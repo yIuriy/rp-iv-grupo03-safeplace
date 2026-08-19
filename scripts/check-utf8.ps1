@@ -98,7 +98,60 @@ function Get-StagedFileBytes {
     return $memory.ToArray()
 }
 
-$stagedFiles = git diff --cached --name-only --diff-filter=ACMR
+function Invoke-GitBytes {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string] $Arguments
+    )
+
+    $processInfo = [System.Diagnostics.ProcessStartInfo]::new()
+    $processInfo.FileName = "git"
+    $processInfo.Arguments = $Arguments
+    $processInfo.RedirectStandardOutput = $true
+    $processInfo.RedirectStandardError = $true
+    $processInfo.UseShellExecute = $false
+
+    $process = [System.Diagnostics.Process]::Start($processInfo)
+    $memory = [System.IO.MemoryStream]::new()
+    $process.StandardOutput.BaseStream.CopyTo($memory)
+    $process.WaitForExit()
+
+    if ($process.ExitCode -ne 0) {
+        $errorOutput = $process.StandardError.ReadToEnd()
+        throw "Falha ao executar git $Arguments. $errorOutput"
+    }
+
+    return $memory.ToArray()
+}
+
+function Get-StagedFiles {
+    $bytes = Invoke-GitBytes -Arguments "-c core.quotepath=false diff --cached --name-only -z --diff-filter=ACMR"
+
+    if ($bytes.Length -eq 0) {
+        return @()
+    }
+
+    $encoding = [System.Text.UTF8Encoding]::new($false, $true)
+    $files = @()
+    $start = 0
+
+    for ($index = 0; $index -lt $bytes.Length; $index++) {
+        if ($bytes[$index] -ne 0) {
+            continue
+        }
+
+        if ($index -gt $start) {
+            $length = $index - $start
+            $files += $encoding.GetString($bytes, $start, $length)
+        }
+
+        $start = $index + 1
+    }
+
+    return $files
+}
+
+$stagedFiles = Get-StagedFiles
 
 if (-not $stagedFiles) {
     exit 0
