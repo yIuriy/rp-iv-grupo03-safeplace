@@ -1,6 +1,6 @@
 # Requisitos Não-Funcionais
 
-Documento de Especificação Arquitetural — Sistema SafePlace Este documento apresenta a especificação dos Requisitos Não-Funcionais (RNFs), a fundamentação do Padrão Arquitetural adotado e as modelagens estruturais e físicas do sistema SafePlace, contemplando os diagramas de pacotes, de componentes e de implantação.
+Este documento apresenta a especificação dos Requisitos Não-Funcionais (RNFs) do sistema SafePlace.
 
 Os requisitos a seguir delimitam os critérios de qualidade, restrições técnicas e níveis de serviço que o ecossistema SafePlace deve cumprir.
 
