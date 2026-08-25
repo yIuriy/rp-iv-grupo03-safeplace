@@ -50,9 +50,9 @@ Este requisito refere-se ao controle dos equipamentos que estão disponíveis pa
 
 Este requisito refere-se à interligação entre tarefas e seus devidos EPIs, ou seja, os que devem ser utilizados durante sua execução.
 
-## RF13: O Sistema deve permitir que um supervisor crie registros do acidente
+## RF13: O sistema deve permitir que um supervisor crie registros de acidente
 
-Este requisito refere-se à permitir o registro de fotos, vídeos e depoimentos de testemunhas que estavam presentes no local da ocorrência do acidente.
+Este requisito refere-se à capacidade de um supervisor registrar acidentes ocorridos, informando os dados necessários para identificação, acompanhamento e análise da ocorrência.
 
 ## RF14: O sistema deve permitir a gestão de descarte dos EPIs
 
@@ -88,7 +88,7 @@ Este requisito refere-se à capacidade do sistema de calcular automaticamente a 
 
 ## RF22: O sistema deve permitir a gerência de visitantes
 
-Este requisito refere-se à capacidade de um supervisor ou gestor de segurança realizar o registro de visitantes, incluidno informações que o identifquem e quai EPI's ele está temporiamente em posse.
+Este requisito refere-se à capacidade de um supervisor ou gestor de segurança realizar o registro de visitantes, incluindo informações que os identifiquem e quais EPIs estão temporariamente em sua posse.
 
 ## RF23: O sistema deve permitir a gestão de supervisores e colaboradores
 
