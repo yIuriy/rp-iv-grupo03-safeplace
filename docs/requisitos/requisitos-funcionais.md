@@ -64,7 +64,7 @@ Este requisito refere-se ao sistema realizar o registro detalhado da investigaç
 
 ## RF16: O sistema deve permitir o registro de incidentes
 
-Este requisito refere-se ao sistema permitir que funcionários relatem situações de risco ou incidentes que não geraram lesão, mas que poderiam ter gerado, para fins de prevenção proativa.
+Este requisito refere-se ao sistema permitir que colaborador, supervisor ou gerente de segurança relatem situações de risco ou incidentes que não geraram lesão, mas que poderiam ter gerado, para fins de prevenção proativa.
 
 ## RF17: O sistema deve permitir a geração de dashboards de segurança
 
