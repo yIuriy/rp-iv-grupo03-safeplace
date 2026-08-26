@@ -45,23 +45,23 @@ A priorização deve começar pelos Requisitos Funcionais (RFs), pois eles repre
 
 | ID | Requisito | Prioridade | Justificativa |
 | --- | --- | --- | --- |
-| RNF01 | Tempo de resposta | A definir | A definir |
-| RNF02 | Capacidade de usuários simultâneos | A definir | A definir |
-| RNF03 | Controle de acesso por perfil | A definir | A definir |
-| RNF04 | Criptografia de dados sensíveis | A definir | A definir |
-| RNF05 | Rastreabilidade de ações (auditoria) | A definir | A definir |
-| RNF06 | Disponibilidade mínima | A definir | A definir |
-| RNF07 | Backup e recuperação de dados | A definir | A definir |
-| RNF08 | Funcionamento offline parcial | A definir | A definir |
-| RNF09 | Conformidade com normas regulamentadoras | A definir | A definir |
-| RNF10 | Integridade e validade dos documentos gerados | A definir | A definir |
-| RNF11 | Interface responsiva e acessível | A definir | A definir |
-| RNF12 | Facilidade de aprendizado | A definir | A definir |
-| RNF13 | Suporte multilíngue | A definir | A definir |
-| RNF14 | Modularidade e extensibilidade | A definir | A definir |
-| RNF15 | Documentação técnica | A definir | A definir |
-| RNF16 | Compatibilidade com navegadores e sistemas operacionais | A definir | A definir |
-| RNF17 | Integração via API | A definir | A definir |
+| RNF01 | Tempo de resposta | Must have | O sistema precisa responder rapidamente às solicitações feitas, a fim de não gerar descontentamento. |
+| RNF02 | Capacidade de usuários simultâneos | Should have | O sistema deve permitir um número adequado de usuários simultâneos, mas, em um primeiro momento, deve atender a um número reduzido. |
+| RNF03 | Controle de acesso por perfil | Must have | As funcionalidades são baseadas nos perfis, sendo uma das bases do sistema. |
+| RNF04 | Criptografia de dados sensíveis | Should have | Os dados devem ser criptografados, porém, para uma versão inicial, uma criptografia mais básica pode ser aplicada. |
+| RNF05 | Rastreabilidade de ações (auditoria) | Could have | Sua importância se dá na implementação final do software, para acompanhar as ações dos usuários. |
+| RNF06 | Disponibilidade mínima | Should have | O sistema deve estar disponível na maior parte do tempo, mas, em sua versão inicial, tempos maiores de manutenção podem ser necessários. |
+| RNF07 | Backup e recuperação de dados | Could have | Não é necessário nas versões iniciais, cujos dados serão usados para teste. |
+| RNF08 | Funcionamento offline parcial | Could have | Deve ser implementado após as demais funcionalidades, pois depende de sincronização e armazenamento local. |
+| RNF09 | Conformidade com normas regulamentadoras | Must have | Necessário para a base legal do software. |
+| RNF10 | Integridade e validade dos documentos gerados | Should have | Relacionado às normas e aos processos legais, torna-se essencial quando houver geração de documentos oficiais pelo sistema. |
+| RNF11 | Interface responsiva e acessível | Should have | Deve ser implementado após o desenvolvimento das principais funcionalidades, como refinamento do software. |
+| RNF12 | Facilidade de aprendizado | Must have | Mesmo em suas versões iniciais, o software não deve ser difícil de usar. |
+| RNF13 | Suporte multilíngue | Could have | Não afeta o software como um todo, sendo voltado apenas para fins de maior visibilidade e suporte. |
+| RNF14 | Modularidade e extensibilidade | Must have | Necessário com base nos bons princípios de desenvolvimento. |
+| RNF15 | Documentação técnica | Must have | Essencial para acompanhar o desenvolvimento do software. |
+| RNF16 | Compatibilidade com navegadores e sistemas operacionais | Must have | Requisito essencial para que o software funcione no maior número de dispositivos possível. |
+| RNF17 | Integração via API | Could have | Deve ter sua implementação analisada após a criação do MVP. |
 
 ## Orientações para Revisão
 
