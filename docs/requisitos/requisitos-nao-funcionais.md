@@ -34,7 +34,7 @@ O sistema deve realizar backup automático diário dos dados, com capacidade de 
 
 ## RNF08 — Funcionamento offline parcial
 
-As funcionalidades críticas de registro de acidentes e incidentes devem operar em modo offline por meio de recursos de Progressive Web App (PWA), armazenando os dados localmente no dispositivo e sincronizando automaticamente com o servidor quando a conexão for restabelecida. Funcionalidades que dependem de processamento em tempo real, como dashboards, ficam indisponíveis durante a ausência de conexão.
+O sistema deve permitir a consulta em modo offline das principais estatísticas, indicadores e relatórios previamente sincronizados por meio de recursos de Progressive Web App (PWA) e armazenamento em cache local, garantindo aos gestores de segurança o acesso contínuo aos dados consolidados mesmo em ambientes sem conectividade. Funcionalidades de atualização em tempo real e geração dinâmica de novos relatórios permanecem suspensas até o restabelecimento da conexão com o servidor.
 
 ## RNF09 — Conformidade com normas regulamentadoras
 
@@ -56,9 +56,9 @@ Um usuário com conhecimento básico de informática deve ser capaz de realizar 
 
 O sistema deve oferecer interface em português do Brasil como idioma padrão, com possibilidade de expansão para espanhol e inglês sem necessidade de refatoração do código-fonte.
 
-## RNF14 — Modularidade e extensibilidade
+## RNF14 — Desacoplamento e extensibilidade
 
-O sistema deve ser desenvolvido em arquitetura modular, permitindo a adição de novos módulos, como integração com sistemas ERP, sem impacto nas demais funcionalidades já existentes.
+O sistema deve ser projetado com alto grau de desacoplamento, garantindo que as regras de negócio centrais sejam totalmente independentes de tecnologias de infraestrutura, bancos de dados, interfaces de usuário e serviços externos. A inclusão de novas funcionalidades e a integração com sistemas de terceiros (como ERPs e CRMs) devem ser realizadas exclusivamente por meio de contratos de interface padronizados, de forma plugável e sem impactar ou modificar o núcleo de regras já existente.
 
 ## RNF15 — Documentação técnica
 
