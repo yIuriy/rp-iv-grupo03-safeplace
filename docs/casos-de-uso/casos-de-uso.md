@@ -104,11 +104,6 @@ No MVP, o fluxo cobre consulta e registro de manutenção. Validação externa d
 | 1. Tentar alocar colaborador em tarefa de risco (ex.: NR-10, NR-35) | |
 | | 2. Detectar que a certificação obrigatória do colaborador está vencida |
 | | 3. Bloquear a alocação e emitir alerta impeditivo ao Supervisor/Gestor |
-| **Cenário de Exceção II - Cadastro de certificado com data inconsistente** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Inserir data de validade anterior à data de emissão ou data de emissão futura | |
-| | 2. Validar inconsistência cronológica das datas |
-| | 3. Recusar o salvamento e exibir mensagem solicitando a correção dos campos |
 
 ---
 
