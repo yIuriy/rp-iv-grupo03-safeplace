@@ -59,11 +59,12 @@ Este documento apresenta a consolidação e especificação detalhada dos Casos 
 | **Cenário Principal** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar o menu "Certificações e Treinamentos" | |
-| | 2. Carregar tela com listagem de colaboradores e suas certificações |
+| | 2. Carregar listagem de colaboradores |
 | 3. Selecionar um colaborador | |
-| | 4. Exibir detalhes das certificações e treinamentos do colaborador |
-| 5. Visualizar certificações cadastradas | |
-| 6. Visualizar treinamentos realizados | |
+| | 4. Exibir detalhes das certificações |
+| | 5. Exibir detalhes dos treinamentos |
+|6. Visualizar certificações cadastradas | |
+| 7. Visualizar treinamentos realizados | |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. O sistema deve alertar automaticamente quando uma certificação estiver próxima do vencimento (30 dias). | 2. O sistema deve bloquear a alocação de colaboradores com certificações vencidas em tarefas de risco. |
 | **Cenário Alternativo I - O colaborador possui certificados vencidos** | |
@@ -78,30 +79,20 @@ Este documento apresenta a consolidação e especificação detalhada dos Casos 
 | | 3. Emitir alerta de bloqueio preventivo para tarefas de risco |
 | **Cenário Alternativo III - Colaborador sem certificações cadastradas** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Selecionar colaborador recém-admitido | |
+| 1. Selecionar colaborador | |
 | | 2. Identificar ausência de histórico de certificações |
-| | 3. Exibir mensagem indicando pendência da trilha inicial de integração e treinamentos admissionais |
+| | 3. Exibir mensagem indicando pendência da trilha inicial de integração |
+| | 4. Exibir mensagem indicando pendência de treinamentos admissionais |
 | **Cenário Alternativo IV - Filtrar colaboradores por status de certificação** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar painel de filtros de certificações | |
 | 2. Selecionar status desejado (em dia, próximas do vencimento em 30 dias ou vencidas) | |
 | | 3. Atualizar a listagem exibindo apenas os colaboradores que atendem ao filtro |
-| **Cenário de Exceção I - Falha de conexão com o banco de dados** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Tentar carregar as informações | |
-| | 2. Detectar falha de conexão com a base de dados |
-| | 3. Exibir mensagem de erro de indisponibilidade |
-| | 4. Registrar erro no log do sistema |
-| **Cenário de Exceção II - Bloqueio de alocação por certificação obrigatória vencida** | |
+| **Cenário de Exceção I - Bloqueio de alocação por certificação obrigatória vencida** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Tentar alocar colaborador em tarefa de risco (ex.: NR-10, NR-35) | |
 | | 2. Detectar que a certificação obrigatória do colaborador está vencida |
 | | 3. Bloquear a alocação e emitir alerta impeditivo ao Supervisor/Gestor |
-| **Cenário de Exceção III - Cadastro de certificado com data inconsistente** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Inserir data de validade anterior à data de emissão ou data de emissão futura | |
-| | 2. Validar inconsistência cronológica das datas |
-| | 3. Recusar o salvamento e exibir mensagem solicitando a correção dos campos |
 
 ---
 
