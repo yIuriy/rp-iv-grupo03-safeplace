@@ -274,9 +274,10 @@ Este documento apresenta a consolidação e especificação detalhada dos Casos 
 | | 2. Carregar listagem de EPIs disponíveis com nome, quantidade e status |
 | 3. Selecionar um EPI específico | |
 | | 4. Exibir detalhes do item e histórico de movimentações |
-| 5. Informar nova quantidade/entrada | |
-| | 6. Validar dados informados e confirmar atualização |
-| | 7. Atualizar o saldo de estoque no sistema |
+| 5. Clicar em "Registrar nova quantidade/entrada" | |
+| 6. Informar dados | |
+| | 7. Validar dados informados |
+| | 8. Atualizar o saldo de estoque no sistema |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. Não é permitido que o estoque fique com quantidade negativa. | 2. Todo EPI cadastrado deve possuir Certificado de Aprovação (CA) válido. |
 | **Cenário Alternativo I - Estoque vazio / crítico** | |
@@ -285,23 +286,26 @@ Este documento apresenta a consolidação e especificação detalhada dos Casos 
 | | 2. Destacar o item em alerta visual no painel do Gestor |
 | **Cenário Alternativo II - Baixa definitiva de estoque por descarte ou obsolescência** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Selecionar lote de EPIs danificados, reprovados ou com CA expirado | |
-| 2. Acionar opção "Registrar Descarte/Baixa Definitiva" e informar motivo | |
-| | 3. Validar justificativa de descarte, dar baixa no inventário e registrar termo de destinação |
-| **Cenário de Exceção I - Falha ao salvar movimentação** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Tentar salvar dados da movimentação | |
-| | 2. Detectar falha de gravação no banco de dados e exibir mensagem de erro |
-| **Cenário de Exceção II - Bloqueio de entrada de lote com CA vencido ou inválido** | |
+| 1. Selecionar o item ou lote de EPIs danificados, reprovados ou com CA expirado | |
+| 2. Clicar em "Registrar Descarte/Baixa Definitiva" | |
+| 3. Informar o código do item/lote | |
+| 4. Informar quantidade a descartar | |
+| 5. Informar justificativa técnica | |
+| | 6. Validar se a quantidade informada é menor ou igual ao saldo disponível |
+| | 7. Dar baixa na quantidade do inventário |
+| | 8. Gerar o termo de destinação/descarte |
+| **Cenário de Exceção I - Bloqueio de entrada de lote com CA vencido ou inválido** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Informar número de CA vencido ou cancelado no cadastro de entrada | |
 | | 2. Validar status do CA na base normativa |
-| | 3. Bloquear o recebimento do lote no estoque e alertar sobre a irregularidade |
-| **Cenário de Exceção III - Tentativa de saída com quantidade superior ao saldo em estoque** | |
+| | 3. Bloquear o recebimento do lote no estoque |
+| | 4. Alertar sobre a irregularidade |
+| **Cenário de Exceção II - Tentativa de saída com quantidade superior ao saldo em estoque** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Solicitar baixa/saída de quantidade maior do que o saldo atual disponível | |
+| 1. Informar quantidade a descartar superior ao saldo  disponível | |
 | | 2. Detectar tentativa de geração de saldo negativo |
-| | 3. Bloquear a transação e exibir alerta informando o saldo máximo permitido |
+| | 3. Bloquear a transação |
+| | 4. Exibir alerta informando o saldo máximo permitido|
 
 ---
 
