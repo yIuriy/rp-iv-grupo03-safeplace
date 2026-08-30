@@ -275,9 +275,9 @@ Este documento apresenta a consolidação e especificação detalhada dos Casos 
 | 3. Selecionar um EPI específico | |
 | | 4. Exibir detalhes do item e histórico de movimentações |
 | 5. Clicar em "Registrar nova quantidade/entrada" | |
-| 6. Informar dados| |
-| | 7. Validar dados informados|
-| | 7. Atualizar o saldo de estoque no sistema |
+| 6. Informar dados | |
+| | 7. Validar dados informados |
+| | 8. Atualizar o saldo de estoque no sistema |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. Não é permitido que o estoque fique com quantidade negativa. | 2. Todo EPI cadastrado deve possuir Certificado de Aprovação (CA) válido. |
 | **Cenário Alternativo I - Estoque vazio / crítico** | |
@@ -289,11 +289,11 @@ Este documento apresenta a consolidação e especificação detalhada dos Casos 
 | 1. Selecionar o item ou lote de EPIs danificados, reprovados ou com CA expirado | |
 | 2. Clicar em "Registrar Descarte/Baixa Definitiva" | |
 | 3. Informar o código do item/lote | |
-| 4.Informar quantidade a descartar| |
-| 6. Informar justificativa técnica| |
-| | 7. Validar se a quantidade informada é menor ou igual ao saldo disponível |
-| | 8. Dar baixa na quantidade do inventário |
-| | 9. Gerar o termo de destinação/descarte|
+| 4. Informar quantidade a descartar | |
+| 5. Informar justificativa técnica | |
+| | 6. Validar se a quantidade informada é menor ou igual ao saldo disponível |
+| | 7. Dar baixa na quantidade do inventário |
+| | 8. Gerar o termo de destinação/descarte |
 | **Cenário de Exceção I - Bloqueio de entrada de lote com CA vencido ou inválido** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Informar número de CA vencido ou cancelado no cadastro de entrada | |
