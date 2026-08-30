@@ -612,39 +612,3 @@ No MVP, este caso de uso cobre empréstimos e devoluções para colaboradores. E
 | | 2. Detectar duplicidade de cautela sem registro de devolução anterior |
 | | 3. Exibir alerta de duplicidade e exigir confirmação/justificativa de substituição |
 
----
-
-## UC13 – Gerenciar Supervisores e Colaboradores
-
-Este caso de uso é proposto para cobrir o RF23 sem criar um novo requisito funcional.
-
-| Elemento / Ações do Ator | Detalhes / Ações do Sistema |
-| :--- | :--- |
-| **Identificador** | **UC13** |
-| **Nome** | Gerenciar Supervisores e Colaboradores |
-| **Ator Principal** | Gestor de Segurança ou Supervisor |
-| **Atores Secundários** | Nenhum |
-| **Resumo** | Permite ao Gestor de Segurança gerenciar supervisores e ao Supervisor gerenciar colaboradores. |
-| **Pré-condições** | O ator deve estar autenticado com o perfil adequado. |
-| **Pós-condições** | Usuário cadastrado ou atualizado conforme a permissão do ator. |
-| **Cenário Principal** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Acessar a gestão de usuários | |
-| | 2. Exibir os tipos de usuário permitidos para o perfil autenticado |
-| 3. Selecionar a opção de cadastro | |
-| | 4. Solicitar os dados do novo usuário |
-| 5. Preencher os dados e confirmar | |
-| | 6. Validar a permissão do ator |
-| | 7. Gerar a senha inicial e salvar o cadastro |
-| **Regras de Negócio, Restrições e Validações** | |
-| 1. O Gestor de Segurança gerencia supervisores. | 2. O Supervisor gerencia colaboradores. |
-| 3. A senha inicial deve ser gerada automaticamente pelo sistema. | |
-| **Cenário Alternativo I - Atualizar cadastro** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Selecionar um usuário permitido para o seu perfil | |
-| 2. Alterar os dados e confirmar | |
-| | 3. Validar a permissão e salvar as alterações |
-| **Cenário de Exceção I - Perfil sem permissão** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Tentar gerenciar um tipo de usuário não permitido | |
-| | 2. Bloquear a operação e informar a falta de permissão |
