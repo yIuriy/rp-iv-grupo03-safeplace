@@ -124,10 +124,13 @@ No MVP, o fluxo cobre consulta e registro de manutenção. Validação externa d
 | | 2. Exibir lista de setores físicos cadastrados |
 | 3. Selecionar a opção de cadastrar nova área de risco | |
 | | 4. Apresentar formulário com campos de identificação, agentes de risco e limites |
-| 5. Preencher dados do setor e perigos mapeados | |
-| 6. Confirmar cadastro | |
-| | 7. Validar dados informados e salvar novo setor de risco |
-| | 8. Atualizar o mapa global de riscos da organização e disponibilizar para consulta do Supervisor |
+| 5. Preencher dados do setor | |
+| 6. Preencher perigos mapeados | |
+| 7. Confirmar cadastro | |
+| | 8. Validar dados informados |
+| | 9. Salvar novo setor de risco|
+| | 10. Atualizar o mapa global de riscos da organização |
+| | 11. Disponibilizar para consulta do Supervisor |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. Todo setor cadastrado como área de risco, independentemente do grau de perigo, exige o vínculo obrigatório dos EPIs necessários para acesso. | 2. Toda alteração de limite físico de área de risco gera registro auditado. |
 | **Cenário Alternativo I - Filtrar áreas por grau de perigo** | |
@@ -137,19 +140,24 @@ No MVP, o fluxo cobre consulta e registro de manutenção. Validação externa d
 | | 3. Atualizar a listagem exibindo apenas os setores do nível selecionado |
 | **Cenário Alternativo II - Atualização de agentes de risco e redefinição de limites** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Acessar setor de risco existente | |
+| 1. Selecionar setor de risco existente | |
 | 2. Alterar os fatores de risco mapeados ou limites físicos | |
-| | 3. Validar alterações, registrar nova versão no histórico e atualizar mapa de risco |
+| | 3. Validar alterações |
+| | 4. Registrar nova versão no histórico |
+| | 5. Atualizar mapa de risco|
 | **Cenário de Exceção I - Setor com código duplicado** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Confirmar cadastro com código já existente | |
-| | 2. Identificar duplicidade e exibir alerta de código já em uso |
-| 3. Corrigir o código e reenviar formulário | |
+| | 2. Identificar duplicidade |
+| | 3. Exibir alerta de código já em uso|
+| 4. Corrigir o código | |
+| | 5. Reenviar formulário|
 | **Cenário de Exceção II - Bloqueio de cadastro sem vínculo de EPIs obrigatórios** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Tentar salvar área de risco sem selecionar nenhum EPI obrigatório de proteção | |
-| | 2. Detectar ausência de EPIs vinculados (violação da Regra 1) |
-| | 3. Bloquear o salvamento e exigir a inclusão dos EPIs necessários para acesso ao setor |
+| | 2. Detectar ausência de EPIs vinculados |
+| | 3. Bloquear o salvamento |
+| | 4. Exigir a inclusão dos EPIs necessários para acesso ao setor|
 
 ---
 
