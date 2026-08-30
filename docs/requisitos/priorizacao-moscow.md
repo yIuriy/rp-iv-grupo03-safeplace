@@ -6,7 +6,7 @@ Para a entrega atual, o MVP é formado pelos requisitos classificados como `Must
 
 ## Critérios da Técnica MoSCoW
 
-| Classificação | Significado | Critério de uso |
+| Classificação | Significado em português | Critério de uso |
 | --- | --- | --- |
 | Must have | Deve ter | É indispensável para o MVP cumprir seu objetivo. |
 | Should have | Deveria ter | É importante, mas pode ser entregue depois do núcleo do MVP. |
