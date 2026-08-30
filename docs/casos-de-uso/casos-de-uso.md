@@ -124,10 +124,13 @@ No MVP, o fluxo cobre consulta e registro de manutenção. Validação externa d
 | | 2. Exibir lista de setores físicos cadastrados |
 | 3. Selecionar a opção de cadastrar nova área de risco | |
 | | 4. Apresentar formulário com campos de identificação, agentes de risco e limites |
-| 5. Preencher dados do setor e perigos mapeados | |
-| 6. Confirmar cadastro | |
-| | 7. Validar dados informados e salvar novo setor de risco |
-| | 8. Atualizar o mapa global de riscos da organização e disponibilizar para consulta do Supervisor |
+| 5. Preencher dados do setor | |
+| 6. Preencher perigos mapeados | |
+| 7. Confirmar cadastro | |
+| | 8. Validar dados informados |
+| | 9. Salvar novo setor de risco|
+| | 10. Atualizar o mapa global de riscos da organização |
+| | 11. Disponibilizar para consulta do Supervisor |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. Todo setor cadastrado como área de risco, independentemente do grau de perigo, exige o vínculo obrigatório dos EPIs necessários para acesso. | 2. Toda alteração de limite físico de área de risco gera registro auditado. |
 | **Cenário Alternativo I - Filtrar áreas por grau de perigo** | |
@@ -137,19 +140,24 @@ No MVP, o fluxo cobre consulta e registro de manutenção. Validação externa d
 | | 3. Atualizar a listagem exibindo apenas os setores do nível selecionado |
 | **Cenário Alternativo II - Atualização de agentes de risco e redefinição de limites** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Acessar setor de risco existente | |
+| 1. Selecionar setor de risco existente | |
 | 2. Alterar os fatores de risco mapeados ou limites físicos | |
-| | 3. Validar alterações, registrar nova versão no histórico e atualizar mapa de risco |
+| | 3. Validar alterações |
+| | 4. Registrar nova versão no histórico |
+| | 5. Atualizar mapa de risco|
 | **Cenário de Exceção I - Setor com código duplicado** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Confirmar cadastro com código já existente | |
-| | 2. Identificar duplicidade e exibir alerta de código já em uso |
-| 3. Corrigir o código e reenviar formulário | |
+| | 2. Identificar duplicidade |
+| | 3. Exibir alerta de código já em uso|
+| 4. Corrigir o código | |
+| | 5. Reenviar formulário|
 | **Cenário de Exceção II - Bloqueio de cadastro sem vínculo de EPIs obrigatórios** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Tentar salvar área de risco sem selecionar nenhum EPI obrigatório de proteção | |
-| | 2. Detectar ausência de EPIs vinculados (violação da Regra 1) |
-| | 3. Bloquear o salvamento e exigir a inclusão dos EPIs necessários para acesso ao setor |
+| | 2. Detectar ausência de EPIs vinculados |
+| | 3. Bloquear o salvamento |
+| | 4. Exigir a inclusão dos EPIs necessários para acesso ao setor|
 
 ---
 
@@ -604,39 +612,3 @@ No MVP, este caso de uso cobre empréstimos e devoluções para colaboradores. E
 | | 2. Detectar duplicidade de cautela sem registro de devolução anterior |
 | | 3. Exibir alerta de duplicidade e exigir confirmação/justificativa de substituição |
 
----
-
-## UC13 – Gerenciar Supervisores e Colaboradores
-
-Este caso de uso é proposto para cobrir o RF23 sem criar um novo requisito funcional.
-
-| Elemento / Ações do Ator | Detalhes / Ações do Sistema |
-| :--- | :--- |
-| **Identificador** | **UC13** |
-| **Nome** | Gerenciar Supervisores e Colaboradores |
-| **Ator Principal** | Gestor de Segurança ou Supervisor |
-| **Atores Secundários** | Nenhum |
-| **Resumo** | Permite ao Gestor de Segurança gerenciar supervisores e ao Supervisor gerenciar colaboradores. |
-| **Pré-condições** | O ator deve estar autenticado com o perfil adequado. |
-| **Pós-condições** | Usuário cadastrado ou atualizado conforme a permissão do ator. |
-| **Cenário Principal** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Acessar a gestão de usuários | |
-| | 2. Exibir os tipos de usuário permitidos para o perfil autenticado |
-| 3. Selecionar a opção de cadastro | |
-| | 4. Solicitar os dados do novo usuário |
-| 5. Preencher os dados e confirmar | |
-| | 6. Validar a permissão do ator |
-| | 7. Gerar a senha inicial e salvar o cadastro |
-| **Regras de Negócio, Restrições e Validações** | |
-| 1. O Gestor de Segurança gerencia supervisores. | 2. O Supervisor gerencia colaboradores. |
-| 3. A senha inicial deve ser gerada automaticamente pelo sistema. | |
-| **Cenário Alternativo I - Atualizar cadastro** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Selecionar um usuário permitido para o seu perfil | |
-| 2. Alterar os dados e confirmar | |
-| | 3. Validar a permissão e salvar as alterações |
-| **Cenário de Exceção I - Perfil sem permissão** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Tentar gerenciar um tipo de usuário não permitido | |
-| | 2. Bloquear a operação e informar a falta de permissão |
