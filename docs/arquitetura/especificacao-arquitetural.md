@@ -1,50 +1,91 @@
 # Especificação Arquitetural
 
-## 2. Padrão Arquitetural Adotado: Arquitetura Hexagonal (Ports & Adapters)
+## 1. Objetivo
 
-### Justificativa de Readequação Arquitetural
+Este documento registra as decisões arquiteturais do SafePlace e delimita a arquitetura da entrega de MVP. O escopo funcional, os itens excluídos e a matriz de rastreabilidade estão em [Especificação do MVP e Arquitetura](../mvp/especificacao-mvp-arquitetura.md).
 
-A concepção inicial do nosso projeto para o sistema previa uma Arquitetura Híbrida, mesclando Camadas Lógicas, Fronteiras Hexagonais e Barramento de Mensageria Orientado a Eventos (EDA), conforme descrito no documento de nossa entrega anterior, no qual apresentamos as primeiras versões dos diagramas de pacotes e de componentes. No entanto, durante o aprofundamento das fases de análise e projeto, identificamos a necessidade de readequar o padrão arquitetural, migrando para uma abordagem centralizada na Arquitetura Hexagonal (Ports & Adapters) pura. Sendo assim, detalhamos abaixo os fatores técnicos e acadêmicos que motivaram nossa decisão, bem como as estratégias de mitigação que adotamos para garantir o cumprimento integral dos Requisitos Não-Funcionais (RNFs).
+O SafePlace acompanha acidentes e incidentes de trabalho, áreas de risco e o uso de Equipamentos de Proteção Individual (EPIs). Sensores, Internet das Coisas (IoT), rotas de evacuação e simulações de emergência não fazem parte da versão atual do sistema.
 
-### Redução da Complexidade e Carga Cognitiva
+## 2. Conceitos adotados
 
-O principal motivo para a mudança foi o nível de complexidade acidental introduzido pela abordagem híbrida. Percebemos que a sobreposição de um barramento de eventos (EDA) com uma estrutura de camadas e fronteiras hexagonais gerou um modelo de difícil compreensão. Em termos de implementação de software, concluímos que isso resultaria em um alto custo de desenvolvimento, testes e manutenção para o futuro sistema. Considerando nossa realidade como acadêmicos e projetando o ciclo de vida real de um software corporativo, a manutenibilidade (RNF16) e a clareza estrutural são fundamentais. A Arquitetura Hexagonal simplifica a nossa visão do sistema ao focar em um único paradigma estrutural: o isolamento completo do domínio de negócio no centro da aplicação, comunicando-se com o mundo externo (banco de dados, interfaces web, APIs) exclusivamente por meio de Portas (interfaces) e Adaptadores. Isso reduz a nossa curva de aprendizado e torna o código mais coeso e previsível para o trabalho em equipe futuramente.
+MVP, MVC e Arquitetura Hexagonal tratam de decisões diferentes:
 
-### Isolamento do Domínio e Conformidade (Referente aos requisitos RNF10 e RNF15)
+- MVP define quais funcionalidades serão entregues primeiro.
+- MVC organiza a interface em Model, View e Controller.
+- Arquitetura Hexagonal organiza as dependências do sistema por meio de portas e adaptadores.
 
-Quando focamos no padrão Hexagonal, garantimos que todas as regras de negócio sensíveis do SafePlace, tal como auditorias, emissões de CATs e regras da LGPD, fiquem completamente agnósticas em relação à tecnologia de infraestrutura. Qualquer mudança no banco de dados, no framework web ou nos serviços externos afetará apenas os adaptadores periféricos, protegendo o núcleo do sistema e garantindo a extensibilidade exigida pelo RNF15.
+O MVC pode ser usado no adaptador web sem substituir a Arquitetura Hexagonal. Nesse arranjo, os Controllers recebem as ações do usuário e chamam as portas de entrada da aplicação.
 
-### Mitigação do Processamento de Eventos
+## 3. Padrão arquitetural
 
-A nossa decisão de remover o Barramento de Mensageria Orientado a Eventos (EDA) do escopo trouxe o desafio de atender ao RNF02 (processamento de dados de sensores com latência máxima de 500 milissegundos). Na arquitetura híbrida inicial, os eventos gerenciavam esse fluxo em tempo real. Para suprir essa ausência sem reinserirmos a complexidade do EDA, propomos a utilização de processamentos transversais (Cross-cutting Concerns) acoplados diretamente aos Adaptadores de Entrada (Driving Adapters) do hexágono. De modo geral, a estratégia conceitual que adotamos consiste em:
+O SafePlace adota a Arquitetura Hexagonal, também chamada de Ports and Adapters. O objetivo é manter as regras de negócio independentes da interface, do banco de dados e de serviços externos.
 
-- Comunicação Direta nas Fronteiras: A captura contínua de dados dos sensores é gerenciada por adaptadores de entrada dedicados, projetados para lidar nativamente com o fluxo de informações dos dispositivos. Isso nos permite recepcionar e isolar os dados sensoriais logo na borda do sistema, antes que entrem no fluxo principal das regras de negócio.
-- Tratamento Transversal de Alertas: Aspectos que exigem uma resposta imediata, como o monitoramento em tempo real (RNF02), são gerenciados de forma transversal. Assim, quando um dado crítico é identificado na fronteira do sistema, a ocorrência é encaminhada diretamente aos componentes responsáveis por sua tratativa. A partir disso, essa abordagem nos permite garantir respostas rápidas e o cumprimento das restrições de latência, preservando o desempenho geral da aplicação sem onerar o núcleo de domínio com o roteamento de eventos complexos.
+A arquitetura é dividida em três partes:
 
-## 3. Diagramas Arquiteturais do Sistema
+1. Domínio: contém entidades e regras de negócio.
+2. Aplicação: coordena os casos de uso e declara as portas.
+3. Adaptadores: conectam a aplicação à interface web, à persistência, à autenticação e à auditoria.
 
-Toda a modelagem do sistema SafePlace foi desenvolvida utilizando a ferramenta Astah. Esta seção apresenta as visões da arquitetura, divididas por escopo de representação do software.
+As dependências apontam para o núcleo. O domínio não conhece frameworks, banco de dados ou detalhes da interface.
 
-### Nota sobre a Revisão dos Diagramas de Pacotes e Componentes
+### 3.1. Portas de entrada
 
-Para a elaboração desta etapa final, revisamos e corrigimos os diagramas de pacotes e de componentes entregues anteriormente. Esse refinamento foi necessário para eliminar inconsistências e garantir o total alinhamento com o novo diagrama de implantação.
+As portas de entrada representam as operações disponíveis para os atores do sistema. No MVP, elas devem cobrir:
 
-### 3.1. Diagrama de Pacotes
+- gestão de usuários e perfis;
+- registro e consulta de acidentes e incidentes;
+- controle de estoque de EPIs;
+- controle de manutenção de EPIs;
+- empréstimo e devolução de EPIs;
+- cadastro e consulta de áreas de risco.
 
-Esse diagrama está em anexo junto com o email de entrega.
+### 3.2. Portas de saída
 
-### 3.2. Diagrama de Componentes
+As portas de saída representam recursos externos ao núcleo:
 
-Esse diagrama está em anexo junto com o email de entrega.
+- repositórios de usuários, ocorrências, EPIs e áreas de risco;
+- autenticação e controle de acesso;
+- registro de auditoria;
+- criptografia e armazenamento seguro.
 
-### 3.3. Diagrama de Implantação
+## 4. Organização lógica do MVP
 
-Esse diagrama está em anexo junto com o email de entrega.
+O núcleo é organizado pelas funcionalidades `usuarios`, `ocorrencias`, `epis` e `areas-de-risco`. Cada funcionalidade reúne suas regras e casos de uso. Os adaptadores ficam separados do núcleo para evitar dependência de tecnologia nas regras de negócio.
 
-### Nota sobre a Representação da Arquitetura Hexagonal na Implantação
+Essa organização atende ao RNF14, que exige desacoplamento e extensibilidade. A documentação deste repositório atende parcialmente ao RNF15 ao registrar o escopo, a rastreabilidade e as decisões arquiteturais. A documentação da API e do modelo de dados ainda depende da implementação.
 
-Cabe esclarecer uma decisão de modelagem em relação à ausência da representação explícita das Portas de Entrada e de Saída no Diagrama de Implantação. Optamos por não desenhar essas interfaces como blocos separados para manter o rigor técnico exigido pela UML. O diagrama de implantação tem o objetivo de ilustrar a infraestrutura física (servidores, redes, dispositivos) e os artefatos físicos implantáveis (executáveis, pacotes, containers). Como as portas da arquitetura hexagonal são conceitos estritamente lógicos do código (interfaces), elas não existem como artefatos físicos independentes a serem instalados em um servidor. Representá-las como nós ou peças de hardware configuraria um erro conceitual grave, além de gerar poluição visual no modelo. A consistência entre as visões do sistema é garantida pelo empacotamento: os elementos lógicos (Casos de Uso, Portas e Entidades), detalhados previamente no diagrama de componentes, encontram-se implicitamente contidos dentro do artefato do Núcleo da Aplicação (Core), o qual está devidamente mapeado e implantado no nó físico do Servidor de Aplicação. Dessa forma, separamos corretamente a visão lógica da estrutura física.
+## 5. Requisitos não funcionais e decisões arquiteturais
 
-### Diagrama de componentes:
+| Requisito | Decisão arquitetural |
+| --- | --- |
+| RNF01 | Medir o tempo dos fluxos principais e limitar consultas desnecessárias. |
+| RNF03 | Verificar o perfil do usuário antes de executar cada caso de uso protegido. |
+| RNF04 | Usar TLS 1.3 na transmissão e AES-256 no armazenamento de dados sensíveis. |
+| RNF05 | Manter log imutável das operações, com usuário, data, hora e retenção mínima de 5 anos. |
+| RNF09 | Manter as validações normativas no domínio, sem vinculá-las à interface. |
+| RNF12 | Manter os fluxos principais curtos e com mensagens de validação claras. |
+| RNF14 | Isolar domínio, aplicação e adaptadores por contratos definidos. |
+| RNF15 | Versionar a arquitetura, a API e o modelo de dados junto ao projeto. |
+| RNF16 | Evitar recursos exclusivos de um navegador ou sistema operacional. |
 
-(está metade certo porque metade eu fiz e metade não deu pra fazer e o pessoal não entendeu nada)
+As decisões acima descrevem a solução esperada. O atendimento de cada RNF deve ser comprovado por testes ou evidências da implementação.
+
+## 6. Artefatos arquiteturais
+
+Os diagramas não são alterados nesta revisão. O grupo fará a atualização em uma etapa posterior. O conteúdo esperado de cada artefato está definido na [Especificação do MVP e Arquitetura](../mvp/especificacao-mvp-arquitetura.md#8-artefatos-arquiteturais-pendentes).
+
+| Artefato | Status |
+| --- | --- |
+| Diagrama de pacotes | Pendente de atualização |
+| Diagrama de componentes lógico | Pendente de atualização |
+| Diagrama de componentes executável | Pendente de atualização |
+| Diagrama de sequência | Pendente de atualização |
+| Diagrama de classes reduzido ao MVP | Pendente de atualização |
+
+## 7. Limites da arquitetura atual
+
+- O barramento de eventos não faz parte do MVP.
+- Não há adaptadores para sensores ou dispositivos IoT.
+- RF21 e UC10 permanecem documentados como evolução futura, mas não entram nos componentes do MVP.
+- Relatórios, CAT, dashboards, funcionamento offline e integrações externas permanecem fora do núcleo da primeira entrega.
+- Tecnologias de implementação ainda não foram definidas neste documento.
