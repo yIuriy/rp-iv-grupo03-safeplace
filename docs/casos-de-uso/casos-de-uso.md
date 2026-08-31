@@ -6,9 +6,9 @@ Este documento especifica os casos de uso do SafePlace. Os fluxos incluem funcio
 
 ## 2. Recorte do MVP
 
-O MVP utiliza os fluxos básicos de UC01, UC03, UC05, UC06, UC09 e UC12. O UC13 é proposto para cobrir o RF23, que não possuía caso de uso correspondente.
+O MVP contempla os fluxos essenciais dos casos de uso primários: **UC01**, **UC03**, **UC05**, **UC06**, **UC09** e **UC12**.
 
-Os demais casos de uso permanecem documentados como backlog. Dentro dos casos de uso selecionados, cenários ligados a investigação, CAT, mídias, visitantes, treinamentos, descarte avançado e substituição inteligente não fazem parte do MVP.
+Os demais casos de uso permanecem documentados como backlog para versões futuras. Dentro dos casos de uso selecionados para o MVP, cenários avançados (como integração externa de CA, emissão automatizada de CAT, gestão de mídias e projeções preditivas) fazem parte do escopo futuro.
 
 ---
 
@@ -179,10 +179,13 @@ Este caso de uso está fora do MVP. Ele permanece documentado como extensão fut
 | 1. Acessar uma ocorrência previamente cadastrada ou em processo de registro | |
 | | 2. Exibir dados da ocorrência |
 | 3. Selecionar a opção de anexar mídias/testemunhas | |
-| | 4. Apresentar opções de upload de mídias e cadastro de testemunhas |
-| 5. Inserir os dados das testemunhas e selecionar arquivos de mídia | |
-| | 6. Validar formatos e tamanhos dos arquivos |
-| | 7. Vincular as evidências ao registro da ocorrência |
+| | 4. Apresentar opções de upload de mídias |
+| | 5. Apresentar cadastro de testemunhas |
+| 6. Inserir os dados das testemunhas | |
+| | 7. Selecionar arquivos de mídia |
+| | 8. Validar formatos |
+| | 9. Validar tamanhos dos arquivos|
+| | 10. Vincular as evidências ao registro da ocorrência |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. Documentos e imagens de acidentes devem ser armazenados de forma segura e criptografada. | 2. Toda remoção de evidência pericial exige justificativa técnica obrigatória. |
 | **Cenário Alternativo I - Remover mídia ou testemunha já anexada** | |
@@ -190,31 +193,37 @@ Este caso de uso está fora do MVP. Ele permanece documentado como extensão fut
 | 1. Acessar a lista de evidências vinculadas | |
 | 2. Selecionar o item que deseja remover | |
 | | 3. Exibir diálogo de confirmação solicitando justificativa |
-| 4. Confirmar remoção informando a justificativa obrigatória | |
-| | 5. Validar justificativa, desvincular o item e registrar exclusão no log de auditoria |
-| | 6. Atualizar a listagem refletindo a remoção |
+| 4. Confirmar remoção | |
+| 5. Informar justificativa obrigatória | |
+| | 6. Validar justificativa |
+| | 7. Desvincular o item|
+| | 8. Registrar exclusão no log de auditoria|
+| | 9. Atualizar a listagem refletindo a remoção |
 | **Cenário Alternativo II - Cadastro de testemunha externa** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Identificar que a testemunha é externa (terceirizado/visitante sem matrícula) | |
 | 2. Preencher formulário de testemunha avulsa com nome, documento e contato | |
-| | 3. Validar dados de contato e vincular o depoimento avulso à ocorrência |
+| | 3. Validar dados de contato |
+| | 4. Vincular o depoimento avulso à ocorrência|
 | **Cenário de Exceção I - Arquivo com formato ou tamanho inválido** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Selecionar arquivo para upload | |
 | | 2. Detectar formato não suportado ou tamanho acima do limite |
 | | 3. Exibir mensagem de erro especificando formatos aceitos (JPG, PNG, MP4, PDF) |
-| | 4. Cancelar o upload e descartar o arquivo inválido |
-| 5. Selecionar novo arquivo válido ou cancelar operação | |
+| | 4. Cancelar o upload |
+| | 5. Descartar o arquivo inválido |
 | **Cenário de Exceção II - Tentativa de remoção sem justificativa obrigatória** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Confirmar exclusão de evidência deixando o campo de justificativa em branco | |
 | | 2. Detectar ausência de justificativa |
-| | 3. Bloquear a exclusão e exigir o preenchimento do motivo para fins de auditoria |
+| | 3. Bloquear a exclusão |
+| | 4. Exigir o preenchimento do motivo para fins de auditoria|
 | **Cenário de Exceção III - Falha de upload por interrupção de conexão de rede** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Iniciar upload de arquivo pesado | |
 | | 2. Detectar queda de conexão antes da conclusão do envio |
-| | 3. Alertar sobre a interrupção e disponibilizar opção de retentar o upload |
+| | 3. Alertar sobre a interrupção |
+| | 4. Disponibilizar opção de retentar o upload |
 
 ---
 
@@ -453,11 +462,16 @@ No MVP, o Colaborador pode relatar incidentes. O Supervisor pode relatar acident
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar a funcionalidade "Relatar Acidente/Incidente" | |
 | | 2. Exibir formulário de relato rápido de acidentes e incidentes |
-| 3. Selecionar o tipo de ocorrência (acidente ou incidente) e informar setor, colaboradores envolvidos e descrição dos fatos | |
-| 4. Acionar opcionalmente o caso de uso estendido **UC04 - Anexar Mídias e Testemunhas** | |
-| 5. Confirmar o envio do relato de acidente/incidente | |
-| | 6. Validar dados, registrar o acidente/incidente no sistema e gerar protocolo |
-| | 7. Enviar notificação automática da ocorrência ao Gestor de Segurança |
+| 3. Selecionar o tipo de ocorrência (acidente ou incidente) | |
+| 4. Informar setor| |
+| 5. Informar colaboradores envolvidos | |
+| 6. Informar descrição dos fatos | |
+| 7. Acionar opcionalmente o caso de uso estendido **UC04 - Anexar Mídias e Testemunhas** | |
+| 8. Confirmar o envio do relato de acidente/incidente | |
+| | 9. Validar dados |
+| | 10. Registrar o acidente/incidente |
+| | 11. Gerar protocolo|
+| | 12. Enviar notificação automática da ocorrência ao Gestor de Segurança |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. O formulário deve ser objetivo para preenchimento ágil. | 2. O Colaborador pode registrar incidentes; o Supervisor pode registrar acidentes e incidentes. |
 | **Cenário Alternativo I - Anexar foto ou evidência ao relato** | |
