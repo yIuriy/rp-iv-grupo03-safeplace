@@ -6,9 +6,9 @@ Este documento especifica os casos de uso do SafePlace. Os fluxos incluem funcio
 
 ## 2. Recorte do MVP
 
-O MVP utiliza os fluxos básicos de UC01, UC03, UC05, UC06, UC09 e UC12. O UC13 é proposto para cobrir o RF23, que não possuía caso de uso correspondente.
+O MVP contempla os fluxos essenciais dos casos de uso primários: **UC01**, **UC03**, **UC05**, **UC06**, **UC09** e **UC12**.
 
-Os demais casos de uso permanecem documentados como backlog. Dentro dos casos de uso selecionados, cenários ligados a investigação, CAT, mídias, visitantes, treinamentos, descarte avançado e substituição inteligente não fazem parte do MVP.
+Os demais casos de uso permanecem documentados como backlog para versões futuras. Dentro dos casos de uso selecionados para o MVP, cenários avançados (como integração externa de CA, emissão automatizada de CAT, gestão de mídias e projeções preditivas) fazem parte do escopo futuro.
 
 ---
 
@@ -179,10 +179,13 @@ Este caso de uso está fora do MVP. Ele permanece documentado como extensão fut
 | 1. Acessar uma ocorrência previamente cadastrada ou em processo de registro | |
 | | 2. Exibir dados da ocorrência |
 | 3. Selecionar a opção de anexar mídias/testemunhas | |
-| | 4. Apresentar opções de upload de mídias e cadastro de testemunhas |
-| 5. Inserir os dados das testemunhas e selecionar arquivos de mídia | |
-| | 6. Validar formatos e tamanhos dos arquivos |
-| | 7. Vincular as evidências ao registro da ocorrência |
+| | 4. Apresentar opções de upload de mídias |
+| | 5. Apresentar cadastro de testemunhas |
+| 6. Inserir os dados das testemunhas | |
+| | 7. Selecionar arquivos de mídia |
+| | 8. Validar formatos |
+| | 9. Validar tamanhos dos arquivos|
+| | 10. Vincular as evidências ao registro da ocorrência |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. Documentos e imagens de acidentes devem ser armazenados de forma segura e criptografada. | 2. Toda remoção de evidência pericial exige justificativa técnica obrigatória. |
 | **Cenário Alternativo I - Remover mídia ou testemunha já anexada** | |
@@ -190,31 +193,37 @@ Este caso de uso está fora do MVP. Ele permanece documentado como extensão fut
 | 1. Acessar a lista de evidências vinculadas | |
 | 2. Selecionar o item que deseja remover | |
 | | 3. Exibir diálogo de confirmação solicitando justificativa |
-| 4. Confirmar remoção informando a justificativa obrigatória | |
-| | 5. Validar justificativa, desvincular o item e registrar exclusão no log de auditoria |
-| | 6. Atualizar a listagem refletindo a remoção |
+| 4. Confirmar remoção | |
+| 5. Informar justificativa obrigatória | |
+| | 6. Validar justificativa |
+| | 7. Desvincular o item|
+| | 8. Registrar exclusão no log de auditoria|
+| | 9. Atualizar a listagem refletindo a remoção |
 | **Cenário Alternativo II - Cadastro de testemunha externa** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Identificar que a testemunha é externa (terceirizado/visitante sem matrícula) | |
 | 2. Preencher formulário de testemunha avulsa com nome, documento e contato | |
-| | 3. Validar dados de contato e vincular o depoimento avulso à ocorrência |
+| | 3. Validar dados de contato |
+| | 4. Vincular o depoimento avulso à ocorrência|
 | **Cenário de Exceção I - Arquivo com formato ou tamanho inválido** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Selecionar arquivo para upload | |
 | | 2. Detectar formato não suportado ou tamanho acima do limite |
 | | 3. Exibir mensagem de erro especificando formatos aceitos (JPG, PNG, MP4, PDF) |
-| | 4. Cancelar o upload e descartar o arquivo inválido |
-| 5. Selecionar novo arquivo válido ou cancelar operação | |
+| | 4. Cancelar o upload |
+| | 5. Descartar o arquivo inválido |
 | **Cenário de Exceção II - Tentativa de remoção sem justificativa obrigatória** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Confirmar exclusão de evidência deixando o campo de justificativa em branco | |
 | | 2. Detectar ausência de justificativa |
-| | 3. Bloquear a exclusão e exigir o preenchimento do motivo para fins de auditoria |
+| | 3. Bloquear a exclusão |
+| | 4. Exigir o preenchimento do motivo para fins de auditoria|
 | **Cenário de Exceção III - Falha de upload por interrupção de conexão de rede** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Iniciar upload de arquivo pesado | |
 | | 2. Detectar queda de conexão antes da conclusão do envio |
-| | 3. Alertar sobre a interrupção e disponibilizar opção de retentar o upload |
+| | 3. Alertar sobre a interrupção |
+| | 4. Disponibilizar opção de retentar o upload |
 
 ---
 
@@ -238,36 +247,36 @@ No MVP, este caso de uso cobre o registro, a consulta, a atualização e o arqui
 | 3. Escolher cadastrar ocorrência | |
 | | 4. Solicitar dados da ocorrência (tipo: acidente ou incidente, data, local, colaborador, tipo de lesão ou potencial de dano, EPIs) |
 | 5. Preencher as informações solicitadas | |
-| | 6. Validar os dados e registrar a ocorrência no sistema |
-| | 7. Oferecer execução do caso de uso estendido **UC04 - Anexar Mídias e Testemunhas** |
+| | 6. Validar os dados |
+| | 7. Registrar a ocorrência no sistema|
+| | 8. Oferecer execução do caso de uso estendido **UC04 - Anexar Mídias e Testemunhas** |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. Registros de acidentes e incidentes não podem ser excluídos do sistema, apenas arquivados. | 2. O sistema registra automaticamente data, hora e usuário responsável pelo cadastro. |
 | **Cenário Alternativo I - Consultar ocorrência existente** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Selecionar a opção 'Consultar ocorrência' | |
-| | 2. Exibir campos de busca e filtros (por tipo: acidente ou incidente, colaborador, data, setor, gravidade) |
-| 3. Informar os critérios de busca e confirmar | |
-| | 4. Buscar e exibir a lista de ocorrências correspondentes |
-| 5. Selecionar uma ocorrência da lista | |
-| | 6. Exibir detalhes completos, evidências anexadas e status do plano de ação |
-| **Cenário Alternativo II - Geração automática de dados para emissão de CAT** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Acessar registro de acidente com lesão confirmado | |
-| 2. Acionar opção "Gerar Dados para CAT" | |
-| | 3. Compilar automaticamente dados do colaborador, empresa, local, tipo de lesão e agente causador |
-| | 4. Gerar documento/arquivo padronizado para envio aos órgãos reguladores |
-| **Cenário Alternativo III - Registro de investigação de causa raiz** | |
+| | 2. Exibir campos de busca |
+| | 3. Exibir filtros (por tipo: acidente ou incidente, colaborador, data, setor, gravidade) |
+| 4. Informar os critérios de busca e confirmar | |
+| | 5. Buscar e exibir a lista de ocorrências correspondentes |
+| 6. Selecionar uma ocorrência da lista | |
+| | 7. Exibir detalhes completos |
+| | 8. Exibir evidências anexadas|
+| | 9. Exibir status do plano de ação|
+| **Cenário Alternativo II - Registro de investigação de causa raiz** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar aba de "Investigação Pericial" da ocorrência | |
 | 2. Selecionar metodologia de análise (Árvore de Causas ou 5 Porquês) | |
 | 3. Mapear os fatores determinantes (humanos, materiais, organizacionais e ambientais) | |
 | | 4. Validar e salvar o laudo pericial com a determinação da causa raiz |
-| **Cenário Alternativo IV - Triagem e conversão de relato preventivo em investigação formal** | |
+| **Cenário Alternativo III - Triagem e conversão de relato preventivo em investigação formal** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar lista de incidentes relatados pelos supervisores | |
-| 2. Selecionar relato preventivo e identificar alto potencial de gravidade | |
-| 3. Acionar opção "Converter em Investigação Formal" | |
-| | 4. Criar processo de investigação formal vinculando o histórico do relato original |
+| 2. Selecionar relato preventivo | |
+| 3. Identificar alto potencial de gravidade| |
+| 4. Acionar opção "Converter em Investigação Formal" | |
+| | 5. Criar processo de investigação formal |
+| | 6. Vincular o histórico do relato original |
 | **Cenário de Exceção I - Colaborador não cadastrado** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Informar identificação de colaborador inexistente | |
@@ -276,7 +285,8 @@ No MVP, este caso de uso cobre o registro, a consulta, a atualização e o arqui
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Tentar excluir permanentemente um registro de acidente ou incidente | |
 | | 2. Detectar tentativa de deleção física |
-| | 3. Bloquear a exclusão e emitir alerta de conformidade legal informando a obrigatoriedade de arquivamento auditado por 5 anos |
+| | 3. Bloquear a exclusão |
+| | 4. Emitir alerta de conformidade legal informando a obrigatoriedade de arquivamento auditado por 5 anos|
 
 ---
 
@@ -356,22 +366,12 @@ No MVP, este caso de uso cobre entradas, saídas, consulta de saldo e histórico
 | | 7. Validar dados e salvar informações vinculando o plano à ocorrência |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. Toda ocorrência grave exige ao menos uma ação preventiva cadastrada. | 2. O Gestor pode parametrizar quais ações emitirão alertas automáticos e a antecedência do aviso (ex.: 3 dias antes do vencimento do prazo). |
-| **Cenário Alternativo I - Atualizar status do plano de ação** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Acessar plano de ação existente | |
-| 2. Atualizar status de conclusão da medida corretiva | |
-| | 3. Validar e salvar novas alterações |
-| **Cenário Alternativo II - Filtrar planos de ação por status, criticidade e alertas** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Acessar painel de controle de planos de ação | |
-| 2. Selecionar filtros desejados (status: pendente/em atraso/concluído, criticidade ou apenas ações com alerta ativado) | |
-| | 3. Atualizar a listagem exibindo apenas os planos correspondentes |
-| **Cenário Alternativo III - Prorrogação de prazo de ação com justificativa** | |
+| **Cenário Alternativo I - Prorrogação de prazo de ação com justificativa** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Selecionar ação com prazo a expirar ou em atraso | |
 | 2. Informar nova data limite e preencher justificativa técnica formal | |
 | | 3. Validar justificativa, registrar histórico da prorrogação e reajustar gatilhos de alerta |
-| **Cenário Alternativo IV - Reatribuição de responsável pela ação** | |
+| **Cenário Alternativo II - Reatribuição de responsável pela ação** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Selecionar ação preventiva | |
 | 2. Alterar o colaborador/setor responsável pela execução | |
@@ -409,12 +409,7 @@ No MVP, este caso de uso cobre entradas, saídas, consulta de saldo e histórico
 | | 6. Validar os dados e salvar a matriz de vinculação da tarefa |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. No momento do empréstimo de EPIs, o sistema deve sugerir automaticamente os itens exigidos pela tarefa selecionada. | 2. Apenas o Gestor de Segurança pode alterar a matriz de EPIs por tarefa. |
-| **Cenário Alternativo I - Alterar EPIs vinculados** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Acessar vínculo existente de uma tarefa | |
-| 2. Adicionar ou desmarcar EPIs da relação | |
-| | 3. Salvar novas alterações |
-| **Cenário Alternativo II - Parametrização por nível de periculosidade da tarefa** | |
+| **Cenário Alternativo I - Parametrização por nível de periculosidade da tarefa** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Selecionar o nível de perigo atribuído à atividade (ex.: trabalho em altura ou com eletricidade) | |
 | | 2. Filtrar e sugerir automaticamente a classe mínima de proteção requerida pelas NRs |
@@ -453,29 +448,38 @@ No MVP, o Colaborador pode relatar incidentes. O Supervisor pode relatar acident
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar a funcionalidade "Relatar Acidente/Incidente" | |
 | | 2. Exibir formulário de relato rápido de acidentes e incidentes |
-| 3. Selecionar o tipo de ocorrência (acidente ou incidente) e informar setor, colaboradores envolvidos e descrição dos fatos | |
-| 4. Acionar opcionalmente o caso de uso estendido **UC04 - Anexar Mídias e Testemunhas** | |
-| 5. Confirmar o envio do relato de acidente/incidente | |
-| | 6. Validar dados, registrar o acidente/incidente no sistema e gerar protocolo |
-| | 7. Enviar notificação automática da ocorrência ao Gestor de Segurança |
+| 3. Selecionar o tipo de ocorrência (acidente ou incidente) | |
+| 4. Informar setor| |
+| 5. Informar colaboradores envolvidos | |
+| 6. Informar descrição dos fatos | |
+| 7. Acionar opcionalmente o caso de uso estendido **UC04 - Anexar Mídias e Testemunhas** | |
+| 8. Confirmar o envio do relato de acidente/incidente | |
+| | 9. Validar dados |
+| | 10. Registrar o acidente/incidente |
+| | 11. Gerar protocolo|
+| | 12. Enviar notificação automática da ocorrência ao Gestor de Segurança |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. O formulário deve ser objetivo para preenchimento ágil. | 2. O Colaborador pode registrar incidentes; o Supervisor pode registrar acidentes e incidentes. |
 | **Cenário Alternativo I - Anexar foto ou evidência ao relato** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Selecionar foto ou evidência do acidente/incidente antes de enviar | |
-| | 2. Validar formato da mídia e vincular ao relato do acidente/incidente |
+| | 2. Validar formato da mídia |
+| | 3. Vincular ao relato do acidente/incidente|
 | **Cenário Alternativo II - Consultar acidentes/incidentes relatados** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar listagem de acidentes e incidentes enviados pelo supervisor | |
-| | 2. Exibir status de triagem e acompanhamento das ocorrências pelo Gestor de Segurança |
+| | 2. Exibir status de triagem |
+| | 3. Exibir acompanhamento das ocorrências pelo Gestor de Segurança |
 | **Cenário de Exceção I - Envio de relato em modo offline** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Confirmar envio do relato de acidente/incidente sem conexão à internet | |
-| | 2. Armazenar o relato localmente na memória do PWA e sincronizar automaticamente ao restabelecer sinal |
+| | 2. Armazenar o relato localmente na memória do PWA |
+| | 3. Sincronizar automaticamente ao restabelecer sinal |
 | **Cenário de Exceção II - Relato com campos obrigatórios não preenchidos** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Tentar submeter relato de acidente/incidente sem informar setor ou descrição | |
-| | 2. Detectar campos obrigatórios em branco, bloquear envio e indicar campos pendentes |
+| | 2. Detectar campos obrigatórios em branco |
+| | 3. Bloquear envio e indicar campos pendentes|
 
 ---
 
@@ -496,37 +500,38 @@ Este caso de uso está fora do MVP porque implementa o RF21, classificado como `
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar o módulo de histórico dos EPIs | |
 | 2. Solicitar ao sistema a "Análise de Projeção de Desgaste" | |
-| | 3. Cruzar frequência de uso, durabilidade nominal e condições ambientais do setor |
-| | 4. Verificar validade do Certificado de Aprovação (CA) no cadastro do EPI |
-| | 5. Gerar projeção de descarte para os próximos períodos |
-| 6. Analisar a lista de projeções geradas | |
-| | 7. Emitir lista de reposição prioritária e gerar requisição automática de compra quando atingido o estoque mínimo |
+| | 3. Consultar frequência de uso |
+| | 4. Consultar durabilidade nominal do EPI |
+| | 5. Consultar condições ambientais do setor |
+| | 6. Cruzar os dados coletados das consultas |
+| | 7. Aplicar multiplicadores da matriz de risco |
+| | 8. Verificar validade do Certificado de Aprovação (CA) no cadastro do EPI |
+| | 9. Gerar projeção de descarte para os próximos períodos |
+| 10. Analisar a lista de projeções geradas | |
+| | 11. Emitir lista de reposição prioritária |
+| | 12. Consultar estoque atual e mínimo |
+| | 13. Gerar requisição automática de compra |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. A data de expiração do CA é prioritária: nenhum EPI pode ter uso prorrogado se o CA estiver vencido. | 2. O cálculo de projeção aplica multiplicadores baseados na matriz de risco do setor. |
-| **Cenário Alternativo I - Prorrogação por inspeção física** | |
+| **Cenário Alternativo I - Prorrogação por inspeção técnica** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Realizar inspeção técnica presencial e atestar bom estado do EPI | |
-| 2. Inserir laudo técnico no sistema | |
+| 1. Realizar inspeção técnica presencial e atestar bom estado | |
+| 2. Inserir laudo técnico | |
 | | 3. Estender a data projetada de descarte respeitando o limite legal do CA |
 | **Cenário Alternativo II - Ajuste manual do lote de compra** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Acessar a requisição automática de compra gerada pelo sistema | |
-| 2. Ajustar as quantidades para compras em lote ou adicionar itens complementares | |
-| | 3. Atualizar a requisição com os novos quantitativos definidos pelo Gestor |
+| 1. Acessar requisição automática de compra | |
+| 2. Ajustar quantitativos ou adicionar itens complementares | |
+| | 3. Atualizar requisição com os novos quantitativos |
 | **Cenário Alternativo III - Exportação de relatório preditivo e custos** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Solicitar exportação da análise de substituições para o próximo trimestre | |
-| | 2. Gerar relatório consolidado com projeções de descarte, demandas de compra e estimativa orçamentária em PDF/CSV |
+| 1. Solicitar exportação da análise para o próximo trimestre | |
+| | 2. Gerar relatório consolidado em PDF/CSV |
 | **Cenário de Exceção I - Falha no processamento do cálculo de projeção** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Solicitar processamento da análise de projeção de desgaste | |
-| | 2. Detectar falha ou inconsistência no cálculo das variáveis estatísticas |
-| | 3. Exibir mensagem de erro no processamento e permitir nova tentativa |
-| **Cenário de Exceção II - Bloqueio de prorrogação além da validade do CA** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Tentar estender a vida útil do EPI para uma data posterior ao vencimento do CA | |
-| | 2. Detectar violação do limite legal do Certificado de Aprovação |
-| | 3. Bloquear a prorrogação e alertar que o vencimento do CA é improrrogável |
+| | 1. Detectar falha ou inconsistência no cálculo da projeção |
+| | 2. Exibir mensagem de erro e permitir nova tentativa |
+| 3. Solicitar nova tentativa | |
 
 ---
 
