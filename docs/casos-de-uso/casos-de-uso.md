@@ -478,19 +478,23 @@ No MVP, o Colaborador pode relatar incidentes. O Supervisor pode relatar acident
 | **Cenário Alternativo I - Anexar foto ou evidência ao relato** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Selecionar foto ou evidência do acidente/incidente antes de enviar | |
-| | 2. Validar formato da mídia e vincular ao relato do acidente/incidente |
+| | 2. Validar formato da mídia |
+| | 3. Vincular ao relato do acidente/incidente|
 | **Cenário Alternativo II - Consultar acidentes/incidentes relatados** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar listagem de acidentes e incidentes enviados pelo supervisor | |
-| | 2. Exibir status de triagem e acompanhamento das ocorrências pelo Gestor de Segurança |
+| | 2. Exibir status de triagem |
+| | 3. Exibir acompanhamento das ocorrências pelo Gestor de Segurança |
 | **Cenário de Exceção I - Envio de relato em modo offline** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Confirmar envio do relato de acidente/incidente sem conexão à internet | |
-| | 2. Armazenar o relato localmente na memória do PWA e sincronizar automaticamente ao restabelecer sinal |
+| | 2. Armazenar o relato localmente na memória do PWA |
+| | 3. Sincronizar automaticamente ao restabelecer sinal |
 | **Cenário de Exceção II - Relato com campos obrigatórios não preenchidos** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Tentar submeter relato de acidente/incidente sem informar setor ou descrição | |
-| | 2. Detectar campos obrigatórios em branco, bloquear envio e indicar campos pendentes |
+| | 2. Detectar campos obrigatórios em branco |
+| | 3. Bloquear envio e indicar campos pendentes|
 
 ---
 
