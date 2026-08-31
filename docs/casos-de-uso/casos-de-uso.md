@@ -247,36 +247,36 @@ No MVP, este caso de uso cobre o registro, a consulta, a atualização e o arqui
 | 3. Escolher cadastrar ocorrência | |
 | | 4. Solicitar dados da ocorrência (tipo: acidente ou incidente, data, local, colaborador, tipo de lesão ou potencial de dano, EPIs) |
 | 5. Preencher as informações solicitadas | |
-| | 6. Validar os dados e registrar a ocorrência no sistema |
-| | 7. Oferecer execução do caso de uso estendido **UC04 - Anexar Mídias e Testemunhas** |
+| | 6. Validar os dados |
+| | 7. Registrar a ocorrência no sistema|
+| | 8. Oferecer execução do caso de uso estendido **UC04 - Anexar Mídias e Testemunhas** |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. Registros de acidentes e incidentes não podem ser excluídos do sistema, apenas arquivados. | 2. O sistema registra automaticamente data, hora e usuário responsável pelo cadastro. |
 | **Cenário Alternativo I - Consultar ocorrência existente** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Selecionar a opção 'Consultar ocorrência' | |
-| | 2. Exibir campos de busca e filtros (por tipo: acidente ou incidente, colaborador, data, setor, gravidade) |
-| 3. Informar os critérios de busca e confirmar | |
-| | 4. Buscar e exibir a lista de ocorrências correspondentes |
-| 5. Selecionar uma ocorrência da lista | |
-| | 6. Exibir detalhes completos, evidências anexadas e status do plano de ação |
-| **Cenário Alternativo II - Geração automática de dados para emissão de CAT** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Acessar registro de acidente com lesão confirmado | |
-| 2. Acionar opção "Gerar Dados para CAT" | |
-| | 3. Compilar automaticamente dados do colaborador, empresa, local, tipo de lesão e agente causador |
-| | 4. Gerar documento/arquivo padronizado para envio aos órgãos reguladores |
-| **Cenário Alternativo III - Registro de investigação de causa raiz** | |
+| | 2. Exibir campos de busca |
+| | 3. Exibir filtros (por tipo: acidente ou incidente, colaborador, data, setor, gravidade) |
+| 4. Informar os critérios de busca e confirmar | |
+| | 5. Buscar e exibir a lista de ocorrências correspondentes |
+| 6. Selecionar uma ocorrência da lista | |
+| | 7. Exibir detalhes completos |
+| | 8. Exibir evidências anexadas|
+| | 9. Exibir status do plano de ação|
+| **Cenário Alternativo II - Registro de investigação de causa raiz** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar aba de "Investigação Pericial" da ocorrência | |
 | 2. Selecionar metodologia de análise (Árvore de Causas ou 5 Porquês) | |
 | 3. Mapear os fatores determinantes (humanos, materiais, organizacionais e ambientais) | |
 | | 4. Validar e salvar o laudo pericial com a determinação da causa raiz |
-| **Cenário Alternativo IV - Triagem e conversão de relato preventivo em investigação formal** | |
+| **Cenário Alternativo III - Triagem e conversão de relato preventivo em investigação formal** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar lista de incidentes relatados pelos supervisores | |
-| 2. Selecionar relato preventivo e identificar alto potencial de gravidade | |
-| 3. Acionar opção "Converter em Investigação Formal" | |
-| | 4. Criar processo de investigação formal vinculando o histórico do relato original |
+| 2. Selecionar relato preventivo | |
+| 3. Identificar alto potencial de gravidade| |
+| 4. Acionar opção "Converter em Investigação Formal" | |
+| | 5. Criar processo de investigação formal |
+| | 6. Vincular o histórico do relato original |
 | **Cenário de Exceção I - Colaborador não cadastrado** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Informar identificação de colaborador inexistente | |
@@ -285,7 +285,8 @@ No MVP, este caso de uso cobre o registro, a consulta, a atualização e o arqui
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Tentar excluir permanentemente um registro de acidente ou incidente | |
 | | 2. Detectar tentativa de deleção física |
-| | 3. Bloquear a exclusão e emitir alerta de conformidade legal informando a obrigatoriedade de arquivamento auditado por 5 anos |
+| | 3. Bloquear a exclusão |
+| | 4. Emitir alerta de conformidade legal informando a obrigatoriedade de arquivamento auditado por 5 anos|
 
 ---
 
