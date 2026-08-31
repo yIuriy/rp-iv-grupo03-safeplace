@@ -10,7 +10,6 @@ Este documento define o escopo da primeira entrega do SafePlace e relaciona requ
 - [Requisitos não funcionais](../requisitos/requisitos-nao-funcionais.md)
 - [Priorização MoSCoW](../requisitos/priorizacao-moscow.md)
 - [Casos de uso](../casos-de-uso/casos-de-uso.md)
-- [Diagrama de classes conceitual](../diagramas/classes/diagrama-classes-conceitual.md)
 - [Especificação arquitetural](../arquitetura/especificacao-arquitetural.md)
 
 ## 3. Termos usados na entrega
