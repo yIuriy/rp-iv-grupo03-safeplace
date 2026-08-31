@@ -28,11 +28,20 @@ O MVP contém os requisitos classificados como `Must have`. Itens `Should have` 
 
 A prioridade indica quando o requisito será entregue, não se ele é válido. Por isso, requisitos fora do MVP continuam documentados.
 
-### 4.1. Justificativa da priorização
+### 4.1. Critérios da Técnica MoSCoW
+
+| Classificação | Significado em inglês | Critério de uso |
+| --- | --- | --- |
+| Deve ter | Must have | Requisito indispensável para o sistema cumprir seu objetivo principal. |
+| Deveria ter | Should have | Requisito importante, mas que pode ser ajustado ou entregue após os itens indispensáveis. |
+| Poderia ter | Could have | Requisito desejável, com menor impacto caso não seja implementado inicialmente. |
+| Não terá agora | Won't have | Requisito fora do escopo da versão atual, mas que pode ser retomado futuramente. |
+
+### 4.2. Justificativa da priorização
 
 A priorização considera três fatores: a contribuição direta do requisito para o objetivo do SafePlace, as dependências entre funcionalidades e o risco de entregar um MVP sem os controles básicos de segurança e rastreabilidade. As justificativas abaixo preservam a fundamentação da priorização registrada pelo grupo e explicam sua relação com o escopo desta entrega.
 
-#### 4.1.1. Requisitos funcionais
+#### 4.2.1. Requisitos funcionais
 
 | ID | Prioridade | Justificativa |
 | --- | --- | --- |
@@ -60,7 +69,7 @@ A priorização considera três fatores: a contribuição direta do requisito pa
 | RF22 | Could have | É útil para segurança, mas não é essencial para o fluxo principal de acidentes e EPIs. |
 | RF23 | Must have | É necessário para controlar usuários e responsabilidades nos fluxos principais. |
 
-#### 4.1.2. Requisitos não funcionais
+#### 4.2.2. Requisitos não funcionais
 
 | ID | Prioridade | Justificativa |
 | --- | --- | --- |
