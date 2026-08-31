@@ -2,11 +2,19 @@
 
 ## 1. Introdução
 
-Este documento apresenta a consolidação e especificação detalhada dos Casos de Uso do sistema **SafePlace**, voltado à gestão de Saúde e Segurança do Trabalho (SST). Nas seções seguintes, são descritos os fluxos de interação dos atores **Gestor de Segurança** e **Supervisor** com o sistema, contemplando o controle de manutenção e estoque de EPIs, rastreabilidade de empréstimos, gestão de certificações e treinamentos, mapeamento de áreas de risco, classificação de periculosidade, registro e investigação de acidentes e incidentes, definição de planos de ação e planejamento de substituição inteligente de equipamentos.
+Este documento especifica os casos de uso do SafePlace. Os fluxos incluem funcionalidades do MVP e itens planejados para versões posteriores. A classificação de cada requisito pode ser consultada em [Priorização de Requisitos](../requisitos/priorizacao-moscow.md).
+
+## 2. Recorte do MVP
+
+O MVP utiliza os fluxos básicos de UC01, UC03, UC05, UC06, UC09 e UC12. O UC13 é proposto para cobrir o RF23, que não possuía caso de uso correspondente.
+
+Os demais casos de uso permanecem documentados como backlog. Dentro dos casos de uso selecionados, cenários ligados a investigação, CAT, mídias, visitantes, treinamentos, descarte avançado e substituição inteligente não fazem parte do MVP.
 
 ---
 
 ## UC01 – Controlar Manutenção dos EPI's
+
+No MVP, o fluxo cobre consulta e registro de manutenção. Validação externa de CA e descarte definitivo permanecem no backlog.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
@@ -16,14 +24,17 @@ Este documento apresenta a consolidação e especificação detalhada dos Casos 
 | **Atores Secundários** | Nenhum |
 | **Resumo** | Descreve as etapas percorridas por um gestor de segurança para controlar a manutenção dos Equipamentos de Proteção Individual (EPIs), garantindo que estejam em condições adequadas de uso. |
 | **Pré-condições** | O Gestor de Segurança deve estar logado no sistema;<br>Os EPIs devem estar previamente cadastrados. |
-| **Pós-condições** | Situação dos EPIs verificada e histórico atualizado. |
+| **Pós-condições** | Situação do EPI e histórico de manutenção atualizados. |
 | **Cenário Principal** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar o módulo de EPIs | |
 | | 2. Exibir a lista de EPIs cadastrados com seus status |
 | 3. Consultar detalhes de um EPI específico | |
 | | 4. Exibir histórico e datas de manutenção |
-| 5. Analisar a situação | |
+| 5. Selecionar a opção de registrar manutenção | |
+| | 6. Solicitar data, descrição e resultado da manutenção |
+| 7. Preencher os dados e confirmar | |
+| | 8. Validar os dados, registrar a manutenção e atualizar o status do EPI |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. Deve haver clareza visual nos indicadores de status dos equipamentos. | 2. Apenas EPIs ativos devem ser exibidos nas listagens operacionais. |
 | **Cenário Alternativo I - Filtrar EPIs por status** | |
@@ -113,10 +124,13 @@ Este documento apresenta a consolidação e especificação detalhada dos Casos 
 | | 2. Exibir lista de setores físicos cadastrados |
 | 3. Selecionar a opção de cadastrar nova área de risco | |
 | | 4. Apresentar formulário com campos de identificação, agentes de risco e limites |
-| 5. Preencher dados do setor e perigos mapeados | |
-| 6. Confirmar cadastro | |
-| | 7. Validar dados informados e salvar novo setor de risco |
-| | 8. Atualizar o mapa global de riscos da organização e disponibilizar para consulta do Supervisor |
+| 5. Preencher dados do setor | |
+| 6. Preencher perigos mapeados | |
+| 7. Confirmar cadastro | |
+| | 8. Validar dados informados |
+| | 9. Salvar novo setor de risco|
+| | 10. Atualizar o mapa global de riscos da organização |
+| | 11. Disponibilizar para consulta do Supervisor |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. Todo setor cadastrado como área de risco, independentemente do grau de perigo, exige o vínculo obrigatório dos EPIs necessários para acesso. | 2. Toda alteração de limite físico de área de risco gera registro auditado. |
 | **Cenário Alternativo I - Filtrar áreas por grau de perigo** | |
@@ -126,23 +140,30 @@ Este documento apresenta a consolidação e especificação detalhada dos Casos 
 | | 3. Atualizar a listagem exibindo apenas os setores do nível selecionado |
 | **Cenário Alternativo II - Atualização de agentes de risco e redefinição de limites** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Acessar setor de risco existente | |
+| 1. Selecionar setor de risco existente | |
 | 2. Alterar os fatores de risco mapeados ou limites físicos | |
-| | 3. Validar alterações, registrar nova versão no histórico e atualizar mapa de risco |
+| | 3. Validar alterações |
+| | 4. Registrar nova versão no histórico |
+| | 5. Atualizar mapa de risco|
 | **Cenário de Exceção I - Setor com código duplicado** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Confirmar cadastro com código já existente | |
-| | 2. Identificar duplicidade e exibir alerta de código já em uso |
-| 3. Corrigir o código e reenviar formulário | |
+| | 2. Identificar duplicidade |
+| | 3. Exibir alerta de código já em uso|
+| 4. Corrigir o código | |
+| | 5. Reenviar formulário|
 | **Cenário de Exceção II - Bloqueio de cadastro sem vínculo de EPIs obrigatórios** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Tentar salvar área de risco sem selecionar nenhum EPI obrigatório de proteção | |
-| | 2. Detectar ausência de EPIs vinculados (violação da Regra 1) |
-| | 3. Bloquear o salvamento e exigir a inclusão dos EPIs necessários para acesso ao setor |
+| | 2. Detectar ausência de EPIs vinculados |
+| | 3. Bloquear o salvamento |
+| | 4. Exigir a inclusão dos EPIs necessários para acesso ao setor|
 
 ---
 
 ## UC04 – Anexar Mídias e Testemunhas
+
+Este caso de uso está fora do MVP. Ele permanece documentado como extensão futura de UC05 e UC09.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
@@ -198,6 +219,8 @@ Este documento apresenta a consolidação e especificação detalhada dos Casos 
 ---
 
 ## UC05 – Gerenciar Acidentes e Incidentes
+
+No MVP, este caso de uso cobre o registro, a consulta, a atualização e o arquivamento de ocorrências. Investigação de causa raiz, plano de ação, CAT e anexos permanecem fora da primeira entrega.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
@@ -258,6 +281,8 @@ Este documento apresenta a consolidação e especificação detalhada dos Casos 
 ---
 
 ## UC06 – Controlar Estoque de EPIs
+
+No MVP, este caso de uso cobre entradas, saídas, consulta de saldo e histórico de movimentações. Descarte, gestão de fornecedores e validações externas do Certificado de Aprovação permanecem no backlog.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
@@ -413,14 +438,16 @@ Este documento apresenta a consolidação e especificação detalhada dos Casos 
 
 ## UC09 – Relatar Acidente/Incidente
 
+No MVP, o Colaborador pode relatar incidentes. O Supervisor pode relatar acidentes e incidentes. O Gestor de Segurança consulta e conduz a triagem dos registros.
+
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
 | **Identificador** | **UC09** |
 | **Nome** | Relatar Acidente/Incidente |
-| **Ator Principal** | Supervisor |
+| **Ator Principal** | Colaborador ou Supervisor |
 | **Atores Secundários** | Gestor de Segurança |
 | **Resumo** | Permite o registro rápido de ocorrências de acidentes e incidentes no ambiente de trabalho pelo supervisor, viabilizando a pronta comunicação ao Gestor de Segurança para início de ações preventivas e corretivas. |
-| **Pré-condições** | O Supervisor deve estar logado no sistema. |
+| **Pré-condições** | O Colaborador ou Supervisor deve estar logado no sistema. |
 | **Pós-condições** | Acidente ou incidente registrado no sistema com notificação enviada ao Gestor de Segurança. |
 | **Cenário Principal** | |
 | **Ações do Ator** | **Ações do Sistema** |
@@ -432,7 +459,7 @@ Este documento apresenta a consolidação e especificação detalhada dos Casos 
 | | 6. Validar dados, registrar o acidente/incidente no sistema e gerar protocolo |
 | | 7. Enviar notificação automática da ocorrência ao Gestor de Segurança |
 | **Regras de Negócio, Restrições e Validações** | |
-| 1. O formulário de relato de acidente/incidente deve ser objetivo para preenchimento ágil em chão de fábrica. | 2. Todo relato de acidente/incidente gera notificação automática para triagem do Gestor de Segurança. |
+| 1. O formulário deve ser objetivo para preenchimento ágil. | 2. O Colaborador pode registrar incidentes; o Supervisor pode registrar acidentes e incidentes. |
 | **Cenário Alternativo I - Anexar foto ou evidência ao relato** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Selecionar foto ou evidência do acidente/incidente antes de enviar | |
@@ -453,6 +480,8 @@ Este documento apresenta a consolidação e especificação detalhada dos Casos 
 ---
 
 ## UC10 – Planejar Substituição Inteligente de EPI
+
+Este caso de uso está fora do MVP porque implementa o RF21, classificado como `Won't have` na versão atual.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
@@ -535,21 +564,23 @@ Este documento apresenta a consolidação e especificação detalhada dos Casos 
 
 ## UC12 – Controlar Empréstimo de EPIs
 
+No MVP, este caso de uso cobre empréstimos e devoluções para colaboradores. Empréstimos para visitantes, bloqueios por treinamento e sugestões automáticas de equipamentos permanecem fora da primeira entrega.
+
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
 | **Identificador** | **UC12** |
 | **Nome** | Controlar Empréstimo de EPIs |
 | **Ator Principal** | Supervisor |
 | **Atores Secundários** | Gestor de Segurança |
-| **Resumo** | Descreve o registro de entrega, cautela, posse e devolução de Equipamentos de Proteção Individual a colaboradores e visitantes, garantindo rastreabilidade. |
-| **Pré-condições** | O Supervisor ou Gestor deve estar logado;<br>Colaborador/Visitante e EPIs cadastrados. |
+| **Resumo** | Descreve o registro de entrega, posse e devolução de EPIs a colaboradores. O atendimento a visitantes fica reservado para versão posterior. |
+| **Pré-condições** | O Supervisor ou Gestor deve estar logado;<br>O colaborador e os EPIs devem estar cadastrados. |
 | **Pós-condições** | Empréstimo ou devolução registrado e estoque movimentado. |
 | **Cenário Principal** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar a tela de "Empréstimo de EPIs" | |
 | 2. Selecionar a operação "Novo Empréstimo" | |
-| 3. Informar matrícula do colaborador ou selecionar visitante | |
-| | 4. Exibir EPIs obrigatórios para a função e validar treinamentos do colaborador |
+| 3. Informar a matrícula do colaborador | |
+| | 4. Exibir os EPIs disponíveis para empréstimo |
 | 5. Ler o código/número do EPI disponível e confirmar entrega | |
 | | 6. Validar o status do EPI, registrar o termo de cautela e debitar do estoque |
 | **Regras de Negócio, Restrições e Validações** | |
@@ -580,3 +611,4 @@ Este documento apresenta a consolidação e especificação detalhada dos Casos 
 | 1. Tentar emprestar segundo EPI do mesmo tipo a um colaborador que já possui um ativo | |
 | | 2. Detectar duplicidade de cautela sem registro de devolução anterior |
 | | 3. Exibir alerta de duplicidade e exigir confirmação/justificativa de substituição |
+
