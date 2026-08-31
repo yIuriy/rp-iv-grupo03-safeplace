@@ -366,22 +366,12 @@ No MVP, este caso de uso cobre entradas, saídas, consulta de saldo e histórico
 | | 7. Validar dados e salvar informações vinculando o plano à ocorrência |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. Toda ocorrência grave exige ao menos uma ação preventiva cadastrada. | 2. O Gestor pode parametrizar quais ações emitirão alertas automáticos e a antecedência do aviso (ex.: 3 dias antes do vencimento do prazo). |
-| **Cenário Alternativo I - Atualizar status do plano de ação** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Acessar plano de ação existente | |
-| 2. Atualizar status de conclusão da medida corretiva | |
-| | 3. Validar e salvar novas alterações |
-| **Cenário Alternativo II - Filtrar planos de ação por status, criticidade e alertas** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Acessar painel de controle de planos de ação | |
-| 2. Selecionar filtros desejados (status: pendente/em atraso/concluído, criticidade ou apenas ações com alerta ativado) | |
-| | 3. Atualizar a listagem exibindo apenas os planos correspondentes |
-| **Cenário Alternativo III - Prorrogação de prazo de ação com justificativa** | |
+| **Cenário Alternativo I - Prorrogação de prazo de ação com justificativa** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Selecionar ação com prazo a expirar ou em atraso | |
 | 2. Informar nova data limite e preencher justificativa técnica formal | |
 | | 3. Validar justificativa, registrar histórico da prorrogação e reajustar gatilhos de alerta |
-| **Cenário Alternativo IV - Reatribuição de responsável pela ação** | |
+| **Cenário Alternativo II - Reatribuição de responsável pela ação** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Selecionar ação preventiva | |
 | 2. Alterar o colaborador/setor responsável pela execução | |
@@ -419,12 +409,7 @@ No MVP, este caso de uso cobre entradas, saídas, consulta de saldo e histórico
 | | 6. Validar os dados e salvar a matriz de vinculação da tarefa |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. No momento do empréstimo de EPIs, o sistema deve sugerir automaticamente os itens exigidos pela tarefa selecionada. | 2. Apenas o Gestor de Segurança pode alterar a matriz de EPIs por tarefa. |
-| **Cenário Alternativo I - Alterar EPIs vinculados** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Acessar vínculo existente de uma tarefa | |
-| 2. Adicionar ou desmarcar EPIs da relação | |
-| | 3. Salvar novas alterações |
-| **Cenário Alternativo II - Parametrização por nível de periculosidade da tarefa** | |
+| **Cenário Alternativo I - Parametrização por nível de periculosidade da tarefa** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Selecionar o nível de perigo atribuído à atividade (ex.: trabalho em altura ou com eletricidade) | |
 | | 2. Filtrar e sugerir automaticamente a classe mínima de proteção requerida pelas NRs |
@@ -515,37 +500,38 @@ Este caso de uso está fora do MVP porque implementa o RF21, classificado como `
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar o módulo de histórico dos EPIs | |
 | 2. Solicitar ao sistema a "Análise de Projeção de Desgaste" | |
-| | 3. Cruzar frequência de uso, durabilidade nominal e condições ambientais do setor |
-| | 4. Verificar validade do Certificado de Aprovação (CA) no cadastro do EPI |
-| | 5. Gerar projeção de descarte para os próximos períodos |
-| 6. Analisar a lista de projeções geradas | |
-| | 7. Emitir lista de reposição prioritária e gerar requisição automática de compra quando atingido o estoque mínimo |
+| | 3. Consultar frequência de uso |
+| | 4. Consultar durabilidade nominal do EPI |
+| | 5. Consultar condições ambientais do setor |
+| | 6. Cruzar os dados coletados das consultas |
+| | 7. Aplicar multiplicadores da matriz de risco |
+| | 8. Verificar validade do Certificado de Aprovação (CA) no cadastro do EPI |
+| | 9. Gerar projeção de descarte para os próximos períodos |
+| 10. Analisar a lista de projeções geradas | |
+| | 11. Emitir lista de reposição prioritária |
+| | 12. Consultar estoque atual e mínimo |
+| | 13. Gerar requisição automática de compra |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. A data de expiração do CA é prioritária: nenhum EPI pode ter uso prorrogado se o CA estiver vencido. | 2. O cálculo de projeção aplica multiplicadores baseados na matriz de risco do setor. |
-| **Cenário Alternativo I - Prorrogação por inspeção física** | |
+| **Cenário Alternativo I - Prorrogação por inspeção técnica** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Realizar inspeção técnica presencial e atestar bom estado do EPI | |
-| 2. Inserir laudo técnico no sistema | |
+| 1. Realizar inspeção técnica presencial e atestar bom estado | |
+| 2. Inserir laudo técnico | |
 | | 3. Estender a data projetada de descarte respeitando o limite legal do CA |
 | **Cenário Alternativo II - Ajuste manual do lote de compra** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Acessar a requisição automática de compra gerada pelo sistema | |
-| 2. Ajustar as quantidades para compras em lote ou adicionar itens complementares | |
-| | 3. Atualizar a requisição com os novos quantitativos definidos pelo Gestor |
+| 1. Acessar requisição automática de compra | |
+| 2. Ajustar quantitativos ou adicionar itens complementares | |
+| | 3. Atualizar requisição com os novos quantitativos |
 | **Cenário Alternativo III - Exportação de relatório preditivo e custos** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Solicitar exportação da análise de substituições para o próximo trimestre | |
-| | 2. Gerar relatório consolidado com projeções de descarte, demandas de compra e estimativa orçamentária em PDF/CSV |
+| 1. Solicitar exportação da análise para o próximo trimestre | |
+| | 2. Gerar relatório consolidado em PDF/CSV |
 | **Cenário de Exceção I - Falha no processamento do cálculo de projeção** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Solicitar processamento da análise de projeção de desgaste | |
-| | 2. Detectar falha ou inconsistência no cálculo das variáveis estatísticas |
-| | 3. Exibir mensagem de erro no processamento e permitir nova tentativa |
-| **Cenário de Exceção II - Bloqueio de prorrogação além da validade do CA** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Tentar estender a vida útil do EPI para uma data posterior ao vencimento do CA | |
-| | 2. Detectar violação do limite legal do Certificado de Aprovação |
-| | 3. Bloquear a prorrogação e alertar que o vencimento do CA é improrrogável |
+| | 1. Detectar falha ou inconsistência no cálculo da projeção |
+| | 2. Exibir mensagem de erro e permitir nova tentativa |
+| 3. Solicitar nova tentativa | |
 
 ---
 
