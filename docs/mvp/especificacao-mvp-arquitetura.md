@@ -29,33 +29,87 @@ O MVP contém os requisitos classificados como `Must have`. Itens `Should have` 
 
 A prioridade indica quando o requisito será entregue, não se ele é válido. Por isso, requisitos fora do MVP continuam documentados.
 
+### 4.1. Justificativa da priorização
+
+A priorização considera três fatores: a contribuição direta do requisito para o objetivo do SafePlace, as dependências entre funcionalidades e o risco de entregar um MVP sem os controles básicos de segurança e rastreabilidade. As justificativas abaixo preservam a fundamentação da priorização registrada pelo grupo e explicam sua relação com o escopo desta entrega.
+
+#### 4.1.1. Requisitos funcionais
+
+| ID | Prioridade | Justificativa |
+| --- | --- | --- |
+| RF01 | Should have | Complementa o registro de acidentes, mas pode ser tratado como uma classificação após o cadastro principal. |
+| RF02 | Should have | Complementa a análise do acidente, mas depende do registro principal e do controle de EPIs. |
+| RF03 | Must have | Sustenta o controle básico dos equipamentos de proteção e é parte central do sistema. |
+| RF04 | Must have | Permite acompanhar o estado de uso e conservação dos EPIs. |
+| RF05 | Must have | Permite relacionar acidentes, incidentes e inspeções ao contexto de risco do ambiente. |
+| RF06 | Should have | Ajuda na análise preventiva, mas pode ser implementado após o cadastro das áreas e ocorrências. |
+| RF07 | Should have | É importante para a resposta aos acidentes, mas pode evoluir após a estrutura inicial de registros. |
+| RF08 | Could have | Exige regras automáticas e análise de histórico, podendo ser entregue em etapa posterior. |
+| RF09 | Should have | Fortalece o acompanhamento preventivo, mas pode ser entregue após o mapeamento das áreas. |
+| RF10 | Could have | É relevante para prevenção, mas amplia o escopo para a gestão de capacitações. |
+| RF11 | Must have | Permite saber quais EPIs estão disponíveis, em uso ou pendentes de devolução. |
+| RF12 | Should have | Melhora a consistência do uso de EPIs, mas depende do cadastro de tarefas e equipamentos. |
+| RF13 | Must have | Representa uma funcionalidade central para o acompanhamento de acidentes de trabalho. |
+| RF14 | Should have | Complementa o ciclo de vida dos EPIs, mas pode ser entregue após estoque, manutenção e rastreabilidade. |
+| RF15 | Could have | Aprofunda a análise do acidente, mas pode ser simplificado ou adiado na primeira versão. |
+| RF16 | Must have | Permite acompanhar situações de risco antes que gerem acidentes, fortalecendo a prevenção. |
+| RF17 | Could have | Depende dos dados já cadastrados e pode ser implementado após os fluxos principais. |
+| RF18 | Could have | Depende da consolidação dos dados e pode ser implementado depois do fluxo principal. |
+| RF19 | Could have | É importante, mas exige maior cuidado com regras legais e dados padronizados. |
+| RF20 | Should have | Apoia o controle dos EPIs, mas pode ser entregue após o cadastro e a rastreabilidade dos equipamentos. |
+| RF21 | Won't have | Exige cálculo preditivo, regras de uso e alertas de compra, ficando fora da versão inicial. |
+| RF22 | Could have | É útil para segurança, mas não é essencial para o fluxo principal de acidentes e EPIs. |
+| RF23 | Must have | É necessário para controlar usuários e responsabilidades nos fluxos principais. |
+
+#### 4.1.2. Requisitos não funcionais
+
+| ID | Prioridade | Justificativa |
+| --- | --- | --- |
+| RNF01 | Must have | Os fluxos principais precisam responder em tempo adequado para serem úteis aos usuários. |
+| RNF02 | Should have | A capacidade de usuários é importante, mas o MVP acadêmico pode começar com uma carga menor e controlada. |
+| RNF03 | Must have | O controle por perfil protege as funções e os dados conforme a responsabilidade de cada usuário. |
+| RNF04 | Must have | O MVP registra acidentes e incidentes, que podem conter dados sensíveis e precisam de proteção desde a primeira versão. |
+| RNF05 | Must have | As alterações em ocorrências, EPIs e usuários precisam ser rastreáveis para preservar a confiabilidade dos registros. |
+| RNF06 | Should have | A disponibilidade é importante, mas não é o foco principal da demonstração acadêmica. |
+| RNF07 | Could have | Backup e recuperação são necessários para um ambiente real, mas podem ser tratados após a validação do núcleo do MVP. |
+| RNF08 | Could have | O modo offline depende de sincronização e armazenamento local, não sendo essencial para os fluxos iniciais. |
+| RNF09 | Must have | As regras de segurança do trabalho devem orientar o domínio e os fluxos principais do sistema. |
+| RNF10 | Should have | Torna-se prioritário quando o sistema passar a gerar documentos oficiais e legais. |
+| RNF11 | Should have | É importante para a qualidade da interface, mas pode ser refinado após a implementação dos fluxos principais. |
+| RNF12 | Must have | As tarefas essenciais devem ser compreendidas por usuários com conhecimento básico de informática. |
+| RNF13 | Could have | O suporte a outros idiomas amplia o alcance, mas não é necessário para validar o objetivo do MVP. |
+| RNF14 | Must have | O desacoplamento permite organizar o projeto e evoluir os módulos sem modificar as regras centrais. |
+| RNF15 | Must have | A documentação técnica é parte da própria entrega e permite compreender e manter o projeto. |
+| RNF16 | Must have | A compatibilidade definida evita que os fluxos principais dependam de um ambiente específico. |
+| RNF17 | Could have | Integrações externas podem ser analisadas após a validação das funcionalidades internas do MVP. |
+
 ## 5. Escopo do MVP
 
 ### 5.1. Requisitos funcionais incluídos
 
-| Requisito | Resultado esperado no MVP |
-| --- | --- |
-| RF03 | Consultar estoque e registrar entradas e saídas de EPIs. |
-| RF04 | Consultar e registrar manutenção de EPIs. |
-| RF05 | Cadastrar, consultar e atualizar áreas de risco. |
-| RF11 | Registrar empréstimos, devoluções e itens pendentes. |
-| RF13 | Permitir que o Supervisor registre acidentes. |
-| RF16 | Permitir o registro de incidentes pelos perfis definidos no requisito. |
-| RF23 | Gerenciar supervisores e colaboradores conforme o perfil do ator. |
+| Requisito | Prioridade | Resultado esperado no MVP |
+| --- | --- | --- |
+| RF03 | Must have | Consultar estoque e registrar entradas e saídas de EPIs. |
+| RF04 | Must have | Consultar e registrar manutenção de EPIs. |
+| RF05 | Must have | Cadastrar, consultar e atualizar áreas de risco. |
+| RF11 | Must have | Registrar empréstimos, devoluções e itens pendentes. |
+| RF13 | Must have | Permitir que o Supervisor registre acidentes. |
+| RF16 | Must have | Permitir o registro de incidentes pelos perfis definidos no requisito. |
+| RF23 | Must have | Gerenciar supervisores e colaboradores conforme o perfil do ator. |
 
 ### 5.2. Requisitos não funcionais incluídos
 
-| Requisito | Evidência esperada |
-| --- | --- |
-| RNF01 | Teste dos tempos de resposta dos fluxos principais. |
-| RNF03 | Testes de permissão para Gestor, Supervisor e Colaborador. |
-| RNF04 | Evidência de TLS 1.3 na transmissão e AES-256 no armazenamento. |
-| RNF05 | Evidência de log imutável e da política de retenção mínima de 5 anos. |
-| RNF09 | Regras normativas identificadas nos casos de uso e no domínio. |
-| RNF12 | Teste das tarefas principais com usuários do público esperado. |
-| RNF14 | Dependências do núcleo separadas por portas e adaptadores. |
-| RNF15 | Arquitetura, API e modelo de dados versionados no repositório. |
-| RNF16 | Verificação nos navegadores e sistemas definidos no requisito. |
+| Requisito | Prioridade | Evidência esperada |
+| --- | --- | --- |
+| RNF01 | Must have | Teste dos tempos de resposta dos fluxos principais. |
+| RNF03 | Must have | Testes de permissão para Gestor, Supervisor e Colaborador. |
+| RNF04 | Must have | Evidência de TLS 1.3 na transmissão e AES-256 no armazenamento. |
+| RNF05 | Must have | Evidência de log imutável e da política de retenção mínima de 5 anos. |
+| RNF09 | Must have | Regras normativas identificadas nos casos de uso e no domínio. |
+| RNF12 | Must have | Teste das tarefas principais com usuários do público esperado. |
+| RNF14 | Must have | Dependências do núcleo separadas por portas e adaptadores. |
+| RNF15 | Must have | Arquitetura, API e modelo de dados versionados no repositório. |
+| RNF16 | Must have | Verificação nos navegadores e sistemas definidos no requisito. |
 
 ### 5.3. Casos de uso incluídos
 
