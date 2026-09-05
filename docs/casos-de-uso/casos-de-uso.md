@@ -405,24 +405,30 @@ No MVP, este caso de uso cobre entradas, saídas, consulta de saldo e histórico
 | | 2. Exibir a lista de tarefas cadastradas |
 | 3. Selecionar uma tarefa | |
 | | 4. Apresentar lista de EPIs disponíveis no catálogo |
-| 5. Marcar os EPIs de uso obrigatório e confirmar associação | |
-| | 6. Validar os dados e salvar a matriz de vinculação da tarefa |
+| 5. Marcar os EPIs de uso obrigatório | |
+| 6. Confirmar associação | |
+| | 7. Validar dados |
+| | 8. Verificar compatibilidade |
+| | 9. Salvar a matriz de vinculação |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. No momento do empréstimo de EPIs, o sistema deve sugerir automaticamente os itens exigidos pela tarefa selecionada. | 2. Apenas o Gestor de Segurança pode alterar a matriz de EPIs por tarefa. |
 | **Cenário Alternativo I - Parametrização por nível de periculosidade da tarefa** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Selecionar o nível de perigo atribuído à atividade (ex.: trabalho em altura ou com eletricidade) | |
-| | 2. Filtrar e sugerir automaticamente a classe mínima de proteção requerida pelas NRs |
-| 3. Confirmar a matriz de proteção parametrizada | |
+| 1. Selecionar o nível de perigo | |
+| | 2. Filtrar |
+| | 3. Sugerir classe mínima de proteção |
+| 4. Confirmar matriz de proteção parametrizada | |
+| | 5. Apresentar lista de EPIs disponíveis no catálogo |
 | **Cenário de Exceção I - Tarefa sem EPI associado** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Salvar tarefa de risco sem selecionar nenhum EPI | |
-| | 2. Exibir aviso solicitando confirmação expressa ou inclusão de EPI |
-| **Cenário de Exceção II - Bloqueio de EPI descontinuado ou com CA vencido** | |
+| 1. Confirmar associação sem marcar EPI | |
+| | 2. Exibir aviso de confirmação expressa |
+| **Cenário de Exceção II - Bloqueio de EPI com CA inválido** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Tentar vincular modelo de EPI cujo CA esteja cancelado ou expirado | |
-| | 2. Detectar irregularidade do Certificado de Aprovação no catálogo |
-| | 3. Bloquear a vinculação e exibir mensagem indicando a necessidade de selecionar item com CA válido |
+| 1. Confirmar associação com EPI de CA inválido | |
+| | 2. Detectar irregularidade do CA |
+| | 3. Bloquear a vinculação |
+| | 4. Exibir mensagem de selecionar item com CA válido |
 | **Cenário de Exceção III - Alerta de incompatibilidade técnica entre EPIs** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Selecionar EPIs que apresentam incompatibilidade de acoplamento físico (ex.: protetor auditivo tipo concha incompatível com modelo de capacete) | |
