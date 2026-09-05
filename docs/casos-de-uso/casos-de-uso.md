@@ -376,11 +376,7 @@ No MVP, este caso de uso cobre entradas, saídas, consulta de saldo e histórico
 | 1. Selecionar ação preventiva | |
 | 2. Alterar o colaborador/setor responsável pela execução | |
 | | 3. Atualizar o responsável e emitir notificação ao novo encarregado |
-| **Cenário de Exceção I - Ocorrência não encontrada** | |
-| **Ações do Ator** | **Ações do Sistema** |
-| 1. Tentar acessar ocorrência inexistente | |
-| | 2. Identificar ausência do registro, exibir erro e retornar à lista |
-| **Cenário de Exceção II - Tentativa de cadastro de ação com prazo retroativo** | |
+| **Cenário de Exceção I - Tentativa de cadastro de ação com prazo retroativo** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Inserir prazo de conclusão anterior à data atual ou à data do acidente | |
 | | 2. Detectar inconsistência temporal no cronograma |
