@@ -22,6 +22,15 @@ De início, o trabalho será uma revisão do projeto, buscando deixá-lo mais co
 - Quando houver incerteza, registrar a dúvida em vez de inventar contexto.
 - Considerar os arquivos em `ai/context/` como fonte de contexto complementar quando forem adicionados.
 
+## Preservação das contribuições da equipe
+
+- Não alterar silenciosamente as ideias, decisões, justificativas, prioridades ou conteúdo produzido por outros membros da equipe.
+- Por padrão, limitar as alterações à organização das informações e à melhoria da apresentação, como títulos, seções, ordem, tabelas, espaçamento, links e formatação.
+- Não adicionar, remover, resumir ou reescrever conteúdo por iniciativa própria, mesmo que pareça mais correto, bonito ou tecnicamente adequado.
+- Se for identificada uma inconsistência, registrar a observação e sugerir uma mudança separadamente, sem modificar o conteúdo original.
+- Preservar a autoria, as contribuições individuais e o sentido original dos artefatos compartilhados.
+- Alterar o conteúdo, a ideia ou a decisão de outro membro somente quando isso for solicitado explicitamente pelo usuário.
+
 ## Escopo inicial
 
 - Revisar a estrutura do trabalho.
