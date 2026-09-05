@@ -17,16 +17,16 @@ A priorização deve começar pelos Requisitos Funcionais (RFs), pois eles repre
 
 | ID | Requisito | Prioridade | Justificativa |
 | --- | --- | --- | --- |
-| RF01 | Gerenciar acidentes causados por um funcionário | Deveria ter | Complementa o registro de acidentes, mas pode ser tratado como classificação após o cadastro principal. |
+| RF01 | Gerenciar acidentes causados por um funcionário | Deve ter | Permite identificar acidentes relacionados a fatores humanos, informação essencial para registrar e acompanhar as ocorrências. |
 | RF02 | Gerenciar acidentes causados por falha de equipamento de segurança | Deveria ter | Complementa a análise do acidente, mas depende do registro principal e do controle de EPIs. |
 | RF03 | Controlar o estoque dos EPIs | Deve ter | Sustenta o controle básico de equipamentos de proteção, parte central do sistema. |
 | RF04 | Controlar a manutenção dos EPIs | Deve ter | Garante que os EPIs cadastrados possam ser acompanhados quanto ao estado de uso e conservação. |
 | RF05 | Mapear as áreas de risco do ambiente de trabalho | Deve ter | Permite relacionar acidentes, incidentes e inspeções ao contexto de risco do ambiente. |
-| RF06 | Classificar o nível de periculosidade da tarefa | Deveria ter | Ajuda na análise preventiva, mas pode ser implementado após o cadastro das áreas e ocorrências. |
-| RF07 | Informar o plano de ação para cada tipo de acidente | Deveria ter | É importante para resposta aos acidentes, mas pode evoluir após a estrutura inicial de registros. |
+| RF06 | Classificar o nível de periculosidade da tarefa | Deve ter | Permite classificar o risco das tarefas antes da execução, apoiando a prevenção e a definição das medidas de segurança. |
+| RF07 | Informar o plano de ação para cada tipo de acidente | Deve ter | Garante que cada acidente ou incidente tenha medidas corretivas e preventivas para reduzir novas ocorrências. |
 | RF08 | Gerar alertas automáticos por comportamento de risco | Poderia ter | Exige regras automáticas e análise de histórico, podendo ficar para uma etapa posterior. |
 | RF09 | Registrar histórico de inspeções periódicas das áreas de risco | Deveria ter | Fortalece o acompanhamento preventivo, mas pode ser entregue após o mapeamento das áreas. |
-| RF10 | Controlar vencimento de certificações e treinamentos obrigatórios | Poderia ter | É relevante para prevenção, mas amplia o escopo para gestão de capacitações. |
+| RF10 | Controlar vencimento de certificações e treinamentos obrigatórios | Deve ter | Evita que colaboradores com certificações ou treinamentos vencidos sejam alocados em tarefas de risco. |
 | RF11 | Controlar a rastreabilidade dos EPIs | Deve ter | Permite saber quais EPIs estão disponíveis, em uso ou pendentes de devolução. |
 | RF12 | Conectar tarefas e EPIs | Deveria ter | Melhora a consistência do uso de EPIs, mas depende do cadastro de tarefas e equipamentos. |
 | RF13 | Criar registros de acidente | Deve ter | Representa uma das funcionalidades centrais para acompanhamento de acidentes de trabalho. |
@@ -37,8 +37,8 @@ A priorização deve começar pelos Requisitos Funcionais (RFs), pois eles repre
 | RF18 | Emitir relatórios estatísticos | Poderia ter | Depende da consolidação dos dados e pode ser implementado depois do fluxo principal. |
 | RF19 | Gerar documentação legal | Poderia ter | É importante, mas exige maior cuidado com regras legais e dados padronizados. |
 | RF20 | Gerenciar fornecedores e Certificado de Aprovação | Deveria ter | Apoia o controle dos EPIs, mas pode ser entregue após o cadastro e rastreabilidade dos equipamentos. |
-| RF21 | Gerenciar ciclo de vida e substituição inteligente de EPIs | Não terá agora | Exige cálculo preditivo, regras de uso e alertas de compra, ficando fora do escopo da versão inicial. |
-| RF22 | Gerenciar visitantes | Poderia ter | É útil para segurança, mas não é essencial para o fluxo principal de acidentes e EPIs. |
+| RF21 | Gerenciar ciclo de vida e substituição inteligente de EPIs | Deve ter | Permite antecipar substituições antes do vencimento ou do esgotamento dos EPIs, mantendo a continuidade da proteção. |
+| RF22 | Gerenciar visitantes | Deveria ter | É importante para controlar a entrega temporária de EPIs a visitantes, mas pode ser entregue após os fluxos essenciais. |
 | RF23 | Gerenciar supervisores e colaboradores | Deve ter | É necessário para controlar usuários e responsabilidades dentro dos fluxos principais. |
 
 ## Priorização dos Requisitos Não-Funcionais

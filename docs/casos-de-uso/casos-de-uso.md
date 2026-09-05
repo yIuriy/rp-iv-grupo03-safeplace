@@ -229,7 +229,7 @@ Este caso de uso está fora do MVP. Ele permanece documentado como extensão fut
 
 ## UC05 – Gerenciar Acidentes e Incidentes
 
-No MVP, este caso de uso cobre o registro, a consulta, a atualização e o arquivamento de ocorrências. Investigação de causa raiz, plano de ação, CAT e anexos permanecem fora da primeira entrega.
+No MVP, este caso de uso cobre o registro, a consulta, a atualização e o arquivamento de ocorrências. Investigação de causa raiz, CAT e anexos permanecem fora da primeira entrega.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
@@ -487,8 +487,6 @@ No MVP, o Colaborador pode relatar incidentes. O Supervisor pode relatar acident
 
 ## UC10 – Planejar Substituição Inteligente de EPI
 
-Este caso de uso está fora do MVP porque implementa o RF21, classificado como `Won't have` na versão atual.
-
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
 | **Identificador** | **UC10** |
@@ -571,7 +569,7 @@ Este caso de uso está fora do MVP porque implementa o RF21, classificado como `
 
 ## UC12 – Controlar Empréstimo de EPIs
 
-No MVP, este caso de uso cobre empréstimos e devoluções para colaboradores. Empréstimos para visitantes, bloqueios por treinamento e sugestões automáticas de equipamentos permanecem fora da primeira entrega.
+No MVP, este caso de uso cobre empréstimos e devoluções para colaboradores. Empréstimos para visitantes e sugestões automáticas de equipamentos permanecem fora da primeira entrega.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
@@ -618,4 +616,3 @@ No MVP, este caso de uso cobre empréstimos e devoluções para colaboradores. E
 | 1. Tentar emprestar segundo EPI do mesmo tipo a um colaborador que já possui um ativo | |
 | | 2. Detectar duplicidade de cautela sem registro de devolução anterior |
 | | 3. Exibir alerta de duplicidade e exigir confirmação/justificativa de substituição |
-

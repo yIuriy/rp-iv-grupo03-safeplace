@@ -37,20 +37,24 @@ As portas de entrada representam as operações disponíveis para os atores do s
 - controle de estoque de EPIs;
 - controle de manutenção de EPIs;
 - empréstimo e devolução de EPIs;
-- cadastro e consulta de áreas de risco.
+- cadastro e consulta de áreas de risco;
+- classificação do nível de periculosidade das tarefas;
+- definição e acompanhamento de planos de ação;
+- controle de certificações e treinamentos;
+- gestão do ciclo de vida e planejamento da substituição dos EPIs.
 
 ### 3.2. Portas de saída
 
 As portas de saída representam recursos externos ao núcleo:
 
-- repositórios de usuários, ocorrências, EPIs e áreas de risco;
+- repositórios de usuários, ocorrências, EPIs, áreas de risco, tarefas, certificações e treinamentos;
 - autenticação e controle de acesso;
 - registro de auditoria;
 - criptografia e armazenamento seguro.
 
 ## 4. Organização lógica do MVP
 
-O núcleo é organizado pelas funcionalidades `usuarios`, `ocorrencias`, `epis` e `areas-de-risco`. Cada funcionalidade reúne suas regras e casos de uso. Os adaptadores ficam separados do núcleo para evitar dependência de tecnologia nas regras de negócio.
+O núcleo é organizado pelas funcionalidades `usuarios`, `ocorrencias`, `epis`, `areas-de-risco`, `tarefas` e `capacitacoes`. Cada funcionalidade reúne suas regras e casos de uso. Os adaptadores ficam separados do núcleo para evitar dependência de tecnologia nas regras de negócio.
 
 Essa organização atende ao RNF14, que exige desacoplamento e extensibilidade. A documentação deste repositório atende parcialmente ao RNF15 ao registrar o escopo, a rastreabilidade e as decisões arquiteturais. A documentação da API e do modelo de dados ainda depende da implementação.
 
@@ -86,6 +90,5 @@ Os diagramas não são alterados nesta revisão. O grupo fará a atualização e
 
 - O barramento de eventos não faz parte do MVP.
 - Não há adaptadores para sensores ou dispositivos IoT.
-- RF21 e UC10 permanecem documentados como evolução futura, mas não entram nos componentes do MVP.
 - Relatórios, CAT, dashboards, funcionamento offline e integrações externas permanecem fora do núcleo da primeira entrega.
 - Tecnologias de implementação ainda não foram definidas neste documento.
