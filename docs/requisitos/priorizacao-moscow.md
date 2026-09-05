@@ -18,7 +18,7 @@ A priorização deve começar pelos Requisitos Funcionais (RFs), pois eles repre
 | ID | Requisito | Prioridade | Justificativa |
 | --- | --- | --- | --- |
 | RF01 | Gerenciar acidentes causados por um funcionário | Deveria ter | Complementa o registro de acidentes, mas pode ser tratado como classificação após o cadastro principal. |
-| RF02 | Gerenciar acidentes causados por falha de equipamento de segurança | Deve ter | Complementa a análise do acidente, mas depende do registro principal e do controle de EPIs. |
+| RF02 | Gerenciar acidentes causados por falha de equipamento de segurança | Deveria ter | Complementa a análise do acidente, mas depende do registro principal e do controle de EPIs. |
 | RF03 | Controlar o estoque dos EPIs | Deve ter | Sustenta o controle básico de equipamentos de proteção, parte central do sistema. |
 | RF04 | Controlar a manutenção dos EPIs | Deve ter | Garante que os EPIs cadastrados possam ser acompanhados quanto ao estado de uso e conservação. |
 | RF05 | Mapear as áreas de risco do ambiente de trabalho | Deve ter | Permite relacionar acidentes, incidentes e inspeções ao contexto de risco do ambiente. |
@@ -48,8 +48,8 @@ A priorização deve começar pelos Requisitos Funcionais (RFs), pois eles repre
 | RNF01 | Tempo de resposta | Deve ter | O sistema precisa responder rapidamente às solicitações feitas, a fim de não gerar descontentamento. |
 | RNF02 | Capacidade de usuários simultâneos | Deveria ter | O sistema deve permitir um número adequado de usuários simultâneos, mas, em um primeiro momento, deve atender a um número reduzido. |
 | RNF03 | Controle de acesso por perfil | Deve ter | As funcionalidades são baseadas nos perfis, sendo uma das bases do sistema. |
-| RNF04 | Criptografia de dados sensíveis | Deveria ter | Os dados devem ser criptografados, porém, para uma versão inicial, uma criptografia mais básica pode ser aplicada. |
-| RNF05 | Rastreabilidade de ações (auditoria) | Poderia ter | Sua importância se dá na implementação final do software, para acompanhar as ações dos usuários. |
+| RNF04 | Criptografia de dados sensíveis | Deve ter | O MVP registra acidentes e incidentes, que podem conter dados sensíveis e precisam de proteção desde a primeira versão. |
+| RNF05 | Rastreabilidade de ações (auditoria) | Deve ter | As alterações em ocorrências, EPIs e usuários precisam ser rastreáveis para preservar a confiabilidade dos registros. |
 | RNF06 | Disponibilidade mínima | Deveria ter | O sistema deve estar disponível na maior parte do tempo, mas, em sua versão inicial, tempos maiores de manutenção podem ser necessários. |
 | RNF07 | Backup e recuperação de dados | Poderia ter | Não é necessário nas versões iniciais, cujos dados serão usados para teste. |
 | RNF08 | Funcionamento offline parcial | Poderia ter | Deve ser implementado após as demais funcionalidades, pois depende de sincronização e armazenamento local. |
