@@ -1,6 +1,8 @@
-# SafePlace component library
+# SafePlace Design System
 
 The React implementation of the [SafePlace Figma design system](https://www.figma.com/design/9tatIII5caffv6gJmdlH3t/Logotipo?node-id=74-99). Use these shared components when building feature screens so the team uses the same fonts, assets, spacing and interaction states.
+
+This folder is the single source for the design system documentation, tokens, Figma map and SVG assets. See the [design foundations](foundations.md) for the exported values, typography, layout and accessibility rules, and the [component contracts](component-contracts.md) for the supported Figma families and states.
 
 ## Run the catalog
 
@@ -84,7 +86,7 @@ The desktop reference at 1344 px has 520 px cards. The tablet reference at 768 p
 
 Fonts are self-hosted through pinned Fontsource packages: Manrope 600/700 and Inter 400/500/600, Latin subset (including Portuguese accents). The Vite build includes the font files; it makes no runtime request to a font CDN. Font licenses are distributed in [`public/licenses`](../public/licenses/). The outlined logo and all 19 SVGs are the exact existing Figma exports. CSS masks recolor icons without redrawing their paths.
 
-Use the `--sp-*` semantic tokens from [`tokens.css`](tokens.css). `docs/design-system/` retains the design snapshot; `frontend/design-system/` is the runtime copy. They are not automatically synchronized. Update the corresponding snapshots together when the design changes. Do not create a second button or copy colors into each feature.
+Use the `--sp-*` semantic tokens from [`tokens.css`](tokens.css). `frontend/design-system/` contains the design snapshot used by the application. Update the JSON and CSS together in this folder when the design changes. Do not create a second button or copy colors into each feature.
 
 ## Interaction and accessibility
 

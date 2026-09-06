@@ -1,4 +1,4 @@
-# SafePlace Design System
+# SafePlace design foundations
 
 Version 1.0.0, exported on September 6, 2026.
 
@@ -15,7 +15,7 @@ This package connects the SafePlace brand kit to the web interface. Figma contai
 - `assets/icons/`: 19 original icon exports from the Figma library.
 - `component-contracts.md`: implementation rules and direct links to each family.
 
-This folder retains the Figma foundation snapshot. The React implementation now lives in [`frontend/src/shared/components`](../../frontend/src/shared/components/) and [`frontend/src/shared/layout`](../../frontend/src/shared/layout/). See the [component guide](../../frontend/design-system/README.md) for the interactive catalog, usage and validation. Business operations and persistence remain the responsibility of feature code.
+This folder retains the Figma foundation snapshot. The React implementation now lives in [`frontend/src/shared/components`](../src/shared/components/) and [`frontend/src/shared/layout`](../src/shared/layout/). See the [component guide](README.md) for the interactive catalog, usage and validation. Business operations and persistence remain the responsibility of feature code.
 
 ## Use the foundations
 
@@ -110,4 +110,4 @@ The sample names, classifications and records in Figma are fictitious. They demo
 
 Update the canonical component in Figma and keep its instances connected. Export variables, text styles and component metadata again after changes. Preserve variable aliases in CSS. Update the JSON and CSS together, and keep the component map tied to actual node IDs.
 
-This folder is a versioned snapshot. It does not synchronize automatically with Figma. The [component guide](../../frontend/design-system/README.md) maps the implemented React components to their Figma nodes. No Code Connect integration has been configured.
+This folder is a versioned snapshot. It does not synchronize automatically with Figma. The [component guide](README.md) maps the implemented React components to their Figma nodes. No Code Connect integration has been configured.
