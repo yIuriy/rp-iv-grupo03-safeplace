@@ -1,4 +1,12 @@
-# React + TypeScript + Vite
+# SafePlace frontend
+
+The shared component library is ready for feature development. Run `npm ci` and `npm run dev`, then open `/design-system` for the interactive catalog or `/design-system/examples/risk-areas` for the composed reference screen.
+
+Read the [component guide](design-system/README.md) for imports, properties, Figma links, layout rules and team conventions. The examples use fictional data and do not connect to the backend.
+
+Validation: `npm run build`, `npm run lint`, and `npm test` (install the test browser first with `npx playwright install chromium`).
+
+## Original React + TypeScript + Vite template notes
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
