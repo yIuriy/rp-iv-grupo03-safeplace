@@ -1095,9 +1095,24 @@
       "path": "assets/logo-primary.svg"
     },
     {
+      "id": "7:9",
+      "name": "Layout=Horizontal, Color=Inverse",
+      "path": "assets/logo-inverse.svg"
+    },
+    {
+      "id": "7:30",
+      "name": "Layout=Stacked, Color=Inverse",
+      "path": "assets/logo-stacked-inverse.svg"
+    },
+    {
       "id": "6:5",
       "name": "Color=Primary",
       "path": "assets/symbol-primary.svg"
+    },
+    {
+      "id": "6:10",
+      "name": "Color=Inverse",
+      "path": "assets/symbol-inverse.svg"
     },
     {
       "id": "26:342",

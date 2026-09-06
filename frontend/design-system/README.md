@@ -4,6 +4,8 @@ The React implementation of the [SafePlace Figma design system](https://www.figm
 
 This folder is the single source for the design system documentation, tokens, Figma map and SVG assets. See the [design foundations](foundations.md) for the exported values, typography, layout and accessibility rules, and the [component contracts](component-contracts.md) for the supported Figma families and states.
 
+For dark surfaces, use the [inverse horizontal logo](assets/logo-inverse.svg), [inverse stacked logo](assets/logo-stacked-inverse.svg) or [inverse symbol](assets/symbol-inverse.svg). The [dark logo guide](foundations.md#logos-for-dark-surfaces) describes their placement and proportions.
+
 ## Run the catalog
 
 From `frontend/`, using Node.js 22.13 or newer:

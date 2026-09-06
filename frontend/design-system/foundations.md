@@ -12,6 +12,7 @@ This package connects the SafePlace brand kit to the web interface. Figma contai
 - `tokens.css`: the same variables as CSS custom properties, preserving semantic aliases, plus text-style classes.
 - `figma-map.json`: 44 component families, their properties, supported variants, reference frames and asset sources.
 - `assets/logo-primary.svg` and `assets/symbol-primary.svg`: original Figma exports with outlined logo text.
+- `assets/logo-inverse.svg`, `assets/logo-stacked-inverse.svg` and `assets/symbol-inverse.svg`: white Figma variants with transparent backgrounds for dark surfaces.
 - `assets/icons/`: 19 original icon exports from the Figma library.
 - `component-contracts.md`: implementation rules and direct links to each family.
 
@@ -45,6 +46,20 @@ Use classes such as `sp-type-heading-md`, `sp-type-body-md` and `sp-type-label-m
 Load Manrope 600 and 700 and Inter 400, 500 and 600 before comparing screenshots. The React frontend now bundles these fonts through pinned Fontsource packages. This snapshot folder does not contain font binaries. A fallback sans-serif face changes line lengths and is not a fidelity reference.
 
 Use the complete logo SVG at 160 px wide in the desktop header and 144 px in the compact header, preserving its aspect ratio. The SVG wordmark is outlined, so it does not depend on browser text rendering.
+
+### Logos for dark surfaces
+
+Use the original `Color=Inverse` variants when the logo appears on a dark surface. They are white with transparent backgrounds and keep the original vector paths. The logo text is outlined and does not require a font download.
+
+| Asset | Use | Original size | Figma source |
+| --- | --- | --- | --- |
+| [Horizontal logo](assets/logo-inverse.svg) | Application header, using the same widths as the primary logo | 348 by 64 px | [7:9](https://www.figma.com/design/9tatIII5caffv6gJmdlH3t/Logotipo?node-id=7-9) |
+| [Stacked logo](assets/logo-stacked-inverse.svg) | Centered brand blocks with space for the symbol above the name | 191 by 152 px | [7:30](https://www.figma.com/design/9tatIII5caffv6gJmdlH3t/Logotipo?node-id=7-30) |
+| [Symbol](assets/symbol-inverse.svg) | Compact brand placements without the wordmark | 64 by 64 px | [6:10](https://www.figma.com/design/9tatIII5caffv6gJmdlH3t/Logotipo?node-id=6-10) |
+
+Select the variant according to the surface behind the logo: primary on light surfaces, inverse on dark surfaces. Preserve the aspect ratio and transparency; use the inverse export directly instead of applying a color filter to the primary logo.
+
+### Icons
 
 Icons use a 20 by 20 px box. Their geometry must remain proportional. The exported icon files preserve their original color; if the interface needs another semantic color, apply the SVG as a CSS mask with that color or export the matching Figma state. Provide an accessible name on icon-only controls and hide decorative icons from assistive technology.
 
