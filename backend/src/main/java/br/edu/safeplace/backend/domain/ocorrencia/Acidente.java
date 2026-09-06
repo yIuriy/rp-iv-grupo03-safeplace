@@ -20,6 +20,13 @@ public class Acidente extends Ocorrencia {
         this.destino = destino;
     }
 
+    public static Acidente novo(LocalDateTime dataOcorrencia, String local, String descricao,
+            PlanoDeAcao planoDeAcao, String causaRaiz, String tipo, String dano,
+            String numeroProtocolo, String destino) {
+        return new Acidente(null, dataOcorrencia, local, descricao, planoDeAcao,
+                causaRaiz, tipo, dano, numeroProtocolo, destino);
+    }
+
     public String getCausaRaiz() {
         return causaRaiz;
     }
