@@ -10,7 +10,10 @@ Este documento define o escopo da primeira entrega do SafePlace e relaciona requ
 - [Requisitos não funcionais](../requisitos/requisitos-nao-funcionais.md)
 - [Priorização MoSCoW](../requisitos/priorizacao-moscow.md)
 - [Casos de uso](../casos-de-uso/casos-de-uso.md)
+- [Histórias de usuário](../historias-de-usuario.md)
+- [Glossário](../glossario.md)
 - [Especificação arquitetural](../arquitetura/especificacao-arquitetural.md)
+- [Diagrama de classes](../diagramas/classes/Diagrama%20de%20Classes%20-%20SafePlace.png)
 
 ## 3. Termos usados na entrega
 
@@ -21,6 +24,12 @@ MVP, MVC e Arquitetura Hexagonal representam decisões diferentes:
 - Arquitetura Hexagonal separa o núcleo de negócio das tecnologias externas por meio de portas e adaptadores.
 
 O MVC pode ser usado no adaptador web da Arquitetura Hexagonal. A escolha de um não substitui os demais.
+
+### 3.1. Pessoas cadastradas e acesso
+
+Gestor de Segurança e Supervisor são os perfis com acesso ao sistema. O Gestor gerencia as contas de supervisores; o Supervisor gerencia os cadastros de colaboradores. O Colaborador não recebe conta, senha ou perfil de autenticação, mas permanece identificado nos registros de ocorrências, capacitações e empréstimos. O Supervisor registra os relatos comunicados por ele, usando a própria identificação.
+
+Essa definição segue RF16, RF23, RNF03 e a decisão registrada na [issue #81](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/81). O cadastro de uma pessoa e sua eventual presença no diagrama de classes não concedem permissão de acesso.
 
 ## 4. Critério de escopo
 
@@ -107,17 +116,17 @@ A priorização considera três fatores: a contribuição direta do requisito pa
 | RF10 | Controlar vencimento de certificações e treinamentos obrigatórios | Deve ter | Controlar vencimentos de certificações e treinamentos obrigatórios. |
 | RF11 | Controlar a rastreabilidade dos EPIs | Deve ter | Registrar empréstimos, devoluções e itens pendentes. |
 | RF13 | Criar registros de acidente | Deve ter | Permitir que o Supervisor registre acidentes. |
-| RF16 | Registrar incidentes | Deve ter | Permitir o registro de incidentes pelos perfis definidos no requisito. |
+| RF16 | Registrar incidentes | Deve ter | Permitir registro pelo Supervisor ou Gestor. Relatos comunicados pelo Colaborador são registrados pelo Supervisor. |
 | RF21 | Gerenciar ciclo de vida e substituição inteligente de EPIs | Deve ter | Calcular a previsão de substituição dos EPIs e gerar alertas preventivos. |
-| RF23 | Gerenciar supervisores e colaboradores | Deve ter | Gerenciar supervisores e colaboradores conforme o perfil do ator. |
+| RF23 | Gerenciar supervisores e colaboradores | Deve ter | Gestor gerencia supervisores com conta e senha inicial automática; Supervisor gerencia colaboradores sem conta ou senha, preservando seus vínculos. |
 
 ### 5.2. Requisitos não funcionais incluídos
 
 | ID | Requisito | Prioridade | Evidência esperada |
 | --- | --- | --- | --- |
-| RNF03 | Controle de acesso por perfil | Deve ter | Testes de permissão para Gestor, Supervisor e Colaborador. |
+| RNF03 | Controle de acesso por perfil | Deve ter | Testes de permissão para Gestor e Supervisor, além de verificação de que o cadastro de Colaborador não cria credenciais nem permite autenticação. |
 | RNF05 | Rastreabilidade de ações (auditoria) | Deve ter | Evidência de log imutável e da política de retenção mínima de 5 anos. |
-| RNF08 | Funcionamento offline parcial | Deve ter | Demonstração da consulta offline a informações previamente sincronizadas. |
+| RNF08 | Funcionamento offline parcial | Deve ter | Demonstração de consulta sem conexão após definir os dados disponíveis e resolver a dependência com indicadores e relatórios fora do MVP. Envio offline de relatos ainda pendente. |
 | RNF11 | Interface responsiva e acessível | Deve ter | Verificação em dispositivos desktop, tablet e móvel, com avaliação das diretrizes WCAG 2.1 AA. |
 | RNF15 | Documentação técnica | Deve ter | Arquitetura, API e modelo de dados versionados no repositório. |
 
@@ -131,11 +140,13 @@ A priorização considera três fatores: a contribuição direta do requisito pa
 | UC05 | Registro, consulta, atualização e arquivamento de ocorrências. |
 | UC06 | Entrada, saída, saldo e histórico de estoque. |
 | UC07 | Definição e acompanhamento de planos de ação. |
-| UC09 | Relato de acidente ou incidente, sem anexos. |
-| UC10 | Planejamento da substituição de EPIs com base no ciclo de vida. |
+| UC09 | Relato de acidente ou incidente pelo Supervisor, sem anexos. Envio offline pendente de decisão. |
+| UC10 | Previsão de substituição e alertas preventivos. Requisições de compra e parâmetros de cálculo pendentes de definição. |
 | UC11 | Classificação e consulta do nível de periculosidade das tarefas. |
 | UC12 | Empréstimo e devolução de EPIs para colaboradores. |
-| UC13 | Gestão de supervisores e colaboradores. |
+| UC13 (proposto) | Gestão de supervisores e colaboradores prevista em RF23. O fluxo ainda não está especificado no catálogo textual. |
+
+A inclusão de um UC nesta tabela indica escopo previsto, não implementação concluída. UC13 ainda não conta como cobertura textual completa de RF23. As pendências que impedem fechar a revisão estão na seção 11.
 
 ## 6. Fora do escopo
 
@@ -162,7 +173,7 @@ O núcleo é dividido pelas funcionalidades `usuarios`, `ocorrencias`, `epis`, `
 
 ### 7.1. Portas de entrada esperadas
 
-- gerenciar usuários;
+- gerenciar contas de supervisores e cadastros de colaboradores sem acesso;
 - registrar e consultar ocorrências;
 - controlar estoque;
 - controlar manutenção;
@@ -202,11 +213,13 @@ O fluxo recomendado é o registro de acidente ou incidente. O diagrama deve incl
 
 ### 8.5. Diagrama de classes reduzido ao MVP
 
-Deve conter apenas as classes necessárias aos requisitos `Deve ter`: usuário e perfil, ocorrência, plano de ação, EPI, estoque, movimentação, manutenção, empréstimo, projeção de substituição, área de risco, tarefa, classificação de periculosidade, certificação, treinamento e auditoria.
+Deve conter apenas as classes necessárias aos requisitos `Deve ter`: usuário e perfil de acesso, colaborador cadastrado sem acesso, ocorrência, plano de ação, EPI, estoque, movimentação, manutenção, empréstimo, projeção de substituição, área de risco, tarefa, classificação de periculosidade, certificação, treinamento e auditoria.
 
-Como proposta de modelagem, o grupo pode separar `EPI`, que representa o tipo de equipamento, de `ItemEPI`, que representa uma unidade física rastreável. Essa proposta não cria um requisito novo.
+Como proposta de modelagem, o grupo pode separar `EPI`, representando o tipo de equipamento nessa proposta, de `ItemEPI`, representando uma unidade física rastreável. Essa separação não está aprovada e não define o significado de `EPI` no modelo vigente, que ainda precisa ser esclarecido. A proposta não cria um requisito novo.
 
 ## 9. Matriz de rastreabilidade
+
+As situações abaixo descrevem a cobertura documental, não o atendimento pela implementação. A base técnica existente e seus limites estão na [especificação arquitetural](../arquitetura/especificacao-arquitetural.md#7-base-técnica-existente-e-limites).
 
 | ID | Requisito | Caso de uso | Elemento arquitetural | Situação |
 | --- | --- | --- | --- | --- |
@@ -215,19 +228,19 @@ Como proposta de modelagem, o grupo pode separar `EPI`, que representa o tipo de
 | RF03 | Controlar o estoque dos EPIs | UC06 | Gestão de EPIs, Estoque e Persistência | Coberto pelo fluxo básico. |
 | RF04 | Controlar a manutenção dos EPIs | UC01 | Gestão de EPIs, Manutenção e Persistência | Fluxo ajustado para registrar manutenção. |
 | RF05 | Mapear as áreas de risco do ambiente de trabalho | UC03 | Gestão de Áreas de Risco e Persistência | Coberto. |
-| RF06 | Classificar o nível de periculosidade da tarefa | UC11 | Gestão de Tarefas | Coberto pela classificação de periculosidade. |
-| RF07 | Informar o plano de ação para cada tipo de acidente | UC07 | Gestão de Ocorrências | Coberto pela definição de planos vinculados às ocorrências. |
-| RF10 | Controlar vencimento de certificações e treinamentos obrigatórios | UC02 | Gestão de Capacitações | Coberto pelo controle de certificações e treinamentos. |
+| RF06 | Classificar o nível de periculosidade da tarefa | UC11 | Gestão de Tarefas | Fluxo descrito; vocabulário dos graus de risco pendente de alinhamento com UC03 e classes. |
+| RF07 | Informar o plano de ação para cada tipo de acidente | UC07 | Gestão de Ocorrências | Fluxo descrito; representação das ações e notificação de responsável sem acesso ainda pendentes. |
+| RF10 | Controlar vencimento de certificações e treinamentos obrigatórios | UC02 | Gestão de Capacitações | Consulta, alertas e bloqueio descritos; fluxo de cadastro das capacitações ainda não identificado. |
 | RF11 | Controlar a rastreabilidade dos EPIs | UC12 | Gestão de EPIs, Empréstimo e Estoque | Recorte limitado a colaboradores. |
 | RF13 | Criar registros de acidente | UC09 e UC05 | Gestão de Ocorrências | Coberto. |
-| RF16 | Registrar incidentes | UC09 e UC05 | Gestão de Ocorrências | Atores alinhados ao requisito. |
-| RF21 | Gerenciar ciclo de vida e substituição inteligente de EPIs | UC10 | Gestão de EPIs | Coberto pelo planejamento de substituição com base no ciclo de vida. |
-| RF23 | Gerenciar supervisores e colaboradores | UC13 | Gestão de Usuários e Autorização | UC13 proposto para fechar a lacuna. |
-| RNF03 | Controle de acesso por perfil | UCs do MVP | Autenticação e Autorização | Exige teste por perfil. |
+| RF16 | Registrar incidentes | UC09 e UC05 | Gestão de Ocorrências | Supervisor registra em UC09, inclusive relatos de colaboradores; Gestor registra em UC05. |
+| RF21 | Gerenciar ciclo de vida e substituição inteligente de EPIs | UC10 | Gestão de EPIs | Previsão e alertas no MVP; requisições, origem dos dados e parâmetros de cálculo ainda pendentes. |
+| RF23 | Gerenciar supervisores e colaboradores | UC13 proposto; US23 e US24 | Gestão de Usuários e Autorização | Responsabilidades descritas nas histórias e no RF; fluxo de UC13 ainda não especificado. |
+| RNF03 | Controle de acesso por perfil | UCs do MVP | Autenticação e Autorização | Exige testes para Gestor e Supervisor e cadastro de Colaborador sem credenciais. |
 | RNF05 | Rastreabilidade de ações (auditoria) | UCs com alteração | Auditoria | Decisão obrigatória no MVP. |
-| RNF08 | Funcionamento offline parcial | UCs de consulta | Cache local e Sincronização | Exige demonstração sem conexão. |
+| RNF08 | Funcionamento offline parcial | Consulta prevista em RNF08; relação com UC09 pendente | Cache local e Sincronização | Dados, dispositivos e alcance do offline ainda precisam ser definidos antes da demonstração. |
 | RNF11 | Interface responsiva e acessível | UCs do MVP | Interface Web | Exige verificação responsiva e de acessibilidade. |
-| RNF15 | Documentação técnica | Todos | Documentação versionada | Parcial; API e modelo de dados dependem da implementação. |
+| RNF15 | Documentação técnica | Todos | Documentação versionada | Parcial; há instruções de execução, migrações e OpenAPI para ocorrências e estoque de EPIs. Cobertura dos demais fluxos ainda pendente. |
 
 ## 10. Critérios de aceite da documentação
 
@@ -241,3 +254,51 @@ A documentação da entrega estará pronta quando:
 6. a equipe registrar evidências para os RNFs do MVP.
 
 O item 5 permanece pendente nesta revisão por decisão do grupo.
+
+## 11. Pendências da revisão documental
+
+Esta revisão cobre parte da [issue #81](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/81). A priorização e suas justificativas foram preservadas: RF21 continua `Deve ter` e RNF04 continua `Deveria ter`. Os pontos abaixo dependem de decisão ou implementação e não são considerados resolvidos pelos ajustes de redação.
+
+### 11.1. Escopo e fluxos
+
+| Ponto | Evidência e definição ainda necessária | Destino |
+| --- | --- | --- |
+| Gestão de pessoas | RF23 e US23/US24 definem os responsáveis, mas UC13 ainda não possui fluxo. Definir também identificação de acesso, dados cadastrais, entrega da senha inicial e eventual desativação, sem criar conta para Colaborador. | UC13, histórias e issue #74. |
+| Offline | RNF08 prevê consulta de estatísticas, indicadores e relatórios pelo Gestor; RF17 e RF18 estão no backlog. UC09 prevê criação e envio posterior de relatos. Definir dados consultáveis, perfis, dispositivos e se haverá criação offline. | RNF08, UC09, US13/US16/US17/US18 e arquitetura. |
+| Substituição de EPIs | RF21 prevê projeções e alertas. UC10 acrescenta requisições de compra e prorrogação por laudo. Definir esses desdobramentos, origem dos dados, unidades, fórmula, multiplicadores e antecedência dos avisos. A exportação de relatórios segue no backlog de RF18. | UC10, US21 e issue #76. |
+| Cadastro de capacitações | UC02 consulta dados já cadastrados; os modelos também contêm cadastro e validação de datas. Identificar o fluxo responsável por essas operações. | UC02, US10 e revisão dos diagramas na issue #81. |
+| Plano de ação | UC07 acompanha ações individuais e admite responsável Colaborador ou setor. Definir sua representação e como notificar o responsável sem conceder acesso ao sistema. | UC07, US07 e issue #39. |
+| CA no MVP | UC01, UC06, UC10 e UC12 usam informações de CA, enquanto a gestão de fornecedores e CA (RF20) está no backlog. Esclarecer como os dados necessários serão fornecidos no MVP, preservando a prioridade e as regras existentes. | UCs de EPIs, US03/US04/US11/US20/US21 e issue #76. |
+
+### 11.2. Correspondência com o diagrama de classes
+
+O [PNG de classes](../diagramas/classes/Diagrama%20de%20Classes%20-%20SafePlace.png) foi consultado como referência, sem alterar o desenho nem o modelo Astah. A [issue #39](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/39) concentra sua revisão. As propostas de dados das histórias continuam propostas.
+
+| Ponto | Divergência preservada para decisão |
+| --- | --- |
+| Unidade de EPI | US11 acompanha a posse de um equipamento, mas `EPI` possui quantidade e o modelo também tem `ModeloEPI` e `LoteEPI`. Definir se cada registro representa tipo, lote ou unidade física antes de aprovar a proposta `ItemEPI`. |
+| Resultado de manutenção | US04 propõe resultado textual; `ManutencaoEPI.resultadoManutencao` é booleano no desenho. Definir resultado, classificação e relação com a situação do EPI. |
+| Identificadores | US20 propõe CA textual e `ModeloEPI.ca` é inteiro. `Colaborador.cpf` é texto, mas há operações que recebem CPF inteiro. UC12 usa matrícula, proposta em US24 junto ao setor e aos metadados do cadastro. Confirmar os dados e seus tipos. |
+| Grau de risco | UC03 e `NivelPerigo` usam baixo/médio/alto/crítico; UC11 e US06 usam leve/moderado/grave/crítico. Definir uma lista comum ou classificações distintas com correspondência explícita. |
+| Ocorrências e rastreabilidade | UC09 exige protocolo para acidente e incidente e distingue data do fato de data/hora do cadastro. O PNG coloca protocolo apenas em `Acidente`. Conferir também envolvidos, EPIs, arquivamento, movimentações, responsáveis e auditoria, conforme os pontos da issue #81. |
+| Investigação e CAT | RF15 trata investigação e RF19 trata geração de CAT, ambos no backlog. O modelo usa `CAT` em operações de laudo pericial. Os conceitos permanecem distintos no glossário; os contratos precisam de revisão. |
+
+### 11.3. Dependências com a implementação
+
+| Issue | Alinhamento necessário |
+| --- | --- |
+| [#74: usuários e perfis](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/74) | O texto consultado ainda inclui `COLABORADOR` como perfil. A implementação deve seguir RF23 e RNF03 revisados, separando conta de acesso de cadastro de pessoa. |
+| [#75: ocorrências](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/75) | Distinguir o usuário que registra dos colaboradores envolvidos; preservar a data do fato e identificar o momento do cadastro. Conferir protocolo e acompanhamento com UC05/UC09. |
+| [#76: EPIs](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/76) | A base já registra EPIs e movimentações com data/hora e motivo, mas não identifica o operador da movimentação. Conferir unidade rastreável, responsáveis e dados de projeção após as definições acima. |
+| [#77: áreas de risco e tarefas](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/77) | Alinhar `NivelPerigo` após a decisão de vocabulário e distinguir proteção para acesso à área do vínculo entre tarefa e EPI. |
+
+Essas dependências são registradas aqui para continuidade do trabalho. O ajuste documental não altera o código nem encerra as issues. Os limites técnicos atuais, incluindo autorização, auditoria e configuração da URL da API, estão na [especificação arquitetural](../arquitetura/especificacao-arquitetural.md#7-base-técnica-existente-e-limites).
+
+### 11.4. Verificação desta revisão
+
+Verificações realizadas em 6 de setembro de 2026:
+
+- Links locais, âncoras, tabelas e blocos de código conferidos; `git diff --check` sem erros. As 40 prioridades, as justificativas da MoSCoW, o código e os diagramas foram preservados.
+- Frontend: `npm run lint`, `npm run build` e os 11 testes de `npm test` passaram após a instalação do Chromium exigido pelo Playwright.
+- Backend: após incorporar a base de EPIs e o endpoint de disponibilidade da `dev`, os 21 testes de `./mvnw -Dtest=OcorrenciaServiceTest,EpiTest,EpiServiceTest,EpiControllerTest,HealthControllerTest test` passaram, compilando com alvo Java 21 em JDK 25. Cobrem domínio, serviços e controladores, sem validar a persistência JPA.
+- A execução com Docker Compose e PostgreSQL, o teste que carrega toda a aplicação e a execução em JDK 21 não foram verificados neste ambiente. Docker e PostgreSQL não estavam instalados. Os passos de execução foram conferidos com os arquivos de configuração; a verificação completa desses passos permanece pendente.

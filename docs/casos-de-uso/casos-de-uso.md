@@ -6,15 +6,19 @@ Este documento especifica os casos de uso do SafePlace. Os fluxos incluem funcio
 
 ## 2. Recorte do MVP
 
-O MVP contempla os fluxos essenciais dos casos de uso primários: **UC01**, **UC03**, **UC05**, **UC06**, **UC09** e **UC12**.
+O MVP contempla os fluxos essenciais de UC01, UC02, UC03, UC05, UC06, UC07, UC09, UC10, UC11 e UC12, conforme os requisitos classificados como `Deve ter` e a [especificação do MVP](../mvp/especificacao-mvp-arquitetura.md#53-casos-de-uso-incluídos). RF23 também pertence ao MVP, mas o UC13 proposto para sua cobertura ainda precisa ser especificado.
 
-Os demais casos de uso permanecem documentados como backlog para versões futuras. Dentro dos casos de uso selecionados para o MVP, cenários avançados (como integração externa de CA, emissão automatizada de CAT, gestão de mídias e projeções preditivas) fazem parte do escopo futuro.
+UC04 (anexos e testemunhas) e UC08 (vínculo entre tarefas e EPIs) permanecem no backlog. Nos UCs do MVP, os cenários futuros continuam descritos e são identificados no próprio texto. A previsão de substituição e os alertas de RF21 pertencem ao MVP; o alcance das requisições de compra de UC10 e do envio offline de UC09 continua pendente de decisão.
+
+Os atores com acesso são Gestor de Segurança e Supervisor. O Colaborador é cadastrado pelo Supervisor para vínculo a ocorrências, capacitações e empréstimos, sem conta ou senha. O Supervisor registra os relatos comunicados pelo Colaborador.
 
 ---
 
 ## UC01 – Controlar Manutenção dos EPI's
 
 No MVP, o fluxo cobre consulta e registro de manutenção. Validação externa de CA e descarte definitivo permanecem no backlog.
+
+A exceção II é preservada como cenário futuro, pois exige descarte definitivo. A forma de verificar o CA no MVP e a correspondência entre resultado da manutenção e situação do EPI continuam a confirmar, conforme US03 e US04.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
@@ -57,6 +61,8 @@ No MVP, o fluxo cobre consulta e registro de manutenção. Validação externa d
 ---
 
 ## UC02 – Controlar Certificações e Treinamentos
+
+Este caso de uso integra o MVP por RF10. O fluxo descreve consulta, alertas e bloqueio de alocação. O cadastro das capacitações e a validação cronológica presentes nos modelos ainda precisam de um fluxo textual identificado; não são considerados especificados por esta consulta.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
@@ -109,6 +115,8 @@ No MVP, o fluxo cobre consulta e registro de manutenção. Validação externa d
 
 ## UC03 – Mapear Áreas de Risco 
 
+Este caso de uso integra o MVP por RF05. Os EPIs exigidos para acesso à área são definidos aqui; os EPIs exigidos para executar uma tarefa pertencem ao vínculo de UC08 (RF12, backlog).
+
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
 | **Identificador** | **UC03** |
@@ -123,9 +131,9 @@ No MVP, o fluxo cobre consulta e registro de manutenção. Validação externa d
 | 1. Acessar o módulo de Áreas de Risco | |
 | | 2. Exibir lista de setores físicos cadastrados |
 | 3. Selecionar a opção de cadastrar nova área de risco | |
-| | 4. Apresentar formulário com campos de identificação, agentes de risco e limites |
+| | 4. Apresentar formulário com identificação, código, agentes de risco, limites e EPIs obrigatórios para acesso à área |
 | 5. Preencher dados do setor | |
-| 6. Preencher perigos mapeados | |
+| 6. Preencher perigos mapeados e selecionar os EPIs obrigatórios para acesso | |
 | 7. Confirmar cadastro | |
 | | 8. Validar dados informados |
 | | 9. Salvar novo setor de risco|
@@ -231,19 +239,21 @@ Este caso de uso está fora do MVP. Ele permanece documentado como extensão fut
 
 No MVP, este caso de uso cobre o registro, a consulta, a atualização e o arquivamento de ocorrências. Investigação de causa raiz, CAT e anexos permanecem fora da primeira entrega.
 
+O passo 8 do cenário principal, a consulta de evidências no alternativo I e os alternativos II e III são cenários futuros. A triagem e o acompanhamento do relato permanecem no MVP, conforme UC09; sua conversão em investigação formal depende de RF15, no backlog.
+
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
 | **Identificador** | **UC05** |
 | **Nome** | Gerenciar Acidentes e Incidentes |
 | **Ator Principal** | Gestor de Segurança |
 | **Atores Secundários** | Nenhum |
-| **Resumo** | Permite registrar, consultar, atualizar e conduzir a investigação pericial de acidentes e incidentes de trabalho causados por fatores humanos, condições inseguras ou falha de equipamentos. |
+| **Resumo** | Permite registrar, consultar, atualizar e arquivar acidentes e incidentes de trabalho causados por fatores humanos, condições inseguras ou falha de equipamentos. A investigação pericial permanece como extensão futura. |
 | **Pré-condições** | O Gestor de Segurança deve estar logado no sistema;<br>O colaborador envolvido deve estar cadastrado (se aplicável). |
-| **Pós-condições** | Acidente ou incidente formalizado no sistema, gerando histórico para investigação, plano de ação e documentação legal (CAT). |
+| **Pós-condições** | Ocorrência registrada, consultada, atualizada ou arquivada, conforme a operação, com histórico preservado para acompanhamento e plano de ação. Investigação e documentação legal (CAT) são resultados futuros. |
 | **Cenário Principal** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar a funcionalidade de gerenciamento de acidentes e incidentes | |
-| | 2. Apresentar opções (cadastrar, consultar ou editar ocorrência) |
+| | 2. Apresentar opções (cadastrar, consultar, editar ou arquivar ocorrência) |
 | 3. Escolher cadastrar ocorrência | |
 | | 4. Solicitar dados da ocorrência (tipo: acidente ou incidente, data, local, colaborador, tipo de lesão ou potencial de dano, EPIs) |
 | 5. Preencher as informações solicitadas | |
@@ -277,6 +287,20 @@ No MVP, este caso de uso cobre o registro, a consulta, a atualização e o arqui
 | 4. Acionar opção "Converter em Investigação Formal" | |
 | | 5. Criar processo de investigação formal |
 | | 6. Vincular o histórico do relato original |
+| **Cenário Alternativo IV - Atualizar ocorrência (MVP)** | |
+| **Ações do Ator** | **Ações do Sistema** |
+| 1. Selecionar uma ocorrência e a opção de editar | |
+| | 2. Exibir os dados registrados |
+| 3. Alterar os dados e confirmar | |
+| | 4. Validar e salvar as alterações, preservando o histórico |
+| | 5. Registrar usuário, data, hora e dados alterados na auditoria |
+| | 6. Exibir os dados atualizados na consulta |
+| **Cenário Alternativo V - Arquivar ocorrência (MVP)** | |
+| **Ações do Ator** | **Ações do Sistema** |
+| 1. Selecionar uma ocorrência e a opção de arquivar | |
+| | 2. Registrar o arquivamento, preservando os dados e o histórico da ocorrência |
+| | 3. Registrar usuário, data, hora e alteração na auditoria |
+| | 4. Identificar a ocorrência como arquivada na consulta |
 | **Cenário de Exceção I - Colaborador não cadastrado** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Informar identificação de colaborador inexistente | |
@@ -294,6 +318,8 @@ No MVP, este caso de uso cobre o registro, a consulta, a atualização e o arqui
 
 No MVP, este caso de uso cobre entradas, saídas, consulta de saldo e histórico de movimentações. Descarte, gestão de fornecedores e validações externas do Certificado de Aprovação permanecem no backlog.
 
+O alternativo II e a exceção I são cenários futuros. A verificação interna do CA depende da definição registrada em US03. As movimentações identificam quantidade, data, hora e o Gestor responsável pelo registro, conforme a rastreabilidade exigida por RNF05.
+
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
 | **Identificador** | **UC06** |
@@ -309,10 +335,10 @@ No MVP, este caso de uso cobre entradas, saídas, consulta de saldo e histórico
 | | 2. Carregar listagem de EPIs disponíveis com nome, quantidade e status |
 | 3. Selecionar um EPI específico | |
 | | 4. Exibir detalhes do item e histórico de movimentações |
-| 5. Clicar em "Registrar nova quantidade/entrada" | |
-| 6. Informar dados | |
+| 5. Selecionar o registro de entrada ou saída | |
+| 6. Informar o EPI, o tipo da movimentação e a quantidade | |
 | | 7. Validar dados informados |
-| | 8. Atualizar o saldo de estoque no sistema |
+| | 8. Registrar a movimentação com quantidade, data, hora e Gestor responsável; atualizar o saldo de estoque |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. Não é permitido que o estoque fique com quantidade negativa. | 2. Todo EPI cadastrado deve possuir Certificado de Aprovação (CA) válido. |
 | **Cenário Alternativo I - Estoque vazio / crítico** | |
@@ -337,7 +363,7 @@ No MVP, este caso de uso cobre entradas, saídas, consulta de saldo e histórico
 | | 4. Alertar sobre a irregularidade |
 | **Cenário de Exceção II - Tentativa de saída com quantidade superior ao saldo em estoque** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Informar quantidade a descartar superior ao saldo  disponível | |
+| 1. Informar quantidade de saída superior ao saldo disponível | |
 | | 2. Detectar tentativa de geração de saldo negativo |
 | | 3. Bloquear a transação |
 | | 4. Exibir alerta informando o saldo máximo permitido|
@@ -345,6 +371,8 @@ No MVP, este caso de uso cobre entradas, saídas, consulta de saldo e histórico
 ---
 
 ## UC07 – Definir Plano de Ação por Acidente / Incidente
+
+Este caso de uso integra o MVP por RF07. Prazos, responsáveis, situação e alertas são acompanhados por ação, conforme os cenários abaixo. O responsável pode ser um Colaborador ou setor, mas isso não cria uma conta de acesso. O meio de notificar uma pessoa sem acesso e a representação das ações individuais no modelo de classes continuam pendentes de definição.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
@@ -385,6 +413,8 @@ No MVP, este caso de uso cobre entradas, saídas, consulta de saldo e histórico
 ---
 
 ## UC08 – Interligar Tarefa ao EPI
+
+Este caso de uso está no backlog, pois RF12 está classificado como `Deveria ter`. A sugestão automática de EPIs no empréstimo também pertence a esse recorte futuro.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
@@ -435,33 +465,35 @@ No MVP, este caso de uso cobre entradas, saídas, consulta de saldo e histórico
 
 ## UC09 – Relatar Acidente/Incidente
 
-No MVP, o Colaborador pode relatar incidentes. O Supervisor pode relatar acidentes e incidentes. O Gestor de Segurança consulta e conduz a triagem dos registros.
+No MVP, o Supervisor registra acidentes e incidentes, inclusive os comunicados pelo Colaborador, que não acessa o sistema. O Gestor de Segurança consulta e conduz a triagem dos registros; seu próprio registro de ocorrências é descrito em UC05.
+
+O passo 7 do cenário principal e o alternativo I (anexos) pertencem ao backlog. O envio offline da exceção I está pendente: RNF08 prevê consulta de dados sincronizados, enquanto esse cenário cria novos relatos. Seus passos são preservados para decisão, sem considerar o envio offline como escopo confirmado.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
 | **Identificador** | **UC09** |
 | **Nome** | Relatar Acidente/Incidente |
-| **Ator Principal** | Colaborador ou Supervisor |
+| **Ator Principal** | Supervisor |
 | **Atores Secundários** | Gestor de Segurança |
-| **Resumo** | Permite o registro rápido de ocorrências de acidentes e incidentes no ambiente de trabalho pelo supervisor, viabilizando a pronta comunicação ao Gestor de Segurança para início de ações preventivas e corretivas. |
-| **Pré-condições** | O Colaborador ou Supervisor deve estar logado no sistema. |
-| **Pós-condições** | Acidente ou incidente registrado no sistema com notificação enviada ao Gestor de Segurança. |
+| **Resumo** | Permite ao Supervisor registrar acidentes e incidentes, inclusive os comunicados pelos colaboradores, e informar o Gestor de Segurança para acompanhamento e definição de ações preventivas e corretivas. |
+| **Pré-condições** | O Supervisor deve estar logado no sistema. Os colaboradores informados devem estar cadastrados, sem necessidade de conta ou senha própria. |
+| **Pós-condições** | Acidente ou incidente registrado com protocolo de acompanhamento, identificação do Supervisor que realizou o cadastro e notificação enviada ao Gestor de Segurança. |
 | **Cenário Principal** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar a funcionalidade "Relatar Acidente/Incidente" | |
 | | 2. Exibir formulário de relato rápido de acidentes e incidentes |
 | 3. Selecionar o tipo de ocorrência (acidente ou incidente) | |
-| 4. Informar setor| |
+| 4. Informar a data do fato e o setor | |
 | 5. Informar colaboradores envolvidos | |
 | 6. Informar descrição dos fatos | |
 | 7. Acionar opcionalmente o caso de uso estendido **UC04 - Anexar Mídias e Testemunhas** | |
 | 8. Confirmar o envio do relato de acidente/incidente | |
 | | 9. Validar dados |
-| | 10. Registrar o acidente/incidente |
-| | 11. Gerar protocolo|
+| | 10. Registrar o acidente/incidente, preservando a data do fato e registrando automaticamente usuário, data e hora do cadastro |
+| | 11. Gerar e apresentar o protocolo para acidente ou incidente |
 | | 12. Enviar notificação automática da ocorrência ao Gestor de Segurança |
 | **Regras de Negócio, Restrições e Validações** | |
-| 1. O formulário deve ser objetivo para preenchimento ágil. | 2. O Colaborador pode registrar incidentes; o Supervisor pode registrar acidentes e incidentes. |
+| 1. O formulário deve ser objetivo para preenchimento ágil. | 2. O Supervisor registra acidentes e incidentes com sua própria identificação, inclusive quando os fatos são comunicados por um Colaborador. A data e hora do cadastro não substituem a data do fato. |
 | **Cenário Alternativo I - Anexar foto ou evidência ao relato** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Selecionar foto ou evidência do acidente/incidente antes de enviar | |
@@ -472,7 +504,7 @@ No MVP, o Colaborador pode relatar incidentes. O Supervisor pode relatar acident
 | 1. Acessar listagem de acidentes e incidentes enviados pelo supervisor | |
 | | 2. Exibir status de triagem |
 | | 3. Exibir acompanhamento das ocorrências pelo Gestor de Segurança |
-| **Cenário de Exceção I - Envio de relato em modo offline** | |
+| **Cenário de Exceção I - Envio de relato em modo offline (pendente de decisão)** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Confirmar envio do relato de acidente/incidente sem conexão à internet | |
 | | 2. Armazenar o relato localmente na memória do PWA |
@@ -486,6 +518,10 @@ No MVP, o Colaborador pode relatar incidentes. O Supervisor pode relatar acident
 ---
 
 ## UC10 – Planejar Substituição Inteligente de EPI
+
+RF21 integra o MVP com previsão de substituição e alertas preventivos. A geração de requisições de compra (passo 13 e alternativo II) e a prorrogação por laudo (alternativo I) permanecem pendentes de decisão, conforme US21. As pós-condições abaixo preservam o cenário completo proposto; o registro de requisições ainda não é um resultado confirmado do MVP.
+
+O alternativo III, de exportação de relatório, pertence ao backlog de RF18. A origem e as unidades dos dados, a fórmula, os multiplicadores de risco e a antecedência dos alertas precisam ser definidos antes de validar os resultados da projeção.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
@@ -537,6 +573,8 @@ No MVP, o Colaborador pode relatar incidentes. O Supervisor pode relatar acident
 
 ## UC11 – Classificar Nível de Periculosidade
 
+Este caso de uso integra o MVP por RF06. Os níveis leve, moderado, grave e crítico usados abaixo divergem de baixo, médio, alto e crítico usados em UC03 e na enumeração `NivelPerigo` do diagrama de classes. A padronização depende de decisão da equipe; os valores originais são preservados até essa definição. O recálculo de vínculos com EPIs no alternativo I depende de RF12, no backlog.
+
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
 | **Identificador** | **UC11** |
@@ -570,6 +608,8 @@ No MVP, o Colaborador pode relatar incidentes. O Supervisor pode relatar acident
 ## UC12 – Controlar Empréstimo de EPIs
 
 No MVP, este caso de uso cobre empréstimos e devoluções para colaboradores. Empréstimos para visitantes e sugestões automáticas de equipamentos permanecem fora da primeira entrega.
+
+O Colaborador que recebe o EPI é identificado separadamente do Supervisor ou Gestor autenticado que registra a entrega. A indicação de descarte na devolução não executa a baixa definitiva de RF14, que permanece no backlog. O alternativo II e a sugestão de modelo alternativo no passo 3 da exceção II são cenários futuros; o bloqueio por falta de saldo faz parte do MVP.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |

@@ -64,7 +64,7 @@ Este requisito refere-se ao sistema realizar o registro detalhado da investigaç
 
 ## RF16: O sistema deve permitir o registro de incidentes
 
-Este requisito refere-se ao sistema permitir que colaborador, supervisor ou gerente de segurança relatem situações de risco ou incidentes que não geraram lesão, mas que poderiam ter gerado, para fins de prevenção proativa.
+Este requisito refere-se ao registro de situações de risco ou incidentes que não geraram lesão, mas que poderiam ter gerado. O Supervisor registra os relatos, inclusive os comunicados pelos colaboradores. O Gestor de Segurança também pode registrar incidentes, conforme UC05. O Colaborador não acessa o sistema e não precisa de conta ou senha para ter seu relato registrado pelo Supervisor.
 
 ## RF17: O sistema deve permitir a geração de dashboards de segurança
 
@@ -92,4 +92,4 @@ Este requisito refere-se à capacidade de um supervisor ou gestor de segurança 
 
 ## RF23: O sistema deve permitir a gestão de supervisores e colaboradores
 
-Este requisito refere-se a capacidade de um supervisor gerenciar colaboradores e um gestor de segurança gerenciar supervisores, com o sistema gerando automaticamente a senha de ambos os casos.
+Este requisito refere-se à capacidade de um Supervisor cadastrar, consultar e atualizar colaboradores e de um Gestor de Segurança cadastrar, consultar e atualizar supervisores. O sistema gera automaticamente a senha inicial apenas para o Supervisor. O Colaborador possui cadastro para vinculação a ocorrências, capacitações e empréstimos de EPIs, sem conta de acesso, perfil de autenticação ou senha. A atualização cadastral deve preservar os vínculos existentes.

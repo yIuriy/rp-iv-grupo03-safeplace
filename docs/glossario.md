@@ -24,6 +24,8 @@ Fator presente em uma área, atividade ou processo de trabalho que pode causar d
 
 Aviso gerado pelo sistema quando uma condição importante é identificada, como vencimento de certificação, estoque crítico, EPI com CA vencido, prazo de ação próximo do vencimento ou ocorrência com alto potencial de gravidade.
 
+O alerta de comportamento de risco (RF08, backlog) considera o histórico de ocorrências da pessoa. O alerta de prazo de ação (UC07, MVP) acompanha o prazo configurado para uma ação. O alerta de substituição (RF21, MVP) avisa sobre a necessidade prevista de reposição de EPIs. São condições diferentes e não devem ser tratadas como um único tipo de alerta de comportamento.
+
 ### Área de risco
 
 Setor físico ou local de trabalho que apresenta perigos mapeados e exige regras específicas de proteção. No SafePlace, áreas de risco podem ser cadastradas, atualizadas, classificadas e associadas a EPIs obrigatórios.
@@ -38,7 +40,7 @@ Forma de retirar uma ocorrência da operação ativa sem apagá-la definitivamen
 
 ### Ator
 
-Pessoa ou perfil que interage com o sistema em um caso de uso. Os principais atores do SafePlace são Gestor de Segurança, Supervisor e Colaborador.
+Pessoa ou perfil que interage com o sistema em um caso de uso. Os atores com acesso ao SafePlace são Gestor de Segurança e Supervisor. O Colaborador comunica os fatos ao Supervisor, que registra o relato no sistema.
 
 ### Auditoria
 
@@ -66,7 +68,7 @@ Registro que comprova a aprovação de um EPI para uso conforme normas aplicáve
 
 ### Colaborador
 
-Usuário que atua nas atividades operacionais da organização. Pode estar envolvido em acidentes, incidentes, treinamentos, certificações e empréstimos de EPIs.
+Pessoa que atua nas atividades operacionais da organização e é cadastrada pelo Supervisor. Pode estar envolvida em acidentes, incidentes, treinamentos, certificações e empréstimos de EPIs. Esse cadastro não possui conta, senha ou perfil de acesso. Seus relatos são registrados pelo Supervisor.
 
 ### Condição insegura
 
@@ -74,7 +76,7 @@ Situação do ambiente, equipamento ou processo que aumenta a chance de acidente
 
 ### Controle de acesso por perfil
 
-Restrição das funcionalidades do sistema conforme o papel do usuário. No SafePlace, os perfis principais são Colaborador, Supervisor e Gestor de Segurança.
+Restrição das funcionalidades do sistema conforme o papel do usuário. No SafePlace, os perfis de acesso são Supervisor e Gestor de Segurança. O cadastro de Colaborador não permite autenticação.
 
 ### Descarte
 
@@ -94,7 +96,7 @@ Parte central do sistema que contém as entidades, regras de negócio e conceito
 
 ### Empréstimo de EPI
 
-Registro da entrega temporária de um EPI a um colaborador, visitante ou terceirizado. Deve indicar data, hora, responsável pela entrega e vínculo com o usuário que está em posse do equipamento.
+Registro da entrega temporária de um EPI a uma pessoa. No MVP, atende colaboradores; visitantes e terceirizados pertencem ao cenário futuro de UC12. Deve indicar data, hora, o Supervisor ou Gestor que registra a entrega e o Colaborador que recebe o equipamento. Receber um EPI não exige conta de acesso.
 
 ### EPI
 
@@ -114,11 +116,11 @@ Problema em um EPI ou equipamento de segurança que reduz sua capacidade de prot
 
 ### Gestor de Segurança
 
-Perfil responsável por controlar EPIs, áreas de risco, acidentes, incidentes, planos de ação, supervisores, colaboradores e regras de segurança no sistema.
+Perfil responsável por controlar EPIs, áreas de risco, acidentes, incidentes, planos de ação, supervisores e regras de segurança no sistema. O Gestor consulta dados de colaboradores nos fluxos sob sua responsabilidade; o cadastro e a atualização dos colaboradores são atribuições do Supervisor em RF23.
 
 ### Grau de risco
 
-Classificação usada para indicar a gravidade ou intensidade do risco associado a uma área, atividade ou função. A documentação usa níveis como baixo, médio, alto, crítico, leve, moderado, grave e crítico.
+Classificação usada para indicar a gravidade ou intensidade do risco associado a uma área, atividade ou função. UC03 e a enumeração `NivelPerigo` do diagrama de classes usam baixo, médio, alto e crítico. UC11 e US06 usam leve, moderado, grave e crítico. A padronização ou a correspondência entre essas listas está pendente; elas não são consideradas equivalentes por este glossário.
 
 ### Histórico de manutenção
 
@@ -138,7 +140,7 @@ Processo de análise de uma ocorrência para identificar fatores determinantes e
 
 ### ItemEPI
 
-Unidade física rastreável de um EPI. Enquanto EPI pode representar o tipo ou modelo do equipamento, ItemEPI representa um exemplar específico em estoque, emprestado, em manutenção ou descartado.
+Nome proposto para representar uma unidade física rastreável de um EPI, em estoque, emprestada, em manutenção ou descartada. A separação entre tipo de equipamento e unidade física está em discussão na seção 8.5 da especificação do MVP. `ItemEPI` não é uma classe aprovada: o modelo atual usa `EPI`, `ModeloEPI` e `LoteEPI`, e a unidade representada por `EPI` ainda precisa ser definida.
 
 ### Laudo pericial
 
@@ -178,11 +180,11 @@ Normas brasileiras de segurança e saúde no trabalho usadas como referência pa
 
 ### Ocorrência
 
-Registro genérico de um acidente ou incidente. Pode conter tipo, data, local, setor, colaborador envolvido, descrição, evidências, status, plano de ação e histórico.
+Registro genérico de um acidente ou incidente. Pode conter tipo, data, local, setor, colaboradores envolvidos, descrição, evidências, status, plano de ação e histórico. A data do fato indica quando o acidente ou incidente ocorreu; a data e hora do cadastro indicam quando o usuário o registrou. São informações distintas. Evidências pertencem ao escopo futuro de UC04.
 
 ### Perfil
 
-Papel associado ao usuário para definir permissões e responsabilidades no sistema. Os perfis documentados são Colaborador, Supervisor e Gestor de Segurança.
+Papel associado ao usuário para definir permissões e responsabilidades no sistema. Os perfis de acesso são Supervisor e Gestor de Segurança. Colaborador identifica uma pessoa cadastrada, não um perfil de autenticação.
 
 ### Plano de ação
 
@@ -214,7 +216,7 @@ Registro de uma situação de risco ou incidente feito antes que ocorra dano mai
 
 ### Requisição automática de compra
 
-Solicitação gerada pelo sistema quando a projeção de reposição identifica necessidade futura de compra de EPIs.
+Solicitação de compra registrada quando a projeção de reposição identifica necessidade futura de EPIs. UC10 descreve essa solicitação, enquanto RF21 e o resultado esperado do MVP explicitam previsão e alertas. A inclusão da requisição no MVP e seus dados mínimos estão pendentes de decisão. Emitir um alerta não equivale a salvar uma requisição.
 
 ### Responsável pela ação
 
@@ -230,7 +232,7 @@ Situação atual de um equipamento, como disponível, em uso, em manutenção, v
 
 ### Supervisor
 
-Perfil responsável por acompanhar atividades operacionais, registrar acidentes ou incidentes conforme permissões definidas e apoiar o controle de empréstimos de EPIs.
+Perfil responsável por cadastrar, consultar e atualizar colaboradores, registrar acidentes e incidentes, inclusive os comunicados por eles, e controlar empréstimos e devoluções de EPIs. Sua conta é gerenciada pelo Gestor de Segurança.
 
 ### Tarefa de risco
 
@@ -254,7 +256,7 @@ Análise inicial de uma ocorrência ou relato preventivo para definir gravidade,
 
 ### Usuário
 
-Pessoa cadastrada no SafePlace que acessa o sistema por meio de um perfil. Pode ser Colaborador, Supervisor ou Gestor de Segurança.
+Pessoa com conta de acesso ao SafePlace e perfil de Supervisor ou Gestor de Segurança. O Colaborador possui cadastro para vínculo aos registros, mas não é usuário com acesso ao sistema.
 
 ### Visitante
 
@@ -267,5 +269,7 @@ Pessoa externa à organização que pode receber EPIs temporariamente para acess
 - [Requisitos não funcionais](requisitos/requisitos-nao-funcionais.md)
 - [Priorização MoSCoW](requisitos/priorizacao-moscow.md)
 - [Casos de uso](casos-de-uso/casos-de-uso.md)
+- [Histórias de usuário](historias-de-usuario.md)
 - [Especificação do MVP e Arquitetura](mvp/especificacao-mvp-arquitetura.md)
 - [Especificação arquitetural](arquitetura/especificacao-arquitetural.md)
+- [Diagrama de classes](diagramas/classes/Diagrama%20de%20Classes%20-%20SafePlace.png)

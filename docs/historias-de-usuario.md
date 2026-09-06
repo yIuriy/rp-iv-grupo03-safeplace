@@ -2,7 +2,9 @@
 
 As histórias cobrem os requisitos RF01 a RF23. A indicação de MVP ou backlog segue a [Especificação do MVP](mvp/especificacao-mvp-arquitetura.md) e a [Priorização MoSCoW](requisitos/priorizacao-moscow.md). Backlog identifica funcionalidades previstas para depois da primeira entrega.
 
-Decisão adotada nestas histórias: o Colaborador não acessa o sistema, não recebe conta ou senha e tem seus relatos registrados pelo Supervisor. Essa decisão substitui, apenas neste documento, as previsões de acesso do Colaborador em RF16, RF23, RNF03 e UC09. Os documentos de origem permanecem preservados.
+O Colaborador não acessa o sistema, não recebe conta ou senha e tem seus relatos registrados pelo Supervisor. Essa definição segue RF16, RF23, RNF03 e UC09, conforme a decisão registrada na [issue #81](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/81).
+
+Os dicionários de dados são propostas de detalhamento. Campos, formatos e regras marcados como "A confirmar" continuam pendentes de decisão; sua presença neste documento não os torna requisitos aprovados. As divergências com o diagrama de classes estão registradas nas [pendências da revisão documental](mvp/especificacao-mvp-arquitetura.md#11-pendências-da-revisão-documental).
 
 # US01 – Acompanhar acidentes relacionados a fatores humanos
 
@@ -854,7 +856,7 @@ Referência: [RF23](requisitos/requisitos-funcionais.md#rf23-o-sistema-deve-perm
 
 # US24 – Gerenciar colaboradores
 
-Referência: [RF23](requisitos/requisitos-funcionais.md#rf23-o-sistema-deve-permitir-a-gestão-de-supervisores-e-colaboradores), com a decisão de Colaborador sem acesso adotada neste documento. Escopo: MVP.
+Referência: [RF23](requisitos/requisitos-funcionais.md#rf23-o-sistema-deve-permitir-a-gestão-de-supervisores-e-colaboradores). Escopo: MVP, com cadastro de Colaborador sem acesso ao sistema.
 
 ## Descrição da História:
 

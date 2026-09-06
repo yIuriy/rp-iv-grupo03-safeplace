@@ -1,83 +1,59 @@
 # Interface web do SafePlace
 
-A biblioteca de componentes compartilhados está pronta para o desenvolvimento das funcionalidades. Execute `npm ci` e `npm run dev`. Depois, abra `/design-system` para acessar o catálogo interativo ou `/design-system/examples/risk-areas` para consultar a tela de referência montada com os componentes.
+A interface usa React 19, TypeScript e Vite 8. A biblioteca de componentes compartilhados está disponível para o desenvolvimento das funcionalidades. O catálogo interativo fica em `/design-system`, e a tela de referência de áreas de risco fica em `/design-system/examples/risk-areas`.
 
 Consulte o [guia de componentes](design-system/README.md) para conhecer as importações, propriedades, referências do Figma, regras de organização visual e convenções da equipe. Os exemplos usam dados fictícios e não se conectam ao servidor da aplicação.
 
-Para validar o projeto, execute `npm run build`, `npm run lint` e `npm test`. Antes de executar os testes, instale o navegador usado neles com `npx playwright install chromium`.
+## Executar em desenvolvimento
 
-## Notas do modelo original React + TypeScript + Vite
+Use Node.js 22.12 ou superior com npm. A partir da raiz do repositório:
 
-Este modelo fornece uma configuração mínima para usar React com Vite, atualização de módulos durante o desenvolvimento (HMR) e algumas regras de análise de código do ESLint.
-
-Há duas extensões oficiais disponíveis:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) usa [Oxc](https://oxc.rs).
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) usa [SWC](https://swc.rs/).
-
-## Compilador do React
-
-O compilador do React não está habilitado neste modelo devido ao impacto no desempenho durante o desenvolvimento e a geração da versão de produção. Para adicioná-lo, consulte a [documentação de instalação](https://react.dev/learn/react-compiler/installation).
-
-## Ampliação da configuração do ESLint
-
-Para uma aplicação de produção, recomenda-se atualizar a configuração para habilitar regras de análise de código que considerem os tipos do TypeScript:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Outras configurações...
-
-      // Substitua tseslint.configs.recommended pela configuração abaixo
-      tseslint.configs.recommendedTypeChecked,
-      // Como alternativa, use esta opção para regras mais rígidas
-      tseslint.configs.strictTypeChecked,
-      // Opcionalmente, inclua esta configuração para regras de estilo
-      tseslint.configs.stylisticTypeChecked,
-
-      // Outras configurações...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // Outras opções...
-    },
-  },
-])
-
+```sh
+cd frontend
+npm ci
+npm run dev
 ```
 
-Também é possível instalar [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) e [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) para usar regras de análise de código específicas do React:
+Abra o endereço exibido no terminal, normalmente [http://localhost:5173](http://localhost:5173). O catálogo pode ser usado sem backend ou banco de dados. Para executar o conjunto com PostgreSQL e API, consulte o [README principal](../README.md#executar-com-docker-compose).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Configurar a URL da API
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Outras configurações...
-      // Habilita as regras de análise para React
-      reactX.configs['recommended-typescript'],
-      // Habilita as regras de análise para React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // Outras opções...
-    },
-  },
-])
+O cliente HTTP em [src/shared/api/https.ts](src/shared/api/https.ts) lê `VITE_URL_API`. Sem essa variável, usa `http://localhost:8080/api`. Para usar outro endereço, crie `frontend/.env.local` com o conteúdo abaixo e reinicie o Vite:
 
+```dotenv
+VITE_URL_API=http://localhost:8080/api
 ```
+
+O [Compose atual](../docker-compose.yml) fornece `VITE_API_URL`, nome diferente do lido pelo cliente. Com os valores locais padrão, o cliente usa o endereço padrão. A correção dessa divergência de configuração continua pendente; alterar apenas `VITE_API_URL` não muda a URL usada pelo código. Os exemplos do catálogo ainda não utilizam esse cliente.
+
+## Validar e gerar a interface
+
+Execute em `frontend/`:
+
+```sh
+npm run lint
+npm run build
+npx playwright install chromium
+npm test
+```
+
+O lint verifica as regras de código configuradas. O build verifica os tipos e gera os arquivos em `dist/`. Os testes Playwright verificam o catálogo e seus exemplos no Chromium; sua configuração inicia um servidor local na porta 4173. Eles não demonstram integração com a API nem persistência dos dados.
+
+Para conferir o resultado do build no navegador:
+
+```sh
+npm run preview
+```
+
+Use o endereço exibido no terminal, normalmente [http://localhost:4173](http://localhost:4173). O comando serve para conferir o build localmente. O Dockerfile atual executa o servidor de desenvolvimento do Vite.
+
+## Organização
+
+- `src/features/design-system/`: catálogo e exemplos com dados fictícios.
+- `src/shared/components/` e `src/shared/layout/`: componentes e estrutura visual compartilhados.
+- `src/shared/api/`: cliente HTTP para a integração com a API.
+- `design-system/`: tokens, contratos e guias de componentes.
+- `design/`: referências visuais exportadas do Figma.
+- `tests/`: testes do catálogo no navegador.
+
+Referências: [especificação arquitetural](../docs/arquitetura/especificacao-arquitetural.md) e [guia de variáveis de ambiente do Vite](https://vite.dev/guide/env-and-mode).

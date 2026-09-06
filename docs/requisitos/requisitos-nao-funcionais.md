@@ -14,7 +14,7 @@ O sistema deve suportar ao menos 20 usuários simultâneos sem degradação perc
 
 ## RNF03 — Controle de acesso por perfil
 
-O sistema deve implementar controle de acesso baseado em perfis (RBAC), restringindo funcionalidades conforme o papel do usuário, sendo eles: colaborador, gestor de segurança e supervisor.
+O sistema deve implementar controle de acesso baseado em perfis (RBAC), restringindo funcionalidades conforme o papel do usuário: Gestor de Segurança ou Supervisor. O Colaborador é uma pessoa cadastrada para vinculação aos registros do sistema, sem conta, senha ou perfil de acesso. Seu cadastro não permite autenticação.
 
 ## RNF04 — Criptografia de dados sensíveis
 
