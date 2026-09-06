@@ -1,15 +1,13 @@
 package br.edu.safeplace.backend.application.port.in;
 
+import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
+import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
+import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
+
 import java.util.List;
 
-import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
-import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
-import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
-
 public interface RegistrarOcorrenciaUseCase {
-    Acidente registrarAcidente(Acidente acidente);
-
-    Incidente registrarIncidente(Incidente incidente);
-
-    List<Ocorrencia> listar();
+    OcorrenciaOutputDTO registrarAcidente(RegistrarAcidenteInputDTO inputDTO);
+    OcorrenciaOutputDTO registrarIncidente(RegistrarIncidenteInputDTO inputDTO);
+    List<OcorrenciaOutputDTO> listar();
 }
