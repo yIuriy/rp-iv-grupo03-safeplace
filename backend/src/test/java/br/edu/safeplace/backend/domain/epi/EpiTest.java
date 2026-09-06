@@ -24,6 +24,23 @@ class EpiTest {
     }
 
     @Test
+    void deveCriarNovoEpiComStatusDisponivelQuandoQuantidadeMaiorQueZero() {
+        Epi epi = Epi.novo("Óculos de Proteção", "CA-9988", 10, 2, LocalDate.of(2028, 1, 1), 365);
+
+        assertNull(epi.getId());
+        assertEquals("Óculos de Proteção", epi.getNome());
+        assertEquals(StatusEpi.DISPONIVEL, epi.getStatus());
+    }
+
+    @Test
+    void deveCriarNovoEpiComStatusEsgotadoQuandoQuantidadeForZero() {
+        Epi epi = Epi.novo("Luva", "CA-1234", 0, 5, null, null);
+
+        assertNull(epi.getId());
+        assertEquals(StatusEpi.ESGOTADO, epi.getStatus());
+    }
+
+    @Test
     void deveAdicionarEstoqueETransitarDeEsgotadoParaDisponivel() {
         Epi epi = new Epi(1, "Luva de Vaqueta", "CA-1234", 0, 5,
                 StatusEpi.ESGOTADO, null, null);
