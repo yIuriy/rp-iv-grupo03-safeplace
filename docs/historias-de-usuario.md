@@ -2,8 +2,6 @@
 
 As histórias cobrem os requisitos RF01 a RF23. A indicação de MVP ou backlog segue a [Especificação do MVP](mvp/especificacao-mvp-arquitetura.md) e a [Priorização MoSCoW](requisitos/priorizacao-moscow.md). Backlog identifica funcionalidades previstas para depois da primeira entrega.
 
-Os dicionários de dados são uma proposta de detalhamento dos campos de cada história. A coluna **Propriedade** apresenta o identificador sugerido em inglês. Limites, formatos e regras ainda não definidos nas fontes estão indicados como **A confirmar**.
-
 Decisão adotada nestas histórias: o Colaborador não acessa o sistema, não recebe conta ou senha e tem seus relatos registrados pelo Supervisor. Essa decisão substitui, apenas neste documento, as previsões de acesso do Colaborador em RF16, RF23, RNF03 e UC09. Os documentos de origem permanecem preservados.
 
 # US01 – Acompanhar acidentes relacionados a fatores humanos
@@ -18,14 +16,14 @@ Referências: [RF01](requisitos/requisitos-funcionais.md#rf01-o-sistema-deve-ger
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Acidente | `occurrence_id` | Identificador de ocorrência | Obrigatório; deve identificar um acidente cadastrado. | Registro acompanhado pelo Gestor. |
-> | Colaborador envolvido | `employee_id` | Identificador de colaborador | Obrigatório; deve corresponder a um colaborador cadastrado. | Pessoa relacionada ao fator humano registrado. |
-> | Fator humano | `human_factor_description` | Texto | Obrigatório para esta classificação; tamanho máximo a confirmar. | Descrição do comportamento relacionado ao acidente. |
-> | Uso do EPI | `ppe_usage_description` | Texto | Preenchido quando relacionado ao acidente. | Informação sobre uso incorreto ou ausência do EPI. |
-> | Data da ocorrência | `occurred_on` | Data | Recuperada do registro da ocorrência. | Data em que o acidente aconteceu. |
-> | Setor | `sector_id` | Identificador de setor | Recuperado do registro da ocorrência. | Setor onde o acidente ocorreu. |
+> | Acidente | Acidente cadastrado. | Identificador de ocorrência | Obrigatório | Registro acompanhado pelo Gestor. |
+> | Colaborador envolvido | Colaborador cadastrado. | Identificador de colaborador | Obrigatório | Pessoa relacionada ao fator humano registrado. |
+> | Fator humano | Tamanho máximo a confirmar. | Texto | Obrigatório | Descrição do comportamento relacionado ao acidente. |
+> | Uso do EPI | Tamanho máximo a confirmar. | Texto | Condicional | Informação sobre uso incorreto ou ausência do EPI. |
+> | Data da ocorrência | Formato a confirmar. | Data | Automático | Data em que o acidente aconteceu. |
+> | Setor | O setor da ocorrência. | Identificador de setor | Automático | Setor onde o acidente ocorreu. |
 
 ## Regra(s) de Negócio:
 
@@ -53,13 +51,13 @@ Referências: [RF02](requisitos/requisitos-funcionais.md#rf02-o-sistema-deve-ger
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Acidente | `occurrence_id` | Identificador de ocorrência | Obrigatório; deve identificar um acidente cadastrado. | Ocorrência relacionada à falha. |
-> | EPIs envolvidos | `ppe_ids` | Lista de identificadores de EPI | Deve identificar os equipamentos relacionados à falha. | Equipamentos envolvidos no acidente. |
-> | Descrição da falha | `equipment_failure_description` | Texto | Obrigatória para esta classificação; tamanho máximo a confirmar. | Falha observada no equipamento de proteção. |
-> | Estado do EPI na ocorrência | `ppe_condition_description` | Texto | Preenchido conforme a informação disponível sobre o acidente. | Condição do equipamento quando ocorreu a falha. |
-> | Colaborador envolvido | `employee_id` | Identificador de colaborador | Se informado, deve corresponder a um cadastro existente. | Colaborador relacionado ao acidente. |
+> | Acidente | Acidente cadastrado. | Identificador de ocorrência | Obrigatório | Ocorrência relacionada à falha. |
+> | EPIs envolvidos | Os equipamentos relacionados à falha. | Lista de identificadores de EPI | Obrigatório | Equipamentos envolvidos no acidente. |
+> | Descrição da falha | Tamanho máximo a confirmar. | Texto | Obrigatório | Falha observada no equipamento de proteção. |
+> | Estado do EPI na ocorrência | Tamanho máximo a confirmar. | Texto | Condicional | Condição do equipamento quando ocorreu a falha. |
+> | Colaborador envolvido | Cadastro existente. | Identificador de colaborador | Opcional | Colaborador relacionado ao acidente. |
 
 ## Regra(s) de Negócio:
 
@@ -87,16 +85,16 @@ Referências: [RF03](requisitos/requisitos-funcionais.md#rf03-o-sistema-deve-con
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | EPI | `ppe_id` | Identificador de EPI | Obrigatório; equipamento previamente cadastrado. | Equipamento movimentado ou consultado. |
-> | Tipo de movimentação | `movement_type` | Entrada ou saída | Obrigatório para uma movimentação. | Operação que altera o estoque. |
-> | Quantidade movimentada | `quantity` | Número inteiro | Maior que zero; uma saída não pode superar o saldo. | Quantidade de unidades da movimentação. |
-> | Saldo | `stock_balance` | Número inteiro | Calculado pelo sistema; não pode ser negativo. | Quantidade de unidades em estoque. |
-> | Estoque mínimo | `minimum_stock` | Número inteiro | Não negativo; valor definido para cada EPI. | Limite usado para indicar estoque crítico. |
-> | Situação do EPI | `ppe_status` | Situações do cadastro de EPI | Consultada no cadastro; lista completa a confirmar. | Estado de uso e manutenção do equipamento. |
-> | Data e hora da movimentação | `recorded_at` | Data e hora | Geradas pelo sistema. | Momento do registro da entrada ou saída. |
-> | Responsável | `recorded_by` | Identificador de usuário | Obtido do usuário autenticado. | Pessoa que registrou a movimentação. |
+> | EPI | Equipamento cadastrado. | Identificador de EPI | Obrigatório | Equipamento movimentado ou consultado. |
+> | Tipo de movimentação | Não se aplica. | Entrada ou saída | Obrigatório | Operação que altera o estoque. |
+> | Quantidade movimentada | Maior que zero; uma saída não pode superar o saldo. | Número inteiro | Obrigatório | Quantidade de unidades da movimentação. |
+> | Saldo | Valor mínimo: zero. | Número inteiro | Calculado | Quantidade de unidades em estoque. |
+> | Estoque mínimo | Valor mínimo: zero. | Número inteiro | A confirmar | Limite usado para indicar estoque crítico. |
+> | Situação do EPI | Lista completa de situações a confirmar. | Situações do cadastro de EPI | Automático | Estado de uso e manutenção do equipamento. |
+> | Data e hora da movimentação | Formato a confirmar. | Data e hora | Automático | Momento do registro da entrada ou saída. |
+> | Responsável | O usuário autenticado. | Identificador de usuário | Automático | Pessoa que registrou a movimentação. |
 
 ## Regra(s) de Negócio:
 
@@ -126,14 +124,14 @@ Referências: [RF04](requisitos/requisitos-funcionais.md#rf04-o-sistema-deve-con
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | EPI | `ppe_id` | Identificador de EPI | Obrigatório; deve corresponder a equipamento cadastrado. | Equipamento submetido à manutenção. |
-> | Data da manutenção | `maintenance_date` | Data | Obrigatória. | Data da realização da manutenção. |
-> | Descrição da manutenção | `maintenance_description` | Texto | Obrigatória; tamanho máximo a confirmar. | Serviço realizado no equipamento. |
-> | Resultado da manutenção | `maintenance_result` | Texto | Obrigatório; classificação dos resultados a confirmar. | Resultado usado para atualizar a situação do EPI. |
-> | Situação do EPI | `ppe_status` | Situações do cadastro de EPI | Atualizada conforme o resultado; correspondência entre resultado e situação a confirmar. | Condição atual do equipamento. |
-> | Responsável pelo registro | `recorded_by` | Identificador de usuário | Obtido do usuário autenticado. | Gestor que registrou a manutenção. |
+> | EPI | Deve corresponder a equipamento cadastrado. | Identificador de EPI | Obrigatório | Equipamento submetido à manutenção. |
+> | Data da manutenção | Formato a confirmar. | Data | Obrigatório | Data da realização da manutenção. |
+> | Descrição da manutenção | Tamanho máximo a confirmar. | Texto | Obrigatório | Serviço realizado no equipamento. |
+> | Resultado da manutenção | Classificação dos resultados a confirmar. | Texto | Obrigatório | Resultado usado para atualizar a situação do EPI. |
+> | Situação do EPI | Correspondência entre resultado e situação a confirmar. | Situações do cadastro de EPI | Automático | Condição atual do equipamento. |
+> | Responsável pelo registro | O usuário autenticado. | Identificador de usuário | Automático | Gestor que registrou a manutenção. |
 
 ## Regra(s) de Negócio:
 
@@ -161,14 +159,14 @@ Referências: [RF05](requisitos/requisitos-funcionais.md#rf05-o-sistema-deve-map
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Código da área | `area_code` | Texto | Obrigatório e único; formato a confirmar. | Código de identificação da área de risco. |
-> | Identificação do setor | `sector_name` | Texto | Obrigatória; tamanho máximo a confirmar. | Nome ou identificação do setor físico. |
-> | Agentes de risco | `risk_agents` | Lista de agentes de risco | Obrigatória; catálogo de agentes a confirmar. | Perigos identificados no setor. |
-> | Limites físicos | `physical_boundaries` | Descrição ou representação de limites | Obrigatórios; formato de representação a confirmar. | Delimitação física da área. |
-> | Grau de perigo | `area_risk_level` | Baixo, médio, alto ou crítico | Um dos níveis previstos em UC03. | Classificação usada na consulta das áreas. |
-> | EPIs obrigatórios | `required_ppe_ids` | Lista de identificadores de EPI | Deve conter pelo menos um EPI cadastrado. | Equipamentos necessários para acesso ao setor. |
+> | Código da área | Formato a confirmar. | Texto | Obrigatório; único | Código de identificação da área de risco. |
+> | Identificação do setor | Tamanho máximo a confirmar. | Texto | Obrigatório | Nome ou identificação do setor físico. |
+> | Agentes de risco | Catálogo de agentes a confirmar. | Lista de agentes de risco | Obrigatório | Perigos identificados no setor. |
+> | Limites físicos | Formato de representação a confirmar. | Descrição ou representação de limites | Obrigatório | Delimitação física da área. |
+> | Grau de perigo | Dos níveis previstos em UC03. | Baixo, médio, alto ou crítico | A confirmar | Classificação usada na consulta das áreas. |
+> | EPIs obrigatórios | Pelo menos um EPI cadastrado. | Lista de identificadores de EPI | Obrigatório | Equipamentos necessários para acesso ao setor. |
 
 ## Regra(s) de Negócio:
 
@@ -197,13 +195,13 @@ Referências: [RF06](requisitos/requisitos-funcionais.md#rf06-o-sistema-deve-per
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Tarefa | `task_id` | Identificador de tarefa | Obrigatório; tarefa previamente cadastrada. | Atividade que recebe a classificação. |
-> | Grau de risco | `task_risk_level` | Leve, moderado, grave ou crítico | Obrigatório; níveis definidos em UC11. | Nível de periculosidade da tarefa. |
-> | Exigências normativas | `regulatory_requirements` | Texto ou lista de referências | Conteúdo e critérios de classificação a confirmar com a equipe. | Exigências consideradas na classificação da atividade. |
-> | Responsável técnico | `technical_responsible_id` | Identificador de usuário | Obrigatório no histórico da alteração. | Gestor responsável pela classificação. |
-> | Data e hora da alteração | `updated_at` | Data e hora | Geradas pelo sistema. | Momento da classificação ou revisão. |
+> | Tarefa | Tarefa cadastrada. | Identificador de tarefa | Obrigatório | Atividade que recebe a classificação. |
+> | Grau de risco | Dos níveis definidos em UC11. | Leve, moderado, grave ou crítico | Obrigatório | Nível de periculosidade da tarefa. |
+> | Exigências normativas | Conteúdo e critérios de classificação a confirmar. | Texto ou lista de referências | A confirmar | Exigências consideradas na classificação da atividade. |
+> | Responsável técnico | O responsável técnico pela classificação. | Identificador de usuário | Obrigatório | Gestor responsável pela classificação. |
+> | Data e hora da alteração | Formato a confirmar. | Data e hora | Automático | Momento da classificação ou revisão. |
 
 ## Regra(s) de Negócio:
 
@@ -231,17 +229,17 @@ Referências: [RF07](requisitos/requisitos-funcionais.md#rf07-o-sistema-deve-per
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Ocorrência | `occurrence_id` | Identificador de ocorrência | Obrigatório; ocorrência previamente registrada. | Acidente ou incidente que originou o plano. |
-> | Descrição da ação | `action_description` | Texto | Obrigatória; tamanho máximo a confirmar. | Medida a ser executada. |
-> | Tipo de ação | `action_type` | Preventiva ou corretiva | Obrigatório. | Finalidade da medida. |
-> | Responsável pela execução | `assignee_id` | Identificador de colaborador ou setor | Obrigatório; deve identificar o responsável escolhido. | Pessoa ou setor encarregado da execução. |
-> | Prazo | `due_date` | Data | Não pode ser anterior à data atual nem à data da ocorrência. | Data limite para executar a ação. |
-> | Situação da ação | `action_status` | Situações de acompanhamento | Lista de situações e transições a confirmar. | Andamento da execução. |
-> | Alerta ativado | `alert_enabled` | Sim ou não | Configurado pelo Gestor para cada ação. | Indica se a ação deve gerar aviso de prazo. |
-> | Antecedência do alerta | `alert_lead_days` | Número inteiro de dias | Não negativo; informado quando o alerta estiver ativado. | Antecedência escolhida para o aviso. |
-> | Justificativa de prorrogação | `extension_reason` | Texto | Obrigatória ao prorrogar o prazo. | Motivo técnico da alteração de prazo. |
+> | Ocorrência | Ocorrência previamente registrada. | Identificador de ocorrência | Obrigatório | Acidente ou incidente que originou o plano. |
+> | Descrição da ação | Tamanho máximo a confirmar. | Texto | Obrigatório | Medida a ser executada. |
+> | Tipo de ação | Não se aplica. | Preventiva ou corretiva | Obrigatório | Finalidade da medida. |
+> | Responsável pela execução | O responsável escolhido. | Identificador de colaborador ou setor | Obrigatório | Pessoa ou setor encarregado da execução. |
+> | Prazo | Não pode ser anterior à data atual nem à data da ocorrência. | Data | Obrigatório | Data limite para executar a ação. |
+> | Situação da ação | Lista de situações e transições a confirmar. | Situações de acompanhamento | A confirmar | Andamento da execução. |
+> | Alerta ativado | Não se aplica. | Sim ou não | A confirmar | Indica se a ação deve gerar aviso de prazo. |
+> | Antecedência do alerta | Valor mínimo: zero. | Número inteiro de dias | Condicional | Antecedência escolhida para o aviso. |
+> | Justificativa de prorrogação | Tamanho máximo a confirmar. | Texto | Condicional | Motivo técnico da alteração de prazo. |
 
 ## Regra(s) de Negócio:
 
@@ -271,14 +269,14 @@ Referência: [RF08](requisitos/requisitos-funcionais.md#rf08-o-sistema-deve-gera
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Pessoa acompanhada | `person_id` | Identificador de colaborador ou visitante | Obrigatório; pessoa identificada nos registros. | Pessoa cujo histórico é analisado. |
-> | Tipo de pessoa | `person_type` | Colaborador ou visitante | Deve corresponder ao cadastro consultado. | Distingue a origem do cadastro. |
-> | Ocorrências de risco | `risk_occurrence_ids` | Lista de identificadores de ocorrência | Critérios de inclusão na contagem a confirmar. | Registros considerados na análise. |
-> | Quantidade acumulada | `risk_occurrence_count` | Número inteiro não negativo | Calculada a partir das ocorrências consideradas. | Total de comportamentos de risco registrados. |
-> | Limite de ocorrências | `risk_occurrence_limit` | Número inteiro não negativo | Configurável; valor inicial a confirmar. | Limite que dispara o alerta quando ultrapassado. |
-> | Período de análise | `analysis_period` | Intervalo de datas ou histórico completo | A confirmar; RF08 não define uma janela de contagem. | Recorte do histórico usado no cálculo. |
+> | Pessoa acompanhada | A pessoa acompanhada nos registros. | Identificador de colaborador ou visitante | Obrigatório | Pessoa cujo histórico é analisado. |
+> | Tipo de pessoa | Conforme o cadastro consultado. | Colaborador ou visitante | Automático | Distingue a origem do cadastro. |
+> | Ocorrências de risco | Critérios de inclusão na contagem a confirmar. | Lista de identificadores de ocorrência | A confirmar | Registros considerados na análise. |
+> | Quantidade acumulada | Valor mínimo: zero. | Número inteiro não negativo | Calculado | Total de comportamentos de risco registrados. |
+> | Limite de ocorrências | Valor mínimo: zero; valor inicial a confirmar. | Número inteiro não negativo | A confirmar | Limite que dispara o alerta quando ultrapassado. |
+> | Período de análise | Janela de contagem a confirmar; RF08 não define esse período. | Intervalo de datas ou histórico completo | A confirmar | Recorte do histórico usado no cálculo. |
 
 ## Regra(s) de Negócio:
 
@@ -306,14 +304,14 @@ Referência: [RF09](requisitos/requisitos-funcionais.md#rf09-o-sistema-deve-regi
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Área de risco | `risk_area_id` | Identificador de área de risco | Obrigatório; área previamente cadastrada. | Área inspecionada. |
-> | Data da inspeção | `inspection_date` | Data | Obrigatória. | Data em que a inspeção foi realizada. |
-> | Norma avaliada | `regulatory_reference` | Referência a uma norma aplicável | Obrigatória para relacionar a avaliação à norma. | Referência considerada na inspeção. |
-> | Resultado da avaliação | `compliance_result` | Conformidade ou não conformidade | Obrigatório por avaliação registrada. | Resultado observado em relação à referência informada. |
-> | Observações da inspeção | `inspection_notes` | Texto | Detalhamento e tamanho máximo a confirmar. | Condições verificadas e descrição das não conformidades. |
-> | Responsável pelo registro | `recorded_by` | Identificador de usuário | Obtido do usuário autenticado. | Pessoa que incluiu a inspeção no histórico. |
+> | Área de risco | Área de risco cadastrada. | Identificador de área de risco | Obrigatório | Área inspecionada. |
+> | Data da inspeção | Formato a confirmar. | Data | Obrigatório | Data em que a inspeção foi realizada. |
+> | Norma avaliada | Norma aplicável à área. | Referência a uma norma aplicável | Obrigatório | Referência considerada na inspeção. |
+> | Resultado da avaliação | Não se aplica. | Conformidade ou não conformidade | Obrigatório | Resultado observado em relação à referência informada. |
+> | Observações da inspeção | Tamanho máximo a confirmar. | Texto | A confirmar | Condições verificadas e descrição das não conformidades. |
+> | Responsável pelo registro | Usuário autenticado. | Identificador de usuário | Automático | Pessoa que incluiu a inspeção no histórico. |
 
 ## Regra(s) de Negócio:
 
@@ -341,16 +339,16 @@ Referências: [RF10](requisitos/requisitos-funcionais.md#rf10-o-sistema-deve-con
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Colaborador | `employee_id` | Identificador de colaborador | Obrigatório; deve corresponder a um cadastro existente. | Pessoa cuja capacitação é consultada. |
-> | Certificação ou treinamento | `qualification_id` | Identificador de capacitação | Deve corresponder a curso ou certificação cadastrada. | Habilitação acompanhada pelo sistema. |
-> | Tipo de capacitação | `qualification_type` | Certificação ou treinamento | Deve corresponder ao cadastro. | Natureza da capacitação consultada. |
-> | Data de realização | `completed_on` | Data | Disponível quando houver realização registrada. | Data de conclusão da capacitação. |
-> | Data de vencimento | `expires_on` | Data | Necessária para controlar a validade; casos sem vencimento a confirmar. | Limite de validade registrado. |
-> | Situação da certificação | `certification_status` | Em dia, próxima do vencimento ou vencida | Calculada a partir da validade cadastrada. | Situação usada nos filtros e alertas. |
-> | Situação do treinamento | `training_status` | Realizado ou pendente | Obtida dos registros de treinamento. | Indica se a capacitação foi concluída. |
-> | Tarefa pretendida | `task_id` | Identificador de tarefa | Necessária para verificar as habilitações exigidas na alocação. | Tarefa na qual se pretende alocar o colaborador. |
+> | Colaborador | Colaborador cadastrado. | Identificador de colaborador | Obrigatório | Pessoa cuja capacitação é consultada. |
+> | Certificação ou treinamento | Curso ou certificação cadastrada. | Identificador de capacitação | Obrigatório | Habilitação acompanhada pelo sistema. |
+> | Tipo de capacitação | Correspondente ao cadastro. | Certificação ou treinamento | Automático | Natureza da capacitação consultada. |
+> | Data de realização | Formato a confirmar. | Data | Condicional | Data de conclusão da capacitação. |
+> | Data de vencimento | Formato a confirmar. | Data | Condicional | Limite de validade registrado. |
+> | Situação da certificação | Conforme a validade cadastrada. | Em dia, próxima do vencimento ou vencida | Calculado | Situação usada nos filtros e alertas. |
+> | Situação do treinamento | Conforme os registros de treinamento. | Realizado ou pendente | Automático | Indica se a capacitação foi concluída. |
+> | Tarefa pretendida | Tarefa cadastrada. | Identificador de tarefa | Condicional | Tarefa na qual se pretende alocar o colaborador. |
 
 ## Regra(s) de Negócio:
 
@@ -379,16 +377,16 @@ Referências: [RF11](requisitos/requisitos-funcionais.md#rf11-o-sistema-deve-con
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Colaborador | `employee_id` | Identificador ou matrícula de colaborador | Obrigatório; colaborador previamente cadastrado. | Pessoa que recebe o EPI. |
-> | Equipamento entregue | `ppe_item_id` | Código ou número de EPI rastreável | Obrigatório; deve identificar o equipamento entregue. | Unidade cuja posse será acompanhada. |
-> | Data e hora da entrega | `loaned_at` | Data e hora | Obrigatórias no empréstimo. | Momento da entrega ao colaborador. |
-> | Responsável pela entrega | `delivered_by` | Identificador de usuário | Obrigatório; Supervisor ou Gestor autenticado. | Pessoa que registrou a entrega. |
-> | Data prevista de devolução | `expected_return_on` | Data | Necessária para identificar atrasos; regra de definição a confirmar. | Prazo combinado para devolver o equipamento. |
-> | Data e hora da devolução | `returned_at` | Data e hora | Preenchidas quando houver devolução. | Momento em que o empréstimo foi encerrado. |
-> | Estado na devolução | `return_condition` | Apto, manutenção ou descarte | Obrigatório ao devolver, conforme UC12. | Condição que orienta o destino do EPI. |
-> | Justificativa de substituição | `replacement_reason` | Texto | Exigida na confirmação de entrega duplicada do mesmo tipo. | Motivo de novo empréstimo quando já existe item ativo em posse. |
+> | Colaborador | Colaborador cadastrado. | Identificador ou matrícula de colaborador | Obrigatório | Pessoa que recebe o EPI. |
+> | Equipamento entregue | Equipamento cadastrado. | Código ou número de EPI rastreável | Obrigatório | Unidade cuja posse será acompanhada. |
+> | Data e hora da entrega | Formato a confirmar. | Data e hora | Obrigatório | Momento da entrega ao colaborador. |
+> | Responsável pela entrega | Supervisor ou Gestor autenticado. | Identificador de usuário | Obrigatório | Pessoa que registrou a entrega. |
+> | Data prevista de devolução | Regra de definição a confirmar. | Data | Obrigatório | Prazo combinado para devolver o equipamento. |
+> | Data e hora da devolução | Formato a confirmar. | Data e hora | Condicional | Momento em que o empréstimo foi encerrado. |
+> | Estado na devolução | Não se aplica. | Apto, manutenção ou descarte | Condicional | Condição que orienta o destino do EPI. |
+> | Justificativa de substituição | Tamanho máximo a confirmar. | Texto | Condicional | Motivo de novo empréstimo quando já existe item ativo em posse. |
 
 ## Regra(s) de Negócio:
 
@@ -420,13 +418,13 @@ Referências: [RF12](requisitos/requisitos-funcionais.md#rf12-o-sistema-deve-per
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Tarefa | `task_id` | Identificador de tarefa | Obrigatório; tarefa previamente cadastrada. | Atividade para a qual se define a proteção. |
-> | EPIs obrigatórios | `required_ppe_ids` | Lista de identificadores de EPI | Itens cadastrados; ausência de seleção exige confirmação expressa. | Equipamentos exigidos para executar a tarefa. |
-> | Grau de risco | `task_risk_level` | Leve, moderado, grave ou crítico | Recuperado da classificação da tarefa, quando utilizado. | Nível usado para parametrizar a proteção. |
-> | Classe mínima de proteção | `minimum_protection_class` | Classes de proteção | Catálogo e regras de correspondência a confirmar. | Proteção sugerida conforme a periculosidade. |
-> | Compatibilidade entre EPIs | `ppe_compatibility` | Resultado da avaliação de compatibilidade | Regras e fonte dos dados técnicos a confirmar. | Indica se os equipamentos selecionados podem ser usados em conjunto. |
+> | Tarefa | Tarefa cadastrada. | Identificador de tarefa | Obrigatório | Atividade para a qual se define a proteção. |
+> | EPIs obrigatórios | EPIs cadastrados; seleção vazia exige confirmação. | Lista de identificadores de EPI | Condicional | Equipamentos exigidos para executar a tarefa. |
+> | Grau de risco | Conforme a classificação da tarefa. | Leve, moderado, grave ou crítico | Automático | Nível usado para parametrizar a proteção. |
+> | Classe mínima de proteção | Catálogo e correspondência a confirmar. | Classes de proteção | A confirmar | Proteção sugerida conforme a periculosidade. |
+> | Compatibilidade entre EPIs | Critérios de compatibilidade a confirmar. | Resultado da avaliação de compatibilidade | Calculado | Indica se os equipamentos selecionados podem ser usados em conjunto. |
 
 ## Regra(s) de Negócio:
 
@@ -457,18 +455,18 @@ Referências: [RF13](requisitos/requisitos-funcionais.md#rf13-o-sistema-deve-per
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Tipo de ocorrência | `occurrence_type` | Acidente | Obrigatório; nesta história o tipo é acidente. | Distingue o registro de um incidente. |
-> | Data da ocorrência | `occurred_on` | Data | Obrigatória. | Data em que o acidente aconteceu. |
-> | Setor | `sector_id` | Identificador de setor | Obrigatório, conforme UC09. | Setor onde ocorreu o acidente. |
-> | Local | `location_description` | Texto | Complementa a identificação do setor; detalhamento obrigatório a confirmar. | Local específico da ocorrência. |
-> | Colaboradores envolvidos | `employee_ids` | Lista de identificadores de colaborador | Pessoas informadas devem estar previamente cadastradas. | Colaboradores relacionados ao acidente. |
-> | Descrição dos fatos | `description` | Texto | Obrigatória; tamanho máximo a confirmar. | Relato do que aconteceu. |
-> | Lesão ou dano | `injury_description` | Texto | Preenchido conforme as informações disponíveis. | Consequências conhecidas do acidente. |
-> | EPIs envolvidos | `ppe_ids` | Lista de identificadores de EPI | Preenchida quando houver relação com equipamentos. | Equipamentos relacionados ao acidente. |
-> | Protocolo | `protocol` | Identificador de acompanhamento | Gerado pelo sistema; formato a confirmar. | Identificação usada para consultar o relato. |
-> | Responsável e momento do registro | `registration_metadata` | Usuário, data e hora | Gerados a partir da sessão e do momento do cadastro. | Identifica quem registrou o acidente e quando. |
+> | Tipo de ocorrência | Não se aplica. | Acidente | Obrigatório | Distingue o registro de um incidente. |
+> | Data da ocorrência | Formato a confirmar. | Data | Obrigatório | Data em que o acidente aconteceu. |
+> | Setor | Setor cadastrado. | Identificador de setor | Obrigatório | Setor onde ocorreu o acidente. |
+> | Local | Tamanho máximo a confirmar. | Texto | A confirmar | Local específico da ocorrência. |
+> | Colaboradores envolvidos | Colaboradores cadastrados. | Lista de identificadores de colaborador | Condicional | Colaboradores relacionados ao acidente. |
+> | Descrição dos fatos | Tamanho máximo a confirmar. | Texto | Obrigatório | Relato do que aconteceu. |
+> | Lesão ou dano | Tamanho máximo a confirmar. | Texto | Condicional | Consequências conhecidas do acidente. |
+> | EPIs envolvidos | EPIs cadastrados. | Lista de identificadores de EPI | Condicional | Equipamentos relacionados ao acidente. |
+> | Protocolo | Formato a confirmar. | Identificador de acompanhamento | Automático | Identificação usada para consultar o relato. |
+> | Responsável e momento do registro | Usuário da sessão; data e hora do cadastro. | Usuário, data e hora | Automático | Identifica quem registrou o acidente e quando. |
 
 ## Regra(s) de Negócio:
 
@@ -499,14 +497,14 @@ Referências: [RF14](requisitos/requisitos-funcionais.md#rf14-o-sistema-deve-per
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Item ou lote | `ppe_reference` | Código de item ou lote de EPI | Obrigatório; deve corresponder a registro existente. | Equipamentos destinados ao descarte. |
-> | Quantidade descartada | `quantity` | Número inteiro | Maior que zero e menor ou igual ao saldo disponível. | Quantidade retirada definitivamente do estoque. |
-> | Justificativa técnica | `disposal_reason` | Texto | Obrigatória; tamanho máximo a confirmar. | Motivo do descarte. |
-> | Data e hora do registro | `recorded_at` | Data e hora | Geradas pelo sistema. | Momento do registro da baixa. |
-> | Responsável | `recorded_by` | Identificador de usuário | Obtido do Gestor autenticado. | Pessoa que confirmou o descarte. |
-> | Termo de destinação | `disposal_record` | Documento de descarte | Gerado após a baixa; conteúdo e formato a confirmar. | Comprovante da destinação registrada. |
+> | Item ou lote | Item ou lote cadastrado. | Código de item ou lote de EPI | Obrigatório | Equipamentos destinados ao descarte. |
+> | Quantidade descartada | Maior que zero; menor ou igual ao saldo disponível. | Número inteiro | Obrigatório | Quantidade retirada definitivamente do estoque. |
+> | Justificativa técnica | Tamanho máximo a confirmar. | Texto | Obrigatório | Motivo do descarte. |
+> | Data e hora do registro | Formato a confirmar. | Data e hora | Automático | Momento do registro da baixa. |
+> | Responsável | Gestor autenticado. | Identificador de usuário | Automático | Pessoa que confirmou o descarte. |
+> | Termo de destinação | Conteúdo e formato a confirmar. | Documento de descarte | Automático | Comprovante da destinação registrada. |
 
 ## Regra(s) de Negócio:
 
@@ -534,14 +532,14 @@ Referências: [RF15](requisitos/requisitos-funcionais.md#rf15-o-sistema-deve-per
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Acidente | `occurrence_id` | Identificador de ocorrência | Obrigatório; acidente previamente registrado. | Ocorrência investigada. |
-> | Metodologia | `investigation_method` | Árvore de Causas ou 5 Porquês | Métodos previstos em UC05; ampliação do catálogo a confirmar. | Método escolhido para conduzir a análise. |
-> | Fatores determinantes | `contributing_factors` | Registros de fatores humanos, materiais, organizacionais e ambientais | Estrutura de cada registro a confirmar. | Fatores identificados na investigação. |
-> | Detalhamento da análise | `analysis_details` | Texto ou estrutura do método escolhido | Obrigatório; formato por metodologia a confirmar. | Desenvolvimento da investigação. |
-> | Causa raiz | `root_cause` | Texto | Necessária para o laudo com conclusão; tamanho máximo a confirmar. | Causa determinada na análise. |
-> | Laudo da investigação | `investigation_report` | Registro de investigação | Vinculado ao acidente; formato a confirmar. | Resultado documentado da investigação. |
+> | Acidente | Acidente cadastrado. | Identificador de ocorrência | Obrigatório | Ocorrência investigada. |
+> | Metodologia | Ampliação do catálogo a confirmar. | Árvore de Causas ou 5 Porquês | Obrigatório | Método escolhido para conduzir a análise. |
+> | Fatores determinantes | Estrutura a confirmar. | Registros de fatores humanos, materiais, organizacionais e ambientais | Obrigatório | Fatores identificados na investigação. |
+> | Detalhamento da análise | Formato por metodologia a confirmar. | Texto ou estrutura do método escolhido | Obrigatório | Desenvolvimento da investigação. |
+> | Causa raiz | Tamanho máximo a confirmar. | Texto | Condicional | Causa determinada na análise. |
+> | Laudo da investigação | Formato a confirmar. | Registro de investigação | Obrigatório | Resultado documentado da investigação. |
 
 ## Regra(s) de Negócio:
 
@@ -569,16 +567,16 @@ Referências: [RF16](requisitos/requisitos-funcionais.md#rf16-o-sistema-deve-per
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Tipo de ocorrência | `occurrence_type` | Incidente | Obrigatório; nesta história o tipo é incidente. | Identifica uma ocorrência sem lesão. |
-> | Data da ocorrência | `occurred_on` | Data | Obrigatória. | Data em que o incidente foi observado. |
-> | Setor | `sector_id` | Identificador de setor | Obrigatório, conforme UC09. | Setor relacionado ao incidente. |
-> | Colaboradores envolvidos | `employee_ids` | Lista de identificadores de colaborador | Quando informados, devem estar cadastrados. | Pessoas relacionadas ao incidente. |
-> | Descrição dos fatos | `description` | Texto | Obrigatória; tamanho máximo a confirmar. | Relato da situação de risco. |
-> | Potencial de dano | `potential_harm` | Texto | Descreve a consequência possível; classificação a confirmar. | Dano que a situação poderia ter causado. |
-> | Protocolo | `protocol` | Identificador de acompanhamento | Gerado pelo sistema; formato a confirmar. | Identificação do relato para consulta. |
-> | Responsável e momento do registro | `registration_metadata` | Usuário, data e hora | Obtidos automaticamente no cadastro. | Identifica quem registrou o incidente e quando. |
+> | Tipo de ocorrência | Não se aplica. | Incidente | Obrigatório | Identifica uma ocorrência sem lesão. |
+> | Data da ocorrência | Formato a confirmar. | Data | Obrigatório | Data em que o incidente foi observado. |
+> | Setor | Setor cadastrado. | Identificador de setor | Obrigatório | Setor relacionado ao incidente. |
+> | Colaboradores envolvidos | Colaboradores cadastrados. | Lista de identificadores de colaborador | Condicional | Pessoas relacionadas ao incidente. |
+> | Descrição dos fatos | Tamanho máximo a confirmar. | Texto | Obrigatório | Relato da situação de risco. |
+> | Potencial de dano | Classificação e tamanho máximo a confirmar. | Texto | A confirmar | Dano que a situação poderia ter causado. |
+> | Protocolo | Formato a confirmar. | Identificador de acompanhamento | Automático | Identificação do relato para consulta. |
+> | Responsável e momento do registro | Usuário da sessão; data e hora do cadastro. | Usuário, data e hora | Automático | Identifica quem registrou o incidente e quando. |
 
 ## Regra(s) de Negócio:
 
@@ -609,13 +607,13 @@ Referência: [RF17](requisitos/requisitos-funcionais.md#rf17-o-sistema-deve-perm
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Taxa de frequência de acidentes | `accident_frequency_rate` | Número calculado | Fórmula, unidade e período de referência a confirmar. | Indicador de frequência dos acidentes. |
-> | Indicador de gravidade | `accident_severity_indicator` | Valor ou distribuição calculada | Fórmula e classificação a confirmar. | Informação sobre a gravidade dos acidentes registrados. |
-> | Conformidade dos EPIs | `ppe_compliance_summary` | Valores agrupados por situação de conformidade | Critérios de conformidade e agrupamento a confirmar. | Situação dos EPIs apresentada no painel. |
-> | Período de referência | `reference_period` | Intervalo de datas | Recorte usado pelos indicadores; seleção pelo usuário a confirmar. | Período ao qual os dados exibidos se referem. |
-> | Momento da atualização | `updated_at` | Data e hora | Gerados na atualização dos indicadores. | Momento dos dados apresentados. |
+> | Taxa de frequência de acidentes | Fórmula, unidade e período a confirmar. | Número calculado | Calculado | Indicador de frequência dos acidentes. |
+> | Indicador de gravidade | Fórmula e classificação a confirmar. | Valor ou distribuição calculada | Calculado | Informação sobre a gravidade dos acidentes registrados. |
+> | Conformidade dos EPIs | Critérios de conformidade e agrupamento a confirmar. | Valores agrupados por situação de conformidade | Calculado | Situação dos EPIs apresentada no painel. |
+> | Período de referência | Intervalo de referência a confirmar. | Intervalo de datas | A confirmar | Período ao qual os dados exibidos se referem. |
+> | Momento da atualização | Formato a confirmar. | Data e hora | Automático | Momento dos dados apresentados. |
 
 ## Regra(s) de Negócio:
 
@@ -643,14 +641,14 @@ Referência: [RF18](requisitos/requisitos-funcionais.md#rf18-o-sistema-deve-perm
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Assunto do relatório | `report_subject` | Acidentes, treinamentos realizados ou áreas de maior risco | Selecionado para a emissão; combinação de assuntos a confirmar. | Conjunto de informações exportadas. |
-> | Periodicidade | `report_period_type` | Mensal ou anual | Obrigatória. | Tipo de período previsto em RF18. |
-> | Ano de referência | `reference_year` | Ano | Obrigatório. | Ano dos dados consultados. |
-> | Mês de referência | `reference_month` | Número inteiro de 1 a 12 | Obrigatório para relatório mensal. | Mês dos dados consultados. |
-> | Formato de exportação | `export_format` | PDF ou CSV | Obrigatório. | Formato do arquivo gerado. |
-> | Arquivo do relatório | `report_file` | Arquivo PDF ou CSV | Gerado pelo sistema; colunas e layout a confirmar. | Resultado disponibilizado para exportação. |
+> | Assunto do relatório | Combinação de assuntos a confirmar. | Acidentes, treinamentos realizados ou áreas de maior risco | Obrigatório | Conjunto de informações exportadas. |
+> | Periodicidade | Não se aplica. | Mensal ou anual | Obrigatório | Tipo de período previsto em RF18. |
+> | Ano de referência | Limites a confirmar. | Ano | Obrigatório | Ano dos dados consultados. |
+> | Mês de referência | Valor mínimo: 1; valor máximo: 12. | Número inteiro de 1 a 12 | Condicional | Mês dos dados consultados. |
+> | Formato de exportação | Não se aplica. | PDF ou CSV | Obrigatório | Formato do arquivo gerado. |
+> | Arquivo do relatório | Colunas e layout a confirmar. | Arquivo PDF ou CSV | Automático | Resultado disponibilizado para exportação. |
 
 ## Regra(s) de Negócio:
 
@@ -679,13 +677,13 @@ Referência: [RF19](requisitos/requisitos-funcionais.md#rf19-o-sistema-deve-perm
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Acidente | `occurrence_id` | Identificador de ocorrência | Obrigatório; deve identificar um acidente registrado. | Registro de origem dos dados. |
-> | Dados do colaborador | `employee_data` | Dados cadastrais vinculados ao acidente | Campos exigidos pelo modelo de CAT a confirmar. | Informações existentes sobre a pessoa envolvida. |
-> | Dados do acidente | `accident_data` | Dados da ocorrência | Recuperados do acidente; correspondência com o modelo a confirmar. | Informações sobre data, local e fatos já registrados. |
-> | Informações complementares | `additional_cat_data` | Campos do modelo de CAT | Obrigatoriedade e formato a confirmar. | Informações necessárias que ainda não constam no cadastro. |
-> | Documento preenchido | `cat_document` | Documento de CAT | Modelo, formato e mecanismo de integridade a confirmar. | Resultado da preparação para emissão. |
+> | Acidente | Acidente cadastrado. | Identificador de ocorrência | Obrigatório | Registro de origem dos dados. |
+> | Dados do colaborador | Campos definidos pelo modelo de CAT; a confirmar. | Dados cadastrais vinculados ao acidente | Automático | Informações existentes sobre a pessoa envolvida. |
+> | Dados do acidente | Correspondência com o modelo de CAT a confirmar. | Dados da ocorrência | Automático | Informações sobre data, local e fatos já registrados. |
+> | Informações complementares | Formato a confirmar. | Campos do modelo de CAT | A confirmar | Informações necessárias que ainda não constam no cadastro. |
+> | Documento preenchido | Modelo, formato e mecanismo de integridade a confirmar. | Documento de CAT | Automático | Resultado da preparação para emissão. |
 
 ## Regra(s) de Negócio:
 
@@ -714,14 +712,14 @@ Referência: [RF20](requisitos/requisitos-funcionais.md#rf20-o-sistema-deve-perm
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Fornecedor | `supplier_id` | Identificador de fornecedor | Deve identificar o cadastro vinculado ao EPI. | Fornecedor do equipamento. |
-> | Nome do fornecedor | `supplier_name` | Texto | Obrigatório na proposta de cadastro; demais dados cadastrais a confirmar. | Identificação legível do fornecedor. |
-> | EPI | `ppe_id` | Identificador de EPI | Obrigatório para associar fornecedor e CA. | Equipamento ao qual os dados se referem. |
-> | Número do CA | `ca_number` | Texto identificador | Obrigatório; formato e validação a confirmar. | Número do Certificado de Aprovação. |
-> | Validade do CA | `ca_expires_on` | Data | Obrigatória para verificar o vencimento. | Data de validade cadastrada internamente. |
-> | Situação de vencimento | `ca_expiration_status` | Vencido ou não vencido | Calculada pela validade; tratamento da data limite a confirmar. | Resultado usado para gerar o aviso de vencimento. |
+> | Fornecedor | Fornecedor cadastrado e vinculado ao EPI. | Identificador de fornecedor | Obrigatório | Fornecedor do equipamento. |
+> | Nome do fornecedor | Tamanho máximo a confirmar. | Texto | Obrigatório | Identificação legível do fornecedor. |
+> | EPI | EPI cadastrado. | Identificador de EPI | Obrigatório | Equipamento ao qual os dados se referem. |
+> | Número do CA | Formato e validação a confirmar. | Texto identificador | Obrigatório | Número do Certificado de Aprovação. |
+> | Validade do CA | Formato a confirmar. | Data | Obrigatório | Data de validade cadastrada internamente. |
+> | Situação de vencimento | Tratamento da data limite a confirmar. | Vencido ou não vencido | Calculado | Resultado usado para gerar o aviso de vencimento. |
 
 ## Regra(s) de Negócio:
 
@@ -750,18 +748,18 @@ Referências: [RF21](requisitos/requisitos-funcionais.md#rf21-o-sistema-deve-ger
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | EPI | `ppe_id` | Identificador de EPI | Obrigatório; equipamento com histórico de uso. | Equipamento analisado. |
-> | Frequência de uso | `usage_frequency` | Valor numérico ou histórico de utilização | Unidade e forma de obtenção a confirmar. | Frequência considerada na estimativa de desgaste. |
-> | Durabilidade nominal | `nominal_lifetime` | Duração | Deve usar unidade compatível com o cálculo; origem a confirmar. | Vida útil de referência do equipamento. |
-> | Condições ambientais | `environmental_conditions` | Dados das condições do setor | Estrutura e valores aceitos a confirmar. | Condições que influenciam o desgaste. |
-> | Multiplicadores de risco | `risk_multipliers` | Valores numéricos da matriz de risco | Valores e fórmula de aplicação a confirmar. | Fatores de ajuste da durabilidade. |
-> | Validade do CA | `ca_expires_on` | Data | Recuperada do cadastro interno do EPI. | Limite considerado pela regra de substituição do projeto. |
-> | Saldo atual | `stock_balance` | Número inteiro não negativo | Recuperado do estoque. | Quantidade disponível para reposição. |
-> | Estoque mínimo | `minimum_stock` | Número inteiro não negativo | Recuperado da configuração do EPI. | Referência de disponibilidade mínima. |
-> | Data projetada de substituição | `projected_replacement_on` | Data | Calculada; deve respeitar o limite de CA previsto em UC10. | Previsão de troca ou descarte do equipamento. |
-> | Prioridade de reposição | `replacement_priority` | Classificação ou ordenação | Critérios a confirmar. | Posição do equipamento na lista de reposição. |
+> | EPI | EPI cadastrado com histórico de uso. | Identificador de EPI | Obrigatório | Equipamento analisado. |
+> | Frequência de uso | Unidade a confirmar. | Valor numérico ou histórico de utilização | A confirmar | Frequência considerada na estimativa de desgaste. |
+> | Durabilidade nominal | Unidade compatível com o cálculo. | Duração | Obrigatório | Vida útil de referência do equipamento. |
+> | Condições ambientais | Estrutura e valores aceitos a confirmar. | Dados das condições do setor | Obrigatório | Condições que influenciam o desgaste. |
+> | Multiplicadores de risco | Valores e fórmula a confirmar. | Valores numéricos da matriz de risco | A confirmar | Fatores de ajuste da durabilidade. |
+> | Validade do CA | Conforme o cadastro interno do EPI. | Data | Automático | Limite considerado pela regra de substituição do projeto. |
+> | Saldo atual | Valor mínimo: zero. | Número inteiro não negativo | Automático | Quantidade disponível para reposição. |
+> | Estoque mínimo | Valor mínimo: zero. | Número inteiro não negativo | Automático | Referência de disponibilidade mínima. |
+> | Data projetada de substituição | Não pode ultrapassar a validade do CA, conforme UC10. | Data | Calculado | Previsão de troca ou descarte do equipamento. |
+> | Prioridade de reposição | Critérios de ordenação a confirmar. | Classificação ou ordenação | Calculado | Posição do equipamento na lista de reposição. |
 
 ## Regra(s) de Negócio:
 
@@ -791,16 +789,16 @@ Referências: [RF22](requisitos/requisitos-funcionais.md#rf22-o-sistema-deve-per
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Visitante | `visitor_id` | Identificador de visitante | Gerado ou recuperado do cadastro. | Pessoa externa que recebe os equipamentos. |
-> | Nome | `full_name` | Texto | Obrigatório na proposta de cadastro. | Nome do visitante. |
-> | Documento | `document_number` | Texto identificador | Tipo, formato e regra de duplicidade a confirmar. | Documento usado na identificação do visitante. |
-> | Empresa | `company_name` | Texto | Prevista em UC12; obrigatoriedade a confirmar. | Empresa à qual o visitante está vinculado. |
-> | EPIs entregues | `ppe_item_ids` | Lista de códigos de EPI rastreável | Deve identificar os itens entregues temporariamente. | Equipamentos em posse do visitante. |
-> | Data e hora da entrega | `loaned_at` | Data e hora | Obrigatórias no empréstimo. | Momento da entrega dos equipamentos. |
-> | Responsável pela entrega | `delivered_by` | Identificador de usuário | Supervisor ou Gestor autenticado. | Pessoa que registrou a entrega. |
-> | Termo de cautela temporário | `temporary_loan_record` | Registro de empréstimo | Vinculado ao visitante. | Comprovante da entrega temporária. |
+> | Visitante | Visitante cadastrado. | Identificador de visitante | Automático | Pessoa externa que recebe os equipamentos. |
+> | Nome | Tamanho máximo a confirmar. | Texto | Obrigatório | Nome do visitante. |
+> | Documento | Tipo e formato a confirmar. | Texto identificador | A confirmar | Documento usado na identificação do visitante. |
+> | Empresa | Tamanho máximo a confirmar. | Texto | A confirmar | Empresa à qual o visitante está vinculado. |
+> | EPIs entregues | EPIs cadastrados. | Lista de códigos de EPI rastreável | Obrigatório | Equipamentos em posse do visitante. |
+> | Data e hora da entrega | Formato a confirmar. | Data e hora | Obrigatório | Momento da entrega dos equipamentos. |
+> | Responsável pela entrega | Supervisor ou Gestor autenticado. | Identificador de usuário | Automático | Pessoa que registrou a entrega. |
+> | Termo de cautela temporário | Vinculado ao visitante. | Registro de empréstimo | Obrigatório | Comprovante da entrega temporária. |
 
 ## Regra(s) de Negócio:
 
@@ -829,14 +827,14 @@ Referência: [RF23](requisitos/requisitos-funcionais.md#rf23-o-sistema-deve-perm
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Supervisor | `supervisor_id` | Identificador de supervisor | Gerado pelo sistema; único. | Identificação do cadastro. |
-> | Nome | `full_name` | Texto | Obrigatório na proposta de cadastro; tamanho máximo a confirmar. | Nome do Supervisor. |
-> | Identificação de acesso | `login_identifier` | Identificador de acesso | Único; uso de matrícula, e-mail ou outro formato a confirmar. | Informação usada pelo Supervisor para entrar no sistema. |
-> | Perfil | `role` | Supervisor | Definido para a conta criada nesta história. | Perfil que delimita as permissões. |
-> | Senha inicial | `initial_password` | Credencial de acesso | Gerada automaticamente; política e forma de entrega a confirmar. | Credencial inicial prevista em RF23. |
-> | Responsável pelo cadastro | `created_by` | Identificador de usuário | Obtido do Gestor autenticado. | Pessoa que cadastrou o Supervisor. |
+> | Supervisor | Formato a confirmar. | Identificador de supervisor | Automático; único | Identificação do cadastro. |
+> | Nome | Tamanho máximo a confirmar. | Texto | Obrigatório | Nome do Supervisor. |
+> | Identificação de acesso | Formato de identificação a confirmar. | Identificador de acesso | Único | Informação usada pelo Supervisor para entrar no sistema. |
+> | Perfil | Não se aplica. | Supervisor | Automático | Perfil que delimita as permissões. |
+> | Senha inicial | Política de senha a confirmar. | Credencial de acesso | Automático | Credencial inicial prevista em RF23. |
+> | Responsável pelo cadastro | Gestor autenticado. | Identificador de usuário | Automático | Pessoa que cadastrou o Supervisor. |
 
 ## Regra(s) de Negócio:
 
@@ -866,14 +864,14 @@ Referência: [RF23](requisitos/requisitos-funcionais.md#rf23-o-sistema-deve-perm
 
 ## Dicionário de Dados:
 
-> | Atributo | Propriedade | Domínio | Restrição | Descrição |
+> | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Colaborador | `employee_id` | Identificador de colaborador | Gerado pelo sistema; único. | Identificação usada nos vínculos do sistema. |
-> | Nome | `full_name` | Texto | Obrigatório na proposta de cadastro; tamanho máximo a confirmar. | Nome do Colaborador. |
-> | Matrícula | `employee_number` | Texto identificador | Usada na identificação em UC12; formato e regra de unicidade a confirmar. | Identificação funcional do Colaborador. |
-> | Setor | `sector_id` | Identificador de setor | Se informado, deve corresponder a setor cadastrado; obrigatoriedade a confirmar. | Setor relacionado ao Colaborador. |
-> | Responsável pelo cadastro | `created_by` | Identificador de usuário | Obtido do Supervisor autenticado. | Pessoa que incluiu o cadastro. |
-> | Data e hora do cadastro | `created_at` | Data e hora | Geradas pelo sistema. | Momento de criação do registro. |
+> | Colaborador | Formato a confirmar. | Identificador de colaborador | Automático; único | Identificação usada nos vínculos do sistema. |
+> | Nome | Tamanho máximo a confirmar. | Texto | Obrigatório | Nome do Colaborador. |
+> | Matrícula | Formato a confirmar. | Texto identificador | A confirmar | Identificação funcional do Colaborador. |
+> | Setor | Setor cadastrado. | Identificador de setor | A confirmar | Setor relacionado ao Colaborador. |
+> | Responsável pelo cadastro | Supervisor autenticado. | Identificador de usuário | Automático | Pessoa que incluiu o cadastro. |
+> | Data e hora do cadastro | Formato a confirmar. | Data e hora | Automático | Momento de criação do registro. |
 
 ## Regra(s) de Negócio:
 
