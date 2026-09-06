@@ -59,4 +59,22 @@ public record OcorrenciaResponse(
 
         throw new IllegalStateException("Tipo de ocorrência não suportado.");
     }
+
+    public static OcorrenciaResponse fromOutputDTO(br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO dto) {
+        return new OcorrenciaResponse(
+                dto.idOcorrencia(),
+                dto.tipoOcorrencia(),
+                dto.dataOcorrencia(),
+                dto.local(),
+                dto.descricao(),
+                dto.planoDeAcao() != null ? PlanoDeAcaoResponse.fromDomain(dto.planoDeAcao()) : null,
+                dto.causaRaiz(),
+                dto.tipo(),
+                dto.dano(),
+                dto.numeroProtocolo(),
+                dto.destino(),
+                dto.situacaoRisco(),
+                dto.potencialDano()
+        );
+    }
 }

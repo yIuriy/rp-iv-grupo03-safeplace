@@ -40,4 +40,16 @@ public record MovimentacaoEstoqueResponse(
                 saldoAtual
         );
     }
+
+    public static MovimentacaoEstoqueResponse fromOutputDTO(br.edu.safeplace.backend.application.dto.output.MovimentacaoEstoqueOutputDTO dto) {
+        return new MovimentacaoEstoqueResponse(
+                dto.id(),
+                dto.epiId(),
+                dto.tipo(),
+                dto.quantidade(),
+                dto.dataHora(),
+                dto.motivo(),
+                dto.saldoAposMovimentacao()
+        );
+    }
 }

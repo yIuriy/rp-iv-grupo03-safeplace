@@ -1,9 +1,10 @@
 package br.edu.safeplace.backend.adapters.in.web;
 
+import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
+import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
+import br.edu.safeplace.backend.application.dto.output.MovimentacaoEstoqueOutputDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarEpiUseCase;
 import br.edu.safeplace.backend.config.SecurityConfig;
-import br.edu.safeplace.backend.domain.epi.Epi;
-import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
@@ -39,10 +40,10 @@ class EpiControllerTest {
 
     @Test
     void deveCriarEpiComSucesso() throws Exception {
-        Epi epiSalvo = new Epi(1, "Capacete H-700", "CA-12345", 20, 5,
-                StatusEpi.DISPONIVEL, LocalDate.of(2028, 6, 30), 365);
+        EpiOutputDTO epiSalvo = new EpiOutputDTO(1, "Capacete H-700", "CA-12345", 20, 5,
+                StatusEpi.DISPONIVEL, LocalDate.of(2028, 6, 30), 365, false);
 
-        when(useCase.cadastrarEpi(any(Epi.class))).thenReturn(epiSalvo);
+        when(useCase.cadastrarEpi(any(CadastrarEpiInputDTO.class))).thenReturn(epiSalvo);
 
         String jsonRequest = """
                 {
@@ -70,8 +71,8 @@ class EpiControllerTest {
 
     @Test
     void deveListarEpis() throws Exception {
-        Epi epi1 = new Epi(1, "Capacete", "CA-1", 10, 2, StatusEpi.DISPONIVEL, null, null);
-        Epi epi2 = new Epi(2, "Luva", "CA-2", 0, 5, StatusEpi.ESGOTADO, null, null);
+        EpiOutputDTO epi1 = new EpiOutputDTO(1, "Capacete", "CA-1", 10, 2, StatusEpi.DISPONIVEL, null, null, false);
+        EpiOutputDTO epi2 = new EpiOutputDTO(2, "Luva", "CA-2", 0, 5, StatusEpi.ESGOTADO, null, null, true);
 
         when(useCase.listar()).thenReturn(List.of(epi1, epi2));
 
@@ -86,13 +87,11 @@ class EpiControllerTest {
 
     @Test
     void deveRegistrarMovimentacaoDeEntrada() throws Exception {
-        MovimentacaoEstoque mov = new MovimentacaoEstoque(1, 1, TipoMovimentacao.ENTRADA, 10,
-                LocalDateTime.of(2026, 9, 6, 16, 0), "Reposição");
-        Epi epiAtualizado = new Epi(1, "Capacete", "CA-1", 30, 5, StatusEpi.DISPONIVEL, null, null);
+        MovimentacaoEstoqueOutputDTO mov = new MovimentacaoEstoqueOutputDTO(1, 1, TipoMovimentacao.ENTRADA, 10,
+                LocalDateTime.of(2026, 9, 6, 16, 0), "Reposição", 30);
 
         when(useCase.registrarMovimentacao(eq(1), eq(TipoMovimentacao.ENTRADA), eq(10), eq("Reposição")))
                 .thenReturn(mov);
-        when(useCase.buscarPorId(1)).thenReturn(epiAtualizado);
 
         String jsonRequest = """
                 {

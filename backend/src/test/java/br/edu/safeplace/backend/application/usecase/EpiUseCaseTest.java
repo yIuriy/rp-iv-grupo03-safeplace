@@ -1,5 +1,8 @@
-package br.edu.safeplace.backend.application.service;
+package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
+import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
+import br.edu.safeplace.backend.application.dto.output.MovimentacaoEstoqueOutputDTO;
 import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
@@ -14,79 +17,82 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class EpiServiceTest {
+class EpiUseCaseTest {
 
     private EpiRepositoryFake repository;
-    private EpiService service;
+    private EpiUseCase useCase;
 
     @BeforeEach
     void setUp() {
         repository = new EpiRepositoryFake();
-        service = new EpiService(repository);
+        useCase = new EpiUseCase(repository);
     }
 
     @Test
     void deveCadastrarEListarEpis() {
-        Epi epi = new Epi(null, "Capacete", "CA-100", 20, 5, StatusEpi.DISPONIVEL, null, null);
-        Epi salvo = service.cadastrarEpi(epi);
+        CadastrarEpiInputDTO input = new CadastrarEpiInputDTO("Capacete", "CA-100", 20, 5, null, null);
+        EpiOutputDTO salvo = useCase.cadastrarEpi(input);
 
-        assertNotNull(salvo.getId());
-        assertEquals(1, salvo.getId());
+        assertNotNull(salvo.id());
+        assertEquals(1, salvo.id());
+        assertEquals(StatusEpi.DISPONIVEL, salvo.status());
 
-        List<Epi> todos = service.listar();
+        List<EpiOutputDTO> todos = useCase.listar();
         assertEquals(1, todos.size());
-        assertEquals("Capacete", todos.get(0).getNome());
+        assertEquals("Capacete", todos.get(0).nome());
     }
 
     @Test
     void deveBuscarEpiPorIdComSucesso() {
-        Epi epi = service.cadastrarEpi(new Epi(null, "Bota de Segurança", "CA-200", 15, 3, StatusEpi.DISPONIVEL, null, null));
-        Epi encontrado = service.buscarPorId(epi.getId());
+        EpiOutputDTO epi = useCase.cadastrarEpi(new CadastrarEpiInputDTO("Bota de Segurança", "CA-200", 15, 3, null, null));
+        EpiOutputDTO encontrado = useCase.buscarPorId(epi.id());
 
-        assertEquals("Bota de Segurança", encontrado.getNome());
+        assertEquals("Bota de Segurança", encontrado.nome());
     }
 
     @Test
     void deveLancarExcecaoAoBuscarEpiInexistente() {
-        assertThrows(EpiNaoEncontradoException.class, () -> service.buscarPorId(999));
+        assertThrows(EpiNaoEncontradoException.class, () -> useCase.buscarPorId(999));
     }
 
     @Test
     void deveRegistrarEntradaDeEstoque() {
-        Epi epi = service.cadastrarEpi(new Epi(null, "Luva Nitrílica", "CA-300", 10, 2, StatusEpi.DISPONIVEL, null, null));
+        EpiOutputDTO epi = useCase.cadastrarEpi(new CadastrarEpiInputDTO("Luva Nitrílica", "CA-300", 10, 2, null, null));
 
-        MovimentacaoEstoque mov = service.registrarMovimentacao(epi.getId(), TipoMovimentacao.ENTRADA, 5, "Compra mensal");
+        MovimentacaoEstoqueOutputDTO mov = useCase.registrarMovimentacao(epi.id(), TipoMovimentacao.ENTRADA, 5, "Compra mensal");
 
-        assertEquals(TipoMovimentacao.ENTRADA, mov.getTipo());
-        assertEquals(5, mov.getQuantidade());
+        assertEquals(TipoMovimentacao.ENTRADA, mov.tipo());
+        assertEquals(5, mov.quantidade());
+        assertEquals(15, mov.saldoAposMovimentacao());
 
-        Epi atualizado = service.buscarPorId(epi.getId());
-        assertEquals(15, atualizado.getQuantidade());
+        EpiOutputDTO atualizado = useCase.buscarPorId(epi.id());
+        assertEquals(15, atualizado.quantidade());
         assertEquals(1, repository.movimentacoes.size());
     }
 
     @Test
     void deveRegistrarSaidaDeEstoque() {
-        Epi epi = service.cadastrarEpi(new Epi(null, "Óculos", "CA-400", 10, 2, StatusEpi.DISPONIVEL, null, null));
+        EpiOutputDTO epi = useCase.cadastrarEpi(new CadastrarEpiInputDTO("Óculos", "CA-400", 10, 2, null, null));
 
-        MovimentacaoEstoque mov = service.registrarMovimentacao(epi.getId(), TipoMovimentacao.SAIDA, 4, "Uso operacional");
+        MovimentacaoEstoqueOutputDTO mov = useCase.registrarMovimentacao(epi.id(), TipoMovimentacao.SAIDA, 4, "Uso operacional");
 
-        assertEquals(TipoMovimentacao.SAIDA, mov.getTipo());
-        assertEquals(4, mov.getQuantidade());
+        assertEquals(TipoMovimentacao.SAIDA, mov.tipo());
+        assertEquals(4, mov.quantidade());
+        assertEquals(6, mov.saldoAposMovimentacao());
 
-        Epi atualizado = service.buscarPorId(epi.getId());
-        assertEquals(6, atualizado.getQuantidade());
+        EpiOutputDTO atualizado = useCase.buscarPorId(epi.id());
+        assertEquals(6, atualizado.quantidade());
     }
 
     @Test
     void deveImpedirSaidaMaiorQueSaldo() {
-        Epi epi = service.cadastrarEpi(new Epi(null, "Protetor", "CA-500", 10, 2, StatusEpi.DISPONIVEL, null, null));
+        EpiOutputDTO epi = useCase.cadastrarEpi(new CadastrarEpiInputDTO("Protetor", "CA-500", 10, 2, null, null));
 
         assertThrows(SaldoInsuficienteException.class, () ->
-                service.registrarMovimentacao(epi.getId(), TipoMovimentacao.SAIDA, 11, "Retirada excessiva"));
+                useCase.registrarMovimentacao(epi.id(), TipoMovimentacao.SAIDA, 11, "Retirada excessiva"));
 
-        Epi atualizado = service.buscarPorId(epi.getId());
-        assertEquals(10, atualizado.getQuantidade());
+        EpiOutputDTO atualizado = useCase.buscarPorId(epi.id());
+        assertEquals(10, atualizado.quantidade());
     }
 
     private static class EpiRepositoryFake implements EpiRepositoryPort {
@@ -113,19 +119,19 @@ class EpiServiceTest {
         }
 
         @Override
-        public Optional<Epi> buscarPorId(Integer id) {
-            return Optional.ofNullable(storage.get(id));
-        }
-
-        @Override
         public List<Epi> listar() {
             return new ArrayList<>(storage.values());
         }
 
         @Override
+        public Optional<Epi> buscarPorId(Integer id) {
+            return Optional.ofNullable(storage.get(id));
+        }
+
+        @Override
         public MovimentacaoEstoque salvarMovimentacao(MovimentacaoEstoque movimentacao) {
             Integer id = movimentacao.getId() != null ? movimentacao.getId() : nextMovId++;
-            MovimentacaoEstoque salva = new MovimentacaoEstoque(
+            MovimentacaoEstoque salvo = new MovimentacaoEstoque(
                     id,
                     movimentacao.getEpiId(),
                     movimentacao.getTipo(),
@@ -133,8 +139,8 @@ class EpiServiceTest {
                     movimentacao.getDataHora(),
                     movimentacao.getMotivo()
             );
-            movimentacoes.add(salva);
-            return salva;
+            movimentacoes.add(salvo);
+            return salvo;
         }
 
         @Override
