@@ -43,6 +43,12 @@ public class Epi {
         this.vidaUtilDias = vidaUtilDias;
     }
 
+    public static Epi novo(String nome, String numeroCa, int quantidade, int estoqueMinimo,
+                           LocalDate dataValidadeCa, Integer vidaUtilDias) {
+        StatusEpi statusInicial = quantidade > 0 ? StatusEpi.DISPONIVEL : StatusEpi.ESGOTADO;
+        return new Epi(null, nome, numeroCa, quantidade, estoqueMinimo, statusInicial, dataValidadeCa, vidaUtilDias);
+    }
+
     public MovimentacaoEstoque adicionarEstoque(int qtd, String motivo) {
         if (qtd <= 0) {
             throw new IllegalArgumentException("Quantidade a adicionar deve ser maior que zero.");
