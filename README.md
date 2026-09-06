@@ -9,6 +9,11 @@ Este repositório reúne o trabalho do Grupo 03 na disciplina de Resolução de 
 O MVP, a versão inicial com as funcionalidades essenciais, prevê:
 
 - Registro e acompanhamento de acidentes e incidentes.
+- Identificação de acidentes relacionados a fatores humanos.
+- Classificação do nível de periculosidade das tarefas.
+- Definição e acompanhamento de planos de ação.
+- Controle de certificações e treinamentos obrigatórios.
+- Gestão do ciclo de vida e planejamento da substituição dos EPIs.
 - Controle de estoque, manutenção, empréstimos e devoluções de EPIs.
 - Cadastro, consulta e atualização de áreas de risco.
 - Gestão de supervisores e colaboradores conforme as permissões de cada perfil.

@@ -37,36 +37,36 @@ As portas de entrada representam as operações disponíveis para os atores do s
 - controle de estoque de EPIs;
 - controle de manutenção de EPIs;
 - empréstimo e devolução de EPIs;
-- cadastro e consulta de áreas de risco.
+- cadastro e consulta de áreas de risco;
+- classificação do nível de periculosidade das tarefas;
+- definição e acompanhamento de planos de ação;
+- controle de certificações e treinamentos;
+- gestão do ciclo de vida e planejamento da substituição dos EPIs.
 
 ### 3.2. Portas de saída
 
 As portas de saída representam recursos externos ao núcleo:
 
-- repositórios de usuários, ocorrências, EPIs e áreas de risco;
+- repositórios de usuários, ocorrências, EPIs, áreas de risco, tarefas, certificações e treinamentos;
 - autenticação e controle de acesso;
 - registro de auditoria;
 - criptografia e armazenamento seguro.
 
 ## 4. Organização lógica do MVP
 
-O núcleo é organizado pelas funcionalidades `usuarios`, `ocorrencias`, `epis` e `areas-de-risco`. Cada funcionalidade reúne suas regras e casos de uso. Os adaptadores ficam separados do núcleo para evitar dependência de tecnologia nas regras de negócio.
+O núcleo é organizado pelas funcionalidades `usuarios`, `ocorrencias`, `epis`, `areas-de-risco`, `tarefas` e `capacitacoes`. Cada funcionalidade reúne suas regras e casos de uso. Os adaptadores ficam separados do núcleo para evitar dependência de tecnologia nas regras de negócio.
 
 Essa organização atende ao RNF14, que exige desacoplamento e extensibilidade. A documentação deste repositório atende parcialmente ao RNF15 ao registrar o escopo, a rastreabilidade e as decisões arquiteturais. A documentação da API e do modelo de dados ainda depende da implementação.
 
 ## 5. Requisitos não funcionais e decisões arquiteturais
 
-| Requisito | Decisão arquitetural |
-| --- | --- |
-| RNF01 | Medir o tempo dos fluxos principais e limitar consultas desnecessárias. |
-| RNF03 | Verificar o perfil do usuário antes de executar cada caso de uso protegido. |
-| RNF04 | Usar TLS 1.3 na transmissão e AES-256 no armazenamento de dados sensíveis. |
-| RNF05 | Manter log imutável das operações, com usuário, data, hora e retenção mínima de 5 anos. |
-| RNF09 | Manter as validações normativas no domínio, sem vinculá-las à interface. |
-| RNF12 | Manter os fluxos principais curtos e com mensagens de validação claras. |
-| RNF14 | Isolar domínio, aplicação e adaptadores por contratos definidos. |
-| RNF15 | Versionar a arquitetura, a API e o modelo de dados junto ao projeto. |
-| RNF16 | Evitar recursos exclusivos de um navegador ou sistema operacional. |
+| ID | Requisito | Decisão arquitetural |
+| --- | --- | --- |
+| RNF03 | Controle de acesso por perfil | Verificar o perfil do usuário antes de executar cada caso de uso protegido. |
+| RNF05 | Rastreabilidade de ações (auditoria) | Manter log imutável das operações, com usuário, data, hora e retenção mínima de 5 anos. |
+| RNF08 | Funcionamento offline parcial | Manter cópias locais dos dados sincronizados necessários às consultas offline. |
+| RNF11 | Interface responsiva e acessível | Construir a interface para diferentes tamanhos de tela e seguir as diretrizes WCAG 2.1 AA. |
+| RNF15 | Documentação técnica | Versionar a arquitetura, a API e o modelo de dados junto ao projeto. |
 
 As decisões acima descrevem a solução esperada. O atendimento de cada RNF deve ser comprovado por testes ou evidências da implementação.
 
@@ -86,6 +86,5 @@ Os diagramas não são alterados nesta revisão. O grupo fará a atualização e
 
 - O barramento de eventos não faz parte do MVP.
 - Não há adaptadores para sensores ou dispositivos IoT.
-- RF21 e UC10 permanecem documentados como evolução futura, mas não entram nos componentes do MVP.
 - Relatórios, CAT, dashboards, funcionamento offline e integrações externas permanecem fora do núcleo da primeira entrega.
 - Tecnologias de implementação ainda não foram definidas neste documento.

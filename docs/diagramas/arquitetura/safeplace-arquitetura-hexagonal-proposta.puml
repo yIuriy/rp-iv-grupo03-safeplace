@@ -1,0 +1,130 @@
+@startuml
+
+!pragma layout smetana
+top to bottom direction
+scale 2400 width
+
+skinparam dpi 120
+skinparam shadowing false
+skinparam roundcorner 14
+skinparam linetype ortho
+skinparam defaultFontName "DejaVu Sans"
+skinparam defaultFontSize 16
+skinparam ArrowColor #173B67
+skinparam ArrowThickness 2
+skinparam PackageBorderColor #173B67
+skinparam PackageFontColor #102A43
+skinparam PackageFontStyle bold
+skinparam RectangleBorderColor #315B7D
+skinparam RectangleBackgroundColor #FFFFFF
+skinparam NoteBorderColor #D28A18
+skinparam NoteBackgroundColor #FFF8E7
+skinparam NoteFontColor #3D3D3D
+skinparam DatabaseBorderColor #173B67
+skinparam DatabaseBackgroundColor #EEF3F8
+
+title Estrutura do Repositório e Arquitetura Hexagonal do SafePlace
+
+package "Interface Web\n(TypeScript)" as frontend #E8F1FF {
+    rectangle "Funcionalidades\nUtilizadores • Ocorrências\nEPIs • Áreas de Risco" as frontend_features
+    rectangle "Componentes Partilhados" as frontend_shared
+    rectangle "Serviço da API" as frontend_api
+
+    frontend_features -[hidden]down-> frontend_shared
+    frontend_shared -[hidden]down-> frontend_api
+}
+
+note bottom of frontend
+Aplicação utilizada no navegador.
+Apresenta informação e recebe ações do utilizador.
+end note
+
+package "Contrato da API" as api_contract #FFF1D6 {
+    rectangle "Pedidos • Respostas • Erros" as contract_content
+}
+
+note bottom of api_contract
+Mantém Python e TypeScript de acordo.
+end note
+
+package "Servidor\n(Python)" as backend #EDF8F5 {
+
+    package "Núcleo da Aplicação" as application #DDF3ED {
+
+        package "Domínio" as domain #C7ECE2 {
+            rectangle "Entidades\nOcorrência • EPI • Área de Risco" as entities
+            rectangle "Enumerações" as enums
+            rectangle "Exceções" as exceptions
+            rectangle "Serviços do Domínio" as domain_services
+            rectangle "Objetos-Valor" as value_objects
+
+            entities -[hidden]down-> enums
+            enums -[hidden]down-> exceptions
+            exceptions -[hidden]down-> domain_services
+            domain_services -[hidden]down-> value_objects
+        }
+
+        package "Portas" as ports #FFE8B8 {
+            rectangle "Entrada\nOperações disponíveis" as input_ports
+            rectangle "Saída\nServiços necessários" as output_ports
+            input_ports -[hidden]down-> output_ports
+        }
+
+        rectangle "Casos de Uso\nRegistar ocorrência\nGerir EPIs\nConsultar áreas de risco" as use_cases
+        rectangle "Objetos de Transferência\nDados de entrada e de saída" as dto
+
+        ports -[hidden]down-> use_cases
+        use_cases -[hidden]down-> dto
+    }
+
+    package "Infraestrutura" as infrastructure #F2F4F7 {
+
+        package "Adaptadores de Entrada" as inbound #E8F1FF {
+            rectangle "HTTP\nRotas • Controladores • Esquemas" as http
+        }
+
+        package "Adaptadores de Saída" as outbound #FFF1D6 {
+            rectangle "Persistência\nMigrações • ORM • Repositórios" as persistence
+            rectangle "Autenticação\ne Autorização" as authentication
+            rectangle "Auditoria" as audit
+            rectangle "Proteção de Dados" as security
+
+            persistence -[hidden]down-> authentication
+            authentication -[hidden]down-> audit
+            audit -[hidden]down-> security
+        }
+    }
+
+    rectangle "Inicialização\nLiga portas e adaptadores" as bootstrap #E6E9EF
+}
+
+database "Base de Dados" as database
+
+frontend_api --> api_contract : segue
+frontend_api --> http : HTTP / JSON
+http --> input_ports : utiliza
+input_ports --> use_cases : inicia
+use_cases --> domain : aplica regras
+use_cases --> output_ports : solicita serviços
+
+inbound ..> input_ports : depende do núcleo
+persistence ..> output_ports : implementa
+authentication ..> output_ports : implementa
+audit ..> output_ports : implementa
+security ..> output_ports : implementa
+
+persistence --> database : lê e grava
+bootstrap ..> application : configura
+bootstrap ..> infrastructure : configura
+
+legend bottom
+  |= Parte |= Porquê existe? |
+  |<#C7ECE2>| Domínio | Guarda as regras de negócio. |
+  |<#FFE8B8>| Portas | Definem contratos estáveis. |
+  |<#E8F1FF>| Entrada | Recebe ações do utilizador. |
+  |<#FFF1D6>| Saída | Liga a serviços externos. |
+  Cada parte tem uma responsabilidade clara.
+  O núcleo não depende da Web nem da base de dados.
+endlegend
+
+@enduml
