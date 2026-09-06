@@ -1,5 +1,18 @@
+# Local project context and generated analysis
 ai/
+/graphify-out/
 
+# Editor settings
+.vscode/
+.idea/
+
+# Temporary files and backups
+/tmp/
 *.lock
+*.bak
+*.swp
+*.swo
 
-/tmp
+# Operating system files
+.DS_Store
+Thumbs.db
