@@ -1,0 +1,182 @@
+/* SafePlace 1.0.0. Exact values from the Figma design system. */
+:root {
+  --sp-palette-pine: #174B3F;
+  --sp-palette-deep: #102F29;
+  --sp-palette-mint: #DDF2E7;
+  --sp-palette-lime: #D7EB83;
+  --sp-palette-paper: #F6F7F2;
+  --sp-palette-white: #FFFFFF;
+  --sp-palette-ink: #172B26;
+  --sp-palette-muted: #52645C;
+  --sp-palette-border: #CBD7D0;
+  --sp-palette-info: #225C86;
+  --sp-palette-info-bg: #EAF3FA;
+  --sp-palette-success: #246644;
+  --sp-palette-success-bg: #E8F3EB;
+  --sp-palette-warning: #805600;
+  --sp-palette-warning-bg: #FFF2CC;
+  --sp-palette-danger: #A4303B;
+  --sp-palette-danger-bg: #FBECEF;
+  --sp-brand-primary: var(--sp-palette-pine);
+  --sp-brand-deep: var(--sp-palette-deep);
+  --sp-brand-soft: var(--sp-palette-mint);
+  --sp-brand-accent: var(--sp-palette-lime);
+  --sp-surface-page: var(--sp-palette-paper);
+  --sp-surface-white: var(--sp-palette-white);
+  --sp-text-primary: var(--sp-palette-ink);
+  --sp-text-secondary: var(--sp-palette-muted);
+  --sp-text-inverse: var(--sp-palette-white);
+  --sp-border-default: var(--sp-palette-border);
+  --sp-feedback-info: var(--sp-palette-info);
+  --sp-feedback-info-bg: var(--sp-palette-info-bg);
+  --sp-feedback-success: var(--sp-palette-success);
+  --sp-feedback-success-bg: var(--sp-palette-success-bg);
+  --sp-feedback-warning: var(--sp-palette-warning);
+  --sp-feedback-warning-bg: var(--sp-palette-warning-bg);
+  --sp-feedback-danger: var(--sp-palette-danger);
+  --sp-feedback-danger-bg: var(--sp-palette-danger-bg);
+  --sp-space-4: 4px;
+  --sp-space-8: 8px;
+  --sp-space-12: 12px;
+  --sp-space-16: 16px;
+  --sp-space-24: 24px;
+  --sp-space-32: 32px;
+  --sp-space-48: 48px;
+  --sp-space-64: 64px;
+  --sp-space-80: 80px;
+  --sp-radius-8: 8px;
+  --sp-radius-16: 16px;
+  --sp-radius-24: 24px;
+  --sp-size-control: 44px;
+  --sp-size-compact: 36px;
+  --sp-size-icon: 20px;
+  --sp-stroke-default: 1px;
+  --sp-stroke-focus: 2px;
+  --sp-radius-4: 4px;
+  --sp-space-0: 0px;
+  --sp-control-border: var(--sp-palette-muted);
+  --sp-control-disabled-bg: var(--sp-palette-border);
+  --sp-palette-danger-hover: #7E2230;
+  --sp-feedback-danger-hover: var(--sp-palette-danger-hover);
+  --sp-layout-header: 64px;
+  --sp-layout-sidebar: 216px;
+  --sp-layout-content-padding: 32px;
+  --sp-layout-mobile-padding: 16px;
+  --sp-layout-gutter: 24px;
+  --sp-layout-tablet-breakpoint: 768px;
+  --sp-layout-desktop-breakpoint: 1200px;
+  --sp-layout-mobile-min: 360px;
+  --sp-focus-offset: 4px;
+  --sp-font-heading: "Manrope";
+  --sp-font-body: "Inter";
+  --sp-type-display-size: 80px;
+  --sp-type-display-line-height: 88px;
+  --sp-type-display-weight: 700;
+  --sp-type-heading-xl-size: 56px;
+  --sp-type-heading-xl-line-height: 64px;
+  --sp-type-heading-xl-weight: 700;
+  --sp-type-heading-lg-size: 40px;
+  --sp-type-heading-lg-line-height: 48px;
+  --sp-type-heading-lg-weight: 600;
+  --sp-type-heading-md-size: 28px;
+  --sp-type-heading-md-line-height: 36px;
+  --sp-type-heading-md-weight: 600;
+  --sp-type-heading-sm-size: 20px;
+  --sp-type-heading-sm-line-height: 28px;
+  --sp-type-heading-sm-weight: 600;
+  --sp-type-body-lg-size: 20px;
+  --sp-type-body-lg-line-height: 30px;
+  --sp-type-body-lg-weight: 400;
+  --sp-type-body-md-size: 16px;
+  --sp-type-body-md-line-height: 24px;
+  --sp-type-body-md-weight: 400;
+  --sp-type-body-sm-size: 14px;
+  --sp-type-body-sm-line-height: 20px;
+  --sp-type-body-sm-weight: 400;
+  --sp-type-label-md-size: 14px;
+  --sp-type-label-md-line-height: 20px;
+  --sp-type-label-md-weight: 600;
+  --sp-type-label-sm-size: 12px;
+  --sp-type-label-sm-line-height: 18px;
+  --sp-type-label-sm-weight: 500;
+}
+
+.sp-type-display {
+  font-family: var(--sp-font-heading), sans-serif;
+  font-size: var(--sp-type-display-size);
+  font-weight: var(--sp-type-display-weight);
+  line-height: var(--sp-type-display-line-height);
+  letter-spacing: 0px;
+}
+
+.sp-type-heading-xl {
+  font-family: var(--sp-font-heading), sans-serif;
+  font-size: var(--sp-type-heading-xl-size);
+  font-weight: var(--sp-type-heading-xl-weight);
+  line-height: var(--sp-type-heading-xl-line-height);
+  letter-spacing: 0px;
+}
+
+.sp-type-heading-lg {
+  font-family: var(--sp-font-heading), sans-serif;
+  font-size: var(--sp-type-heading-lg-size);
+  font-weight: var(--sp-type-heading-lg-weight);
+  line-height: var(--sp-type-heading-lg-line-height);
+  letter-spacing: 0px;
+}
+
+.sp-type-heading-md {
+  font-family: var(--sp-font-heading), sans-serif;
+  font-size: var(--sp-type-heading-md-size);
+  font-weight: var(--sp-type-heading-md-weight);
+  line-height: var(--sp-type-heading-md-line-height);
+  letter-spacing: 0px;
+}
+
+.sp-type-heading-sm {
+  font-family: var(--sp-font-heading), sans-serif;
+  font-size: var(--sp-type-heading-sm-size);
+  font-weight: var(--sp-type-heading-sm-weight);
+  line-height: var(--sp-type-heading-sm-line-height);
+  letter-spacing: 0px;
+}
+
+.sp-type-body-lg {
+  font-family: var(--sp-font-body), sans-serif;
+  font-size: var(--sp-type-body-lg-size);
+  font-weight: var(--sp-type-body-lg-weight);
+  line-height: var(--sp-type-body-lg-line-height);
+  letter-spacing: 0px;
+}
+
+.sp-type-body-md {
+  font-family: var(--sp-font-body), sans-serif;
+  font-size: var(--sp-type-body-md-size);
+  font-weight: var(--sp-type-body-md-weight);
+  line-height: var(--sp-type-body-md-line-height);
+  letter-spacing: 0px;
+}
+
+.sp-type-body-sm {
+  font-family: var(--sp-font-body), sans-serif;
+  font-size: var(--sp-type-body-sm-size);
+  font-weight: var(--sp-type-body-sm-weight);
+  line-height: var(--sp-type-body-sm-line-height);
+  letter-spacing: 0px;
+}
+
+.sp-type-label-md {
+  font-family: var(--sp-font-body), sans-serif;
+  font-size: var(--sp-type-label-md-size);
+  font-weight: var(--sp-type-label-md-weight);
+  line-height: var(--sp-type-label-md-line-height);
+  letter-spacing: 0px;
+}
+
+.sp-type-label-sm {
+  font-family: var(--sp-font-body), sans-serif;
+  font-size: var(--sp-type-label-sm-size);
+  font-weight: var(--sp-type-label-sm-weight);
+  line-height: var(--sp-type-label-sm-line-height);
+  letter-spacing: 0px;
+}

@@ -1,0 +1,28 @@
+.sp-app-shell { min-height: 100dvh; }
+.sp-app-header { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-space-16); height: var(--sp-layout-header); padding: var(--sp-space-16); background: var(--sp-surface-white); }
+.sp-logo-link { display: inline-flex; flex-shrink: 0; }
+.sp-logo { display: block; width: 160px; height: auto; }
+.sp-role-label { font-size: 14px; line-height: 20px; color: var(--sp-text-secondary); }
+.sp-menu-button { display: none; }
+.sp-app-body { display: flex; min-height: calc(100dvh - var(--sp-layout-header)); }
+.sp-sidebar { flex: 0 0 var(--sp-layout-sidebar); width: var(--sp-layout-sidebar); padding: var(--sp-space-16); background: var(--sp-surface-white); }
+.sp-sidebar nav, .sp-navigation-dialog nav { display: flex; flex-direction: column; gap: var(--sp-space-8); }
+.sp-nav-item { display: flex; align-items: center; gap: var(--sp-space-12); min-height: var(--sp-size-control); padding: var(--sp-space-12); border-radius: var(--sp-radius-8); text-decoration: none; color: var(--sp-text-secondary); font-size: 14px; line-height: 20px; font-weight: 600; }
+.sp-nav-item:hover { background: var(--sp-surface-page); }
+.sp-nav-item[aria-current="page"] { color: var(--sp-brand-primary); background: var(--sp-brand-soft); }
+.sp-main { flex: 1; min-width: 0; padding: var(--sp-layout-content-padding); }
+.sp-main:focus { outline: none; }
+.sp-skip-link { position: fixed; z-index: 10; top: var(--sp-space-12); left: var(--sp-space-12); padding: var(--sp-space-12); background: var(--sp-surface-white); transform: translateY(-200%); }
+.sp-skip-link:focus { transform: translateY(0); }
+.sp-navigation-dialog { margin: 0; min-height: 100dvh; max-height: 100dvh; width: 320px; border-radius: 0; }
+.sp-navigation-dialog h2 { margin-bottom: var(--sp-space-24); }
+@media (max-width: 1199px) {
+  .sp-sidebar { display: none; }
+  .sp-role-label { display: none; }
+  .sp-menu-button { display: inline-flex; padding-left: 0; padding-right: 0; }
+  .sp-logo { width: 144px; }
+  .sp-main { padding: var(--sp-space-24); }
+}
+@media (max-width: 767px) {
+  .sp-main { padding: var(--sp-layout-mobile-padding); }
+}

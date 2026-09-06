@@ -1,0 +1,17 @@
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-500.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/manrope/latin-600.css';
+@import '@fontsource/manrope/latin-700.css';
+@import '../design-system/tokens.css';
+@import './shared/components/components.css';
+@import './shared/layout/layout.css';
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--sp-surface-page); color: var(--sp-text-primary); font: var(--sp-type-body-md-weight) var(--sp-type-body-md-size) / var(--sp-type-body-md-line-height) var(--sp-font-body), sans-serif; }
+h1, h2, h3, p, dl { margin: 0; }
+button, input, textarea, select { font: inherit; }
+button, input, textarea, select, a { -webkit-tap-highlight-color: transparent; }
+a { color: var(--sp-brand-primary); text-underline-offset: 3px; }
+:focus-visible { outline: var(--sp-stroke-focus) solid var(--sp-brand-primary); outline-offset: var(--sp-focus-offset); }
+[hidden] { display: none !important; }
