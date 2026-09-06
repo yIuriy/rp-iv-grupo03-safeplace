@@ -46,7 +46,7 @@ A priorização considera três fatores: a contribuição direta do requisito pa
 | ID | Prioridade | Justificativa |
 | --- | --- | --- |
 | RF01 | Must have | Permite identificar acidentes relacionados a fatores humanos, informação essencial para registrar e acompanhar as ocorrências. |
-| RF02 | Should have | Complementa a análise do acidente, mas depende do registro principal e do controle de EPIs. |
+| RF02 | Must have | Permite identificar acidentes relacionados a falhas de equipamentos de segurança, informação essencial para acompanhar as ocorrências. |
 | RF03 | Must have | Sustenta o controle básico dos equipamentos de proteção e é parte central do sistema. |
 | RF04 | Must have | Permite acompanhar o estado de uso e conservação dos EPIs. |
 | RF05 | Must have | Permite relacionar acidentes, incidentes e inspeções ao contexto de risco do ambiente. |
@@ -98,6 +98,7 @@ A priorização considera três fatores: a contribuição direta do requisito pa
 | Requisito | Prioridade | Resultado esperado no MVP |
 | --- | --- | --- |
 | RF01 | Must have | Registrar, consultar e atualizar acidentes relacionados a fatores humanos. |
+| RF02 | Must have | Registrar, consultar e atualizar acidentes relacionados a falhas de equipamentos de segurança. |
 | RF03 | Must have | Consultar estoque e registrar entradas e saídas de EPIs. |
 | RF04 | Must have | Consultar e registrar manutenção de EPIs. |
 | RF05 | Must have | Cadastrar, consultar e atualizar áreas de risco. |
@@ -144,7 +145,7 @@ A priorização considera três fatores: a contribuição direta do requisito pa
 
 Os seguintes grupos permanecem fora do MVP:
 
-- classificação de acidentes por falha de equipamento, inspeções e vínculo entre tarefas e EPIs: RF02, RF09 e RF12;
+- inspeções e vínculo entre tarefas e EPIs: RF09 e RF12;
 - alertas de comportamento, investigação, dashboards, relatórios, CAT e visitantes: RF08, RF15, RF17, RF18, RF19 e RF22;
 - descarte, fornecedores e Certificado de Aprovação: RF14 e RF20;
 - funcionamento offline, suporte multilíngue e integração externa: RNF08, RNF13 e RNF17.
@@ -214,6 +215,7 @@ Como proposta de modelagem, o grupo pode separar `EPI`, que representa o tipo de
 | Requisito | Caso de uso | Elemento arquitetural | Situação |
 | --- | --- | --- | --- |
 | RF01 | UC05 | Gestão de Ocorrências | Coberto pelo registro e gerenciamento de acidentes relacionados a fatores humanos. |
+| RF02 | UC05 | Gestão de Ocorrências e Gestão de EPIs | Coberto pelo registro de acidentes relacionados a falhas de equipamentos de segurança. |
 | RF03 | UC06 | Gestão de EPIs, Estoque e Persistência | Coberto pelo fluxo básico. |
 | RF04 | UC01 | Gestão de EPIs, Manutenção e Persistência | Fluxo ajustado para registrar manutenção. |
 | RF05 | UC03 | Gestão de Áreas de Risco e Persistência | Coberto. |

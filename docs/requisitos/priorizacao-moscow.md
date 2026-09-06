@@ -18,7 +18,7 @@ A priorização deve começar pelos Requisitos Funcionais (RFs), pois eles repre
 | ID | Requisito | Prioridade | Justificativa |
 | --- | --- | --- | --- |
 | RF01 | Gerenciar acidentes causados por um funcionário | Deve ter | Permite identificar acidentes relacionados a fatores humanos, informação essencial para registrar e acompanhar as ocorrências. |
-| RF02 | Gerenciar acidentes causados por falha de equipamento de segurança | Deveria ter | Complementa a análise do acidente, mas depende do registro principal e do controle de EPIs. |
+| RF02 | Gerenciar acidentes causados por falha de equipamento de segurança | Deve ter | Permite identificar acidentes relacionados a falhas de equipamentos de segurança, informação essencial para acompanhar as ocorrências. |
 | RF03 | Controlar o estoque dos EPIs | Deve ter | Sustenta o controle básico de equipamentos de proteção, parte central do sistema. |
 | RF04 | Controlar a manutenção dos EPIs | Deve ter | Garante que os EPIs cadastrados possam ser acompanhados quanto ao estado de uso e conservação. |
 | RF05 | Mapear as áreas de risco do ambiente de trabalho | Deve ter | Permite relacionar acidentes, incidentes e inspeções ao contexto de risco do ambiente. |
