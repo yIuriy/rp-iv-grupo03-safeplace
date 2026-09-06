@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.adapters.in.web;
 
+import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -33,4 +34,14 @@ public record CriarEpiRequest(
         @Schema(description = "Vida útil estimada em dias (opcional para base do RF21)", example = "365")
         Integer vidaUtilDias
 ) {
+    public CadastrarEpiInputDTO toInputDTO() {
+        return new CadastrarEpiInputDTO(
+                nome,
+                numeroCa,
+                quantidade,
+                estoqueMinimo,
+                dataValidadeCa,
+                vidaUtilDias
+        );
+    }
 }
