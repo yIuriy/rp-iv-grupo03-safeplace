@@ -45,20 +45,20 @@ A priorização deve começar pelos Requisitos Funcionais (RFs), pois eles repre
 
 | ID | Requisito | Prioridade | Justificativa |
 | --- | --- | --- | --- |
-| RNF01 | Tempo de resposta | Deve ter | O sistema precisa responder rapidamente às solicitações feitas, a fim de não gerar descontentamento. |
+| RNF01 | Tempo de resposta | Deveria ter | O tempo de resposta é importante, mas pode ser refinado após a validação inicial dos fluxos essenciais. |
 | RNF02 | Capacidade de usuários simultâneos | Deveria ter | O sistema deve permitir um número adequado de usuários simultâneos, mas, em um primeiro momento, deve atender a um número reduzido. |
 | RNF03 | Controle de acesso por perfil | Deve ter | As funcionalidades são baseadas nos perfis, sendo uma das bases do sistema. |
-| RNF04 | Criptografia de dados sensíveis | Deve ter | O MVP registra acidentes e incidentes, que podem conter dados sensíveis e precisam de proteção desde a primeira versão. |
+| RNF04 | Criptografia de dados sensíveis | Deveria ter | A proteção dos dados é importante, mas sua implementação completa pode ser concluída após a validação inicial com dados de teste. |
 | RNF05 | Rastreabilidade de ações (auditoria) | Deve ter | As alterações em ocorrências, EPIs e usuários precisam ser rastreáveis para preservar a confiabilidade dos registros. |
 | RNF06 | Disponibilidade mínima | Deveria ter | O sistema deve estar disponível na maior parte do tempo, mas, em sua versão inicial, tempos maiores de manutenção podem ser necessários. |
 | RNF07 | Backup e recuperação de dados | Poderia ter | Não é necessário nas versões iniciais, cujos dados serão usados para teste. |
-| RNF08 | Funcionamento offline parcial | Poderia ter | Deve ser implementado após as demais funcionalidades, pois depende de sincronização e armazenamento local. |
-| RNF09 | Conformidade com normas regulamentadoras | Deve ter | Necessário para a base legal do software. |
+| RNF08 | Funcionamento offline parcial | Deve ter | Garante a consulta de informações previamente sincronizadas em ambientes com acesso instável à internet. |
+| RNF09 | Conformidade com normas regulamentadoras | Deveria ter | A conformidade é importante, mas a validação normativa completa pode ser aprofundada após os fluxos essenciais. |
 | RNF10 | Integridade e validade dos documentos gerados | Deveria ter | Relacionado às normas e aos processos legais, torna-se essencial quando houver geração de documentos oficiais pelo sistema. |
-| RNF11 | Interface responsiva e acessível | Deveria ter | Deve ser implementado após o desenvolvimento das principais funcionalidades, como refinamento do software. |
-| RNF12 | Facilidade de aprendizado | Deve ter | Mesmo em suas versões iniciais, o software não deve ser difícil de usar. |
+| RNF11 | Interface responsiva e acessível | Deve ter | Permite utilizar os fluxos essenciais em diferentes dispositivos e por pessoas com necessidades de acessibilidade. |
+| RNF12 | Facilidade de aprendizado | Deveria ter | A facilidade de aprendizado é importante, mas sua avaliação formal pode ocorrer após a implementação dos fluxos essenciais. |
 | RNF13 | Suporte multilíngue | Poderia ter | Não afeta o software como um todo, sendo voltado apenas para fins de maior visibilidade e suporte. |
-| RNF14 | Modularidade e extensibilidade | Deve ter | Necessário com base nos bons princípios de desenvolvimento. |
+| RNF14 | Modularidade e extensibilidade | Deveria ter | A modularidade facilita a evolução do sistema, mas pode ser refinada após a validação inicial das funcionalidades. |
 | RNF15 | Documentação técnica | Deve ter | Essencial para acompanhar o desenvolvimento do software. |
-| RNF16 | Compatibilidade com navegadores e sistemas operacionais | Deve ter | Requisito essencial para que o software funcione no maior número de dispositivos possível. |
+| RNF16 | Compatibilidade com navegadores e sistemas operacionais | Deveria ter | A compatibilidade ampla é importante, mas pode ser ampliada após a validação no ambiente inicial. |
 | RNF17 | Integração via API | Poderia ter | Deve ter sua implementação analisada após a criação do MVP. |

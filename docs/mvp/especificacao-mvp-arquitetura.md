@@ -24,7 +24,7 @@ O MVC pode ser usado no adaptador web da Arquitetura Hexagonal. A escolha de um 
 
 ## 4. Critério de escopo
 
-O MVP contém os requisitos classificados como `Must have`. Itens `Should have` e `Could have` permanecem no backlog. Requisitos classificados como `Won't have` ficam explicitamente fora da versão atual.
+O MVP contém os requisitos classificados como `Deve ter`. Itens `Deveria ter` e `Poderia ter` permanecem no backlog. Requisitos classificados como `Não terá agora` ficam explicitamente fora da versão atual.
 
 A prioridade indica quando o requisito será entregue, não se ele é válido. Por isso, requisitos fora do MVP continuam documentados.
 
@@ -43,87 +43,83 @@ A priorização considera três fatores: a contribuição direta do requisito pa
 
 #### 4.2.1. Requisitos funcionais
 
-| ID | Prioridade | Justificativa |
-| --- | --- | --- |
-| RF01 | Must have | Permite identificar acidentes relacionados a fatores humanos, informação essencial para registrar e acompanhar as ocorrências. |
-| RF02 | Must have | Permite identificar acidentes relacionados a falhas de equipamentos de segurança, informação essencial para acompanhar as ocorrências. |
-| RF03 | Must have | Sustenta o controle básico dos equipamentos de proteção e é parte central do sistema. |
-| RF04 | Must have | Permite acompanhar o estado de uso e conservação dos EPIs. |
-| RF05 | Must have | Permite relacionar acidentes, incidentes e inspeções ao contexto de risco do ambiente. |
-| RF06 | Must have | Permite classificar o risco das tarefas antes da execução, apoiando a prevenção e a definição das medidas de segurança. |
-| RF07 | Must have | Garante que cada acidente ou incidente tenha medidas corretivas e preventivas para reduzir novas ocorrências. |
-| RF08 | Could have | Exige regras automáticas e análise de histórico, podendo ser entregue em etapa posterior. |
-| RF09 | Should have | Fortalece o acompanhamento preventivo, mas pode ser entregue após o mapeamento das áreas. |
-| RF10 | Must have | Evita que colaboradores com certificações ou treinamentos vencidos sejam alocados em tarefas de risco. |
-| RF11 | Must have | Permite saber quais EPIs estão disponíveis, em uso ou pendentes de devolução. |
-| RF12 | Should have | Melhora a consistência do uso de EPIs, mas depende do cadastro de tarefas e equipamentos. |
-| RF13 | Must have | Representa uma funcionalidade central para o acompanhamento de acidentes de trabalho. |
-| RF14 | Should have | Complementa o ciclo de vida dos EPIs, mas pode ser entregue após estoque, manutenção e rastreabilidade. |
-| RF15 | Could have | Aprofunda a análise do acidente, mas pode ser simplificado ou adiado na primeira versão. |
-| RF16 | Must have | Permite acompanhar situações de risco antes que gerem acidentes, fortalecendo a prevenção. |
-| RF17 | Could have | Depende dos dados já cadastrados e pode ser implementado após os fluxos principais. |
-| RF18 | Could have | Depende da consolidação dos dados e pode ser implementado depois do fluxo principal. |
-| RF19 | Could have | É importante, mas exige maior cuidado com regras legais e dados padronizados. |
-| RF20 | Should have | Apoia o controle dos EPIs, mas pode ser entregue após o cadastro e a rastreabilidade dos equipamentos. |
-| RF21 | Must have | Permite antecipar substituições antes do vencimento ou do esgotamento dos EPIs, mantendo a continuidade da proteção. |
-| RF22 | Should have | É importante para controlar a entrega temporária de EPIs a visitantes, mas pode ser entregue após os fluxos essenciais. |
-| RF23 | Must have | É necessário para controlar usuários e responsabilidades nos fluxos principais. |
+| ID | Requisito | Prioridade | Justificativa |
+| --- | --- | --- | --- |
+| RF01 | Gerenciar acidentes causados por um funcionário | Deve ter | Permite identificar acidentes relacionados a fatores humanos, informação essencial para registrar e acompanhar as ocorrências. |
+| RF02 | Gerenciar acidentes causados por falha de equipamento de segurança | Deve ter | Permite identificar acidentes relacionados a falhas de equipamentos de segurança, informação essencial para acompanhar as ocorrências. |
+| RF03 | Controlar o estoque dos EPIs | Deve ter | Sustenta o controle básico dos equipamentos de proteção e é parte central do sistema. |
+| RF04 | Controlar a manutenção dos EPIs | Deve ter | Permite acompanhar o estado de uso e conservação dos EPIs. |
+| RF05 | Mapear as áreas de risco do ambiente de trabalho | Deve ter | Permite relacionar acidentes, incidentes e inspeções ao contexto de risco do ambiente. |
+| RF06 | Classificar o nível de periculosidade da tarefa | Deve ter | Permite classificar o risco das tarefas antes da execução, apoiando a prevenção e a definição das medidas de segurança. |
+| RF07 | Informar o plano de ação para cada tipo de acidente | Deve ter | Garante que cada acidente ou incidente tenha medidas corretivas e preventivas para reduzir novas ocorrências. |
+| RF08 | Gerar alertas automáticos por comportamento de risco | Poderia ter | Exige regras automáticas e análise de histórico, podendo ser entregue em etapa posterior. |
+| RF09 | Registrar histórico de inspeções periódicas das áreas de risco | Deveria ter | Fortalece o acompanhamento preventivo, mas pode ser entregue após o mapeamento das áreas. |
+| RF10 | Controlar vencimento de certificações e treinamentos obrigatórios | Deve ter | Evita que colaboradores com certificações ou treinamentos vencidos sejam alocados em tarefas de risco. |
+| RF11 | Controlar a rastreabilidade dos EPIs | Deve ter | Permite saber quais EPIs estão disponíveis, em uso ou pendentes de devolução. |
+| RF12 | Conectar tarefas e EPIs | Deveria ter | Melhora a consistência do uso de EPIs, mas depende do cadastro de tarefas e equipamentos. |
+| RF13 | Criar registros de acidente | Deve ter | Representa uma funcionalidade central para o acompanhamento de acidentes de trabalho. |
+| RF14 | Gerenciar descarte dos EPIs | Deveria ter | Complementa o ciclo de vida dos EPIs, mas pode ser entregue após estoque, manutenção e rastreabilidade. |
+| RF15 | Registrar investigação de acidente | Poderia ter | Aprofunda a análise do acidente, mas pode ser simplificado ou adiado na primeira versão. |
+| RF16 | Registrar incidentes | Deve ter | Permite acompanhar situações de risco antes que gerem acidentes, fortalecendo a prevenção. |
+| RF17 | Gerar dashboards de segurança | Poderia ter | Depende dos dados já cadastrados e pode ser implementado após os fluxos principais. |
+| RF18 | Emitir relatórios estatísticos | Poderia ter | Depende da consolidação dos dados e pode ser implementado depois do fluxo principal. |
+| RF19 | Gerar documentação legal | Poderia ter | É importante, mas exige maior cuidado com regras legais e dados padronizados. |
+| RF20 | Gerenciar fornecedores e Certificado de Aprovação | Deveria ter | Apoia o controle dos EPIs, mas pode ser entregue após o cadastro e a rastreabilidade dos equipamentos. |
+| RF21 | Gerenciar ciclo de vida e substituição inteligente de EPIs | Deve ter | Permite antecipar substituições antes do vencimento ou do esgotamento dos EPIs, mantendo a continuidade da proteção. |
+| RF22 | Gerenciar visitantes | Deveria ter | É importante para controlar a entrega temporária de EPIs a visitantes, mas pode ser entregue após os fluxos essenciais. |
+| RF23 | Gerenciar supervisores e colaboradores | Deve ter | É necessário para controlar usuários e responsabilidades nos fluxos principais. |
 
 #### 4.2.2. Requisitos não funcionais
 
-| ID | Prioridade | Justificativa |
-| --- | --- | --- |
-| RNF01 | Must have | Os fluxos principais precisam responder em tempo adequado para serem úteis aos usuários. |
-| RNF02 | Should have | A capacidade de usuários é importante, mas o MVP acadêmico pode começar com uma carga menor e controlada. |
-| RNF03 | Must have | O controle por perfil protege as funções e os dados conforme a responsabilidade de cada usuário. |
-| RNF04 | Must have | O MVP registra acidentes e incidentes, que podem conter dados sensíveis e precisam de proteção desde a primeira versão. |
-| RNF05 | Must have | As alterações em ocorrências, EPIs e usuários precisam ser rastreáveis para preservar a confiabilidade dos registros. |
-| RNF06 | Should have | A disponibilidade é importante, mas não é o foco principal da demonstração acadêmica. |
-| RNF07 | Could have | Backup e recuperação são necessários para um ambiente real, mas podem ser tratados após a validação do núcleo do MVP. |
-| RNF08 | Could have | O modo offline depende de sincronização e armazenamento local, não sendo essencial para os fluxos iniciais. |
-| RNF09 | Must have | As regras de segurança do trabalho devem orientar o domínio e os fluxos principais do sistema. |
-| RNF10 | Should have | Torna-se prioritário quando o sistema passar a gerar documentos oficiais e legais. |
-| RNF11 | Should have | É importante para a qualidade da interface, mas pode ser refinado após a implementação dos fluxos principais. |
-| RNF12 | Must have | As tarefas essenciais devem ser compreendidas por usuários com conhecimento básico de informática. |
-| RNF13 | Could have | O suporte a outros idiomas amplia o alcance, mas não é necessário para validar o objetivo do MVP. |
-| RNF14 | Must have | O desacoplamento permite organizar o projeto e evoluir os módulos sem modificar as regras centrais. |
-| RNF15 | Must have | A documentação técnica é parte da própria entrega e permite compreender e manter o projeto. |
-| RNF16 | Must have | A compatibilidade definida evita que os fluxos principais dependam de um ambiente específico. |
-| RNF17 | Could have | Integrações externas podem ser analisadas após a validação das funcionalidades internas do MVP. |
+| ID | Requisito | Prioridade | Justificativa |
+| --- | --- | --- | --- |
+| RNF01 | Tempo de resposta | Deveria ter | O tempo de resposta é importante, mas pode ser refinado após a validação inicial dos fluxos essenciais. |
+| RNF02 | Capacidade de usuários simultâneos | Deveria ter | A capacidade de usuários é importante, mas o MVP acadêmico pode começar com uma carga menor e controlada. |
+| RNF03 | Controle de acesso por perfil | Deve ter | O controle por perfil protege as funções e os dados conforme a responsabilidade de cada usuário. |
+| RNF04 | Criptografia de dados sensíveis | Deveria ter | A proteção dos dados é importante, mas sua implementação completa pode ser concluída após a validação inicial com dados de teste. |
+| RNF05 | Rastreabilidade de ações (auditoria) | Deve ter | As alterações em ocorrências, EPIs e usuários precisam ser rastreáveis para preservar a confiabilidade dos registros. |
+| RNF06 | Disponibilidade mínima | Deveria ter | A disponibilidade é importante, mas não é o foco principal da demonstração acadêmica. |
+| RNF07 | Backup e recuperação de dados | Poderia ter | Backup e recuperação são necessários para um ambiente real, mas podem ser tratados após a validação do núcleo do MVP. |
+| RNF08 | Funcionamento offline parcial | Deve ter | Garante a consulta de informações previamente sincronizadas em ambientes com acesso instável à internet. |
+| RNF09 | Conformidade com normas regulamentadoras | Deveria ter | A conformidade é importante, mas a validação normativa completa pode ser aprofundada após os fluxos essenciais. |
+| RNF10 | Integridade e validade dos documentos gerados | Deveria ter | Torna-se prioritário quando o sistema passar a gerar documentos oficiais e legais. |
+| RNF11 | Interface responsiva e acessível | Deve ter | Permite utilizar os fluxos essenciais em diferentes dispositivos e por pessoas com necessidades de acessibilidade. |
+| RNF12 | Facilidade de aprendizado | Deveria ter | A facilidade de aprendizado é importante, mas sua avaliação formal pode ocorrer após a implementação dos fluxos essenciais. |
+| RNF13 | Suporte multilíngue | Poderia ter | O suporte a outros idiomas amplia o alcance, mas não é necessário para validar o objetivo do MVP. |
+| RNF14 | Modularidade e extensibilidade | Deveria ter | A modularidade facilita a evolução do sistema, mas pode ser refinada após a validação inicial das funcionalidades. |
+| RNF15 | Documentação técnica | Deve ter | A documentação técnica é parte da própria entrega e permite compreender e manter o projeto. |
+| RNF16 | Compatibilidade com navegadores e sistemas operacionais | Deveria ter | A compatibilidade ampla é importante, mas pode ser ampliada após a validação no ambiente inicial. |
+| RNF17 | Integração via API | Poderia ter | Integrações externas podem ser analisadas após a validação das funcionalidades internas do MVP. |
 
 ## 5. Escopo do MVP
 
 ### 5.1. Requisitos funcionais incluídos
 
-| Requisito | Prioridade | Resultado esperado no MVP |
-| --- | --- | --- |
-| RF01 | Must have | Registrar, consultar e atualizar acidentes relacionados a fatores humanos. |
-| RF02 | Must have | Registrar, consultar e atualizar acidentes relacionados a falhas de equipamentos de segurança. |
-| RF03 | Must have | Consultar estoque e registrar entradas e saídas de EPIs. |
-| RF04 | Must have | Consultar e registrar manutenção de EPIs. |
-| RF05 | Must have | Cadastrar, consultar e atualizar áreas de risco. |
-| RF06 | Must have | Classificar o nível de periculosidade das tarefas. |
-| RF07 | Must have | Definir e acompanhar planos de ação vinculados a acidentes e incidentes. |
-| RF10 | Must have | Controlar vencimentos de certificações e treinamentos obrigatórios. |
-| RF11 | Must have | Registrar empréstimos, devoluções e itens pendentes. |
-| RF13 | Must have | Permitir que o Supervisor registre acidentes. |
-| RF16 | Must have | Permitir o registro de incidentes pelos perfis definidos no requisito. |
-| RF21 | Must have | Calcular a previsão de substituição dos EPIs e gerar alertas preventivos. |
-| RF23 | Must have | Gerenciar supervisores e colaboradores conforme o perfil do ator. |
+| ID | Requisito | Prioridade | Resultado esperado no MVP |
+| --- | --- | --- | --- |
+| RF01 | Gerenciar acidentes causados por um funcionário | Deve ter | Registrar, consultar e atualizar acidentes relacionados a fatores humanos. |
+| RF02 | Gerenciar acidentes causados por falha de equipamento de segurança | Deve ter | Registrar, consultar e atualizar acidentes relacionados a falhas de equipamentos de segurança. |
+| RF03 | Controlar o estoque dos EPIs | Deve ter | Consultar estoque e registrar entradas e saídas de EPIs. |
+| RF04 | Controlar a manutenção dos EPIs | Deve ter | Consultar e registrar manutenção de EPIs. |
+| RF05 | Mapear as áreas de risco do ambiente de trabalho | Deve ter | Cadastrar, consultar e atualizar áreas de risco. |
+| RF06 | Classificar o nível de periculosidade da tarefa | Deve ter | Classificar o nível de periculosidade das tarefas. |
+| RF07 | Informar o plano de ação para cada tipo de acidente | Deve ter | Definir e acompanhar planos de ação vinculados a acidentes e incidentes. |
+| RF10 | Controlar vencimento de certificações e treinamentos obrigatórios | Deve ter | Controlar vencimentos de certificações e treinamentos obrigatórios. |
+| RF11 | Controlar a rastreabilidade dos EPIs | Deve ter | Registrar empréstimos, devoluções e itens pendentes. |
+| RF13 | Criar registros de acidente | Deve ter | Permitir que o Supervisor registre acidentes. |
+| RF16 | Registrar incidentes | Deve ter | Permitir o registro de incidentes pelos perfis definidos no requisito. |
+| RF21 | Gerenciar ciclo de vida e substituição inteligente de EPIs | Deve ter | Calcular a previsão de substituição dos EPIs e gerar alertas preventivos. |
+| RF23 | Gerenciar supervisores e colaboradores | Deve ter | Gerenciar supervisores e colaboradores conforme o perfil do ator. |
 
 ### 5.2. Requisitos não funcionais incluídos
 
-| Requisito | Prioridade | Evidência esperada |
-| --- | --- | --- |
-| RNF01 | Must have | Teste dos tempos de resposta dos fluxos principais. |
-| RNF03 | Must have | Testes de permissão para Gestor, Supervisor e Colaborador. |
-| RNF04 | Must have | Evidência de TLS 1.3 na transmissão e AES-256 no armazenamento. |
-| RNF05 | Must have | Evidência de log imutável e da política de retenção mínima de 5 anos. |
-| RNF09 | Must have | Regras normativas identificadas nos casos de uso e no domínio. |
-| RNF12 | Must have | Teste das tarefas principais com usuários do público esperado. |
-| RNF14 | Must have | Dependências do núcleo separadas por portas e adaptadores. |
-| RNF15 | Must have | Arquitetura, API e modelo de dados versionados no repositório. |
-| RNF16 | Must have | Verificação nos navegadores e sistemas definidos no requisito. |
+| ID | Requisito | Prioridade | Evidência esperada |
+| --- | --- | --- | --- |
+| RNF03 | Controle de acesso por perfil | Deve ter | Testes de permissão para Gestor, Supervisor e Colaborador. |
+| RNF05 | Rastreabilidade de ações (auditoria) | Deve ter | Evidência de log imutável e da política de retenção mínima de 5 anos. |
+| RNF08 | Funcionamento offline parcial | Deve ter | Demonstração da consulta offline a informações previamente sincronizadas. |
+| RNF11 | Interface responsiva e acessível | Deve ter | Verificação em dispositivos desktop, tablet e móvel, com avaliação das diretrizes WCAG 2.1 AA. |
+| RNF15 | Documentação técnica | Deve ter | Arquitetura, API e modelo de dados versionados no repositório. |
 
 ### 5.3. Casos de uso incluídos
 
@@ -148,7 +144,7 @@ Os seguintes grupos permanecem fora do MVP:
 - inspeções e vínculo entre tarefas e EPIs: RF09 e RF12;
 - alertas de comportamento, investigação, dashboards, relatórios, CAT e visitantes: RF08, RF15, RF17, RF18, RF19 e RF22;
 - descarte, fornecedores e Certificado de Aprovação: RF14 e RF20;
-- funcionamento offline, suporte multilíngue e integração externa: RNF08, RNF13 e RNF17.
+- tempo de resposta, capacidade de usuários, criptografia, disponibilidade, backup, conformidade normativa, integridade de documentos, facilidade de aprendizado, suporte multilíngue, modularidade, compatibilidade ampla e integração externa: RNF01, RNF02, RNF04, RNF06, RNF07, RNF09, RNF10, RNF12, RNF13, RNF14, RNF16 e RNF17.
 
 Sensores, IoT, rotas de evacuação e simulações de emergência pertencem a uma versão antiga do projeto. Esses itens não fazem parte do backlog atual porque não possuem requisito vigente.
 
@@ -206,42 +202,38 @@ O fluxo recomendado é o registro de acidente ou incidente. O diagrama deve incl
 
 ### 8.5. Diagrama de classes reduzido ao MVP
 
-Deve conter apenas as classes necessárias aos requisitos `Must have`: usuário e perfil, ocorrência, plano de ação, EPI, estoque, movimentação, manutenção, empréstimo, projeção de substituição, área de risco, tarefa, classificação de periculosidade, certificação, treinamento e auditoria.
+Deve conter apenas as classes necessárias aos requisitos `Deve ter`: usuário e perfil, ocorrência, plano de ação, EPI, estoque, movimentação, manutenção, empréstimo, projeção de substituição, área de risco, tarefa, classificação de periculosidade, certificação, treinamento e auditoria.
 
 Como proposta de modelagem, o grupo pode separar `EPI`, que representa o tipo de equipamento, de `ItemEPI`, que representa uma unidade física rastreável. Essa proposta não cria um requisito novo.
 
 ## 9. Matriz de rastreabilidade
 
-| Requisito | Caso de uso | Elemento arquitetural | Situação |
-| --- | --- | --- | --- |
-| RF01 | UC05 | Gestão de Ocorrências | Coberto pelo registro e gerenciamento de acidentes relacionados a fatores humanos. |
-| RF02 | UC05 | Gestão de Ocorrências e Gestão de EPIs | Coberto pelo registro de acidentes relacionados a falhas de equipamentos de segurança. |
-| RF03 | UC06 | Gestão de EPIs, Estoque e Persistência | Coberto pelo fluxo básico. |
-| RF04 | UC01 | Gestão de EPIs, Manutenção e Persistência | Fluxo ajustado para registrar manutenção. |
-| RF05 | UC03 | Gestão de Áreas de Risco e Persistência | Coberto. |
-| RF06 | UC11 | Gestão de Tarefas | Coberto pela classificação de periculosidade. |
-| RF07 | UC07 | Gestão de Ocorrências | Coberto pela definição de planos vinculados às ocorrências. |
-| RF10 | UC02 | Gestão de Capacitações | Coberto pelo controle de certificações e treinamentos. |
-| RF11 | UC12 | Gestão de EPIs, Empréstimo e Estoque | Recorte limitado a colaboradores. |
-| RF13 | UC09 e UC05 | Gestão de Ocorrências | Coberto. |
-| RF16 | UC09 e UC05 | Gestão de Ocorrências | Atores alinhados ao requisito. |
-| RF21 | UC10 | Gestão de EPIs | Coberto pelo planejamento de substituição com base no ciclo de vida. |
-| RF23 | UC13 | Gestão de Usuários e Autorização | UC13 proposto para fechar a lacuna. |
-| RNF01 | UCs do MVP | Interface, Aplicação e Persistência | Exige teste de desempenho. |
-| RNF03 | UCs do MVP | Autenticação e Autorização | Exige teste por perfil. |
-| RNF04 | UC05 e UC09 | HTTPS, Criptografia e Persistência | Decisão obrigatória no MVP. |
-| RNF05 | UCs com alteração | Auditoria | Decisão obrigatória no MVP. |
-| RNF09 | UCs do MVP | Regras de Domínio | Exige validação normativa. |
-| RNF12 | UCs do MVP | Interface Web | Exige teste de usabilidade. |
-| RNF14 | UCs do MVP | Núcleo, Portas e Adaptadores | Atendido pelo desenho arquitetural. |
-| RNF15 | Todos | Documentação versionada | Parcial; API e modelo de dados dependem da implementação. |
-| RNF16 | UCs do MVP | Interface Web e implantação | Exige matriz de compatibilidade. |
+| ID | Requisito | Caso de uso | Elemento arquitetural | Situação |
+| --- | --- | --- | --- | --- |
+| RF01 | Gerenciar acidentes causados por um funcionário | UC05 | Gestão de Ocorrências | Coberto pelo registro e gerenciamento de acidentes relacionados a fatores humanos. |
+| RF02 | Gerenciar acidentes causados por falha de equipamento de segurança | UC05 | Gestão de Ocorrências e Gestão de EPIs | Coberto pelo registro de acidentes relacionados a falhas de equipamentos de segurança. |
+| RF03 | Controlar o estoque dos EPIs | UC06 | Gestão de EPIs, Estoque e Persistência | Coberto pelo fluxo básico. |
+| RF04 | Controlar a manutenção dos EPIs | UC01 | Gestão de EPIs, Manutenção e Persistência | Fluxo ajustado para registrar manutenção. |
+| RF05 | Mapear as áreas de risco do ambiente de trabalho | UC03 | Gestão de Áreas de Risco e Persistência | Coberto. |
+| RF06 | Classificar o nível de periculosidade da tarefa | UC11 | Gestão de Tarefas | Coberto pela classificação de periculosidade. |
+| RF07 | Informar o plano de ação para cada tipo de acidente | UC07 | Gestão de Ocorrências | Coberto pela definição de planos vinculados às ocorrências. |
+| RF10 | Controlar vencimento de certificações e treinamentos obrigatórios | UC02 | Gestão de Capacitações | Coberto pelo controle de certificações e treinamentos. |
+| RF11 | Controlar a rastreabilidade dos EPIs | UC12 | Gestão de EPIs, Empréstimo e Estoque | Recorte limitado a colaboradores. |
+| RF13 | Criar registros de acidente | UC09 e UC05 | Gestão de Ocorrências | Coberto. |
+| RF16 | Registrar incidentes | UC09 e UC05 | Gestão de Ocorrências | Atores alinhados ao requisito. |
+| RF21 | Gerenciar ciclo de vida e substituição inteligente de EPIs | UC10 | Gestão de EPIs | Coberto pelo planejamento de substituição com base no ciclo de vida. |
+| RF23 | Gerenciar supervisores e colaboradores | UC13 | Gestão de Usuários e Autorização | UC13 proposto para fechar a lacuna. |
+| RNF03 | Controle de acesso por perfil | UCs do MVP | Autenticação e Autorização | Exige teste por perfil. |
+| RNF05 | Rastreabilidade de ações (auditoria) | UCs com alteração | Auditoria | Decisão obrigatória no MVP. |
+| RNF08 | Funcionamento offline parcial | UCs de consulta | Cache local e Sincronização | Exige demonstração sem conexão. |
+| RNF11 | Interface responsiva e acessível | UCs do MVP | Interface Web | Exige verificação responsiva e de acessibilidade. |
+| RNF15 | Documentação técnica | Todos | Documentação versionada | Parcial; API e modelo de dados dependem da implementação. |
 
 ## 10. Critérios de aceite da documentação
 
 A documentação da entrega estará pronta quando:
 
-1. todos os requisitos `Must have` apontarem para pelo menos um caso de uso;
+1. todos os requisitos `Deve ter` apontarem para pelo menos um caso de uso;
 2. todos os casos de uso do MVP apontarem para um módulo arquitetural;
 3. requisitos fora do MVP não aparecerem como funcionalidades da primeira entrega;
 4. sensores e simulações não aparecerem na arquitetura vigente;

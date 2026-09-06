@@ -60,17 +60,13 @@ Essa organização atende ao RNF14, que exige desacoplamento e extensibilidade. 
 
 ## 5. Requisitos não funcionais e decisões arquiteturais
 
-| Requisito | Decisão arquitetural |
-| --- | --- |
-| RNF01 | Medir o tempo dos fluxos principais e limitar consultas desnecessárias. |
-| RNF03 | Verificar o perfil do usuário antes de executar cada caso de uso protegido. |
-| RNF04 | Usar TLS 1.3 na transmissão e AES-256 no armazenamento de dados sensíveis. |
-| RNF05 | Manter log imutável das operações, com usuário, data, hora e retenção mínima de 5 anos. |
-| RNF09 | Manter as validações normativas no domínio, sem vinculá-las à interface. |
-| RNF12 | Manter os fluxos principais curtos e com mensagens de validação claras. |
-| RNF14 | Isolar domínio, aplicação e adaptadores por contratos definidos. |
-| RNF15 | Versionar a arquitetura, a API e o modelo de dados junto ao projeto. |
-| RNF16 | Evitar recursos exclusivos de um navegador ou sistema operacional. |
+| ID | Requisito | Decisão arquitetural |
+| --- | --- | --- |
+| RNF03 | Controle de acesso por perfil | Verificar o perfil do usuário antes de executar cada caso de uso protegido. |
+| RNF05 | Rastreabilidade de ações (auditoria) | Manter log imutável das operações, com usuário, data, hora e retenção mínima de 5 anos. |
+| RNF08 | Funcionamento offline parcial | Manter cópias locais dos dados sincronizados necessários às consultas offline. |
+| RNF11 | Interface responsiva e acessível | Construir a interface para diferentes tamanhos de tela e seguir as diretrizes WCAG 2.1 AA. |
+| RNF15 | Documentação técnica | Versionar a arquitetura, a API e o modelo de dados junto ao projeto. |
 
 As decisões acima descrevem a solução esperada. O atendimento de cada RNF deve ser comprovado por testes ou evidências da implementação.
 
