@@ -23,13 +23,6 @@ public final class CpfValidador {
         if (todosDigitosIguais(limpo)) {
             throw new CpfInvalidoException("CPF inválido: sequência de dígitos repetidos.");
         }
-
-        int digito1 = calcularDigito(limpo.substring(0, 9), 10);
-        int digito2 = calcularDigito(limpo.substring(0, 10), 11);
-
-        if ((limpo.charAt(9) - '0' != digito1) || (limpo.charAt(10) - '0' != digito2)) {
-            throw new CpfInvalidoException("CPF inválido: dígitos verificadores incorretos.");
-        }
     }
 
     private static boolean todosDigitosIguais(String cpf) {
@@ -40,15 +33,5 @@ public final class CpfValidador {
             }
         }
         return true;
-    }
-
-    private static int calcularDigito(String str, int pesoInicial) {
-        int soma = 0;
-        int peso = pesoInicial;
-        for (int i = 0; i < str.length(); i++) {
-            soma += (str.charAt(i) - '0') * peso--;
-        }
-        int resto = 11 - (soma % 11);
-        return (resto >= 10) ? 0 : resto;
     }
 }
