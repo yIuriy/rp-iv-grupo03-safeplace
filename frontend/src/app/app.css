@@ -1,0 +1,3 @@
+.sp-feature-page { display: grid; gap: var(--sp-space-24); min-width: 0; }
+.sp-feature-heading { display: grid; gap: var(--sp-space-8); }
+.sp-feature-heading p { color: var(--sp-text-secondary); }
