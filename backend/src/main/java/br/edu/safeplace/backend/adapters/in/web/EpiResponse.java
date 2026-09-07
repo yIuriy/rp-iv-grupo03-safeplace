@@ -48,4 +48,18 @@ public record EpiResponse(
                 epi.getVidaUtilDias()
         );
     }
+
+    public static EpiResponse fromOutputDTO(br.edu.safeplace.backend.application.dto.output.EpiOutputDTO dto) {
+        return new EpiResponse(
+                dto.id(),
+                dto.nome(),
+                dto.numeroCa(),
+                dto.quantidade(),
+                dto.estoqueMinimo(),
+                dto.estoqueCritico(),
+                dto.status(),
+                dto.dataValidadeCa(),
+                dto.vidaUtilDias()
+        );
+    }
 }

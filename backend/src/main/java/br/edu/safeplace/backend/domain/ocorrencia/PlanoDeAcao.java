@@ -18,6 +18,11 @@ public class PlanoDeAcao {
         this.medidasPreventivas = medidasPreventivas;
     }
 
+    public static PlanoDeAcao novo(String medidasCorretivas, LocalDate prazo, String status,
+            String medidasPreventivas) {
+        return new PlanoDeAcao(null, medidasCorretivas, prazo, status, medidasPreventivas);
+    }
+
     public Integer getId() {
         return id;
     }

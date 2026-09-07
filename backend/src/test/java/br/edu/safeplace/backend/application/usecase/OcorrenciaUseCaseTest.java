@@ -1,5 +1,8 @@
-package br.edu.safeplace.backend.application.service;
+package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
+import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
+import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
@@ -13,17 +16,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
-class OcorrenciaServiceTest {
+class OcorrenciaUseCaseTest {
 
     @Test
     void deveRegistrarAcidente() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaService service = new OcorrenciaService(repository);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository);
 
-        Acidente acidente = new Acidente(
-                null,
+        RegistrarAcidenteInputDTO input = new RegistrarAcidenteInputDTO(
                 LocalDateTime.of(2026, 9, 6, 14, 30),
                 "Setor de corte",
                 "Funcionario sofreu corte durante operacao de maquina.",
@@ -39,22 +40,21 @@ class OcorrenciaServiceTest {
                 "ACD-2026-001",
                 "Ambulatorio");
 
-        Acidente salvo = service.registrarAcidente(acidente);
+        OcorrenciaOutputDTO salvo = useCase.registrarAcidente(input);
 
-        assertEquals(1, salvo.getIdOcorrencia());
-        assertEquals("Setor de corte", salvo.getLocal());
-        assertEquals("Corte", salvo.getTipo());
+        assertEquals(1, salvo.idOcorrencia());
+        assertEquals("Setor de corte", salvo.local());
+        assertEquals("Corte", salvo.tipo());
+        assertEquals("ACIDENTE", salvo.tipoOcorrencia());
         assertEquals(1, repository.listar().size());
-        assertInstanceOf(Acidente.class, repository.listar().get(0));
     }
 
     @Test
     void deveRegistrarIncidente() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaService service = new OcorrenciaService(repository);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository);
 
-        Incidente incidente = new Incidente(
-                null,
+        RegistrarIncidenteInputDTO input = new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 6, 15, 10),
                 "Almoxarifado",
                 "Empilhamento irregular quase causou queda de material.",
@@ -67,22 +67,21 @@ class OcorrenciaServiceTest {
                 "Caixas acima do limite permitido",
                 "Queda de material sobre funcionario");
 
-        Incidente salvo = service.registrarIncidente(incidente);
+        OcorrenciaOutputDTO salvo = useCase.registrarIncidente(input);
 
-        assertEquals(1, salvo.getIdOcorrencia());
-        assertEquals("Almoxarifado", salvo.getLocal());
-        assertEquals("Caixas acima do limite permitido", salvo.getSituacaoRisco());
+        assertEquals(1, salvo.idOcorrencia());
+        assertEquals("Almoxarifado", salvo.local());
+        assertEquals("Caixas acima do limite permitido", salvo.situacaoRisco());
+        assertEquals("INCIDENTE", salvo.tipoOcorrencia());
         assertEquals(1, repository.listar().size());
-        assertInstanceOf(Incidente.class, repository.listar().get(0));
     }
 
     @Test
     void deveListarOcorrenciasRegistradas() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaService service = new OcorrenciaService(repository);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository);
 
-        service.registrarIncidente(new Incidente(
-                null,
+        useCase.registrarIncidente(new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 6, 16, 0),
                 "Corredor principal",
                 "Piso molhado sem sinalizacao.",
@@ -90,8 +89,7 @@ class OcorrenciaServiceTest {
                 "Risco de queda",
                 "Lesao leve"));
 
-        service.registrarAcidente(new Acidente(
-                null,
+        useCase.registrarAcidente(new RegistrarAcidenteInputDTO(
                 LocalDateTime.of(2026, 9, 6, 17, 0),
                 "Oficina",
                 "Funcionario prensou o dedo.",
@@ -102,11 +100,11 @@ class OcorrenciaServiceTest {
                 "ACD-2026-002",
                 "Ambulatorio"));
 
-        List<Ocorrencia> ocorrencias = service.listar();
+        List<OcorrenciaOutputDTO> ocorrencias = useCase.listar();
 
         assertEquals(2, ocorrencias.size());
-        assertInstanceOf(Incidente.class, ocorrencias.get(0));
-        assertInstanceOf(Acidente.class, ocorrencias.get(1));
+        assertEquals("INCIDENTE", ocorrencias.get(0).tipoOcorrencia());
+        assertEquals("ACIDENTE", ocorrencias.get(1).tipoOcorrencia());
     }
 
     private static class OcorrenciaRepositoryFake implements OcorrenciaRepositoryPort {
@@ -127,7 +125,6 @@ class OcorrenciaServiceTest {
                     acidente.getDano(),
                     acidente.getNumeroProtocolo(),
                     acidente.getDestino());
-
             ocorrencias.add(salvo);
             return salvo;
         }
@@ -142,14 +139,13 @@ class OcorrenciaServiceTest {
                     incidente.getPlanoDeAcao(),
                     incidente.getSituacaoRisco(),
                     incidente.getPotencialDano());
-
             ocorrencias.add(salvo);
             return salvo;
         }
 
         @Override
         public List<Ocorrencia> listar() {
-            return ocorrencias;
+            return new ArrayList<>(ocorrencias);
         }
     }
 }

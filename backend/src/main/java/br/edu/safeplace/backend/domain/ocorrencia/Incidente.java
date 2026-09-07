@@ -13,6 +13,12 @@ public class Incidente extends Ocorrencia {
         this.potencialDano = potencialDano;
     }
 
+    public static Incidente novo(LocalDateTime dataOcorrencia, String local, String descricao,
+            PlanoDeAcao planoDeAcao, String situacaoRisco, String potencialDano) {
+        return new Incidente(null, dataOcorrencia, local, descricao, planoDeAcao,
+                situacaoRisco, potencialDano);
+    }
+
     public String getSituacaoRisco() {
         return situacaoRisco;
     }
