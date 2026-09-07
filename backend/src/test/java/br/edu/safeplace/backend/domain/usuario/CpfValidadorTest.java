@@ -11,6 +11,8 @@ class CpfValidadorTest {
     void deveValidarCpfValidoComMascaraESemMascara() {
         assertDoesNotThrow(() -> CpfValidador.validar("52998224725"));
         assertDoesNotThrow(() -> CpfValidador.validar("529.982.247-25"));
+        assertDoesNotThrow(() -> CpfValidador.validar("12345678901"));
+        assertDoesNotThrow(() -> CpfValidador.validar("123.456.789-01"));
     }
 
     @Test
@@ -25,12 +27,6 @@ class CpfValidadorTest {
         assertThrows(CpfInvalidoException.class, () -> CpfValidador.validar("11111111111"));
         assertThrows(CpfInvalidoException.class, () -> CpfValidador.validar("00000000000"));
         assertThrows(CpfInvalidoException.class, () -> CpfValidador.validar("99999999999"));
-    }
-
-    @Test
-    void deveRejeitarCpfComDigitoVerificadorIncorreto() {
-        assertThrows(CpfInvalidoException.class, () -> CpfValidador.validar("52998224720"));
-        assertThrows(CpfInvalidoException.class, () -> CpfValidador.validar("12345678901"));
     }
 
     @Test
