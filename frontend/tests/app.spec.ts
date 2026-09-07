@@ -46,3 +46,34 @@ test('supports direct URLs, browser history and recovery from unknown routes', a
   await page.getByRole('link', { name: 'Voltar ao início' }).click()
   await expect(page).toHaveURL('/usuarios')
 })
+
+for (const width of [360, 768, 1344]) {
+  test(`application navigation works with the keyboard at ${width}px`, async ({ page }, testInfo) => {
+    const errors: string[] = []
+    page.on('pageerror', error => errors.push(error.message))
+    await page.setViewportSize({ width, height: 960 })
+    await page.route('**/api/usuarios', route => route.fulfill({ json: [{ id: 1, nome: 'Ana Silva' }] }))
+    await page.goto('/usuarios')
+    await page.keyboard.press('Tab')
+    await expect(page.getByRole('link', { name: 'Pular para o conteúdo' })).toBeFocused()
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('main')).toBeFocused()
+    await expect(page.getByRole('cell', { name: 'Ana Silva' })).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+    await page.screenshot({ path: testInfo.outputPath(`users-${width}.png`), fullPage: true })
+
+    for (const label of ['Ocorrências', 'EPIs', 'Áreas de risco', 'Tarefas']) {
+      if (width < 1200) {
+        await page.getByRole('button', { name: 'Menu', exact: true }).click()
+        await expect(page.getByRole('dialog', { name: 'Navegação' })).toBeVisible()
+      }
+      const link = page.getByRole('navigation', { name: 'Navegação principal' }).getByRole('link', { name: label, exact: true })
+      await link.focus()
+      await page.keyboard.press('Enter')
+      await expect(page.getByRole('heading', { name: label, exact: true })).toBeVisible()
+      await expect(page.getByRole('dialog', { name: 'Navegação' })).not.toBeVisible()
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+    }
+    expect(errors).toEqual([])
+  })
+}
