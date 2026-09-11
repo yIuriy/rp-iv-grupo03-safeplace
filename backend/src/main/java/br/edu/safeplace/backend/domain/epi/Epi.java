@@ -27,13 +27,15 @@ public class Epi {
             int estoqueMinimo,
             StatusEpi status,
             LocalDate dataValidadeCa,
-            Integer vidaUtilDias) {
+            Integer vidaUtilDias,
+            String descricao,
+            ClassificacaoEPI classificacao) {
         this(
                 id,
                 nome,
                 new CertificadoAprovacao(numeroCa, dataValidadeCa),
                 quantidade,
-                new EspecificacaoEPI(null, estoqueMinimo, null),
+                new EspecificacaoEPI(descricao, estoqueMinimo, classificacao),
                 status,
                 vidaUtilDias);
 
@@ -83,7 +85,9 @@ public class Epi {
             int quantidade,
             int estoqueMinimo,
             LocalDate dataValidadeCa,
-            Integer vidaUtilDias) {
+            Integer vidaUtilDias,
+            String descricao,
+            ClassificacaoEPI classificacao) {
         return novo(
                 nome,
                 numeroCa,
@@ -91,7 +95,9 @@ public class Epi {
                 estoqueMinimo,
                 dataValidadeCa,
                 vidaUtilDias,
-                LocalDate.now());
+                LocalDate.now(), 
+                descricao, 
+                classificacao);
     }
 
     public static Epi novo(
@@ -101,7 +107,9 @@ public class Epi {
             int estoqueMinimo,
             LocalDate dataValidadeCa,
             Integer vidaUtilDias,
-            LocalDate dataCadastro) {
+            LocalDate dataCadastro,
+            String descricao,
+            ClassificacaoEPI classificacao) {
         CertificadoAprovacao certificado = new CertificadoAprovacao(numeroCa, dataValidadeCa);
 
         certificado.validarParaCadastroEm(dataCadastro);
@@ -115,7 +123,7 @@ public class Epi {
                 nome,
                 certificado,
                 quantidade,
-                new EspecificacaoEPI(null, estoqueMinimo, null),
+                new EspecificacaoEPI(descricao, estoqueMinimo, classificacao),
                 statusInicial,
                 vidaUtilDias);
     }

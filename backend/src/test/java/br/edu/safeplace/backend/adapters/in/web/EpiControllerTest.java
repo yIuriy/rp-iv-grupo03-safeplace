@@ -41,7 +41,7 @@ class EpiControllerTest {
     @Test
     void deveCriarEpiComSucesso() throws Exception {
         EpiOutputDTO epiSalvo = new EpiOutputDTO(1, "Capacete H-700", "CA-12345", 20, 5,
-                StatusEpi.DISPONIVEL, LocalDate.of(2028, 6, 30), 365, false);
+                StatusEpi.DISPONIVEL, LocalDate.of(2028, 6, 30), 365, false, null, null);
 
         when(useCase.cadastrarEpi(any(CadastrarEpiInputDTO.class))).thenReturn(epiSalvo);
 
@@ -71,8 +71,8 @@ class EpiControllerTest {
 
     @Test
     void deveListarEpis() throws Exception {
-        EpiOutputDTO epi1 = new EpiOutputDTO(1, "Capacete", "CA-1", 10, 2, StatusEpi.DISPONIVEL, null, null, false);
-        EpiOutputDTO epi2 = new EpiOutputDTO(2, "Luva", "CA-2", 0, 5, StatusEpi.ESGOTADO, null, null, true);
+        EpiOutputDTO epi1 = new EpiOutputDTO(1, "Capacete", "CA-1", 10, 2, StatusEpi.DISPONIVEL, null, null, false, null, null);
+        EpiOutputDTO epi2 = new EpiOutputDTO(2, "Luva", "CA-2", 0, 5, StatusEpi.ESGOTADO, null, null, true, null, null);
 
         when(useCase.listar()).thenReturn(List.of(epi1, epi2));
 

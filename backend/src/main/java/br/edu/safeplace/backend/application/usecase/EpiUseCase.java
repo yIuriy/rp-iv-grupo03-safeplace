@@ -31,8 +31,9 @@ public class EpiUseCase implements GerenciarEpiUseCase {
                 inputDTO.quantidade(),
                 inputDTO.estoqueMinimo(),
                 inputDTO.dataValidadeCa(),
-                inputDTO.vidaUtilDias()
-        );
+                inputDTO.vidaUtilDias(),
+                inputDTO.descricao(),
+                inputDTO.classificacao());
         Epi salvo = repositoryPort.salvar(novoEpi);
         return EpiOutputDTO.deDominio(salvo);
     }
@@ -55,7 +56,8 @@ public class EpiUseCase implements GerenciarEpiUseCase {
 
     @Override
     @Transactional
-    public MovimentacaoEstoqueOutputDTO registrarMovimentacao(Integer epiId, TipoMovimentacao tipo, int quantidade, String motivo) {
+    public MovimentacaoEstoqueOutputDTO registrarMovimentacao(Integer epiId, TipoMovimentacao tipo, int quantidade,
+            String motivo) {
         Epi epi = repositoryPort.buscarPorId(epiId)
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId));
 

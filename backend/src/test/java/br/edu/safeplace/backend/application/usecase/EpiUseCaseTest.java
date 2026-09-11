@@ -9,6 +9,7 @@ import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
+import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
 import br.edu.safeplace.backend.domain.epi.exception.SaldoInsuficienteException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,7 @@ class EpiUseCaseTest {
     @Test
     void deveCadastrarEListarEpis() {
         CadastrarEpiInputDTO input = new CadastrarEpiInputDTO("Capacete", "CA-100", 20, 5, LocalDate.now().plusYears(1),
-                null);
+                null, null, null);
         EpiOutputDTO salvo = useCase.cadastrarEpi(input);
 
         assertNotNull(salvo.id());
@@ -52,7 +53,7 @@ class EpiUseCaseTest {
     void deveBuscarEpiPorIdComSucesso() {
         EpiOutputDTO epi = useCase
                 .cadastrarEpi(new CadastrarEpiInputDTO("Bota de Segurança", "CA-200", 15, 3,
-                        LocalDate.now().plusYears(1), null));
+                        LocalDate.now().plusYears(1), null, null, null));
         EpiOutputDTO encontrado = useCase.buscarPorId(epi.id());
 
         assertEquals("Bota de Segurança", encontrado.nome());
@@ -67,7 +68,7 @@ class EpiUseCaseTest {
     void deveRegistrarEntradaDeEstoque() {
         EpiOutputDTO epi = useCase
                 .cadastrarEpi(new CadastrarEpiInputDTO("Luva Nitrílica", "CA-300", 10, 2, LocalDate.now().plusYears(1),
-                        null));
+                        null, null, null));
 
         MovimentacaoEstoqueOutputDTO mov = useCase.registrarMovimentacao(epi.id(), TipoMovimentacao.ENTRADA, 5,
                 "Compra mensal");
@@ -84,7 +85,8 @@ class EpiUseCaseTest {
     @Test
     void deveRegistrarSaidaDeEstoque() {
         EpiOutputDTO epi = useCase
-                .cadastrarEpi(new CadastrarEpiInputDTO("Óculos", "CA-400", 10, 2, LocalDate.now().plusYears(1), null));
+                .cadastrarEpi(new CadastrarEpiInputDTO("Óculos", "CA-400", 10, 2, LocalDate.now().plusYears(1), null,
+                        null, null));
 
         MovimentacaoEstoqueOutputDTO mov = useCase.registrarMovimentacao(epi.id(), TipoMovimentacao.SAIDA, 4,
                 "Uso operacional");
@@ -100,7 +102,7 @@ class EpiUseCaseTest {
     @Test
     void deveImpedirSaidaMaiorQueSaldo() {
         EpiOutputDTO epi = useCase.cadastrarEpi(
-                new CadastrarEpiInputDTO("Protetor", "CA-500", 10, 2, LocalDate.now().plusYears(1), null));
+                new CadastrarEpiInputDTO("Protetor", "CA-500", 10, 2, LocalDate.now().plusYears(1), null, null, null));
 
         assertThrows(SaldoInsuficienteException.class,
                 () -> useCase.registrarMovimentacao(epi.id(), TipoMovimentacao.SAIDA, 11, "Retirada excessiva"));
@@ -126,7 +128,9 @@ class EpiUseCaseTest {
                     epi.getEstoqueMinimo(),
                     epi.getStatus(),
                     epi.getDataValidadeCa(),
-                    epi.getVidaUtilDias());
+                    epi.getVidaUtilDias(),
+                    epi.getEspecificacao().getDescricao(),
+                    epi.getEspecificacao().getClassificacao());
             storage.put(id, salvo);
             return salvo;
         }
@@ -167,7 +171,7 @@ class EpiUseCaseTest {
     void deveRejeitarCaVencidoSemSalvarEpi() {
         CadastrarEpiInputDTO input = new CadastrarEpiInputDTO(
                 "Capacete", "CA-100", 20, 5,
-                LocalDate.MIN, null);
+                LocalDate.MIN, null, null, null);
 
         assertThatThrownBy(() -> useCase.cadastrarEpi(input))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -180,12 +184,35 @@ class EpiUseCaseTest {
     void deveRejeitarCaSemValidadeSemSalvarEpi() {
         CadastrarEpiInputDTO input = new CadastrarEpiInputDTO(
                 "Capacete", "CA-100", 20, 5,
-                null, null);
+                null, null, null, null);
 
         assertThatThrownBy(() -> useCase.cadastrarEpi(input))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Data de validade do CA é obrigatória.");
 
         assertThat(repository.listar()).isEmpty();
+    }
+
+    @Test
+    void devePreservarEspecificacaoAoCadastrarEConsultar() {
+        CadastrarEpiInputDTO input = new CadastrarEpiInputDTO(
+                "Óculos",
+                "1234",
+                10,
+                2,
+                LocalDate.now().plusYears(1),
+                365,
+                "Óculos de proteção com lentes transparentes",
+                ClassificacaoEPI.PROTECAO_DE_OLHOS);
+
+        EpiOutputDTO salvo = useCase.cadastrarEpi(input);
+        EpiOutputDTO consultado = useCase.buscarPorId(salvo.id());
+
+        assertThat(salvo.descricao()).isEqualTo(input.descricao());
+        assertThat(salvo.classificacao()).isEqualTo(input.classificacao());
+
+        assertThat(consultado.descricao()).isEqualTo(input.descricao());
+        assertThat(consultado.classificacao()).isEqualTo(input.classificacao());
+        assertThat(consultado.estoqueMinimo()).isEqualTo(2);
     }
 }

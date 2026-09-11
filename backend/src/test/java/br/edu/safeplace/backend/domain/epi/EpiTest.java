@@ -26,7 +26,7 @@ class EpiTest {
         @Test
         void deveCriarEpiComDadosValidos() {
                 Epi epi = new Epi(1, "Óculos de Proteção", "CA-9988", 10, 2,
-                                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365);
+                                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365, null, null);
 
                 assertEquals(Integer.valueOf(1), epi.getId());
                 assertEquals("Óculos de Proteção", epi.getNome());
@@ -41,7 +41,7 @@ class EpiTest {
         void deveCriarNovoEpiComStatusDisponivelQuandoQuantidadeMaiorQueZero() {
                 Epi epi = Epi.novo(
                                 "Óculos de Proteção", "CA-9988", 10, 2,
-                                VALIDADE_CA, 365, DATA_CADASTRO);
+                                VALIDADE_CA, 365, DATA_CADASTRO, null, null);
 
                 assertNull(epi.getId());
                 assertEquals("Óculos de Proteção", epi.getNome());
@@ -52,7 +52,7 @@ class EpiTest {
         void deveCriarNovoEpiComStatusEsgotadoQuandoQuantidadeForZero() {
                 Epi epi = Epi.novo(
                                 "Luva", "CA-1234", 0, 5,
-                                VALIDADE_CA, null, DATA_CADASTRO);
+                                VALIDADE_CA, null, DATA_CADASTRO, null, null);
 
                 assertNull(epi.getId());
                 assertEquals(StatusEpi.ESGOTADO, epi.getStatus());
@@ -61,7 +61,7 @@ class EpiTest {
         @Test
         void deveAdicionarEstoqueETransitarDeEsgotadoParaDisponivel() {
                 Epi epi = new Epi(1, "Luva de Vaqueta", "CA-1234", 0, 5,
-                                StatusEpi.ESGOTADO, VALIDADE_CA, null);
+                                StatusEpi.ESGOTADO, VALIDADE_CA, null, null, null);
 
                 MovimentacaoEstoque mov = epi.adicionarEstoque(15, "Chegada de lote");
 
@@ -75,7 +75,7 @@ class EpiTest {
         @Test
         void deveRemoverEstoqueETransitarParaEsgotadoAoZerar() {
                 Epi epi = new Epi(1, "Protetor Auricular", "CA-5678", 5, 2,
-                                StatusEpi.DISPONIVEL, VALIDADE_CA, null);
+                                StatusEpi.DISPONIVEL, VALIDADE_CA, null, null, null);
 
                 MovimentacaoEstoque mov = epi.removerEstoque(5, "Distribuição para equipe");
 
@@ -89,7 +89,7 @@ class EpiTest {
         @Test
         void deveLancarExcecaoAoTentarRemoverMaisQueOSaldoDisponivel() {
                 Epi epi = new Epi(1, "Capacete", "CA-1111", 10, 3,
-                                StatusEpi.DISPONIVEL, VALIDADE_CA, null);
+                                StatusEpi.DISPONIVEL, VALIDADE_CA, null, null, null);
 
                 assertThrows(SaldoInsuficienteException.class, () -> epi.removerEstoque(11, "Retirada excessiva"));
                 assertEquals(10, epi.getQuantidade());
@@ -98,7 +98,7 @@ class EpiTest {
         @Test
         void deveDetectarEstoqueCritico() {
                 Epi epi = new Epi(1, "Máscara PFF2", "CA-2222", 3, 3,
-                                StatusEpi.DISPONIVEL, VALIDADE_CA, null);
+                                StatusEpi.DISPONIVEL, VALIDADE_CA, null, null, null);
 
                 assertTrue(epi.isEstoqueCritico());
         }
@@ -106,13 +106,13 @@ class EpiTest {
         @Test
         void deveValidarCamposObrigatoriosNaConstrucao() {
                 assertThrows(IllegalArgumentException.class,
-                                () -> new Epi(1, "", "CA-111", 5, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null));
+                                () -> new Epi(1, "", "CA-111", 5, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null, null, null));
 
                 assertThrows(IllegalArgumentException.class,
-                                () -> new Epi(1, "Luva", null, 5, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null));
+                                () -> new Epi(1, "Luva", null, 5, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null, null, null));
 
                 assertThrows(IllegalArgumentException.class,
-                                () -> new Epi(1, "Luva", "CA-111", -1, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null));
+                                () -> new Epi(1, "Luva", "CA-111", -1, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null, null, null));
         }
 
         @ParameterizedTest
@@ -122,7 +122,7 @@ class EpiTest {
                         String motivo) {
                 Epi epi = new Epi(
                                 1, "Luva", "CA-1234", 0, 2,
-                                StatusEpi.ESGOTADO, LocalDate.of(2028, 1, 1), 365);
+                                StatusEpi.ESGOTADO, LocalDate.of(2028, 1, 1), 365, null, null);
 
                 assertThatThrownBy(() -> epi.adicionarEstoque(5, motivo))
                                 .isInstanceOf(IllegalArgumentException.class)
@@ -139,7 +139,7 @@ class EpiTest {
                         String motivo) {
                 Epi epi = new Epi(
                                 1, "Luva", "CA-1234", 5, 2,
-                                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365);
+                                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365, null, null);
 
                 assertThatThrownBy(() -> epi.removerEstoque(5, motivo))
                                 .isInstanceOf(IllegalArgumentException.class)
@@ -153,7 +153,7 @@ class EpiTest {
         void deveRejeitarEntradaQueUltrapasseLimiteDeInteiro() {
                 Epi epi = new Epi(
                                 1, "Luva", "CA-1234", Integer.MAX_VALUE, 2,
-                                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365);
+                                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365, null, null);
 
                 assertThatThrownBy(() -> epi.adicionarEstoque(1, "Reposição"))
                                 .isInstanceOf(IllegalArgumentException.class)
@@ -167,7 +167,7 @@ class EpiTest {
         void devePermitirEntradaQueAtinjaLimiteDeInteiro() {
                 Epi epi = new Epi(
                                 1, "Luva", "CA-1234", Integer.MAX_VALUE - 1, 2,
-                                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365);
+                                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365, null, null);
 
                 MovimentacaoEstoque movimentacao = epi.adicionarEstoque(1, "Reposição");
 
@@ -180,7 +180,7 @@ class EpiTest {
         void deveRejeitarQuantidadesNaoPositivasSemAlterarEstoque(int quantidade) {
                 Epi epi = new Epi(
                                 1, "Luva", "CA-1234", 5, 2,
-                                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365);
+                                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365, null, null);
 
                 assertThatThrownBy(() -> epi.adicionarEstoque(quantidade, "Reposição"))
                                 .isInstanceOf(IllegalArgumentException.class);
@@ -196,7 +196,7 @@ class EpiTest {
         void deveCadastrarEpiComCertificadoValido() {
                 Epi epi = Epi.novo(
                                 "Capacete", "CA-1234", 10, 2,
-                                VALIDADE_CA, 365, DATA_CADASTRO);
+                                VALIDADE_CA, 365, DATA_CADASTRO, null, null);
 
                 assertThat(epi.getId()).isNull();
                 assertThat(epi.getCertificadoAprovacao()).isEqualTo(
@@ -209,7 +209,7 @@ class EpiTest {
         void deveRejeitarCadastroComCaVencido() {
                 assertThatThrownBy(() -> Epi.novo(
                                 "Capacete", "CA-1234", 10, 2,
-                                DATA_CADASTRO.minusDays(1), 365, DATA_CADASTRO))
+                                DATA_CADASTRO.minusDays(1), 365, DATA_CADASTRO, null, null))
                                 .isInstanceOf(IllegalArgumentException.class)
                                 .hasMessage("Não é permitido cadastrar EPI com CA vencido.");
         }
@@ -218,7 +218,7 @@ class EpiTest {
         void devePermitirCadastroNoDiaDoVencimento() {
                 Epi epi = Epi.novo(
                                 "Capacete", "CA-1234", 10, 2,
-                                DATA_CADASTRO, 365, DATA_CADASTRO);
+                                DATA_CADASTRO, 365, DATA_CADASTRO, null, null);
 
                 assertThat(epi.getDataValidadeCa()).isEqualTo(DATA_CADASTRO);
         }
@@ -227,7 +227,7 @@ class EpiTest {
         void deveRejeitarCadastroSemValidadeDoCa() {
                 assertThatThrownBy(() -> Epi.novo(
                                 "Capacete", "CA-1234", 10, 2,
-                                null, 365, DATA_CADASTRO))
+                                null, 365, DATA_CADASTRO, null, null))
                                 .isInstanceOf(IllegalArgumentException.class)
                                 .hasMessage("Data de validade do CA é obrigatória.");
         }
@@ -236,7 +236,7 @@ class EpiTest {
         void deveRejeitarCadastroComFormatoDeCaInvalido() {
                 assertThatThrownBy(() -> Epi.novo(
                                 "Capacete", "ABC", 10, 2,
-                                VALIDADE_CA, 365, DATA_CADASTRO))
+                                VALIDADE_CA, 365, DATA_CADASTRO, null, null))
                                 .isInstanceOf(IllegalArgumentException.class)
                                 .hasMessage(
                                                 "Número do CA deve conter apenas dígitos, com prefixo CA- opcional.");
@@ -248,7 +248,7 @@ class EpiTest {
 
                 Epi epi = new Epi(
                                 1, "Capacete", "CA-1234", 10, 2,
-                                StatusEpi.DISPONIVEL, validadeAntiga, 365);
+                                StatusEpi.DISPONIVEL, validadeAntiga, 365, null, null);
 
                 assertThat(epi.getId()).isEqualTo(1);
                 assertThat(epi.getDataValidadeCa()).isEqualTo(validadeAntiga);
@@ -260,7 +260,7 @@ class EpiTest {
         void deveImpedirCadastroComCaVencidoPeloConstrutorPublico() {
                 assertThatThrownBy(() -> new Epi(
                                 null, "Capacete", "CA-1234", 10, 2,
-                                StatusEpi.DISPONIVEL, LocalDate.MIN, 365))
+                                StatusEpi.DISPONIVEL, LocalDate.MIN, 365, null, null))
                                 .isInstanceOf(IllegalArgumentException.class)
                                 .hasMessage("Não é permitido cadastrar EPI com CA vencido.");
         }
@@ -274,7 +274,7 @@ class EpiTest {
                                 5,
                                 VALIDADE_CA,
                                 365,
-                                DATA_CADASTRO);
+                                DATA_CADASTRO, null, null);
 
                 assertThat(epi.getEspecificacao()).isNotNull();
                 assertThat(epi.getEspecificacao().getQuantidadeMinima())
@@ -300,7 +300,7 @@ class EpiTest {
                                 minimo,
                                 VALIDADE_CA,
                                 365,
-                                DATA_CADASTRO);
+                                DATA_CADASTRO, null, null);
 
                 assertThat(epi.isEstoqueCritico()).isEqualTo(esperado);
         }
@@ -314,7 +314,7 @@ class EpiTest {
                                 -1,
                                 VALIDADE_CA,
                                 365,
-                                DATA_CADASTRO))
+                                DATA_CADASTRO, null, null))
                                 .isInstanceOf(IllegalArgumentException.class)
                                 .hasMessage("Quantidade mínima não pode ser negativa.");
         }
