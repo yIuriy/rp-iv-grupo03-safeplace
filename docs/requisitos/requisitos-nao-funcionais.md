@@ -16,6 +16,8 @@ O sistema deve suportar ao menos 20 usuários simultâneos sem degradação perc
 
 O sistema deve implementar controle de acesso baseado em perfis (RBAC), restringindo funcionalidades conforme o papel do usuário: Gestor de Segurança ou Supervisor. O Colaborador é uma pessoa cadastrada para vinculação aos registros do sistema, sem conta, senha ou perfil de acesso. Seu cadastro não permite autenticação.
 
+A autenticação é realizada via endpoint `POST /api/auth/login`, aceitando exclusivamente `email` e `senha` (o sistema não aceita CPF no login). As requisições subsequentes são autenticadas por meio de tokens JSON Web Tokens (JWT) assinados via HMAC-SHA256, contendo o e-mail no claim `sub` e o perfil do usuário no claim `perfil`. No escopo do MVP, a validade do token JWT é de 7 dias (604.800.000 ms) para otimizar os fluxos de desenvolvimento e testes da equipe.
+
 ## RNF04 — Criptografia de dados sensíveis
 
 Todos os dados sensíveis, como atestados de saúde, Comunicações de Acidente de Trabalho (CATs), históricos de acidentes e mídias anexadas, devem ser armazenados e transmitidos com criptografia AES-256 e protocolo HTTPS com TLS 1.3.

@@ -31,7 +31,7 @@ class UsuarioCasoDeUsoBuscaPorCpfTest {
     private CodificadorSenhaPorta codificadorSenhaPorta;
 
     @Mock
-    private GeradorSenhaPorta geradorSenhaPorta;
+    private br.edu.safeplace.backend.application.port.out.GeradorSenhaPorta geradorSenhaPorta;
 
     private UsuarioCasoDeUso casoDeUso;
 

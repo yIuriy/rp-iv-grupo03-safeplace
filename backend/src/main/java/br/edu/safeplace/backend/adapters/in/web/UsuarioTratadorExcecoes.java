@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.adapters.in.web;
 
+import br.edu.safeplace.backend.domain.usuario.exception.CredenciaisInvalidasException;
 import br.edu.safeplace.backend.domain.usuario.exception.CpfInvalidoException;
 import br.edu.safeplace.backend.domain.usuario.exception.CpfJaCadastradoException;
 import br.edu.safeplace.backend.domain.usuario.exception.EmailJaCadastradoException;
@@ -14,6 +15,16 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class UsuarioTratadorExcecoes {
+
+    @ExceptionHandler(CredenciaisInvalidasException.class)
+    public ResponseEntity<Map<String, Object>> handleCredenciaisInvalidas(CredenciaisInvalidasException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.UNAUTHORIZED.value(),
+                "error", "Não Autorizado",
+                "message", ex.getMessage()
+        ));
+    }
 
     @ExceptionHandler(UsuarioNaoEncontradoException.class)
     public ResponseEntity<Map<String, Object>> handleUsuarioNaoEncontrado(UsuarioNaoEncontradoException ex) {

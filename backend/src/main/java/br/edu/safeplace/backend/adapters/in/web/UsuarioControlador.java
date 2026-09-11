@@ -25,6 +25,19 @@ public class UsuarioControlador {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Cadastra um novo usuário ou colaborador")
     public UsuarioResposta criar(@Valid @RequestBody CriarUsuarioRequisicao requisicao) {
+        if (requisicao.perfil() == br.edu.safeplace.backend.domain.usuario.Perfil.SUPERVISOR
+                || requisicao.perfil() == br.edu.safeplace.backend.domain.usuario.Perfil.GESTOR_SEGURANCA) {
+            org.springframework.security.core.Authentication auth =
+                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !auth.getAuthorities().isEmpty()) {
+                boolean isGestor = auth.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_GESTOR_SEGURANCA"));
+                if (!isGestor) {
+                    throw new org.springframework.security.access.AccessDeniedException(
+                            "Apenas Gestor de Segurança pode cadastrar supervisores ou gestores.");
+                }
+            }
+        }
         UsuarioSaidaDTO salvo = casoDeUso.cadastrarUsuario(requisicao.paraDTOEntrada());
         return UsuarioResposta.aPartirDe(salvo);
     }
