@@ -14,8 +14,17 @@ public record UsuarioSaidaDTO(
         String email,
         Perfil perfil,
         boolean ativo,
-        LocalDateTime criadoEm
+        LocalDateTime criadoEm,
+        String senhaInicial
 ) {
+    /**
+     * Devolve uma cópia com a senha inicial preenchida. Usado apenas no retorno do cadastro
+     * de Supervisor (issue #91); listagem e busca mantêm este campo nulo.
+     */
+    public UsuarioSaidaDTO comSenhaInicial(String senhaInicial) {
+        return new UsuarioSaidaDTO(id, nome, cpf, dataNascimento, email, perfil, ativo, criadoEm, senhaInicial);
+    }
+
     public static UsuarioSaidaDTO deDominio(Colaborador colaborador) {
         return new UsuarioSaidaDTO(
                 colaborador.getId(),
@@ -25,7 +34,8 @@ public record UsuarioSaidaDTO(
                 colaborador.getEmail(),
                 colaborador.getPerfil(),
                 colaborador.isAtivo(),
-                colaborador.getCriadoEm()
+                colaborador.getCriadoEm(),
+                null
         );
     }
 }

@@ -25,7 +25,7 @@ public record CriarUsuarioRequisicao(
         @Schema(description = "Email corporativo (obrigatório para perfis com acesso ao sistema)", example = "joao.silva@safeplace.com")
         String email,
 
-        @Schema(description = "Senha de acesso (obrigatória para Supervisor e Gestor de Segurança)", example = "Segredo@123")
+        @Schema(description = "Senha de acesso. Usada apenas para Gestor de Segurança; para Supervisor é ignorada, pois o sistema gera a senha inicial (RF23). Não se aplica a Colaborador.", example = "Segredo@123")
         String senha,
 
         @NotNull(message = "Perfil é obrigatório")
