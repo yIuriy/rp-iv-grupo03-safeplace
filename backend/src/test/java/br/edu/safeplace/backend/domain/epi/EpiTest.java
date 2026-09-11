@@ -1,11 +1,20 @@
 package br.edu.safeplace.backend.domain.epi;
 
-import br.edu.safeplace.backend.domain.epi.exception.SaldoInsuficienteException;
-import org.junit.jupiter.api.Test;
-
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import br.edu.safeplace.backend.domain.epi.exception.SaldoInsuficienteException;
 
 class EpiTest {
 
@@ -14,7 +23,7 @@ class EpiTest {
         Epi epi = new Epi(1, "Óculos de Proteção", "CA-9988", 10, 2,
                 StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365);
 
-        assertEquals(1, epi.getId());
+        assertEquals(Integer.valueOf(1), epi.getId());
         assertEquals("Óculos de Proteção", epi.getNome());
         assertEquals("CA-9988", epi.getNumeroCa());
         assertEquals(10, epi.getQuantidade());
@@ -87,13 +96,90 @@ class EpiTest {
 
     @Test
     void deveValidarCamposObrigatoriosNaConstrucao() {
-        assertThrows(IllegalArgumentException.class, () ->
-                new Epi(1, "", "CA-111", 5, 1, StatusEpi.DISPONIVEL, null, null));
+        assertThrows(IllegalArgumentException.class,
+                () -> new Epi(1, "", "CA-111", 5, 1, StatusEpi.DISPONIVEL, null, null));
 
-        assertThrows(IllegalArgumentException.class, () ->
-                new Epi(1, "Luva", null, 5, 1, StatusEpi.DISPONIVEL, null, null));
+        assertThrows(IllegalArgumentException.class,
+                () -> new Epi(1, "Luva", null, 5, 1, StatusEpi.DISPONIVEL, null, null));
 
-        assertThrows(IllegalArgumentException.class, () ->
-                new Epi(1, "Luva", "CA-111", -1, 1, StatusEpi.DISPONIVEL, null, null));
+        assertThrows(IllegalArgumentException.class,
+                () -> new Epi(1, "Luva", "CA-111", -1, 1, StatusEpi.DISPONIVEL, null, null));
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { " ", "\t", "\n" })
+    void devePreservarSaldoEStatusQuandoEntradaTiverMotivoInvalido(
+            String motivo) {
+        Epi epi = new Epi(
+                1, "Luva", "CA-1234", 0, 2,
+                StatusEpi.ESGOTADO, LocalDate.of(2028, 1, 1), 365);
+
+        assertThatThrownBy(() -> epi.adicionarEstoque(5, motivo))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Motivo da movimentação é obrigatório.");
+
+        assertThat(epi.getQuantidade()).isZero();
+        assertThat(epi.getStatus()).isEqualTo(StatusEpi.ESGOTADO);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { " ", "\t", "\n" })
+    void devePreservarSaldoEStatusQuandoSaidaTiverMotivoInvalido(
+            String motivo) {
+        Epi epi = new Epi(
+                1, "Luva", "CA-1234", 5, 2,
+                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365);
+
+        assertThatThrownBy(() -> epi.removerEstoque(5, motivo))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Motivo da movimentação é obrigatório.");
+
+        assertThat(epi.getQuantidade()).isEqualTo(5);
+        assertThat(epi.getStatus()).isEqualTo(StatusEpi.DISPONIVEL);
+    }
+
+    @Test
+    void deveRejeitarEntradaQueUltrapasseLimiteDeInteiro() {
+        Epi epi = new Epi(
+                1, "Luva", "CA-1234", Integer.MAX_VALUE, 2,
+                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365);
+
+        assertThatThrownBy(() -> epi.adicionarEstoque(1, "Reposição"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Entrada excede o limite de quantidade do estoque.");
+
+        assertThat(epi.getQuantidade()).isEqualTo(Integer.MAX_VALUE);
+        assertThat(epi.getStatus()).isEqualTo(StatusEpi.DISPONIVEL);
+    }
+
+    @Test
+    void devePermitirEntradaQueAtinjaLimiteDeInteiro() {
+        Epi epi = new Epi(
+                1, "Luva", "CA-1234", Integer.MAX_VALUE - 1, 2,
+                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365);
+
+        MovimentacaoEstoque movimentacao = epi.adicionarEstoque(1, "Reposição");
+
+        assertThat(epi.getQuantidade()).isEqualTo(Integer.MAX_VALUE);
+        assertThat(movimentacao.getQuantidade()).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, -1, Integer.MIN_VALUE })
+    void deveRejeitarQuantidadesNaoPositivasSemAlterarEstoque(int quantidade) {
+        Epi epi = new Epi(
+                1, "Luva", "CA-1234", 5, 2,
+                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365);
+
+        assertThatThrownBy(() -> epi.adicionarEstoque(quantidade, "Reposição"))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        assertThatThrownBy(() -> epi.removerEstoque(quantidade, "Distribuição"))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        assertThat(epi.getQuantidade()).isEqualTo(5);
+        assertThat(epi.getStatus()).isEqualTo(StatusEpi.DISPONIVEL);
     }
 }
