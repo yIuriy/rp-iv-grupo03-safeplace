@@ -9,4 +9,5 @@ public interface GerenciarUsuarioCasoDeUso {
     UsuarioSaidaDTO cadastrarUsuario(CadastrarUsuarioEntradaDTO entrada);
     List<UsuarioSaidaDTO> listarUsuarios();
     UsuarioSaidaDTO buscarPorId(Integer id);
+    UsuarioSaidaDTO buscarPorCpf(String cpf);
 }
