@@ -29,13 +29,16 @@ class UsuarioCasoDeUsoBuscaPorCpfTest {
     @Mock
     private CodificadorSenhaPorta codificadorSenhaPorta;
 
+    @Mock
+    private br.edu.safeplace.backend.application.port.out.GeradorSenhaPorta geradorSenhaPorta;
+
     private UsuarioCasoDeUso casoDeUso;
 
     private final String cpfValido = "52998224725";
 
     @BeforeEach
     void setUp() {
-        casoDeUso = new UsuarioCasoDeUso(repositorioPorta, codificadorSenhaPorta);
+        casoDeUso = new UsuarioCasoDeUso(repositorioPorta, codificadorSenhaPorta, geradorSenhaPorta);
     }
 
     @Test
