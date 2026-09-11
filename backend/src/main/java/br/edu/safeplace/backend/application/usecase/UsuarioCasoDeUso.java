@@ -80,4 +80,14 @@ public class UsuarioCasoDeUso implements GerenciarUsuarioCasoDeUso {
                 .map(UsuarioSaidaDTO::deDominio)
                 .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com ID: " + id));
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UsuarioSaidaDTO buscarPorCpf(String cpf) {
+        CpfValidador.validar(cpf);
+        String cpfSanitizado = CpfValidador.sanitizar(cpf);
+        return repositorioPorta.buscarPorCpf(cpfSanitizado)
+                .map(UsuarioSaidaDTO::deDominio)
+                .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com CPF: " + cpfSanitizado));
+    }
 }
