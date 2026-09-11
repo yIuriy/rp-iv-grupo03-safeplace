@@ -27,8 +27,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.springframework.security.test.context.support.WithMockUser;
+
 @WebMvcTest({UsuarioControlador.class, UsuarioTratadorExcecoes.class})
 @Import(SecurityConfig.class)
+@WithMockUser(roles = "GESTOR_SEGURANCA")
 class UsuarioControladorTest {
 
     @Autowired
