@@ -1,10 +1,55 @@
-# SafePlace
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="frontend/design-system/assets/logo-inverse.svg">
+    <source media="(prefers-color-scheme: light)" srcset="frontend/design-system/assets/logo-primary.svg">
+    <img src="frontend/design-system/assets/logo-primary.svg" alt="SafePlace" width="420">
+  </picture>
+</h1>
+
+<p align="center">
+  <strong>Registrar. Acompanhar. Agir.</strong><br>
+  Segurança do trabalho: ocorrências, EPIs e áreas de risco.
+</p>
+
+<p align="center">
+  <a href="backend/pom.xml"><img src="https://img.shields.io/badge/Java-21-174B3F?style=for-the-badge&amp;labelColor=243D35" alt="Java 21"></a>
+  <a href="backend/pom.xml"><img src="https://img.shields.io/badge/Spring_Boot-4.1.1-174B3F?style=for-the-badge&amp;logo=springboot&amp;logoColor=white&amp;labelColor=243D35" alt="Spring Boot 4.1.1"></a>
+  <a href="docker-compose.yml"><img src="https://img.shields.io/badge/PostgreSQL-16-174B3F?style=for-the-badge&amp;logo=postgresql&amp;logoColor=white&amp;labelColor=243D35" alt="PostgreSQL 16"></a>
+  <br>
+  <a href="frontend/package.json"><img src="https://img.shields.io/badge/React-19-174B3F?style=for-the-badge&amp;logo=react&amp;logoColor=white&amp;labelColor=243D35" alt="React 19"></a>
+  <a href="frontend/package.json"><img src="https://img.shields.io/badge/TypeScript-6-174B3F?style=for-the-badge&amp;logo=typescript&amp;logoColor=white&amp;labelColor=243D35" alt="TypeScript 6"></a>
+  <a href="frontend/package.json"><img src="https://img.shields.io/badge/Vite-8-174B3F?style=for-the-badge&amp;logo=vite&amp;logoColor=white&amp;labelColor=243D35" alt="Vite 8"></a>
+</p>
+
+<p align="center">
+  <a href="#sobre-o-projeto">Sobre</a> ·
+  <a href="#tecnologias">Tecnologias</a> ·
+  <a href="#executar-com-docker-compose">Como executar</a> ·
+  <a href="frontend/design-system/README.md">Design system</a> ·
+  <a href="#documentação">Documentação</a> ·
+  <a href="#membros-do-grupo">Equipe</a>
+</p>
+
+## Sobre o projeto
 
 O SafePlace é um projeto de sistema para apoiar a segurança do trabalho, com foco no registro e acompanhamento de acidentes e incidentes, no controle de Equipamentos de Proteção Individual (EPIs) e no mapeamento de áreas de risco. Seus usuários com acesso são o Gestor de Segurança e o Supervisor, com permissões conforme cada perfil.
 
 O Gestor gerencia as contas dos supervisores. O Supervisor cadastra os colaboradores e registra os relatos comunicados por eles. O Colaborador permanece cadastrado para vínculo a ocorrências, capacitações e empréstimos de EPIs, sem conta, senha ou acesso ao sistema.
 
 Este repositório reúne o trabalho do Grupo 03 na disciplina de Resolução de Problemas IV, dando continuidade ao projeto elaborado em Análise e Projeto de Software (APS).
+
+## Tecnologias
+
+As tecnologias abaixo compõem a base do projeto. O que já está disponível está descrito em [Base implementada](#base-implementada).
+
+| Parte | Tecnologias | Uso no projeto |
+| --- | --- | --- |
+| Interface web | **React 19**, **TypeScript 6** e **Vite 8** | Interface e componentes reutilizáveis. Configuração em [package.json](frontend/package.json). |
+| API e regras de negócio | **Java 21** e **Spring Boot 4.1.1** | Serviços do backend e operações da API. Configuração em [pom.xml](backend/pom.xml). |
+| Persistência | **PostgreSQL 16**, **Spring Data JPA** e **Flyway** | Armazenamento dos dados e controle das alterações no banco. Veja a [configuração de conexão](backend/src/main/resources/application.yaml) e as [migrações](backend/src/main/resources/db/migration/). |
+| Ambiente de desenvolvimento | **Docker Compose** e **Maven Wrapper** | Execução dos serviços locais e compilação do backend. Veja o [Compose](docker-compose.yml) e os [comandos de desenvolvimento](#desenvolver-com-execução-local). |
+| Documentação da API | **Springdoc**, **OpenAPI** e **Swagger UI** | Contrato da API e consulta interativa às operações em `/docs`. |
+| Design e identidade visual | **Figma**, **SVG** e **CSS** | Logo, cores, tipografia e componentes do [design system](frontend/design-system/README.md). |
 
 ## Escopo inicial
 
@@ -117,6 +162,8 @@ Esses testes isolados não validam a persistência JPA. O empacotamento gera `ba
 
 ## Documentação
 
+- [Design system e biblioteca de componentes](frontend/design-system/README.md)
+- [Identidade visual e arquivos de design](frontend/design/README.md)
 - [Requisitos funcionais](docs/requisitos/requisitos-funcionais.md)
 - [Requisitos não funcionais](docs/requisitos/requisitos-nao-funcionais.md)
 - [Priorização de requisitos](docs/requisitos/priorizacao-moscow.md)
