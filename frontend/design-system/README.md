@@ -15,7 +15,7 @@ npm ci
 npm run dev
 ```
 
-- `/design-system`: interactive component catalog. The root `/` also opens it while the application is being built.
+- `/design-system`: interactive component catalog. The root `/` opens the application at `/usuarios`.
 - `/design-system/examples/risk-areas`: composed reference screen with fictional data, filters and consultation dialogs.
 - The reference navigation links lead to related catalog examples. Registration opens an explanation of the demonstration; it does not create a record.
 
