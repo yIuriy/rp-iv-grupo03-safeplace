@@ -2,6 +2,7 @@ package br.edu.safeplace.backend.adapters.in.web;
 
 import br.edu.safeplace.backend.application.dto.output.UsuarioSaidaDTO;
 import br.edu.safeplace.backend.domain.usuario.Perfil;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
@@ -31,7 +32,13 @@ public record UsuarioResposta(
         boolean ativo,
 
         @Schema(description = "Data e hora de criação no sistema", example = "2026-09-07T10:00:00")
-        LocalDateTime criadoEm
+        LocalDateTime criadoEm,
+
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @Schema(description = "Senha inicial gerada pelo sistema. Presente apenas na resposta do cadastro de Supervisor; "
+                + "nunca é devolvida em listagem ou busca e não é armazenada em texto puro (RF23, issue #91).",
+                example = "Xk7!pQ2#mA9z")
+        String senhaInicial
 ) {
     public static UsuarioResposta aPartirDe(UsuarioSaidaDTO dto) {
         return new UsuarioResposta(
@@ -42,7 +49,8 @@ public record UsuarioResposta(
                 dto.email(),
                 dto.perfil(),
                 dto.ativo(),
-                dto.criadoEm()
+                dto.criadoEm(),
+                dto.senhaInicial()
         );
     }
 }

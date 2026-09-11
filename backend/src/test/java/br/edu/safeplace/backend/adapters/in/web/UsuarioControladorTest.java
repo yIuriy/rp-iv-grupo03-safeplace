@@ -43,7 +43,7 @@ class UsuarioControladorTest {
     void deveCriarUsuarioComSucessoESemExporSenha() throws Exception {
         UsuarioSaidaDTO saida = new UsuarioSaidaDTO(
                 1, "Ana Lima", cpfValido, LocalDate.of(1985, 7, 20),
-                "ana@empresa.com", Perfil.SUPERVISOR, true, LocalDateTime.now()
+                "ana@empresa.com", Perfil.SUPERVISOR, true, LocalDateTime.now(), null
         );
 
         when(casoDeUso.cadastrarUsuario(any(CadastrarUsuarioEntradaDTO.class))).thenReturn(saida);
@@ -74,7 +74,7 @@ class UsuarioControladorTest {
     void deveListarUsuarios() throws Exception {
         UsuarioSaidaDTO u1 = new UsuarioSaidaDTO(
                 1, "Carlos Souza", cpfValido, LocalDate.of(1995, 3, 10),
-                "carlos@empresa.com", Perfil.COLABORADOR, true, LocalDateTime.now()
+                "carlos@empresa.com", Perfil.COLABORADOR, true, LocalDateTime.now(), null
         );
         when(casoDeUso.listarUsuarios()).thenReturn(List.of(u1));
 
