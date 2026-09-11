@@ -11,7 +11,7 @@ public class MovimentacaoEstoque {
     private final String motivo;
 
     public MovimentacaoEstoque(Integer id, Integer epiId, TipoMovimentacao tipo, int quantidade,
-                               LocalDateTime dataHora, String motivo) {
+            LocalDateTime dataHora, String motivo) {
         if (tipo == null) {
             throw new IllegalArgumentException("Tipo de movimentação é obrigatório.");
         }
@@ -20,6 +20,11 @@ public class MovimentacaoEstoque {
         }
         if (dataHora == null) {
             throw new IllegalArgumentException("Data e hora da movimentação são obrigatórias.");
+        }
+
+        if (motivo == null || motivo.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Motivo da movimentação é obrigatório.");
         }
 
         this.id = id;

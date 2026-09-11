@@ -32,11 +32,18 @@ public class EpiEntity {
     @Column(name = "vida_util_dias")
     private Integer vidaUtilDias;
 
+    @Column(name = "especificacao_descricao", columnDefinition = "text")
+    private String descricao;
+
+    @Column(name = "especificacao_classificacao", length = 80)
+    private String classificacao;
+
     public EpiEntity() {
     }
 
     public EpiEntity(Integer id, String nome, String numeroCa, Integer quantidade,
-                     Integer estoqueMinimo, String status, LocalDate dataValidadeCa, Integer vidaUtilDias) {
+            Integer estoqueMinimo, String status, LocalDate dataValidadeCa, Integer vidaUtilDias, String descricao,
+            String classificacao) {
         this.id = id;
         this.nome = nome;
         this.numeroCa = numeroCa;
@@ -45,6 +52,8 @@ public class EpiEntity {
         this.status = status;
         this.dataValidadeCa = dataValidadeCa;
         this.vidaUtilDias = vidaUtilDias;
+        this.descricao = descricao;
+        this.classificacao = classificacao;
     }
 
     public Integer getId() {
@@ -77,5 +86,13 @@ public class EpiEntity {
 
     public Integer getVidaUtilDias() {
         return vidaUtilDias;
+    }
+
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public String getClassificacao() {
+        return classificacao;
     }
 }

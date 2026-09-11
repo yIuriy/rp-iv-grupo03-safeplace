@@ -7,9 +7,26 @@ import java.util.List;
 import java.util.Optional;
 
 public interface EpiRepositoryPort {
+
     Epi salvar(Epi epi);
+
     Optional<Epi> buscarPorId(Integer id);
-    List<Epi> listar();
-    MovimentacaoEstoque salvarMovimentacao(MovimentacaoEstoque movimentacao);
-    List<MovimentacaoEstoque> listarMovimentacoesPorEpi(Integer epiId);
+
+    Optional<Epi> buscarPorCA(String numeroCa);
+
+    List<Epi> listarTodos();
+
+    Epi atualizarSaldo(Epi epi);
+
+    MovimentacaoEstoque salvarMovimentacao(
+            MovimentacaoEstoque movimentacao
+    );
+
+    List<MovimentacaoEstoque> listarMovimentacoesPorEpi(
+            Integer epiId
+    );
+
+    default List<Epi> listar() {
+        return listarTodos();
+    }
 }

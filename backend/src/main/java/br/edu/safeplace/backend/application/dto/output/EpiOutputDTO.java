@@ -2,6 +2,7 @@ package br.edu.safeplace.backend.application.dto.output;
 
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
+import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
 
 import java.time.LocalDate;
 
@@ -14,8 +15,9 @@ public record EpiOutputDTO(
         StatusEpi status,
         LocalDate dataValidadeCa,
         Integer vidaUtilDias,
-        boolean estoqueCritico
-) {
+        boolean estoqueCritico,
+        String descricao,
+        ClassificacaoEPI classificacao) {
     public static EpiOutputDTO deDominio(Epi epi) {
         return new EpiOutputDTO(
                 epi.getId(),
@@ -26,7 +28,8 @@ public record EpiOutputDTO(
                 epi.getStatus(),
                 epi.getDataValidadeCa(),
                 epi.getVidaUtilDias(),
-                epi.isEstoqueCritico()
-        );
+                epi.isEstoqueCritico(),
+                epi.getEspecificacao().getDescricao(),
+                epi.getEspecificacao().getClassificacao());
     }
 }

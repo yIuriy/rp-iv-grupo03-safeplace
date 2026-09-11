@@ -1,6 +1,7 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
 import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
+import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
@@ -32,7 +33,7 @@ public class EpiJpaAdapter implements EpiRepositoryPort {
     }
 
     @Override
-    public List<Epi> listar() {
+    public List<Epi> listarTodos() {
         return epiRepository.findAll().stream().map(this::toDomain).toList();
     }
 
@@ -50,6 +51,17 @@ public class EpiJpaAdapter implements EpiRepositoryPort {
                 .toList();
     }
 
+    @Override
+    public Optional<Epi> buscarPorCA(String numeroCa) {
+        return epiRepository.findByNumeroCa(numeroCa)
+                .map(this::toDomain);
+    }
+
+    @Override
+    public Epi atualizarSaldo(Epi epi) {
+        return salvar(epi);
+    }
+
     private EpiEntity toEntity(Epi domain) {
         return new EpiEntity(
                 domain.getId(),
@@ -59,8 +71,11 @@ public class EpiJpaAdapter implements EpiRepositoryPort {
                 domain.getEstoqueMinimo(),
                 domain.getStatus().name(),
                 domain.getDataValidadeCa(),
-                domain.getVidaUtilDias()
-        );
+                domain.getVidaUtilDias(),
+                domain.getEspecificacao().getDescricao(),
+                domain.getEspecificacao().getClassificacao() == null
+                        ? null
+                        : domain.getEspecificacao().getClassificacao().name());
     }
 
     private Epi toDomain(EpiEntity entity) {
@@ -72,8 +87,11 @@ public class EpiJpaAdapter implements EpiRepositoryPort {
                 entity.getEstoqueMinimo(),
                 StatusEpi.valueOf(entity.getStatus()),
                 entity.getDataValidadeCa(),
-                entity.getVidaUtilDias()
-        );
+                entity.getVidaUtilDias(),
+                entity.getDescricao(),
+                entity.getClassificacao() == null
+                        ? null
+                        : ClassificacaoEPI.valueOf(entity.getClassificacao()));
     }
 
     private MovimentacaoEstoqueEntity toEntity(MovimentacaoEstoque domain) {
@@ -83,8 +101,7 @@ public class EpiJpaAdapter implements EpiRepositoryPort {
                 domain.getTipo().name(),
                 domain.getQuantidade(),
                 domain.getDataHora(),
-                domain.getMotivo()
-        );
+                domain.getMotivo());
     }
 
     private MovimentacaoEstoque toDomain(MovimentacaoEstoqueEntity entity) {
@@ -94,7 +111,6 @@ public class EpiJpaAdapter implements EpiRepositoryPort {
                 TipoMovimentacao.valueOf(entity.getTipo()),
                 entity.getQuantidade(),
                 entity.getDataHora(),
-                entity.getMotivo()
-        );
+                entity.getMotivo());
     }
 }
