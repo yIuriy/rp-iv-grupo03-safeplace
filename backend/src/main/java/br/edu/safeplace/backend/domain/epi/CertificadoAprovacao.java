@@ -18,7 +18,7 @@ public record CertificadoAprovacao(
             numeroNormalizado = numeroNormalizado.substring(3);
         }
 
-        // Ao chegaar aqui, o CA- já vai ter sido retirado
+        // Ao chegar aqui, o CA- já vai ter sido retirado
         if (!numeroNormalizado.matches("[0-9]+")) {
             throw new IllegalArgumentException(
                     "Número do CA deve conter apenas dígitos, com prefixo CA- opcional.");

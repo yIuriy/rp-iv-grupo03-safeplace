@@ -25,7 +25,7 @@ public record CriarEpiRequest(
 
         @Schema(description = "Descrição da especificação do EPI.") String descricao,
 
-        @Schema(description = "Classificação da especificação do EPI.", example = "`PROTECAO_DE_OLHOS") ClassificacaoEPI classificacao) {
+        @Schema(description = "Classificação da especificação do EPI.", example = "PROTECAO_DE_OLHOS") ClassificacaoEPI classificacao) {
     public CadastrarEpiInputDTO toInputDTO() {
         return new CadastrarEpiInputDTO(
                 nome,

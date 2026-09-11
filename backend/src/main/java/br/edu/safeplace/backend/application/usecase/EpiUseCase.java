@@ -71,7 +71,7 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
             throw new IllegalArgumentException("Tipo de movimentação inválido: " + tipo);
         }
 
-        repositoryPort.salvar(epi);
+        repositoryPort.atualizarSaldo(epi);
         MovimentacaoEstoque salvo = repositoryPort.salvarMovimentacao(movimentacao);
         return MovimentacaoEstoqueOutputDTO.deDominio(salvo, epi.getQuantidade());
     }
