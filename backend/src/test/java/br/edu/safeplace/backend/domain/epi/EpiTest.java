@@ -1,9 +1,12 @@
 package br.edu.safeplace.backend.domain.epi;
 
+import br.edu.safeplace.backend.domain.epi.exception.CertificadoAprovacaoVencidoException;
+import br.edu.safeplace.backend.domain.epi.exception.EpiIndisponivelParaManutencaoException;
 import br.edu.safeplace.backend.domain.epi.exception.SaldoInsuficienteException;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -95,5 +98,84 @@ class EpiTest {
 
         assertThrows(IllegalArgumentException.class, () ->
                 new Epi(1, "Luva", "CA-111", -1, 1, StatusEpi.DISPONIVEL, null, null));
+    }
+
+    @Test
+    void deveEnviarEpiParaManutencaoComSucesso() {
+        Epi epi = new Epi(1, "Capacete", "CA-111", 5, 1, StatusEpi.DISPONIVEL, LocalDate.of(2030, 1, 1), 365);
+
+        epi.enviarParaManutencao(LocalDate.of(2026, 9, 11));
+
+        assertEquals(StatusEpi.EM_MANUTENCAO, epi.getStatus());
+    }
+
+    @Test
+    void deveImpedirEnvioParaManutencaoQuandoStatusNaoForDisponivel() {
+        Epi epi = new Epi(1, "Capacete", "CA-111", 5, 1, StatusEpi.EM_USO, LocalDate.of(2030, 1, 1), 365);
+
+        assertThrows(EpiIndisponivelParaManutencaoException.class, () ->
+                epi.enviarParaManutencao(LocalDate.of(2026, 9, 11)));
+    }
+
+    @Test
+    void deveBloquearEnvioParaManutencaoQuandoCaEstiverVencido() {
+        LocalDate caVencido = LocalDate.of(2025, 1, 1);
+        Epi epi = new Epi(1, "Máscara", "CA-222", 5, 1, StatusEpi.DISPONIVEL, caVencido, 180);
+
+        CertificadoAprovacaoVencidoException ex = assertThrows(
+                CertificadoAprovacaoVencidoException.class,
+                () -> epi.enviarParaManutencao(LocalDate.of(2026, 9, 11))
+        );
+
+        assertEquals(1, ex.getEpiId());
+        assertEquals("CA-222", ex.getNumeroCa());
+        assertEquals(caVencido, ex.getDataValidadeCa());
+        assertEquals(StatusEpi.DISPONIVEL, epi.getStatus());
+    }
+
+    @Test
+    void deveConcluirManutencaoAprovadaEVoltarParaDisponivel() {
+        Epi epi = new Epi(1, "Óculos", "CA-333", 4, 1, StatusEpi.EM_MANUTENCAO, LocalDate.of(2030, 1, 1), null);
+        ManutencaoEpi manutencao = new ManutencaoEpi(
+                10, 1, LocalDateTime.now(), TipoManutencao.PREVENTIVA,
+                "Ajuste e higienização", ResultadoManutencao.APROVADO, "Técnico Silva"
+        );
+
+        epi.concluirManutencao(manutencao);
+
+        assertEquals(StatusEpi.DISPONIVEL, epi.getStatus());
+        assertEquals(4, epi.getQuantidade());
+    }
+
+    @Test
+    void deveConcluirManutencaoReprovadaETransitarParaDescartadoComDecremento() {
+        Epi epi = new Epi(1, "Luva", "CA-444", 2, 1, StatusEpi.EM_MANUTENCAO, LocalDate.of(2030, 1, 1), null);
+        ManutencaoEpi manutencao = new ManutencaoEpi(
+                11, 1, LocalDateTime.now(), TipoManutencao.CORRETIVA,
+                "Rasgo estrutural irreparável", ResultadoManutencao.REPROVADO, "Técnico Silva"
+        );
+
+        epi.concluirManutencao(manutencao);
+
+        assertEquals(StatusEpi.DESCARTADO, epi.getStatus());
+        assertEquals(1, epi.getQuantidade());
+    }
+
+    @Test
+    void deveImpedirConclusaoDeManutencaoSeEpiNaoEstiverEmManutencao() {
+        Epi epi = new Epi(1, "Luva", "CA-444", 2, 1, StatusEpi.DISPONIVEL, LocalDate.of(2030, 1, 1), null);
+        ManutencaoEpi manutencao = new ManutencaoEpi(
+                12, 1, LocalDateTime.now(), TipoManutencao.PREVENTIVA,
+                "Troca", ResultadoManutencao.APROVADO, "Técnico Silva"
+        );
+
+        assertThrows(EpiIndisponivelParaManutencaoException.class, () -> epi.concluirManutencao(manutencao));
+    }
+
+    @Test
+    void deveValidarCaComSucessoQuandoDataFutura() {
+        Epi epi = new Epi(1, "Cinto", "CA-555", 1, 1, StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365);
+
+        assertDoesNotThrow(() -> epi.validarCaValido(LocalDate.of(2026, 9, 11)));
     }
 }
