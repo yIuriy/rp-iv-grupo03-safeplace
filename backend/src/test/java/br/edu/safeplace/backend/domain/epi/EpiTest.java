@@ -106,13 +106,16 @@ class EpiTest {
         @Test
         void deveValidarCamposObrigatoriosNaConstrucao() {
                 assertThrows(IllegalArgumentException.class,
-                                () -> new Epi(1, "", "CA-111", 5, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null, null, null));
+                                () -> new Epi(1, "", "CA-111", 5, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null, null,
+                                                null));
 
                 assertThrows(IllegalArgumentException.class,
-                                () -> new Epi(1, "Luva", null, 5, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null, null, null));
+                                () -> new Epi(1, "Luva", null, 5, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null, null,
+                                                null));
 
                 assertThrows(IllegalArgumentException.class,
-                                () -> new Epi(1, "Luva", "CA-111", -1, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null, null, null));
+                                () -> new Epi(1, "Luva", "CA-111", -1, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null, null,
+                                                null));
         }
 
         @ParameterizedTest
@@ -317,5 +320,97 @@ class EpiTest {
                                 DATA_CADASTRO, null, null))
                                 .isInstanceOf(IllegalArgumentException.class)
                                 .hasMessage("Quantidade mínima não pode ser negativa.");
+        }
+
+        @Test
+        void deveValidarCaAoCriarEpiSemIdPeloConstrutorPublico() {
+                Epi epi = new Epi(
+                                null,
+                                "Capacete",
+                                "1234",
+                                10,
+                                2,
+                                StatusEpi.DISPONIVEL,
+                                VALIDADE_CA,
+                                365,
+                                "Capacete de segurança",
+                                ClassificacaoEPI.PROTECAO_DE_CABECA);
+
+                assertThat(epi.getId()).isNull();
+                assertThat(epi.getNumeroCa()).isEqualTo("1234");
+        }
+
+        @Test
+        void deveRejeitarNomeNulo() {
+                assertThatThrownBy(() -> new Epi(
+                                1,
+                                null,
+                                "1234",
+                                10,
+                                2,
+                                StatusEpi.DISPONIVEL,
+                                VALIDADE_CA,
+                                365,
+                                "Capacete de segurança",
+                                ClassificacaoEPI.PROTECAO_DE_CABECA))
+                                .isInstanceOf(IllegalArgumentException.class)
+                                .hasMessage("Nome do EPI é obrigatório.");
+        }
+
+        @Test
+        void deveRejeitarStatusNulo() {
+                assertThatThrownBy(() -> new Epi(
+                                1,
+                                "Capacete",
+                                "1234",
+                                10,
+                                2,
+                                null,
+                                VALIDADE_CA,
+                                365,
+                                "Capacete de segurança",
+                                ClassificacaoEPI.PROTECAO_DE_CABECA))
+                                .isInstanceOf(IllegalArgumentException.class)
+                                .hasMessage("Status do EPI é obrigatório.");
+        }
+
+        @Test
+        void deveManterStatusDisponivelQuandoSaidaNaoZerarEstoque() {
+                Epi epi = new Epi(
+                                1,
+                                "Capacete",
+                                "1234",
+                                10,
+                                2,
+                                StatusEpi.DISPONIVEL,
+                                VALIDADE_CA,
+                                365,
+                                "Capacete de segurança",
+                                ClassificacaoEPI.PROTECAO_DE_CABECA);
+
+                epi.removerEstoque(4, "Distribuição operacional");
+
+                assertThat(epi.getQuantidade()).isEqualTo(6);
+                assertThat(epi.getStatus()).isEqualTo(StatusEpi.DISPONIVEL);
+        }
+
+        @Test
+        void deveManterStatusQuandoSaidaZeraEstoqueDeEpiEmUso() {
+                Epi epi = new Epi(
+                                1,
+                                "Capacete",
+                                "1234",
+                                5,
+                                2,
+                                StatusEpi.EM_USO,
+                                VALIDADE_CA,
+                                365,
+                                "Capacete de segurança",
+                                ClassificacaoEPI.PROTECAO_DE_CABECA);
+
+                epi.removerEstoque(5, "Baixa operacional");
+
+                assertThat(epi.getQuantidade()).isZero();
+                assertThat(epi.getStatus()).isEqualTo(StatusEpi.EM_USO);
         }
 }
