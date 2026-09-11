@@ -111,6 +111,80 @@ class EpiUseCaseTest {
         assertEquals(10, atualizado.quantidade());
     }
 
+    @Test
+    void deveRegistrarEntradaPelaPortaDeEstoque() {
+        EpiOutputDTO epi = useCase.cadastrarEpi(
+                new CadastrarEpiInputDTO(
+                        "Capacete",
+                        "1234",
+                        10,
+                        2,
+                        LocalDate.now().plusYears(1),
+                        365,
+                        "Capacete de segurança",
+                        ClassificacaoEPI.PROTECAO_DE_CABECA));
+
+        MovimentacaoEstoqueOutputDTO movimentacao = useCase.registrarEntrada(
+                epi.id(),
+                5,
+                "Recebimento de lote");
+
+        assertEquals(TipoMovimentacao.ENTRADA, movimentacao.tipo());
+        assertEquals(15, movimentacao.saldoAposMovimentacao());
+        assertEquals(15, useCase.consultarSaldoDisponivel(epi.id()));
+    }
+
+    @Test
+    void deveDarBaixaPelaPortaDeEstoque() {
+        EpiOutputDTO epi = useCase.cadastrarEpi(
+                new CadastrarEpiInputDTO(
+                        "Capacete",
+                        "1234",
+                        10,
+                        2,
+                        LocalDate.now().plusYears(1),
+                        365,
+                        "Capacete de segurança",
+                        ClassificacaoEPI.PROTECAO_DE_CABECA));
+
+        MovimentacaoEstoqueOutputDTO movimentacao = useCase.darBaixaEstoque(
+                epi.id(),
+                4,
+                "Distribuição operacional");
+
+        assertEquals(TipoMovimentacao.SAIDA, movimentacao.tipo());
+        assertEquals(6, movimentacao.saldoAposMovimentacao());
+        assertEquals(6, useCase.consultarSaldoDisponivel(epi.id()));
+    }
+
+    @Test
+    void deveImpedirBaixaMaiorQueSaldoPelaPortaDeEstoque() {
+        EpiOutputDTO epi = useCase.cadastrarEpi(
+                new CadastrarEpiInputDTO(
+                        "Capacete",
+                        "1234",
+                        10,
+                        2,
+                        LocalDate.now().plusYears(1),
+                        365,
+                        "Capacete de segurança",
+                        ClassificacaoEPI.PROTECAO_DE_CABECA));
+
+        assertThrows(SaldoInsuficienteException.class, () -> useCase.darBaixaEstoque(
+                epi.id(),
+                11,
+                "Tentativa acima do saldo"));
+
+        assertEquals(10, useCase.consultarSaldoDisponivel(epi.id()));
+    }
+
+    @Test
+    void deveRejeitarConsultaDeSaldoParaEpiInexistente() {
+        assertThrows(
+                EpiNaoEncontradoException.class,
+                () -> useCase.consultarSaldoDisponivel(999));
+    }
+
     private static class EpiRepositoryFake implements EpiRepositoryPort {
         private final Map<Integer, Epi> storage = new HashMap<>();
         private final List<MovimentacaoEstoque> movimentacoes = new ArrayList<>();
