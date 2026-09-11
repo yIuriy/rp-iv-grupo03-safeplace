@@ -2,6 +2,7 @@ package br.edu.safeplace.backend.application.usecase;
 
 import br.edu.safeplace.backend.application.dto.output.UsuarioSaidaDTO;
 import br.edu.safeplace.backend.application.port.out.CodificadorSenhaPorta;
+import br.edu.safeplace.backend.application.port.out.GeradorSenhaPorta;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.exception.CpfInvalidoException;
