@@ -32,7 +32,7 @@ public class EpiEntity {
     @Column(name = "vida_util_dias")
     private Integer vidaUtilDias;
 
-    @Column(name = "especificao_descricao", columnDefinition = "text")
+    @Column(name = "especificacao_descricao", columnDefinition = "text")
     private String descricao;
 
     @Column(name = "especificacao_classificacao", length = 80)

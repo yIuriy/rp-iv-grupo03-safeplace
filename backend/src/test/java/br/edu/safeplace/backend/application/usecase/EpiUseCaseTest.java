@@ -136,11 +136,6 @@ class EpiUseCaseTest {
         }
 
         @Override
-        public List<Epi> listar() {
-            return new ArrayList<>(storage.values());
-        }
-
-        @Override
         public Optional<Epi> buscarPorId(Integer id) {
             return Optional.ofNullable(storage.get(id));
         }
@@ -165,6 +160,23 @@ class EpiUseCaseTest {
                     .filter(m -> m.getEpiId().equals(epiId))
                     .toList();
         }
+
+        @Override
+        public Optional<Epi> buscarPorCA(String numeroCa) {
+            return storage.values().stream()
+                    .filter(epi -> epi.getNumeroCa().equals(numeroCa))
+                    .findFirst();
+        }
+
+        @Override
+        public List<Epi> listarTodos() {
+            return new ArrayList<>(storage.values());
+        }
+
+        @Override
+        public Epi atualizarSaldo(Epi epi) {
+            return salvar(epi);
+        }
     }
 
     @Test
@@ -177,7 +189,7 @@ class EpiUseCaseTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Não é permitido cadastrar EPI com CA vencido.");
 
-        assertThat(repository.listar()).isEmpty();
+        assertThat(repository.listarTodos()).isEmpty();
     }
 
     @Test
@@ -190,7 +202,7 @@ class EpiUseCaseTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Data de validade do CA é obrigatória.");
 
-        assertThat(repository.listar()).isEmpty();
+        assertThat(repository.listarTodos()).isEmpty();
     }
 
     @Test

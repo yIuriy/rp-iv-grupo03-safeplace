@@ -11,11 +11,12 @@ import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import br.edu.safeplace.backend.application.port.in.GerenciarEstoqueUseCase;
 
 import java.util.List;
 
 @Service
-public class EpiUseCase implements GerenciarEpiUseCase {
+public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase {
     private final EpiRepositoryPort repositoryPort;
 
     public EpiUseCase(EpiRepositoryPort repositoryPort) {
@@ -73,5 +74,39 @@ public class EpiUseCase implements GerenciarEpiUseCase {
         repositoryPort.salvar(epi);
         MovimentacaoEstoque salvo = repositoryPort.salvarMovimentacao(movimentacao);
         return MovimentacaoEstoqueOutputDTO.deDominio(salvo, epi.getQuantidade());
+    }
+
+    @Override
+    @Transactional
+    public MovimentacaoEstoqueOutputDTO registrarEntrada(
+            Integer epiId,
+            int quantidade,
+            String motivo) {
+        return registrarMovimentacao(
+                epiId,
+                TipoMovimentacao.ENTRADA,
+                quantidade,
+                motivo);
+    }
+
+    @Override
+    @Transactional
+    public MovimentacaoEstoqueOutputDTO darBaixaEstoque(
+            Integer epiId,
+            int quantidade,
+            String motivo) {
+        return registrarMovimentacao(
+                epiId,
+                TipoMovimentacao.SAIDA,
+                quantidade,
+                motivo);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int consultarSaldoDisponivel(Integer epiId) {
+        return repositoryPort.buscarPorId(epiId)
+                .orElseThrow(() -> new EpiNaoEncontradoException(epiId))
+                .getQuantidade();
     }
 }

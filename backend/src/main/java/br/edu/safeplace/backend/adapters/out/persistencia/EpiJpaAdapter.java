@@ -33,7 +33,7 @@ public class EpiJpaAdapter implements EpiRepositoryPort {
     }
 
     @Override
-    public List<Epi> listar() {
+    public List<Epi> listarTodos() {
         return epiRepository.findAll().stream().map(this::toDomain).toList();
     }
 
@@ -49,6 +49,17 @@ public class EpiJpaAdapter implements EpiRepositoryPort {
                 .stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Optional<Epi> buscarPorCA(String numeroCa) {
+        return epiRepository.findByNumeroCa(numeroCa)
+                .map(this::toDomain);
+    }
+
+    @Override
+    public Epi atualizarSaldo(Epi epi) {
+        return salvar(epi);
     }
 
     private EpiEntity toEntity(Epi domain) {
