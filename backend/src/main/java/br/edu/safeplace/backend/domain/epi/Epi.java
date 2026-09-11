@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.domain.epi;
 
+import br.edu.safeplace.backend.domain.epi.exception.CertificadoAprovacaoVencidoException;
+import br.edu.safeplace.backend.domain.epi.exception.EpiIndisponivelParaManutencaoException;
 import br.edu.safeplace.backend.domain.epi.exception.SaldoInsuficienteException;
 
 import java.time.LocalDate;
@@ -78,6 +80,50 @@ public class Epi {
 
     public boolean isEstoqueCritico() {
         return this.quantidade <= this.estoqueMinimo;
+    }
+
+    public void validarCaValido() {
+        validarCaValido(LocalDate.now());
+    }
+
+    public void validarCaValido(LocalDate dataReferencia) {
+        LocalDate referencia = dataReferencia != null ? dataReferencia : LocalDate.now();
+        if (this.dataValidadeCa != null && this.dataValidadeCa.isBefore(referencia)) {
+            throw new CertificadoAprovacaoVencidoException(this.id, this.nome, this.numeroCa, this.dataValidadeCa);
+        }
+    }
+
+    public void enviarParaManutencao() {
+        enviarParaManutencao(LocalDate.now());
+    }
+
+    public void enviarParaManutencao(LocalDate dataReferencia) {
+        validarCaValido(dataReferencia);
+        if (this.status != StatusEpi.DISPONIVEL) {
+            throw new EpiIndisponivelParaManutencaoException(
+                    this.id, this.status, "Apenas EPIs com status DISPONIVEL podem ser enviados para manutenção."
+            );
+        }
+        this.status = StatusEpi.EM_MANUTENCAO;
+    }
+
+    public void concluirManutencao(ManutencaoEpi manutencao) {
+        if (manutencao == null) {
+            throw new IllegalArgumentException("Registro de manutenção é obrigatório.");
+        }
+        if (this.status != StatusEpi.EM_MANUTENCAO) {
+            throw new EpiIndisponivelParaManutencaoException(
+                    this.id, this.status, "Apenas EPIs com status EM_MANUTENCAO podem concluir manutenção."
+            );
+        }
+        if (manutencao.getResultado() == ResultadoManutencao.APROVADO) {
+            this.status = StatusEpi.DISPONIVEL;
+        } else if (manutencao.getResultado() == ResultadoManutencao.REPROVADO) {
+            this.status = StatusEpi.DESCARTADO;
+            if (this.quantidade > 0) {
+                this.quantidade--;
+            }
+        }
     }
 
     public Integer getId() {
