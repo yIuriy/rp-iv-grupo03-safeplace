@@ -9,7 +9,7 @@ public class Epi {
     private final Integer id;
     private final String nome;
     private int quantidade;
-    private final int estoqueMinimo;
+    private final EspecificacaoEPI especificacao;
     private StatusEpi status;
     private final Integer vidaUtilDias;
     private final CertificadoAprovacao certificadoAprovacao;
@@ -33,7 +33,7 @@ public class Epi {
                 nome,
                 new CertificadoAprovacao(numeroCa, dataValidadeCa),
                 quantidade,
-                estoqueMinimo,
+                new EspecificacaoEPI(null, estoqueMinimo, null),
                 status,
                 vidaUtilDias);
 
@@ -47,7 +47,7 @@ public class Epi {
             String nome,
             CertificadoAprovacao certificadoAprovacao,
             int quantidade,
-            int estoqueMinimo,
+            EspecificacaoEPI especificacao,
             StatusEpi status,
             Integer vidaUtilDias) {
         if (nome == null || nome.isBlank()) {
@@ -59,9 +59,9 @@ public class Epi {
                     "Quantidade em estoque não pode ser negativa.");
         }
 
-        if (estoqueMinimo < 0) {
+        if (especificacao == null) {
             throw new IllegalArgumentException(
-                    "Estoque mínimo não pode ser negativo.");
+                    "Especificação do EPI é obrigatória.");
         }
 
         if (status == null) {
@@ -72,7 +72,7 @@ public class Epi {
         this.nome = nome;
         this.certificadoAprovacao = certificadoAprovacao;
         this.quantidade = quantidade;
-        this.estoqueMinimo = estoqueMinimo;
+        this.especificacao = especificacao;
         this.status = status;
         this.vidaUtilDias = vidaUtilDias;
     }
@@ -115,7 +115,7 @@ public class Epi {
                 nome,
                 certificado,
                 quantidade,
-                estoqueMinimo,
+                new EspecificacaoEPI(null, estoqueMinimo, null),
                 statusInicial,
                 vidaUtilDias);
     }
@@ -184,7 +184,7 @@ public class Epi {
     }
 
     public boolean isEstoqueCritico() {
-        return this.quantidade <= this.estoqueMinimo;
+        return this.quantidade <= this.especificacao.getQuantidadeMinima();
     }
 
     public Integer getId() {
@@ -204,7 +204,7 @@ public class Epi {
     }
 
     public int getEstoqueMinimo() {
-        return estoqueMinimo;
+        return especificacao.getQuantidadeMinima();
     }
 
     public StatusEpi getStatus() {
@@ -221,5 +221,9 @@ public class Epi {
 
     public Integer getVidaUtilDias() {
         return vidaUtilDias;
+    }
+
+    public EspecificacaoEPI getEspecificacao() {
+        return especificacao;
     }
 }

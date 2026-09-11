@@ -1,6 +1,4 @@
-package br.edu.safeplace.backend.domain.epi.exception;
-
-import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
+package br.edu.safeplace.backend.domain.epi;
 
 public class EspecificacaoEPI {
     private final String descricao;

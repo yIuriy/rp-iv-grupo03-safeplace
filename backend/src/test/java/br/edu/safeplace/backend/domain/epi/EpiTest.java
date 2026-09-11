@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import br.edu.safeplace.backend.domain.epi.exception.SaldoInsuficienteException;
 
@@ -262,5 +263,59 @@ class EpiTest {
                                 StatusEpi.DISPONIVEL, LocalDate.MIN, 365))
                                 .isInstanceOf(IllegalArgumentException.class)
                                 .hasMessage("Não é permitido cadastrar EPI com CA vencido.");
+        }
+
+        @Test
+        void deveArmazenarQuantidadeMinimaNaEspecificacao() {
+                Epi epi = Epi.novo(
+                                "Óculos",
+                                "1234",
+                                10,
+                                5,
+                                VALIDADE_CA,
+                                365,
+                                DATA_CADASTRO);
+
+                assertThat(epi.getEspecificacao()).isNotNull();
+                assertThat(epi.getEspecificacao().getQuantidadeMinima())
+                                .isEqualTo(5);
+                assertThat(epi.getEstoqueMinimo()).isEqualTo(5);
+        }
+
+        @ParameterizedTest
+        @CsvSource({
+                        "4, 5, true",
+                        "5, 5, true",
+                        "6, 5, false",
+                        "0, 0, true"
+        })
+        void deveCalcularEstoqueCriticoPeloMinimoDaEspecificacao(
+                        int quantidade,
+                        int minimo,
+                        boolean esperado) {
+                Epi epi = Epi.novo(
+                                "Óculos",
+                                "1234",
+                                quantidade,
+                                minimo,
+                                VALIDADE_CA,
+                                365,
+                                DATA_CADASTRO);
+
+                assertThat(epi.isEstoqueCritico()).isEqualTo(esperado);
+        }
+
+        @Test
+        void deveRejeitarMinimoNegativoNaCriacaoDoEpi() {
+                assertThatThrownBy(() -> Epi.novo(
+                                "Óculos",
+                                "1234",
+                                10,
+                                -1,
+                                VALIDADE_CA,
+                                365,
+                                DATA_CADASTRO))
+                                .isInstanceOf(IllegalArgumentException.class)
+                                .hasMessage("Quantidade mínima não pode ser negativa.");
         }
 }
