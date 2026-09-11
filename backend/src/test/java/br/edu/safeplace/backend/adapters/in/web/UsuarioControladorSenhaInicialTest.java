@@ -27,8 +27,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Issue #91: a senha inicial do Supervisor aparece apenas na resposta 201 do cadastro.
  */
+import org.springframework.security.test.context.support.WithMockUser;
+
 @WebMvcTest({UsuarioControlador.class, UsuarioTratadorExcecoes.class})
 @Import(SecurityConfig.class)
+@WithMockUser(roles = "GESTOR_SEGURANCA")
 class UsuarioControladorSenhaInicialTest {
 
     private static final String CPF = "52998224725";
