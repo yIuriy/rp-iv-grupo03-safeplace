@@ -2,6 +2,7 @@ package br.edu.safeplace.backend.application.usecase;
 
 import br.edu.safeplace.backend.application.dto.output.UsuarioSaidaDTO;
 import br.edu.safeplace.backend.application.port.out.CodificadorSenhaPorta;
+import br.edu.safeplace.backend.application.port.out.GeradorSenhaPorta;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.exception.CpfInvalidoException;
@@ -29,13 +30,16 @@ class UsuarioCasoDeUsoBuscaPorCpfTest {
     @Mock
     private CodificadorSenhaPorta codificadorSenhaPorta;
 
+    @Mock
+    private GeradorSenhaPorta geradorSenhaPorta;
+
     private UsuarioCasoDeUso casoDeUso;
 
     private final String cpfValido = "52998224725";
 
     @BeforeEach
     void setUp() {
-        casoDeUso = new UsuarioCasoDeUso(repositorioPorta, codificadorSenhaPorta);
+        casoDeUso = new UsuarioCasoDeUso(repositorioPorta, codificadorSenhaPorta, geradorSenhaPorta);
     }
 
     @Test
