@@ -117,13 +117,15 @@ O estoque segue a mesma organização: `EpiController` recebe as requisições, 
 
 | Operação disponível | Endpoint |
 | --- | --- |
+| Autenticar usuário (obter token JWT) | `POST /api/auth/login` |
+| Cadastrar e listar usuários | `POST /api/usuarios` e `GET /api/usuarios` |
 | Cadastrar e listar ocorrências | `POST /api/ocorrencias` e `GET /api/ocorrencias` |
 | Cadastrar e listar EPIs | `POST /api/epis` e `GET /api/epis` |
 | Consultar um EPI | `GET /api/epis/{id}` |
 | Registrar entrada ou saída de estoque | `POST /api/epis/{id}/movimentacoes` |
 | Verificar disponibilidade da API | `GET /api/health` |
 
-A implementação de EPIs ainda não cobre manutenção, empréstimos, devoluções ou projeções de substituição. Os módulos de usuários, áreas de risco, tarefas e capacitações ainda não possuem implementação nessa base. O frontend apresenta o catálogo e exemplos de componentes com dados fictícios; não integra os fluxos de negócio com a API.
+A implementação de EPIs ainda não cobre manutenção, empréstimos, devoluções ou projeções de substituição. Os módulos de áreas de risco, tarefas e capacitações ainda não possuem implementação nessa base. O módulo de usuários e autenticação RBAC está implementado no backend via Arquitetura Hexagonal. O frontend apresenta o catálogo e exemplos de componentes com dados fictícios; não integra os fluxos de negócio com a API.
 
 Os passos de execução e verificação estão no [README principal](../../README.md#executar-com-docker-compose) e no [README do frontend](../../frontend/README.md). O Compose é o ambiente local de desenvolvimento, enquanto os diagramas de implantação descrevem uma proposta de distribuição do sistema.
 
@@ -133,6 +135,6 @@ Pontos ainda não atendidos ou fora da entrega:
 - Não há adaptadores para sensores ou dispositivos IoT.
 - Relatórios, CAT, dashboards e integrações externas permanecem fora do MVP, conforme a priorização.
 - RNF08 permanece no MVP, com escopo pendente e sem implementação de cache ou sincronização na interface atual.
-- A [configuração de segurança](../../backend/src/main/java/br/edu/safeplace/backend/config/SecurityConfig.java) permite as requisições sem aplicar perfis. RNF03 ainda depende da implementação de autenticação e autorização.
+- A [configuração de segurança](../../backend/src/main/java/br/edu/safeplace/backend/config/SecurityConfig.java) aplica controle de acesso por perfil (RBAC) e autenticação via JWT (RNF03). Rotas públicas limitam-se a autenticação, documentação Swagger e health check.
 - RNF05 ainda precisa de implementação que cubra as operações, os dados auditados, a imutabilidade e a retenção.
 - O Compose fornece `VITE_API_URL`, mas o cliente HTTP lê `VITE_URL_API`. A configuração precisa ser alinhada quando a interface for integrada à API; o valor local padrão está documentado no README do frontend.

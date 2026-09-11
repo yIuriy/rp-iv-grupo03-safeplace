@@ -25,9 +25,15 @@ MVP, MVC e Arquitetura Hexagonal representam decisões diferentes:
 
 O MVC pode ser usado no adaptador web da Arquitetura Hexagonal. A escolha de um não substitui os demais.
 
-### 3.1. Pessoas cadastradas e acesso
+### 3.1. Pessoas cadastradas, fluxo de acesso e ausência de autocadastro
 
-Gestor de Segurança e Supervisor são os perfis com acesso ao sistema. O Gestor gerencia as contas de supervisores; o Supervisor gerencia os cadastros de colaboradores. O Colaborador não recebe conta, senha ou perfil de autenticação, mas permanece identificado nos registros de ocorrências, capacitações e empréstimos. O Supervisor registra os relatos comunicados por ele, usando a própria identificação.
+O SafePlace é uma plataforma corporativa fechada de uso estritamente interno. **Não existe tela de autocadastro público na interface**: o ponto de entrada da aplicação é exclusivamente a tela de **Login** (`POST /api/auth/login`), autenticando via `email` e `senha` com emissão de token JWT (validade de 7 dias no MVP).
+
+O primeiro acesso administrativo (Gestor de Segurança) é provisionado por meio de carga inicial (*seed*) no banco de dados. A partir desse usuário, o provisionamento é realizado de forma estritamente interna e hierárquica respeitando o modelo RBAC:
+
+- **Gestor de Segurança**: perfil com acesso ao sistema, autentica-se com e-mail e senha. Gerencia as contas de Supervisores e outros gestores. No cadastro de um Supervisor, o sistema gera automaticamente sua credencial inicial.
+- **Supervisor**: perfil com acesso ao sistema, autentica-se com e-mail e senha gerada. Gerencia os cadastros de colaboradores e os registros operacionais sob sua responsabilidade (ocorrências, empréstimos de EPIs). Não possui permissão para cadastrar outros supervisores ou gestores.
+- **Colaborador**: não recebe conta de acesso, credencial ou senha, não possuindo permissão de autenticação. Seu registro existe para vinculação aos registros operacionais (ocorrências, treinamentos e empréstimos de EPIs). Seus relatos são registrados no sistema pelo Supervisor responsável.
 
 Essa definição segue RF16, RF23, RNF03 e a decisão registrada na [issue #81](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/81). O cadastro de uma pessoa e sua eventual presença no diagrama de classes não concedem permissão de acesso.
 

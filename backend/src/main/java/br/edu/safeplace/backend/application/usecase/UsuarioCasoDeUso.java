@@ -26,6 +26,12 @@ public class UsuarioCasoDeUso implements GerenciarUsuarioCasoDeUso {
     private final GeradorSenhaPorta geradorSenhaPorta;
 
     public UsuarioCasoDeUso(UsuarioRepositorioPorta repositorioPorta,
+                            CodificadorSenhaPorta codificadorSenhaPorta) {
+        this(repositorioPorta, codificadorSenhaPorta, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public UsuarioCasoDeUso(UsuarioRepositorioPorta repositorioPorta,
                             CodificadorSenhaPorta codificadorSenhaPorta,
                             GeradorSenhaPorta geradorSenhaPorta) {
         this.repositorioPorta = repositorioPorta;
