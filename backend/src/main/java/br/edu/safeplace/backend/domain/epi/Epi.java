@@ -3,6 +3,8 @@ package br.edu.safeplace.backend.domain.epi;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import br.edu.safeplace.backend.domain.epi.exception.CertificadoAprovacaoVencidoException;
+import br.edu.safeplace.backend.domain.epi.exception.EpiIndisponivelParaManutencaoException;
 import br.edu.safeplace.backend.domain.epi.exception.SaldoInsuficienteException;
 
 public class Epi {
@@ -42,6 +44,28 @@ public class Epi {
         if (id == null) {
             this.certificadoAprovacao.validarParaCadastroEm(LocalDate.now());
         }
+    }
+
+    public Epi(
+            Integer id,
+            String nome,
+            String numeroCa,
+            int quantidade,
+            int estoqueMinimo,
+            StatusEpi status,
+            LocalDate dataValidadeCa,
+            Integer vidaUtilDias) {
+        this(
+                id,
+                nome,
+                numeroCa,
+                quantidade,
+                estoqueMinimo,
+                status,
+                dataValidadeCa,
+                vidaUtilDias,
+                null,
+                null);
     }
 
     private Epi(
@@ -201,8 +225,8 @@ public class Epi {
 
     public void validarCaValido(LocalDate dataReferencia) {
         LocalDate referencia = dataReferencia != null ? dataReferencia : LocalDate.now();
-        if (this.dataValidadeCa != null && this.dataValidadeCa.isBefore(referencia)) {
-            throw new CertificadoAprovacaoVencidoException(this.id, this.nome, this.numeroCa, this.dataValidadeCa);
+        if (getDataValidadeCa() != null && getDataValidadeCa().isBefore(referencia)) {
+            throw new CertificadoAprovacaoVencidoException(this.id, this.nome, getNumeroCa(), getDataValidadeCa());
         }
     }
 

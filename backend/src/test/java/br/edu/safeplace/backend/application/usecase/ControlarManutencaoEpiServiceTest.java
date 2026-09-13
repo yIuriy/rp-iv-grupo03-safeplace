@@ -177,8 +177,26 @@ class ControlarManutencaoEpiServiceTest {
         }
 
         @Override
-        public List<Epi> listar() {
+        public Optional<Epi> buscarPorCA(String numeroCa) {
+            return storage.values().stream()
+                    .filter(e -> e.getNumeroCa().equals(numeroCa))
+                    .findFirst();
+        }
+
+        @Override
+        public List<Epi> listarTodos() {
             return new ArrayList<>(storage.values());
+        }
+
+        @Override
+        public Epi atualizarSaldo(Epi epi) {
+            storage.put(epi.getId(), epi);
+            return epi;
+        }
+
+        @Override
+        public List<Epi> listar() {
+            return listarTodos();
         }
 
         @Override
