@@ -147,5 +147,19 @@ class OcorrenciaUseCaseTest {
         public List<Ocorrencia> listar() {
             return new ArrayList<>(ocorrencias);
         }
+
+        @Override
+        public java.util.Optional<Ocorrencia> buscarPorId(Integer id) {
+            return ocorrencias.stream()
+                    .filter(o -> o.getIdOcorrencia().equals(id))
+                    .findFirst();
+        }
+
+        @Override
+        public long proximoSequencialCAT(int ano, int mes) {
+            return ocorrencias.stream()
+                    .filter(Acidente.class::isInstance)
+                    .count() + 1;
+        }
     }
 }

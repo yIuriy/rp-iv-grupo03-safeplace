@@ -31,7 +31,7 @@ public record OcorrenciaResponse(
                     acidente.getLocal(),
                     acidente.getDescricao(),
                     PlanoDeAcaoResponse.fromDomain(acidente.getPlanoDeAcao()),
-                    acidente.getCausaRaiz(),
+                    acidente.getCausaRaiz() != null ? acidente.getCausaRaiz().name() : null,
                     acidente.getTipo(),
                     acidente.getDano(),
                     acidente.getNumeroProtocolo(),

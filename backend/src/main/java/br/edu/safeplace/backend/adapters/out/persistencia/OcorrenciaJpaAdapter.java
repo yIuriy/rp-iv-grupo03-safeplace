@@ -1,6 +1,7 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
@@ -33,6 +34,19 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
     @Override
     public List<Ocorrencia> listar() {
         return repository.findAll().stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public Optional<Ocorrencia> buscarPorId(Integer id) {
+        if (id == null) {
+            return Optional.empty();
+        }
+        return repository.findById(id).map(this::toDomain);
+    }
+
+    @Override
+    public long proximoSequencialCAT(int ano, int mes) {
+        return repository.count() + 1;
     }
 
     private AcidenteEntity toEntity(Acidente acidente) {
