@@ -31,7 +31,7 @@ public record OcorrenciaOutputDTO(
                     a.getLocal(),
                     a.getDescricao(),
                     a.getPlanoDeAcao(),
-                    a.getCausaRaiz(),
+                    a.getCausaRaiz() != null ? a.getCausaRaiz().name() : null,
                     a.getTipo(),
                     a.getDano(),
                     a.getNumeroProtocolo(),

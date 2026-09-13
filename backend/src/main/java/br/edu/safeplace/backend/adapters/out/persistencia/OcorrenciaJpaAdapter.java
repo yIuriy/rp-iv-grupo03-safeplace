@@ -42,7 +42,7 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
                 acidente.getLocal(),
                 acidente.getDescricao(),
                 toEntity(acidente.getPlanoDeAcao()),
-                acidente.getCausaRaiz(),
+                acidente.getCausaRaiz() != null ? acidente.getCausaRaiz().name() : null,
                 acidente.getTipo(),
                 acidente.getDano(),
                 acidente.getNumeroProtocolo(),

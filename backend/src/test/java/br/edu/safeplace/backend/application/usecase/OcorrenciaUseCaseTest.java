@@ -37,7 +37,7 @@ class OcorrenciaUseCaseTest {
                 "Ausencia de protecao adequada",
                 "Corte",
                 "Ferimento na mao direita",
-                "ACD-2026-001",
+                "CAT-2026-09-0001",
                 "Ambulatorio");
 
         OcorrenciaOutputDTO salvo = useCase.registrarAcidente(input);
@@ -97,7 +97,7 @@ class OcorrenciaUseCaseTest {
                 "Falha no procedimento",
                 "Prensamento",
                 "Lesao no dedo",
-                "ACD-2026-002",
+                "CAT-2026-09-0002",
                 "Ambulatorio"));
 
         List<OcorrenciaOutputDTO> ocorrencias = useCase.listar();
