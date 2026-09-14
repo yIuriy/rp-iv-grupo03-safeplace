@@ -1,6 +1,7 @@
 package br.edu.safeplace.backend.config;
 
 import br.edu.safeplace.backend.adapters.out.seguranca.JwtFiltroAutenticacao;
+import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,6 +35,7 @@ public class SecurityConfig {
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
                         // Rotas públicas (RNF03)
                         .requestMatchers(
                                 "/api/auth/**",
