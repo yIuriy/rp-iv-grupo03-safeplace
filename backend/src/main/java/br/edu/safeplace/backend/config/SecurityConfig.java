@@ -48,6 +48,12 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll()
                         // Rotas protegidas por RBAC (RNF03)
+                        // RF23: so o Gestor de Seguranca provisiona supervisores; o Supervisor
+                        // cadastra colaboradores.
+                        .requestMatchers(HttpMethod.POST, "/api/usuarios/supervisores")
+                                .hasRole("GESTOR_SEGURANCA")
+                        .requestMatchers(HttpMethod.POST, "/api/usuarios/colaboradores")
+                                .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         .requestMatchers("/api/usuarios/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         .requestMatchers("/api/epis/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         .requestMatchers("/api/ocorrencias/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
