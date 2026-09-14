@@ -1,10 +1,8 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
 import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
-import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
-import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
 import org.springframework.stereotype.Repository;
 
@@ -63,35 +61,11 @@ public class EpiJpaAdapter implements EpiRepositoryPort {
     }
 
     private EpiEntity toEntity(Epi domain) {
-        return new EpiEntity(
-                domain.getId(),
-                domain.getNome(),
-                domain.getNumeroCa(),
-                domain.getQuantidade(),
-                domain.getEstoqueMinimo(),
-                domain.getStatus().name(),
-                domain.getDataValidadeCa(),
-                domain.getVidaUtilDias(),
-                domain.getEspecificacao().getDescricao(),
-                domain.getEspecificacao().getClassificacao() == null
-                        ? null
-                        : domain.getEspecificacao().getClassificacao().name());
+        return EpiEntityMapper.toEntity(domain);
     }
 
     private Epi toDomain(EpiEntity entity) {
-        return new Epi(
-                entity.getId(),
-                entity.getNome(),
-                entity.getNumeroCa(),
-                entity.getQuantidade(),
-                entity.getEstoqueMinimo(),
-                StatusEpi.valueOf(entity.getStatus()),
-                entity.getDataValidadeCa(),
-                entity.getVidaUtilDias(),
-                entity.getDescricao(),
-                entity.getClassificacao() == null
-                        ? null
-                        : ClassificacaoEPI.valueOf(entity.getClassificacao()));
+        return EpiEntityMapper.toDomain(entity);
     }
 
     private MovimentacaoEstoqueEntity toEntity(MovimentacaoEstoque domain) {

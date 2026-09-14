@@ -5,6 +5,7 @@ import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -50,6 +51,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/usuarios/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         .requestMatchers("/api/epis/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         .requestMatchers("/api/ocorrencias/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        // UC03 e UC11: o Gestor de Seguranca mantem o cadastro; o Supervisor e ator
+                        // secundario e apenas consulta as diretrizes.
+                        .requestMatchers(HttpMethod.GET, "/api/areas-risco/**", "/api/tarefas/**")
+                                .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        .requestMatchers("/api/areas-risco/**", "/api/tarefas/**").hasRole("GESTOR_SEGURANCA")
                         .anyRequest().authenticated()
                 );
 
