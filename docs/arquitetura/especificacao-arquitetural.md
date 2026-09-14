@@ -123,9 +123,20 @@ O estoque segue a mesma organização: `EpiController` recebe as requisições, 
 | Cadastrar e listar EPIs | `POST /api/epis` e `GET /api/epis` |
 | Consultar um EPI | `GET /api/epis/{id}` |
 | Registrar entrada ou saída de estoque | `POST /api/epis/{id}/movimentacoes` |
+| Cadastrar e listar áreas de risco | `POST /api/areas-risco` e `GET /api/areas-risco` |
+| Filtrar o mapa de riscos por grau de perigo | `GET /api/areas-risco?nivelPerigo={nivel}` |
+| Consultar uma área de risco | `GET /api/areas-risco/{id}` |
+| Cadastrar e listar tarefas | `POST /api/tarefas` e `GET /api/tarefas` |
+| Filtrar tarefas por grau de perigo | `GET /api/tarefas?nivelPerigo={nivel}` |
+| Consultar uma tarefa | `GET /api/tarefas/{id}` |
+| Classificar ou reavaliar a periculosidade de uma tarefa | `PATCH /api/tarefas/{id}/classificacao` |
 | Verificar disponibilidade da API | `GET /api/health` |
 
-A implementação de EPIs ainda não cobre manutenção, empréstimos, devoluções ou projeções de substituição. Os módulos de áreas de risco, tarefas e capacitações ainda não possuem implementação nessa base. O módulo de usuários e autenticação RBAC está implementado no backend via Arquitetura Hexagonal. O frontend apresenta o catálogo e exemplos de componentes com dados fictícios; não integra os fluxos de negócio com a API.
+Os módulos de áreas de risco (RF05, UC03) e de tarefas (RF06, UC11) seguem a mesma organização: `AreaRiscoController` e `TarefaController` recebem as requisições; `AreaRiscoUseCase` implementa `GerenciarAreaRiscoUseCase` e `TarefaUseCase` implementa `ClassificarTarefaUseCase`; a persistência fica em `AreaRiscoJpaAdapter` e `TarefaJpaAdapter`, por trás de `AreaRiscoRepositoryPort` e `TarefaRepositoryPort`. O domínio fica em `domain/area_risco/` e `domain/tarefa/`, e a enumeração `NivelPerigo`, compartilhada pelos dois, fica em `domain/comum/`. O cadastro de área de risco aplica a RN1 do UC03, bloqueando o salvamento sem EPIs obrigatórios de acesso. A classificação de tarefa registra data e hora; o responsável técnico exigido pela RN1 do UC11 depende do módulo de auditoria, ainda não implementado.
+
+`NivelPerigo` foi implementado com o vocabulário de UC03 e do diagrama de classes (`BAIXO`, `MEDIO`, `ALTO`, `CRITICO`). A divergência com os níveis leve, moderado, grave e crítico usados em UC11 e US06 continua pendente de decisão da equipe, conforme o glossário e a issue #77.
+
+A implementação de EPIs ainda não cobre manutenção, empréstimos, devoluções ou projeções de substituição. O vínculo entre tarefas e EPIs (RF12) e as inspeções periódicas (RF09) permanecem no backlog, assim como o módulo de capacitações. O módulo de usuários e autenticação RBAC está implementado no backend via Arquitetura Hexagonal. O frontend apresenta o catálogo e exemplos de componentes com dados fictícios; não integra os fluxos de negócio com a API.
 
 Os passos de execução e verificação estão no [README principal](../../README.md#executar-com-docker-compose) e no [README do frontend](../../frontend/README.md). O Compose é o ambiente local de desenvolvimento, enquanto os diagramas de implantação descrevem uma proposta de distribuição do sistema.
 
