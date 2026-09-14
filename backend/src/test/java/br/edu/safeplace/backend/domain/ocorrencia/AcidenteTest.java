@@ -10,6 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.ProtocoloCATInvalidoException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
@@ -23,7 +24,7 @@ class AcidenteTest {
     @DisplayName("Deve criar Acidente completo com campos de ocorrência e específicos de acidente")
     void deveCriarAcidenteCompleto() {
         LocalDateTime dataFato = LocalDateTime.now().minusDays(2);
-        AreaRisco area = AreaRisco.novo("Usinagem", "Tornos mecânicos", "ALTO");
+        AreaRisco area = AreaRisco.novo("Usinagem", "Tornos mecânicos", NivelPerigo.ALTO);
         Colaborador colaborador = Colaborador.novo("Roberto", "87455877074", LocalDate.of(1992, 3, 10), "roberto@empresa.com");
         GestorDeSeguranca gestor = GestorDeSeguranca.novo("Mariana", "49216091040", LocalDate.of(1988, 7, 20), "mariana@empresa.com", "senha123");
 
@@ -103,7 +104,7 @@ class AcidenteTest {
         Acidente novoAcidente = Acidente.novo(
                 "Corte com estilete",
                 dataFato,
-                AreaRisco.novo("Expedição", "Embalagem", "MEDIO"),
+                AreaRisco.novo("Expedição", "Embalagem", NivelPerigo.MEDIO),
                 null, null, null, null,
                 CausaRaiz.FATOR_HUMANO,
                 "Corte",
