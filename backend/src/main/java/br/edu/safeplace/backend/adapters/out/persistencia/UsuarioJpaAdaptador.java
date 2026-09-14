@@ -41,4 +41,11 @@ public class UsuarioJpaAdaptador implements UsuarioRepositorioPorta {
     public List<Colaborador> listarTodos() {
         return jpaRepositorio.findAll().stream().map(ColaboradorEntidade::paraDominio).toList();
     }
+
+    @Override
+    public List<Colaborador> listarColaboradores(String nome, String cpf) {
+        return jpaRepositorio.buscarColaboradores(nome, cpf).stream()
+                .map(ColaboradorEntidade::paraDominio)
+                .toList();
+    }
 }

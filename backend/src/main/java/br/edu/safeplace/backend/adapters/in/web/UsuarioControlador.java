@@ -1,11 +1,16 @@
 package br.edu.safeplace.backend.adapters.in.web;
 
+import br.edu.safeplace.backend.application.dto.input.FiltroColaboradorDTO;
 import br.edu.safeplace.backend.application.dto.output.UsuarioSaidaDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarUsuarioCasoDeUso;
+import br.edu.safeplace.backend.domain.usuario.Perfil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,23 +26,50 @@ public class UsuarioControlador {
         this.casoDeUso = casoDeUso;
     }
 
+    /**
+     * RF23: apenas o Gestor de Segurança provisiona supervisores. A restrição de papel é aplicada
+     * de forma declarativa no {@code SecurityConfig}.
+     */
+    @PostMapping("/supervisores")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Cadastra um Supervisor e devolve a senha inicial gerada pelo sistema")
+    public UsuarioResposta criarSupervisor(@Valid @RequestBody CadastrarSupervisorRequisicao requisicao) {
+        return UsuarioResposta.aPartirDe(casoDeUso.cadastrarSupervisor(requisicao.paraDTOEntrada()));
+    }
+
+    /**
+     * RF23: Supervisor e Gestor de Segurança cadastram colaboradores, que não têm credenciais.
+     */
+    @PostMapping("/colaboradores")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Cadastra um Colaborador, sem conta de acesso nem senha")
+    public UsuarioResposta criarColaborador(@Valid @RequestBody CadastrarColaboradorRequisicao requisicao) {
+        return UsuarioResposta.aPartirDe(casoDeUso.cadastrarColaborador(requisicao.paraDTOEntrada()));
+    }
+
+    @GetMapping("/colaboradores")
+    @Operation(summary = "Lista os colaboradores cadastrados, com filtros opcionais por nome e CPF")
+    public List<UsuarioResposta> listarColaboradores(
+            @RequestParam(required = false) String nome,
+            @RequestParam(required = false) String cpf) {
+        return casoDeUso.listarColaboradores(new FiltroColaboradorDTO(nome, cpf)).stream()
+                .map(UsuarioResposta::aPartirDe)
+                .toList();
+    }
+
+    /**
+     * Cadastro genérico por perfil, anterior aos endpoints por papel.
+     *
+     * @deprecated use {@code POST /api/usuarios/supervisores} ou
+     *             {@code POST /api/usuarios/colaboradores}, que aplicam o RBAC de RF23 por rota.
+     */
+    @Deprecated
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Cadastra um novo usuário ou colaborador")
+    @Operation(summary = "Cadastra um novo usuário ou colaborador",
+            description = "Descontinuado: prefira POST /api/usuarios/supervisores ou POST /api/usuarios/colaboradores.")
     public UsuarioResposta criar(@Valid @RequestBody CriarUsuarioRequisicao requisicao) {
-        if (requisicao.perfil() == br.edu.safeplace.backend.domain.usuario.Perfil.SUPERVISOR
-                || requisicao.perfil() == br.edu.safeplace.backend.domain.usuario.Perfil.GESTOR_SEGURANCA) {
-            org.springframework.security.core.Authentication auth =
-                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.isAuthenticated() && !auth.getAuthorities().isEmpty()) {
-                boolean isGestor = auth.getAuthorities().stream()
-                        .anyMatch(a -> a.getAuthority().equals("ROLE_GESTOR_SEGURANCA"));
-                if (!isGestor) {
-                    throw new org.springframework.security.access.AccessDeniedException(
-                            "Apenas Gestor de Segurança pode cadastrar supervisores ou gestores.");
-                }
-            }
-        }
+        exigirGestorParaPerfilComAcesso(requisicao.perfil());
         UsuarioSaidaDTO salvo = casoDeUso.cadastrarUsuario(requisicao.paraDTOEntrada());
         return UsuarioResposta.aPartirDe(salvo);
     }
@@ -54,5 +86,27 @@ public class UsuarioControlador {
     @Operation(summary = "Busca detalhes de um usuário por ID")
     public UsuarioResposta buscarPorId(@PathVariable Integer id) {
         return UsuarioResposta.aPartirDe(casoDeUso.buscarPorId(id));
+    }
+
+    /**
+     * Perfis com acesso ao sistema só podem ser criados pelo Gestor de Segurança (RF23). A rota
+     * genérica aceita qualquer perfil no corpo, então a verificação precisa acontecer aqui; as
+     * rotas por papel resolvem isso pela própria URL.
+     */
+    private void exigirGestorParaPerfilComAcesso(Perfil perfil) {
+        if (perfil == null || !perfil.exigeCredenciais()) {
+            return;
+        }
+
+        Authentication autenticacao = SecurityContextHolder.getContext().getAuthentication();
+        boolean gestor = autenticacao != null
+                && autenticacao.isAuthenticated()
+                && autenticacao.getAuthorities().stream()
+                        .anyMatch(papel -> "ROLE_GESTOR_SEGURANCA".equals(papel.getAuthority()));
+
+        if (!gestor) {
+            throw new AccessDeniedException(
+                    "Apenas Gestor de Segurança pode cadastrar supervisores ou gestores.");
+        }
     }
 }
