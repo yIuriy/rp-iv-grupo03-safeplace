@@ -145,20 +145,24 @@ npm run dev
 
 Use o endereço exibido pelo Vite. A configuração da URL da API e os comandos de validação da interface estão no [README do frontend](frontend/README.md).
 
-Para testar e empacotar o backend, execute em `backend/`, com o banco de desenvolvimento disponível:
+Para testar e empacotar o backend, execute em `backend/`:
 
 ```sh
 ./mvnw test
 ./mvnw package
 ```
 
-O teste `BackendApplicationTests` carrega a aplicação e precisa da conexão com o banco. Para executar os testes de domínio, serviços e controladores que não usam o banco:
+A suíte é dividida em dois grupos. Os testes de domínio, casos de uso e controladores rodam sempre, sem banco. Os testes de integração — que aplicam as migrações Flyway, validam o mapeamento JPA e exercitam a API com o servidor real — precisam de um PostgreSQL e são **ignorados** quando não encontram nenhum, em vez de falhar. Há duas formas de fornecê-lo:
 
 ```sh
-./mvnw -Dtest=OcorrenciaServiceTest,EpiTest,EpiServiceTest,EpiControllerTest,HealthControllerTest test
+# 1. Docker disponível: os testes sobem o PostgreSQL sozinhos, via Testcontainers.
+./mvnw test
+
+# 2. Sem Docker: aponte para um PostgreSQL já em execução.
+./mvnw test -Dsafeplace.test.datasource.url=jdbc:postgresql://localhost:5432/safeplace
 ```
 
-Esses testes isolados não validam a persistência JPA. O empacotamento gera `backend/target/backend-0.0.1-SNAPSHOT.jar`.
+Use `-Dsafeplace.test.datasource.username` e `-Dsafeplace.test.datasource.password` se as credenciais forem diferentes de `safeplace`. O banco indicado recebe as migrações; os testes rodam em transações com rollback e não deixam dados. O relatório de cobertura fica em `backend/target/site/jacoco/index.html` e o empacotamento gera `backend/target/backend-0.0.1-SNAPSHOT.jar`.
 
 ## Documentação
 
