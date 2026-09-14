@@ -69,7 +69,7 @@ A documentação dos casos de uso também inclui funcionalidades previstas para 
 
 ## Base implementada
 
-O [backend](backend/) usa Java 21, Spring Boot 4.1.1, persistência JPA, migrações Flyway e PostgreSQL. A base atual oferece cadastro e listagem de acidentes e incidentes em `/api/ocorrencias`, incluindo os dados de plano de ação recebidos no cadastro. Também oferece cadastro e consulta de EPIs e registro de entradas e saídas de estoque em `/api/epis`, mapeamento das áreas de risco em `/api/areas-risco` e classificação do nível de periculosidade das tarefas em `/api/tarefas`, além da verificação de disponibilidade em `/api/health`. Isso ainda não cobre todos os fluxos do MVP. A configuração de segurança permite as requisições sem aplicar os perfis definidos em RNF03.
+O [backend](backend/) usa Java 21, Spring Boot 4.1.1, persistência JPA, migrações Flyway e PostgreSQL. A base atual oferece cadastro e listagem de acidentes e incidentes em `/api/ocorrencias`, incluindo os dados de plano de ação recebidos no cadastro. Também oferece cadastro e consulta de EPIs e registro de entradas e saídas de estoque em `/api/epis`, provisionamento de supervisores e colaboradores em `/api/usuarios`, mapeamento das áreas de risco em `/api/areas-risco` e classificação do nível de periculosidade das tarefas em `/api/tarefas`, além da verificação de disponibilidade em `/api/health`. Isso ainda não cobre todos os fluxos do MVP. A configuração de segurança permite as requisições sem aplicar os perfis definidos em RNF03.
 
 O [frontend](frontend/README.md) usa React 19, TypeScript e Vite 8. A interface disponível é o catálogo de componentes em `/design-system`, com exemplos que usam dados fictícios. A integração desses exemplos com a API ainda não está implementada.
 

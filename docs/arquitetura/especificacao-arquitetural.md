@@ -119,6 +119,10 @@ O estoque segue a mesma organização: `EpiController` recebe as requisições, 
 | --- | --- |
 | Autenticar usuário (obter token JWT) | `POST /api/auth/login` |
 | Cadastrar e listar usuários | `POST /api/usuarios` e `GET /api/usuarios` |
+| Cadastrar Supervisor (Gestor de Segurança) | `POST /api/usuarios/supervisores` |
+| Cadastrar Colaborador (Supervisor ou Gestor) | `POST /api/usuarios/colaboradores` |
+| Listar colaboradores, com filtros por nome e CPF | `GET /api/usuarios/colaboradores?nome={nome}&cpf={cpf}` |
+| Consultar um usuário | `GET /api/usuarios/{id}` |
 | Cadastrar e listar ocorrências | `POST /api/ocorrencias` e `GET /api/ocorrencias` |
 | Cadastrar e listar EPIs | `POST /api/epis` e `GET /api/epis` |
 | Consultar um EPI | `GET /api/epis/{id}` |
@@ -131,6 +135,8 @@ O estoque segue a mesma organização: `EpiController` recebe as requisições, 
 | Consultar uma tarefa | `GET /api/tarefas/{id}` |
 | Classificar ou reavaliar a periculosidade de uma tarefa | `PATCH /api/tarefas/{id}/classificacao` |
 | Verificar disponibilidade da API | `GET /api/health` |
+
+O módulo de usuários expõe o provisionamento de RF23 em rotas por papel: `POST /api/usuarios/supervisores` é exclusivo do Gestor de Segurança e devolve a senha inicial gerada pelo sistema uma única vez, enquanto `POST /api/usuarios/colaboradores` atende Supervisor e Gestor e não aceita credenciais — uma requisição que envie `senha` ou `perfil` recebe 400. A restrição de papel é declarada no `SecurityConfig`, e não no corpo do controlador. A rota genérica `POST /api/usuarios` continua disponível para compatibilidade, marcada como descontinuada.
 
 Os módulos de áreas de risco (RF05, UC03) e de tarefas (RF06, UC11) seguem a mesma organização: `AreaRiscoController` e `TarefaController` recebem as requisições; `AreaRiscoUseCase` implementa `GerenciarAreaRiscoUseCase` e `TarefaUseCase` implementa `ClassificarTarefaUseCase`; a persistência fica em `AreaRiscoJpaAdapter` e `TarefaJpaAdapter`, por trás de `AreaRiscoRepositoryPort` e `TarefaRepositoryPort`. O domínio fica em `domain/area_risco/` e `domain/tarefa/`, e a enumeração `NivelPerigo`, compartilhada pelos dois, fica em `domain/comum/`. O cadastro de área de risco aplica a RN1 do UC03, bloqueando o salvamento sem EPIs obrigatórios de acesso. A classificação de tarefa registra data e hora; o responsável técnico exigido pela RN1 do UC11 depende do módulo de auditoria, ainda não implementado.
 
