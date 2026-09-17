@@ -1,6 +1,6 @@
 # Interface web do SafePlace
 
-A interface usa React 19, TypeScript e Vite 8. A aplicação abre em `/usuarios` e reutiliza o layout e os componentes compartilhados. O catálogo interativo fica em `/design-system`, e a tela de referência de áreas de risco fica em `/design-system/examples/risk-areas`.
+A interface usa React 19, TypeScript e Vite 8. A aplicação abre na tela de login e, depois de autenticar, em `/usuarios`, reutilizando o layout e os componentes compartilhados. O catálogo interativo fica em `/design-system`, e a tela de referência de áreas de risco fica em `/design-system/examples/risk-areas`; os dois continuam públicos e não chamam a API.
 
 Consulte o [guia de componentes](design-system/README.md) para conhecer as importações, propriedades, referências do Figma, regras de organização visual e convenções da equipe. Os exemplos usam dados fictícios e não se conectam ao servidor da aplicação.
 
@@ -8,8 +8,9 @@ Consulte o [guia de componentes](design-system/README.md) para conhecer as impor
 
 | Rota | Comportamento atual |
 | --- | --- |
+| `/login` | Formulário de e-mail e senha que chama `POST /api/auth/login`. Sem sessão, qualquer rota da aplicação redireciona para aqui e volta ao destino pedido depois de entrar. |
 | `/` | Redireciona para `/usuarios`. |
-| `/usuarios` | Consulta `GET /api/usuarios`, exibe nomes e trata carregamento, lista vazia, erro e nova tentativa. |
+| `/usuarios` | Gestor: abas de supervisores e colaboradores, cadastro de supervisor com senha inicial e cadastro de colaborador. Supervisor: busca e cadastro de colaboradores. Integrada a `/api/usuarios`, com carregamento, lista vazia, erro e nova tentativa. |
 | `/ocorrencias` | Tela inicial de ocorrências. |
 | `/epis` | Tela inicial de EPIs. |
 | `/areas-risco` | Tela inicial de áreas de risco. |
@@ -19,21 +20,36 @@ As quatro telas iniciais identificam a funcionalidade como em desenvolvimento. N
 
 O menu indica a tela ativa e permite navegar sem recarregar a página. URLs diretas, atualização da página e histórico do navegador são suportados. Endereços desconhecidos mostram uma página com link para voltar ao início. A navegação reutiliza o menu compacto, os estados de foco e o link para pular ao conteúdo do design system.
 
-### Integração inicial de usuários
+### Autenticação e sessão
 
-O endpoint de usuários ainda depende da [issue #74](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/74). Seu contrato de resposta não está definido na base atual. O formato **provisório** consumido por esta tela é uma lista JSON com `id` (número ou texto) e `nome` (texto):
+- O login usa apenas e-mail e senha em `POST /api/auth/login`, como define a [especificação do MVP, seção 3.1](../docs/mvp/especificacao-mvp-arquitetura.md#31-pessoas-cadastradas-fluxo-de-acesso-e-ausência-de-autocadastro). Não há autocadastro nem recuperação de senha.
+- A resposta (token, nome, e-mail e perfil) fica em `sessionStorage`, na chave `safeplace.sessao`: sobrevive a recarregar a página e termina ao fechar a aba. A issue #94 pede para não impor `localStorage` nem nova política de autenticação; a validade do token é decidida pelo backend (RNF03).
+- O cliente HTTP compartilhado anexa `Authorization: Bearer` a toda chamada. Um 401 fora do login encerra a sessão e volta ao `/login` com aviso de sessão expirada. O botão "Sair" do cabeçalho apaga a sessão.
+- A interface aceita os perfis `GESTOR_SEGURANCA` e `SUPERVISOR`. Colaborador não tem conta nem entra no sistema (RF23, RNF03).
+- Implementação em `src/features/autenticacao/`: `sessao.ts` guarda e lê a sessão, `interceptadores.ts` anexa o token e detecta 401, `AutenticacaoProvider.tsx` e `contexto.ts` expõem o estado ao React, `ExigirSessao.tsx` protege as rotas e `LoginPage.tsx` é a tela.
 
-```json
-[{ "id": 1, "nome": "Nome de exemplo" }]
-```
+### Gestão de supervisores e colaboradores
 
-Esse exemplo documenta o formato; não é usado como dado na aplicação. A leitura fica em `src/features/usuarios/UsersPage.tsx`, para ser alinhada ao contrato definitivo quando o endpoint existir. Campos adicionais são ignorados. A API continua responsável por nunca enviar senhas, conforme a issue #74.
+A tela `/usuarios` aplica a matriz de RF23 que o `SecurityConfig` do backend também aplica:
 
-A consulta usa o cliente compartilhado, tem limite de espera de 10 segundos e é cancelada ao sair da tela. Endpoint ausente, falha de conexão e resposta incompatível mostram uma mensagem com nova tentativa. A integração com o backend real permanece pendente até a entrega e a conferência do contrato da issue #74.
+| Ação | Gestor | Supervisor | Endpoint |
+| --- | --- | --- | --- |
+| Listar supervisores | Sim | Não | `GET /api/usuarios`, filtrado por perfil na interface |
+| Cadastrar supervisor | Sim | Não | `POST /api/usuarios/supervisores` |
+| Listar e buscar colaboradores | Sim | Sim | `GET /api/usuarios/colaboradores?nome={nome}&cpf={cpf}` |
+| Cadastrar colaborador | Sim | Sim | `POST /api/usuarios/colaboradores` |
 
-A tela não aplica autenticação nem atribui perfis. RF23 e RNF03 distinguem usuários com acesso de colaboradores cadastrados sem conta. O texto da issue #74 ainda cita `COLABORADOR` como perfil, divergência já registrada na documentação do MVP; esta entrega não redefine essa decisão.
+- A senha inicial do Supervisor aparece uma única vez, no resultado do cadastro. Listagens nunca a mostram e a interface não a guarda.
+- O formulário de colaborador não tem campos de senha ou perfil e não envia essas chaves; o backend as recusaria com 400.
+- A validação local repete só o que o backend exige: campos obrigatórios, CPF com 11 dígitos, data de nascimento no passado e e-mail válido. Erros 400 e 409 mostram a mensagem da API e mantêm os dados digitados.
+- A busca envia o CPF sem máscara. Recarregar a página mantém a sessão e mostra os dados persistidos pela API.
+- Implementação em `src/features/usuarios/`: `api.ts` (contratos e chamadas), `UsersPage.tsx` (abas por perfil), `SupervisoresPainel.tsx`, `ColaboradoresPainel.tsx`, `CadastroDialog.tsx`, `PessoaFormulario.tsx` e `validacaoPessoa.ts`.
 
-O RNF08 continua pendente: não há PWA, cache local nem sincronização. A documentação do MVP ainda precisa delimitar os dados disponíveis offline. Os testes de teclado e tamanhos de tela apoiam o RNF11, mas não constituem uma auditoria completa de WCAG 2.1 AA.
+Fora desta entrega: atualização de cadastros (issue #122), consulta offline de RNF08 (issues #105 e #127) e a carga inicial do primeiro Gestor, descrita a seguir.
+
+### Primeiro acesso
+
+A especificação do MVP prevê que o primeiro Gestor de Segurança venha de carga inicial no banco, mas o repositório ainda não traz essa carga nem uma migração com esse registro. Para entrar na interface em um banco novo é preciso inserir um Gestor com hash BCrypt na tabela `usuarios`. A forma dessa carga é decisão pendente do grupo.
 
 ## Executar em desenvolvimento
 
@@ -72,7 +88,7 @@ npx playwright install chromium
 npm test
 ```
 
-O lint verifica as regras de código configuradas. O build verifica os tipos e gera os arquivos em `dist/`. Os testes Playwright verificam a aplicação, o catálogo e seus exemplos no Chromium; sua configuração inicia um servidor local na porta 4173. Os testes da aplicação cobrem navegação, histórico, teclado, larguras de 360, 768 e 1344 pixels e os estados da consulta de usuários. Somente as respostas HTTP são simuladas; componentes, rotas e cliente HTTP são executados. Esses testes não demonstram persistência nem integração com o endpoint real de usuários.
+O lint verifica as regras de código configuradas. O build verifica os tipos e gera os arquivos em `dist/`. Os testes Playwright verificam a aplicação, o catálogo e seus exemplos no Chromium; sua configuração inicia um servidor local na porta 4173. Os testes da aplicação cobrem login, sessão, saída, expiração de token, matriz de perfis, cadastro de supervisor com senha inicial, cadastro e busca de colaboradores, navegação, histórico, teclado e larguras de 360, 768 e 1344 pixels. Somente as respostas HTTP são simuladas; componentes, rotas, sessão e cliente HTTP são executados. Esses testes não substituem a verificação contra o backend real com PostgreSQL.
 
 Para conferir o resultado do build no navegador:
 
@@ -85,7 +101,8 @@ Use o endereço exibido no terminal, normalmente [http://localhost:4173](http://
 ## Organização
 
 - `src/app/`: composição do layout, navegação e estilo das páginas da aplicação.
-- `src/features/usuarios/`: consulta inicial de usuários e leitura do contrato provisório.
+- `src/features/autenticacao/`: login, sessão e proteção de rotas.
+- `src/features/usuarios/`: consulta e cadastro de supervisores e colaboradores por perfil.
 - `src/features/ocorrencias/`, `epis/`, `areas-risco/` e `tarefas/`: telas iniciais por funcionalidade.
 - `src/features/design-system/`: catálogo e exemplos com dados fictícios.
 - `src/shared/components/` e `src/shared/layout/`: componentes e estrutura visual compartilhados.

@@ -71,7 +71,7 @@ A documentação dos casos de uso também inclui funcionalidades previstas para 
 
 O [backend](backend/) usa Java 21, Spring Boot 4.1.1, persistência JPA, migrações Flyway e PostgreSQL. A base atual oferece cadastro e listagem de acidentes e incidentes em `/api/ocorrencias`, incluindo os dados de plano de ação recebidos no cadastro. Também oferece cadastro e consulta de EPIs e registro de entradas e saídas de estoque em `/api/epis`, provisionamento de supervisores e colaboradores em `/api/usuarios`, mapeamento das áreas de risco em `/api/areas-risco` e classificação do nível de periculosidade das tarefas em `/api/tarefas`, além da verificação de disponibilidade em `/api/health`. Isso ainda não cobre todos os fluxos do MVP. A configuração de segurança permite as requisições sem aplicar os perfis definidos em RNF03.
 
-O [frontend](frontend/README.md) usa React 19, TypeScript e Vite 8. A interface disponível é o catálogo de componentes em `/design-system`, com exemplos que usam dados fictícios. A integração desses exemplos com a API ainda não está implementada.
+O [frontend](frontend/README.md) usa React 19, TypeScript e Vite 8. A interface integra o login e a gestão de supervisores e colaboradores com a API (`/api/auth/login` e `/api/usuarios`), aplicando os perfis de RF23. As telas de ocorrências, EPIs, áreas de risco e tarefas ainda são iniciais. O catálogo de componentes em `/design-system` continua disponível com dados fictícios.
 
 ## Executar com Docker Compose
 
@@ -100,11 +100,13 @@ docker compose up -d backend
 
 | Serviço | Endereço local | Como conferir |
 | --- | --- | --- |
-| Interface | [Catálogo de componentes](http://localhost:5173/design-system) | A página deve apresentar os componentes do SafePlace. |
+| Interface | [Tela de login](http://localhost:5173/login) | Deve apresentar o formulário de e-mail e senha. O [catálogo de componentes](http://localhost:5173/design-system) continua acessível sem login. |
 | Backend | [Estado da aplicação](http://localhost:8080/actuator/health) | A resposta deve conter `"status":"UP"`. |
 | API | [Documentação interativa](http://localhost:8080/docs) | Deve listar as operações de ocorrências, EPIs e disponibilidade. |
 | Contrato da API | [OpenAPI](http://localhost:8080/v3/api-docs) | Deve retornar a descrição da API em JSON. |
 | Banco | `localhost:5432` | Banco `safeplace`, usuário `safeplace` e senha de desenvolvimento `safeplace`, conforme o Compose. |
+
+Para entrar na interface é preciso existir um Gestor de Segurança na tabela `usuarios`. O repositório ainda não traz essa carga inicial; a pendência está registrada na [especificação do MVP, seção 3.1](docs/mvp/especificacao-mvp-arquitetura.md#31-pessoas-cadastradas-fluxo-de-acesso-e-ausência-de-autocadastro) e no [README do frontend](frontend/README.md#primeiro-acesso).
 
 Para encerrar os serviços mantendo os dados do volume do PostgreSQL:
 
