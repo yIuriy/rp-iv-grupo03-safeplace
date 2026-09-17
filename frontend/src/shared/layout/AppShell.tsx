@@ -10,8 +10,9 @@ export function NavItem({ icon, active, children, className = '', ...props }: Co
     className={`sp-nav-item ${className}`}><Icon name={icon} /><span>{children}</span></a>
 }
 
-export function AppHeader({ roleLabel, onMenuClick, menuOpen, menuId }: {
+export function AppHeader({ roleLabel, actions, onMenuClick, menuOpen, menuId }: {
   roleLabel: string
+  actions?: ReactNode
   onMenuClick: () => void
   menuOpen: boolean
   menuId: string
@@ -20,12 +21,13 @@ export function AppHeader({ roleLabel, onMenuClick, menuOpen, menuId }: {
     <Button variant="quiet" className="sp-menu-button" onClick={onMenuClick}
       aria-expanded={menuOpen} aria-controls={menuId} aria-haspopup="dialog">Menu</Button>
     <a href="/" className="sp-logo-link" aria-label="SafePlace, início"><img src={logo} alt="" className="sp-logo" /></a>
-    <span className="sp-role-label">{roleLabel}</span>
+    <div className="sp-header-end"><span className="sp-role-label">{roleLabel}</span>{actions}</div>
   </header>
 }
 
-export function AppShell({ roleLabel, navigation, children }: {
+export function AppShell({ roleLabel, actions, navigation, children }: {
   roleLabel: string
+  actions?: ReactNode
   navigation: ReactNode
   children: ReactNode
 }) {
@@ -41,7 +43,7 @@ export function AppShell({ roleLabel, navigation, children }: {
 
   return <div className="sp-app-shell">
     <a href="#main-content" className="sp-skip-link">Pular para o conteúdo</a>
-    <AppHeader {...{ roleLabel, menuOpen }} menuId={id} onMenuClick={() => setMenuOpen(true)} />
+    <AppHeader {...{ roleLabel, actions, menuOpen }} menuId={id} onMenuClick={() => setMenuOpen(true)} />
     <div className="sp-app-body">
       <aside className="sp-sidebar"><nav aria-label="Navegação principal">{navigation}</nav></aside>
       <main id="main-content" className="sp-main" tabIndex={-1}>{children}</main>

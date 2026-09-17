@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.application.port.in;
 
+import br.edu.safeplace.backend.application.dto.input.AtualizarPessoaInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarColaboradorInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarSupervisorInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarUsuarioEntradaDTO;
@@ -27,6 +28,18 @@ public interface GerenciarUsuarioCasoDeUso {
      * RF23: o Supervisor cadastra colaboradores, que não possuem conta de acesso nem senha.
      */
     UsuarioSaidaDTO cadastrarColaborador(CadastrarColaboradorInputDTO entrada);
+
+    /**
+     * RF23 / issue #122: o Gestor de Segurança atualiza os dados cadastrais de um Supervisor,
+     * preservando id, CPF, perfil e credenciais. Um id de outro perfil não é encontrado.
+     */
+    UsuarioSaidaDTO atualizarSupervisor(Integer id, AtualizarPessoaInputDTO entrada);
+
+    /**
+     * RF23 / issue #122: Supervisor e Gestor atualizam os dados cadastrais de um Colaborador,
+     * que continua sem conta de acesso.
+     */
+    UsuarioSaidaDTO atualizarColaborador(Integer id, AtualizarPessoaInputDTO entrada);
 
     List<UsuarioSaidaDTO> listarUsuarios();
 

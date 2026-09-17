@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.application.dto.input.AtualizarPessoaInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarColaboradorInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarSupervisorInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarUsuarioEntradaDTO;
@@ -95,6 +96,53 @@ public class UsuarioCasoDeUso implements GerenciarUsuarioCasoDeUso {
 
         // Sem senha inicial: o Colaborador não possui conta de acesso.
         return UsuarioSaidaDTO.deDominio(repositorioPorta.salvar(novoColaborador));
+    }
+
+    @Override
+    @Transactional
+    public UsuarioSaidaDTO atualizarSupervisor(Integer id, AtualizarPessoaInputDTO entrada) {
+        return atualizarCadastro(id, Perfil.SUPERVISOR, entrada);
+    }
+
+    @Override
+    @Transactional
+    public UsuarioSaidaDTO atualizarColaborador(Integer id, AtualizarPessoaInputDTO entrada) {
+        return atualizarCadastro(id, Perfil.COLABORADOR, entrada);
+    }
+
+    /**
+     * Issue #122: atualiza no lugar, preservando id e CPF para que os vínculos existentes continuem
+     * apontando para a mesma pessoa. O perfil vem da rota e é conferido antes de alterar, então um
+     * Colaborador nunca vira Supervisor por esta operação. A autoria da alteração depende do módulo
+     * de auditoria (#121); aqui só a data de atualização é registrada.
+     */
+    private UsuarioSaidaDTO atualizarCadastro(Integer id, Perfil perfilEsperado, AtualizarPessoaInputDTO entrada) {
+        Colaborador atual = repositorioPorta.buscarPorId(id)
+                .filter(pessoa -> pessoa.getPerfil() == perfilEsperado)
+                .orElseThrow(() -> new UsuarioNaoEncontradoException(
+                        nomeDoPerfil(perfilEsperado) + " não encontrado com ID: " + id));
+
+        validarEmailDisponivelPara(atual, entrada.email());
+
+        Colaborador atualizado = atual.comDadosAtualizados(entrada.nome(), entrada.dataNascimento(), entrada.email());
+        return UsuarioSaidaDTO.deDominio(repositorioPorta.salvar(atualizado));
+    }
+
+    private static String nomeDoPerfil(Perfil perfil) {
+        return perfil == Perfil.SUPERVISOR ? "Supervisor" : "Colaborador";
+    }
+
+    /** O e-mail continua único, mas a própria pessoa pode manter o que já tem. */
+    private void validarEmailDisponivelPara(Colaborador atual, String email) {
+        if (email == null || email.isBlank()) {
+            return;
+        }
+        String emailSanitizado = email.trim().toLowerCase();
+        repositorioPorta.buscarPorEmail(emailSanitizado)
+                .filter(outro -> !outro.getId().equals(atual.getId()))
+                .ifPresent(outro -> {
+                    throw new EmailJaCadastradoException("Email já cadastrado no sistema: " + emailSanitizado);
+                });
     }
 
     @Override

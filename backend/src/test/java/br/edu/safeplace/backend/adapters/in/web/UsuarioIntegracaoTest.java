@@ -244,6 +244,77 @@ class UsuarioIntegracaoTest {
         assertThat(colaboradores).doesNotContain("senhaInicial").doesNotContain("$2a$");
     }
 
+    @Test
+    @DisplayName("Issue #122: Gestor atualiza Supervisor preservando id, CPF e hash da senha no banco")
+    void gestorAtualizaSupervisorPreservandoIdentidadeECredencial() {
+        int id = corpoDe(chamar("POST", "/api/usuarios/supervisores",
+                jsonSupervisor(CPF_SUPERVISOR), Perfil.GESTOR_SEGURANCA)).get("id").asInt();
+        String hashAntes = jdbcTemplate.queryForObject("SELECT senha FROM usuarios WHERE id = ?", String.class, id);
+
+        HttpResponse<String> resposta = chamar("PUT", "/api/usuarios/supervisores/" + id,
+                jsonAtualizacao("Joana Ribeiro Souza", "joana.souza@safeplace.test"), Perfil.GESTOR_SEGURANCA);
+
+        assertThat(resposta.statusCode()).isEqualTo(200);
+        JsonNode corpo = corpoDe(resposta);
+        assertThat(corpo.get("id").asInt()).isEqualTo(id);
+        assertThat(corpo.get("cpf").asText()).isEqualTo(CPF_SUPERVISOR);
+        assertThat(corpo.get("perfil").asText()).isEqualTo("SUPERVISOR");
+        assertThat(corpo.has("senhaInicial")).isFalse();
+
+        JsonNode consulta = corpoDe(chamar("GET", "/api/usuarios/" + id, null, Perfil.GESTOR_SEGURANCA));
+        assertThat(consulta.get("nome").asText()).isEqualTo("Joana Ribeiro Souza");
+        assertThat(consulta.get("email").asText()).isEqualTo("joana.souza@safeplace.test");
+        assertThat(jdbcTemplate.queryForObject("SELECT senha FROM usuarios WHERE id = ?", String.class, id))
+                .isEqualTo(hashAntes);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM usuarios WHERE cpf = ?", Integer.class, CPF_SUPERVISOR)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Issue #122: Supervisor atualiza Colaborador sem credenciais; a rota de Supervisor não converte o perfil")
+    void supervisorAtualizaColaboradorERotaNaoConvertePerfil() {
+        int id = corpoDe(chamar("POST", "/api/usuarios/colaboradores",
+                jsonColaborador(CPF_COLABORADOR, "João da Silva"), Perfil.SUPERVISOR)).get("id").asInt();
+
+        HttpResponse<String> atualizado = chamar("PUT", "/api/usuarios/colaboradores/" + id,
+                jsonAtualizacao("João Pedro da Silva", null), Perfil.SUPERVISOR);
+        assertThat(atualizado.statusCode()).isEqualTo(200);
+        assertThat(corpoDe(atualizado).get("perfil").asText()).isEqualTo("COLABORADOR");
+        assertThat(jdbcTemplate.queryForObject("SELECT senha FROM usuarios WHERE id = ?", String.class, id)).isNull();
+
+        HttpResponse<String> pelaRotaErrada = chamar("PUT", "/api/usuarios/supervisores/" + id,
+                jsonAtualizacao("Outro Nome", "outro@safeplace.test"), Perfil.GESTOR_SEGURANCA);
+        assertThat(pelaRotaErrada.statusCode()).isEqualTo(404);
+        assertThat(jdbcTemplate.queryForObject("SELECT perfil FROM usuarios WHERE id = ?", String.class, id))
+                .isEqualTo("COLABORADOR");
+        assertThat(jdbcTemplate.queryForObject("SELECT nome FROM usuarios WHERE id = ?", String.class, id))
+                .isEqualTo("João Pedro da Silva");
+    }
+
+    @Test
+    @DisplayName("Issue #122: Supervisor não atualiza Supervisor (403) e e-mail duplicado responde 409 sem alterar dados")
+    void permissaoEDuplicidadeNaAtualizacao() {
+        int idSupervisor = corpoDe(chamar("POST", "/api/usuarios/supervisores",
+                jsonSupervisor(CPF_SUPERVISOR), Perfil.GESTOR_SEGURANCA)).get("id").asInt();
+        int idColaborador = corpoDe(chamar("POST", "/api/usuarios/colaboradores",
+                jsonColaborador(CPF_COLABORADOR, "João da Silva"), Perfil.SUPERVISOR)).get("id").asInt();
+
+        assertThat(chamar("PUT", "/api/usuarios/supervisores/" + idSupervisor,
+                jsonAtualizacao("Joana", "joana.ribeiro@safeplace.test"), Perfil.SUPERVISOR).statusCode()).isEqualTo(403);
+
+        HttpResponse<String> duplicado = chamar("PUT", "/api/usuarios/colaboradores/" + idColaborador,
+                jsonAtualizacao("João da Silva", "joana.ribeiro@safeplace.test"), Perfil.SUPERVISOR);
+        assertThat(duplicado.statusCode()).isEqualTo(409);
+        assertThat(jdbcTemplate.queryForObject("SELECT email FROM usuarios WHERE id = ?", String.class, idColaborador)).isNull();
+        assertThat(jdbcTemplate.queryForObject("SELECT nome FROM usuarios WHERE id = ?", String.class, idSupervisor))
+                .isEqualTo("Joana Ribeiro");
+    }
+
+    private static String jsonAtualizacao(String nome, String email) {
+        String campoEmail = email == null ? "" : ", \"email\": \"" + email + "\"";
+        return "{ \"nome\": \"" + nome + "\", \"dataNascimento\": \"1990-01-10\"" + campoEmail + " }";
+    }
+
     private static String codificar(String valor) {
         return URLEncoder.encode(valor, StandardCharsets.UTF_8);
     }
