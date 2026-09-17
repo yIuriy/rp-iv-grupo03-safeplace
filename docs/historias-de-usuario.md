@@ -835,13 +835,13 @@ Referência: [RF23](requisitos/requisitos-funcionais.md#rf23-o-sistema-deve-perm
 > | Nome | Tamanho máximo a confirmar. | Texto | Obrigatório | Nome do Supervisor. |
 > | Identificação de acesso | Formato de e-mail institucional. | E-mail | Obrigatório; único | E-mail corporativo utilizado como credencial de login no sistema. |
 > | Perfil | Não se aplica. | Supervisor | Automático | Perfil que delimita as permissões. |
-> | Senha inicial | Sequência alfanumérica aleatória de 12 caracteres. | Texto | Automático | Senha inicial temporária gerada pelo sistema no momento do cadastro (RF23). |
+> | Senha inicial | Sequência aleatória de 12 caracteres, com letras maiúsculas, minúsculas, dígitos e caracteres especiais. | Texto | Automático | Senha inicial temporária gerada pelo sistema no momento do cadastro (RF23). |
 > | Responsável pelo cadastro | Gestor autenticado. | Identificador de usuário | Automático | Pessoa que cadastrou o Supervisor. |
 
 ## Regra(s) de Negócio:
 
 > 1. O Gestor de Segurança gerencia os supervisores.
-> 2. No cadastro de um Supervisor, o sistema deve gerar automaticamente a senha inicial (12 caracteres alfanuméricos) e salvar seu hash criptográfico (BCrypt), retornando a senha temporária na resposta do cadastro, conforme RF23.
+> 2. No cadastro de um Supervisor, o sistema deve gerar automaticamente a senha inicial (12 caracteres, com ao menos uma letra minúscula, uma maiúscula, um dígito e um caractere especial) e salvar seu hash criptográfico (BCrypt), retornando a senha temporária na resposta do cadastro, conforme RF23.
 > 3. A conta criada deve receber as permissões de Supervisor, sem atribuir permissões de Gestor.
 > 4. Cadastro e atualizações devem registrar auditoria conforme RNF05.
 > 5. O login do usuário é realizado exclusivamente com e-mail e senha via `POST /api/auth/login` (não aceitando CPF). A autenticação emite token JWT com perfil e validade de 7 dias no MVP (RNF03).

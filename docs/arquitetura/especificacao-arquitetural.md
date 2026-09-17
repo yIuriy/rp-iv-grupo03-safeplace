@@ -91,7 +91,7 @@ Os diagramas não são alterados nesta revisão. O grupo fará a atualização e
 
 O [diagrama de classes](../diagramas/classes/Diagrama%20de%20Classes%20-%20SafePlace.png) é uma referência do domínio, com pendências acompanhadas na [issue #39](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/39). A operação `Supervisor.criarContaColaborador()` ainda precisa ser alinhada ao cadastro sem acesso. Heranças de dados pessoais não definem permissões de autenticação.
 
-O [PlantUML da proposta hexagonal](../diagramas/arquitetura/safeplace-arquitetura-hexagonal-proposta.puml) e seu [PNG](../diagramas/arquitetura/safeplace-arquitetura-hexagonal-proposta.png) são uma proposta anterior que usa Python. Devem ser lidos como referência histórica da separação de responsabilidades; a tecnologia adotada na base atual é Java. Componentes e implantação também precisam ser reconciliados na etapa de diagramas da [issue #81](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/81).
+O [PlantUML da proposta hexagonal](../diagramas/arquitetura/safeplace-arquitetura-hexagonal-proposta.puml) e seu [PNG](../diagramas/arquitetura/safeplace-arquitetura-hexagonal-proposta.png) descrevem uma proposta anterior, elaborada antes da definição da linguagem. O texto do PlantUML foi atualizado para Java, que é a tecnologia adotada na base atual; o PNG ainda precisa ser regerado a partir dele. Devem ser lidos como referência da separação de responsabilidades. Componentes e implantação também precisam ser reconciliados na etapa de diagramas da [issue #81](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/81).
 
 | Artefato | Status |
 | --- | --- |
