@@ -1,7 +1,11 @@
 import { test, expect } from '@playwright/test'
+import { iniciarSessao, pessoas, simularListagens } from './helpers/sessao'
+
+const anaSilva = { ...pessoas.supervisora, nome: 'Ana Silva' }
 
 test('opens the application and navigates between its five features without reloading', async ({ page }) => {
-  await page.route('**/api/usuarios', route => route.fulfill({ json: [] }))
+  await iniciarSessao(page)
+  await simularListagens(page)
   await page.goto('/')
   await expect(page).toHaveURL(/\/usuarios$/)
   await expect(page.getByRole('heading', { name: 'Usuários', exact: true })).toBeVisible()
@@ -28,6 +32,8 @@ test('opens the application and navigates between its five features without relo
 })
 
 test('supports direct URLs, browser history and recovery from unknown routes', async ({ page }) => {
+  await iniciarSessao(page)
+  await simularListagens(page)
   await page.goto('/tarefas/')
   await expect(page).toHaveTitle('Tarefas | SafePlace')
   await page.reload()
@@ -42,7 +48,6 @@ test('supports direct URLs, browser history and recovery from unknown routes', a
   await page.goto('/pagina-inexistente')
   await expect(page.getByRole('heading', { name: 'Página não encontrada' })).toBeVisible()
   await expect(page).toHaveTitle('Página não encontrada | SafePlace')
-  await page.route('**/api/usuarios', route => route.fulfill({ json: [] }))
   await page.getByRole('link', { name: 'Voltar ao início' }).click()
   await expect(page).toHaveURL('/usuarios')
 })
@@ -52,7 +57,8 @@ for (const width of [360, 768, 1344]) {
     const errors: string[] = []
     page.on('pageerror', error => errors.push(error.message))
     await page.setViewportSize({ width, height: 960 })
-    await page.route('**/api/usuarios', route => route.fulfill({ json: [{ id: 1, nome: 'Ana Silva' }] }))
+    await iniciarSessao(page)
+    await simularListagens(page, { usuarios: [anaSilva] })
     await page.goto('/usuarios')
     await page.keyboard.press('Tab')
     await expect(page.getByRole('link', { name: 'Pular para o conteúdo' })).toBeFocused()

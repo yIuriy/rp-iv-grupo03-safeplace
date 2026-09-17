@@ -1,10 +1,12 @@
 import { test, expect } from '@playwright/test'
+import { iniciarSessao } from './helpers/sessao'
 
 for (const failure of ['missing endpoint', 'network unavailable']) {
   test(`keeps navigation available when ${failure}`, async ({ page }) => {
     await page.route('**/api/usuarios', route => failure === 'missing endpoint'
       ? route.fulfill({ status: 404, json: { message: 'Not found' } })
       : route.abort('internetdisconnected'))
+    await iniciarSessao(page)
     await page.goto('/usuarios')
     await expect(page.getByRole('alert')).toContainText('Não foi possível carregar os usuários.')
     await page.getByRole('link', { name: 'Ocorrências', exact: true }).click()
@@ -20,6 +22,7 @@ for (const [label, body] of [
     const errors: string[] = []
     page.on('pageerror', error => errors.push(error.message))
     await page.route('**/api/usuarios', route => route.fulfill({ contentType: 'application/json', body }))
+    await iniciarSessao(page)
     await page.goto('/usuarios')
     await expect(page.getByRole('alert')).toContainText('Não foi possível carregar os usuários.')
     await expect(page.getByRole('button', { name: 'Tentar novamente' })).toBeVisible()
@@ -33,6 +36,7 @@ test('shows the user names returned by GET /api/usuarios without exposing extra 
     { id: 2, nome: 'Bruno Costa' },
   ] }))
   const request = page.waitForRequest('**/api/usuarios')
+  await iniciarSessao(page)
   await page.goto('/usuarios')
   const apiRequest = await request
   expect(apiRequest.method()).toBe('GET')
@@ -51,6 +55,7 @@ test('announces a failed query and allows retrying without reloading the page', 
   await page.route('**/api/usuarios', route => available
     ? route.fulfill({ json: [{ id: 3, nome: 'Carla Souza' }] })
     : route.fulfill({ status: 503, json: { message: 'Unavailable' } }))
+  await iniciarSessao(page)
   await page.goto('/usuarios')
   await expect(page.getByRole('alert')).toContainText('Não foi possível carregar os usuários.')
   await expect(page.getByRole('heading', { name: 'Nenhum usuário encontrado' })).toHaveCount(0)
@@ -68,6 +73,7 @@ test('announces loading and distinguishes an empty response from an unfinished r
     await responseReady
     await route.fulfill({ json: [] })
   })
+  await iniciarSessao(page)
   await page.goto('/usuarios')
   try {
     await expect(page.getByRole('status')).toHaveText('Carregando usuários...')

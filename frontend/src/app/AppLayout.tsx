@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { matchPath, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { AppShell } from '../shared/layout'
-import { Icon, type IconName } from '../shared/components'
+import { Button, Icon, type IconName } from '../shared/components'
+import { useAutenticacao, useSessaoAtiva } from '../features/autenticacao/contexto'
+import { rotuloDoPerfil } from '../features/autenticacao/sessao'
 import './app.css'
 
 const navigation: { path: string; label: string; icon: IconName }[] = [
@@ -15,6 +17,8 @@ const navigation: { path: string; label: string; icon: IconName }[] = [
 export function AppLayout() {
   const { pathname } = useLocation()
   const previousPath = useRef(pathname)
+  const { sair } = useAutenticacao()
+  const sessao = useSessaoAtiva()
 
   useEffect(() => {
     const previousTitle = document.title
@@ -27,11 +31,13 @@ export function AppLayout() {
     return () => { document.title = previousTitle }
   }, [pathname])
 
-  return <AppShell roleLabel="Segurança do trabalho" navigation={navigation.map(item =>
-    <NavLink key={item.path} to={item.path} className="sp-nav-item">
-      <Icon name={item.icon} /><span>{item.label}</span>
-    </NavLink>
-  )}>
+  return <AppShell roleLabel={`${sessao.nome} · ${rotuloDoPerfil[sessao.perfil]}`}
+    actions={<Button variant="quiet" onClick={sair}>Sair</Button>}
+    navigation={navigation.map(item =>
+      <NavLink key={item.path} to={item.path} className="sp-nav-item">
+        <Icon name={item.icon} /><span>{item.label}</span>
+      </NavLink>
+    )}>
     <Outlet />
   </AppShell>
 }

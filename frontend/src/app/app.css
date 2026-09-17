@@ -1,3 +1,15 @@
 .sp-feature-page { display: grid; gap: var(--sp-space-24); min-width: 0; }
 .sp-feature-heading { display: grid; gap: var(--sp-space-8); }
 .sp-feature-heading p { color: var(--sp-text-secondary); }
+
+/* Login */
+.sp-login-page { min-height: 100dvh; display: grid; place-items: center; padding: var(--sp-space-24); background: var(--sp-surface-page); }
+.sp-login-card { width: min(100%, 440px); display: grid; gap: var(--sp-space-24); padding: var(--sp-space-32); background: var(--sp-surface-white); border: 1px solid var(--sp-border-default); border-radius: var(--sp-radius-16); }
+.sp-login-logo { display: block; width: 180px; max-width: 100%; height: auto; }
+.sp-login-heading { display: grid; gap: var(--sp-space-8); }
+.sp-login-heading p { color: var(--sp-text-secondary); }
+.sp-login-submit { justify-content: center; }
+.sp-form { display: grid; gap: var(--sp-space-16); }
+@media (max-width: 767px) {
+  .sp-login-card { padding: var(--sp-space-24); }
+}
