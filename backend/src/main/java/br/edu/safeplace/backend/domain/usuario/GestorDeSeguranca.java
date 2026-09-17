@@ -23,6 +23,13 @@ public class GestorDeSeguranca extends Colaborador {
         return new GestorDeSeguranca(null, cpf, nome, dataNascimento, email, senha, true, LocalDateTime.now(), LocalDateTime.now());
     }
 
+    /** Mantém o hash da senha: a atualização cadastral não troca credenciais. */
+    @Override
+    public GestorDeSeguranca comDadosAtualizados(String nome, LocalDate dataNascimento, String email) {
+        return new GestorDeSeguranca(getId(), getCpf(), nome, dataNascimento, email, senha, isAtivo(),
+                getCriadoEm(), LocalDateTime.now());
+    }
+
     @Override
     public Perfil getPerfil() {
         return Perfil.GESTOR_SEGURANCA;
