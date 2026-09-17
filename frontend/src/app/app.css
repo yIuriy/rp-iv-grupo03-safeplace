@@ -9,7 +9,21 @@
 .sp-login-heading { display: grid; gap: var(--sp-space-8); }
 .sp-login-heading p { color: var(--sp-text-secondary); }
 .sp-login-submit { justify-content: center; }
+
+/* Formulários e painéis de cadastro */
 .sp-form { display: grid; gap: var(--sp-space-16); }
+.sp-dialog > .sp-form, .sp-dialog-body { margin-top: var(--sp-space-24); }
+.sp-dialog-body { display: grid; gap: var(--sp-space-16); }
+.sp-dialog-note { color: var(--sp-text-secondary); }
+.sp-painel { display: grid; gap: var(--sp-space-24); }
+.sp-painel-acoes { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-space-16); }
+.sp-painel-acoes p { color: var(--sp-text-secondary); }
+.sp-busca { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto auto; gap: var(--sp-space-16); align-items: end; }
+.sp-senha-inicial { display: grid; gap: var(--sp-space-8); padding: var(--sp-space-16); border: 1px dashed var(--sp-border-default); border-radius: var(--sp-radius-8); background: var(--sp-surface-page); }
+.sp-senha-inicial dt { font: var(--sp-type-label-md-weight) var(--sp-type-label-md-size) / var(--sp-type-label-md-line-height) var(--sp-font-body), sans-serif; color: var(--sp-text-secondary); }
+.sp-senha-inicial dd { margin: 0; }
+.sp-senha-inicial code { font-size: var(--sp-type-heading-md-size); line-height: var(--sp-type-heading-md-line-height); letter-spacing: 0.08em; user-select: all; overflow-wrap: anywhere; }
 @media (max-width: 767px) {
   .sp-login-card { padding: var(--sp-space-24); }
+  .sp-busca { grid-template-columns: 1fr; }
 }
