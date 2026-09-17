@@ -10,7 +10,7 @@ Consulte o [guia de componentes](design-system/README.md) para conhecer as impor
 | --- | --- |
 | `/login` | Formulário de e-mail e senha que chama `POST /api/auth/login`. Sem sessão, qualquer rota da aplicação redireciona para aqui e volta ao destino pedido depois de entrar. |
 | `/` | Redireciona para `/usuarios`. |
-| `/usuarios` | Gestor: abas de supervisores e colaboradores, cadastro de supervisor com senha inicial e cadastro de colaborador. Supervisor: busca e cadastro de colaboradores. Integrada a `/api/usuarios`, com carregamento, lista vazia, erro e nova tentativa. |
+| `/usuarios` | Gestor: abas de supervisores e colaboradores, cadastro de supervisor com senha inicial, cadastro e edição de supervisores e colaboradores. Supervisor: busca, cadastro e edição de colaboradores. Integrada a `/api/usuarios`, com carregamento, lista vazia, erro e nova tentativa. |
 | `/ocorrencias` | Tela inicial de ocorrências. |
 | `/epis` | Tela inicial de EPIs. |
 | `/areas-risco` | Tela inicial de áreas de risco. |
@@ -38,14 +38,17 @@ A tela `/usuarios` aplica a matriz de RF23 que o `SecurityConfig` do backend tam
 | Cadastrar supervisor | Sim | Não | `POST /api/usuarios/supervisores` |
 | Listar e buscar colaboradores | Sim | Sim | `GET /api/usuarios/colaboradores?nome={nome}&cpf={cpf}` |
 | Cadastrar colaborador | Sim | Sim | `POST /api/usuarios/colaboradores` |
+| Editar supervisor | Sim | Não | `PUT /api/usuarios/supervisores/{id}` |
+| Editar colaborador | Sim | Sim | `PUT /api/usuarios/colaboradores/{id}` |
 
 - A senha inicial do Supervisor aparece uma única vez, no resultado do cadastro. Listagens nunca a mostram e a interface não a guarda.
 - O formulário de colaborador não tem campos de senha ou perfil e não envia essas chaves; o backend as recusaria com 400.
 - A validação local repete só o que o backend exige: campos obrigatórios, CPF com 11 dígitos, data de nascimento no passado e e-mail válido. Erros 400 e 409 mostram a mensagem da API e mantêm os dados digitados.
 - A busca envia o CPF sem máscara. Recarregar a página mantém a sessão e mostra os dados persistidos pela API.
+- A edição (issue #122) reaproveita o formulário do cadastro com os dados atuais. Só nome, data de nascimento e e-mail são enviados; o CPF aparece somente leitura e não vai no corpo, porque a alteração de CPF e a desativação aguardam decisão do grupo (especificação do MVP, seção 11.1). Perfil e senha nunca mudam por esse caminho: a API recusa esses campos com 400. Um 404 na edição indica que o cadastro mudou de perfil ou não existe mais.
 - Implementação em `src/features/usuarios/`: `api.ts` (contratos e chamadas), `UsersPage.tsx` (abas por perfil), `SupervisoresPainel.tsx`, `ColaboradoresPainel.tsx`, `CadastroDialog.tsx`, `PessoaFormulario.tsx` e `validacaoPessoa.ts`.
 
-Fora desta entrega: atualização de cadastros (issue #122), consulta offline de RNF08 (issues #105 e #127) e a carga inicial do primeiro Gestor, descrita a seguir.
+Fora desta entrega: consulta offline de RNF08 (issues #105 e #127), a carga inicial do primeiro Gestor, descrita a seguir, e a autoria das alterações, que depende do módulo de auditoria (issue #121).
 
 ### Primeiro acesso
 
@@ -88,7 +91,7 @@ npx playwright install chromium
 npm test
 ```
 
-O lint verifica as regras de código configuradas. O build verifica os tipos e gera os arquivos em `dist/`. Os testes Playwright verificam a aplicação, o catálogo e seus exemplos no Chromium; sua configuração inicia um servidor local na porta 4173. Os testes da aplicação cobrem login, sessão, saída, expiração de token, matriz de perfis, cadastro de supervisor com senha inicial, cadastro e busca de colaboradores, navegação, histórico, teclado e larguras de 360, 768 e 1344 pixels. Somente as respostas HTTP são simuladas; componentes, rotas, sessão e cliente HTTP são executados. Esses testes não substituem a verificação contra o backend real com PostgreSQL.
+O lint verifica as regras de código configuradas. O build verifica os tipos e gera os arquivos em `dist/`. Os testes Playwright verificam a aplicação, o catálogo e seus exemplos no Chromium; sua configuração inicia um servidor local na porta 4173. Os testes da aplicação cobrem login, sessão, saída, expiração de token, matriz de perfis, cadastro de supervisor com senha inicial, cadastro, edição e busca de colaboradores e supervisores, navegação, histórico, teclado e larguras de 360, 768 e 1344 pixels. Somente as respostas HTTP são simuladas; componentes, rotas, sessão e cliente HTTP são executados. Esses testes não substituem a verificação contra o backend real com PostgreSQL.
 
 Para conferir o resultado do build no navegador:
 

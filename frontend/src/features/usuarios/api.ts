@@ -76,11 +76,27 @@ export async function cadastrarColaborador(dados: DadosPessoa): Promise<UsuarioC
   return lerUsuario(data)
 }
 
+/** Dados editáveis na atualização (issue #122). CPF identifica o cadastro e não muda por aqui. */
+export type DadosAtualizacao = Omit<DadosPessoa, 'cpf'>
+
+/** Exclusivo do Gestor. Preserva CPF, perfil e credenciais; só dados cadastrais mudam. */
+export async function atualizarSupervisor(id: number, dados: DadosAtualizacao): Promise<Usuario> {
+  const { data } = await http.put<unknown>(`/usuarios/supervisores/${id}`, dados)
+  return lerUsuario(data)
+}
+
+/** Supervisor ou Gestor. O Colaborador continua sem conta de acesso. */
+export async function atualizarColaborador(id: number, dados: DadosAtualizacao): Promise<Usuario> {
+  const { data } = await http.put<unknown>(`/usuarios/colaboradores/${id}`, dados)
+  return lerUsuario(data)
+}
+
 export function descreverFalhaDeCadastro(erro: unknown): string {
   const status = statusDoErro(erro)
-  if (status === 403) return 'Seu perfil não tem permissão para este cadastro.'
+  if (status === 403) return 'Seu perfil não tem permissão para esta operação.'
+  if (status === 404) return 'Cadastro não encontrado. Ele pode ter sido alterado por outra pessoa; recarregue a lista.'
   if (status === 409 || status === 400) {
     return mensagemDaApi(erro) ?? 'Os dados informados conflitam com um cadastro existente ou são inválidos.'
   }
-  return 'Não foi possível concluir o cadastro agora. Os dados preenchidos foram mantidos; tente novamente.'
+  return 'Não foi possível concluir a operação agora. Os dados preenchidos foram mantidos; tente novamente.'
 }

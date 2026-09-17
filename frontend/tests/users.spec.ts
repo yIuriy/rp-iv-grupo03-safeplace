@@ -12,18 +12,18 @@ test('Gestor sees supervisors and colaboradores in tabs without any credential d
   await expect(abas.getByRole('tab', { name: 'Supervisores' })).toHaveAttribute('aria-selected', 'true')
 
   const supervisores = page.getByRole('table', { name: 'Supervisores cadastrados' })
-  await expect(supervisores.getByRole('cell', { name: 'Joana Ribeiro' })).toBeVisible()
-  await expect(supervisores.getByRole('cell', { name: '111.444.777-35' })).toBeVisible()
-  await expect(supervisores.getByRole('cell', { name: '20/04/1988' })).toBeVisible()
-  await expect(supervisores.getByRole('cell', { name: 'Ativo' })).toBeVisible()
+  await expect(supervisores.getByRole('cell', { name: 'Joana Ribeiro', exact: true })).toBeVisible()
+  await expect(supervisores.getByRole('cell', { name: '111.444.777-35', exact: true })).toBeVisible()
+  await expect(supervisores.getByRole('cell', { name: '20/04/1988', exact: true })).toBeVisible()
+  await expect(supervisores.getByRole('cell', { name: 'Ativo', exact: true })).toBeVisible()
   await expect(supervisores.getByRole('row')).toHaveCount(2)
-  await expect(supervisores.getByRole('cell', { name: 'Gestora Ana' })).toHaveCount(0)
+  await expect(supervisores.getByRole('cell', { name: 'Gestora Ana', exact: true })).toHaveCount(0)
   await expect(page.getByText('never-render-this')).toHaveCount(0)
 
   await abas.getByRole('tab', { name: 'Colaboradores' }).click()
   const colaboradores = page.getByRole('table', { name: 'Colaboradores cadastrados' })
-  await expect(colaboradores.getByRole('cell', { name: 'João da Silva' })).toBeVisible()
-  await expect(colaboradores.getByRole('cell', { name: 'Não informado' })).toBeVisible()
+  await expect(colaboradores.getByRole('cell', { name: 'João da Silva', exact: true })).toBeVisible()
+  await expect(colaboradores.getByRole('cell', { name: 'Não informado', exact: true })).toBeVisible()
   expect(chamadas.map(chamada => chamada.url.pathname)).toEqual(['/api/usuarios', '/api/usuarios/colaboradores'])
   expect(new Set(chamadas.map(chamada => chamada.authorization))).toEqual(new Set([`Bearer ${gestora.token}`]))
 })
@@ -36,7 +36,7 @@ test('Supervisor only manages colaboradores', async ({ page }) => {
   await expect(page.getByRole('tablist')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Novo supervisor' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Novo colaborador' })).toBeVisible()
-  await expect(page.getByRole('cell', { name: 'João da Silva' })).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'João da Silva', exact: true })).toBeVisible()
   expect(chamadas.map(chamada => chamada.url.pathname)).toEqual(['/api/usuarios/colaboradores'])
 })
 
@@ -46,7 +46,7 @@ test('searches colaboradores by name and CPF digits and distinguishes an empty s
     colaboradores: url => url.searchParams.has('nome') ? [] : [pessoas.colaborador],
   })
   await page.goto('/usuarios')
-  await expect(page.getByRole('cell', { name: 'João da Silva' })).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'João da Silva', exact: true })).toBeVisible()
 
   const busca = page.getByRole('search', { name: 'Buscar colaboradores' })
   await busca.getByLabel('Nome').fill('Ana')
@@ -56,7 +56,7 @@ test('searches colaboradores by name and CPF digits and distinguishes an empty s
   await expect(page.getByRole('table')).toHaveCount(0)
 
   await busca.getByRole('button', { name: 'Limpar' }).click()
-  await expect(page.getByRole('cell', { name: 'João da Silva' })).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'João da Silva', exact: true })).toBeVisible()
   await expect(busca.getByLabel('Nome')).toHaveValue('')
   expect(chamadas.map(chamada => chamada.url.search)).toEqual(['', '?nome=Ana&cpf=11144477735', ''])
 })
@@ -100,7 +100,7 @@ test('Gestor creates a Supervisor and sees the initial password only once', asyn
   await resultado.getByRole('button', { name: 'Concluir' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page.getByText('Xk7!pQ2#mA9z')).toHaveCount(0)
-  await expect(page.getByRole('table', { name: 'Supervisores cadastrados' }).getByRole('cell', { name: 'Joana Ribeiro' })).toBeVisible()
+  await expect(page.getByRole('table', { name: 'Supervisores cadastrados' }).getByRole('cell', { name: 'Joana Ribeiro', exact: true })).toBeVisible()
   expect(chamadas.filter(chamada => chamada.url.pathname === '/api/usuarios')).toHaveLength(2)
 
   await page.getByRole('button', { name: 'Novo supervisor' }).click()
@@ -141,7 +141,7 @@ test('Colaborador form has no credential fields, shows API conflicts and confirm
   await dialog.getByRole('button', { name: 'Cadastrar colaborador' }).click()
   await expect(page.getByRole('dialog', { name: 'Novo colaborador' })).toHaveCount(0)
   await expect(page.getByText('Maria Souza cadastrado sem conta de acesso.')).toBeVisible()
-  await expect(page.getByRole('table', { name: 'Colaboradores cadastrados' }).getByRole('cell', { name: 'Maria Souza' })).toBeVisible()
+  await expect(page.getByRole('table', { name: 'Colaboradores cadastrados' }).getByRole('cell', { name: 'Maria Souza', exact: true })).toBeVisible()
   expect(corpos).toHaveLength(2)
   for (const corpo of corpos) {
     expect(corpo).toEqual({ nome: 'Maria Souza', cpf: '52998224725', dataNascimento: '1990-02-10' })
@@ -162,7 +162,7 @@ test('announces a failed colaboradores query and allows retrying without reloadi
   await expect(page.getByRole('heading', { name: 'Nenhum colaborador cadastrado' })).toHaveCount(0)
   disponivel = true
   await page.getByRole('button', { name: 'Tentar novamente' }).click()
-  await expect(page.getByRole('cell', { name: 'João da Silva' })).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'João da Silva', exact: true })).toBeVisible()
   await expect(page.getByRole('alert')).toHaveCount(0)
   expect(errors).toEqual([])
 })
@@ -203,4 +203,80 @@ test('announces loading and distinguishes an empty response from an unfinished r
   await expect(page.getByRole('heading', { name: 'Nenhum supervisor cadastrado' })).toBeVisible()
   await expect(page.getByRole('table')).toHaveCount(0)
   await expect(page.getByText('Carregando supervisores...')).toHaveCount(0)
+})
+
+test('Gestor edits a Supervisor: CPF is read-only, PUT carries only editable fields and the list shows the saved data', async ({ page }) => {
+  await iniciarSessao(page, gestora)
+  const supervisores: Record<string, unknown>[] = [{ ...pessoas.supervisora }]
+  const chamadas = await simularListagens(page, { usuarios: supervisores })
+  let corpo: Record<string, unknown> | undefined
+  await page.route('**/api/usuarios/supervisores/2', route => {
+    corpo = route.request().postDataJSON()
+    Object.assign(supervisores[0], corpo)
+    return route.fulfill({ json: supervisores[0] })
+  })
+  await page.goto('/usuarios')
+  await page.getByRole('button', { name: 'Editar Joana Ribeiro' }).click()
+
+  const dialog = page.getByRole('dialog', { name: 'Editar supervisor' })
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByLabel('Nome completo')).toHaveValue('Joana Ribeiro')
+  await expect(dialog.getByLabel('CPF')).toHaveValue('11144477735')
+  await expect(dialog.getByLabel('CPF')).toHaveAttribute('readonly', '')
+  await expect(dialog.getByLabel('E-mail corporativo')).toHaveValue('joana.ribeiro@safeplace.test')
+  await expect(dialog.locator('input[type="password"]')).toHaveCount(0)
+
+  await dialog.getByLabel('Nome completo').fill('Joana Ribeiro Souza')
+  await dialog.getByLabel('E-mail corporativo').fill('joana.souza@safeplace.test')
+  await dialog.getByRole('button', { name: 'Salvar alterações' }).click()
+
+  await expect(page.getByRole('dialog', { name: 'Editar supervisor' })).toHaveCount(0)
+  await expect(page.getByText('Joana Ribeiro Souza atualizado.')).toBeVisible()
+  const tabela = page.getByRole('table', { name: 'Supervisores cadastrados' })
+  await expect(tabela.getByRole('cell', { name: 'Joana Ribeiro Souza', exact: true })).toBeVisible()
+  await expect(tabela.getByRole('cell', { name: 'joana.souza@safeplace.test', exact: true })).toBeVisible()
+  expect(corpo).toEqual({ nome: 'Joana Ribeiro Souza', dataNascimento: '1988-04-20', email: 'joana.souza@safeplace.test' })
+  expect(chamadas.filter(chamada => chamada.url.pathname === '/api/usuarios')).toHaveLength(2)
+
+  await page.reload()
+  await expect(page.getByRole('table', { name: 'Supervisores cadastrados' }).getByRole('cell', { name: 'Joana Ribeiro Souza', exact: true })).toBeVisible()
+})
+
+test('Supervisor edits a Colaborador and keeps the typed data when the API reports a conflict', async ({ page }) => {
+  await iniciarSessao(page, supervisor)
+  const colaboradores: Record<string, unknown>[] = [{ ...pessoas.colaborador }]
+  await simularListagens(page, { colaboradores })
+  const corpos: Record<string, unknown>[] = []
+  await page.route('**/api/usuarios/colaboradores/3', route => {
+    corpos.push(route.request().postDataJSON())
+    if (corpos.length === 1) {
+      return route.fulfill({ status: 409, json: { status: 409, error: 'Conflito de Dados', message: 'Email já cadastrado no sistema: joana.ribeiro@safeplace.test' } })
+    }
+    Object.assign(colaboradores[0], corpos[corpos.length - 1])
+    return route.fulfill({ json: colaboradores[0] })
+  })
+  await page.goto('/usuarios')
+  await page.getByRole('button', { name: 'Editar João da Silva' }).click()
+
+  const dialog = page.getByRole('dialog', { name: 'Editar colaborador' })
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByText('continua sem conta de acesso')).toBeVisible()
+  await expect(dialog.getByLabel('CPF')).toHaveAttribute('readonly', '')
+  await expect(dialog.getByLabel(/senha|perfil/i)).toHaveCount(0)
+
+  await dialog.getByLabel('Nome completo').fill('João Pedro da Silva')
+  await dialog.getByLabel('E-mail de contato (opcional)').fill('joana.ribeiro@safeplace.test')
+  await dialog.getByRole('button', { name: 'Salvar alterações' }).click()
+  await expect(dialog.getByRole('alert')).toContainText('Email já cadastrado no sistema')
+  await expect(dialog.getByLabel('Nome completo')).toHaveValue('João Pedro da Silva')
+
+  await dialog.getByLabel('E-mail de contato (opcional)').fill('joao.pedro@safeplace.test')
+  await dialog.getByRole('button', { name: 'Salvar alterações' }).click()
+  await expect(page.getByRole('dialog', { name: 'Editar colaborador' })).toHaveCount(0)
+  await expect(page.getByText('João Pedro da Silva atualizado.')).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'João Pedro da Silva', exact: true })).toBeVisible()
+  expect(corpos).toHaveLength(2)
+  for (const corpo of corpos) {
+    expect(Object.keys(corpo).sort()).toEqual(['dataNascimento', 'email', 'nome'])
+  }
 })

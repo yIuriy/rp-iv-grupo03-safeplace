@@ -64,7 +64,7 @@ for (const width of [360, 768, 1344]) {
     await expect(page.getByRole('link', { name: 'Pular para o conteúdo' })).toBeFocused()
     await page.keyboard.press('Enter')
     await expect(page.getByRole('main')).toBeFocused()
-    await expect(page.getByRole('cell', { name: 'Ana Silva' })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Ana Silva', exact: true })).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     await page.screenshot({ path: testInfo.outputPath(`users-${width}.png`), fullPage: true })
 

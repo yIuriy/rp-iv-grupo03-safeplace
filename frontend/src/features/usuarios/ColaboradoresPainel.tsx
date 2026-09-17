@@ -1,8 +1,8 @@
 import { useCallback, useState, type FormEvent } from 'react'
 import { Button, SearchInput, TextField, Toast } from '../../shared/components'
 import { useConsulta } from '../../shared/api/useConsulta'
-import { listarColaboradores, type FiltroColaboradores } from './api'
-import { CadastroDialog } from './CadastroDialog'
+import { listarColaboradores, type FiltroColaboradores, type Usuario } from './api'
+import { CadastroDialog, type ModoSalvamento } from './CadastroDialog'
 import { ResultadoConsulta } from './ResultadoConsulta'
 import { UsuariosTabela } from './UsuariosTabela'
 
@@ -12,10 +12,15 @@ function lerFiltro(form: FormData): FiltroColaboradores {
   return { nome: nome || undefined, cpf: cpf || undefined }
 }
 
-/** Supervisor e Gestor cadastram e consultam colaboradores, que não têm conta de acesso (RF23). */
+function mensagemDeSalvamento(usuario: Usuario, modo: ModoSalvamento): string {
+  return modo === 'criado' ? `${usuario.nome} cadastrado sem conta de acesso.` : `${usuario.nome} atualizado.`
+}
+
+/** Supervisor e Gestor cadastram, consultam e atualizam colaboradores, que não têm conta de acesso (RF23). */
 export function ColaboradoresPainel() {
   const [filtro, setFiltro] = useState<FiltroColaboradores>({})
   const [cadastroAberto, setCadastroAberto] = useState(false)
+  const [editando, setEditando] = useState<Usuario | null>(null)
   const [aviso, setAviso] = useState('')
   const carregar = useCallback((signal: AbortSignal) => listarColaboradores(filtro, signal), [filtro])
   const consulta = useConsulta(JSON.stringify(filtro), carregar)
@@ -24,6 +29,11 @@ export function ColaboradoresPainel() {
   function buscar(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setFiltro(lerFiltro(new FormData(event.currentTarget)))
+  }
+
+  function fecharDialogo() {
+    setCadastroAberto(false)
+    setEditando(null)
   }
 
   return <div className="sp-painel">
@@ -42,10 +52,11 @@ export function ColaboradoresPainel() {
       vazio={filtrando
         ? { title: 'Nenhum colaborador encontrado', description: 'Nenhum cadastro corresponde ao nome ou CPF informados. Ajuste a busca ou limpe os filtros.' }
         : { title: 'Nenhum colaborador cadastrado', description: 'Cadastre o primeiro colaborador para vinculá-lo aos registros do sistema.' }}>
-      {colaboradores => <UsuariosTabela caption="Colaboradores cadastrados" usuarios={colaboradores} />}
+      {colaboradores => <UsuariosTabela caption="Colaboradores cadastrados" usuarios={colaboradores} aoEditar={setEditando} />}
     </ResultadoConsulta>
-    <CadastroDialog tipo="colaborador" open={cadastroAberto} aoFechar={() => setCadastroAberto(false)}
-      aoCriado={usuario => { setAviso(`${usuario.nome} cadastrado sem conta de acesso.`); consulta.recarregar() }} />
+    <CadastroDialog tipo="colaborador" open={cadastroAberto || editando !== null} usuario={editando ?? undefined}
+      aoFechar={fecharDialogo}
+      aoSalvar={(usuario, modo) => { setAviso(mensagemDeSalvamento(usuario, modo)); consulta.recarregar() }} />
     <Toast message={aviso} onDismiss={() => setAviso('')} />
   </div>
 }
