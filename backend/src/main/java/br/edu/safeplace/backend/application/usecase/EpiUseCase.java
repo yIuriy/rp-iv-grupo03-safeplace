@@ -79,7 +79,7 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
     @Transactional
     public MovimentacaoEstoqueOutputDTO registrarMovimentacao(Integer epiId, TipoMovimentacao tipo, int quantidade,
             String motivo, String responsavelEmail) {
-        Epi epi = repositoryPort.buscarPorId(epiId)
+        Epi epi = repositoryPort.buscarPorIdComLock(epiId)
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId));
         Integer responsavelId = buscarResponsavelId(responsavelEmail);
 
