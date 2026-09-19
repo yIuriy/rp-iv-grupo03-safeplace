@@ -80,7 +80,7 @@ class ControlarManutencaoEpiServiceTest {
     }
 
     @Test
-    void deveConcluirManutencaoReprovadaEAtualizarEpiParaDescartadoComDecremento() {
+    void deveConcluirManutencaoReprovadaSemExecutarDescarteDefinitivo() {
         Epi epi = new Epi(4, "Cinto", "CA-400", 2, 1, StatusEpi.EM_MANUTENCAO, LocalDate.of(2030, 1, 1), 365);
         epiRepository.salvar(epi);
 
@@ -92,10 +92,10 @@ class ControlarManutencaoEpiServiceTest {
 
         ManutencaoEpiOutputDTO resultadoDTO = service.concluirManutencao(input);
 
-        assertEquals(StatusEpi.DESCARTADO, resultadoDTO.statusAtualEpi());
+        assertEquals(StatusEpi.EM_MANUTENCAO, resultadoDTO.statusAtualEpi());
         Epi atualizado = epiRepository.buscarPorId(4).orElseThrow();
-        assertEquals(StatusEpi.DESCARTADO, atualizado.getStatus());
-        assertEquals(1, atualizado.getQuantidade());
+        assertEquals(StatusEpi.EM_MANUTENCAO, atualizado.getStatus());
+        assertEquals(2, atualizado.getQuantidade());
     }
 
     @Test

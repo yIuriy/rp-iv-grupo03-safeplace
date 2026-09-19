@@ -11,16 +11,16 @@ import br.edu.safeplace.backend.domain.epi.exception.EpiIndisponivelParaManutenc
 import br.edu.safeplace.backend.domain.epi.exception.SaldoInsuficienteException;
 
 public class Epi {
-    private final Integer id;
+    private final Integer codigoEPI;
+    private final String localizacao;
     private final String nome;
     private int quantidade;
     private EspecificacaoEPI especificacao;
     private StatusEpi status;
     private final Integer vidaUtilDias;
-    private final CertificadoAprovacao certificadoAprovacao;
-    private String localizacao;
+    private final LoteEPI lote;
     private final List<ManutencaoEpi> historicoManutencao = new ArrayList<>();
-    private final List<LoteEPI> lotes = new ArrayList<>();
+    private final List<LoteEPI> lotesAdicionais = new ArrayList<>();
 
     /**
      * Mantém compatibilidade com o adaptador de persistência existente.
@@ -37,20 +37,25 @@ public class Epi {
             LocalDate dataValidadeCa,
             Integer vidaUtilDias,
             String descricao,
-            ClassificacaoEPI classificacao,
-            String localizacao) {
+            ClassificacaoEPI classificacao) {
+        this(id, nome, numeroCa, quantidade, estoqueMinimo, status, dataValidadeCa,
+                vidaUtilDias, descricao, classificacao, null);
+    }
+
+    public Epi(Integer id, String nome, String numeroCa, int quantidade, int estoqueMinimo,
+               StatusEpi status, LocalDate dataValidadeCa, Integer vidaUtilDias,
+               String descricao, ClassificacaoEPI classificacao, String localizacao) {
         this(
                 id,
                 nome,
-                new CertificadoAprovacao(numeroCa, dataValidadeCa),
+                loteLegado(numeroCa, dataValidadeCa, quantidade),
                 quantidade,
                 new EspecificacaoEPI(descricao, estoqueMinimo, classificacao),
                 status,
-                vidaUtilDias,
-                localizacao);
+                vidaUtilDias, localizacao);
 
         if (id == null) {
-            this.certificadoAprovacao.validarParaCadastroEm(LocalDate.now());
+            this.lote.getModelo().validarParaCadastroEm(LocalDate.now());
         }
     }
 
@@ -62,31 +67,6 @@ public class Epi {
             int estoqueMinimo,
             StatusEpi status,
             LocalDate dataValidadeCa,
-            Integer vidaUtilDias,
-            String descricao,
-            ClassificacaoEPI classificacao) {
-        this(
-                id,
-                nome,
-                numeroCa,
-                quantidade,
-                estoqueMinimo,
-                status,
-                dataValidadeCa,
-                vidaUtilDias,
-                descricao,
-                classificacao,
-                null);
-    }
-
-    public Epi(
-            Integer id,
-            String nome,
-            String numeroCa,
-            int quantidade,
-            int estoqueMinimo,
-            StatusEpi status,
-            LocalDate dataValidadeCa,
             Integer vidaUtilDias) {
         this(
                 id,
@@ -98,57 +78,24 @@ public class Epi {
                 dataValidadeCa,
                 vidaUtilDias,
                 null,
-                null,
                 null);
     }
 
-    /**
-     * Construtor alinhado com o diagrama de classes (EPI).
-     */
-    public Epi(
-            int codigoEPI,
-            String localizacao,
-            int quantidade,
-            StatusEpi status) {
-        this(
-                codigoEPI,
-                "EPI-" + codigoEPI,
-                new CertificadoAprovacao("0000", LocalDate.now().plusYears(1)),
-                quantidade,
-                new EspecificacaoEPI("Especificação EPI", 0, null),
+    /** Compatibilidade com a assinatura reduzida do diagrama. */
+    public Epi(int codigoEPI, String localizacao, int quantidade, StatusEpi status) {
+        this(codigoEPI, "EPI-" + codigoEPI, "1", quantidade, 0,
                 status != null ? status : StatusEpi.DISPONIVEL,
-                null,
-                localizacao);
+                LocalDate.now().plusYears(1), null, null, localizacao);
     }
 
     private Epi(
             Integer id,
             String nome,
-            CertificadoAprovacao certificadoAprovacao,
+            LoteEPI lote,
             int quantidade,
             EspecificacaoEPI especificacao,
             StatusEpi status,
-            Integer vidaUtilDias) {
-        this(
-                id,
-                nome,
-                certificadoAprovacao,
-                quantidade,
-                especificacao,
-                status,
-                vidaUtilDias,
-                null);
-    }
-
-    private Epi(
-            Integer id,
-            String nome,
-            CertificadoAprovacao certificadoAprovacao,
-            int quantidade,
-            EspecificacaoEPI especificacao,
-            StatusEpi status,
-            Integer vidaUtilDias,
-            String localizacao) {
+            Integer vidaUtilDias, String localizacao) {
         if (nome == null || nome.isBlank()) {
             throw new IllegalArgumentException("Nome do EPI é obrigatório.");
         }
@@ -167,14 +114,17 @@ public class Epi {
             throw new IllegalArgumentException("Status do EPI é obrigatório.");
         }
 
-        this.id = id;
+        this.codigoEPI = id;
         this.nome = nome;
-        this.certificadoAprovacao = certificadoAprovacao;
+        if (lote == null) {
+            throw new IllegalArgumentException("Lote do EPI é obrigatório.");
+        }
+        this.lote = lote;
+        this.localizacao = localizacao;
         this.quantidade = quantidade;
         this.especificacao = especificacao;
         this.status = status;
         this.vidaUtilDias = vidaUtilDias;
-        this.localizacao = localizacao;
     }
 
     public static Epi novo(
@@ -195,8 +145,21 @@ public class Epi {
                 vidaUtilDias,
                 LocalDate.now(), 
                 descricao, 
-                classificacao,
-                null);
+                classificacao);
+    }
+
+    public static Epi novo(
+            String nome,
+            String numeroCa,
+            int quantidade,
+            int estoqueMinimo,
+            LocalDate dataValidadeCa,
+            Integer vidaUtilDias,
+            String descricao,
+            ClassificacaoEPI classificacao,
+            String localizacao) {
+        return novo(nome, numeroCa, quantidade, estoqueMinimo, dataValidadeCa,
+                vidaUtilDias, LocalDate.now(), descricao, classificacao, localizacao);
     }
 
     public static Epi novo(
@@ -209,33 +172,15 @@ public class Epi {
             LocalDate dataCadastro,
             String descricao,
             ClassificacaoEPI classificacao) {
-        return novo(
-                nome,
-                numeroCa,
-                quantidade,
-                estoqueMinimo,
-                dataValidadeCa,
-                vidaUtilDias,
-                dataCadastro,
-                descricao,
-                classificacao,
-                null);
+        return novo(nome, numeroCa, quantidade, estoqueMinimo, dataValidadeCa,
+                vidaUtilDias, dataCadastro, descricao, classificacao, null);
     }
 
-    public static Epi novo(
-            String nome,
-            String numeroCa,
-            int quantidade,
-            int estoqueMinimo,
-            LocalDate dataValidadeCa,
-            Integer vidaUtilDias,
-            LocalDate dataCadastro,
-            String descricao,
-            ClassificacaoEPI classificacao,
-            String localizacao) {
-        CertificadoAprovacao certificado = new CertificadoAprovacao(numeroCa, dataValidadeCa);
-
-        certificado.validarParaCadastroEm(dataCadastro);
+    public static Epi novo(String nome, String numeroCa, int quantidade, int estoqueMinimo,
+                           LocalDate dataValidadeCa, Integer vidaUtilDias, LocalDate dataCadastro,
+                           String descricao, ClassificacaoEPI classificacao, String localizacao) {
+        LoteEPI lote = loteLegado(numeroCa, dataValidadeCa, quantidade);
+        lote.getModelo().validarParaCadastroEm(dataCadastro);
 
         StatusEpi statusInicial = quantidade > 0
                 ? StatusEpi.DISPONIVEL
@@ -244,15 +189,37 @@ public class Epi {
         return new Epi(
                 null,
                 nome,
-                certificado,
+                lote,
                 quantidade,
                 new EspecificacaoEPI(descricao, estoqueMinimo, classificacao),
                 statusInicial,
-                vidaUtilDias,
-                localizacao);
+                vidaUtilDias, localizacao);
+    }
+
+    public static Epi novo(String nome, LoteEPI lote, int quantidade, int estoqueMinimo,
+                           Integer vidaUtilDias, String descricao,
+                           ClassificacaoEPI classificacao, String localizacao) {
+        lote.getModelo().validarParaCadastroEm(LocalDate.now());
+        return new Epi(null, nome, lote, quantidade,
+                new EspecificacaoEPI(descricao, estoqueMinimo, classificacao),
+                quantidade > 0 ? StatusEpi.DISPONIVEL : StatusEpi.ESGOTADO,
+                vidaUtilDias, localizacao);
+    }
+
+    public static Epi reconstituir(Integer codigoEPI, String nome, LoteEPI lote,
+                                   int quantidade, int estoqueMinimo, StatusEpi status,
+                                   Integer vidaUtilDias, String descricao,
+                                   ClassificacaoEPI classificacao, String localizacao) {
+        return new Epi(codigoEPI, nome, lote, quantidade,
+                new EspecificacaoEPI(descricao, estoqueMinimo, classificacao),
+                status, vidaUtilDias, localizacao);
     }
 
     public MovimentacaoEstoque adicionarEstoque(int qtd, String motivo) {
+        return adicionarEstoque(qtd, motivo, null);
+    }
+
+    public MovimentacaoEstoque adicionarEstoque(int qtd, String motivo, Integer responsavelId) {
         if (qtd <= 0) {
             throw new IllegalArgumentException(
                     "Quantidade a adicionar deve ser maior que zero.");
@@ -267,7 +234,9 @@ public class Epi {
 
         MovimentacaoEstoque movimentacao = new MovimentacaoEstoque(
                 null,
-                this.id,
+                this.codigoEPI,
+                this.lote.getId(),
+                responsavelId,
                 TipoMovimentacao.ENTRADA,
                 qtd,
                 LocalDateTime.now(),
@@ -283,6 +252,10 @@ public class Epi {
     }
 
     public MovimentacaoEstoque removerEstoque(int qtd, String motivo) {
+        return removerEstoque(qtd, motivo, null);
+    }
+
+    public MovimentacaoEstoque removerEstoque(int qtd, String motivo, Integer responsavelId) {
         if (qtd <= 0) {
             throw new IllegalArgumentException(
                     "Quantidade a retirar deve ser maior que zero.");
@@ -300,7 +273,9 @@ public class Epi {
 
         MovimentacaoEstoque movimentacao = new MovimentacaoEstoque(
                 null,
-                this.id,
+                this.codigoEPI,
+                this.lote.getId(),
+                responsavelId,
                 TipoMovimentacao.SAIDA,
                 qtd,
                 LocalDateTime.now(),
@@ -325,8 +300,8 @@ public class Epi {
 
     public void validarCaValido(LocalDate dataReferencia) {
         LocalDate referencia = dataReferencia != null ? dataReferencia : LocalDate.now();
-        if (getDataValidadeCa() != null && getDataValidadeCa().isBefore(referencia)) {
-            throw new CertificadoAprovacaoVencidoException(this.id, this.nome, getNumeroCa(), getDataValidadeCa());
+        if (!lote.getModelo().verificarCA(referencia)) {
+            throw new CertificadoAprovacaoVencidoException(this.codigoEPI, this.nome, getNumeroCa(), getDataValidadeCa());
         }
     }
 
@@ -338,7 +313,7 @@ public class Epi {
         validarCaValido(dataReferencia);
         if (this.status != StatusEpi.DISPONIVEL) {
             throw new EpiIndisponivelParaManutencaoException(
-                    this.id, this.status, "Apenas EPIs com status DISPONIVEL podem ser enviados para manutenção."
+                    this.codigoEPI, this.status, "Apenas EPIs com status DISPONIVEL podem ser enviados para manutenção."
             );
         }
         this.status = StatusEpi.EM_MANUTENCAO;
@@ -350,32 +325,23 @@ public class Epi {
         }
         if (this.status != StatusEpi.EM_MANUTENCAO) {
             throw new EpiIndisponivelParaManutencaoException(
-                    this.id, this.status, "Apenas EPIs com status EM_MANUTENCAO podem concluir manutenção."
+                    this.codigoEPI, this.status, "Apenas EPIs com status EM_MANUTENCAO podem concluir manutenção."
             );
         }
         this.historicoManutencao.add(manutencao);
         if (manutencao.getResultado() == ResultadoManutencao.APROVADO) {
             this.status = StatusEpi.DISPONIVEL;
-        } else if (manutencao.getResultado() == ResultadoManutencao.REPROVADO) {
-            this.status = StatusEpi.DESCARTADO;
-            if (this.quantidade > 0) {
-                this.quantidade--;
-            }
         }
+        // Reprovação preserva a indisponibilidade atual e não executa descarte (RF14).
+        // O estado definitivo da reprovação depende da decisão de domínio #124.
     }
 
-    /**
-     * Operações especificadas no diagrama de classes (EPI).
-     */
     public List<Epi> buscarEPIs() {
         return List.of(this);
     }
 
     public Epi buscarEPI(int codigoEPI) {
-        if (this.id != null && this.id == codigoEPI) {
-            return this;
-        }
-        return null;
+        return this.codigoEPI != null && this.codigoEPI == codigoEPI ? this : null;
     }
 
     public List<ManutencaoEpi> obterHistoricoManutencao() {
@@ -384,18 +350,12 @@ public class Epi {
 
     public void adicionarManutencao(ManutencaoEpi manutencao) {
         if (manutencao != null) {
-            this.historicoManutencao.add(manutencao);
+            historicoManutencao.add(manutencao);
         }
     }
 
     public boolean validarVinculoEPIsObrigatorios() {
-        if (this.status == StatusEpi.DESCARTADO) {
-            return false;
-        }
-        if (this.certificadoAprovacao != null && this.certificadoAprovacao.estaVencidoEm(LocalDate.now())) {
-            return false;
-        }
-        return true;
+        return status != StatusEpi.DESCARTADO && lote.getModelo().verificarCA(LocalDate.now());
     }
 
     public boolean compararComQuantidadeMinima() {
@@ -406,67 +366,53 @@ public class Epi {
         return compararComQuantidadeMinima();
     }
 
-    public void atualizarQuantidade(EspecificacaoEPI tipo, int quantidade) {
+    public void atualizarQuantidade(EspecificacaoEPI especificacao, int quantidade) {
         if (quantidade < 0) {
-            throw new IllegalArgumentException(
-                    "Quantidade em estoque não pode ser negativa.");
+            throw new IllegalArgumentException("Quantidade em estoque não pode ser negativa.");
         }
-        if (tipo != null) {
-            this.especificacao = tipo;
+        if (especificacao != null) {
+            this.especificacao = especificacao;
         }
         this.quantidade = quantidade;
-        if (this.quantidade == 0 && this.status == StatusEpi.DISPONIVEL) {
-            this.status = StatusEpi.ESGOTADO;
-        } else if (this.quantidade > 0 && this.status == StatusEpi.ESGOTADO) {
-            this.status = StatusEpi.DISPONIVEL;
+        if (quantidade == 0 && status == StatusEpi.DISPONIVEL) {
+            status = StatusEpi.ESGOTADO;
+        } else if (quantidade > 0 && status == StatusEpi.ESGOTADO) {
+            status = StatusEpi.DISPONIVEL;
         }
     }
 
     public List<Epi> buscarEPIsAbaixoDaQuantidadeMinima() {
-        if (compararComQuantidadeMinima()) {
-            return List.of(this);
-        }
-        return List.of();
+        return compararComQuantidadeMinima() ? List.of(this) : List.of();
     }
 
     public void adicionarLote(LoteEPI lote) {
         if (lote != null) {
-            this.lotes.add(lote);
+            lotesAdicionais.add(lote);
         }
     }
 
     public List<LoteEPI> getLotes() {
-        return Collections.unmodifiableList(lotes);
+        return Collections.unmodifiableList(lotesAdicionais);
     }
 
     public LoteEPI buscarLote(int codigo) {
-        for (LoteEPI lote : lotes) {
-            if (lote.getModelo() != null && lote.getModelo().getCa() == codigo) {
-                return lote;
-            }
-            try {
-                if (Integer.parseInt(lote.getNumeroLote()) == codigo) {
-                    return lote;
-                }
-            } catch (NumberFormatException ignored) {
-            }
-        }
-        return null;
+        return lotesAdicionais.stream()
+                .filter(lote -> lote.getModelo().getCa() == codigo
+                        || Integer.toString(codigo).equals(lote.getNumeroLote()))
+                .findFirst()
+                .orElse(null);
     }
 
     public int validarBaixa(int codigo, int quantidade) {
-        if (this.id != null && this.id != codigo) {
+        if (codigoEPI != null && codigoEPI != codigo) {
             throw new IllegalArgumentException("Código do EPI informado não corresponde ao EPI atual.");
         }
         if (quantidade <= 0) {
             throw new IllegalArgumentException("Quantidade para baixa deve ser maior que zero.");
         }
         if (quantidade > this.quantidade) {
-            throw new SaldoInsuficienteException(
-                    "Saldo insuficiente em estoque. Saldo atual: "
-                            + this.quantidade
-                            + ", quantidade solicitada: "
-                            + quantidade);
+            throw new SaldoInsuficienteException("Saldo insuficiente em estoque. Saldo atual: "
+                    + this.quantidade + ", quantidade solicitada: " + quantidade);
         }
         return this.quantidade - quantidade;
     }
@@ -479,20 +425,17 @@ public class Epi {
         return true;
     }
 
-    public Integer getId() {
-        return id;
-    }
-
-    public int getCodigoEPI() {
-        return id != null ? id : 0;
+    public Integer getCodigoEPI() {
+        return codigoEPI;
     }
 
     public String getLocalizacao() {
         return localizacao;
     }
 
-    public void setLocalizacao(String localizacao) {
-        this.localizacao = localizacao;
+    /** Alias mantido para os contratos HTTP e JPA existentes. */
+    public Integer getId() {
+        return codigoEPI;
     }
 
     public String getNome() {
@@ -500,14 +443,10 @@ public class Epi {
     }
 
     public String getNumeroCa() {
-        return certificadoAprovacao.numero();
+        return Integer.toString(lote.getModelo().getCa());
     }
 
     public int getQuantidade() {
-        return quantidade;
-    }
-
-    public int getQuantidate() {
         return quantidade;
     }
 
@@ -520,11 +459,15 @@ public class Epi {
     }
 
     public LocalDate getDataValidadeCa() {
-        return certificadoAprovacao.dataValidade();
+        return lote.getModelo().getValidadeCA();
     }
 
-    public CertificadoAprovacao getCertificadoAprovacao() {
-        return certificadoAprovacao;
+    public ModeloEPI getModelo() {
+        return lote.getModelo();
+    }
+
+    public LoteEPI getLote() {
+        return lote;
     }
 
     public Integer getVidaUtilDias() {
@@ -533,5 +476,10 @@ public class Epi {
 
     public EspecificacaoEPI getEspecificacao() {
         return especificacao;
+    }
+
+    private static LoteEPI loteLegado(String numeroCa, LocalDate dataValidadeCa, int quantidade) {
+        return new LoteEPI(null, null, null, null, quantidade,
+                ModeloEPI.deCadastroLegado(numeroCa, dataValidadeCa));
     }
 }

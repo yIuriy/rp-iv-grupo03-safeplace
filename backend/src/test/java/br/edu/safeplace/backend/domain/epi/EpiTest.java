@@ -204,8 +204,8 @@ class EpiTest {
                                 VALIDADE_CA, 365, DATA_CADASTRO, null, null);
 
                 assertThat(epi.getId()).isNull();
-                assertThat(epi.getCertificadoAprovacao()).isEqualTo(
-                                new CertificadoAprovacao("1234", VALIDADE_CA));
+                assertThat(epi.getModelo().getCa()).isEqualTo(1234);
+                assertThat(epi.getModelo().getValidadeCA()).isEqualTo(VALIDADE_CA);
                 assertThat(epi.getNumeroCa()).isEqualTo("1234");
                 assertThat(epi.getDataValidadeCa()).isEqualTo(VALIDADE_CA);
         }
@@ -257,8 +257,7 @@ class EpiTest {
 
                 assertThat(epi.getId()).isEqualTo(1);
                 assertThat(epi.getDataValidadeCa()).isEqualTo(validadeAntiga);
-                assertThat(epi.getCertificadoAprovacao()
-                                .estaVencidoEm(DATA_CADASTRO)).isTrue();
+                assertThat(epi.getModelo().verificarCA(DATA_CADASTRO)).isFalse();
         }
 
         @Test

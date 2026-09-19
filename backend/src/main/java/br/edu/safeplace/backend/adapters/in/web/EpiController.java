@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -48,13 +49,23 @@ public class EpiController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Registra uma movimentação de estoque (ENTRADA ou SAIDA) para o EPI")
     public MovimentacaoEstoqueResponse movimentar(@PathVariable Integer id,
-                                                  @Valid @RequestBody MovimentacaoEstoqueRequest request) {
+                                                  @Valid @RequestBody MovimentacaoEstoqueRequest request,
+                                                  Authentication autenticacao) {
         MovimentacaoEstoqueOutputDTO mov = useCase.registrarMovimentacao(
                 id,
                 request.tipo(),
                 request.quantidade(),
-                request.motivo()
+                request.motivo(),
+                autenticacao.getName()
         );
         return MovimentacaoEstoqueResponse.fromOutputDTO(mov);
+    }
+
+    @GetMapping("/{id}/movimentacoes")
+    @Operation(summary = "Consulta o histórico de movimentações de estoque do EPI")
+    public List<MovimentacaoEstoqueResponse> buscarHistorico(@PathVariable Integer id) {
+        return useCase.buscarHistorico(id).stream()
+                .map(MovimentacaoEstoqueResponse::fromOutputDTO)
+                .toList();
     }
 }

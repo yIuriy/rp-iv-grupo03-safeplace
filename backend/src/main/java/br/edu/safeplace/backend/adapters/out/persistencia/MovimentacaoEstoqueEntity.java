@@ -14,6 +14,12 @@ public class MovimentacaoEstoqueEntity {
     @Column(name = "epi_id", nullable = false)
     private Integer epiId;
 
+    @Column(name = "lote_id")
+    private Integer loteId;
+
+    @Column(name = "responsavel_id")
+    private Integer responsavelId;
+
     @Column(nullable = false, length = 20)
     private String tipo;
 
@@ -31,8 +37,15 @@ public class MovimentacaoEstoqueEntity {
 
     public MovimentacaoEstoqueEntity(Integer id, Integer epiId, String tipo, Integer quantidade,
                                      LocalDateTime dataHora, String motivo) {
+        this(id, epiId, null, null, tipo, quantidade, dataHora, motivo);
+    }
+
+    public MovimentacaoEstoqueEntity(Integer id, Integer epiId, Integer loteId, Integer responsavelId,
+                                     String tipo, Integer quantidade, LocalDateTime dataHora, String motivo) {
         this.id = id;
         this.epiId = epiId;
+        this.loteId = loteId;
+        this.responsavelId = responsavelId;
         this.tipo = tipo;
         this.quantidade = quantidade;
         this.dataHora = dataHora;
@@ -46,6 +59,8 @@ public class MovimentacaoEstoqueEntity {
     public Integer getEpiId() {
         return epiId;
     }
+    public Integer getLoteId() { return loteId; }
+    public Integer getResponsavelId() { return responsavelId; }
 
     public String getTipo() {
         return tipo;

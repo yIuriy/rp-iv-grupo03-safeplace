@@ -93,7 +93,7 @@ class EpiControllerTest {
         MovimentacaoEstoqueOutputDTO mov = new MovimentacaoEstoqueOutputDTO(1, 1, TipoMovimentacao.ENTRADA, 10,
                 LocalDateTime.of(2026, 9, 6, 16, 0), "Reposição", 30);
 
-        when(useCase.registrarMovimentacao(eq(1), eq(TipoMovimentacao.ENTRADA), eq(10), eq("Reposição")))
+        when(useCase.registrarMovimentacao(eq(1), eq(TipoMovimentacao.ENTRADA), eq(10), eq("Reposição"), anyString()))
                 .thenReturn(mov);
 
         String jsonRequest = """
@@ -118,7 +118,7 @@ class EpiControllerTest {
 
     @Test
     void deveRetornarBadRequestQuandoSaldoForInsuficiente() throws Exception {
-        when(useCase.registrarMovimentacao(eq(1), eq(TipoMovimentacao.SAIDA), eq(50), any()))
+        when(useCase.registrarMovimentacao(eq(1), eq(TipoMovimentacao.SAIDA), eq(50), any(), anyString()))
                 .thenThrow(new SaldoInsuficienteException("Saldo insuficiente em estoque."));
 
         String jsonRequest = """
@@ -139,7 +139,7 @@ class EpiControllerTest {
 
     @Test
     void deveRetornarNotFoundQuandoEpiNaoExistir() throws Exception {
-        when(useCase.registrarMovimentacao(eq(999), any(), anyInt(), any()))
+        when(useCase.registrarMovimentacao(eq(999), any(), anyInt(), any(), anyString()))
                 .thenThrow(new EpiNaoEncontradoException(999));
 
         String jsonRequest = """

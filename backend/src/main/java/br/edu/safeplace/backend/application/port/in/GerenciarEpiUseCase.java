@@ -12,4 +12,7 @@ public interface GerenciarEpiUseCase {
     List<EpiOutputDTO> listar();
     EpiOutputDTO buscarPorId(Integer id);
     MovimentacaoEstoqueOutputDTO registrarMovimentacao(Integer epiId, TipoMovimentacao tipo, int quantidade, String motivo);
+    MovimentacaoEstoqueOutputDTO registrarMovimentacao(Integer epiId, TipoMovimentacao tipo, int quantidade,
+                                                        String motivo, String responsavelEmail);
+    List<MovimentacaoEstoqueOutputDTO> buscarHistorico(Integer epiId);
 }
