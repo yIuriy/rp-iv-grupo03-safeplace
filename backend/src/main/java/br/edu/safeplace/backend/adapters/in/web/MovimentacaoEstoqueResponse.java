@@ -14,6 +14,12 @@ public record MovimentacaoEstoqueResponse(
         @Schema(description = "ID do EPI movimentado", example = "1")
         Integer epiId,
 
+        @Schema(description = "Lote de origem da movimentação", example = "1")
+        Integer loteId,
+
+        @Schema(description = "Responsável autenticado pela movimentação", example = "1")
+        Integer responsavelId,
+
         @Schema(description = "Tipo de movimentação realizada", example = "ENTRADA")
         TipoMovimentacao tipo,
 
@@ -33,6 +39,8 @@ public record MovimentacaoEstoqueResponse(
         return new MovimentacaoEstoqueResponse(
                 mov.getId(),
                 mov.getEpiId(),
+                mov.getLoteId(),
+                mov.getResponsavelId(),
                 mov.getTipo(),
                 mov.getQuantidade(),
                 mov.getDataHora(),
@@ -45,6 +53,8 @@ public record MovimentacaoEstoqueResponse(
         return new MovimentacaoEstoqueResponse(
                 dto.id(),
                 dto.epiId(),
+                dto.loteId(),
+                dto.responsavelId(),
                 dto.tipo(),
                 dto.quantidade(),
                 dto.dataHora(),
