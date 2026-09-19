@@ -2,35 +2,53 @@ package br.edu.safeplace.backend.application.usecase;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.edu.safeplace.backend.application.dto.input.AtualizarAreaRiscoInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarAreaRiscoInputDTO;
 import br.edu.safeplace.backend.application.dto.output.AreaRiscoOutputDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarAreaRiscoUseCase;
 import br.edu.safeplace.backend.application.port.out.AreaRiscoRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.SetorRepositoryPort;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.area_risco.exception.AreaRiscoNaoEncontradaException;
 import br.edu.safeplace.backend.domain.area_risco.exception.CodigoAreaRiscoDuplicadoException;
+import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 
 /**
- * Mapeamento das áreas de risco do ambiente de trabalho (RF05 / UC03).
+ * Mapeamento das áreas de risco do ambiente de trabalho (RF05 / UC03 / US05).
  */
 @Service
 public class AreaRiscoUseCase implements GerenciarAreaRiscoUseCase {
 
     private final AreaRiscoRepositoryPort areaRiscoRepositoryPort;
     private final EpiRepositoryPort epiRepositoryPort;
+    private final SetorRepositoryPort setorRepositoryPort;
+    private final LogAuditoriaRepositoryPort logAuditoriaRepositoryPort;
+
+    @Autowired
+    public AreaRiscoUseCase(
+            AreaRiscoRepositoryPort areaRiscoRepositoryPort,
+            EpiRepositoryPort epiRepositoryPort,
+            SetorRepositoryPort setorRepositoryPort,
+            LogAuditoriaRepositoryPort logAuditoriaRepositoryPort) {
+        this.areaRiscoRepositoryPort = areaRiscoRepositoryPort;
+        this.epiRepositoryPort = epiRepositoryPort;
+        this.setorRepositoryPort = setorRepositoryPort;
+        this.logAuditoriaRepositoryPort = logAuditoriaRepositoryPort;
+    }
 
     public AreaRiscoUseCase(
             AreaRiscoRepositoryPort areaRiscoRepositoryPort,
             EpiRepositoryPort epiRepositoryPort) {
-        this.areaRiscoRepositoryPort = areaRiscoRepositoryPort;
-        this.epiRepositoryPort = epiRepositoryPort;
+        this(areaRiscoRepositoryPort, epiRepositoryPort, null, null);
     }
 
     @Override
@@ -45,6 +63,11 @@ public class AreaRiscoUseCase implements GerenciarAreaRiscoUseCase {
             });
         }
 
+        if (inputDTO.setorId() != null && setorRepositoryPort != null) {
+            setorRepositoryPort.buscarPorId(inputDTO.setorId())
+                    .orElseThrow(() -> new IllegalArgumentException("Setor não encontrado com id: " + inputDTO.setorId()));
+        }
+
         List<Epi> episObrigatorios = resolverEpis(inputDTO.episObrigatoriosIds());
 
         AreaRisco novaArea = AreaRisco.cadastrar(
@@ -52,9 +75,49 @@ public class AreaRiscoUseCase implements GerenciarAreaRiscoUseCase {
                 inputDTO.nome(),
                 inputDTO.descricao(),
                 inputDTO.nivelPerigo(),
+                inputDTO.setorId(),
+                inputDTO.agentesRisco(),
+                inputDTO.limites(),
                 episObrigatorios);
 
         return AreaRiscoOutputDTO.deDominio(areaRiscoRepositoryPort.salvar(novaArea));
+    }
+
+    @Override
+    @Transactional
+    public AreaRiscoOutputDTO atualizarAreaRisco(Integer id, AtualizarAreaRiscoInputDTO inputDTO, String operador) {
+        AreaRisco existente = areaRiscoRepositoryPort.buscarPorId(id)
+                .orElseThrow(() -> new AreaRiscoNaoEncontradaException(id));
+
+        if (inputDTO.setorId() != null && setorRepositoryPort != null) {
+            setorRepositoryPort.buscarPorId(inputDTO.setorId())
+                    .orElseThrow(() -> new IllegalArgumentException("Setor não encontrado com id: " + inputDTO.setorId()));
+        }
+
+        List<Epi> episObrigatorios = resolverEpis(inputDTO.episObrigatoriosIds());
+
+        AreaRisco atualizada = existente.atualizar(
+                inputDTO.nome(),
+                inputDTO.descricao(),
+                inputDTO.nivelPerigo(),
+                inputDTO.setorId(),
+                inputDTO.agentesRisco(),
+                inputDTO.limites(),
+                episObrigatorios);
+
+        AreaRisco salva = areaRiscoRepositoryPort.atualizar(atualizada);
+
+        if (logAuditoriaRepositoryPort != null) {
+            LogAuditoria log = LogAuditoria.registrarAlteracao(
+                    operador != null ? operador : "sistema",
+                    "AreaRisco",
+                    id,
+                    inputDTO.justificativa()
+            );
+            logAuditoriaRepositoryPort.salvar(log);
+        }
+
+        return AreaRiscoOutputDTO.deDominio(salva);
     }
 
     @Override
@@ -84,10 +147,6 @@ public class AreaRiscoUseCase implements GerenciarAreaRiscoUseCase {
         return AreaRiscoOutputDTO.deDominio(areaRisco);
     }
 
-    /**
-     * Resolve os EPIs selecionados no formulário do UC03 contra o catálogo cadastrado. A lista
-     * vazia é devolvida como está para que a validação de RN1 permaneça no domínio.
-     */
     private List<Epi> resolverEpis(List<Integer> episObrigatoriosIds) {
         if (episObrigatoriosIds == null || episObrigatoriosIds.isEmpty()) {
             return List.of();
