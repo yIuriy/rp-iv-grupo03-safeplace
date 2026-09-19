@@ -282,11 +282,11 @@ O [PNG de classes](../diagramas/classes/Diagrama%20de%20Classes%20-%20SafePlace.
 
 | Ponto | Divergência preservada para decisão |
 | --- | --- |
-| Unidade de EPI | US11 acompanha a posse de um equipamento, mas `EPI` possui quantidade e o modelo também tem `ModeloEPI` e `LoteEPI`. Definir se cada registro representa tipo, lote ou unidade física antes de aprovar a proposta `ItemEPI`. |
-| Resultado de manutenção | US04 propõe resultado textual; `ManutencaoEPI.resultadoManutencao` é booleano no desenho. Definir resultado, classificação e relação com a situação do EPI. |
-| Identificadores | US20 propõe CA textual e `ModeloEPI.ca` é inteiro. `Colaborador.cpf` é texto, mas há operações que recebem CPF inteiro. UC12 usa matrícula, proposta em US24 junto ao setor e aos metadados do cadastro. Confirmar os dados e seus tipos. |
+| Unidade de EPI | Decisão #124: cada `EPI` representa saldo de um lote e modelo. `quantidade` é o saldo disponível do registro; `status` aplica-se ao registro inteiro. `ItemEPI`, serial e código de barras continuam fora do MVP. |
+| Resultado de manutenção | Decisão #124: `APROVADO` corresponde a `true` e devolve o registro à disponibilidade; `REPROVADO` corresponde a `false`, preserva indisponibilidade e não executa descarte definitivo. |
+| Identificadores | Decisão #124: CA é inteiro e tem fonte única em `ModeloEPI`; a API aceita texto numérico apenas como adaptação de entrada. Lote identifica o recebimento e mantém vínculo com o modelo. |
 | Grau de risco | UC03 e `NivelPerigo` usam baixo/médio/alto/crítico; UC11 e US06 usam leve/moderado/grave/crítico. Definir uma lista comum ou classificações distintas com correspondência explícita. |
-| Ocorrências e rastreabilidade | UC09 exige protocolo para acidente e incidente e distingue data do fato de data/hora do cadastro. O PNG coloca protocolo apenas em `Acidente`. Conferir também envolvidos, EPIs, arquivamento, movimentações, responsáveis e auditoria, conforme os pontos da issue #81. |
+| Ocorrências e rastreabilidade | UC09 exige protocolo para acidente e incidente e distingue data do fato de data/hora do cadastro. O PNG coloca protocolo apenas em `Acidente`. Movimentações de estoque registram lote e identificador do responsável autenticado, e podem ser consultadas por EPI. Conferir também envolvidos, EPIs, arquivamento e auditoria, conforme os pontos da issue #81. |
 | Investigação e CAT | RF15 trata investigação e RF19 trata geração de CAT, ambos no backlog. O modelo usa `CAT` em operações de laudo pericial. Os conceitos permanecem distintos no glossário; os contratos precisam de revisão. |
 
 ### 11.3. Dependências com a implementação
