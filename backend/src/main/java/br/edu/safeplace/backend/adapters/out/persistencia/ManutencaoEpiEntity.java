@@ -17,7 +17,7 @@ public class ManutencaoEpiEntity {
     @Column(name = "data_manutencao", nullable = false)
     private LocalDateTime dataManutencao;
 
-    @Column(name = "tipo_manutencao", nullable = false, length = 30)
+    @Column(name = "tipo_manutencao", length = 30)
     private String tipoManutencao;
 
     @Column(nullable = false, columnDefinition = "TEXT")

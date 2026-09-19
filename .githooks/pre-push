@@ -1,0 +1,24 @@
+#!/usr/bin/env sh
+
+set -eu
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+BACKEND_DIR="$REPO_ROOT/backend"
+
+if [ ! -x "$BACKEND_DIR/mvnw" ]; then
+  echo "❌ Maven Wrapper não encontrado em $BACKEND_DIR/mvnw."
+  echo "Push cancelado."
+  exit 1
+fi
+
+echo "Validando projeto antes do push..."
+
+if (cd "$BACKEND_DIR" && ./mvnw clean verify); then
+  echo "✅ Build e testes passaram."
+  echo "Push liberado."
+  exit 0
+fi
+
+echo "❌ Build ou testes falharam."
+echo "Push cancelado."
+exit 1

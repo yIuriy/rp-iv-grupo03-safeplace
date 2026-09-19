@@ -112,8 +112,8 @@ class ControlarManutencaoEpiServiceTest {
     }
 
     @Test
-    void deveLancarExcecaoAoConcluirManutencaoDeEpiComStatusInvalido() {
-        Epi epi = new Epi(6, "Bota", "CA-600", 5, 1, StatusEpi.DISPONIVEL, LocalDate.of(2030, 1, 1), 365);
+    void deveLancarExcecaoAoConcluirManutencaoDeEpiEmUso() {
+        Epi epi = new Epi(6, "Bota", "CA-600", 5, 1, StatusEpi.EM_USO, LocalDate.of(2030, 1, 1), 365);
         epiRepository.salvar(epi);
 
         ConcluirManutencaoInputDTO input = new ConcluirManutencaoInputDTO(

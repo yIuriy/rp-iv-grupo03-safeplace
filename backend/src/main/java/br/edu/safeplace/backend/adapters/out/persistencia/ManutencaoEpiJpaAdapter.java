@@ -36,14 +36,16 @@ public class ManutencaoEpiJpaAdapter implements ManutencaoEpiRepositoryPort {
 
     private ManutencaoEpiEntity toEntity(ManutencaoEpi manutencao) {
         return new ManutencaoEpiEntity(manutencao.getId(), manutencao.getEpiId(),
-                manutencao.getDataManutencao(), manutencao.getTipoManutencao().name(),
+                manutencao.getDataManutencao(), manutencao.getTipoManutencao() == null
+                        ? null : manutencao.getTipoManutencao().name(),
                 manutencao.getDescricao(), manutencao.getResultado().name(),
                 manutencao.getResponsavelManutencao(), manutencao.getResponsavelId());
     }
 
     private ManutencaoEpi toDomain(ManutencaoEpiEntity entity) {
         return new ManutencaoEpi(entity.getId(), entity.getEpiId(), entity.getDataManutencao(),
-                TipoManutencao.valueOf(entity.getTipoManutencao()), entity.getDescricao(),
+                entity.getTipoManutencao() == null ? null : TipoManutencao.valueOf(entity.getTipoManutencao()),
+                entity.getDescricao(),
                 ResultadoManutencao.valueOf(entity.getResultado()), entity.getResponsavelManutencao(),
                 entity.getResponsavelId());
     }

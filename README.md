@@ -154,6 +154,22 @@ Para testar e empacotar o backend, execute em `backend/`:
 ./mvnw package
 ```
 
+### Configuração dos Git Hooks
+
+Após clonar o projeto, execute a partir da raiz:
+
+```sh
+./scripts/setup-git-hooks.sh
+```
+
+Antes de cada `git push`, o hook executará automaticamente no diretório `backend/`:
+
+```sh
+./mvnw clean verify
+```
+
+Se a compilação ou os testes falharem, o push será bloqueado. O hook não executa `docker build`.
+
 A suíte é dividida em dois grupos. Os testes de domínio, casos de uso e controladores rodam sempre, sem banco. Os testes de integração — que aplicam as migrações Flyway, validam o mapeamento JPA e exercitam a API com o servidor real — precisam de um PostgreSQL e são **ignorados** quando não encontram nenhum, em vez de falhar. Há duas formas de fornecê-lo:
 
 ```sh

@@ -60,6 +60,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/usuarios/colaboradores/*")
                                 .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         .requestMatchers("/api/usuarios/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        // UC01/US04: somente o Gestor de Segurança registra manutenção.
+                        .requestMatchers(HttpMethod.POST, "/api/epis/*/manutencoes")
+                                .hasRole("GESTOR_SEGURANCA")
                         .requestMatchers("/api/epis/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         .requestMatchers("/api/ocorrencias/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         // UC03 e UC11: o Gestor de Seguranca mantem o cadastro; o Supervisor e ator
