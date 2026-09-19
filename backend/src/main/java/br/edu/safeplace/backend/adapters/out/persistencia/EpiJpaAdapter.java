@@ -72,6 +72,8 @@ public class EpiJpaAdapter implements EpiRepositoryPort {
         return new MovimentacaoEstoqueEntity(
                 domain.getId(),
                 domain.getEpiId(),
+                domain.getLoteId(),
+                domain.getResponsavelId(),
                 domain.getTipo().name(),
                 domain.getQuantidade(),
                 domain.getDataHora(),
@@ -82,6 +84,8 @@ public class EpiJpaAdapter implements EpiRepositoryPort {
         return new MovimentacaoEstoque(
                 entity.getId(),
                 entity.getEpiId(),
+                entity.getLoteId(),
+                entity.getResponsavelId(),
                 TipoMovimentacao.valueOf(entity.getTipo()),
                 entity.getQuantidade(),
                 entity.getDataHora(),

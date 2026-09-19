@@ -41,9 +41,15 @@ public class EpiEntity {
     @Column(columnDefinition = "text")
     private String localizacao;
 
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "lote_id")
+    private LoteEpiEntity lote;
+
     public String getLocalizacao() {
         return localizacao;
     }
+
+    public LoteEpiEntity getLote() { return lote; }
 
     public EpiEntity() {
     }
@@ -58,6 +64,14 @@ public class EpiEntity {
     public EpiEntity(Integer id, String nome, String numeroCa, Integer quantidade,
                      Integer estoqueMinimo, String status, LocalDate dataValidadeCa,
                      Integer vidaUtilDias, String descricao, String classificacao, String localizacao) {
+        this(id, nome, numeroCa, quantidade, estoqueMinimo, status, dataValidadeCa,
+                vidaUtilDias, descricao, classificacao, localizacao, null);
+    }
+
+    public EpiEntity(Integer id, String nome, String numeroCa, Integer quantidade,
+                     Integer estoqueMinimo, String status, LocalDate dataValidadeCa,
+                     Integer vidaUtilDias, String descricao, String classificacao, String localizacao,
+                     LoteEpiEntity lote) {
         this.localizacao = localizacao;
         this.id = id;
         this.nome = nome;
@@ -69,6 +83,7 @@ public class EpiEntity {
         this.vidaUtilDias = vidaUtilDias;
         this.descricao = descricao;
         this.classificacao = classificacao;
+        this.lote = lote;
     }
 
     public Integer getId() {

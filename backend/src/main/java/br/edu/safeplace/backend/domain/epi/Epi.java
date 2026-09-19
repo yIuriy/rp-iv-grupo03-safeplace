@@ -15,8 +15,7 @@ public class Epi {
     private final EspecificacaoEPI especificacao;
     private StatusEpi status;
     private final Integer vidaUtilDias;
-    // Provisório: vínculo direto enquanto os lotes legados não têm contrato aprovado (#124).
-    private final ModeloEPI modelo;
+    private final LoteEPI lote;
 
     /**
      * Mantém compatibilidade com o adaptador de persistência existente.
@@ -44,14 +43,14 @@ public class Epi {
         this(
                 id,
                 nome,
-                ModeloEPI.deCadastroLegado(numeroCa, dataValidadeCa),
+                loteLegado(numeroCa, dataValidadeCa, quantidade),
                 quantidade,
                 new EspecificacaoEPI(descricao, estoqueMinimo, classificacao),
                 status,
                 vidaUtilDias, localizacao);
 
         if (id == null) {
-            this.modelo.validarParaCadastroEm(LocalDate.now());
+            this.lote.getModelo().validarParaCadastroEm(LocalDate.now());
         }
     }
 
@@ -80,7 +79,7 @@ public class Epi {
     private Epi(
             Integer id,
             String nome,
-            ModeloEPI modelo,
+            LoteEPI lote,
             int quantidade,
             EspecificacaoEPI especificacao,
             StatusEpi status,
@@ -105,7 +104,10 @@ public class Epi {
 
         this.codigoEPI = id;
         this.nome = nome;
-        this.modelo = modelo;
+        if (lote == null) {
+            throw new IllegalArgumentException("Lote do EPI é obrigatório.");
+        }
+        this.lote = lote;
         this.localizacao = localizacao;
         this.quantidade = quantidade;
         this.especificacao = especificacao;
@@ -165,9 +167,8 @@ public class Epi {
     public static Epi novo(String nome, String numeroCa, int quantidade, int estoqueMinimo,
                            LocalDate dataValidadeCa, Integer vidaUtilDias, LocalDate dataCadastro,
                            String descricao, ClassificacaoEPI classificacao, String localizacao) {
-        ModeloEPI modelo = ModeloEPI.deCadastroLegado(numeroCa, dataValidadeCa);
-
-        modelo.validarParaCadastroEm(dataCadastro);
+        LoteEPI lote = loteLegado(numeroCa, dataValidadeCa, quantidade);
+        lote.getModelo().validarParaCadastroEm(dataCadastro);
 
         StatusEpi statusInicial = quantidade > 0
                 ? StatusEpi.DISPONIVEL
@@ -176,14 +177,37 @@ public class Epi {
         return new Epi(
                 null,
                 nome,
-                modelo,
+                lote,
                 quantidade,
                 new EspecificacaoEPI(descricao, estoqueMinimo, classificacao),
                 statusInicial,
                 vidaUtilDias, localizacao);
     }
 
+    public static Epi novo(String nome, LoteEPI lote, int quantidade, int estoqueMinimo,
+                           Integer vidaUtilDias, String descricao,
+                           ClassificacaoEPI classificacao, String localizacao) {
+        lote.getModelo().validarParaCadastroEm(LocalDate.now());
+        return new Epi(null, nome, lote, quantidade,
+                new EspecificacaoEPI(descricao, estoqueMinimo, classificacao),
+                quantidade > 0 ? StatusEpi.DISPONIVEL : StatusEpi.ESGOTADO,
+                vidaUtilDias, localizacao);
+    }
+
+    public static Epi reconstituir(Integer codigoEPI, String nome, LoteEPI lote,
+                                   int quantidade, int estoqueMinimo, StatusEpi status,
+                                   Integer vidaUtilDias, String descricao,
+                                   ClassificacaoEPI classificacao, String localizacao) {
+        return new Epi(codigoEPI, nome, lote, quantidade,
+                new EspecificacaoEPI(descricao, estoqueMinimo, classificacao),
+                status, vidaUtilDias, localizacao);
+    }
+
     public MovimentacaoEstoque adicionarEstoque(int qtd, String motivo) {
+        return adicionarEstoque(qtd, motivo, null);
+    }
+
+    public MovimentacaoEstoque adicionarEstoque(int qtd, String motivo, Integer responsavelId) {
         if (qtd <= 0) {
             throw new IllegalArgumentException(
                     "Quantidade a adicionar deve ser maior que zero.");
@@ -199,6 +223,8 @@ public class Epi {
         MovimentacaoEstoque movimentacao = new MovimentacaoEstoque(
                 null,
                 this.codigoEPI,
+                this.lote.getId(),
+                responsavelId,
                 TipoMovimentacao.ENTRADA,
                 qtd,
                 LocalDateTime.now(),
@@ -214,6 +240,10 @@ public class Epi {
     }
 
     public MovimentacaoEstoque removerEstoque(int qtd, String motivo) {
+        return removerEstoque(qtd, motivo, null);
+    }
+
+    public MovimentacaoEstoque removerEstoque(int qtd, String motivo, Integer responsavelId) {
         if (qtd <= 0) {
             throw new IllegalArgumentException(
                     "Quantidade a retirar deve ser maior que zero.");
@@ -232,6 +262,8 @@ public class Epi {
         MovimentacaoEstoque movimentacao = new MovimentacaoEstoque(
                 null,
                 this.codigoEPI,
+                this.lote.getId(),
+                responsavelId,
                 TipoMovimentacao.SAIDA,
                 qtd,
                 LocalDateTime.now(),
@@ -256,7 +288,7 @@ public class Epi {
 
     public void validarCaValido(LocalDate dataReferencia) {
         LocalDate referencia = dataReferencia != null ? dataReferencia : LocalDate.now();
-        if (!modelo.verificarCA(referencia)) {
+        if (!lote.getModelo().verificarCA(referencia)) {
             throw new CertificadoAprovacaoVencidoException(this.codigoEPI, this.nome, getNumeroCa(), getDataValidadeCa());
         }
     }
@@ -309,7 +341,7 @@ public class Epi {
     }
 
     public String getNumeroCa() {
-        return Integer.toString(modelo.getCa());
+        return Integer.toString(lote.getModelo().getCa());
     }
 
     public int getQuantidade() {
@@ -325,11 +357,15 @@ public class Epi {
     }
 
     public LocalDate getDataValidadeCa() {
-        return modelo.getValidadeCA();
+        return lote.getModelo().getValidadeCA();
     }
 
     public ModeloEPI getModelo() {
-        return modelo;
+        return lote.getModelo();
+    }
+
+    public LoteEPI getLote() {
+        return lote;
     }
 
     public Integer getVidaUtilDias() {
@@ -338,5 +374,10 @@ public class Epi {
 
     public EspecificacaoEPI getEspecificacao() {
         return especificacao;
+    }
+
+    private static LoteEPI loteLegado(String numeroCa, LocalDate dataValidadeCa, int quantidade) {
+        return new LoteEPI(null, null, null, null, quantidade,
+                ModeloEPI.deCadastroLegado(numeroCa, dataValidadeCa));
     }
 }

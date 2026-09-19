@@ -4,17 +4,22 @@ import java.time.LocalDate;
 
 public class ModeloEPI {
 
+    private final Integer id;
     private final int ca;
     private final String marca;
     private final LocalDate validadeCA;
 
     public ModeloEPI(int ca, String marca, LocalDate validadeCA) {
-        if (validadeCA == null) {
-            throw new IllegalArgumentException(
-                    "Data de validade do CA é obrigatória."
-            );
-        }
+        this(null, ca, marca, validadeCA);
+    }
 
+    public ModeloEPI(Integer id, int ca, String marca, LocalDate validadeCA) {
+        if (ca <= 0)
+            throw new IllegalArgumentException("CA inválido.");
+        if (validadeCA == null)
+            throw new IllegalArgumentException("Data de validade do CA é obrigatória.");
+
+        this.id = id;
         this.ca = ca;
         this.marca = marca;
         this.validadeCA = validadeCA;
@@ -50,19 +55,17 @@ public class ModeloEPI {
         return verificarCA(LocalDate.now());
     }
 
-    public boolean verificarCA(LocalDate dataReferencia) {
-        if (dataReferencia == null) {
-            throw new IllegalArgumentException(
-                    "Data de referência é obrigatória."
-            );
-        }
-
-        return !validadeCA.isBefore(dataReferencia);
+    public boolean verificarCA(LocalDate data) {
+        if (data == null)
+            throw new IllegalArgumentException("Data de referência é obrigatória.");
+        return !validadeCA.isBefore(data);
     }
 
     public int getCa() {
         return ca;
     }
+
+    public Integer getId() { return id; }
 
     public String getMarca() {
         return marca;
