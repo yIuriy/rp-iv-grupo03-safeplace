@@ -12,5 +12,13 @@ public record CadastrarEpiInputDTO(
                 LocalDate dataValidadeCa,
                 Integer vidaUtilDias,
                 String descricao,
-                ClassificacaoEPI classificacao) {
+                ClassificacaoEPI classificacao,
+                String localizacao) {
+
+    public CadastrarEpiInputDTO(String nome, String numeroCa, int quantidade, int estoqueMinimo,
+                                LocalDate dataValidadeCa, Integer vidaUtilDias, String descricao,
+                                ClassificacaoEPI classificacao) {
+        this(nome, numeroCa, quantidade, estoqueMinimo, dataValidadeCa, vidaUtilDias,
+                descricao, classificacao, null);
+    }
 }

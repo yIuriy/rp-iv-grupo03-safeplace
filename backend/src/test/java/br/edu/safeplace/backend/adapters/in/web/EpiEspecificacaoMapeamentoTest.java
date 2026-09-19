@@ -31,6 +31,7 @@ class EpiEspecificacaoMapeamentoTest {
 
         assertThat(input.descricao()).isEqualTo(request.descricao());
         assertThat(input.classificacao()).isEqualTo(request.classificacao());
+        assertThat(input.localizacao()).isNull();
 
         Epi epi = Epi.novo(
                 input.nome(),

@@ -38,12 +38,27 @@ public class EpiEntity {
     @Column(name = "especificacao_classificacao", length = 80)
     private String classificacao;
 
+    @Column(columnDefinition = "text")
+    private String localizacao;
+
+    public String getLocalizacao() {
+        return localizacao;
+    }
+
     public EpiEntity() {
     }
 
     public EpiEntity(Integer id, String nome, String numeroCa, Integer quantidade,
             Integer estoqueMinimo, String status, LocalDate dataValidadeCa, Integer vidaUtilDias, String descricao,
             String classificacao) {
+        this(id, nome, numeroCa, quantidade, estoqueMinimo, status, dataValidadeCa,
+                vidaUtilDias, descricao, classificacao, null);
+    }
+
+    public EpiEntity(Integer id, String nome, String numeroCa, Integer quantidade,
+                     Integer estoqueMinimo, String status, LocalDate dataValidadeCa,
+                     Integer vidaUtilDias, String descricao, String classificacao, String localizacao) {
+        this.localizacao = localizacao;
         this.id = id;
         this.nome = nome;
         this.numeroCa = numeroCa;

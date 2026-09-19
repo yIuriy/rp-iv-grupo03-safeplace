@@ -8,13 +8,15 @@ import br.edu.safeplace.backend.domain.epi.exception.EpiIndisponivelParaManutenc
 import br.edu.safeplace.backend.domain.epi.exception.SaldoInsuficienteException;
 
 public class Epi {
-    private final Integer id;
+    private final Integer codigoEPI;
+    private final String localizacao;
     private final String nome;
     private int quantidade;
     private final EspecificacaoEPI especificacao;
     private StatusEpi status;
     private final Integer vidaUtilDias;
-    private final CertificadoAprovacao certificadoAprovacao;
+    // Provisório: vínculo direto enquanto os lotes legados não têm contrato aprovado (#124).
+    private final ModeloEPI modelo;
 
     /**
      * Mantém compatibilidade com o adaptador de persistência existente.
@@ -32,17 +34,24 @@ public class Epi {
             Integer vidaUtilDias,
             String descricao,
             ClassificacaoEPI classificacao) {
+        this(id, nome, numeroCa, quantidade, estoqueMinimo, status, dataValidadeCa,
+                vidaUtilDias, descricao, classificacao, null);
+    }
+
+    public Epi(Integer id, String nome, String numeroCa, int quantidade, int estoqueMinimo,
+               StatusEpi status, LocalDate dataValidadeCa, Integer vidaUtilDias,
+               String descricao, ClassificacaoEPI classificacao, String localizacao) {
         this(
                 id,
                 nome,
-                new CertificadoAprovacao(numeroCa, dataValidadeCa),
+                ModeloEPI.deCadastroLegado(numeroCa, dataValidadeCa),
                 quantidade,
                 new EspecificacaoEPI(descricao, estoqueMinimo, classificacao),
                 status,
-                vidaUtilDias);
+                vidaUtilDias, localizacao);
 
         if (id == null) {
-            this.certificadoAprovacao.validarParaCadastroEm(LocalDate.now());
+            this.modelo.validarParaCadastroEm(LocalDate.now());
         }
     }
 
@@ -71,11 +80,11 @@ public class Epi {
     private Epi(
             Integer id,
             String nome,
-            CertificadoAprovacao certificadoAprovacao,
+            ModeloEPI modelo,
             int quantidade,
             EspecificacaoEPI especificacao,
             StatusEpi status,
-            Integer vidaUtilDias) {
+            Integer vidaUtilDias, String localizacao) {
         if (nome == null || nome.isBlank()) {
             throw new IllegalArgumentException("Nome do EPI é obrigatório.");
         }
@@ -94,9 +103,10 @@ public class Epi {
             throw new IllegalArgumentException("Status do EPI é obrigatório.");
         }
 
-        this.id = id;
+        this.codigoEPI = id;
         this.nome = nome;
-        this.certificadoAprovacao = certificadoAprovacao;
+        this.modelo = modelo;
+        this.localizacao = localizacao;
         this.quantidade = quantidade;
         this.especificacao = especificacao;
         this.status = status;
@@ -131,12 +141,33 @@ public class Epi {
             int estoqueMinimo,
             LocalDate dataValidadeCa,
             Integer vidaUtilDias,
+            String descricao,
+            ClassificacaoEPI classificacao,
+            String localizacao) {
+        return novo(nome, numeroCa, quantidade, estoqueMinimo, dataValidadeCa,
+                vidaUtilDias, LocalDate.now(), descricao, classificacao, localizacao);
+    }
+
+    public static Epi novo(
+            String nome,
+            String numeroCa,
+            int quantidade,
+            int estoqueMinimo,
+            LocalDate dataValidadeCa,
+            Integer vidaUtilDias,
             LocalDate dataCadastro,
             String descricao,
             ClassificacaoEPI classificacao) {
-        CertificadoAprovacao certificado = new CertificadoAprovacao(numeroCa, dataValidadeCa);
+        return novo(nome, numeroCa, quantidade, estoqueMinimo, dataValidadeCa,
+                vidaUtilDias, dataCadastro, descricao, classificacao, null);
+    }
 
-        certificado.validarParaCadastroEm(dataCadastro);
+    public static Epi novo(String nome, String numeroCa, int quantidade, int estoqueMinimo,
+                           LocalDate dataValidadeCa, Integer vidaUtilDias, LocalDate dataCadastro,
+                           String descricao, ClassificacaoEPI classificacao, String localizacao) {
+        ModeloEPI modelo = ModeloEPI.deCadastroLegado(numeroCa, dataValidadeCa);
+
+        modelo.validarParaCadastroEm(dataCadastro);
 
         StatusEpi statusInicial = quantidade > 0
                 ? StatusEpi.DISPONIVEL
@@ -145,11 +176,11 @@ public class Epi {
         return new Epi(
                 null,
                 nome,
-                certificado,
+                modelo,
                 quantidade,
                 new EspecificacaoEPI(descricao, estoqueMinimo, classificacao),
                 statusInicial,
-                vidaUtilDias);
+                vidaUtilDias, localizacao);
     }
 
     public MovimentacaoEstoque adicionarEstoque(int qtd, String motivo) {
@@ -167,7 +198,7 @@ public class Epi {
 
         MovimentacaoEstoque movimentacao = new MovimentacaoEstoque(
                 null,
-                this.id,
+                this.codigoEPI,
                 TipoMovimentacao.ENTRADA,
                 qtd,
                 LocalDateTime.now(),
@@ -200,7 +231,7 @@ public class Epi {
 
         MovimentacaoEstoque movimentacao = new MovimentacaoEstoque(
                 null,
-                this.id,
+                this.codigoEPI,
                 TipoMovimentacao.SAIDA,
                 qtd,
                 LocalDateTime.now(),
@@ -225,8 +256,8 @@ public class Epi {
 
     public void validarCaValido(LocalDate dataReferencia) {
         LocalDate referencia = dataReferencia != null ? dataReferencia : LocalDate.now();
-        if (getDataValidadeCa() != null && getDataValidadeCa().isBefore(referencia)) {
-            throw new CertificadoAprovacaoVencidoException(this.id, this.nome, getNumeroCa(), getDataValidadeCa());
+        if (!modelo.verificarCA(referencia)) {
+            throw new CertificadoAprovacaoVencidoException(this.codigoEPI, this.nome, getNumeroCa(), getDataValidadeCa());
         }
     }
 
@@ -238,7 +269,7 @@ public class Epi {
         validarCaValido(dataReferencia);
         if (this.status != StatusEpi.DISPONIVEL) {
             throw new EpiIndisponivelParaManutencaoException(
-                    this.id, this.status, "Apenas EPIs com status DISPONIVEL podem ser enviados para manutenção."
+                    this.codigoEPI, this.status, "Apenas EPIs com status DISPONIVEL podem ser enviados para manutenção."
             );
         }
         this.status = StatusEpi.EM_MANUTENCAO;
@@ -250,21 +281,27 @@ public class Epi {
         }
         if (this.status != StatusEpi.EM_MANUTENCAO) {
             throw new EpiIndisponivelParaManutencaoException(
-                    this.id, this.status, "Apenas EPIs com status EM_MANUTENCAO podem concluir manutenção."
+                    this.codigoEPI, this.status, "Apenas EPIs com status EM_MANUTENCAO podem concluir manutenção."
             );
         }
         if (manutencao.getResultado() == ResultadoManutencao.APROVADO) {
             this.status = StatusEpi.DISPONIVEL;
-        } else if (manutencao.getResultado() == ResultadoManutencao.REPROVADO) {
-            this.status = StatusEpi.DESCARTADO;
-            if (this.quantidade > 0) {
-                this.quantidade--;
-            }
         }
+        // Reprovação preserva a indisponibilidade atual e não executa descarte (RF14).
+        // O estado definitivo da reprovação depende da decisão de domínio #124.
     }
 
+    public Integer getCodigoEPI() {
+        return codigoEPI;
+    }
+
+    public String getLocalizacao() {
+        return localizacao;
+    }
+
+    /** Alias mantido para os contratos HTTP e JPA existentes. */
     public Integer getId() {
-        return id;
+        return codigoEPI;
     }
 
     public String getNome() {
@@ -272,7 +309,7 @@ public class Epi {
     }
 
     public String getNumeroCa() {
-        return certificadoAprovacao.numero();
+        return Integer.toString(modelo.getCa());
     }
 
     public int getQuantidade() {
@@ -288,11 +325,11 @@ public class Epi {
     }
 
     public LocalDate getDataValidadeCa() {
-        return certificadoAprovacao.dataValidade();
+        return modelo.getValidadeCA();
     }
 
-    public CertificadoAprovacao getCertificadoAprovacao() {
-        return certificadoAprovacao;
+    public ModeloEPI getModelo() {
+        return modelo;
     }
 
     public Integer getVidaUtilDias() {

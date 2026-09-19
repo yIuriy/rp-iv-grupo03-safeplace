@@ -34,7 +34,8 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
                 inputDTO.dataValidadeCa(),
                 inputDTO.vidaUtilDias(),
                 inputDTO.descricao(),
-                inputDTO.classificacao());
+                inputDTO.classificacao(),
+                inputDTO.localizacao());
         Epi salvo = repositoryPort.salvar(novoEpi);
         return EpiOutputDTO.deDominio(salvo);
     }

@@ -27,7 +27,8 @@ final class EpiEntityMapper {
                 domain.getEspecificacao().getDescricao(),
                 domain.getEspecificacao().getClassificacao() == null
                         ? null
-                        : domain.getEspecificacao().getClassificacao().name());
+                        : domain.getEspecificacao().getClassificacao().name(),
+                domain.getLocalizacao());
     }
 
     static Epi toDomain(EpiEntity entity) {
@@ -43,6 +44,7 @@ final class EpiEntityMapper {
                 entity.getDescricao(),
                 entity.getClassificacao() == null
                         ? null
-                        : ClassificacaoEPI.valueOf(entity.getClassificacao()));
+                        : ClassificacaoEPI.valueOf(entity.getClassificacao()),
+                entity.getLocalizacao());
     }
 }

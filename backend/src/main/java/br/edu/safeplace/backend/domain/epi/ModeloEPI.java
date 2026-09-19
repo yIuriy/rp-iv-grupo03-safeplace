@@ -20,6 +20,32 @@ public class ModeloEPI {
         this.validadeCA = validadeCA;
     }
 
+    /** Adapta o formato textual legado da API ao CA inteiro do modelo UML. */
+    public static ModeloEPI deCadastroLegado(String numero, LocalDate validadeCA) {
+        if (numero == null || numero.isBlank()) {
+            throw new IllegalArgumentException("Número do CA é obrigatório.");
+        }
+        String normalizado = numero.strip();
+        if (normalizado.startsWith("CA-")) {
+            normalizado = normalizado.substring(3);
+        }
+        if (!normalizado.matches("[0-9]+")) {
+            throw new IllegalArgumentException(
+                    "Número do CA deve conter apenas dígitos, com prefixo CA- opcional.");
+        }
+        try {
+            return new ModeloEPI(Integer.parseInt(normalizado), null, validadeCA);
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Número do CA excede o limite inteiro do modelo.", ex);
+        }
+    }
+
+    public void validarParaCadastroEm(LocalDate dataReferencia) {
+        if (!verificarCA(dataReferencia)) {
+            throw new IllegalArgumentException("Não é permitido cadastrar EPI com CA vencido.");
+        }
+    }
+
     public boolean verificarCA() {
         return verificarCA(LocalDate.now());
     }

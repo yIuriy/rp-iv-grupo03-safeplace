@@ -29,7 +29,9 @@ public record EpiResponse(
 
         @Schema(description = "Descrição da especificação do EPI.") String descricao,
 
-        @Schema(description = "Classificação da especificação do EPI") ClassificacaoEPI classificacao) {
+        @Schema(description = "Classificação da especificação do EPI") ClassificacaoEPI classificacao,
+
+        @Schema(description = "Localização atual do EPI", example = "Almoxarifado A") String localizacao) {
     public static EpiResponse fromDomain(Epi epi) {
         return new EpiResponse(
                 epi.getId(),
@@ -42,7 +44,8 @@ public record EpiResponse(
                 epi.getDataValidadeCa(),
                 epi.getVidaUtilDias(),
                 epi.getEspecificacao().getDescricao(),
-                epi.getEspecificacao().getClassificacao());
+                epi.getEspecificacao().getClassificacao(),
+                epi.getLocalizacao());
     }
 
     public static EpiResponse fromOutputDTO(br.edu.safeplace.backend.application.dto.output.EpiOutputDTO dto) {
@@ -56,6 +59,7 @@ public record EpiResponse(
                 dto.status(),
                 dto.dataValidadeCa(),
                 dto.vidaUtilDias(), dto.descricao(),
-                dto.classificacao());
+                dto.classificacao(),
+                dto.localizacao());
     }
 }

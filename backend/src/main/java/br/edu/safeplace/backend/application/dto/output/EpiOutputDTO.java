@@ -17,7 +17,15 @@ public record EpiOutputDTO(
         Integer vidaUtilDias,
         boolean estoqueCritico,
         String descricao,
-        ClassificacaoEPI classificacao) {
+        ClassificacaoEPI classificacao,
+        String localizacao) {
+
+    public EpiOutputDTO(Integer id, String nome, String numeroCa, int quantidade, int estoqueMinimo,
+                        StatusEpi status, LocalDate dataValidadeCa, Integer vidaUtilDias,
+                        boolean estoqueCritico, String descricao, ClassificacaoEPI classificacao) {
+        this(id, nome, numeroCa, quantidade, estoqueMinimo, status, dataValidadeCa, vidaUtilDias,
+                estoqueCritico, descricao, classificacao, null);
+    }
     public static EpiOutputDTO deDominio(Epi epi) {
         return new EpiOutputDTO(
                 epi.getId(),
@@ -30,6 +38,7 @@ public record EpiOutputDTO(
                 epi.getVidaUtilDias(),
                 epi.isEstoqueCritico(),
                 epi.getEspecificacao().getDescricao(),
-                epi.getEspecificacao().getClassificacao());
+                epi.getEspecificacao().getClassificacao(),
+                epi.getLocalizacao());
     }
 }

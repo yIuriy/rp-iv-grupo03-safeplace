@@ -25,7 +25,16 @@ public record CriarEpiRequest(
 
         @Schema(description = "Descrição da especificação do EPI.") String descricao,
 
-        @Schema(description = "Classificação da especificação do EPI.", example = "PROTECAO_DE_OLHOS") ClassificacaoEPI classificacao) {
+        @Schema(description = "Classificação da especificação do EPI.", example = "PROTECAO_DE_OLHOS") ClassificacaoEPI classificacao,
+
+        @Schema(description = "Localização atual do EPI", example = "Almoxarifado A") String localizacao) {
+
+    public CriarEpiRequest(String nome, String numeroCa, Integer quantidade, Integer estoqueMinimo,
+                           LocalDate dataValidadeCa, Integer vidaUtilDias, String descricao,
+                           ClassificacaoEPI classificacao) {
+        this(nome, numeroCa, quantidade, estoqueMinimo, dataValidadeCa, vidaUtilDias,
+                descricao, classificacao, null);
+    }
     public CadastrarEpiInputDTO toInputDTO() {
         return new CadastrarEpiInputDTO(
                 nome,
@@ -35,6 +44,7 @@ public record CriarEpiRequest(
                 dataValidadeCa,
                 vidaUtilDias,
                 descricao,
-                classificacao);
+                classificacao,
+                localizacao);
     }
 }
