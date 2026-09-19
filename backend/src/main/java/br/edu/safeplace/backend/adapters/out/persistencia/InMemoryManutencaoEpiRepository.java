@@ -29,7 +29,8 @@ public class InMemoryManutencaoEpiRepository implements ManutencaoEpiRepositoryP
                 manutencao.getTipoManutencao(),
                 manutencao.getDescricao(),
                 manutencao.getResultado(),
-                manutencao.getResponsavelManutencao()
+                manutencao.getResponsavelManutencao(),
+                manutencao.getResponsavelId()
         );
         storage.put(id, salvo);
         return salvo;

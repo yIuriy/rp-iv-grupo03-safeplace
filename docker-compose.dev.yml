@@ -38,7 +38,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.dev
     environment:
-      VITE_API_URL: http://localhost:8080/api
+      VITE_API_URL: /api
+      API_PROXY_TARGET: http://backend:8080
       CHOKIDAR_USEPOLLING: "true"
       WATCHPACK_POLLING: "true"
     ports:
