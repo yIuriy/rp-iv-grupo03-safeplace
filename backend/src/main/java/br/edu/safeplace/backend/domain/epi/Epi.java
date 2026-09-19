@@ -85,7 +85,7 @@ public class Epi {
     public Epi(int codigoEPI, String localizacao, int quantidade, StatusEpi status) {
         this(codigoEPI, "EPI-" + codigoEPI, "1", quantidade, 0,
                 status != null ? status : StatusEpi.DISPONIVEL,
-                LocalDate.now().plusYears(1), null, null, localizacao);
+                LocalDate.now().plusYears(1), null, null, null, localizacao);
     }
 
     private Epi(
