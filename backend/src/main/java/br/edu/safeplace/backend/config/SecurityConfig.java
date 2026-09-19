@@ -54,6 +54,11 @@ public class SecurityConfig {
                                 .hasRole("GESTOR_SEGURANCA")
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/colaboradores")
                                 .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        // Issue #122: a atualizacao cadastral segue a mesma matriz do cadastro.
+                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/supervisores/*")
+                                .hasRole("GESTOR_SEGURANCA")
+                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/colaboradores/*")
+                                .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         .requestMatchers("/api/usuarios/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         .requestMatchers("/api/epis/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         .requestMatchers("/api/ocorrencias/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")

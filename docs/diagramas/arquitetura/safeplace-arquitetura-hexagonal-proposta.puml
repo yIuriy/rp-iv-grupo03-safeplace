@@ -44,10 +44,10 @@ package "Contrato da API" as api_contract #FFF1D6 {
 }
 
 note bottom of api_contract
-Mantém Python e TypeScript de acordo.
+Mantém Java e TypeScript de acordo.
 end note
 
-package "Servidor\n(Python)" as backend #EDF8F5 {
+package "Servidor\n(Java)" as backend #EDF8F5 {
 
     package "Núcleo da Aplicação" as application #DDF3ED {
 

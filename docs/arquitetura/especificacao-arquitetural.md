@@ -91,7 +91,7 @@ Os diagramas não são alterados nesta revisão. O grupo fará a atualização e
 
 O [diagrama de classes](../diagramas/classes/Diagrama%20de%20Classes%20-%20SafePlace.png) é uma referência do domínio, com pendências acompanhadas na [issue #39](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/39). A operação `Supervisor.criarContaColaborador()` ainda precisa ser alinhada ao cadastro sem acesso. Heranças de dados pessoais não definem permissões de autenticação.
 
-O [PlantUML da proposta hexagonal](../diagramas/arquitetura/safeplace-arquitetura-hexagonal-proposta.puml) e seu [PNG](../diagramas/arquitetura/safeplace-arquitetura-hexagonal-proposta.png) são uma proposta anterior que usa Python. Devem ser lidos como referência histórica da separação de responsabilidades; a tecnologia adotada na base atual é Java. Componentes e implantação também precisam ser reconciliados na etapa de diagramas da [issue #81](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/81).
+O [PlantUML da proposta hexagonal](../diagramas/arquitetura/safeplace-arquitetura-hexagonal-proposta.puml) e seu [PNG](../diagramas/arquitetura/safeplace-arquitetura-hexagonal-proposta.png) descrevem uma proposta anterior, elaborada antes da definição da linguagem. O texto do PlantUML foi atualizado para Java, que é a tecnologia adotada na base atual; o PNG ainda precisa ser regerado a partir dele. Devem ser lidos como referência da separação de responsabilidades. Componentes e implantação também precisam ser reconciliados na etapa de diagramas da [issue #81](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/81).
 
 | Artefato | Status |
 | --- | --- |
@@ -122,6 +122,8 @@ O estoque segue a mesma organização: `EpiController` recebe as requisições, 
 | Cadastrar Supervisor (Gestor de Segurança) | `POST /api/usuarios/supervisores` |
 | Cadastrar Colaborador (Supervisor ou Gestor) | `POST /api/usuarios/colaboradores` |
 | Listar colaboradores, com filtros por nome e CPF | `GET /api/usuarios/colaboradores?nome={nome}&cpf={cpf}` |
+| Atualizar dados cadastrais de Supervisor (Gestor de Segurança) | `PUT /api/usuarios/supervisores/{id}` |
+| Atualizar dados cadastrais de Colaborador (Supervisor ou Gestor) | `PUT /api/usuarios/colaboradores/{id}` |
 | Consultar um usuário | `GET /api/usuarios/{id}` |
 | Cadastrar e listar ocorrências | `POST /api/ocorrencias` e `GET /api/ocorrencias` |
 | Cadastrar e listar EPIs | `POST /api/epis` e `GET /api/epis` |
@@ -138,11 +140,13 @@ O estoque segue a mesma organização: `EpiController` recebe as requisições, 
 
 O módulo de usuários expõe o provisionamento de RF23 em rotas por papel: `POST /api/usuarios/supervisores` é exclusivo do Gestor de Segurança e devolve a senha inicial gerada pelo sistema uma única vez, enquanto `POST /api/usuarios/colaboradores` atende Supervisor e Gestor e não aceita credenciais — uma requisição que envie `senha` ou `perfil` recebe 400. A restrição de papel é declarada no `SecurityConfig`, e não no corpo do controlador. A rota genérica `POST /api/usuarios` continua disponível para compatibilidade, marcada como descontinuada.
 
+A atualização cadastral (issue #122) segue a mesma matriz: `PUT /api/usuarios/supervisores/{id}` é exclusivo do Gestor e `PUT /api/usuarios/colaboradores/{id}` atende Supervisor e Gestor. A operação altera nome, data de nascimento e e-mail no mesmo registro, preservando id, CPF, perfil e hash da senha; como a rota fixa o papel, um id de outro perfil responde 404 e a atualização nunca converte um Colaborador em conta de acesso. CPF, senha, perfil e situação (`ativo`) são recusados com 400, porque a alteração de CPF e a desativação aguardam decisão do grupo (especificação do MVP, seção 11.1). A autoria da alteração exigida por RNF05 depende do módulo de auditoria (issue #121); por enquanto só `atualizado_em` é registrado.
+
 Os módulos de áreas de risco (RF05, UC03) e de tarefas (RF06, UC11) seguem a mesma organização: `AreaRiscoController` e `TarefaController` recebem as requisições; `AreaRiscoUseCase` implementa `GerenciarAreaRiscoUseCase` e `TarefaUseCase` implementa `ClassificarTarefaUseCase`; a persistência fica em `AreaRiscoJpaAdapter` e `TarefaJpaAdapter`, por trás de `AreaRiscoRepositoryPort` e `TarefaRepositoryPort`. O domínio fica em `domain/area_risco/` e `domain/tarefa/`, e a enumeração `NivelPerigo`, compartilhada pelos dois, fica em `domain/comum/`. O cadastro de área de risco aplica a RN1 do UC03, bloqueando o salvamento sem EPIs obrigatórios de acesso. A classificação de tarefa registra data e hora; o responsável técnico exigido pela RN1 do UC11 depende do módulo de auditoria, ainda não implementado.
 
 `NivelPerigo` foi implementado com o vocabulário de UC03 e do diagrama de classes (`BAIXO`, `MEDIO`, `ALTO`, `CRITICO`). A divergência com os níveis leve, moderado, grave e crítico usados em UC11 e US06 continua pendente de decisão da equipe, conforme o glossário e a issue #77.
 
-A implementação de EPIs ainda não cobre manutenção, empréstimos, devoluções ou projeções de substituição. O vínculo entre tarefas e EPIs (RF12) e as inspeções periódicas (RF09) permanecem no backlog, assim como o módulo de capacitações. O módulo de usuários e autenticação RBAC está implementado no backend via Arquitetura Hexagonal. O frontend apresenta o catálogo e exemplos de componentes com dados fictícios; não integra os fluxos de negócio com a API.
+A implementação de EPIs ainda não cobre manutenção, empréstimos, devoluções ou projeções de substituição. O vínculo entre tarefas e EPIs (RF12) e as inspeções periódicas (RF09) permanecem no backlog, assim como o módulo de capacitações. O módulo de usuários e autenticação RBAC está implementado no backend via Arquitetura Hexagonal. O frontend integra o login e a gestão de supervisores e colaboradores com a API, aplicando na interface a mesma matriz de perfis do `SecurityConfig`; as demais telas de negócio ainda são iniciais, e o catálogo de componentes segue disponível com dados fictícios.
 
 Os passos de execução e verificação estão no [README principal](../../README.md#executar-com-docker-compose) e no [README do frontend](../../frontend/README.md). O Compose é o ambiente local de desenvolvimento, enquanto os diagramas de implantação descrevem uma proposta de distribuição do sistema.
 
@@ -154,4 +158,5 @@ Pontos ainda não atendidos ou fora da entrega:
 - RNF08 permanece no MVP, com escopo pendente e sem implementação de cache ou sincronização na interface atual.
 - A [configuração de segurança](../../backend/src/main/java/br/edu/safeplace/backend/config/SecurityConfig.java) aplica controle de acesso por perfil (RBAC) e autenticação via JWT (RNF03). Rotas públicas limitam-se a autenticação, documentação Swagger e health check.
 - RNF05 ainda precisa de implementação que cubra as operações, os dados auditados, a imutabilidade e a retenção.
-- O Compose fornece `VITE_API_URL`, mas o cliente HTTP lê `VITE_URL_API`. A configuração precisa ser alinhada quando a interface for integrada à API; o valor local padrão está documentado no README do frontend.
+- O Compose fornece `VITE_API_URL` e o cliente HTTP a lê, aceitando `VITE_URL_API` como nome anterior; o valor local padrão está documentado no README do frontend.
+- A carga inicial do primeiro Gestor de Segurança, prevista na seção 3.1 da especificação do MVP, ainda não existe no repositório: sem um registro inserido à mão na tabela `usuarios`, não há como entrar na interface.

@@ -2,6 +2,7 @@ package br.edu.safeplace.backend.domain.epi;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -412,5 +413,166 @@ class EpiTest {
 
                 assertThat(epi.getQuantidade()).isZero();
                 assertThat(epi.getStatus()).isEqualTo(StatusEpi.EM_USO);
+        }
+
+        @Test
+        void deveConstruirEpiComAtributosDoDiagramaDeClasses() {
+                Epi epi = new Epi(101, "Almoxarifado Central", 50, StatusEpi.DISPONIVEL);
+
+                assertEquals(101, epi.getCodigoEPI());
+                assertEquals(Integer.valueOf(101), epi.getId());
+                assertEquals("Almoxarifado Central", epi.getLocalizacao());
+                assertEquals(50, epi.getQuantidade());
+                assertEquals(50, epi.getQuantidate());
+                assertEquals(StatusEpi.DISPONIVEL, epi.getStatus());
+        }
+
+        @Test
+        void devePermitirAlterarLocalizacao() {
+                Epi epi = new Epi(102, "Setor A", 20, StatusEpi.DISPONIVEL);
+                epi.setLocalizacao("Setor B");
+
+                assertEquals("Setor B", epi.getLocalizacao());
+        }
+
+        @Test
+        void deveBuscarEPIsRetornandoLista() {
+                Epi epi = new Epi(10, "Estoque 1", 15, StatusEpi.DISPONIVEL);
+
+                List<Epi> lista = epi.buscarEPIs();
+
+                assertThat(lista).containsExactly(epi);
+        }
+
+        @Test
+        void deveBuscarEpiPorCodigo() {
+                Epi epi = new Epi(20, "Estoque 2", 10, StatusEpi.DISPONIVEL);
+
+                assertThat(epi.buscarEPI(20)).isSameAs(epi);
+                assertThat(epi.buscarEPI(999)).isNull();
+        }
+
+        @Test
+        void deveObterHistoricoManutencaoERegistrarManutencoes() {
+                Epi epi = new Epi(1, "Capacete", "CA-1234", 5, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, 365,
+                                "Capacete", ClassificacaoEPI.PROTECAO_DE_CABECA, "Prateleira 1");
+
+                assertThat(epi.obterHistoricoManutencao()).isEmpty();
+
+                ManutencaoEpi m1 = ManutencaoEpi.novo(1, LocalDateTime.now(), TipoManutencao.PREVENTIVA,
+                                "Revisão geral", ResultadoManutencao.APROVADO, "Técnico Silva");
+                epi.adicionarManutencao(m1);
+
+                assertThat(epi.obterHistoricoManutencao()).containsExactly(m1);
+
+                epi.enviarParaManutencao();
+                ManutencaoEpi m2 = ManutencaoEpi.novo(1, LocalDateTime.now(), TipoManutencao.CORRETIVA,
+                                "Troca de carneira", ResultadoManutencao.APROVADO, "Técnico Silva");
+                epi.concluirManutencao(m2);
+
+                assertThat(epi.obterHistoricoManutencao()).containsExactly(m1, m2);
+        }
+
+        @Test
+        void deveValidarVinculoEpisObrigatorios() {
+                Epi epiValido = new Epi(1, "Óculos", "CA-1234", 10, 2, StatusEpi.DISPONIVEL,
+                                VALIDADE_CA, 365, "Óculos", ClassificacaoEPI.PROTECAO_DE_OLHOS, "Armário 1");
+                assertTrue(epiValido.validarVinculoEPIsObrigatorios());
+
+                Epi epiDescartado = new Epi(2, "Luva", "CA-1234", 0, 1, StatusEpi.DESCARTADO,
+                                VALIDADE_CA, 365, "Luva", ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES, "Descarte");
+                assertFalse(epiDescartado.validarVinculoEPIsObrigatorios());
+
+                Epi epiVencido = new Epi(3, "Bota", "CA-1234", 5, 1, StatusEpi.DISPONIVEL,
+                                LocalDate.of(2020, 1, 1), 365, "Bota", ClassificacaoEPI.PROTECAO_DE_MEMBROS_INFERIORES, "Armário 2");
+                assertFalse(epiVencido.validarVinculoEPIsObrigatorios());
+        }
+
+        @Test
+        void deveCompararComQuantidadeMinimaEBuscarAbaixoDaQuantidadeMinima() {
+                EspecificacaoEPI esp = new EspecificacaoEPI("Protetor auricular", 10, ClassificacaoEPI.PROTECAO_AUDITIVA);
+                Epi epi = new Epi(1, "Protetor", "CA-5555", 8, 10, StatusEpi.DISPONIVEL,
+                                VALIDADE_CA, 365, "Protetor auricular", ClassificacaoEPI.PROTECAO_AUDITIVA, "Setor Ruído");
+
+                assertTrue(epi.compararComQuantidadeMinima());
+                assertTrue(epi.compararComQuantMinima());
+                assertThat(epi.buscarEPIsAbaixoDaQuantidadeMinima()).containsExactly(epi);
+
+                epi.atualizarQuantidade(esp, 15);
+                assertFalse(epi.compararComQuantidadeMinima());
+                assertFalse(epi.compararComQuantMinima());
+                assertThat(epi.buscarEPIsAbaixoDaQuantidadeMinima()).isEmpty();
+        }
+
+        @Test
+        void deveAtualizarQuantidadeETransitarStatus() {
+                EspecificacaoEPI novaEsp = new EspecificacaoEPI("Nova spec", 5, ClassificacaoEPI.PROTECAO_DE_CABECA);
+                Epi epi = new Epi(1, "Capacete", "CA-1111", 10, 5, StatusEpi.DISPONIVEL, VALIDADE_CA, 365);
+
+                epi.atualizarQuantidade(novaEsp, 0);
+                assertEquals(0, epi.getQuantidade());
+                assertEquals(StatusEpi.ESGOTADO, epi.getStatus());
+                assertEquals(novaEsp, epi.getEspecificacao());
+
+                epi.atualizarQuantidade(null, 12);
+                assertEquals(12, epi.getQuantidade());
+                assertEquals(StatusEpi.DISPONIVEL, epi.getStatus());
+
+                assertThatThrownBy(() -> epi.atualizarQuantidade(null, -1))
+                                .isInstanceOf(IllegalArgumentException.class)
+                                .hasMessage("Quantidade em estoque não pode ser negativa.");
+        }
+
+        @Test
+        void deveGerenciarEBuscarLotes() {
+                Epi epi = new Epi(1, "Óculos", "CA-1234", 20, 5, StatusEpi.DISPONIVEL, VALIDADE_CA, 365);
+
+                ModeloEPI modelo = new ModeloEPI(9876, "3M", VALIDADE_CA);
+                LoteEPI lote1 = new LoteEPI("1001", "NF-1", LocalDate.now(), LocalDate.now().plusYears(2), 10, modelo);
+                LoteEPI lote2 = new LoteEPI("LOTE-X", "NF-2", LocalDate.now(), LocalDate.now().plusYears(2), 10, modelo);
+
+                epi.adicionarLote(lote1);
+                epi.adicionarLote(lote2);
+
+                assertThat(epi.getLotes()).containsExactly(lote1, lote2);
+                assertThat(epi.buscarLote(9876)).isSameAs(lote1); // busca pelo CA do modelo
+                assertThat(epi.buscarLote(1001)).isSameAs(lote1); // busca pelo número do lote
+                assertThat(epi.buscarLote(5555)).isNull();
+        }
+
+        @Test
+        void deveValidarBaixaComSucessoERejeitarCasosInvalidos() {
+                Epi epi = new Epi(5, "Luva", "CA-1234", 10, 2, StatusEpi.DISPONIVEL, VALIDADE_CA, 365);
+
+                int saldoRestante = epi.validarBaixa(5, 3);
+                assertEquals(7, saldoRestante);
+
+                assertThatThrownBy(() -> epi.validarBaixa(999, 3))
+                                .isInstanceOf(IllegalArgumentException.class)
+                                .hasMessage("Código do EPI informado não corresponde ao EPI atual.");
+
+                assertThatThrownBy(() -> epi.validarBaixa(5, 0))
+                                .isInstanceOf(IllegalArgumentException.class)
+                                .hasMessage("Quantidade para baixa deve ser maior que zero.");
+
+                assertThatThrownBy(() -> epi.validarBaixa(5, 15))
+                                .isInstanceOf(SaldoInsuficienteException.class);
+        }
+
+        @Test
+        void deveDarBaixaComSucessoERecusarQuantidadesInvalidas() {
+                Epi epi = new Epi(5, "Luva", "CA-1234", 10, 2, StatusEpi.DISPONIVEL, VALIDADE_CA, 365);
+
+                assertFalse(epi.darBaixa(0));
+                assertFalse(epi.darBaixa(-2));
+                assertFalse(epi.darBaixa(11));
+                assertEquals(10, epi.getQuantidade());
+
+                assertTrue(epi.darBaixa(4));
+                assertEquals(6, epi.getQuantidade());
+
+                assertTrue(epi.darBaixa(6));
+                assertEquals(0, epi.getQuantidade());
+                assertEquals(StatusEpi.ESGOTADO, epi.getStatus());
         }
 }

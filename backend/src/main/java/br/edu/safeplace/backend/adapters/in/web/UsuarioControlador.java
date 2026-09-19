@@ -58,6 +58,29 @@ public class UsuarioControlador {
     }
 
     /**
+     * RF23 / issue #122: só o Gestor de Segurança atualiza supervisores (regra no
+     * {@code SecurityConfig}). A rota fixa o papel, então a atualização nunca converte um
+     * Colaborador em Supervisor: um id de outro perfil responde 404.
+     */
+    @PutMapping("/supervisores/{id}")
+    @Operation(summary = "Atualiza os dados cadastrais de um Supervisor, preservando CPF, perfil e credenciais")
+    public UsuarioResposta atualizarSupervisor(@PathVariable Integer id,
+                                               @Valid @RequestBody AtualizarSupervisorRequisicao requisicao) {
+        return UsuarioResposta.aPartirDe(casoDeUso.atualizarSupervisor(id, requisicao.paraDTOEntrada()));
+    }
+
+    /**
+     * RF23 / issue #122: Supervisor e Gestor de Segurança atualizam colaboradores, que seguem sem
+     * credenciais.
+     */
+    @PutMapping("/colaboradores/{id}")
+    @Operation(summary = "Atualiza os dados cadastrais de um Colaborador, que continua sem conta de acesso nem senha")
+    public UsuarioResposta atualizarColaborador(@PathVariable Integer id,
+                                                @Valid @RequestBody AtualizarColaboradorRequisicao requisicao) {
+        return UsuarioResposta.aPartirDe(casoDeUso.atualizarColaborador(id, requisicao.paraDTOEntrada()));
+    }
+
+    /**
      * Cadastro genérico por perfil, anterior aos endpoints por papel.
      *
      * @deprecated use {@code POST /api/usuarios/supervisores} ou

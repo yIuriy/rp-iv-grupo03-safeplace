@@ -2,6 +2,9 @@ package br.edu.safeplace.backend.domain.epi;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import br.edu.safeplace.backend.domain.epi.exception.CertificadoAprovacaoVencidoException;
 import br.edu.safeplace.backend.domain.epi.exception.EpiIndisponivelParaManutencaoException;
@@ -12,10 +15,12 @@ public class Epi {
     private final String localizacao;
     private final String nome;
     private int quantidade;
-    private final EspecificacaoEPI especificacao;
+    private EspecificacaoEPI especificacao;
     private StatusEpi status;
     private final Integer vidaUtilDias;
     private final LoteEPI lote;
+    private final List<ManutencaoEpi> historicoManutencao = new ArrayList<>();
+    private final List<LoteEPI> lotesAdicionais = new ArrayList<>();
 
     /**
      * Mantém compatibilidade com o adaptador de persistência existente.
@@ -74,6 +79,13 @@ public class Epi {
                 vidaUtilDias,
                 null,
                 null);
+    }
+
+    /** Compatibilidade com a assinatura reduzida do diagrama. */
+    public Epi(int codigoEPI, String localizacao, int quantidade, StatusEpi status) {
+        this(codigoEPI, "EPI-" + codigoEPI, "1", quantidade, 0,
+                status != null ? status : StatusEpi.DISPONIVEL,
+                LocalDate.now().plusYears(1), null, null, localizacao);
     }
 
     private Epi(
@@ -316,11 +328,101 @@ public class Epi {
                     this.codigoEPI, this.status, "Apenas EPIs com status EM_MANUTENCAO podem concluir manutenção."
             );
         }
+        this.historicoManutencao.add(manutencao);
         if (manutencao.getResultado() == ResultadoManutencao.APROVADO) {
             this.status = StatusEpi.DISPONIVEL;
         }
         // Reprovação preserva a indisponibilidade atual e não executa descarte (RF14).
         // O estado definitivo da reprovação depende da decisão de domínio #124.
+    }
+
+    public List<Epi> buscarEPIs() {
+        return List.of(this);
+    }
+
+    public Epi buscarEPI(int codigoEPI) {
+        return this.codigoEPI != null && this.codigoEPI == codigoEPI ? this : null;
+    }
+
+    public List<ManutencaoEpi> obterHistoricoManutencao() {
+        return Collections.unmodifiableList(historicoManutencao);
+    }
+
+    public void adicionarManutencao(ManutencaoEpi manutencao) {
+        if (manutencao != null) {
+            historicoManutencao.add(manutencao);
+        }
+    }
+
+    public boolean validarVinculoEPIsObrigatorios() {
+        return status != StatusEpi.DESCARTADO && lote.getModelo().verificarCA(LocalDate.now());
+    }
+
+    public boolean compararComQuantidadeMinima() {
+        return isEstoqueCritico();
+    }
+
+    public boolean compararComQuantMinima() {
+        return compararComQuantidadeMinima();
+    }
+
+    public void atualizarQuantidade(EspecificacaoEPI especificacao, int quantidade) {
+        if (quantidade < 0) {
+            throw new IllegalArgumentException("Quantidade em estoque não pode ser negativa.");
+        }
+        if (especificacao != null) {
+            this.especificacao = especificacao;
+        }
+        this.quantidade = quantidade;
+        if (quantidade == 0 && status == StatusEpi.DISPONIVEL) {
+            status = StatusEpi.ESGOTADO;
+        } else if (quantidade > 0 && status == StatusEpi.ESGOTADO) {
+            status = StatusEpi.DISPONIVEL;
+        }
+    }
+
+    public List<Epi> buscarEPIsAbaixoDaQuantidadeMinima() {
+        return compararComQuantidadeMinima() ? List.of(this) : List.of();
+    }
+
+    public void adicionarLote(LoteEPI lote) {
+        if (lote != null) {
+            lotesAdicionais.add(lote);
+        }
+    }
+
+    public List<LoteEPI> getLotes() {
+        return Collections.unmodifiableList(lotesAdicionais);
+    }
+
+    public LoteEPI buscarLote(int codigo) {
+        return lotesAdicionais.stream()
+                .filter(lote -> lote.getModelo().getCa() == codigo
+                        || Integer.toString(codigo).equals(lote.getNumeroLote()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public int validarBaixa(int codigo, int quantidade) {
+        if (codigoEPI != null && codigoEPI != codigo) {
+            throw new IllegalArgumentException("Código do EPI informado não corresponde ao EPI atual.");
+        }
+        if (quantidade <= 0) {
+            throw new IllegalArgumentException("Quantidade para baixa deve ser maior que zero.");
+        }
+        if (quantidade > this.quantidade) {
+            throw new SaldoInsuficienteException("Saldo insuficiente em estoque. Saldo atual: "
+                    + this.quantidade + ", quantidade solicitada: " + quantidade);
+        }
+        return this.quantidade - quantidade;
+    }
+
+    public boolean darBaixa(int quantidade) {
+        if (quantidade <= 0 || quantidade > this.quantidade) {
+            return false;
+        }
+        removerEstoque(quantidade, "Baixa de estoque");
+        return true;
     }
 
     public Integer getCodigoEPI() {

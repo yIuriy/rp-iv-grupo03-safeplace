@@ -40,6 +40,15 @@ public class Colaborador {
         return new Colaborador(null, cpf, nome, dataNascimento, email, true, LocalDateTime.now(), LocalDateTime.now());
     }
 
+    /**
+     * Devolve uma cópia com os dados cadastrais alterados (RF23, issue #122). Identidade (id e
+     * CPF), situação e data de criação são preservadas, e o perfil segue a classe: atualizar nunca
+     * muda o papel da pessoa. Alteração de CPF e desativação aguardam decisão do grupo (MVP, 11.1).
+     */
+    public Colaborador comDadosAtualizados(String nome, LocalDate dataNascimento, String email) {
+        return new Colaborador(id, cpf, nome, dataNascimento, email, ativo, criadoEm, LocalDateTime.now());
+    }
+
     public Perfil getPerfil() {
         return Perfil.COLABORADOR;
     }
