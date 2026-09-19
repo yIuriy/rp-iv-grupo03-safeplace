@@ -60,7 +60,7 @@ Essa é a organização lógica prevista, não uma lista de módulos já impleme
 
 | Funcionalidade | Responsabilidade no MVP | Referências |
 | --- | --- | --- |
-| `usuarios` | Gestor cadastra, consulta e atualiza supervisores com conta; Supervisor cadastra, consulta e atualiza colaboradores sem conta, preservando seus vínculos. | RF23, US23 e US24 |
+| `usuarios` | Gestor cadastra, consulta e atualiza supervisores com conta; Supervisor e Gestor cadastram, consultam e atualizam colaboradores sem conta, preservando seus vínculos. | RF23, US23 e US24 |
 | `ocorrencias` | Registrar e acompanhar acidentes e incidentes, com envolvidos, protocolo, triagem, atualização, arquivamento e planos de ação. | RF01, RF02, RF07, RF13 e RF16; UC05, UC07 e UC09 |
 | `epis` | Estoque, movimentações, manutenção, empréstimos, devoluções e previsão de substituição com alertas. | RF03, RF04, RF11 e RF21; UC01, UC06, UC10 e UC12 |
 | `areas-de-risco` | Cadastro, consulta e atualização das áreas, agentes de risco, limites e EPIs exigidos para acesso. | RF05; UC03 |
