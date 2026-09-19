@@ -860,7 +860,7 @@ Referência: [RF23](requisitos/requisitos-funcionais.md#rf23-o-sistema-deve-perm
 
 ## Descrição da História:
 
-> **Como** Supervisor,
+> **Como** Supervisor ou Gestor de Segurança,
 > **quero** cadastrar, consultar e atualizar colaboradores,
 > **para** identificá-los nos registros de ocorrências, capacitações e empréstimos de EPIs.
 
@@ -872,12 +872,12 @@ Referência: [RF23](requisitos/requisitos-funcionais.md#rf23-o-sistema-deve-perm
 > | Nome | Tamanho máximo a confirmar. | Texto | Obrigatório | Nome do Colaborador. |
 > | Matrícula | Formato a confirmar. | Texto identificador | A confirmar | Identificação funcional do Colaborador. |
 > | Setor | Setor cadastrado. | Identificador de setor | A confirmar | Setor relacionado ao Colaborador. |
-> | Responsável pelo cadastro | Supervisor autenticado. | Identificador de usuário | Automático | Pessoa que incluiu o cadastro. |
+> | Responsável pelo cadastro | Supervisor ou Gestor autenticado. | Identificador de usuário | Automático | Pessoa que incluiu o cadastro. |
 > | Data e hora do cadastro | Formato a confirmar. | Data e hora | Automático | Momento de criação do registro. |
 
 ## Regra(s) de Negócio:
 
-> 1. O Supervisor gerencia os cadastros de colaboradores.
+> 1. Supervisor e Gestor de Segurança podem gerenciar os cadastros de colaboradores.
 > 2. O Colaborador é uma pessoa cadastrada para vinculação aos registros do sistema, sem conta de acesso, perfil de autenticação ou senha.
 > 3. Os relatos comunicados pelo Colaborador são registrados pelo Supervisor com a identificação do Supervisor autenticado.
 > 4. A atualização cadastral deve preservar os vínculos já existentes com ocorrências, capacitações e empréstimos, registrando a alteração na auditoria.
