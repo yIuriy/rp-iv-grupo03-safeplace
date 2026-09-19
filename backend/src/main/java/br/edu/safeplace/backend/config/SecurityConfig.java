@@ -48,8 +48,8 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll()
                         // Rotas protegidas por RBAC (RNF03)
-                        // RF23: so o Gestor de Seguranca provisiona supervisores; o Supervisor
-                        // cadastra colaboradores.
+                        // RF23: so o Gestor de Seguranca provisiona supervisores; Supervisor e Gestor de
+                        // Seguranca cadastram colaboradores.
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/supervisores")
                                 .hasRole("GESTOR_SEGURANCA")
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/colaboradores")
@@ -60,16 +60,18 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/usuarios/colaboradores/*")
                                 .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         .requestMatchers("/api/usuarios/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
-                        // UC01/US04: somente o Gestor de Segurança registra manutenção.
-                        .requestMatchers(HttpMethod.POST, "/api/epis/*/manutencoes")
+                        // UC01, Gestão de Estoque e Manutenção (#132, #103): mutações exclusivas do Gestor de Segurança
+                        .requestMatchers(HttpMethod.POST, "/api/epis", "/api/epis/*/movimentacoes", "/api/epis/*/manutencoes")
                                 .hasRole("GESTOR_SEGURANCA")
-                        .requestMatchers("/api/epis/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        // UC06: consulta de EPIs e movimentações permitida para Gestor e Supervisor
+                        .requestMatchers(HttpMethod.GET, "/api/epis/**")
+                                .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         .requestMatchers("/api/ocorrencias/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         // UC03 e UC11: o Gestor de Seguranca mantem o cadastro; o Supervisor e ator
                         // secundario e apenas consulta as diretrizes.
-                        .requestMatchers(HttpMethod.GET, "/api/areas-risco/**", "/api/tarefas/**")
+                        .requestMatchers(HttpMethod.GET, "/api/areas-risco/**", "/api/tarefas/**", "/api/setores/**")
                                 .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
-                        .requestMatchers("/api/areas-risco/**", "/api/tarefas/**").hasRole("GESTOR_SEGURANCA")
+                        .requestMatchers("/api/areas-risco/**", "/api/tarefas/**", "/api/setores/**").hasRole("GESTOR_SEGURANCA")
                         .anyRequest().authenticated()
                 );
 
