@@ -9,6 +9,7 @@ import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepositoryPort
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.ManutencaoEpi;
+import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +70,10 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
                 ? inputDTO.dataManutencao().toLocalDate()
                 : LocalDate.now();
         epi.validarCaValido(dataReferencia);
+
+        if (epi.getStatus() == StatusEpi.DISPONIVEL) {
+            epi.enviarParaManutencao(dataReferencia);
+        }
 
         ManutencaoEpi manutencao = ManutencaoEpi.novo(
                 epi.getId(),

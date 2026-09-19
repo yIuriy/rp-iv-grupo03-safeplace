@@ -51,9 +51,6 @@ class ManutencaoEpiTest {
                 new ManutencaoEpi(1, 10, null, TipoManutencao.PREVENTIVA, "Desc", ResultadoManutencao.APROVADO, "Resp"));
 
         assertThrows(IllegalArgumentException.class, () ->
-                new ManutencaoEpi(1, 10, agora, null, "Desc", ResultadoManutencao.APROVADO, "Resp"));
-
-        assertThrows(IllegalArgumentException.class, () ->
                 new ManutencaoEpi(1, 10, agora, TipoManutencao.PREVENTIVA, "   ", ResultadoManutencao.APROVADO, "Resp"));
 
         assertThrows(IllegalArgumentException.class, () ->
@@ -61,5 +58,15 @@ class ManutencaoEpiTest {
 
         assertThrows(IllegalArgumentException.class, () ->
                 new ManutencaoEpi(1, 10, agora, TipoManutencao.PREVENTIVA, "Desc", ResultadoManutencao.APROVADO, "  "));
+    }
+
+    @Test
+    void devePermitirTipoDeManutencaoAusenteNoMvp() {
+        ManutencaoEpi manutencao = new ManutencaoEpi(
+                1, 10, LocalDateTime.now(), null, "Inspeção concluída",
+                ResultadoManutencao.APROVADO, "Gestor"
+        );
+
+        assertNull(manutencao.getTipoManutencao());
     }
 }

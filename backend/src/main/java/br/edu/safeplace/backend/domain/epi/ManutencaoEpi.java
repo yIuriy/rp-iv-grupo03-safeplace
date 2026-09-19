@@ -29,9 +29,6 @@ public class ManutencaoEpi {
         if (dataManutencao == null) {
             throw new IllegalArgumentException("Data da manutenção é obrigatória.");
         }
-        if (tipoManutencao == null) {
-            throw new IllegalArgumentException("Tipo de manutenção é obrigatório.");
-        }
         if (descricao == null || descricao.isBlank()) {
             throw new IllegalArgumentException("Descrição da manutenção é obrigatória.");
         }
