@@ -21,4 +21,7 @@ public interface AreaRiscoJpaRepository extends JpaRepository<AreaRiscoEntity, I
 
     @EntityGraph(attributePaths = "episObrigatorios")
     List<AreaRiscoEntity> findByNivelPerigo(String nivelPerigo);
+
+    @EntityGraph(attributePaths = "episObrigatorios")
+    List<AreaRiscoEntity> findBySetorId(Integer setorId);
 }

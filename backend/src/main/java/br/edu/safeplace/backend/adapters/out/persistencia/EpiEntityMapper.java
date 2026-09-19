@@ -59,8 +59,8 @@ final class EpiEntityMapper {
         if (lote == null) {
             return new br.edu.safeplace.backend.domain.epi.LoteEPI(null, null, null, null,
                     legado.getQuantidade(),
-                    new br.edu.safeplace.backend.domain.epi.ModeloEPI(Integer.parseInt(legado.getNumeroCa()),
-                            null, legado.getDataValidadeCa()));
+                    br.edu.safeplace.backend.domain.epi.ModeloEPI.deCadastroLegado(
+                            legado.getNumeroCa(), legado.getDataValidadeCa()));
         }
         return new br.edu.safeplace.backend.domain.epi.LoteEPI(lote.getId(), lote.getNumeroLote(),
                 lote.getNotaFiscal(), lote.getDataFabricacao(), lote.getValidade(),

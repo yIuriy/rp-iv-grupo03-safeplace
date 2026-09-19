@@ -28,6 +28,11 @@ public class AreaRiscoJpaAdapter implements AreaRiscoRepositoryPort {
     }
 
     @Override
+    public AreaRisco atualizar(AreaRisco areaRisco) {
+        return salvar(areaRisco);
+    }
+
+    @Override
     public Optional<AreaRisco> buscarPorId(Integer id) {
         return areaRiscoRepository.findById(id).map(this::toDomain);
     }
@@ -49,6 +54,13 @@ public class AreaRiscoJpaAdapter implements AreaRiscoRepositoryPort {
                 .toList();
     }
 
+    @Override
+    public List<AreaRisco> listarPorSetor(Integer setorId) {
+        return areaRiscoRepository.findBySetorId(setorId).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
     private AreaRiscoEntity toEntity(AreaRisco domain) {
         return new AreaRiscoEntity(
                 domain.getId(),
@@ -56,6 +68,9 @@ public class AreaRiscoJpaAdapter implements AreaRiscoRepositoryPort {
                 domain.getNome(),
                 domain.getDescricao(),
                 domain.getNivelPerigo() == null ? null : domain.getNivelPerigo().name(),
+                domain.getSetorId(),
+                AreaRiscoEntity.formatAgentesRisco(domain.getAgentesRisco()),
+                domain.getLimites(),
                 carregarEpisGerenciados(domain));
     }
 
@@ -78,6 +93,9 @@ public class AreaRiscoJpaAdapter implements AreaRiscoRepositoryPort {
                 entity.getNome(),
                 entity.getDescricao(),
                 entity.getNivelPerigo() == null ? null : NivelPerigo.valueOf(entity.getNivelPerigo()),
+                entity.getSetorId(),
+                entity.getAgentesRiscoList(),
+                entity.getLimites(),
                 entity.getEpisObrigatorios().stream()
                         .map(EpiEntityMapper::toDomain)
                         .toList());

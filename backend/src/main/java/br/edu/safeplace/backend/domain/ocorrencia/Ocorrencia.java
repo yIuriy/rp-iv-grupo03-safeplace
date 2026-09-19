@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.DataOcorrenciaInvalidaException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
@@ -20,6 +21,7 @@ public abstract class Ocorrencia {
     private final Colaborador colaborador;
     private final List<String> midias;
     private final AreaRisco area;
+    private Setor setor;
     private final GestorDeSeguranca gestor;
     private final String local;
     private final PlanoDeAcao planoDeAcao;
@@ -79,8 +81,8 @@ public abstract class Ocorrencia {
                 StatusOcorrencia.ABERTA,
                 Collections.emptyList(),
                 null,
-                Collections.emptyList(),
-                local != null ? AreaRisco.novo(local, null, null) : null,
+                null,
+                null,
                 null,
                 local,
                 planoDeAcao
@@ -138,6 +140,14 @@ public abstract class Ocorrencia {
 
     public AreaRisco getArea() {
         return area;
+    }
+
+    public Setor getSetor() {
+        return setor;
+    }
+
+    public void setSetor(Setor setor) {
+        this.setor = setor;
     }
 
     public GestorDeSeguranca getGestor() {

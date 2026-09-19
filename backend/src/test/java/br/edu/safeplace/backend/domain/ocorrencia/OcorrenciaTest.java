@@ -13,6 +13,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.epi.Epi;
+import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.DataOcorrenciaInvalidaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.TransicaoStatusInvalidaException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
@@ -47,7 +49,8 @@ class OcorrenciaTest {
     void deveInstanciarOcorrenciaComDadosValidos() {
         LocalDateTime dataFato = LocalDateTime.now().minusDays(1);
         LocalDateTime dataRegistro = LocalDateTime.now();
-        AreaRisco area = AreaRisco.novo("Caldeiras", "Alta pressão", NivelPerigo.ALTO);
+        Epi epi = new Epi(1, "Óculos", "CA-123", 10, 2, StatusEpi.DISPONIVEL, LocalDate.now().plusYears(1), 180, "Óculos", null);
+        AreaRisco area = AreaRisco.cadastrar("CALD-01", "Caldeiras", "Alta pressão", NivelPerigo.ALTO, List.of(epi));
         Colaborador colaborador = Colaborador.novo("Carlos", "87455877074", LocalDate.of(1990, 1, 1), "carlos@empresa.com");
         GestorDeSeguranca gestor = GestorDeSeguranca.novo("Ana", "49216091040", LocalDate.of(1985, 5, 5), "ana@empresa.com", "senha123");
 

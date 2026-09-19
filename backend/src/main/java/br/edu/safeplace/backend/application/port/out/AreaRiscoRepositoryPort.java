@@ -10,6 +10,10 @@ public interface AreaRiscoRepositoryPort {
 
     AreaRisco salvar(AreaRisco areaRisco);
 
+    default AreaRisco atualizar(AreaRisco areaRisco) {
+        return salvar(areaRisco);
+    }
+
     Optional<AreaRisco> buscarPorId(Integer id);
 
     Optional<AreaRisco> buscarPorCodigo(String codigo);
@@ -17,4 +21,8 @@ public interface AreaRiscoRepositoryPort {
     List<AreaRisco> listarTodas();
 
     List<AreaRisco> listarPorNivelPerigo(NivelPerigo nivelPerigo);
+
+    default List<AreaRisco> listarPorSetor(Integer setorId) {
+        return List.of();
+    }
 }

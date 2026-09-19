@@ -60,7 +60,7 @@ public class Incidente extends Ocorrencia {
                 null,
                 null,
                 null,
-                local != null ? AreaRisco.novo(local, null, null) : null,
+                null,
                 null,
                 local,
                 planoDeAcao,

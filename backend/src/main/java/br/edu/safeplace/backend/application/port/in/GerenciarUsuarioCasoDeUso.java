@@ -25,7 +25,7 @@ public interface GerenciarUsuarioCasoDeUso {
     UsuarioSaidaDTO cadastrarSupervisor(CadastrarSupervisorInputDTO entrada);
 
     /**
-     * RF23: o Supervisor cadastra colaboradores, que não possuem conta de acesso nem senha.
+     * RF23: Supervisor e Gestor de Segurança cadastram colaboradores, que não possuem conta de acesso nem senha.
      */
     UsuarioSaidaDTO cadastrarColaborador(CadastrarColaboradorInputDTO entrada);
 

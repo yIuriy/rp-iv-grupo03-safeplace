@@ -143,6 +143,25 @@ class AreaRiscoUseCaseTest {
                 .hasMessageContaining("99");
     }
 
+    @Test
+    @DisplayName("Deve atualizar área de risco com novos agentes e limites")
+    void deveAtualizarAreaRiscoComNovosAgentesELimites() {
+        AreaRiscoOutputDTO criada = useCase.cadastrarAreaRisco(new CadastrarAreaRiscoInputDTO(
+                "SET-01", "Nome Original", "Desc", NivelPerigo.MEDIO, null, List.of("Ruído"), "Limite", List.of(1)));
+
+        br.edu.safeplace.backend.application.dto.input.AtualizarAreaRiscoInputDTO atualizacao =
+                new br.edu.safeplace.backend.application.dto.input.AtualizarAreaRiscoInputDTO(
+                        "Novo Nome", "Nova Desc", NivelPerigo.ALTO, null, List.of("Ruído", "Calor"), "Novo Limite", List.of(1, 2), "Revisão");
+
+        AreaRiscoOutputDTO atualizada = useCase.atualizarAreaRisco(criada.id(), atualizacao, "gestor");
+
+        assertThat(atualizada.nome()).isEqualTo("Novo Nome");
+        assertThat(atualizada.nivelPerigo()).isEqualTo(NivelPerigo.ALTO);
+        assertThat(atualizada.agentesRisco()).containsExactly("Ruído", "Calor");
+        assertThat(atualizada.limites()).isEqualTo("Novo Limite");
+        assertThat(atualizada.episObrigatorios()).hasSize(2);
+    }
+
     private static class AreaRiscoRepositoryFake implements AreaRiscoRepositoryPort {
         private final Map<Integer, AreaRisco> storage = new HashMap<>();
         private int nextId = 1;
@@ -152,6 +171,7 @@ class AreaRiscoUseCaseTest {
             Integer id = areaRisco.getId() != null ? areaRisco.getId() : nextId++;
             AreaRisco salva = new AreaRisco(id, areaRisco.getCodigo(), areaRisco.getNome(),
                     areaRisco.getDescricao(), areaRisco.getNivelPerigo(),
+                    areaRisco.getSetorId(), areaRisco.getAgentesRisco(), areaRisco.getLimites(),
                     areaRisco.verificarEpisObrigatoriosArea());
             storage.put(id, salva);
             return salva;

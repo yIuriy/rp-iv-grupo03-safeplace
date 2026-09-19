@@ -12,7 +12,15 @@ public interface EpiRepositoryPort {
 
     Optional<Epi> buscarPorId(Integer id);
 
+    default Optional<Epi> buscarPorIdComLock(Integer id) {
+        return buscarPorId(id);
+    }
+
     Optional<Epi> buscarPorCA(String numeroCa);
+
+    default List<Epi> listarPorCA(String numeroCa) {
+        return buscarPorCA(numeroCa).map(List::of).orElseGet(List::of);
+    }
 
     List<Epi> listarTodos();
 

@@ -2,6 +2,7 @@ package br.edu.safeplace.backend.application.port.in;
 
 import java.util.List;
 
+import br.edu.safeplace.backend.application.dto.input.AtualizarAreaRiscoInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarAreaRiscoInputDTO;
 import br.edu.safeplace.backend.application.dto.output.AreaRiscoOutputDTO;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
@@ -12,6 +13,8 @@ import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 public interface GerenciarAreaRiscoUseCase {
 
     AreaRiscoOutputDTO cadastrarAreaRisco(CadastrarAreaRiscoInputDTO inputDTO);
+
+    AreaRiscoOutputDTO atualizarAreaRisco(Integer id, AtualizarAreaRiscoInputDTO inputDTO, String operador);
 
     List<AreaRiscoOutputDTO> listar();
 

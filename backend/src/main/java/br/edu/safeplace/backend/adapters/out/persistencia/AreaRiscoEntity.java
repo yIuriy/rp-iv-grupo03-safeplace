@@ -1,6 +1,7 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import jakarta.persistence.*;
@@ -25,6 +26,15 @@ public class AreaRiscoEntity {
     @Column(name = "nivel_perigo", nullable = false, length = 20)
     private String nivelPerigo;
 
+    @Column(name = "setor_id")
+    private Integer setorId;
+
+    @Column(name = "agentes_risco", columnDefinition = "text")
+    private String agentesRisco;
+
+    @Column(name = "limites", columnDefinition = "text")
+    private String limites;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "areas_risco_epis", joinColumns = @JoinColumn(name = "area_risco_id"), inverseJoinColumns = @JoinColumn(name = "epi_id"))
     private List<EpiEntity> episObrigatorios = new ArrayList<>();
@@ -32,14 +42,30 @@ public class AreaRiscoEntity {
     public AreaRiscoEntity() {
     }
 
-    public AreaRiscoEntity(Integer id, String codigo, String nome, String descricao, String nivelPerigo,
+    public AreaRiscoEntity(
+            Integer id,
+            String codigo,
+            String nome,
+            String descricao,
+            String nivelPerigo,
+            Integer setorId,
+            String agentesRisco,
+            String limites,
             List<EpiEntity> episObrigatorios) {
         this.id = id;
         this.codigo = codigo;
         this.nome = nome;
         this.descricao = descricao;
         this.nivelPerigo = nivelPerigo;
+        this.setorId = setorId;
+        this.agentesRisco = agentesRisco;
+        this.limites = limites;
         this.episObrigatorios = episObrigatorios != null ? new ArrayList<>(episObrigatorios) : new ArrayList<>();
+    }
+
+    public AreaRiscoEntity(Integer id, String codigo, String nome, String descricao, String nivelPerigo,
+            List<EpiEntity> episObrigatorios) {
+        this(id, codigo, nome, descricao, nivelPerigo, null, null, null, episObrigatorios);
     }
 
     public Integer getId() {
@@ -60,6 +86,35 @@ public class AreaRiscoEntity {
 
     public String getNivelPerigo() {
         return nivelPerigo;
+    }
+
+    public Integer getSetorId() {
+        return setorId;
+    }
+
+    public String getAgentesRisco() {
+        return agentesRisco;
+    }
+
+    public List<String> getAgentesRiscoList() {
+        if (agentesRisco == null || agentesRisco.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(agentesRisco.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+    }
+
+    public static String formatAgentesRisco(List<String> agentes) {
+        if (agentes == null || agentes.isEmpty()) {
+            return null;
+        }
+        return String.join(", ", agentes);
+    }
+
+    public String getLimites() {
+        return limites;
     }
 
     public List<EpiEntity> getEpisObrigatorios() {

@@ -37,7 +37,7 @@ As portas de entrada representam as operações disponíveis para os atores do s
 - controle de estoque de EPIs;
 - controle de manutenção de EPIs;
 - empréstimo e devolução de EPIs;
-- cadastro e consulta de áreas de risco;
+- cadastro, consulta e atualização de setores físicos e áreas de risco;
 - classificação do nível de periculosidade das tarefas;
 - definição e acompanhamento de planos de ação;
 - controle de certificações e treinamentos;
@@ -47,7 +47,7 @@ As portas de entrada representam as operações disponíveis para os atores do s
 
 As portas de saída representam recursos externos ao núcleo:
 
-- repositórios de usuários, ocorrências, EPIs, áreas de risco, tarefas, certificações e treinamentos;
+- repositórios de usuários, ocorrências, EPIs, setores físicos, áreas de risco, tarefas, auditoria, certificações e treinamentos;
 - autenticação e controle de acesso;
 - registro de auditoria;
 - criptografia e armazenamento seguro.
@@ -60,10 +60,10 @@ Essa é a organização lógica prevista, não uma lista de módulos já impleme
 
 | Funcionalidade | Responsabilidade no MVP | Referências |
 | --- | --- | --- |
-| `usuarios` | Gestor cadastra, consulta e atualiza supervisores com conta; Supervisor cadastra, consulta e atualiza colaboradores sem conta, preservando seus vínculos. | RF23, US23 e US24 |
+| `usuarios` | Gestor cadastra, consulta e atualiza supervisores com conta; Supervisor e Gestor cadastram, consultam e atualizam colaboradores sem conta, preservando seus vínculos. | RF23, US23 e US24 |
 | `ocorrencias` | Registrar e acompanhar acidentes e incidentes, com envolvidos, protocolo, triagem, atualização, arquivamento e planos de ação. | RF01, RF02, RF07, RF13 e RF16; UC05, UC07 e UC09 |
 | `epis` | Estoque, movimentações, manutenção, empréstimos, devoluções e previsão de substituição com alertas. | RF03, RF04, RF11 e RF21; UC01, UC06, UC10 e UC12 |
-| `areas-de-risco` | Cadastro, consulta e atualização das áreas, agentes de risco, limites e EPIs exigidos para acesso. | RF05; UC03 |
+| `areas-de-risco` | Gestão de setores físicos e áreas de risco vinculadas (1:N), com cadastro, consulta, atualização de limites, agentes de risco e EPIs exigidos para acesso. | RF05; UC03 |
 | `tarefas` | Classificar e consultar a periculosidade das tarefas. O vínculo entre tarefa e EPI permanece no backlog de RF12. | RF06; UC11 |
 | `capacitacoes` | Consultar certificações e treinamentos, controlar vencimentos e aplicar os impedimentos previstos para alocação e empréstimo. O fluxo de cadastro ainda precisa ser identificado. | RF10; UC02 e UC12 |
 
@@ -132,6 +132,9 @@ O estoque segue a mesma organização: `EpiController` recebe as requisições, 
 | Cadastrar e listar áreas de risco | `POST /api/areas-risco` e `GET /api/areas-risco` |
 | Filtrar o mapa de riscos por grau de perigo | `GET /api/areas-risco?nivelPerigo={nivel}` |
 | Consultar uma área de risco | `GET /api/areas-risco/{id}` |
+| Atualizar área de risco (Gestor de Segurança) | `PUT /api/areas-risco/{id}` |
+| Cadastrar setor físico (Gestor de Segurança) | `POST /api/setores` |
+| Listar e consultar setores físicos | `GET /api/setores` e `GET /api/setores/{id}` |
 | Cadastrar e listar tarefas | `POST /api/tarefas` e `GET /api/tarefas` |
 | Filtrar tarefas por grau de perigo | `GET /api/tarefas?nivelPerigo={nivel}` |
 | Consultar uma tarefa | `GET /api/tarefas/{id}` |
@@ -142,7 +145,7 @@ O módulo de usuários expõe o provisionamento de RF23 em rotas por papel: `POS
 
 A atualização cadastral (issue #122) segue a mesma matriz: `PUT /api/usuarios/supervisores/{id}` é exclusivo do Gestor e `PUT /api/usuarios/colaboradores/{id}` atende Supervisor e Gestor. A operação altera nome, data de nascimento e e-mail no mesmo registro, preservando id, CPF, perfil e hash da senha; como a rota fixa o papel, um id de outro perfil responde 404 e a atualização nunca converte um Colaborador em conta de acesso. CPF, senha, perfil e situação (`ativo`) são recusados com 400, porque a alteração de CPF e a desativação aguardam decisão do grupo (especificação do MVP, seção 11.1). A autoria da alteração exigida por RNF05 depende do módulo de auditoria (issue #121); por enquanto só `atualizado_em` é registrado.
 
-Os módulos de áreas de risco (RF05, UC03) e de tarefas (RF06, UC11) seguem a mesma organização: `AreaRiscoController` e `TarefaController` recebem as requisições; `AreaRiscoUseCase` implementa `GerenciarAreaRiscoUseCase` e `TarefaUseCase` implementa `ClassificarTarefaUseCase`; a persistência fica em `AreaRiscoJpaAdapter` e `TarefaJpaAdapter`, por trás de `AreaRiscoRepositoryPort` e `TarefaRepositoryPort`. O domínio fica em `domain/area_risco/` e `domain/tarefa/`, e a enumeração `NivelPerigo`, compartilhada pelos dois, fica em `domain/comum/`. O cadastro de área de risco aplica a RN1 do UC03, bloqueando o salvamento sem EPIs obrigatórios de acesso. A classificação de tarefa registra data e hora; o responsável técnico exigido pela RN1 do UC11 depende do módulo de auditoria, ainda não implementado.
+Os módulos de áreas de risco e setores (RF05, UC03) e de tarefas (RF06, UC11) seguem a mesma organização: `AreaRiscoController`, `SetorController` e `TarefaController` recebem as requisições; `AreaRiscoUseCase` implementa `GerenciarAreaRiscoUseCase`, `SetorUseCase` implementa `GerenciarSetorUseCase` e `TarefaUseCase` implementa `ClassificarTarefaUseCase`; a persistência fica em `AreaRiscoJpaAdapter`, `SetorJpaAdapter`, `LogAuditoriaJpaAdapter` e `TarefaJpaAdapter`, por trás de `AreaRiscoRepositoryPort`, `SetorRepositoryPort`, `LogAuditoriaRepositoryPort` e `TarefaRepositoryPort`. O domínio fica em `domain/area_risco/`, `domain/auditoria/` e `domain/tarefa/`, e a enumeração `NivelPerigo`, compartilhada pelos dois primeiros, fica em `domain/comum/`. A modelagem separa a entidade `Setor` (espaço físico da planta, com relação 1:N) da `AreaRisco` (delimitação de risco com agentes, limites e EPIs obrigatórios). O cadastro e a atualização de área de risco aplicam a RN1 do UC03, bloqueando o salvamento sem EPIs obrigatórios de acesso e sem setor válido. A atualização de área de risco gera imutavelmente um `LogAuditoria` identificando o responsável e o timestamp da alteração, atendendo ao RNF05. A classificação de tarefa registra data e hora; o responsável técnico exigido pela RN1 do UC11 depende do módulo de auditoria, ainda não integrado a tarefas.
 
 `NivelPerigo` foi implementado com o vocabulário de UC03 e do diagrama de classes (`BAIXO`, `MEDIO`, `ALTO`, `CRITICO`). A divergência com os níveis leve, moderado, grave e crítico usados em UC11 e US06 continua pendente de decisão da equipe, conforme o glossário e a issue #77.
 
@@ -157,6 +160,6 @@ Pontos ainda não atendidos ou fora da entrega:
 - Relatórios, CAT, dashboards e integrações externas permanecem fora do MVP, conforme a priorização.
 - RNF08 permanece no MVP, com escopo pendente e sem implementação de cache ou sincronização na interface atual.
 - A [configuração de segurança](../../backend/src/main/java/br/edu/safeplace/backend/config/SecurityConfig.java) aplica controle de acesso por perfil (RBAC) e autenticação via JWT (RNF03). Rotas públicas limitam-se a autenticação, documentação Swagger e health check.
-- RNF05 ainda precisa de implementação que cubra as operações, os dados auditados, a imutabilidade e a retenção.
+- RNF05 está atendido no módulo de áreas de risco através do registro de logs de auditoria imutáveis com autoria e data/hora (`LogAuditoria`); sua extensão para os demais fluxos do sistema permanece no backlog.
 - O Compose fornece `VITE_API_URL` e o cliente HTTP a lê, aceitando `VITE_URL_API` como nome anterior; o valor local padrão está documentado no README do frontend.
 - A carga inicial do primeiro Gestor de Segurança, prevista na seção 3.1 da especificação do MVP, ainda não existe no repositório: sem um registro inserido à mão na tabela `usuarios`, não há como entrar na interface.

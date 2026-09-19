@@ -33,7 +33,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 @WebMvcTest({EpiController.class, EpiExceptionHandler.class})
 @Import(SecurityConfig.class)
-@WithMockUser(roles = "SUPERVISOR")
+@WithMockUser(roles = "GESTOR_SEGURANCA")
 class EpiControllerTest {
 
     @Autowired

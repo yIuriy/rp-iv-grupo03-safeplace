@@ -10,7 +10,7 @@ O MVP contempla os fluxos essenciais de UC01, UC02, UC03, UC05, UC06, UC07, UC09
 
 UC04 (anexos e testemunhas) e UC08 (vínculo entre tarefas e EPIs) permanecem no backlog. Nos UCs do MVP, os cenários futuros continuam descritos e são identificados no próprio texto. A previsão de substituição e os alertas de RF21 pertencem ao MVP; o alcance das requisições de compra de UC10 e do envio offline de UC09 continua pendente de decisão.
 
-Os atores com acesso são Gestor de Segurança e Supervisor. O Colaborador é cadastrado pelo Supervisor para vínculo a ocorrências, capacitações e empréstimos, sem conta ou senha. O Supervisor registra os relatos comunicados pelo Colaborador.
+Os atores com acesso são Gestor de Segurança e Supervisor. O Colaborador é cadastrado pelo Supervisor ou pelo Gestor de Segurança para vínculo a ocorrências, capacitações e empréstimos, sem conta ou senha. O Supervisor registra os relatos comunicados pelo Colaborador.
 
 ---
 

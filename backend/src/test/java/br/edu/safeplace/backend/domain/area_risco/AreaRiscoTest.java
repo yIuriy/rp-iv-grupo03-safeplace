@@ -117,13 +117,21 @@ class AreaRiscoTest {
     }
 
     @Test
-    @DisplayName("Referência nominal de local não é considerada uma área cadastrada")
-    void referenciaNominalNaoEhAreaCadastrada() {
-        AreaRisco referencia = AreaRisco.novo("Pátio externo", null, null);
+    @DisplayName("Deve atualizar dados, agentes de risco e limites de uma área existente")
+    void deveAtualizarDadosAgentesELimites() {
+        AreaRisco area = AreaRisco.cadastrar("SET-06B", "Pintura", "Cabine 1", NivelPerigo.MEDIO,
+                1, List.of("Vapores"), "Bloco A", List.of(epi(7, "Máscara")));
 
-        assertThat(referencia.isCadastrada()).isFalse();
-        assertThat(referencia.getCodigo()).isNull();
-        assertThat(referencia.verificarEpisObrigatoriosArea()).isEmpty();
+        AreaRisco atualizada = area.atualizar("Pintura Automotiva", "Cabine Nova", NivelPerigo.ALTO,
+                2, List.of("Vapores", "Tíner"), "Bloco B", List.of(epi(7, "Máscara"), epi(8, "Luva")));
+
+        assertThat(atualizada.getNome()).isEqualTo("Pintura Automotiva");
+        assertThat(atualizada.getDescricao()).isEqualTo("Cabine Nova");
+        assertThat(atualizada.getNivelPerigo()).isEqualTo(NivelPerigo.ALTO);
+        assertThat(atualizada.getSetorId()).isEqualTo(2);
+        assertThat(atualizada.getAgentesRisco()).containsExactly("Vapores", "Tíner");
+        assertThat(atualizada.getLimites()).isEqualTo("Bloco B");
+        assertThat(atualizada.exigeEpi(8)).isTrue();
     }
 
     @Test
@@ -143,9 +151,11 @@ class AreaRiscoTest {
                 List.of(epi(1, "Capacete")));
         AreaRisco segunda = AreaRisco.cadastrar("set-08", "Solda renomeada", null, NivelPerigo.BAIXO,
                 List.of(epi(2, "Bota")));
+        AreaRisco diferente = AreaRisco.cadastrar("SET-99", "Outro", null, NivelPerigo.BAIXO,
+                List.of(epi(2, "Bota")));
 
         assertThat(primeira).isEqualTo(segunda);
         assertThat(primeira).hasSameHashCodeAs(segunda);
-        assertThat(primeira).isNotEqualTo(AreaRisco.novo("Solda", null, null));
+        assertThat(primeira).isNotEqualTo(diferente);
     }
 }

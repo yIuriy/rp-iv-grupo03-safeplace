@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -192,5 +193,49 @@ class AreaRiscoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonSemNivel))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Gestor de Segurança deve atualizar área de risco com sucesso")
+    void deveAtualizarAreaRiscoComSucesso() throws Exception {
+        String jsonAtualizacao = """
+                {
+                    "nome": "Linha Atualizada",
+                    "descricao": "Nova descrição",
+                    "nivelPerigo": "ALTO",
+                    "episObrigatoriosIds": [1, 2],
+                    "justificativa": "Ajuste semestral de riscos"
+                }
+                """;
+
+        when(useCase.atualizarAreaRisco(eq(1), any(br.edu.safeplace.backend.application.dto.input.AtualizarAreaRiscoInputDTO.class), any()))
+                .thenReturn(areaSalva());
+
+        mockMvc.perform(put("/api/areas-risco/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonAtualizacao))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.codigo").value("SET-01"));
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("Supervisor não deve atualizar área de risco (proibido)")
+    void supervisorNaoDeveAtualizarAreaRisco() throws Exception {
+        String jsonAtualizacao = """
+                {
+                    "nome": "Linha Atualizada",
+                    "descricao": "Nova descrição",
+                    "nivelPerigo": "ALTO",
+                    "episObrigatoriosIds": [1, 2]
+                }
+                """;
+
+        mockMvc.perform(put("/api/areas-risco/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonAtualizacao))
+                .andExpect(status().isForbidden());
     }
 }

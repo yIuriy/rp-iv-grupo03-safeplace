@@ -12,6 +12,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.epi.Epi;
+import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
@@ -24,7 +26,8 @@ class IncidenteTest {
     @DisplayName("Deve criar Incidente completo com situação de risco e potencial de dano")
     void deveCriarIncidenteCompleto() {
         LocalDateTime dataFato = LocalDateTime.now().minusHours(3);
-        AreaRisco area = AreaRisco.novo("Almoxarifado", "Estocagem vertical", NivelPerigo.MEDIO);
+        Epi epi = new Epi(1, "Capacete", "CA-123", 10, 2, StatusEpi.DISPONIVEL, LocalDate.now().plusYears(1), 180, "Capacete", null);
+        AreaRisco area = AreaRisco.cadastrar("ALM-01", "Almoxarifado", "Estocagem vertical", NivelPerigo.MEDIO, List.of(epi));
         Colaborador colaborador = Colaborador.novo("Juliana", "87455877074", LocalDate.of(1995, 12, 1), "juliana@empresa.com");
         GestorDeSeguranca gestor = GestorDeSeguranca.novo("Fernando", "49216091040", LocalDate.of(1982, 8, 14), "fernando@empresa.com", "senha123");
 

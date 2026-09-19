@@ -124,7 +124,7 @@ A priorização considera três fatores: a contribuição direta do requisito pa
 | RF13 | Criar registros de acidente | Deve ter | Permitir que o Supervisor registre acidentes. |
 | RF16 | Registrar incidentes | Deve ter | Permitir registro pelo Supervisor ou Gestor. Relatos comunicados pelo Colaborador são registrados pelo Supervisor. |
 | RF21 | Gerenciar ciclo de vida e substituição inteligente de EPIs | Deve ter | Calcular a previsão de substituição dos EPIs e gerar alertas preventivos. |
-| RF23 | Gerenciar supervisores e colaboradores | Deve ter | Gestor gerencia supervisores com conta e senha inicial automática; Supervisor gerencia colaboradores sem conta ou senha, preservando seus vínculos. |
+| RF23 | Gerenciar supervisores e colaboradores | Deve ter | Gestor gerencia supervisores com conta e senha inicial automática; Supervisor e Gestor de Segurança gerenciam colaboradores sem conta ou senha, preservando seus vínculos. |
 
 ### 5.2. Requisitos não funcionais incluídos
 

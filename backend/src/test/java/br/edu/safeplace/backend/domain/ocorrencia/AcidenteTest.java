@@ -11,6 +11,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.epi.Epi;
+import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.ProtocoloCATInvalidoException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
@@ -24,7 +26,8 @@ class AcidenteTest {
     @DisplayName("Deve criar Acidente completo com campos de ocorrência e específicos de acidente")
     void deveCriarAcidenteCompleto() {
         LocalDateTime dataFato = LocalDateTime.now().minusDays(2);
-        AreaRisco area = AreaRisco.novo("Usinagem", "Tornos mecânicos", NivelPerigo.ALTO);
+        Epi epi = new Epi(1, "Bota de Segurança", "CA-123", 10, 2, StatusEpi.DISPONIVEL, LocalDate.now().plusYears(1), 180, "Bota", null);
+        AreaRisco area = AreaRisco.cadastrar("USI-01", "Usinagem", "Tornos mecânicos", NivelPerigo.ALTO, List.of(epi));
         Colaborador colaborador = Colaborador.novo("Roberto", "87455877074", LocalDate.of(1992, 3, 10), "roberto@empresa.com");
         GestorDeSeguranca gestor = GestorDeSeguranca.novo("Mariana", "49216091040", LocalDate.of(1988, 7, 20), "mariana@empresa.com", "senha123");
 
@@ -104,7 +107,7 @@ class AcidenteTest {
         Acidente novoAcidente = Acidente.novo(
                 "Corte com estilete",
                 dataFato,
-                AreaRisco.novo("Expedição", "Embalagem", NivelPerigo.MEDIO),
+                AreaRisco.cadastrar("EXP-01", "Expedição", "Embalagem", NivelPerigo.MEDIO, List.of(new Epi(2, "Luva", "CA-456", 5, 1, StatusEpi.DISPONIVEL, LocalDate.now().plusYears(1), 180, "Luva", null))),
                 null, null, null, null,
                 CausaRaiz.FATOR_HUMANO,
                 "Corte",

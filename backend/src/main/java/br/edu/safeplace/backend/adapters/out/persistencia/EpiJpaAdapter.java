@@ -31,6 +31,11 @@ public class EpiJpaAdapter implements EpiRepositoryPort {
     }
 
     @Override
+    public Optional<Epi> buscarPorIdComLock(Integer id) {
+        return epiRepository.findByIdWithLock(id).map(this::toDomain);
+    }
+
+    @Override
     public List<Epi> listarTodos() {
         return epiRepository.findAll().stream().map(this::toDomain).toList();
     }
@@ -51,8 +56,29 @@ public class EpiJpaAdapter implements EpiRepositoryPort {
 
     @Override
     public Optional<Epi> buscarPorCA(String numeroCa) {
-        return epiRepository.findByNumeroCa(numeroCa)
-                .map(this::toDomain);
+        return listarPorCA(numeroCa).stream().findFirst();
+    }
+
+    @Override
+    public List<Epi> listarPorCA(String numeroCa) {
+        if (numeroCa == null || numeroCa.isBlank()) {
+            return List.of();
+        }
+        String normalizado = numeroCa.strip();
+        if (normalizado.toUpperCase().startsWith("CA-")) {
+            normalizado = normalizado.substring(3).strip();
+        }
+        List<Epi> encontrados = epiRepository.findAllByNumeroCa(normalizado)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+        if (encontrados.isEmpty() && !normalizado.equals(numeroCa)) {
+            encontrados = epiRepository.findAllByNumeroCa(numeroCa)
+                    .stream()
+                    .map(this::toDomain)
+                    .toList();
+        }
+        return encontrados;
     }
 
     @Override
