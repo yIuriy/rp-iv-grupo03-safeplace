@@ -6,10 +6,12 @@ import br.edu.safeplace.backend.application.dto.output.ManutencaoEpiOutputDTO;
 import br.edu.safeplace.backend.application.port.in.ControlarManutencaoEpiUseCase;
 import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.ManutencaoEpi;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -19,11 +21,20 @@ import java.util.List;
 public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseCase {
     private final EpiRepositoryPort epiRepositoryPort;
     private final ManutencaoEpiRepositoryPort manutencaoEpiRepositoryPort;
+    private final UsuarioRepositorioPorta usuarioRepositorioPorta;
 
     public ControlarManutencaoEpiService(EpiRepositoryPort epiRepositoryPort,
                                          ManutencaoEpiRepositoryPort manutencaoEpiRepositoryPort) {
+        this(epiRepositoryPort, manutencaoEpiRepositoryPort, null);
+    }
+
+    @Autowired
+    public ControlarManutencaoEpiService(EpiRepositoryPort epiRepositoryPort,
+                                         ManutencaoEpiRepositoryPort manutencaoEpiRepositoryPort,
+                                         UsuarioRepositorioPorta usuarioRepositorioPorta) {
         this.epiRepositoryPort = epiRepositoryPort;
         this.manutencaoEpiRepositoryPort = manutencaoEpiRepositoryPort;
+        this.usuarioRepositorioPorta = usuarioRepositorioPorta;
     }
 
     @Override
@@ -40,6 +51,13 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
     @Override
     @Transactional
     public ManutencaoEpiOutputDTO concluirManutencao(ConcluirManutencaoInputDTO inputDTO) {
+        return concluirManutencao(inputDTO, null);
+    }
+
+    @Override
+    @Transactional
+    public ManutencaoEpiOutputDTO concluirManutencao(ConcluirManutencaoInputDTO inputDTO,
+                                                      String responsavelEmail) {
         if (inputDTO == null) {
             throw new IllegalArgumentException("Dados para conclusão de manutenção são obrigatórios.");
         }
@@ -58,7 +76,8 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
                 inputDTO.tipoManutencao(),
                 inputDTO.descricao(),
                 inputDTO.resultado(),
-                inputDTO.responsavelManutencao()
+                responsavelEmail != null ? responsavelEmail : inputDTO.responsavelManutencao(),
+                buscarResponsavelId(responsavelEmail)
         );
 
         epi.concluirManutencao(manutencao);
@@ -66,6 +85,21 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
 
         ManutencaoEpi salva = manutencaoEpiRepositoryPort.salvar(manutencao);
         return ManutencaoEpiOutputDTO.deDominio(salva, epi.getStatus());
+    }
+
+    private Integer buscarResponsavelId(String responsavelEmail) {
+        if (responsavelEmail == null || responsavelEmail.isBlank()) {
+            if (usuarioRepositorioPorta != null) {
+                throw new IllegalArgumentException("Responsável autenticado é obrigatório.");
+            }
+            return null;
+        }
+        if (usuarioRepositorioPorta == null) {
+            throw new IllegalStateException("Repositório de usuários indisponível para rastrear manutenção.");
+        }
+        return usuarioRepositorioPorta.buscarPorEmail(responsavelEmail.toLowerCase())
+                .map(usuario -> usuario.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Responsável autenticado não encontrado."));
     }
 
     @Override

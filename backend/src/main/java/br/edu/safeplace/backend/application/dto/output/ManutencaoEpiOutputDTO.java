@@ -15,6 +15,7 @@ public record ManutencaoEpiOutputDTO(
         String descricao,
         ResultadoManutencao resultado,
         String responsavelManutencao,
+        Integer responsavelId,
         StatusEpi statusAtualEpi
 ) {
     public static ManutencaoEpiOutputDTO deDominio(ManutencaoEpi manutencao, StatusEpi statusAtualEpi) {
@@ -26,6 +27,7 @@ public record ManutencaoEpiOutputDTO(
                 manutencao.getDescricao(),
                 manutencao.getResultado(),
                 manutencao.getResponsavelManutencao(),
+                manutencao.getResponsavelId(),
                 statusAtualEpi
         );
     }

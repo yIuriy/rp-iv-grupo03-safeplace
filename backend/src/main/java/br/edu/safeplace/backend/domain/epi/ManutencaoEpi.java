@@ -10,10 +10,19 @@ public class ManutencaoEpi {
     private final String descricao;
     private final ResultadoManutencao resultado;
     private final String responsavelManutencao;
+    private final Integer responsavelId;
 
     public ManutencaoEpi(Integer id, Integer epiId, LocalDateTime dataManutencao,
                          TipoManutencao tipoManutencao, String descricao,
                          ResultadoManutencao resultado, String responsavelManutencao) {
+        this(id, epiId, dataManutencao, tipoManutencao, descricao, resultado,
+                responsavelManutencao, null);
+    }
+
+    public ManutencaoEpi(Integer id, Integer epiId, LocalDateTime dataManutencao,
+                         TipoManutencao tipoManutencao, String descricao,
+                         ResultadoManutencao resultado, String responsavelManutencao,
+                         Integer responsavelId) {
         if (epiId == null) {
             throw new IllegalArgumentException("Identificador do EPI é obrigatório.");
         }
@@ -40,12 +49,21 @@ public class ManutencaoEpi {
         this.descricao = descricao;
         this.resultado = resultado;
         this.responsavelManutencao = responsavelManutencao;
+        this.responsavelId = responsavelId;
     }
 
     public static ManutencaoEpi novo(Integer epiId, LocalDateTime dataManutencao,
                                      TipoManutencao tipoManutencao, String descricao,
                                      ResultadoManutencao resultado, String responsavelManutencao) {
         return new ManutencaoEpi(null, epiId, dataManutencao, tipoManutencao, descricao, resultado, responsavelManutencao);
+    }
+
+    public static ManutencaoEpi novo(Integer epiId, LocalDateTime dataManutencao,
+                                     TipoManutencao tipoManutencao, String descricao,
+                                     ResultadoManutencao resultado, String responsavelManutencao,
+                                     Integer responsavelId) {
+        return new ManutencaoEpi(null, epiId, dataManutencao, tipoManutencao, descricao,
+                resultado, responsavelManutencao, responsavelId);
     }
 
     public Integer getId() {
@@ -74,5 +92,9 @@ public class ManutencaoEpi {
 
     public String getResponsavelManutencao() {
         return responsavelManutencao;
+    }
+
+    public Integer getResponsavelId() {
+        return responsavelId;
     }
 }
