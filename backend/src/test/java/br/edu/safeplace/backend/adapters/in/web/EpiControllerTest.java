@@ -4,6 +4,7 @@ import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
 import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.MovimentacaoEstoqueOutputDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarEpiUseCase;
+import br.edu.safeplace.backend.application.port.in.ControlarManutencaoEpiUseCase;
 import br.edu.safeplace.backend.config.SecurityConfig;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
@@ -40,6 +41,9 @@ class EpiControllerTest {
 
     @MockitoBean
     private GerenciarEpiUseCase useCase;
+
+    @MockitoBean
+    private ControlarManutencaoEpiUseCase manutencaoUseCase;
 
     @Test
     void deveCriarEpiComSucesso() throws Exception {

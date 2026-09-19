@@ -1,6 +1,7 @@
 package br.edu.safeplace.backend.adapters.in.web;
 
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
+import br.edu.safeplace.backend.domain.epi.exception.EpiIndisponivelParaManutencaoException;
 import br.edu.safeplace.backend.domain.epi.exception.SaldoInsuficienteException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,17 @@ public class EpiExceptionHandler {
                 "timestamp", LocalDateTime.now(),
                 "status", HttpStatus.BAD_REQUEST.value(),
                 "error", "Saldo Insuficiente",
+                "message", ex.getMessage()
+        ));
+    }
+
+    @ExceptionHandler(EpiIndisponivelParaManutencaoException.class)
+    public ResponseEntity<Map<String, Object>> handleEpiIndisponivelParaManutencao(
+            EpiIndisponivelParaManutencaoException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.BAD_REQUEST.value(),
+                "error", "EPI Indisponível para Manutenção",
                 "message", ex.getMessage()
         ));
     }
