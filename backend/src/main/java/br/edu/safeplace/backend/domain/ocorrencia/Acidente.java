@@ -170,6 +170,35 @@ public class Acidente extends Ocorrencia {
             String tipo,
             String dano,
             String destino) {
+        return novo(
+                descricao,
+                dataOcorrencia,
+                area,
+                colaborador,
+                gestor,
+                testemunhas,
+                midias,
+                causaRaiz,
+                tipo,
+                dano,
+                destino,
+                NivelPerigo.BAIXO
+        );
+    }
+
+    public static Acidente novo(
+            String descricao,
+            LocalDateTime dataOcorrencia,
+            AreaRisco area,
+            Colaborador colaborador,
+            GestorDeSeguranca gestor,
+            List<String> testemunhas,
+            List<String> midias,
+            CausaRaizAcidente causaRaiz,
+            String tipo,
+            String dano,
+            String destino,
+            NivelPerigo gravidade) {
         return new Acidente(
                 null,
                 descricao,
@@ -187,7 +216,8 @@ public class Acidente extends Ocorrencia {
                 tipo,
                 dano,
                 null,
-                destino
+                destino,
+                gravidade
         );
     }
 

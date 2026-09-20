@@ -20,18 +20,43 @@ public class AcidenteEntity extends OcorrenciaEntity {
 
     private String destino;
 
+    @Column(name = "gravidade", nullable = false, length = 20)
+    private String gravidade = "BAIXO";
+
     protected AcidenteEntity() {
     }
 
-    public AcidenteEntity(Integer idOcorrencia, LocalDateTime dataOcorrencia, String local, String descricao,
-            PlanoDeAcaoEntity planoDeAcao, String causaRaiz, String tipo, String dano,
-            String numeroProtocolo, String destino) {
-        super(idOcorrencia, dataOcorrencia, local, descricao, planoDeAcao);
+    public AcidenteEntity(
+            Integer idOcorrencia,
+            LocalDateTime dataOcorrencia,
+            LocalDateTime dataRegistro,
+            String statusOcorrencia,
+            AreaRiscoEntity area,
+            ColaboradorEntidade colaborador,
+            GestorDeSegurancaEntidade gestor,
+            String local,
+            String descricao,
+            PlanoDeAcaoEntity planoDeAcao,
+            String causaRaiz,
+            String tipo,
+            String dano,
+            String numeroProtocolo,
+            String destino,
+            String gravidade) {
+        super(idOcorrencia, dataOcorrencia, dataRegistro, statusOcorrencia, area, colaborador, gestor, local, descricao, planoDeAcao);
         this.causaRaiz = causaRaiz;
         this.tipo = tipo;
         this.dano = dano;
         this.numeroProtocolo = numeroProtocolo;
         this.destino = destino;
+        this.gravidade = gravidade != null ? gravidade : "BAIXO";
+    }
+
+    public AcidenteEntity(Integer idOcorrencia, LocalDateTime dataOcorrencia, String local, String descricao,
+            PlanoDeAcaoEntity planoDeAcao, String causaRaiz, String tipo, String dano,
+            String numeroProtocolo, String destino) {
+        this(idOcorrencia, dataOcorrencia, LocalDateTime.now(), "ABERTA", null, null, null, local, descricao,
+                planoDeAcao, causaRaiz, tipo, dano, numeroProtocolo, destino, "BAIXO");
     }
 
     public String getCausaRaiz() {
@@ -52,5 +77,9 @@ public class AcidenteEntity extends OcorrenciaEntity {
 
     public String getDestino() {
         return destino;
+    }
+
+    public String getGravidade() {
+        return gravidade;
     }
 }
