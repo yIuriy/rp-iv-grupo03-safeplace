@@ -76,6 +76,9 @@
 .sp-select-wrap > .sp-icon { pointer-events: none; position: absolute; top: var(--sp-space-12); right: var(--sp-space-12); color: var(--sp-text-secondary); }
 .sp-search-wrap > .sp-icon { pointer-events: none; position: absolute; top: var(--sp-space-12); left: var(--sp-space-12); color: var(--sp-text-secondary); }
 .sp-search { padding-left: 40px; }
+.sp-password-wrap { position: relative; }
+.sp-password { padding-right: 52px; }
+.sp-password-toggle { position: absolute; top: 0; right: 0; border-radius: var(--sp-radius-8); color: var(--sp-text-secondary); }
 .sp-file-field .sp-control { height: auto; min-height: var(--sp-size-control); padding: 0; overflow: hidden; }
 .sp-file-field input::file-selector-button {
   min-height: 42px; border: 0; border-right: 1px solid var(--sp-control-border); margin-right: var(--sp-space-12);

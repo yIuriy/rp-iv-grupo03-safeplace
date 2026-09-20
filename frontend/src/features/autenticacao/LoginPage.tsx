@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import logo from '../../../design-system/assets/logo-primary.svg'
-import { Alert, Button, TextField } from '../../shared/components'
+import { Alert, Button, PasswordField, TextField } from '../../shared/components'
 import { statusDoErro } from '../../shared/api/erros'
 import { useAutenticacao } from './contexto'
 
@@ -78,7 +78,7 @@ export function LoginPage() {
       <form className="sp-form" onSubmit={enviar} noValidate>
         <TextField label="E-mail" name="email" type="email" autoComplete="username" ref={emailRef}
           required error={erros.email} />
-        <TextField label="Senha" name="senha" type="password" autoComplete="current-password" ref={senhaRef}
+        <PasswordField label="Senha" name="senha" autoComplete="current-password" ref={senhaRef}
           required error={erros.senha} />
         {falha && <Alert tone="danger" title="Não foi possível entrar" live="assertive">{falha}</Alert>}
         <Button type="submit" loading={enviando} className="sp-login-submit">Entrar</Button>

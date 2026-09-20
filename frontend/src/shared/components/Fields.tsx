@@ -1,4 +1,4 @@
-import { useId, type ComponentProps, type ReactNode } from 'react'
+import { useId, useState, type ComponentProps, type ReactNode } from 'react'
 import { Icon } from './Icon'
 
 type FieldProps = {
@@ -69,6 +69,26 @@ export function SearchInput({ label, helper, error, className, hiddenLabel = tru
       <Icon name="search" />
       <input {...props} type="search" id={ids.id} aria-describedby={ids['aria-describedby']}
         aria-invalid={error ? true : props['aria-invalid']} className="sp-control sp-search" />
+    </div>
+  </Field>
+}
+
+/**
+ * Campo de senha com botão para exibir ou ocultar o que foi digitado. O rótulo do botão evita a
+ * palavra "senha" para não concorrer com o rótulo do campo em leitores de tela e em buscas por label.
+ */
+export function PasswordField({ label, helper, error, className, ...props }: FieldProps & Omit<ComponentProps<'input'>, 'type'>) {
+  const [visivel, setVisivel] = useState(false)
+  const ids = useFieldIds(props.id, helper, error, props['aria-describedby'])
+  return <Field {...{ label, helper, error, className, ...ids }}>
+    <div className="sp-password-wrap">
+      <input {...props} type={visivel ? 'text' : 'password'} id={ids.id} aria-describedby={ids['aria-describedby']}
+        aria-invalid={error ? true : props['aria-invalid']} className="sp-control sp-password" />
+      <button type="button" className="sp-button sp-button--quiet sp-icon-button sp-password-toggle"
+        aria-label={visivel ? 'Ocultar caracteres digitados' : 'Exibir caracteres digitados'} aria-pressed={visivel}
+        onClick={() => setVisivel(atual => !atual)}>
+        <Icon name={visivel ? 'eye-off' : 'eye'} />
+      </button>
     </div>
   </Field>
 }
