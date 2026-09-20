@@ -36,7 +36,8 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
                 inputDTO.tipo(),
                 inputDTO.dano(),
                 inputDTO.numeroProtocolo(),
-                inputDTO.destino()
+                inputDTO.destino(),
+                inputDTO.gravidade()
         );
         Acidente salvo = repository.salvarAcidente(acidente);
         return OcorrenciaOutputDTO.deDominio(salvo);

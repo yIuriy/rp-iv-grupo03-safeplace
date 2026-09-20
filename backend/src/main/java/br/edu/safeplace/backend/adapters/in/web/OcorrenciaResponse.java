@@ -19,9 +19,29 @@ public record OcorrenciaResponse(
         String dano,
         String numeroProtocolo,
         String destino,
+        String gravidade,
 
         String situacaoRisco,
         String potencialDano) {
+
+    public OcorrenciaResponse(
+            Integer idOcorrencia,
+            String tipoOcorrencia,
+            LocalDateTime dataOcorrencia,
+            String local,
+            String descricao,
+            PlanoDeAcaoResponse planoDeAcao,
+            String causaRaiz,
+            String tipo,
+            String dano,
+            String numeroProtocolo,
+            String destino,
+            String situacaoRisco,
+            String potencialDano) {
+        this(idOcorrencia, tipoOcorrencia, dataOcorrencia, local, descricao, planoDeAcao,
+                causaRaiz, tipo, dano, numeroProtocolo, destino, null, situacaoRisco, potencialDano);
+    }
+
     public static OcorrenciaResponse fromDomain(Ocorrencia ocorrencia) {
         if (ocorrencia instanceof Acidente acidente) {
             return new OcorrenciaResponse(
@@ -36,6 +56,7 @@ public record OcorrenciaResponse(
                     acidente.getDano(),
                     acidente.getNumeroProtocolo(),
                     acidente.getDestino(),
+                    acidente.getGravidade() != null ? acidente.getGravidade().name() : null,
                     null,
                     null);
         }
@@ -48,6 +69,7 @@ public record OcorrenciaResponse(
                     incidente.getLocal(),
                     incidente.getDescricao(),
                     PlanoDeAcaoResponse.fromDomain(incidente.getPlanoDeAcao()),
+                    null,
                     null,
                     null,
                     null,
@@ -73,6 +95,7 @@ public record OcorrenciaResponse(
                 dto.dano(),
                 dto.numeroProtocolo(),
                 dto.destino(),
+                dto.gravidade(),
                 dto.situacaoRisco(),
                 dto.potencialDano()
         );

@@ -23,8 +23,47 @@ public record OcorrenciaOutputDTO(
         String numeroProtocoloCAT,
         String destino,
         String situacaoRisco,
-        String potencialDano
+        String potencialDano,
+        String gravidade
 ) {
+    public OcorrenciaOutputDTO(
+            Integer idOcorrencia,
+            String tipoOcorrencia,
+            LocalDateTime dataOcorrencia,
+            LocalDateTime dataRegistro,
+            String statusOcorrencia,
+            String local,
+            String descricao,
+            PlanoDeAcao planoDeAcao,
+            String causaRaiz,
+            String tipo,
+            String dano,
+            String numeroProtocolo,
+            String numeroProtocoloCAT,
+            String destino,
+            String situacaoRisco,
+            String potencialDano) {
+        this(
+                idOcorrencia,
+                tipoOcorrencia,
+                dataOcorrencia,
+                dataRegistro,
+                statusOcorrencia,
+                local,
+                descricao,
+                planoDeAcao,
+                causaRaiz,
+                tipo,
+                dano,
+                numeroProtocolo,
+                numeroProtocoloCAT,
+                destino,
+                situacaoRisco,
+                potencialDano,
+                null
+        );
+    }
+
     public static OcorrenciaOutputDTO deDominio(Ocorrencia ocorrencia) {
         if (ocorrencia instanceof Acidente a) {
             return new OcorrenciaOutputDTO(
@@ -43,7 +82,8 @@ public record OcorrenciaOutputDTO(
                     a.getNumeroProtocoloCAT(),
                     a.getDestino(),
                     null,
-                    null
+                    null,
+                    a.getGravidade() != null ? a.getGravidade().name() : null
             );
         } else if (ocorrencia instanceof Incidente i) {
             return new OcorrenciaOutputDTO(
@@ -62,7 +102,8 @@ public record OcorrenciaOutputDTO(
                     null,
                     null,
                     i.getSituacaoRisco(),
-                    i.getPotencialDano()
+                    i.getPotencialDano(),
+                    null
             );
         }
         throw new IllegalArgumentException("Tipo de ocorrência não suportado");

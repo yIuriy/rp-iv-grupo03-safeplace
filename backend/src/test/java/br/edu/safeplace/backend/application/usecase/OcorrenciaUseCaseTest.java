@@ -4,6 +4,7 @@ import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
+import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
@@ -56,6 +57,29 @@ class OcorrenciaUseCaseTest {
         assertEquals("ACIDENTE", salvo.tipoOcorrencia());
         assertEquals("ABERTA", salvo.statusOcorrencia());
         assertEquals(1, repository.listar().size());
+    }
+
+    @Test
+    @DisplayName("Deve registrar acidente com gravidade informada")
+    void deveRegistrarAcidenteComGravidade() {
+        OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository);
+
+        RegistrarAcidenteInputDTO input = new RegistrarAcidenteInputDTO(
+                LocalDateTime.of(2026, 9, 6, 14, 30),
+                "Setor de corte",
+                "Funcionario sofreu corte durante operacao de maquina.",
+                null,
+                "FALHA_EPI",
+                "Corte",
+                "Ferimento na mao direita",
+                null,
+                "Ambulatorio",
+                NivelPerigo.ALTO);
+
+        OcorrenciaOutputDTO salvo = useCase.registrarAcidente(input);
+
+        assertEquals("ALTO", salvo.gravidade());
     }
 
     @Test
@@ -280,7 +304,8 @@ class OcorrenciaUseCaseTest {
                     acidente.getTipo(),
                     acidente.getDano(),
                     acidente.getNumeroProtocoloCAT(),
-                    acidente.getDestino());
+                    acidente.getDestino(),
+                    acidente.getGravidade());
             ocorrencias.add(salvo);
             return salvo;
         }

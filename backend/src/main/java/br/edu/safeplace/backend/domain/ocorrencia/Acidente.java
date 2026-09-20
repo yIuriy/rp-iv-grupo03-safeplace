@@ -201,8 +201,7 @@ public class Acidente extends Ocorrencia {
             String dano,
             String numeroProtocolo,
             String destino) {
-        return new Acidente(
-                null,
+        return novo(
                 dataOcorrencia,
                 local,
                 descricao,
@@ -211,7 +210,41 @@ public class Acidente extends Ocorrencia {
                 tipo,
                 dano,
                 numeroProtocolo,
-                destino
+                destino,
+                NivelPerigo.BAIXO
+        );
+    }
+
+    public static Acidente novo(
+            LocalDateTime dataOcorrencia,
+            String local,
+            String descricao,
+            PlanoDeAcao planoDeAcao,
+            String causaRaiz,
+            String tipo,
+            String dano,
+            String numeroProtocolo,
+            String destino,
+            NivelPerigo gravidade) {
+        return new Acidente(
+                null,
+                descricao,
+                dataOcorrencia,
+                LocalDateTime.now(),
+                StatusOcorrencia.ABERTA,
+                null,
+                null,
+                null,
+                null,
+                null,
+                local,
+                planoDeAcao,
+                converterCausaRaiz(causaRaiz),
+                tipo,
+                dano,
+                numeroProtocolo,
+                destino,
+                gravidade
         );
     }
 
