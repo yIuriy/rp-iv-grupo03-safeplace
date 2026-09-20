@@ -5,12 +5,16 @@ import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.ManutencaoEpiOutputDTO;
 import br.edu.safeplace.backend.application.port.in.ControlarManutencaoEpiUseCase;
 import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.ManutencaoEpi;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,19 +27,28 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
     private final EpiRepositoryPort epiRepositoryPort;
     private final ManutencaoEpiRepositoryPort manutencaoEpiRepositoryPort;
     private final UsuarioRepositorioPorta usuarioRepositorioPorta;
+    private final LogAuditoriaRepositoryPort logAuditoriaRepositoryPort;
 
     public ControlarManutencaoEpiService(EpiRepositoryPort epiRepositoryPort,
                                          ManutencaoEpiRepositoryPort manutencaoEpiRepositoryPort) {
-        this(epiRepositoryPort, manutencaoEpiRepositoryPort, null);
+        this(epiRepositoryPort, manutencaoEpiRepositoryPort, null, null);
+    }
+
+    public ControlarManutencaoEpiService(EpiRepositoryPort epiRepositoryPort,
+                                         ManutencaoEpiRepositoryPort manutencaoEpiRepositoryPort,
+                                         UsuarioRepositorioPorta usuarioRepositorioPorta) {
+        this(epiRepositoryPort, manutencaoEpiRepositoryPort, usuarioRepositorioPorta, null);
     }
 
     @Autowired
     public ControlarManutencaoEpiService(EpiRepositoryPort epiRepositoryPort,
                                          ManutencaoEpiRepositoryPort manutencaoEpiRepositoryPort,
-                                         UsuarioRepositorioPorta usuarioRepositorioPorta) {
+                                         UsuarioRepositorioPorta usuarioRepositorioPorta,
+                                         LogAuditoriaRepositoryPort logAuditoriaRepositoryPort) {
         this.epiRepositoryPort = epiRepositoryPort;
         this.manutencaoEpiRepositoryPort = manutencaoEpiRepositoryPort;
         this.usuarioRepositorioPorta = usuarioRepositorioPorta;
+        this.logAuditoriaRepositoryPort = logAuditoriaRepositoryPort;
     }
 
     @Override
@@ -46,6 +59,17 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
 
         epi.enviarParaManutencao();
         Epi salvo = epiRepositoryPort.salvar(epi);
+
+        if (logAuditoriaRepositoryPort != null) {
+            LogAuditoria log = LogAuditoria.registrarAlteracao(
+                    resolverOperador(null),
+                    "Epi",
+                    salvo.getId(),
+                    "EPI enviado para manutenção"
+            );
+            logAuditoriaRepositoryPort.salvar(log);
+        }
+
         return EpiOutputDTO.deDominio(salvo);
     }
 
@@ -89,7 +113,29 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
         epiRepositoryPort.salvar(epi);
 
         ManutencaoEpi salva = manutencaoEpiRepositoryPort.salvar(manutencao);
+
+        if (logAuditoriaRepositoryPort != null) {
+            LogAuditoria log = LogAuditoria.registrarAlteracao(
+                    resolverOperador(responsavelEmail),
+                    "ManutencaoEpi",
+                    salva.getId(),
+                    "Manutenção de EPI concluída com resultado: " + inputDTO.resultado()
+            );
+            logAuditoriaRepositoryPort.salvar(log);
+        }
+
         return ManutencaoEpiOutputDTO.deDominio(salva, epi.getStatus());
+    }
+
+    private String resolverOperador(String explicit) {
+        if (explicit != null && !explicit.isBlank()) {
+            return explicit.trim();
+        }
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
+            return auth.getName().trim();
+        }
+        return "SISTEMA";
     }
 
     private Integer buscarResponsavelId(String responsavelEmail) {

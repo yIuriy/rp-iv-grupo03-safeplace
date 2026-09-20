@@ -26,6 +26,12 @@ Todos os dados sensíveis, como atestados de saúde, Comunicações de Acidente 
 
 O sistema deve manter log imutável de todas as operações de criação, edição e exclusão de registros, com identificação do usuário responsável, data, hora e dado alterado, armazenado por no mínimo 5 anos.
 
+### Política de Retenção e Imutabilidade da Trilha de Auditoria
+1. **Imutabilidade e Integridade**: Os registros de auditoria são estritamente somente-leitura (append-only). A arquitetura do sistema e a camada de persistência proíbem operações de atualização (`UPDATE`) e exclusão (`DELETE`) sobre os registros da trilha de auditoria (`LogAuditoriaEntity`).
+2. **Prazo de Retenção Mínima**: Todo evento de auditoria gerado deve ser conservado na base de dados ativa e/ou repositório de histórico por um período mínimo de 5 (cinco) anos a partir da data e hora do registro, em atendimento às normas regulamentadoras de segurança e saúde no trabalho (NR-1, NR-6, NR-9) e exigências legais de rastreabilidade.
+3. **Privacidade e Proteção de Credenciais**: É expressamente vedado o armazenamento de senhas, credenciais, segredos criptográficos ou tokens JWT em qualquer campo ou payload de auditoria.
+4. **Política de Descarte/Expurgo**: Quaisquer rotinas de expurgo ou arquivamento frio de logs de auditoria só podem ser executadas para registros cuja data de criação seja estritamente superior a 5 anos, mediante aprovação do Gestor de Segurança e registro de auditoria do próprio expurgo.
+
 ## RNF06 — Disponibilidade mínima
 
 O sistema deve garantir disponibilidade de 99,5% (uptime), com janela de manutenção planejada de no máximo 4 horas mensais, preferencialmente fora do horário de expediente.

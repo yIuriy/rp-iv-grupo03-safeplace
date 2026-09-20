@@ -5,13 +5,17 @@ import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.MovimentacaoEstoqueOutputDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarEpiUseCase;
 import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
 import br.edu.safeplace.backend.domain.epi.LoteEPI;
 import br.edu.safeplace.backend.domain.epi.ModeloEPI;
 import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,15 +27,24 @@ import java.util.List;
 public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase {
     private final EpiRepositoryPort repositoryPort;
     private final UsuarioRepositorioPorta usuarioRepositorio;
+    private final LogAuditoriaRepositoryPort logAuditoriaRepositoryPort;
 
     public EpiUseCase(EpiRepositoryPort repositoryPort) {
-        this(repositoryPort, null);
+        this(repositoryPort, null, null);
+    }
+
+    public EpiUseCase(EpiRepositoryPort repositoryPort, UsuarioRepositorioPorta usuarioRepositorio) {
+        this(repositoryPort, usuarioRepositorio, null);
     }
 
     @Autowired
-    public EpiUseCase(EpiRepositoryPort repositoryPort, UsuarioRepositorioPorta usuarioRepositorio) {
+    public EpiUseCase(
+            EpiRepositoryPort repositoryPort,
+            UsuarioRepositorioPorta usuarioRepositorio,
+            LogAuditoriaRepositoryPort logAuditoriaRepositoryPort) {
         this.repositoryPort = repositoryPort;
         this.usuarioRepositorio = usuarioRepositorio;
+        this.logAuditoriaRepositoryPort = logAuditoriaRepositoryPort;
     }
 
     @Override
@@ -49,6 +62,17 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
                 inputDTO.descricao(),
                 inputDTO.classificacao(), inputDTO.localizacao());
         Epi salvo = repositoryPort.salvar(novoEpi);
+
+        if (logAuditoriaRepositoryPort != null) {
+            LogAuditoria log = LogAuditoria.registrarCadastro(
+                    resolverOperador(null),
+                    "Epi",
+                    salvo.getId(),
+                    "Cadastro de EPI: " + salvo.getNome()
+            );
+            logAuditoriaRepositoryPort.salvar(log);
+        }
+
         return EpiOutputDTO.deDominio(salvo);
     }
 
@@ -94,7 +118,29 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
 
         repositoryPort.atualizarSaldo(epi);
         MovimentacaoEstoque salvo = repositoryPort.salvarMovimentacao(movimentacao);
+
+        if (logAuditoriaRepositoryPort != null) {
+            LogAuditoria log = LogAuditoria.registrarAlteracao(
+                    resolverOperador(responsavelEmail),
+                    "Epi",
+                    epi.getId(),
+                    "Movimentação de estoque: " + tipo + " (" + quantidade + " un). Motivo: " + motivo
+            );
+            logAuditoriaRepositoryPort.salvar(log);
+        }
+
         return MovimentacaoEstoqueOutputDTO.deDominio(salvo, epi.getQuantidade());
+    }
+
+    private String resolverOperador(String explicit) {
+        if (explicit != null && !explicit.isBlank()) {
+            return explicit.trim();
+        }
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
+            return auth.getName().trim();
+        }
+        return "SISTEMA";
     }
 
     @Override
