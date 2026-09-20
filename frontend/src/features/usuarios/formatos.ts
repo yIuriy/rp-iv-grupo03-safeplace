@@ -15,12 +15,12 @@ export function mascararCpf(valor: string): string {
 }
 
 /**
- * Exibição parcial para listagens: `***.456.789-**`. Mantém só o miolo, suficiente para distinguir
- * cadastros sem expor o CPF inteiro. Devolve o original se não tiver 11 dígitos.
+ * Exibição para listagens: `•••.456.789-••`. Cobre com pontos o início e o fim, mantendo os seis
+ * dígitos do meio para distinguir cadastros. Devolve o original se não tiver 11 dígitos.
  */
 export function ocultarCpf(cpf: string): string {
   const digitos = digitosDoCpf(cpf)
-  return digitos.length === 11 ? `***.${digitos.slice(3, 6)}.${digitos.slice(6, 9)}-**` : cpf
+  return digitos.length === 11 ? `•••.${digitos.slice(3, 6)}.${digitos.slice(6, 9)}-••` : cpf
 }
 
 /** Converte `AAAA-MM-DD` da API para `DD/MM/AAAA`; devolve o original se o formato for outro. */
