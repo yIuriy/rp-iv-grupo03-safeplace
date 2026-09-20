@@ -64,6 +64,14 @@ public class LogAuditoria {
         return new LogAuditoria(null, "REMOCAO", dataHora, responsavel, justificativa, null, entidadeId);
     }
 
+    public static LogAuditoria registrarRemocao(
+            String responsavel,
+            String entidade,
+            Integer entidadeId,
+            String justificativa) {
+        return new LogAuditoria(null, "REMOCAO", LocalDateTime.now(), responsavel, justificativa, entidade, entidadeId);
+    }
+
     public Integer getId() {
         return id;
     }

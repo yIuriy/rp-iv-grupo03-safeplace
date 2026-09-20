@@ -9,9 +9,11 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.Immutable;
 
 @Entity
 @Table(name = "logs_auditoria")
+@Immutable
 public class LogAuditoriaEntity {
 
     @Id
