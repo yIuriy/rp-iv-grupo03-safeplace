@@ -3,7 +3,11 @@ package br.edu.safeplace.backend.application.usecase;
 import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
+import br.edu.safeplace.backend.application.port.out.AreaRiscoRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
@@ -11,6 +15,8 @@ import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.TransicaoStatusInvalidaException;
+import br.edu.safeplace.backend.domain.usuario.Colaborador;
+import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +29,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class OcorrenciaUseCaseTest {
 
@@ -56,6 +64,73 @@ class OcorrenciaUseCaseTest {
         assertEquals("ACIDENTE", salvo.tipoOcorrencia());
         assertEquals("ABERTA", salvo.statusOcorrencia());
         assertEquals(1, repository.listar().size());
+    }
+
+    @Test
+    @DisplayName("Deve registrar acidente com gravidade informada")
+    void deveRegistrarAcidenteComGravidade() {
+        OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository);
+
+        RegistrarAcidenteInputDTO input = new RegistrarAcidenteInputDTO(
+                LocalDateTime.of(2026, 9, 6, 14, 30),
+                "Setor de corte",
+                "Funcionario sofreu corte durante operacao de maquina.",
+                null,
+                "FALHA_EPI",
+                "Corte",
+                "Ferimento na mao direita",
+                null,
+                "Ambulatorio",
+                NivelPerigo.ALTO);
+
+        OcorrenciaOutputDTO salvo = useCase.registrarAcidente(input);
+
+        assertEquals("ALTO", salvo.gravidade());
+    }
+
+    @Test
+    @DisplayName("Deve registrar acidente resolvendo area, colaborador e gestor pelos IDs")
+    void deveRegistrarAcidenteComAreaColaboradorEGestor() {
+        OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
+        AreaRiscoRepositoryPort areaRepo = mock(AreaRiscoRepositoryPort.class);
+        UsuarioRepositorioPorta usuarioRepo = mock(UsuarioRepositorioPorta.class);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, areaRepo, usuarioRepo);
+
+        AreaRisco area = new AreaRisco(10, "AR-10", "Laminação", "Setor L", NivelPerigo.ALTO, 5, List.of(), "Galpão", List.of());
+        Colaborador colaborador = new Colaborador(20, "11122233344", "Carlos", LocalDate.of(1995, 2, 2), "carlos@email.com", true, LocalDateTime.now(), LocalDateTime.now());
+        GestorDeSeguranca gestor = new GestorDeSeguranca(30, "55566677788", "Paula", LocalDate.of(1989, 4, 4), "paula@email.com", "hash", true, LocalDateTime.now(), LocalDateTime.now());
+
+        when(areaRepo.buscarPorId(10)).thenReturn(Optional.of(area));
+        when(usuarioRepo.buscarPorId(20)).thenReturn(Optional.of(colaborador));
+        when(usuarioRepo.buscarPorId(30)).thenReturn(Optional.of(gestor));
+
+        RegistrarAcidenteInputDTO input = new RegistrarAcidenteInputDTO(
+                LocalDateTime.of(2026, 9, 15, 10, 0),
+                null,
+                "Queda no piso de laminacao",
+                null,
+                "FATOR_HUMANO",
+                "Queda",
+                "Entorse",
+                null,
+                "Enfermaria",
+                NivelPerigo.MEDIO,
+                10,
+                20,
+                30
+        );
+
+        OcorrenciaOutputDTO salvo = useCase.registrarAcidente(input);
+
+        assertThat(salvo.idOcorrencia()).isEqualTo(1);
+        assertThat(salvo.areaId()).isEqualTo(10);
+        assertThat(salvo.areaNome()).isEqualTo("Laminação");
+        assertThat(salvo.colaboradorId()).isEqualTo(20);
+        assertThat(salvo.colaboradorNome()).isEqualTo("Carlos");
+        assertThat(salvo.gestorId()).isEqualTo(30);
+        assertThat(salvo.gestorNome()).isEqualTo("Paula");
+        assertThat(salvo.gravidade()).isEqualTo("MEDIO");
     }
 
     @Test
@@ -280,7 +355,8 @@ class OcorrenciaUseCaseTest {
                     acidente.getTipo(),
                     acidente.getDano(),
                     acidente.getNumeroProtocoloCAT(),
-                    acidente.getDestino());
+                    acidente.getDestino(),
+                    acidente.getGravidade());
             ocorrencias.add(salvo);
             return salvo;
         }

@@ -1,6 +1,6 @@
 package br.edu.safeplace.backend.domain.ocorrencia;
 
-public enum CausaRaiz {
+public enum CausaRaizAcidente {
     FATOR_HUMANO,
     FALHA_EPI,
     OUTRO

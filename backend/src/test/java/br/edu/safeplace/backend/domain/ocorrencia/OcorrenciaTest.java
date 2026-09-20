@@ -79,7 +79,7 @@ class OcorrenciaTest {
         assertThat(ocorrencia.getColaborador()).isEqualTo(colaborador);
         assertThat(ocorrencia.getGestor()).isEqualTo(gestor);
         assertThat(ocorrencia.getArea()).isEqualTo(area);
-        assertThat(ocorrencia.getLocal()).isEqualTo("Setor B");
+        assertThat(ocorrencia.getLocal()).isEqualTo("Caldeiras");
     }
 
     @Test

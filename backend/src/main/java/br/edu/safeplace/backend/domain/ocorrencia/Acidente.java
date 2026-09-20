@@ -4,15 +4,17 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
 public class Acidente extends Ocorrencia {
-    private final CausaRaiz causaRaiz;
+    private final CausaRaizAcidente causaRaiz;
     private final String tipo;
     private final String dano;
     private final String numeroProtocoloCAT;
     private final String destino;
+    private final NivelPerigo gravidade;
 
     public Acidente(
             Integer idOcorrencia,
@@ -27,11 +29,12 @@ public class Acidente extends Ocorrencia {
             GestorDeSeguranca gestor,
             String local,
             PlanoDeAcao planoDeAcao,
-            CausaRaiz causaRaiz,
+            CausaRaizAcidente causaRaiz,
             String tipo,
             String dano,
             String numeroProtocoloCAT,
-            String destino) {
+            String destino,
+            NivelPerigo gravidade) {
         super(idOcorrencia, descricao, dataOcorrencia, dataRegistro, statusOcorrencia,
                 testemunhas, colaborador, midias, area, gestor, local, planoDeAcao);
 
@@ -40,7 +43,7 @@ public class Acidente extends Ocorrencia {
         }
 
         if (numeroProtocoloCAT != null && !numeroProtocoloCAT.isBlank()) {
-            this.numeroProtocoloCAT = ProtocoloCAT.de(numeroProtocoloCAT).getValor();
+            this.numeroProtocoloCAT = NumeroProtocoloCAT.de(numeroProtocoloCAT).getValor();
         } else {
             this.numeroProtocoloCAT = null;
         }
@@ -49,6 +52,47 @@ public class Acidente extends Ocorrencia {
         this.tipo = tipo != null ? tipo.trim() : null;
         this.dano = dano != null ? dano.trim() : null;
         this.destino = destino != null ? destino.trim() : null;
+        this.gravidade = gravidade != null ? gravidade : NivelPerigo.BAIXO;
+    }
+
+    public Acidente(
+            Integer idOcorrencia,
+            String descricao,
+            LocalDateTime dataOcorrencia,
+            LocalDateTime dataRegistro,
+            StatusOcorrencia statusOcorrencia,
+            List<String> testemunhas,
+            Colaborador colaborador,
+            List<String> midias,
+            AreaRisco area,
+            GestorDeSeguranca gestor,
+            String local,
+            PlanoDeAcao planoDeAcao,
+            CausaRaizAcidente causaRaiz,
+            String tipo,
+            String dano,
+            String numeroProtocoloCAT,
+            String destino) {
+        this(
+                idOcorrencia,
+                descricao,
+                dataOcorrencia,
+                dataRegistro,
+                statusOcorrencia,
+                testemunhas,
+                colaborador,
+                midias,
+                area,
+                gestor,
+                local,
+                planoDeAcao,
+                causaRaiz,
+                tipo,
+                dano,
+                numeroProtocoloCAT,
+                destino,
+                NivelPerigo.BAIXO
+        );
     }
 
     /**
@@ -60,7 +104,7 @@ public class Acidente extends Ocorrencia {
             String local,
             String descricao,
             PlanoDeAcao planoDeAcao,
-            CausaRaiz causaRaiz,
+            CausaRaizAcidente causaRaiz,
             String tipo,
             String dano,
             String numeroProtocolo,
@@ -122,10 +166,39 @@ public class Acidente extends Ocorrencia {
             GestorDeSeguranca gestor,
             List<String> testemunhas,
             List<String> midias,
-            CausaRaiz causaRaiz,
+            CausaRaizAcidente causaRaiz,
             String tipo,
             String dano,
             String destino) {
+        return novo(
+                descricao,
+                dataOcorrencia,
+                area,
+                colaborador,
+                gestor,
+                testemunhas,
+                midias,
+                causaRaiz,
+                tipo,
+                dano,
+                destino,
+                NivelPerigo.BAIXO
+        );
+    }
+
+    public static Acidente novo(
+            String descricao,
+            LocalDateTime dataOcorrencia,
+            AreaRisco area,
+            Colaborador colaborador,
+            GestorDeSeguranca gestor,
+            List<String> testemunhas,
+            List<String> midias,
+            CausaRaizAcidente causaRaiz,
+            String tipo,
+            String dano,
+            String destino,
+            NivelPerigo gravidade) {
         return new Acidente(
                 null,
                 descricao,
@@ -143,7 +216,8 @@ public class Acidente extends Ocorrencia {
                 tipo,
                 dano,
                 null,
-                destino
+                destino,
+                gravidade
         );
     }
 
@@ -157,8 +231,7 @@ public class Acidente extends Ocorrencia {
             String dano,
             String numeroProtocolo,
             String destino) {
-        return new Acidente(
-                null,
+        return novo(
                 dataOcorrencia,
                 local,
                 descricao,
@@ -167,7 +240,41 @@ public class Acidente extends Ocorrencia {
                 tipo,
                 dano,
                 numeroProtocolo,
-                destino
+                destino,
+                NivelPerigo.BAIXO
+        );
+    }
+
+    public static Acidente novo(
+            LocalDateTime dataOcorrencia,
+            String local,
+            String descricao,
+            PlanoDeAcao planoDeAcao,
+            String causaRaiz,
+            String tipo,
+            String dano,
+            String numeroProtocolo,
+            String destino,
+            NivelPerigo gravidade) {
+        return new Acidente(
+                null,
+                descricao,
+                dataOcorrencia,
+                LocalDateTime.now(),
+                StatusOcorrencia.ABERTA,
+                null,
+                null,
+                null,
+                null,
+                null,
+                local,
+                planoDeAcao,
+                converterCausaRaiz(causaRaiz),
+                tipo,
+                dano,
+                numeroProtocolo,
+                destino,
+                gravidade
         );
     }
 
@@ -175,7 +282,7 @@ public class Acidente extends Ocorrencia {
         if (this.numeroProtocoloCAT != null) {
             throw new IllegalStateException("Protocolo CAT já emitido e não pode ser alterado.");
         }
-        ProtocoloCAT protocolo = ProtocoloCAT.gerar(this.getDataOcorrencia(), sequencial);
+        NumeroProtocoloCAT protocolo = NumeroProtocoloCAT.gerar(this.getDataOcorrencia(), sequencial);
         return new Acidente(
                 this.getIdOcorrencia(),
                 this.getDescricao(),
@@ -193,11 +300,20 @@ public class Acidente extends Ocorrencia {
                 this.tipo,
                 this.dano,
                 protocolo.getValor(),
-                this.destino
+                this.destino,
+                this.gravidade
         );
     }
 
-    public CausaRaiz getCausaRaiz() {
+    public NivelPerigo getGravidade() {
+        return gravidade;
+    }
+
+    public boolean isGrave() {
+        return gravidade != null && gravidade.isPeloMenos(NivelPerigo.ALTO);
+    }
+
+    public CausaRaizAcidente getCausaRaiz() {
         return causaRaiz;
     }
 
@@ -221,14 +337,14 @@ public class Acidente extends Ocorrencia {
         return destino;
     }
 
-    private static CausaRaiz converterCausaRaiz(String causa) {
+    private static CausaRaizAcidente converterCausaRaiz(String causa) {
         if (causa == null || causa.isBlank()) {
-            return CausaRaiz.OUTRO;
+            return CausaRaizAcidente.OUTRO;
         }
         try {
-            return CausaRaiz.valueOf(causa.trim().toUpperCase());
+            return CausaRaizAcidente.valueOf(causa.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            return CausaRaiz.OUTRO;
+            return CausaRaizAcidente.OUTRO;
         }
     }
 }

@@ -1,0 +1,218 @@
+package br.edu.safeplace.backend.adapters.out.persistencia;
+
+import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
+import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
+import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
+import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
+import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
+import br.edu.safeplace.backend.domain.usuario.Colaborador;
+import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+@DisplayName("Testes de Unidade do OcorrenciaJpaAdapter")
+class OcorrenciaJpaAdapterTest {
+
+    @Mock
+    private OcorrenciaJpaRepository ocorrenciaRepository;
+
+    @Mock
+    private AreaRiscoJpaRepository areaRiscoRepository;
+
+    @Mock
+    private UsuarioJpaRepositorio usuarioRepository;
+
+    private OcorrenciaJpaAdapter adapter;
+
+    @BeforeEach
+    void setUp() {
+        adapter = new OcorrenciaJpaAdapter(ocorrenciaRepository, areaRiscoRepository, usuarioRepository);
+    }
+
+    @Test
+    @DisplayName("Deve salvar acidente mapeando gravidade, area, colaborador e gestor")
+    void deveSalvarAcidenteComRelacionamentos() {
+        AreaRisco area = new AreaRisco(1, "AR-01", "Prensa", "Setor Prensa", NivelPerigo.ALTO, 10, List.of(), "Galpão", List.of());
+        Colaborador colaborador = new Colaborador(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
+        GestorDeSeguranca gestor = new GestorDeSeguranca(3, "98765432100", "Maria Gestora", LocalDate.of(1985, 5, 5), "maria@email.com", "hash", true, LocalDateTime.now(), LocalDateTime.now());
+
+        AreaRiscoEntity areaEntity = new AreaRiscoEntity(1, "AR-01", "Prensa", "Setor Prensa", "ALTO", 10, null, "Galpão", List.of());
+        ColaboradorEntidade colaboradorEntity = new ColaboradorEntidade(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
+        GestorDeSegurancaEntidade gestorEntity = new GestorDeSegurancaEntidade(3, "98765432100", "Maria Gestora", LocalDate.of(1985, 5, 5), "maria@email.com", "hash", true, LocalDateTime.now(), LocalDateTime.now());
+
+        when(areaRiscoRepository.findById(1)).thenReturn(Optional.of(areaEntity));
+        when(usuarioRepository.findById(2)).thenReturn(Optional.of(colaboradorEntity));
+        when(usuarioRepository.findById(3)).thenReturn(Optional.of(gestorEntity));
+
+        Acidente acidente = Acidente.novo(
+                "Acidente com prensa",
+                LocalDateTime.of(2026, 9, 10, 14, 0),
+                area,
+                colaborador,
+                gestor,
+                List.of(),
+                List.of(),
+                CausaRaizAcidente.FALHA_EPI,
+                "Esmagamento",
+                "Lesão na mão",
+                "Hospital",
+                NivelPerigo.CRITICO
+        );
+
+        when(ocorrenciaRepository.save(any(AcidenteEntity.class))).thenAnswer(invocation -> {
+            AcidenteEntity entity = invocation.getArgument(0);
+            return new AcidenteEntity(
+                    100,
+                    entity.getDataOcorrencia(),
+                    entity.getDataRegistro(),
+                    entity.getStatusOcorrencia(),
+                    entity.getArea(),
+                    entity.getColaborador(),
+                    entity.getGestor(),
+                    entity.getLocal(),
+                    entity.getDescricao(),
+                    entity.getPlanoDeAcao(),
+                    entity.getCausaRaiz(),
+                    entity.getTipo(),
+                    entity.getDano(),
+                    entity.getNumeroProtocolo(),
+                    entity.getDestino(),
+                    entity.getGravidade()
+            );
+        });
+
+        Acidente salvo = adapter.salvarAcidente(acidente);
+
+        assertThat(salvo).isNotNull();
+        assertThat(salvo.getIdOcorrencia()).isEqualTo(100);
+        assertThat(salvo.getGravidade()).isEqualTo(NivelPerigo.CRITICO);
+        assertThat(salvo.getArea()).isNotNull();
+        assertThat(salvo.getArea().getNome()).isEqualTo("Prensa");
+        assertThat(salvo.getColaborador()).isNotNull();
+        assertThat(salvo.getColaborador().getNome()).isEqualTo("João Silva");
+        assertThat(salvo.getGestor()).isNotNull();
+        assertThat(salvo.getGestor().getNome()).isEqualTo("Maria Gestora");
+
+        ArgumentCaptor<AcidenteEntity> captor = ArgumentCaptor.forClass(AcidenteEntity.class);
+        verify(ocorrenciaRepository).save(captor.capture());
+        AcidenteEntity entitySalva = captor.getValue();
+        assertThat(entitySalva.getGravidade()).isEqualTo("CRITICO");
+        assertThat(entitySalva.getArea().getId()).isEqualTo(1);
+        assertThat(entitySalva.getColaborador().getId()).isEqualTo(2);
+        assertThat(entitySalva.getGestor().getId()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Deve salvar incidente mapeando area e colaborador")
+    void deveSalvarIncidente() {
+        AreaRisco area = new AreaRisco(1, "AR-01", "Prensa", "Setor Prensa", NivelPerigo.MEDIO, 10, List.of(), "Galpão", List.of());
+        Colaborador colaborador = new Colaborador(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
+
+        AreaRiscoEntity areaEntity = new AreaRiscoEntity(1, "AR-01", "Prensa", "Setor Prensa", "MEDIO", 10, null, "Galpão", List.of());
+        ColaboradorEntidade colaboradorEntity = new ColaboradorEntidade(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
+
+        when(areaRiscoRepository.findById(1)).thenReturn(Optional.of(areaEntity));
+        when(usuarioRepository.findById(2)).thenReturn(Optional.of(colaboradorEntity));
+
+        Incidente incidente = Incidente.novo(
+                "Quase queda",
+                LocalDateTime.of(2026, 9, 10, 10, 0),
+                area,
+                colaborador,
+                null,
+                List.of(),
+                List.of(),
+                "Piso oleoso",
+                "Queda de mesmo nível"
+        );
+
+        when(ocorrenciaRepository.save(any(IncidenteEntity.class))).thenAnswer(invocation -> {
+            IncidenteEntity entity = invocation.getArgument(0);
+            return new IncidenteEntity(
+                    200,
+                    entity.getDataOcorrencia(),
+                    entity.getDataRegistro(),
+                    entity.getStatusOcorrencia(),
+                    entity.getArea(),
+                    entity.getColaborador(),
+                    entity.getGestor(),
+                    entity.getLocal(),
+                    entity.getDescricao(),
+                    entity.getPlanoDeAcao(),
+                    entity.getSituacaoRisco(),
+                    entity.getPotencialDano()
+            );
+        });
+
+        Incidente salvo = adapter.salvarIncidente(incidente);
+
+        assertThat(salvo).isNotNull();
+        assertThat(salvo.getIdOcorrencia()).isEqualTo(200);
+        assertThat(salvo.getSituacaoRisco()).isEqualTo("Piso oleoso");
+        assertThat(salvo.getPotencialDano()).isEqualTo("Queda de mesmo nível");
+        assertThat(salvo.getArea().getNome()).isEqualTo("Prensa");
+        assertThat(salvo.getColaborador().getNome()).isEqualTo("João Silva");
+    }
+
+    @Test
+    @DisplayName("Deve buscar ocorrência por ID e mapear corretamente")
+    void deveBuscarPorId() {
+        AcidenteEntity entity = new AcidenteEntity(
+                50,
+                LocalDateTime.of(2026, 9, 11, 8, 0),
+                LocalDateTime.of(2026, 9, 11, 8, 30),
+                "EM_TRIAGEM",
+                null,
+                null,
+                null,
+                "Oficina",
+                "Corte com ferramenta",
+                null,
+                "FALHA_EPI",
+                "Corte",
+                "Dedo",
+                "CAT-2026-09-0050",
+                "Ambulatório",
+                "ALTO"
+        );
+
+        when(ocorrenciaRepository.findById(50)).thenReturn(Optional.of(entity));
+
+        Optional<Ocorrencia> resultado = adapter.buscarPorId(50);
+
+        assertThat(resultado).isPresent();
+        assertThat(resultado.get()).isInstanceOf(Acidente.class);
+        Acidente acidente = (Acidente) resultado.get();
+        assertThat(acidente.getIdOcorrencia()).isEqualTo(50);
+        assertThat(acidente.getStatusOcorrencia()).isEqualTo(StatusOcorrencia.EM_TRIAGEM);
+        assertThat(acidente.getGravidade()).isEqualTo(NivelPerigo.ALTO);
+        assertThat(acidente.getNumeroProtocoloCAT()).isEqualTo("CAT-2026-09-0050");
+    }
+
+    @Test
+    @DisplayName("Deve calcular próximo sequencial CAT baseado no count")
+    void deveCalcularProximoSequencialCAT() {
+        when(ocorrenciaRepository.count()).thenReturn(7L);
+
+        long proximo = adapter.proximoSequencialCAT(2026, 9);
+
+        assertThat(proximo).isEqualTo(8L);
+    }
+}

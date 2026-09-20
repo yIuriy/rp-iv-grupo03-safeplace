@@ -5,15 +5,15 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class CausaRaizTest {
+class CausaRaizAcidenteTest {
 
     @Test
     @DisplayName("Deve conter todas as causas raiz requeridas pela regra de negócio")
     void deveConterTodasAsCausasRaizRequeridas() {
-        assertThat(CausaRaiz.values()).containsExactlyInAnyOrder(
-                CausaRaiz.FATOR_HUMANO,
-                CausaRaiz.FALHA_EPI,
-                CausaRaiz.OUTRO
+        assertThat(CausaRaizAcidente.values()).containsExactlyInAnyOrder(
+                CausaRaizAcidente.FATOR_HUMANO,
+                CausaRaizAcidente.FALHA_EPI,
+                CausaRaizAcidente.OUTRO
         );
     }
 }
