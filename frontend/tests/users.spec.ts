@@ -13,7 +13,8 @@ test('Gestor sees supervisors and colaboradores in tabs without any credential d
 
   const supervisores = page.getByRole('table', { name: 'Supervisores cadastrados' })
   await expect(supervisores.getByRole('cell', { name: 'Joana Ribeiro', exact: true })).toBeVisible()
-  await expect(supervisores.getByRole('cell', { name: '111.444.777-35', exact: true })).toBeVisible()
+  await expect(supervisores.getByRole('cell', { name: '***.444.777-**', exact: true })).toBeVisible()
+  await expect(page.getByText('11144477735')).toHaveCount(0)
   await expect(supervisores.getByRole('cell', { name: '20/04/1988', exact: true })).toBeVisible()
   await expect(supervisores.getByRole('cell', { name: 'Ativo', exact: true })).toBeVisible()
   await expect(supervisores.getByRole('row')).toHaveCount(2)

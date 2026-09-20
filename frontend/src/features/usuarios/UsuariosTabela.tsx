@@ -1,8 +1,11 @@
 import { Badge, Button, Table, TableRow } from '../../shared/components'
 import type { Usuario } from './api'
-import { formatarCpf, formatarData } from './formatos'
+import { formatarData, ocultarCpf } from './formatos'
 
-/** Mostra só dados cadastrais. Credenciais nunca chegam aqui: a API não as devolve em listagens. */
+/**
+ * Mostra só dados cadastrais, com o CPF parcialmente oculto: a listagem serve para localizar o cadastro,
+ * e o CPF completo fica na edição. Credenciais nunca chegam aqui: a API não as devolve em listagens.
+ */
 export function UsuariosTabela({ caption, usuarios, aoEditar }: {
   caption: string
   usuarios: Usuario[]
@@ -15,7 +18,7 @@ export function UsuariosTabela({ caption, usuarios, aoEditar }: {
     </tr></thead>
     <tbody>{usuarios.map(usuario => <TableRow key={usuario.id}>
       <td><strong>{usuario.nome}</strong></td>
-      <td>{formatarCpf(usuario.cpf)}</td>
+      <td>{ocultarCpf(usuario.cpf)}</td>
       <td>{formatarData(usuario.dataNascimento)}</td>
       <td>{usuario.email ?? 'Não informado'}</td>
       <td><Badge tone={usuario.ativo ? 'success' : 'warning'}>{usuario.ativo ? 'Ativo' : 'Inativo'}</Badge></td>
