@@ -1,8 +1,9 @@
 import { useCallback, useState, type FormEvent } from 'react'
-import { Button, SearchInput, TextField, Toast } from '../../shared/components'
+import { Button, SearchInput, Toast } from '../../shared/components'
 import { useConsulta } from '../../shared/api/useConsulta'
 import { listarColaboradores, type FiltroColaboradores, type Usuario } from './api'
 import { CadastroDialog, type ModoSalvamento } from './CadastroDialog'
+import { CpfField } from './CpfField'
 import { ResultadoConsulta } from './ResultadoConsulta'
 import { UsuariosTabela } from './UsuariosTabela'
 
@@ -39,7 +40,7 @@ export function ColaboradoresPainel() {
   return <div className="sp-painel">
     <form className="sp-busca" role="search" aria-label="Buscar colaboradores" onSubmit={buscar} onReset={() => setFiltro({})}>
       <SearchInput label="Nome" name="nome" hiddenLabel={false} placeholder="Parte do nome" autoComplete="off" />
-      <TextField label="CPF" name="cpf" inputMode="numeric" placeholder="Somente números" autoComplete="off" />
+      <CpfField label="CPF" name="cpf" placeholder="000.000.000-00" />
       <Button type="submit" variant="secondary" icon="search">Buscar</Button>
       <Button type="reset" variant="quiet">Limpar</Button>
     </form>

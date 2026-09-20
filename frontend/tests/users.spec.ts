@@ -95,7 +95,7 @@ test('Gestor creates a Supervisor and sees the initial password only once', asyn
   await expect(resultado).toBeVisible()
   await expect(resultado.getByText('Xk7!pQ2#mA9z')).toBeVisible()
   await expect(resultado.getByText('não é exibida novamente')).toBeVisible()
-  expect(corpo).toEqual({ nome: 'Joana Ribeiro', cpf: '111.444.777-35', dataNascimento: '1988-04-20', email: 'joana.ribeiro@safeplace.test' })
+  expect(corpo).toEqual({ nome: 'Joana Ribeiro', cpf: '11144477735', dataNascimento: '1988-04-20', email: 'joana.ribeiro@safeplace.test' })
 
   await resultado.getByRole('button', { name: 'Concluir' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
@@ -221,7 +221,7 @@ test('Gestor edits a Supervisor: CPF is read-only, PUT carries only editable fie
   const dialog = page.getByRole('dialog', { name: 'Editar supervisor' })
   await expect(dialog).toBeVisible()
   await expect(dialog.getByLabel('Nome completo')).toHaveValue('Joana Ribeiro')
-  await expect(dialog.getByLabel('CPF')).toHaveValue('11144477735')
+  await expect(dialog.getByLabel('CPF')).toHaveValue('111.444.777-35')
   await expect(dialog.getByLabel('CPF')).toHaveAttribute('readonly', '')
   await expect(dialog.getByLabel('E-mail corporativo')).toHaveValue('joana.ribeiro@safeplace.test')
   await expect(dialog.locator('input[type="password"]')).toHaveCount(0)

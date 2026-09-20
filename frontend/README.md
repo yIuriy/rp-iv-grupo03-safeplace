@@ -44,7 +44,7 @@ A tela `/usuarios` aplica a matriz de RF23 que o `SecurityConfig` do backend tam
 - A senha inicial do Supervisor aparece uma única vez, no resultado do cadastro. Listagens nunca a mostram e a interface não a guarda.
 - O formulário de colaborador não tem campos de senha ou perfil e não envia essas chaves; o backend as recusaria com 400.
 - A validação local repete só o que o backend exige: campos obrigatórios, CPF com 11 dígitos, data de nascimento no passado e e-mail válido. Erros 400 e 409 mostram a mensagem da API e mantêm os dados digitados.
-- A busca envia o CPF sem máscara. Recarregar a página mantém a sessão e mostra os dados persistidos pela API.
+- Os campos de CPF (cadastro e busca) aplicam a máscara `000.000.000-00` enquanto o usuário digita, mas o cadastro e a busca enviam só os 11 dígitos à API. Recarregar a página mantém a sessão e mostra os dados persistidos pela API.
 - A edição (issue #122) reaproveita o formulário do cadastro com os dados atuais. Só nome, data de nascimento e e-mail são enviados; o CPF aparece somente leitura e não vai no corpo, porque a alteração de CPF e a desativação aguardam decisão do grupo (especificação do MVP, seção 11.1). Perfil e senha nunca mudam por esse caminho: a API recusa esses campos com 400. Um 404 na edição indica que o cadastro mudou de perfil ou não existe mais.
 - Implementação em `src/features/usuarios/`: `api.ts` (contratos e chamadas), `UsersPage.tsx` (abas por perfil), `SupervisoresPainel.tsx`, `ColaboradoresPainel.tsx`, `CadastroDialog.tsx`, `PessoaFormulario.tsx` e `validacaoPessoa.ts`.
 

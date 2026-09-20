@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Alert, Button, TextField } from '../../shared/components'
 import { descreverFalhaDeCadastro, type DadosPessoa, type Usuario } from './api'
+import { CpfField } from './CpfField'
 import { hojeIso } from './formatos'
 import { lerDadosPessoa, ordemDosCampos, validarPessoa, type ErrosPessoa } from './validacaoPessoa'
 
@@ -52,9 +53,8 @@ export function PessoaFormulario({ emailObrigatorio, emailHelper, enviarLabel, v
   return <form className="sp-form" onSubmit={enviar} noValidate>
     <TextField label="Nome completo" name="nome" autoComplete="off" required error={erros.nome}
       defaultValue={valoresIniciais?.nome} />
-    <TextField label="CPF" name="cpf" inputMode="numeric" autoComplete="off" required error={erros.cpf}
-      defaultValue={valoresIniciais?.cpf} readOnly={editando}
-      helper={editando ? 'O CPF identifica o cadastro e não é alterado nesta operação.' : 'Somente números ou com pontos e traço.'} />
+    <CpfField label="CPF" name="cpf" required error={erros.cpf} defaultValue={valoresIniciais?.cpf} readOnly={editando}
+      helper={editando ? 'O CPF identifica o cadastro e não é alterado nesta operação.' : 'Digite somente os números; a formatação é automática.'} />
     <TextField label="Data de nascimento" name="dataNascimento" type="date" required max={hojeIso()}
       error={erros.dataNascimento} defaultValue={valoresIniciais?.dataNascimento} />
     <TextField label={emailObrigatorio ? 'E-mail corporativo' : 'E-mail de contato (opcional)'} name="email"

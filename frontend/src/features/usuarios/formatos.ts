@@ -1,6 +1,22 @@
+/** Mantém só os dígitos e limita a 11, o tamanho de um CPF. */
+export function digitosDoCpf(valor: string): string {
+  return valor.replace(/\D/g, '').slice(0, 11)
+}
+
+/**
+ * Máscara progressiva `000.000.000-00`: funciona para valores parciais, então serve enquanto o
+ * usuário digita. Caracteres que não são dígitos são descartados.
+ */
+export function mascararCpf(valor: string): string {
+  const digitos = digitosDoCpf(valor)
+  const blocos = [digitos.slice(0, 3), digitos.slice(3, 6), digitos.slice(6, 9)].filter(Boolean).join('.')
+  const verificador = digitos.slice(9)
+  return verificador ? `${blocos}-${verificador}` : blocos
+}
+
+/** Formata um CPF completo para exibição; devolve o original se não tiver 11 dígitos. */
 export function formatarCpf(cpf: string): string {
-  const digitos = cpf.replace(/\D/g, '')
-  return digitos.length === 11 ? digitos.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : cpf
+  return digitosDoCpf(cpf).length === 11 ? mascararCpf(cpf) : cpf
 }
 
 /** Converte `AAAA-MM-DD` da API para `DD/MM/AAAA`; devolve o original se o formato for outro. */
