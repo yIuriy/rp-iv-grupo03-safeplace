@@ -10,5 +10,18 @@ public record RegistrarIncidenteInputDTO(
         String descricao,
         PlanoDeAcao planoDeAcao,
         String situacaoRisco,
-        String potencialDano
-) {}
+        String potencialDano,
+        Integer areaId,
+        Integer colaboradorId,
+        Integer gestorId
+) {
+    public RegistrarIncidenteInputDTO(
+            LocalDateTime dataOcorrencia,
+            String local,
+            String descricao,
+            PlanoDeAcao planoDeAcao,
+            String situacaoRisco,
+            String potencialDano) {
+        this(dataOcorrencia, local, descricao, planoDeAcao, situacaoRisco, potencialDano, null, null, null);
+    }
+}

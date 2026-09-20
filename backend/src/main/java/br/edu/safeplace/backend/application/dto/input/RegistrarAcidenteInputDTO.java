@@ -15,7 +15,10 @@ public record RegistrarAcidenteInputDTO(
         String dano,
         String numeroProtocolo,
         String destino,
-        NivelPerigo gravidade
+        NivelPerigo gravidade,
+        Integer areaId,
+        Integer colaboradorId,
+        Integer gestorId
 ) {
     public RegistrarAcidenteInputDTO(
             LocalDateTime dataOcorrencia,
@@ -26,7 +29,21 @@ public record RegistrarAcidenteInputDTO(
             String tipo,
             String dano,
             String numeroProtocolo,
+            String destino,
+            NivelPerigo gravidade) {
+        this(dataOcorrencia, local, descricao, planoDeAcao, causaRaiz, tipo, dano, numeroProtocolo, destino, gravidade, null, null, null);
+    }
+
+    public RegistrarAcidenteInputDTO(
+            LocalDateTime dataOcorrencia,
+            String local,
+            String descricao,
+            PlanoDeAcao planoDeAcao,
+            String causaRaiz,
+            String tipo,
+            String dano,
+            String numeroProtocolo,
             String destino) {
-        this(dataOcorrencia, local, descricao, planoDeAcao, causaRaiz, tipo, dano, numeroProtocolo, destino, NivelPerigo.BAIXO);
+        this(dataOcorrencia, local, descricao, planoDeAcao, causaRaiz, tipo, dano, numeroProtocolo, destino, NivelPerigo.BAIXO, null, null, null);
     }
 }

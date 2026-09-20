@@ -11,8 +11,12 @@ import java.time.LocalDateTime;
 public record CriarOcorrenciaRequest(
         @NotBlank String tipoOcorrencia,
         @NotNull LocalDateTime dataOcorrencia,
-        @NotBlank String local,
+        String local,
         @NotBlank String descricao,
+
+        Integer areaId,
+        Integer colaboradorId,
+        Integer gestorId,
 
         String causaRaiz,
         String tipo,
@@ -37,7 +41,10 @@ public record CriarOcorrenciaRequest(
                 dano,
                 numeroProtocolo,
                 destino,
-                converterGravidade(gravidade)
+                converterGravidade(gravidade),
+                areaId,
+                colaboradorId,
+                gestorId
         );
     }
 
@@ -48,7 +55,10 @@ public record CriarOcorrenciaRequest(
                 descricao,
                 planoDeAcao != null ? planoDeAcao.toDomain() : null,
                 situacaoRisco,
-                potencialDano
+                potencialDano,
+                areaId,
+                colaboradorId,
+                gestorId
         );
     }
 
