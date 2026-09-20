@@ -44,7 +44,7 @@ class AcidenteTest {
                 gestor,
                 "Setor de Usinagem",
                 null,
-                CausaRaiz.FALHA_EPI,
+                CausaRaizAcidente.FALHA_EPI,
                 "Fratura",
                 "Contusão no pé",
                 "CAT-2026-09-0001",
@@ -53,7 +53,7 @@ class AcidenteTest {
 
         assertThat(acidente.getId()).isEqualTo(1);
         assertThat(acidente.getDescricao()).isEqualTo("Queda de ferramenta sobre o pé do operador");
-        assertThat(acidente.getCausaRaiz()).isEqualTo(CausaRaiz.FALHA_EPI);
+        assertThat(acidente.getCausaRaiz()).isEqualTo(CausaRaizAcidente.FALHA_EPI);
         assertThat(acidente.getTipo()).isEqualTo("Fratura");
         assertThat(acidente.getDano()).isEqualTo("Contusão no pé");
         assertThat(acidente.getNumeroProtocoloCAT()).isEqualTo("CAT-2026-09-0001");
@@ -91,7 +91,7 @@ class AcidenteTest {
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
                 null, null, null, null, null, null, null,
-                CausaRaiz.FATOR_HUMANO,
+                CausaRaizAcidente.FATOR_HUMANO,
                 "Tipo",
                 "Dano",
                 protocoloInvalido,
@@ -109,7 +109,7 @@ class AcidenteTest {
                 dataFato,
                 AreaRisco.cadastrar("EXP-01", "Expedição", "Embalagem", NivelPerigo.MEDIO, List.of(new Epi(2, "Luva", "CA-456", 5, 1, StatusEpi.DISPONIVEL, LocalDate.now().plusYears(1), 180, "Luva", null))),
                 null, null, null, null,
-                CausaRaiz.FATOR_HUMANO,
+                CausaRaizAcidente.FATOR_HUMANO,
                 "Corte",
                 "Lesão superficial na mão",
                 "Ambulatório interno"
@@ -121,7 +121,7 @@ class AcidenteTest {
 
         assertThat(consolidado.getNumeroProtocoloCAT()).isEqualTo("CAT-2026-09-0015");
         assertThat(consolidado.getDescricao()).isEqualTo(novoAcidente.getDescricao());
-        assertThat(consolidado.getCausaRaiz()).isEqualTo(CausaRaiz.FATOR_HUMANO);
+        assertThat(consolidado.getCausaRaiz()).isEqualTo(CausaRaizAcidente.FATOR_HUMANO);
 
         // Tentativa de consolidar novamente deve ser proibida (readOnly / imutabilidade)
         assertThatThrownBy(() -> consolidado.consolidarCAT(16))
@@ -146,7 +146,7 @@ class AcidenteTest {
         );
 
         assertThat(acidente.getId()).isEqualTo(10);
-        assertThat(acidente.getCausaRaiz()).isEqualTo(CausaRaiz.FALHA_EPI);
+        assertThat(acidente.getCausaRaiz()).isEqualTo(CausaRaizAcidente.FALHA_EPI);
         assertThat(acidente.getLocal()).isEqualTo("Oficina");
         assertThat(acidente.getNumeroProtocoloCAT()).isEqualTo("CAT-2026-09-0005");
     }

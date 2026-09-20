@@ -8,7 +8,7 @@ import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
 public class Acidente extends Ocorrencia {
-    private final CausaRaiz causaRaiz;
+    private final CausaRaizAcidente causaRaiz;
     private final String tipo;
     private final String dano;
     private final String numeroProtocoloCAT;
@@ -27,7 +27,7 @@ public class Acidente extends Ocorrencia {
             GestorDeSeguranca gestor,
             String local,
             PlanoDeAcao planoDeAcao,
-            CausaRaiz causaRaiz,
+            CausaRaizAcidente causaRaiz,
             String tipo,
             String dano,
             String numeroProtocoloCAT,
@@ -60,7 +60,7 @@ public class Acidente extends Ocorrencia {
             String local,
             String descricao,
             PlanoDeAcao planoDeAcao,
-            CausaRaiz causaRaiz,
+            CausaRaizAcidente causaRaiz,
             String tipo,
             String dano,
             String numeroProtocolo,
@@ -122,7 +122,7 @@ public class Acidente extends Ocorrencia {
             GestorDeSeguranca gestor,
             List<String> testemunhas,
             List<String> midias,
-            CausaRaiz causaRaiz,
+            CausaRaizAcidente causaRaiz,
             String tipo,
             String dano,
             String destino) {
@@ -197,7 +197,7 @@ public class Acidente extends Ocorrencia {
         );
     }
 
-    public CausaRaiz getCausaRaiz() {
+    public CausaRaizAcidente getCausaRaiz() {
         return causaRaiz;
     }
 
@@ -221,14 +221,14 @@ public class Acidente extends Ocorrencia {
         return destino;
     }
 
-    private static CausaRaiz converterCausaRaiz(String causa) {
+    private static CausaRaizAcidente converterCausaRaiz(String causa) {
         if (causa == null || causa.isBlank()) {
-            return CausaRaiz.OUTRO;
+            return CausaRaizAcidente.OUTRO;
         }
         try {
-            return CausaRaiz.valueOf(causa.trim().toUpperCase());
+            return CausaRaizAcidente.valueOf(causa.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            return CausaRaiz.OUTRO;
+            return CausaRaizAcidente.OUTRO;
         }
     }
 }
