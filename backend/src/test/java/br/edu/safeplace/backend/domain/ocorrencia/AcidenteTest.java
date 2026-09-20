@@ -150,4 +150,24 @@ class AcidenteTest {
         assertThat(acidente.getLocal()).isEqualTo("Oficina");
         assertThat(acidente.getNumeroProtocoloCAT()).isEqualTo("CAT-2026-09-0005");
     }
+
+    @Test
+    @DisplayName("Deve identificar corretamente se o acidente é grave para regras de plano de ação")
+    void deveIdentificarAcidenteGrave() {
+        Acidente acidenteLeve = new Acidente(
+                1, "Queda sem lesão", LocalDateTime.now().minusHours(1), LocalDateTime.now(),
+                StatusOcorrencia.ABERTA, null, null, null, null, null, null, null,
+                CausaRaizAcidente.OUTRO, "Queda", "Leve", null, null, NivelPerigo.BAIXO
+        );
+        assertThat(acidenteLeve.getGravidade()).isEqualTo(NivelPerigo.BAIXO);
+        assertThat(acidenteLeve.isGrave()).isFalse();
+
+        Acidente acidenteGrave = new Acidente(
+                2, "Queda de altura", LocalDateTime.now().minusHours(1), LocalDateTime.now(),
+                StatusOcorrencia.ABERTA, null, null, null, null, null, null, null,
+                CausaRaizAcidente.FALHA_EPI, "Queda", "Grave", null, null, NivelPerigo.CRITICO
+        );
+        assertThat(acidenteGrave.getGravidade()).isEqualTo(NivelPerigo.CRITICO);
+        assertThat(acidenteGrave.isGrave()).isTrue();
+    }
 }

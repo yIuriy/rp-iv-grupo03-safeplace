@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.List;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
-import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.DataOcorrenciaInvalidaException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
@@ -21,9 +20,7 @@ public abstract class Ocorrencia {
     private final Colaborador colaborador;
     private final List<String> midias;
     private final AreaRisco area;
-    private Setor setor;
     private final GestorDeSeguranca gestor;
-    private final String local;
     private final PlanoDeAcao planoDeAcao;
 
     protected Ocorrencia(
@@ -37,7 +34,6 @@ public abstract class Ocorrencia {
             List<String> midias,
             AreaRisco area,
             GestorDeSeguranca gestor,
-            String local,
             PlanoDeAcao planoDeAcao) {
 
         if (dataOcorrencia == null) {
@@ -60,8 +56,38 @@ public abstract class Ocorrencia {
         this.midias = midias != null ? List.copyOf(midias) : Collections.emptyList();
         this.area = area;
         this.gestor = gestor;
-        this.local = local != null && !local.isBlank() ? local.trim() : (area != null ? area.getNome() : null);
         this.planoDeAcao = planoDeAcao;
+    }
+
+    /**
+     * Construtor de compatibilidade anterior.
+     */
+    protected Ocorrencia(
+            Integer idOcorrencia,
+            String descricao,
+            LocalDateTime dataOcorrencia,
+            LocalDateTime dataRegistro,
+            StatusOcorrencia statusOcorrencia,
+            List<String> testemunhas,
+            Colaborador colaborador,
+            List<String> midias,
+            AreaRisco area,
+            GestorDeSeguranca gestor,
+            String local,
+            PlanoDeAcao planoDeAcao) {
+        this(
+                idOcorrencia,
+                descricao,
+                dataOcorrencia,
+                dataRegistro,
+                statusOcorrencia,
+                testemunhas,
+                colaborador,
+                midias,
+                area != null ? area : (local != null && !local.isBlank() ? new AreaRisco(null, null, local.trim(), null, null, null, null, null, null) : null),
+                gestor,
+                planoDeAcao
+        );
     }
 
     /**
@@ -142,20 +168,12 @@ public abstract class Ocorrencia {
         return area;
     }
 
-    public Setor getSetor() {
-        return setor;
-    }
-
-    public void setSetor(Setor setor) {
-        this.setor = setor;
-    }
-
     public GestorDeSeguranca getGestor() {
         return gestor;
     }
 
     public String getLocal() {
-        return local;
+        return area != null ? area.getNome() : null;
     }
 
     public PlanoDeAcao getPlanoDeAcao() {

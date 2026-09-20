@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
@@ -13,6 +14,46 @@ public class Acidente extends Ocorrencia {
     private final String dano;
     private final String numeroProtocoloCAT;
     private final String destino;
+    private final NivelPerigo gravidade;
+
+    public Acidente(
+            Integer idOcorrencia,
+            String descricao,
+            LocalDateTime dataOcorrencia,
+            LocalDateTime dataRegistro,
+            StatusOcorrencia statusOcorrencia,
+            List<String> testemunhas,
+            Colaborador colaborador,
+            List<String> midias,
+            AreaRisco area,
+            GestorDeSeguranca gestor,
+            String local,
+            PlanoDeAcao planoDeAcao,
+            CausaRaizAcidente causaRaiz,
+            String tipo,
+            String dano,
+            String numeroProtocoloCAT,
+            String destino,
+            NivelPerigo gravidade) {
+        super(idOcorrencia, descricao, dataOcorrencia, dataRegistro, statusOcorrencia,
+                testemunhas, colaborador, midias, area, gestor, local, planoDeAcao);
+
+        if (causaRaiz == null) {
+            throw new IllegalArgumentException("Causa raiz é obrigatória para acidentes.");
+        }
+
+        if (numeroProtocoloCAT != null && !numeroProtocoloCAT.isBlank()) {
+            this.numeroProtocoloCAT = NumeroProtocoloCAT.de(numeroProtocoloCAT).getValor();
+        } else {
+            this.numeroProtocoloCAT = null;
+        }
+
+        this.causaRaiz = causaRaiz;
+        this.tipo = tipo != null ? tipo.trim() : null;
+        this.dano = dano != null ? dano.trim() : null;
+        this.destino = destino != null ? destino.trim() : null;
+        this.gravidade = gravidade != null ? gravidade : NivelPerigo.BAIXO;
+    }
 
     public Acidente(
             Integer idOcorrencia,
@@ -32,23 +73,26 @@ public class Acidente extends Ocorrencia {
             String dano,
             String numeroProtocoloCAT,
             String destino) {
-        super(idOcorrencia, descricao, dataOcorrencia, dataRegistro, statusOcorrencia,
-                testemunhas, colaborador, midias, area, gestor, local, planoDeAcao);
-
-        if (causaRaiz == null) {
-            throw new IllegalArgumentException("Causa raiz é obrigatória para acidentes.");
-        }
-
-        if (numeroProtocoloCAT != null && !numeroProtocoloCAT.isBlank()) {
-            this.numeroProtocoloCAT = ProtocoloCAT.de(numeroProtocoloCAT).getValor();
-        } else {
-            this.numeroProtocoloCAT = null;
-        }
-
-        this.causaRaiz = causaRaiz;
-        this.tipo = tipo != null ? tipo.trim() : null;
-        this.dano = dano != null ? dano.trim() : null;
-        this.destino = destino != null ? destino.trim() : null;
+        this(
+                idOcorrencia,
+                descricao,
+                dataOcorrencia,
+                dataRegistro,
+                statusOcorrencia,
+                testemunhas,
+                colaborador,
+                midias,
+                area,
+                gestor,
+                local,
+                planoDeAcao,
+                causaRaiz,
+                tipo,
+                dano,
+                numeroProtocoloCAT,
+                destino,
+                NivelPerigo.BAIXO
+        );
     }
 
     /**
@@ -175,7 +219,7 @@ public class Acidente extends Ocorrencia {
         if (this.numeroProtocoloCAT != null) {
             throw new IllegalStateException("Protocolo CAT já emitido e não pode ser alterado.");
         }
-        ProtocoloCAT protocolo = ProtocoloCAT.gerar(this.getDataOcorrencia(), sequencial);
+        NumeroProtocoloCAT protocolo = NumeroProtocoloCAT.gerar(this.getDataOcorrencia(), sequencial);
         return new Acidente(
                 this.getIdOcorrencia(),
                 this.getDescricao(),
@@ -193,8 +237,17 @@ public class Acidente extends Ocorrencia {
                 this.tipo,
                 this.dano,
                 protocolo.getValor(),
-                this.destino
+                this.destino,
+                this.gravidade
         );
+    }
+
+    public NivelPerigo getGravidade() {
+        return gravidade;
+    }
+
+    public boolean isGrave() {
+        return gravidade != null && gravidade.isPeloMenos(NivelPerigo.ALTO);
     }
 
     public CausaRaizAcidente getCausaRaiz() {

@@ -17,11 +17,11 @@ Este documento formaliza as decisões arquiteturais e a matriz de correspondênc
 - **Usuário que Registra**: `GestorDeSeguranca` (ou `Supervisor` no relato operacional rápido), registrado via log de auditoria (`LogAuditoria`) e mantido como responsável pelo registro (`gestor : GestorDeSeguranca`).
 - **Colaborador Envolvido**: Cada ocorrência possui **exatamente 1 (um)** colaborador envolvido (`colaborador : Colaborador`), sem concessão de acesso ou credenciais ao colaborador.
 
-### 2.3. Localização da Ocorrência: Setor e Área vs. Atributo Local
-- **Decisão**: O atributo textual livre `local : String` foi removido da entidade `Ocorrencia`.
-- **Estruturação**: A localização física do fato é determinada pelas associações formais:
-  - `setor : Setor` (Setor físico da ocorrência, conforme alinhamento com a gestão de setores).
-  - `area : AreaRisco` (Área de risco específica vinculada ao setor).
+### 2.3. Localização da Ocorrência: Área de Risco (Sem Setor e Sem Local Diretos)
+- **Decisão**: A classe `Ocorrencia` **não possui** o atributo textual `local : String` e **não possui** ligação direta com `Setor`.
+- **Estruturação**: A localização física do fato é determinada exclusivamente pela associação:
+  - `area : AreaRisco` (Área de risco associada, a qual pertence a um Setor no modelo).
+  - O setor físico é obtido indiretamente através de `area.getSetor()`, sem redundância estrutural em `Ocorrencia`.
 
 ### 2.4. Vínculo de EPI Relacionado à Falha
 - **Decisão**: Não há associação estrutural direta entre `Ocorrencia` (ou `Acidente`) e a classe `EPI` no escopo do MVP.
@@ -41,9 +41,9 @@ Este documento formaliza as decisões arquiteturais e a matriz de correspondênc
   - `Em_triagem` → `Arquivada`
   - Não é permitida exclusão física de registros de ocorrência (apenas transição para `Arquivada`).
 
-### 2.7. Gravidade da Ocorrência para UC07
-- **Atributo**: `gravidade : NivelPerigo` (com valores `Baixo`, `Medio`, `Alto`, `Critico`).
-- **Regra de Negócio de UC07**: Ocorrências com gravidade classificada como `Alto` ou `Critico` são consideradas "graves", exigindo a definição obrigatória de ao menos uma ação preventiva no plano de ação (`PlanoDeAcao`).
+### 2.7. Gravidade em Acidente para UC07
+- **Atributo**: `gravidade : NivelPerigo` na subclasse `Acidente` (com valores `Baixo`, `Medio`, `Alto`, `Critico`).
+- **Regra de Negócio de UC07**: Acidentes com gravidade classificada como `Alto` ou `Critico` exigem a definição obrigatória de ao menos uma ação preventiva no plano de ação (`PlanoDeAcao`). Em incidentes, a relevância preventiva é avaliada pelo `potencialDano`.
 
 ### 2.8. Relato Rápido e Não Exigência de Documentos Aprofundados
 - No cadastro / relato inicial (UC09 e fluxo principal de UC05), **não são exigidos**:
