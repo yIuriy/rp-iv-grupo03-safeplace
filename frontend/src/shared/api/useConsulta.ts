@@ -1,3 +1,6 @@
+// Hook genérico de consulta à API: executa a função de carga, cancela a anterior com
+// AbortController e expõe dados, erro, carregando e recarregar.
+
 import { useCallback, useEffect, useState } from 'react'
 
 export type Consulta<T> = {

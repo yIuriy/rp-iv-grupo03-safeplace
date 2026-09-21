@@ -1,3 +1,6 @@
+// Componente de ícone: mapeia nomes para os SVGs do design system e os renderiza como máscara CSS,
+// com rótulo acessível opcional.
+
 import type { CSSProperties } from 'react'
 import plus from '../../../design-system/assets/icons/plus.svg'
 import check from '../../../design-system/assets/icons/check.svg'

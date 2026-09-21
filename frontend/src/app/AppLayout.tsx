@@ -1,3 +1,6 @@
+// Layout das telas autenticadas: menu entre as cinco funcionalidades, título da aba, foco no
+// conteúdo ao trocar de tela, nome e perfil da pessoa logada e botão Sair.
+
 import { useEffect, useRef } from 'react'
 import { matchPath, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { AppShell } from '../shared/layout'

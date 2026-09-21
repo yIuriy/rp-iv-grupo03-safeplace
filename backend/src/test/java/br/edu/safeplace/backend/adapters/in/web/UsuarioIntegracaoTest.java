@@ -1,3 +1,9 @@
+/*
+ * Teste de integração de ponta a ponta do módulo de usuários: HTTP real, segurança ativa, caso de
+ * uso, JPA e PostgreSQL. Pulado quando não há banco. Cobre cadastro, senha inicial, duplicidade e
+ * a atualização cadastral da issue #122.
+ */
+
 package br.edu.safeplace.backend.adapters.in.web;
 
 import java.io.IOException;

@@ -1,3 +1,6 @@
+// Porteiro das rotas protegidas: sem sessão, redireciona para /login guardando o destino para
+// voltar depois de entrar.
+
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAutenticacao } from './contexto'
 

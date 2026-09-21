@@ -1,3 +1,6 @@
+// Formulário compartilhado de cadastro e edição de pessoa: nome, CPF (com máscara; somente leitura
+// na edição), data de nascimento e e-mail, com validação local e foco no primeiro erro.
+
 import { useState, type FormEvent } from 'react'
 import { Alert, Button, TextField } from '../../shared/components'
 import { descreverFalhaDeCadastro, type DadosPessoa, type Usuario } from './api'

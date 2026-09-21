@@ -1,3 +1,8 @@
+/*
+ * Entidade de domínio GestorDeSeguranca: especializa Colaborador acrescentando a senha (hash) e
+ * exigindo e-mail. A atualização cadastral (issue #122) mantém o hash e o perfil.
+ */
+
 package br.edu.safeplace.backend.domain.usuario;
 
 import java.time.LocalDate;

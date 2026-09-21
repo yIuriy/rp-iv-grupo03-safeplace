@@ -1,3 +1,5 @@
+// Funções puras de formatação: dígitos, máscara e ocultação de CPF, e data ISO para DD/MM/AAAA.
+
 /** Mantém só os dígitos e limita a 11, o tamanho de um CPF. */
 export function digitosDoCpf(valor: string): string {
   return valor.replace(/\D/g, '').slice(0, 11)

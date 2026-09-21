@@ -1,3 +1,6 @@
+// Tela de login (issue #94): formulário acessível de e-mail e senha, validação local, mensagens
+// para 401 e falha de rede, aviso de sessão expirada e retorno ao destino que pediu o login.
+
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import logo from '../../../design-system/assets/logo-primary.svg'

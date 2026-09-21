@@ -1,3 +1,5 @@
+// Campo de CPF com máscara 000.000.000-00 aplicada enquanto a pessoa digita.
+
 import type { ComponentProps, InputEvent } from 'react'
 import { TextField } from '../../shared/components'
 import { mascararCpf } from './formatos'

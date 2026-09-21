@@ -1,3 +1,9 @@
+/*
+ * Teste da camada web (MockMvc) das rotas PUT de atualização (issue #122): permissão por papel via
+ * SecurityConfig, códigos HTTP e recusa de CPF, senha, perfil e ativo no corpo. O caso de uso é
+ * mock.
+ */
+
 package br.edu.safeplace.backend.adapters.in.web;
 
 import java.time.LocalDate;

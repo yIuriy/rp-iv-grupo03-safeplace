@@ -1,3 +1,7 @@
+// Campos de formulário do design system: TextField, TextArea, Select, SearchInput, PasswordField
+// (com botão mostrar/ocultar), Checkbox, Radio, Toggle e FileUpload, com rótulos e mensagens
+// acessíveis.
+
 import { useId, useState, type ComponentProps, type ReactNode } from 'react'
 import { Icon } from './Icon'
 

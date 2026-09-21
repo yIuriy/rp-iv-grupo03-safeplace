@@ -1,3 +1,7 @@
+/*
+ * Estilos da estrutura da aplicação: cabeçalho, barra lateral, menu em diálogo, item de navegação
+ * e área principal.
+ */
 .sp-app-shell { min-height: 100dvh; }
 .sp-app-header { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-space-16); height: var(--sp-layout-header); padding: var(--sp-space-16); background: var(--sp-surface-white); }
 .sp-logo-link { display: inline-flex; flex-shrink: 0; }

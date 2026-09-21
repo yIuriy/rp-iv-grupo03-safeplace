@@ -1,3 +1,5 @@
+// Ponto único de exportação dos componentes compartilhados do design system.
+
 export { Button, IconButton, type ButtonProps } from './Button'
 export { Icon, type IconName } from './Icon'
 export { TextField, TextArea, Select, SearchInput, PasswordField, Checkbox, Radio, Toggle, FileUpload } from './Fields'

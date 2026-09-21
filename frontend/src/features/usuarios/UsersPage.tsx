@@ -1,3 +1,6 @@
+// Tela /usuarios: decide pelo perfil da sessão o que mostrar. Gestor vê abas Supervisores e
+// Colaboradores; Supervisor vê só colaboradores (RF23).
+
 import { useState } from 'react'
 import { Tabs } from '../../shared/components'
 import { FeaturePage } from '../../shared/layout/FeaturePage'
