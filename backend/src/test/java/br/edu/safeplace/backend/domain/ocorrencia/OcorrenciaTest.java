@@ -194,4 +194,54 @@ class OcorrenciaTest {
         assertThatThrownBy(() -> ocorrencia.getTestemunhas().add("Outro"))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
+
+    @Test
+    @DisplayName("Texto livre de local não vira área de risco fictícia")
+    void naoDeveDerivarAreaFicticiaDoTextoLocal() {
+        Ocorrencia ocorrencia = new OcorrenciaConcreta(
+                7,
+                "Tropeço em cabo solto no pátio",
+                LocalDateTime.now().minusHours(2),
+                LocalDateTime.now(),
+                StatusOcorrencia.ABERTA,
+                List.of(),
+                null,
+                List.of(),
+                null,
+                null,
+                "Pátio externo",
+                null
+        );
+
+        assertThat(ocorrencia.getArea()).isNull();
+        assertThat(ocorrencia.getLocal()).isEqualTo("Pátio externo");
+        assertThat(ocorrencia.getLocalInformado()).isEqualTo("Pátio externo");
+    }
+
+    @Test
+    @DisplayName("Área de risco associada prevalece sobre o texto livre de local")
+    void areaAssociadaPrevaleceSobreTextoLivre() {
+        Epi epi = new Epi(1, "Óculos", "CA-123", 10, 2, StatusEpi.DISPONIVEL,
+                LocalDate.now().plusYears(1), 180, "Óculos", null);
+        AreaRisco area = AreaRisco.cadastrar("CALD-01", "Caldeiras", "Alta pressão", NivelPerigo.ALTO, List.of(epi));
+
+        Ocorrencia ocorrencia = new OcorrenciaConcreta(
+                8,
+                "Vazamento de vapor",
+                LocalDateTime.now().minusHours(3),
+                LocalDateTime.now(),
+                StatusOcorrencia.ABERTA,
+                List.of(),
+                null,
+                List.of(),
+                area,
+                null,
+                "Anotação antiga do relato",
+                null
+        );
+
+        assertThat(ocorrencia.getArea()).isSameAs(area);
+        assertThat(ocorrencia.getLocal()).isEqualTo("Caldeiras");
+        assertThat(ocorrencia.getLocalInformado()).isEqualTo("Anotação antiga do relato");
+    }
 }

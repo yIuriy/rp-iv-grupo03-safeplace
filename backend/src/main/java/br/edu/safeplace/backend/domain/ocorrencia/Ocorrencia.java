@@ -1,7 +1,6 @@
 package br.edu.safeplace.backend.domain.ocorrencia;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -23,6 +22,14 @@ public abstract class Ocorrencia {
     private final GestorDeSeguranca gestor;
     private final PlanoDeAcao planoDeAcao;
 
+    /**
+     * Texto livre herdado da modelagem anterior, mantido apenas como rótulo descritivo dos
+     * registros legados. A localização estrutural do fato é dada exclusivamente pela associação
+     * {@code area : AreaRisco}, conforme a decisão 2.3 da correspondência de classes/DS09, e este
+     * texto nunca é promovido a uma {@link AreaRisco}.
+     */
+    private final String localInformado;
+
     protected Ocorrencia(
             Integer idOcorrencia,
             String descricao,
@@ -34,6 +41,23 @@ public abstract class Ocorrencia {
             List<String> midias,
             AreaRisco area,
             GestorDeSeguranca gestor,
+            PlanoDeAcao planoDeAcao) {
+        this(idOcorrencia, descricao, dataOcorrencia, dataRegistro, statusOcorrencia, testemunhas,
+                colaborador, midias, area, gestor, null, planoDeAcao);
+    }
+
+    protected Ocorrencia(
+            Integer idOcorrencia,
+            String descricao,
+            LocalDateTime dataOcorrencia,
+            LocalDateTime dataRegistro,
+            StatusOcorrencia statusOcorrencia,
+            List<String> testemunhas,
+            Colaborador colaborador,
+            List<String> midias,
+            AreaRisco area,
+            GestorDeSeguranca gestor,
+            String local,
             PlanoDeAcao planoDeAcao) {
 
         if (dataOcorrencia == null) {
@@ -56,38 +80,8 @@ public abstract class Ocorrencia {
         this.midias = midias != null ? List.copyOf(midias) : Collections.emptyList();
         this.area = area;
         this.gestor = gestor;
+        this.localInformado = local != null && !local.isBlank() ? local.trim() : null;
         this.planoDeAcao = planoDeAcao;
-    }
-
-    /**
-     * Construtor de compatibilidade anterior.
-     */
-    protected Ocorrencia(
-            Integer idOcorrencia,
-            String descricao,
-            LocalDateTime dataOcorrencia,
-            LocalDateTime dataRegistro,
-            StatusOcorrencia statusOcorrencia,
-            List<String> testemunhas,
-            Colaborador colaborador,
-            List<String> midias,
-            AreaRisco area,
-            GestorDeSeguranca gestor,
-            String local,
-            PlanoDeAcao planoDeAcao) {
-        this(
-                idOcorrencia,
-                descricao,
-                dataOcorrencia,
-                dataRegistro,
-                statusOcorrencia,
-                testemunhas,
-                colaborador,
-                midias,
-                area != null ? area : (local != null && !local.isBlank() ? new AreaRisco(null, null, local.trim(), null, null, null, null, null, null) : null),
-                gestor,
-                planoDeAcao
-        );
     }
 
     /**
@@ -172,8 +166,19 @@ public abstract class Ocorrencia {
         return gestor;
     }
 
+    /**
+     * Nome do lugar do fato: vem da área de risco associada e, apenas quando não há área, recai
+     * sobre o texto livre legado. Nunca se constrói uma {@link AreaRisco} a partir desse texto.
+     */
     public String getLocal() {
-        return area != null ? area.getNome() : null;
+        return area != null ? area.getNome() : localInformado;
+    }
+
+    /**
+     * Texto livre legado exatamente como foi informado, sem o fallback para o nome da área.
+     */
+    public String getLocalInformado() {
+        return localInformado;
     }
 
     public PlanoDeAcao getPlanoDeAcao() {

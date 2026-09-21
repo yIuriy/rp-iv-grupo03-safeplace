@@ -39,11 +39,15 @@ class OcorrenciaJpaAdapterTest {
     @Mock
     private UsuarioJpaRepositorio usuarioRepository;
 
+    @Mock
+    private SequenciaProtocoloCatJpaRepository sequenciaProtocoloCatRepository;
+
     private OcorrenciaJpaAdapter adapter;
 
     @BeforeEach
     void setUp() {
-        adapter = new OcorrenciaJpaAdapter(ocorrenciaRepository, areaRiscoRepository, usuarioRepository);
+        adapter = new OcorrenciaJpaAdapter(
+                ocorrenciaRepository, areaRiscoRepository, usuarioRepository, sequenciaProtocoloCatRepository);
     }
 
     @Test
@@ -207,12 +211,44 @@ class OcorrenciaJpaAdapterTest {
     }
 
     @Test
-    @DisplayName("Deve calcular próximo sequencial CAT baseado no count")
-    void deveCalcularProximoSequencialCAT() {
-        when(ocorrenciaRepository.count()).thenReturn(7L);
+    @DisplayName("Deve reservar o sequencial CAT no banco, e não a partir de uma contagem de ocorrências")
+    void deveReservarSequencialCATNoBanco() {
+        when(sequenciaProtocoloCatRepository.reservarProximoSequencial(2026, 9)).thenReturn(8L);
 
         long proximo = adapter.proximoSequencialCAT(2026, 9);
 
         assertThat(proximo).isEqualTo(8L);
+        verify(sequenciaProtocoloCatRepository).reservarProximoSequencial(2026, 9);
+        verify(ocorrenciaRepository, never()).count();
+    }
+
+    @Test
+    @DisplayName("Deve reconstruir o local legado sem transformá-lo em área de risco")
+    void naoDeveDerivarAreaFicticiaDoTextoLocal() {
+        AcidenteEntity entity = new AcidenteEntity(
+                70,
+                LocalDateTime.of(2026, 9, 11, 8, 0),
+                LocalDateTime.of(2026, 9, 11, 8, 30),
+                "ABERTA",
+                null,
+                null,
+                null,
+                "Oficina",
+                "Corte com ferramenta",
+                null,
+                "FALHA_EPI",
+                "Corte",
+                "Dedo",
+                null,
+                "Ambulatório",
+                "BAIXO");
+
+        when(ocorrenciaRepository.findById(70)).thenReturn(Optional.of(entity));
+
+        Acidente acidente = (Acidente) adapter.buscarPorId(70).orElseThrow();
+
+        assertThat(acidente.getArea()).isNull();
+        assertThat(acidente.getLocal()).isEqualTo("Oficina");
+        assertThat(acidente.getLocalInformado()).isEqualTo("Oficina");
     }
 }
