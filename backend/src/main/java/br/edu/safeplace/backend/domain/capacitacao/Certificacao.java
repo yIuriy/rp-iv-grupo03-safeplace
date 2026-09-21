@@ -1,0 +1,84 @@
+package br.edu.safeplace.backend.domain.capacitacao;
+
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
+public class Certificacao {
+    private final Integer id;
+    private final String nome;
+    private StatusCertificacao status;
+    private final LocalDate dataVencimento;
+    private final LocalDate dataEmissao;
+    private final Integer colaboradorId;
+
+    public Certificacao(Integer id, String nome, LocalDate dataVencimento, LocalDate dataEmissao, Integer colaboradorId) {
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException("Nome da certificação é obrigatório.");
+        }
+        if (dataEmissao == null) {
+            throw new IllegalArgumentException("Data de emissão é obrigatória.");
+        }
+        if (dataVencimento == null) {
+            throw new IllegalArgumentException("Data de vencimento é obrigatória.");
+        }
+        if (dataEmissao.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Data de emissão não pode ser no futuro.");
+        }
+        if (colaboradorId == null) {
+            throw new IllegalArgumentException("Colaborador é obrigatório.");
+        }
+
+        this.id = id;
+        this.nome = nome.trim();
+        this.dataVencimento = dataVencimento;
+        this.dataEmissao = dataEmissao;
+        this.colaboradorId = colaboradorId;
+        this.status = calcularStatus(LocalDate.now());
+    }
+
+    public static Certificacao cadastrar(String nome, LocalDate dataVencimento, LocalDate dataEmissao, Integer colaboradorId) {
+        if (dataVencimento.isBefore(LocalDate.now()) || dataVencimento.isEqual(LocalDate.now())) {
+            throw new IllegalArgumentException("Data de vencimento não pode ser no passado ou presente no momento do cadastro.");
+        }
+        return new Certificacao(null, nome, dataVencimento, dataEmissao, colaboradorId);
+    }
+
+    public StatusCertificacao calcularStatus(LocalDate dataReferencia) {
+        if (dataReferencia.isAfter(dataVencimento) || dataReferencia.isEqual(dataVencimento)) {
+            return StatusCertificacao.VENCIDA;
+        }
+        long diasParaVencer = ChronoUnit.DAYS.between(dataReferencia, dataVencimento);
+        if (diasParaVencer <= 30) {
+            return StatusCertificacao.PROXIMA_DO_VENCIMENTO;
+        }
+        return StatusCertificacao.EM_DIA;
+    }
+
+    public void reavaliarStatus(LocalDate dataReferencia) {
+        this.status = calcularStatus(dataReferencia);
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public StatusCertificacao getStatus() {
+        return status;
+    }
+
+    public LocalDate getDataVencimento() {
+        return dataVencimento;
+    }
+
+    public LocalDate getDataEmissao() {
+        return dataEmissao;
+    }
+
+    public Integer getColaboradorId() {
+        return colaboradorId;
+    }
+}
