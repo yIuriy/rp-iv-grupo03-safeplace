@@ -23,19 +23,29 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
     private final OcorrenciaJpaRepository repository;
     private final AreaRiscoJpaRepository areaRiscoRepository;
     private final UsuarioJpaRepositorio usuarioRepository;
+    private final SequenciaProtocoloCatJpaRepository sequenciaProtocoloCatRepository;
 
     @Autowired
     public OcorrenciaJpaAdapter(
             OcorrenciaJpaRepository repository,
             AreaRiscoJpaRepository areaRiscoRepository,
-            UsuarioJpaRepositorio usuarioRepository) {
+            UsuarioJpaRepositorio usuarioRepository,
+            SequenciaProtocoloCatJpaRepository sequenciaProtocoloCatRepository) {
         this.repository = repository;
         this.areaRiscoRepository = areaRiscoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.sequenciaProtocoloCatRepository = sequenciaProtocoloCatRepository;
+    }
+
+    public OcorrenciaJpaAdapter(
+            OcorrenciaJpaRepository repository,
+            AreaRiscoJpaRepository areaRiscoRepository,
+            UsuarioJpaRepositorio usuarioRepository) {
+        this(repository, areaRiscoRepository, usuarioRepository, null);
     }
 
     public OcorrenciaJpaAdapter(OcorrenciaJpaRepository repository) {
-        this(repository, null, null);
+        this(repository, null, null, null);
     }
 
     @Override
@@ -65,7 +75,11 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
 
     @Override
     public long proximoSequencialCAT(int ano, int mes) {
-        return repository.count() + 1;
+        if (sequenciaProtocoloCatRepository == null) {
+            throw new IllegalStateException(
+                    "Sequência de protocolo CAT indisponível: o adaptador foi criado sem acesso ao banco.");
+        }
+        return sequenciaProtocoloCatRepository.reservarProximoSequencial(ano, mes);
     }
 
     private AcidenteEntity toEntity(Acidente acidente) {
