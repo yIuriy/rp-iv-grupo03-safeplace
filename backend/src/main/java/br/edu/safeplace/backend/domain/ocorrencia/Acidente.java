@@ -294,7 +294,7 @@ public class Acidente extends Ocorrencia {
                 this.getMidias(),
                 this.getArea(),
                 this.getGestor(),
-                this.getLocal(),
+                this.getLocalInformado(),
                 this.getPlanoDeAcao(),
                 this.causaRaiz,
                 this.tipo,

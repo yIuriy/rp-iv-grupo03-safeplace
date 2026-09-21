@@ -62,7 +62,7 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
     @Override
     @Transactional
     public OcorrenciaOutputDTO registrarAcidente(RegistrarAcidenteInputDTO inputDTO) {
-        AreaRisco area = resolverArea(inputDTO.areaId(), inputDTO.local());
+        AreaRisco area = resolverArea(inputDTO.areaId());
         Colaborador colaborador = resolverColaborador(inputDTO.colaboradorId());
         GestorDeSeguranca gestor = resolverGestor(inputDTO.gestorId());
         CausaRaizAcidente causaRaiz = converterCausaRaiz(inputDTO.causaRaiz());
@@ -78,7 +78,7 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
                 List.of(),
                 area,
                 gestor,
-                area != null ? area.getNome() : inputDTO.local(),
+                inputDTO.local(),
                 inputDTO.planoDeAcao(),
                 causaRaiz,
                 inputDTO.tipo(),
@@ -105,7 +105,7 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
     @Override
     @Transactional
     public OcorrenciaOutputDTO registrarIncidente(RegistrarIncidenteInputDTO inputDTO) {
-        AreaRisco area = resolverArea(inputDTO.areaId(), inputDTO.local());
+        AreaRisco area = resolverArea(inputDTO.areaId());
         Colaborador colaborador = resolverColaborador(inputDTO.colaboradorId());
         GestorDeSeguranca gestor = resolverGestor(inputDTO.gestorId());
 
@@ -120,7 +120,7 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
                 List.of(),
                 area,
                 gestor,
-                area != null ? area.getNome() : inputDTO.local(),
+                inputDTO.local(),
                 inputDTO.planoDeAcao(),
                 inputDTO.situacaoRisco(),
                 inputDTO.potencialDano()
@@ -140,13 +140,14 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
         return OcorrenciaOutputDTO.deDominio(salvo);
     }
 
-    private AreaRisco resolverArea(Integer areaId, String local) {
+    /**
+     * Resolve a área de risco do fato. A localização estrutural vem apenas desta associação: o
+     * texto livre {@code local} é preservado como rótulo legado e nunca gera uma área fictícia.
+     */
+    private AreaRisco resolverArea(Integer areaId) {
         if (areaId != null && areaRiscoRepository != null) {
             return areaRiscoRepository.buscarPorId(areaId)
                     .orElseThrow(() -> new IllegalArgumentException("Área de risco não encontrada para o ID: " + areaId));
-        }
-        if (local != null && !local.isBlank()) {
-            return new AreaRisco(null, null, local.trim(), null, null, null, null, null, null);
         }
         return null;
     }

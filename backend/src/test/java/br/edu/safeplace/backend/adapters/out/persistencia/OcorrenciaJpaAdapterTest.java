@@ -207,6 +207,36 @@ class OcorrenciaJpaAdapterTest {
     }
 
     @Test
+    @DisplayName("Deve reconstruir o local legado sem transformá-lo em área de risco")
+    void naoDeveDerivarAreaFicticiaDoTextoLocal() {
+        AcidenteEntity entity = new AcidenteEntity(
+                70,
+                LocalDateTime.of(2026, 9, 11, 8, 0),
+                LocalDateTime.of(2026, 9, 11, 8, 30),
+                "ABERTA",
+                null,
+                null,
+                null,
+                "Oficina",
+                "Corte com ferramenta",
+                null,
+                "FALHA_EPI",
+                "Corte",
+                "Dedo",
+                null,
+                "Ambulatório",
+                "BAIXO");
+
+        when(ocorrenciaRepository.findById(70)).thenReturn(Optional.of(entity));
+
+        Acidente acidente = (Acidente) adapter.buscarPorId(70).orElseThrow();
+
+        assertThat(acidente.getArea()).isNull();
+        assertThat(acidente.getLocal()).isEqualTo("Oficina");
+        assertThat(acidente.getLocalInformado()).isEqualTo("Oficina");
+    }
+
+    @Test
     @DisplayName("Deve calcular próximo sequencial CAT baseado no count")
     void deveCalcularProximoSequencialCAT() {
         when(ocorrenciaRepository.count()).thenReturn(7L);
