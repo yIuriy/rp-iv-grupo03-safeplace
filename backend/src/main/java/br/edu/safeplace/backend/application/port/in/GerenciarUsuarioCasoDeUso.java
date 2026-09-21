@@ -1,3 +1,10 @@
+/*
+ * Porta de entrada (interface) do módulo de usuários: declara as operações de cadastro, consulta e
+ * atualização de RF23 que a camada web chama e UsuarioCasoDeUso implementa. Corresponde às
+ * operações de Colaborador e Supervisor do diagrama de classes, movidas para o caso de uso na
+ * arquitetura hexagonal.
+ */
+
 package br.edu.safeplace.backend.application.port.in;
 
 import br.edu.safeplace.backend.application.dto.input.AtualizarPessoaInputDTO;

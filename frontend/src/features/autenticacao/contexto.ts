@@ -1,3 +1,6 @@
+// Contexto React da autenticação: tipo Autenticacao, hook useAutenticacao e useSessaoAtiva, para
+// telas protegidas em que a sessão nunca é nula.
+
 import { createContext, useContext } from 'react'
 import type { Sessao } from './sessao'
 

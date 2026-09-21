@@ -1,3 +1,7 @@
+/*
+ * Estilos dos componentes compartilhados do design system: botões, campos (inclusive senha com
+ * botão de revelar), feedback, diálogos, abas, tabelas, cartões e CPF oculto.
+ */
 .sp-sr-only {
   position: absolute;
   width: 1px;

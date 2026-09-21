@@ -1,3 +1,6 @@
+// Modelo e persistência da sessão no navegador: tipo Sessao, perfis com acesso, leitura e
+// validação do JSON e gravação em sessionStorage (chave safeplace.sessao).
+
 export type PerfilComAcesso = 'GESTOR_SEGURANCA' | 'SUPERVISOR'
 
 export type Sessao = {

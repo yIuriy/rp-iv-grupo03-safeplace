@@ -1,3 +1,6 @@
+// Painel de colaboradores, para Supervisor e Gestor: busca por nome ou CPF, listagem, cadastro e
+// edição. Colaborador não tem conta de acesso (RF23).
+
 import { useCallback, useState, type FormEvent } from 'react'
 import { Button, SearchInput, Toast } from '../../shared/components'
 import { useConsulta } from '../../shared/api/useConsulta'

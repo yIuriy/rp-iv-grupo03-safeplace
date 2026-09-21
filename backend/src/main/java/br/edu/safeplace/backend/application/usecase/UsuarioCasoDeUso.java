@@ -1,3 +1,10 @@
+/*
+ * Caso de uso do módulo de usuários: implementa GerenciarUsuarioCasoDeUso. Garante CPF e e-mail
+ * únicos, gera e codifica a senha inicial do Supervisor (issue #91) e faz a atualização cadastral
+ * por papel (issue #122), usando as portas de saída de repositório, codificador e gerador de
+ * senha.
+ */
+
 package br.edu.safeplace.backend.application.usecase;
 
 import br.edu.safeplace.backend.application.dto.input.AtualizarPessoaInputDTO;

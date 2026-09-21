@@ -1,3 +1,6 @@
+// Exibição de CPF na listagem: início e fim cobertos por pontos, com botão para revelar o número
+// completo.
+
 import { useState } from 'react'
 import { IconButton } from '../../shared/components'
 import { mascararCpf, ocultarCpf } from './formatos'

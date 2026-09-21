@@ -1,3 +1,6 @@
+// Tabela de pessoas cadastradas: nome, CPF oculto, nascimento, e-mail, situação e botão Editar.
+// Nunca exibe credenciais.
+
 import { Badge, Button, Table, TableRow } from '../../shared/components'
 import type { Usuario } from './api'
 import { CpfOculto } from './CpfOculto'

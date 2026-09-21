@@ -1,3 +1,7 @@
+// Provedor de contexto da autenticação (issue #94): guarda a sessão em memória e no
+// sessionStorage, expõe entrar e sair, e encerra a sessão quando o interceptador detecta token
+// rejeitado (401). Instala os interceptadores antes de qualquer tela renderizar.
+
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { autenticar } from './api'
 import { AutenticacaoContexto, type MotivoSaida } from './contexto'

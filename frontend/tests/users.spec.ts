@@ -1,3 +1,7 @@
+// Testes Playwright da tela de usuários (issues #94 e #122): matriz de perfis, busca, cadastro com
+// senha inicial, formulário sem credenciais, edição com CPF somente leitura, conflitos e estados
+// de carga.
+
 import { test, expect } from '@playwright/test'
 import { gestora, iniciarSessao, pessoas, simularListagens, supervisor } from './helpers/sessao'
 

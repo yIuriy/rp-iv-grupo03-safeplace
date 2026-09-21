@@ -1,3 +1,9 @@
+/*
+ * Teste unitário de domínio (issue #122): comDadosAtualizados em Colaborador, Supervisor e
+ * GestorDeSeguranca devolve cópia com os dados novos, preserva identidade, papel e credencial e
+ * não altera o objeto original.
+ */
+
 package br.edu.safeplace.backend.domain.usuario;
 
 import java.time.LocalDate;

@@ -1,3 +1,9 @@
+/*
+ * Adaptador de entrada HTTP do módulo de usuários: rotas /api/usuarios para cadastrar, listar,
+ * buscar e atualizar supervisores e colaboradores (RF23). Traduz JSON em DTOs e delega tudo à
+ * porta GerenciarUsuarioCasoDeUso; a permissão por papel fica no SecurityConfig.
+ */
+
 package br.edu.safeplace.backend.adapters.in.web;
 
 import br.edu.safeplace.backend.application.dto.input.FiltroColaboradorDTO;

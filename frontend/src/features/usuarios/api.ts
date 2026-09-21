@@ -1,3 +1,7 @@
+// Cliente tipado da API de usuários (/api/usuarios): tipos Usuario e DadosPessoa, validação das
+// respostas e funções de listar, cadastrar e atualizar supervisores e colaboradores (RF23, issues
+// #94 e #122).
+
 import { http } from '../../shared/api/https'
 import { mensagemDaApi, statusDoErro } from '../../shared/api/erros'
 

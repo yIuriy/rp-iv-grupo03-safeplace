@@ -1,3 +1,5 @@
+// Chamada de login à API (POST /api/auth/login) e conversão da resposta em Sessao.
+
 import { http } from '../../shared/api/https'
 import { lerSessaoDe, type Sessao } from './sessao'
 

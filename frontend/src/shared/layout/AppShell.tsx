@@ -1,3 +1,6 @@
+// Estrutura visual da aplicação: cabeçalho com logo, perfil e ações (Sair), menu lateral
+// responsivo (diálogo em telas pequenas), link de pular para o conteúdo e área principal.
+
 import { useEffect, useId, useState, type ReactNode, type ComponentProps } from 'react'
 import logo from '../../../design-system/assets/logo-primary.svg'
 import { Button, Dialog, Icon, type IconName } from '../components'

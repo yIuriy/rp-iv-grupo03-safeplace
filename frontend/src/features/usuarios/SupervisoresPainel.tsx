@@ -1,3 +1,5 @@
+// Painel de supervisores, visível só ao Gestor: listagem, cadastro com senha inicial e edição.
+
 import { useState } from 'react'
 import { Button, Toast } from '../../shared/components'
 import { useConsulta } from '../../shared/api/useConsulta'

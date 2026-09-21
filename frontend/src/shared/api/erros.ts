@@ -1,3 +1,6 @@
+// Utilitários para ler erros do axios: status HTTP e a mensagem devolvida pela API no campo
+// message.
+
 import { isAxiosError } from 'axios'
 
 export function statusDoErro(erro: unknown): number | undefined {

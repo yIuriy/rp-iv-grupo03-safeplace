@@ -1,3 +1,9 @@
+/*
+ * Corpo da requisição PUT /api/usuarios/colaboradores/{id} (RF23, issue #122). Valida nome, data
+ * de nascimento e e-mail; recusa CPF, senha, perfil e situação com 400 e converte para
+ * AtualizarPessoaInputDTO.
+ */
+
 package br.edu.safeplace.backend.adapters.in.web;
 
 import java.time.LocalDate;

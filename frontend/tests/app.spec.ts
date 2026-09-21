@@ -1,3 +1,6 @@
+// Testes Playwright de navegação com sessão simulada: as cinco funcionalidades sem recarregar,
+// URLs diretas, histórico, rota desconhecida e uso por teclado em várias larguras.
+
 import { test, expect } from '@playwright/test'
 import { iniciarSessao, pessoas, simularListagens } from './helpers/sessao'
 
