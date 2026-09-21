@@ -24,29 +24,34 @@ public interface GerenciarUsuarioCasoDeUso {
      * {@link #cadastrarSupervisor} e {@link #cadastrarColaborador}, que são específicos por papel.
      */
     UsuarioSaidaDTO cadastrarUsuario(CadastrarUsuarioEntradaDTO entrada);
+    UsuarioSaidaDTO cadastrarUsuario(CadastrarUsuarioEntradaDTO entrada, String operador);
 
     /**
      * RF23: o Gestor de Segurança cadastra supervisores. A senha inicial é gerada pelo sistema e
      * devolvida somente nesta resposta.
      */
     UsuarioSaidaDTO cadastrarSupervisor(CadastrarSupervisorInputDTO entrada);
+    UsuarioSaidaDTO cadastrarSupervisor(CadastrarSupervisorInputDTO entrada, String operador);
 
     /**
      * RF23: Supervisor e Gestor de Segurança cadastram colaboradores, que não possuem conta de acesso nem senha.
      */
     UsuarioSaidaDTO cadastrarColaborador(CadastrarColaboradorInputDTO entrada);
+    UsuarioSaidaDTO cadastrarColaborador(CadastrarColaboradorInputDTO entrada, String operador);
 
     /**
      * RF23 / issue #122: o Gestor de Segurança atualiza os dados cadastrais de um Supervisor,
      * preservando id, CPF, perfil e credenciais. Um id de outro perfil não é encontrado.
      */
     UsuarioSaidaDTO atualizarSupervisor(Integer id, AtualizarPessoaInputDTO entrada);
+    UsuarioSaidaDTO atualizarSupervisor(Integer id, AtualizarPessoaInputDTO entrada, String operador);
 
     /**
      * RF23 / issue #122: Supervisor e Gestor atualizam os dados cadastrais de um Colaborador,
      * que continua sem conta de acesso.
      */
     UsuarioSaidaDTO atualizarColaborador(Integer id, AtualizarPessoaInputDTO entrada);
+    UsuarioSaidaDTO atualizarColaborador(Integer id, AtualizarPessoaInputDTO entrada, String operador);
 
     List<UsuarioSaidaDTO> listarUsuarios();
 

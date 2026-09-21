@@ -7,6 +7,7 @@ import br.edu.safeplace.backend.application.port.in.AutenticarUsuarioCasoDeUso;
 import br.edu.safeplace.backend.application.port.in.GerenciarUsuarioCasoDeUso;
 import br.edu.safeplace.backend.application.port.out.TokenPorta;
 import br.edu.safeplace.backend.domain.usuario.Perfil;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -58,8 +60,14 @@ class SegurancaRbacIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         tokenGestor = "Bearer " + tokenPorta.gerarToken("gestor@safeplace.com", Perfil.GESTOR_SEGURANCA.name());
         tokenSupervisor = "Bearer " + tokenPorta.gerarToken("supervisor@safeplace.com", Perfil.SUPERVISOR.name());
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test

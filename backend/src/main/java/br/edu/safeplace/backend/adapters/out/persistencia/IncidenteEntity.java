@@ -18,11 +18,28 @@ public class IncidenteEntity extends OcorrenciaEntity {
     protected IncidenteEntity() {
     }
 
-    public IncidenteEntity(Integer idOcorrencia, LocalDateTime dataOcorrencia, String local, String descricao,
-            PlanoDeAcaoEntity planoDeAcao, String situacaoRisco, String potencialDano) {
-        super(idOcorrencia, dataOcorrencia, local, descricao, planoDeAcao);
+    public IncidenteEntity(
+            Integer idOcorrencia,
+            LocalDateTime dataOcorrencia,
+            LocalDateTime dataRegistro,
+            String statusOcorrencia,
+            AreaRiscoEntity area,
+            ColaboradorEntidade colaborador,
+            GestorDeSegurancaEntidade gestor,
+            String local,
+            String descricao,
+            PlanoDeAcaoEntity planoDeAcao,
+            String situacaoRisco,
+            String potencialDano) {
+        super(idOcorrencia, dataOcorrencia, dataRegistro, statusOcorrencia, area, colaborador, gestor, local, descricao, planoDeAcao);
         this.situacaoRisco = situacaoRisco;
         this.potencialDano = potencialDano;
+    }
+
+    public IncidenteEntity(Integer idOcorrencia, LocalDateTime dataOcorrencia, String local, String descricao,
+            PlanoDeAcaoEntity planoDeAcao, String situacaoRisco, String potencialDano) {
+        this(idOcorrencia, dataOcorrencia, LocalDateTime.now(), "ABERTA", null, null, null, local, descricao,
+                planoDeAcao, situacaoRisco, potencialDano);
     }
 
     public String getSituacaoRisco() {
