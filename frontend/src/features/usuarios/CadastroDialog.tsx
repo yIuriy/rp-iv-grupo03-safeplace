@@ -1,3 +1,6 @@
+// Diálogo de cadastro e edição de Supervisor ou Colaborador: textos e regras por tipo, chamada à
+// API correspondente e, no cadastro de Supervisor, exibição da senha inicial uma única vez.
+
 import { useState } from 'react'
 import { Alert, Button, Dialog } from '../../shared/components'
 import {

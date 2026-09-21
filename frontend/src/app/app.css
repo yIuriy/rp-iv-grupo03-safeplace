@@ -1,3 +1,7 @@
+/*
+ * Estilos das telas da aplicação: página de funcionalidade, tela de login, painéis de usuários,
+ * formulários, busca, diálogos e exibição da senha inicial.
+ */
 .sp-feature-page { display: grid; gap: var(--sp-space-24); min-width: 0; }
 .sp-feature-heading { display: grid; gap: var(--sp-space-8); }
 .sp-feature-heading p { color: var(--sp-text-secondary); }

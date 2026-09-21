@@ -1,3 +1,6 @@
+// Interceptadores do cliente HTTP compartilhado: anexam Authorization: Bearer a toda chamada e
+// avisam quando um 401 fora do login indica sessão expirada ou revogada (RNF03).
+
 import { http } from '../../shared/api/https'
 import { statusDoErro } from '../../shared/api/erros'
 import { sessaoAtual } from './sessao'

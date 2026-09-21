@@ -1,3 +1,6 @@
+// Leitura do FormData e validação local dos dados de pessoa, espelhando o que o backend exige:
+// nome, CPF com 11 dígitos, data no passado e e-mail.
+
 import type { DadosPessoa } from './api'
 import { digitosDoCpf, hojeIso } from './formatos'
 

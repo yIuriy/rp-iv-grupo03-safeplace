@@ -1,3 +1,9 @@
+/*
+ * Configuração do Spring Security: JWT sem sessão de servidor, rotas públicas (RNF03) e a matriz
+ * de papéis por rota. RF23 e issue #122: só o Gestor cria e atualiza supervisores; Supervisor e
+ * Gestor criam e atualizam colaboradores.
+ */
+
 package br.edu.safeplace.backend.config;
 
 import br.edu.safeplace.backend.adapters.out.seguranca.JwtFiltroAutenticacao;

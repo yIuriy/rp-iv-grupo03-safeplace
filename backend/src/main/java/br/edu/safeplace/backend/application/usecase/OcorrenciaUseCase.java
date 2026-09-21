@@ -6,9 +6,11 @@ import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.RegistrarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.out.AreaRiscoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
@@ -19,6 +21,8 @@ import br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontr
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,27 +34,38 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
     private final OcorrenciaRepositoryPort repository;
     private final AreaRiscoRepositoryPort areaRiscoRepository;
     private final UsuarioRepositorioPorta usuarioRepository;
+    private final LogAuditoriaRepositoryPort logAuditoriaRepositoryPort;
+
+    public OcorrenciaUseCase(OcorrenciaRepositoryPort repository) {
+        this(repository, null, null, null);
+    }
 
     @Autowired
     public OcorrenciaUseCase(
             OcorrenciaRepositoryPort repository,
             AreaRiscoRepositoryPort areaRiscoRepository,
             UsuarioRepositorioPorta usuarioRepository) {
+        this(repository, areaRiscoRepository, usuarioRepository, null);
+    }
+
+    @Autowired
+    public OcorrenciaUseCase(
+            OcorrenciaRepositoryPort repository,
+            AreaRiscoRepositoryPort areaRiscoRepository,
+            UsuarioRepositorioPorta usuarioRepository,
+            LogAuditoriaRepositoryPort logAuditoriaRepositoryPort) {
         this.repository = repository;
         this.areaRiscoRepository = areaRiscoRepository;
         this.usuarioRepository = usuarioRepository;
-    }
-
-    public OcorrenciaUseCase(OcorrenciaRepositoryPort repository) {
-        this(repository, null, null);
+        this.logAuditoriaRepositoryPort = logAuditoriaRepositoryPort;
     }
 
     @Override
     @Transactional
     public OcorrenciaOutputDTO registrarAcidente(RegistrarAcidenteInputDTO inputDTO) {
-        AreaRisco area = resolverArea(inputDTO.areaId(), inputDTO.local());
+        AreaRisco area = resolverArea(inputDTO.areaId());
         Colaborador colaborador = resolverColaborador(inputDTO.colaboradorId());
-        GestorDeSeguranca gestor = resolverGestor(inputDTO.gestorId());
+        GestorDeSeguranca gestor = resolverRelator(inputDTO.gestorId());
         CausaRaizAcidente causaRaiz = converterCausaRaiz(inputDTO.causaRaiz());
 
         Acidente acidente = new Acidente(
@@ -64,7 +79,7 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
                 List.of(),
                 area,
                 gestor,
-                area != null ? area.getNome() : inputDTO.local(),
+                inputDTO.local(),
                 inputDTO.planoDeAcao(),
                 causaRaiz,
                 inputDTO.tipo(),
@@ -74,15 +89,26 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
                 inputDTO.gravidade()
         );
         Acidente salvo = repository.salvarAcidente(acidente);
+
+        if (logAuditoriaRepositoryPort != null) {
+            LogAuditoria log = LogAuditoria.registrarCadastro(
+                    resolverOperador(),
+                    "Acidente",
+                    salvo.getId(),
+                    "Registro de Acidente de Trabalho"
+            );
+            logAuditoriaRepositoryPort.salvar(log);
+        }
+
         return OcorrenciaOutputDTO.deDominio(salvo);
     }
 
     @Override
     @Transactional
     public OcorrenciaOutputDTO registrarIncidente(RegistrarIncidenteInputDTO inputDTO) {
-        AreaRisco area = resolverArea(inputDTO.areaId(), inputDTO.local());
+        AreaRisco area = resolverArea(inputDTO.areaId());
         Colaborador colaborador = resolverColaborador(inputDTO.colaboradorId());
-        GestorDeSeguranca gestor = resolverGestor(inputDTO.gestorId());
+        GestorDeSeguranca gestor = resolverRelator(inputDTO.gestorId());
 
         Incidente incidente = new Incidente(
                 null,
@@ -95,22 +121,34 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
                 List.of(),
                 area,
                 gestor,
-                area != null ? area.getNome() : inputDTO.local(),
+                inputDTO.local(),
                 inputDTO.planoDeAcao(),
                 inputDTO.situacaoRisco(),
                 inputDTO.potencialDano()
         );
         Incidente salvo = repository.salvarIncidente(incidente);
+
+        if (logAuditoriaRepositoryPort != null) {
+            LogAuditoria log = LogAuditoria.registrarCadastro(
+                    resolverOperador(),
+                    "Incidente",
+                    salvo.getId(),
+                    "Registro de Incidente"
+            );
+            logAuditoriaRepositoryPort.salvar(log);
+        }
+
         return OcorrenciaOutputDTO.deDominio(salvo);
     }
 
-    private AreaRisco resolverArea(Integer areaId, String local) {
+    /**
+     * Resolve a área de risco do fato. A localização estrutural vem apenas desta associação: o
+     * texto livre {@code local} é preservado como rótulo legado e nunca gera uma área fictícia.
+     */
+    private AreaRisco resolverArea(Integer areaId) {
         if (areaId != null && areaRiscoRepository != null) {
             return areaRiscoRepository.buscarPorId(areaId)
                     .orElseThrow(() -> new IllegalArgumentException("Área de risco não encontrada para o ID: " + areaId));
-        }
-        if (local != null && !local.isBlank()) {
-            return new AreaRisco(null, null, local.trim(), null, null, null, null, null, null);
         }
         return null;
     }
@@ -121,6 +159,35 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
                     .orElseThrow(() -> new IllegalArgumentException("Colaborador não encontrado para o ID: " + colaboradorId));
         }
         return null;
+    }
+
+    /**
+     * Resolve o responsável pelo registro da ocorrência. O usuário autenticado prevalece sobre o
+     * identificador enviado na requisição, de modo que o relato fique vinculado a quem de fato o
+     * registrou; o identificador explícito só é usado quando não há gestor autenticado. Quem
+     * registra sem ser gestor de segurança (por exemplo, um supervisor no relato rápido) continua
+     * identificado pela trilha de auditoria.
+     */
+    private GestorDeSeguranca resolverRelator(Integer gestorId) {
+        GestorDeSeguranca autenticado = gestorAutenticado();
+        if (autenticado != null) {
+            return autenticado;
+        }
+        return resolverGestor(gestorId);
+    }
+
+    private GestorDeSeguranca gestorAutenticado() {
+        if (usuarioRepository == null) {
+            return null;
+        }
+        String email = emailAutenticado();
+        if (email == null) {
+            return null;
+        }
+        return usuarioRepository.buscarPorEmail(email)
+                .filter(GestorDeSeguranca.class::isInstance)
+                .map(GestorDeSeguranca.class::cast)
+                .orElse(null);
     }
 
     private GestorDeSeguranca resolverGestor(Integer gestorId) {
@@ -169,6 +236,17 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
         ocorrencia.enviarParaTriagem();
 
         Ocorrencia salva = salvarOcorrencia(ocorrencia);
+
+        if (logAuditoriaRepositoryPort != null) {
+            LogAuditoria log = LogAuditoria.registrarAlteracao(
+                    resolverOperador(),
+                    salva instanceof Acidente ? "Acidente" : "Incidente",
+                    salva.getId(),
+                    "Envio de ocorrência para triagem"
+            );
+            logAuditoriaRepositoryPort.salvar(log);
+        }
+
         return OcorrenciaOutputDTO.deDominio(salva);
     }
 
@@ -181,6 +259,17 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
         ocorrencia.arquivar();
 
         Ocorrencia salva = salvarOcorrencia(ocorrencia);
+
+        if (logAuditoriaRepositoryPort != null) {
+            LogAuditoria log = LogAuditoria.registrarAlteracao(
+                    resolverOperador(),
+                    salva instanceof Acidente ? "Acidente" : "Incidente",
+                    salva.getId(),
+                    "Arquivamento de ocorrência"
+            );
+            logAuditoriaRepositoryPort.salvar(log);
+        }
+
         return OcorrenciaOutputDTO.deDominio(salva);
     }
 
@@ -198,7 +287,31 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
         Acidente consolidado = acidente.consolidarCAT(sequencial);
         Acidente salvo = repository.salvarAcidente(consolidado);
 
+        if (logAuditoriaRepositoryPort != null) {
+            LogAuditoria log = LogAuditoria.registrarAlteracao(
+                    resolverOperador(),
+                    "Acidente",
+                    salvo.getId(),
+                    "Consolidação de CAT com protocolo " + salvo.getNumeroProtocolo()
+            );
+            logAuditoriaRepositoryPort.salvar(log);
+        }
+
         return OcorrenciaOutputDTO.deDominio(salvo);
+    }
+
+    private String resolverOperador() {
+        String email = emailAutenticado();
+        return email != null ? email : "SISTEMA";
+    }
+
+    private String emailAutenticado() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
+            String email = auth.getName().trim();
+            return "anonymousUser".equals(email) ? null : email;
+        }
+        return null;
     }
 
     private Ocorrencia salvarOcorrencia(Ocorrencia ocorrencia) {

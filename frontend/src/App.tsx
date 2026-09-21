@@ -1,3 +1,7 @@
+// Raiz da aplicação: define as rotas. /login é pública; as telas de funcionalidade ficam dentro de
+// ExigirSessao (exige login) e AppLayout (cabeçalho e menu). O catálogo do design system segue
+// livre.
+
 import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './app/AppLayout'
 import { AutenticacaoProvider } from './features/autenticacao/AutenticacaoProvider'

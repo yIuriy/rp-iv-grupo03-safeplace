@@ -1,3 +1,9 @@
+/*
+ * DTO de entrada da atualização cadastral (RF23, issue #122): leva só nome, data de nascimento e
+ * e-mail da camada web para o caso de uso. Identidade, perfil, credenciais e situação não passam
+ * por aqui.
+ */
+
 package br.edu.safeplace.backend.application.dto.input;
 
 import java.time.LocalDate;

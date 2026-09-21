@@ -1,3 +1,6 @@
+// Testes Playwright do login (issue #94): redirecionamento de anônimos, credenciais inválidas,
+// falha de rede, validação, expiração do token, saída e acessibilidade em 360px.
+
 import { test, expect } from '@playwright/test'
 import { gestora, iniciarSessao, sessaoGuardada, simularListagens } from './helpers/sessao'
 

@@ -1,3 +1,6 @@
+// Componente genérico para os estados de uma listagem: erro com tentar novamente, carregando,
+// vazia ou com dados.
+
 import type { ReactNode } from 'react'
 import { Alert, Button, EmptyState } from '../../shared/components'
 import type { Consulta } from '../../shared/api/useConsulta'

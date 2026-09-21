@@ -1,3 +1,6 @@
+// Apoio aos testes Playwright: sessões e pessoas de exemplo, gravação da sessão no sessionStorage
+// antes da página carregar e captura das chamadas à API.
+
 import type { Page, Route } from '@playwright/test'
 
 export type SessaoTeste = {

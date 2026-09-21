@@ -1,3 +1,9 @@
+/*
+ * Teste unitário do caso de uso de atualização (issue #122) com repositório em memória: preserva
+ * id, CPF, perfil e hash da senha; id de outro papel não é encontrado; e-mail de outra pessoa é
+ * recusado.
+ */
+
 package br.edu.safeplace.backend.application.usecase;
 
 import java.time.LocalDate;

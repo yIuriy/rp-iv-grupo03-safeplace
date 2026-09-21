@@ -1,3 +1,10 @@
+/*
+ * Entidade de domínio Colaborador, como no diagrama de classes: pessoa cadastrada sem conta de
+ * acesso e superclasse de Supervisor e GestorDeSeguranca. É imutável: comDadosAtualizados devolve
+ * uma cópia com nome, data de nascimento e e-mail novos, preservando id, CPF, situação e criação
+ * (RF23, issue #122).
+ */
+
 package br.edu.safeplace.backend.domain.usuario;
 
 import java.time.LocalDate;
