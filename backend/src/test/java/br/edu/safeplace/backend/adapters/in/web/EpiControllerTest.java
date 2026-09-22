@@ -2,11 +2,13 @@ package br.edu.safeplace.backend.adapters.in.web;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
 import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
+import br.edu.safeplace.backend.application.dto.output.ManutencaoEpiOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.MovimentacaoEstoqueOutputDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarEpiUseCase;
 import br.edu.safeplace.backend.application.port.in.ControlarManutencaoEpiUseCase;
 import br.edu.safeplace.backend.config.SecurityConfig;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
+import br.edu.safeplace.backend.domain.epi.ResultadoManutencao;
 import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 import br.edu.safeplace.backend.domain.epi.exception.SaldoInsuficienteException;
@@ -23,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -160,5 +163,54 @@ class EpiControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Não Encontrado"))
                 .andExpect(jsonPath("$.message").value("EPI com ID 999 não encontrado."));
+    }
+
+    @Test
+    void deveRegistrarManutencaoSemTipoObrigatorio() throws Exception {
+        ManutencaoEpiOutputDTO manutencao = new ManutencaoEpiOutputDTO(
+                10, 1, LocalDateTime.of(2026, 9, 21, 10, 30), null,
+                "Higienização e inspeção", ResultadoManutencao.APROVADO,
+                "gestor@safeplace.com", 2, StatusEpi.DISPONIVEL);
+        when(manutencaoUseCase.concluirManutencao(any(), eq("user"))).thenReturn(manutencao);
+
+        mockMvc.perform(post("/api/epis/1/manutencoes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "dataManutencao": "2026-09-21T10:30:00",
+                                  "descricao": "Higienização e inspeção",
+                                  "resultado": "APROVADO"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(10))
+                .andExpect(jsonPath("$.resultado").value("APROVADO"))
+                .andExpect(jsonPath("$.statusAtualEpi").value("DISPONIVEL"));
+    }
+
+    @Test
+    void deveListarHistoricoDeManutencao() throws Exception {
+        ManutencaoEpiOutputDTO manutencao = new ManutencaoEpiOutputDTO(
+                10, 1, LocalDateTime.of(2026, 9, 21, 10, 30), null,
+                "Higienização e inspeção", ResultadoManutencao.APROVADO,
+                "gestor@safeplace.com", 2, StatusEpi.DISPONIVEL);
+        when(manutencaoUseCase.listarHistoricoPorEpi(1)).thenReturn(List.of(manutencao));
+
+        mockMvc.perform(get("/api/epis/1/manutencoes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(10))
+                .andExpect(jsonPath("$[0].descricao").value("Higienização e inspeção"))
+                .andExpect(jsonPath("$[0].resultado").value("APROVADO"));
+    }
+
+    @Test
+    void deveRejeitarManutencaoSemDadosObrigatorios() throws Exception {
+        mockMvc.perform(post("/api/epis/1/manutencoes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validação Falhou"));
+
+        verifyNoInteractions(manutencaoUseCase);
     }
 }

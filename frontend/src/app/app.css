@@ -27,6 +27,15 @@
 .sp-senha-inicial dt { font: var(--sp-type-label-md-weight) var(--sp-type-label-md-size) / var(--sp-type-label-md-line-height) var(--sp-font-body), sans-serif; color: var(--sp-text-secondary); }
 .sp-senha-inicial dd { margin: 0; }
 .sp-senha-inicial code { font-size: var(--sp-type-heading-md-size); line-height: var(--sp-type-heading-md-line-height); letter-spacing: 0.08em; user-select: all; overflow-wrap: anywhere; }
+
+/* EPIs e manutenção (#104) */
+.sp-epi-filter { display: flex; flex-wrap: wrap; align-items: end; gap: var(--sp-space-16); }
+.sp-epi-filter .sp-field { min-width: min(100%, 280px); }
+.sp-epi-filter p { color: var(--sp-text-secondary); padding-bottom: var(--sp-space-8); }
+.sp-epi-detail { display: grid; gap: var(--sp-space-16); padding: var(--sp-space-24); border: 1px solid var(--sp-border-default); border-radius: var(--sp-radius-8); background: var(--sp-surface-white); }
+.sp-epi-detail-heading { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: var(--sp-space-16); }
+.sp-epi-detail-heading p { margin-top: var(--sp-space-4); color: var(--sp-text-secondary); }
+.sp-epi-history { padding: 0; margin: 0; list-style: none; }
 @media (max-width: 767px) {
   .sp-login-card { padding: var(--sp-space-24); }
   .sp-busca { grid-template-columns: 1fr; }
