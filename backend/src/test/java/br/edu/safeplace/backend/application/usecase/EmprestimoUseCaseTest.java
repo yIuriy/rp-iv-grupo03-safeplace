@@ -65,7 +65,7 @@ class EmprestimoUseCaseTest {
         epis = new EpisEmMemoria();
         usuarios = new UsuariosEmMemoria();
         capacitacoes = new CapacitacoesEmMemoria();
-        useCase = new EmprestimoUseCase(emprestimos, epis, usuarios, capacitacoes);
+        useCase = new EmprestimoUseCase(emprestimos, epis, usuarios, capacitacoes, null);
 
         supervisorId = usuarios.salvar(Supervisor.novo("Bruno Souza", "52998224725",
                 LocalDate.of(1985, 3, 10), EMAIL_SUPERVISOR, "hash")).getId();

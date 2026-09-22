@@ -34,13 +34,6 @@ public record EpiOutputDTO(
                 estoqueCritico, descricao, classificacao, null, null, null, null, null, null, null, null);
     }
 
-    public EpiOutputDTO(Integer id, String nome, String numeroCa, int quantidade, int estoqueMinimo,
-                        StatusEpi status, LocalDate dataValidadeCa, Integer vidaUtilDias,
-                        boolean estoqueCritico, String descricao, ClassificacaoEPI classificacao,
-                        String localizacao) {
-        this(id, nome, numeroCa, quantidade, estoqueMinimo, status, dataValidadeCa, vidaUtilDias,
-                estoqueCritico, descricao, classificacao, localizacao, null, null, null, null, null, null, null);
-    }
     public static EpiOutputDTO deDominio(Epi epi) {
         return new EpiOutputDTO(
                 epi.getId(),
