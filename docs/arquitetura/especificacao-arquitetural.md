@@ -129,6 +129,11 @@ O estoque segue a mesma organização: `EpiController` recebe as requisições, 
 | Cadastrar e listar EPIs | `POST /api/epis` e `GET /api/epis` |
 | Consultar um EPI | `GET /api/epis/{id}` |
 | Registrar entrada ou saída de estoque | `POST /api/epis/{id}/movimentacoes` |
+| Consultar o histórico de movimentações de um EPI | `GET /api/epis/{id}/movimentacoes` |
+| Registrar entrega de EPI a colaborador, com termo de cautela (Supervisor ou Gestor) | `POST /api/emprestimos` |
+| Registrar devolução com estado apto, manutenção ou descarte | `POST /api/emprestimos/{id}/devolucao` |
+| Consultar empréstimos, pendências e atrasos (`situacao=PENDENTES` ou `ATRASADOS`, `colaboradorId`) | `GET /api/emprestimos` e `GET /api/emprestimos/{id}` |
+| Listar EPIs disponíveis para empréstimo | `GET /api/emprestimos/epis-disponiveis` |
 | Cadastrar e listar áreas de risco | `POST /api/areas-risco` e `GET /api/areas-risco` |
 | Filtrar o mapa de riscos por grau de perigo | `GET /api/areas-risco?nivelPerigo={nivel}` |
 | Consultar uma área de risco | `GET /api/areas-risco/{id}` |
@@ -149,7 +154,7 @@ Os módulos de áreas de risco e setores (RF05, UC03) e de tarefas (RF06, UC11) 
 
 `NivelPerigo` foi implementado com o vocabulário de UC03 e do diagrama de classes (`BAIXO`, `MEDIO`, `ALTO`, `CRITICO`). A divergência com os níveis leve, moderado, grave e crítico usados em UC11 e US06 continua pendente de decisão da equipe, conforme o glossário e a issue #77.
 
-A implementação de EPIs ainda não cobre manutenção, empréstimos, devoluções ou projeções de substituição. O vínculo entre tarefas e EPIs (RF12) e as inspeções periódicas (RF09) permanecem no backlog, assim como o módulo de capacitações. O módulo de usuários e autenticação RBAC está implementado no backend via Arquitetura Hexagonal. O frontend integra o login e a gestão de supervisores e colaboradores com a API, aplicando na interface a mesma matriz de perfis do `SecurityConfig`; as demais telas de negócio ainda são iniciais, e o catálogo de componentes segue disponível com dados fictícios.
+O empréstimo de EPIs (RF11, UC12, issue #106) segue a mesma organização: `EmprestimoController` recebe as requisições, `EmprestimoUseCase` implementa `ControlarEmprestimoUseCase` e usa `EmprestimoRepositoryPort` (implementada por `EmprestimoJpaAdapter`, tabela `emprestimos` da migração V19) e `ImpedimentoCapacitacaoPorta` (adaptador somente leitura sobre as tabelas de capacitações). O domínio fica em `domain/emprestimo/`, com `Emprestimo` e os enumeradores `ClassificacaoEmprestimo` (valores do diagrama de classes: `INDISPONIVEL` em posse, `DEVOLUCAO_ATRASADA` após a data prevista, `DISPONIVEL` devolvido) e `EstadoDevolucao` (`APTO`, `MANUTENCAO`, `DESCARTE`). Cada empréstimo retém uma unidade do registro de EPI (decisão #124) e debita ou credita o saldo pelas operações já existentes de `Epi`; só a devolução `APTO` credita o estoque. A implementação de EPIs ainda não cobre projeções de substituição. O vínculo entre tarefas e EPIs (RF12) e as inspeções periódicas (RF09) permanecem no backlog, assim como o módulo de capacitações. O módulo de usuários e autenticação RBAC está implementado no backend via Arquitetura Hexagonal. O frontend integra o login e a gestão de supervisores e colaboradores com a API, aplicando na interface a mesma matriz de perfis do `SecurityConfig`; as demais telas de negócio ainda são iniciais, e o catálogo de componentes segue disponível com dados fictícios.
 
 Os passos de execução e verificação estão no [README principal](../../README.md#executar-com-docker-compose) e no [README do frontend](../../frontend/README.md). O Compose é o ambiente local de desenvolvimento, enquanto os diagramas de implantação descrevem uma proposta de distribuição do sistema.
 

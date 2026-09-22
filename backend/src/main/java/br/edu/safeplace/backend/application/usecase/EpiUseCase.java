@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import br.edu.safeplace.backend.application.port.in.GerenciarEstoqueUseCase;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -149,9 +151,9 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
         Epi epi = repositoryPort.buscarPorId(epiId)
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId));
         int saldoAposMovimentacao = epi.getQuantidade();
-        List<MovimentacaoEstoqueOutputDTO> historico = new java.util.ArrayList<>();
+        List<MovimentacaoEstoqueOutputDTO> historico = new ArrayList<>();
         List<MovimentacaoEstoque> movimentacoes = repositoryPort.listarMovimentacoesPorEpi(epiId).stream()
-                .sorted(java.util.Comparator.comparing(MovimentacaoEstoque::getDataHora).reversed())
+                .sorted(Comparator.comparing(MovimentacaoEstoque::getDataHora).reversed())
                 .toList();
         for (MovimentacaoEstoque movimentacao : movimentacoes) {
             historico.add(MovimentacaoEstoqueOutputDTO.deDominio(movimentacao, saldoAposMovimentacao));
