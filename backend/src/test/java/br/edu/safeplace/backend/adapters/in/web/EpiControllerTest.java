@@ -166,6 +166,32 @@ class EpiControllerTest {
     }
 
     @Test
+    void deveRejeitarMovimentacaoSemMotivo() throws Exception {
+        mockMvc.perform(post("/api/epis/1/movimentacoes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "tipo": "ENTRADA", "quantidade": 5, "motivo": "" }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validação Falhou"));
+
+        verifyNoInteractions(useCase);
+    }
+
+    @Test
+    void deveConsultarHistoricoDeMovimentacoes() throws Exception {
+        MovimentacaoEstoqueOutputDTO movimento = new MovimentacaoEstoqueOutputDTO(5, 1,
+                TipoMovimentacao.ENTRADA, 10, LocalDateTime.of(2026, 9, 22, 9, 0), "Reposição", 30);
+        when(useCase.buscarHistorico(1)).thenReturn(List.of(movimento));
+
+        mockMvc.perform(get("/api/epis/1/movimentacoes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(5))
+                .andExpect(jsonPath("$[0].tipo").value("ENTRADA"))
+                .andExpect(jsonPath("$[0].saldoAtual").value(30));
+    }
+
+    @Test
     void deveRegistrarManutencaoSemTipoObrigatorio() throws Exception {
         ManutencaoEpiOutputDTO manutencao = new ManutencaoEpiOutputDTO(
                 10, 1, LocalDateTime.of(2026, 9, 21, 10, 30), null,
