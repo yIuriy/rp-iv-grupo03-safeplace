@@ -160,7 +160,7 @@ class SetorAreaRiscoPersistenciaIntegracaoTest {
 
         // Verifica se o log de auditoria foi gravado na tabela
         Integer countAudit = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM logs_auditoria WHERE entidade = 'AreaRisco' AND entidade_id = ? AND tipo_operacao = 'ATUALIZACAO'",
+                "SELECT COUNT(*) FROM logs_auditoria WHERE entidade = 'AreaRisco' AND entidade_id = ? AND tipo_operacao = 'ALTERACAO'",
                 Integer.class,
                 criada.id()
         );
