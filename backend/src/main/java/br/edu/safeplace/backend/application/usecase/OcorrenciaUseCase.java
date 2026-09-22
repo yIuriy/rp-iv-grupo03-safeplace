@@ -20,7 +20,6 @@ import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -36,19 +35,6 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
     private final UsuarioRepositorioPorta usuarioRepository;
     private final LogAuditoriaRepositoryPort logAuditoriaRepositoryPort;
 
-    public OcorrenciaUseCase(OcorrenciaRepositoryPort repository) {
-        this(repository, null, null, null);
-    }
-
-    @Autowired
-    public OcorrenciaUseCase(
-            OcorrenciaRepositoryPort repository,
-            AreaRiscoRepositoryPort areaRiscoRepository,
-            UsuarioRepositorioPorta usuarioRepository) {
-        this(repository, areaRiscoRepository, usuarioRepository, null);
-    }
-
-    @Autowired
     public OcorrenciaUseCase(
             OcorrenciaRepositoryPort repository,
             AreaRiscoRepositoryPort areaRiscoRepository,
