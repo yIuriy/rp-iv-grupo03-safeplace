@@ -2,6 +2,10 @@ import { http } from '../../shared/api/https'
 
 export type StatusEpi = 'DISPONIVEL' | 'EM_USO' | 'EM_MANUTENCAO' | 'ESGOTADO' | 'DESCARTADO'
 export type ResultadoManutencao = 'APROVADO' | 'REPROVADO'
+export type ClassificacaoEpi =
+  | 'PROTECAO_CONTRA_QUEDAS' | 'PROTECAO_DE_MEMBROS_INFERIORES' | 'PROTECAO_DE_MEMBROS_SUPERIORES'
+  | 'PROTECAO_DE_TRONCO' | 'PROTECAO_RESPIRATORIA' | 'PROTECAO_AUDITIVA' | 'PROTECAO_DE_OLHOS'
+  | 'PROTECAO_DE_FACE' | 'PROTECAO_DE_CABECA'
 
 export type Epi = {
   id: number
@@ -27,6 +31,23 @@ export type DadosManutencao = {
   dataManutencao: string
   descricao: string
   resultado: ResultadoManutencao
+}
+
+export type DadosCadastroEpi = {
+  nome: string
+  numeroCa: string
+  quantidade: number
+  estoqueMinimo: number
+  dataValidadeCa?: string
+  vidaUtilDias?: number
+  descricao?: string
+  classificacao?: ClassificacaoEpi
+  localizacao?: string
+  numeroLote?: string
+  notaFiscal?: string
+  dataFabricacao?: string
+  validadeLote?: string
+  marca?: string
 }
 
 const status: readonly StatusEpi[] = ['DISPONIVEL', 'EM_USO', 'EM_MANUTENCAO', 'ESGOTADO', 'DESCARTADO']
@@ -78,4 +99,9 @@ export async function listarHistorico(epiId: number, signal?: AbortSignal): Prom
 export async function registrarManutencao(epiId: number, dados: DadosManutencao): Promise<ManutencaoEpi> {
   const { data } = await http.post<unknown>(`/epis/${epiId}/manutencoes`, dados)
   return lerManutencao(data)
+}
+
+export async function cadastrarEpi(dados: DadosCadastroEpi): Promise<Epi> {
+  const { data } = await http.post<unknown>('/epis', dados)
+  return lerEpi(data)
 }

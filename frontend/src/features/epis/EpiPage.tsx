@@ -3,7 +3,7 @@ import { mensagemDaApi, statusDoErro } from '../../shared/api/erros'
 import { useConsulta } from '../../shared/api/useConsulta'
 import { Alert, Badge, Button, Dialog, EmptyState, HistoryItem, Select, Table, TableRow, TextArea, TextField, Toast } from '../../shared/components'
 import { useSessaoAtiva } from '../autenticacao/contexto'
-import { listarEpis, listarHistorico, registrarManutencao, type DadosManutencao, type Epi, type StatusEpi } from './api'
+import { cadastrarEpi, listarEpis, listarHistorico, registrarManutencao, type ClassificacaoEpi, type DadosCadastroEpi, type DadosManutencao, type Epi, type StatusEpi } from './api'
 
 const statusOperacionais: readonly StatusEpi[] = ['DISPONIVEL', 'EM_USO', 'EM_MANUTENCAO', 'ESGOTADO']
 const rotulos: Record<StatusEpi, string> = {
@@ -25,6 +25,89 @@ function descreverErro(erro: unknown) {
   if (statusDoErro(erro) === 403) return 'Seu perfil não tem permissão para registrar manutenção.'
   if (statusDoErro(erro) === 404) return 'EPI não encontrado. Atualize a busca e escolha outro registro.'
   return mensagemDaApi(erro) ?? 'Não foi possível registrar manutenção. Nenhuma confirmação foi exibida.'
+}
+
+function textoOpcional(form: FormData, nome: string): string | undefined {
+  const valor = String(form.get(nome) ?? '').trim()
+  return valor || undefined
+}
+
+function numeroOpcional(form: FormData, nome: string): number | undefined {
+  const valor = textoOpcional(form, nome)
+  return valor === undefined ? undefined : Number(valor)
+}
+
+function DialogoCadastroEpi({ aberto, aoFechar, aoSalvar }: {
+  aberto: boolean
+  aoFechar: () => void
+  aoSalvar: (epi: Epi) => void
+}) {
+  const [enviando, setEnviando] = useState(false)
+  const [erro, setErro] = useState('')
+
+  async function enviar(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const dados: DadosCadastroEpi = {
+      nome: textoOpcional(form, 'nome') ?? '', numeroCa: textoOpcional(form, 'numeroCa') ?? '',
+      quantidade: Number(form.get('quantidade')), estoqueMinimo: Number(form.get('estoqueMinimo')),
+      dataValidadeCa: textoOpcional(form, 'dataValidadeCa'), vidaUtilDias: numeroOpcional(form, 'vidaUtilDias'),
+      descricao: textoOpcional(form, 'descricao'), classificacao: textoOpcional(form, 'classificacao') as ClassificacaoEpi | undefined,
+      localizacao: textoOpcional(form, 'localizacao'), numeroLote: textoOpcional(form, 'numeroLote'),
+      notaFiscal: textoOpcional(form, 'notaFiscal'), dataFabricacao: textoOpcional(form, 'dataFabricacao'),
+      validadeLote: textoOpcional(form, 'validadeLote'), marca: textoOpcional(form, 'marca'),
+    }
+    setErro('')
+    setEnviando(true)
+    try {
+      aoSalvar(await cadastrarEpi(dados))
+    } catch (falha) {
+      setErro(descreverErro(falha))
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  return <Dialog open={aberto} title="Cadastrar EPI"
+    description="Nome, CA, quantidade inicial e estoque mínimo são obrigatórios. Campos adicionais são opcionais." onClose={() => { if (!enviando) aoFechar() }}>
+    {aberto && <form className="sp-form" onSubmit={enviar}>
+      {erro && <Alert tone="danger" title="Cadastro não concluído" live="assertive">{erro}</Alert>}
+      <div className="sp-epi-form-grid">
+        <TextField label="Nome do EPI" name="nome" required maxLength={255} autoFocus />
+        <TextField label="Número do CA" name="numeroCa" required maxLength={255} />
+        <TextField label="Quantidade inicial" name="quantidade" type="number" min="0" step="1" required />
+        <TextField label="Estoque mínimo" name="estoqueMinimo" type="number" min="0" step="1" required />
+        <TextField label="Validade do CA" name="dataValidadeCa" type="date" />
+        <TextField label="Vida útil estimada (dias)" name="vidaUtilDias" type="number" min="1" step="1" />
+        <TextArea className="sp-epi-form-full" label="Descrição" name="descricao" maxLength={1000}
+          helper="Especificação opcional do equipamento." />
+        <Select label="Classificação" name="classificacao" defaultValue="">
+          <option value="">Não informada</option>
+          <option value="PROTECAO_CONTRA_QUEDAS">Proteção contra quedas</option>
+          <option value="PROTECAO_DE_MEMBROS_INFERIORES">Proteção de membros inferiores</option>
+          <option value="PROTECAO_DE_MEMBROS_SUPERIORES">Proteção de membros superiores</option>
+          <option value="PROTECAO_DE_TRONCO">Proteção de tronco</option>
+          <option value="PROTECAO_RESPIRATORIA">Proteção respiratória</option>
+          <option value="PROTECAO_AUDITIVA">Proteção auditiva</option>
+          <option value="PROTECAO_DE_OLHOS">Proteção de olhos</option>
+          <option value="PROTECAO_DE_FACE">Proteção de face</option>
+          <option value="PROTECAO_DE_CABECA">Proteção de cabeça</option>
+        </Select>
+        <TextField label="Localização" name="localizacao" maxLength={255} />
+      </div>
+      <details className="sp-epi-optional-details"><summary>Dados opcionais de lote e modelo</summary>
+        <div className="sp-epi-form-grid">
+          <TextField label="Número do lote" name="numeroLote" maxLength={255} />
+          <TextField label="Nota fiscal" name="notaFiscal" maxLength={255} />
+          <TextField label="Data de fabricação" name="dataFabricacao" type="date" />
+          <TextField label="Validade do lote" name="validadeLote" type="date" />
+          <TextField label="Marca" name="marca" maxLength={255} />
+        </div>
+      </details>
+      <div className="sp-dialog-actions"><Button variant="secondary" disabled={enviando} onClick={aoFechar}>Cancelar</Button>
+        <Button type="submit" loading={enviando}>Cadastrar EPI</Button></div>
+    </form>}
+  </Dialog>
 }
 
 function DialogoManutencao({ epi, aberto, aoFechar, aoSalvar }: {
@@ -81,6 +164,7 @@ export function EpiPage() {
   const [filtro, setFiltro] = useState<StatusEpi | 'TODOS'>('TODOS')
   const [selecionadoId, setSelecionadoId] = useState<number | null>(null)
   const [dialogoAberto, setDialogoAberto] = useState(false)
+  const [cadastroAberto, setCadastroAberto] = useState(false)
   const [aviso, setAviso] = useState('')
   const carregarEpis = useCallback((signal: AbortSignal) => listarEpis(signal), [])
   const epis = useConsulta('epis', carregarEpis)
@@ -105,9 +189,18 @@ export function EpiPage() {
     historico.recarregar()
   }
 
+  function aposCadastrar(epi: Epi) {
+    setCadastroAberto(false)
+    setSelecionadoId(epi.id)
+    setAviso('EPI cadastrado. A listagem foi atualizada.')
+    epis.recarregar()
+  }
+
   return <section className="sp-feature-page">
     <header className="sp-feature-heading"><h1 className="sp-type-heading-md">EPIs</h1>
       <p>Consulte EPIs ativos, filtre situação e acompanhe o histórico de manutenção.</p></header>
+
+    {podeRegistrar && <div className="sp-epi-page-actions"><Button icon="plus" onClick={() => setCadastroAberto(true)}>Cadastrar EPI</Button></div>}
 
     <div className="sp-epi-filter">
       <Select label="Filtrar por situação" value={filtro} onChange={event => setFiltro(event.target.value as StatusEpi | 'TODOS')}>
@@ -150,6 +243,7 @@ export function EpiPage() {
     </section>}
     {selecionado && podeRegistrar && <DialogoManutencao epi={selecionado} aberto={dialogoAberto}
       aoFechar={() => setDialogoAberto(false)} aoSalvar={aposSalvar} />}
+    {podeRegistrar && <DialogoCadastroEpi aberto={cadastroAberto} aoFechar={() => setCadastroAberto(false)} aoSalvar={aposCadastrar} />}
     <Toast message={aviso} onDismiss={() => setAviso('')} />
   </section>
 }
