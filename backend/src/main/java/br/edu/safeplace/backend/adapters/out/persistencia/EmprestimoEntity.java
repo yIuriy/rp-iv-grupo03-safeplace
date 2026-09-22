@@ -1,5 +1,5 @@
 /*
- * Entidade JPA da tabela emprestimos (migração V17). Espelha o domínio Emprestimo; enumeradores
+ * Entidade JPA da tabela emprestimos (migração V19). Espelha o domínio Emprestimo; enumeradores
  * são gravados pelo nome.
  */
 package br.edu.safeplace.backend.adapters.out.persistencia;

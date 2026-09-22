@@ -13,6 +13,7 @@ const navigation: { path: string; label: string; icon: IconName }[] = [
   { path: '/usuarios', label: 'Usuários', icon: 'users' },
   { path: '/ocorrencias', label: 'Ocorrências', icon: 'clipboard' },
   { path: '/epis', label: 'EPIs', icon: 'package' },
+  { path: '/estoque', label: 'Estoque de EPIs', icon: 'clipboard' },
   { path: '/areas-risco', label: 'Áreas de risco', icon: 'map-pin' },
   { path: '/tarefas', label: 'Tarefas', icon: 'check-circle' },
 ]

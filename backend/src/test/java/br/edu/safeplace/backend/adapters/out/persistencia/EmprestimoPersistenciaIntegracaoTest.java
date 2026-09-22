@@ -1,7 +1,7 @@
 /*
  * Teste de integração com PostgreSQL do fluxo completo de empréstimo (issue #106): entrega debita
  * o saldo persistido e grava movimentação com operador; devolução APTO credita; MANUTENCAO não
- * credita; exigência de capacitação vencida (tabelas da V15) impede a entrega; a migração V17 cria
+ * credita; exigência de capacitação vencida (tabelas da V15) impede a entrega; a migração V19 cria
  * a tabela emprestimos. Ignorado sem banco, como os demais testes que usam PostgresDeTeste.
  */
 package br.edu.safeplace.backend.adapters.out.persistencia;
