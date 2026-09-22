@@ -148,9 +148,18 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
     public List<MovimentacaoEstoqueOutputDTO> buscarHistorico(Integer epiId) {
         Epi epi = repositoryPort.buscarPorId(epiId)
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId));
-        return repositoryPort.listarMovimentacoesPorEpi(epiId).stream()
-                .map(movimentacao -> MovimentacaoEstoqueOutputDTO.deDominio(movimentacao, epi.getQuantidade()))
+        int saldoAposMovimentacao = epi.getQuantidade();
+        List<MovimentacaoEstoqueOutputDTO> historico = new java.util.ArrayList<>();
+        List<MovimentacaoEstoque> movimentacoes = repositoryPort.listarMovimentacoesPorEpi(epiId).stream()
+                .sorted(java.util.Comparator.comparing(MovimentacaoEstoque::getDataHora).reversed())
                 .toList();
+        for (MovimentacaoEstoque movimentacao : movimentacoes) {
+            historico.add(MovimentacaoEstoqueOutputDTO.deDominio(movimentacao, saldoAposMovimentacao));
+            saldoAposMovimentacao += movimentacao.getTipo() == TipoMovimentacao.ENTRADA
+                    ? -movimentacao.getQuantidade()
+                    : movimentacao.getQuantidade();
+        }
+        return historico;
     }
 
     private Integer buscarResponsavelId(String responsavelEmail) {
