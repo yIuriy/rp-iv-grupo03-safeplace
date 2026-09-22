@@ -9,6 +9,7 @@ const anaSilva = { ...pessoas.supervisora, nome: 'Ana Silva' }
 test('opens the application and navigates between its five features without reloading', async ({ page }) => {
   await iniciarSessao(page)
   await simularListagens(page)
+  await page.route('**/api/epis', route => route.fulfill({ json: [] })) // a tela /epis consulta o catálogo ao abrir (#133)
   await page.goto('/')
   await expect(page).toHaveURL(/\/usuarios$/)
   await expect(page.getByRole('heading', { name: 'Usuários', exact: true })).toBeVisible()
@@ -37,6 +38,7 @@ test('opens the application and navigates between its five features without relo
 test('supports direct URLs, browser history and recovery from unknown routes', async ({ page }) => {
   await iniciarSessao(page)
   await simularListagens(page)
+  await page.route('**/api/epis', route => route.fulfill({ json: [] })) // a tela /epis consulta o catálogo ao abrir (#133)
   await page.goto('/tarefas/')
   await expect(page).toHaveTitle('Tarefas | SafePlace')
   await page.reload()
@@ -62,6 +64,7 @@ for (const width of [360, 768, 1344]) {
     await page.setViewportSize({ width, height: 960 })
     await iniciarSessao(page)
     await simularListagens(page, { usuarios: [anaSilva] })
+    await page.route('**/api/epis', route => route.fulfill({ json: [] })) // a tela /epis consulta o catálogo ao abrir (#133)
     await page.goto('/usuarios')
     await page.keyboard.press('Tab')
     await expect(page.getByRole('link', { name: 'Pular para o conteúdo' })).toBeFocused()

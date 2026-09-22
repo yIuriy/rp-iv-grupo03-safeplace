@@ -3,7 +3,6 @@ package br.edu.safeplace.backend.adapters.out.persistencia;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
@@ -25,7 +24,6 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
     private final UsuarioJpaRepositorio usuarioRepository;
     private final SequenciaProtocoloCatJpaRepository sequenciaProtocoloCatRepository;
 
-    @Autowired
     public OcorrenciaJpaAdapter(
             OcorrenciaJpaRepository repository,
             AreaRiscoJpaRepository areaRiscoRepository,
@@ -35,18 +33,6 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
         this.areaRiscoRepository = areaRiscoRepository;
         this.usuarioRepository = usuarioRepository;
         this.sequenciaProtocoloCatRepository = sequenciaProtocoloCatRepository;
-    }
-
-    @Autowired
-    public OcorrenciaJpaAdapter(
-            OcorrenciaJpaRepository repository,
-            AreaRiscoJpaRepository areaRiscoRepository,
-            UsuarioJpaRepositorio usuarioRepository) {
-        this(repository, areaRiscoRepository, usuarioRepository, null);
-    }
-
-    public OcorrenciaJpaAdapter(OcorrenciaJpaRepository repository) {
-        this(repository, null, null, null);
     }
 
     @Override

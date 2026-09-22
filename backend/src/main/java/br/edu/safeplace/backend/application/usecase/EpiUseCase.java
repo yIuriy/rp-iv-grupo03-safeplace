@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import br.edu.safeplace.backend.application.port.in.GerenciarEstoqueUseCase;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -148,9 +150,18 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
     public List<MovimentacaoEstoqueOutputDTO> buscarHistorico(Integer epiId) {
         Epi epi = repositoryPort.buscarPorId(epiId)
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId));
-        return repositoryPort.listarMovimentacoesPorEpi(epiId).stream()
-                .map(movimentacao -> MovimentacaoEstoqueOutputDTO.deDominio(movimentacao, epi.getQuantidade()))
+        int saldoAposMovimentacao = epi.getQuantidade();
+        List<MovimentacaoEstoqueOutputDTO> historico = new ArrayList<>();
+        List<MovimentacaoEstoque> movimentacoes = repositoryPort.listarMovimentacoesPorEpi(epiId).stream()
+                .sorted(Comparator.comparing(MovimentacaoEstoque::getDataHora).reversed())
                 .toList();
+        for (MovimentacaoEstoque movimentacao : movimentacoes) {
+            historico.add(MovimentacaoEstoqueOutputDTO.deDominio(movimentacao, saldoAposMovimentacao));
+            saldoAposMovimentacao += movimentacao.getTipo() == TipoMovimentacao.ENTRADA
+                    ? -movimentacao.getQuantidade()
+                    : movimentacao.getQuantidade();
+        }
+        return historico;
     }
 
     private Integer buscarResponsavelId(String responsavelEmail) {

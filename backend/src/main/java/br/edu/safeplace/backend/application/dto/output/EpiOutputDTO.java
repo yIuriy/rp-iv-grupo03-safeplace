@@ -18,14 +18,22 @@ public record EpiOutputDTO(
         boolean estoqueCritico,
         String descricao,
         ClassificacaoEPI classificacao,
-        String localizacao) {
+        String localizacao,
+        Integer loteId,
+        String numeroLote,
+        String notaFiscal,
+        LocalDate dataFabricacao,
+        LocalDate validadeLote,
+        Integer modeloId,
+        String marca) {
 
     public EpiOutputDTO(Integer id, String nome, String numeroCa, int quantidade, int estoqueMinimo,
                         StatusEpi status, LocalDate dataValidadeCa, Integer vidaUtilDias,
                         boolean estoqueCritico, String descricao, ClassificacaoEPI classificacao) {
         this(id, nome, numeroCa, quantidade, estoqueMinimo, status, dataValidadeCa, vidaUtilDias,
-                estoqueCritico, descricao, classificacao, null);
+                estoqueCritico, descricao, classificacao, null, null, null, null, null, null, null, null);
     }
+
     public static EpiOutputDTO deDominio(Epi epi) {
         return new EpiOutputDTO(
                 epi.getId(),
@@ -39,6 +47,13 @@ public record EpiOutputDTO(
                 epi.isEstoqueCritico(),
                 epi.getEspecificacao().getDescricao(),
                 epi.getEspecificacao().getClassificacao(),
-                epi.getLocalizacao());
+                epi.getLocalizacao(),
+                epi.getLote().getId(),
+                epi.getLote().getNumeroLote(),
+                epi.getLote().getNotaFiscal(),
+                epi.getLote().getDataFabricacao(),
+                epi.getLote().getValidade(),
+                epi.getModelo().getId(),
+                epi.getModelo().getMarca());
     }
 }

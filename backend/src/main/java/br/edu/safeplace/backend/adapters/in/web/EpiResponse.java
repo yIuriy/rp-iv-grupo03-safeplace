@@ -31,7 +31,15 @@ public record EpiResponse(
 
         @Schema(description = "Classificação da especificação do EPI") ClassificacaoEPI classificacao,
 
-        @Schema(description = "Localização atual do EPI", example = "Almoxarifado A") String localizacao) {
+        @Schema(description = "Localização atual do EPI", example = "Almoxarifado A") String localizacao,
+
+        @Schema(description = "Identificador do lote vinculado") Integer loteId,
+        @Schema(description = "Número do lote") String numeroLote,
+        @Schema(description = "Nota fiscal do lote") String notaFiscal,
+        @Schema(description = "Data de fabricação do lote") LocalDate dataFabricacao,
+        @Schema(description = "Validade do lote") LocalDate validadeLote,
+        @Schema(description = "Identificador do modelo vinculado") Integer modeloId,
+        @Schema(description = "Marca do modelo") String marca) {
     public static EpiResponse fromDomain(Epi epi) {
         return new EpiResponse(
                 epi.getId(),
@@ -45,7 +53,14 @@ public record EpiResponse(
                 epi.getVidaUtilDias(),
                 epi.getEspecificacao().getDescricao(),
                 epi.getEspecificacao().getClassificacao(),
-                epi.getLocalizacao());
+                epi.getLocalizacao(),
+                epi.getLote().getId(),
+                epi.getLote().getNumeroLote(),
+                epi.getLote().getNotaFiscal(),
+                epi.getLote().getDataFabricacao(),
+                epi.getLote().getValidade(),
+                epi.getModelo().getId(),
+                epi.getModelo().getMarca());
     }
 
     public static EpiResponse fromOutputDTO(br.edu.safeplace.backend.application.dto.output.EpiOutputDTO dto) {
@@ -60,6 +75,13 @@ public record EpiResponse(
                 dto.dataValidadeCa(),
                 dto.vidaUtilDias(), dto.descricao(),
                 dto.classificacao(),
-                dto.localizacao());
+                dto.localizacao(),
+                dto.loteId(),
+                dto.numeroLote(),
+                dto.notaFiscal(),
+                dto.dataFabricacao(),
+                dto.validadeLote(),
+                dto.modeloId(),
+                dto.marca());
     }
 }

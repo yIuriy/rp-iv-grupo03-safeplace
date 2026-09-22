@@ -84,7 +84,7 @@ class TratamentoDeErroHttpTest {
     @Test
     @DisplayName("Corpo JSON malformado deve responder 400, e não 401")
     void jsonMalformadoDeveResponder400() {
-        assertThat(status("POST", "/api/epis", "{ isso nao e json }", Perfil.SUPERVISOR))
+        assertThat(status("POST", "/api/epis", "{ isso nao e json }", Perfil.GESTOR_SEGURANCA))
                 .isEqualTo(400);
     }
 
@@ -101,13 +101,13 @@ class TratamentoDeErroHttpTest {
                 }
                 """;
 
-        assertThat(status("POST", "/api/epis", corpo, Perfil.SUPERVISOR)).isEqualTo(400);
+        assertThat(status("POST", "/api/epis", corpo, Perfil.GESTOR_SEGURANCA)).isEqualTo(400);
     }
 
     @Test
     @DisplayName("Violação de Bean Validation deve responder 400, e não 401")
     void validacaoVioladaDeveResponder400() {
-        assertThat(status("POST", "/api/epis", "{}", Perfil.SUPERVISOR)).isEqualTo(400);
+        assertThat(status("POST", "/api/epis", "{}", Perfil.GESTOR_SEGURANCA)).isEqualTo(400);
     }
 
     @Test
