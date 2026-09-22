@@ -37,6 +37,7 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
         this.sequenciaProtocoloCatRepository = sequenciaProtocoloCatRepository;
     }
 
+    @Autowired
     public OcorrenciaJpaAdapter(
             OcorrenciaJpaRepository repository,
             AreaRiscoJpaRepository areaRiscoRepository,
