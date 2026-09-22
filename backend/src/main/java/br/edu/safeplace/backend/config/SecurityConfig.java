@@ -73,6 +73,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/epis/**")
                                 .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         .requestMatchers("/api/ocorrencias/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        // UC12 (#106): Supervisor é o ator principal e o Gestor o secundário do empréstimo
+                        .requestMatchers("/api/emprestimos/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         // UC03 e UC11: o Gestor de Seguranca mantem o cadastro; o Supervisor e ator
                         // secundario e apenas consulta as diretrizes.
                         .requestMatchers(HttpMethod.GET, "/api/areas-risco/**", "/api/tarefas/**", "/api/setores/**")
