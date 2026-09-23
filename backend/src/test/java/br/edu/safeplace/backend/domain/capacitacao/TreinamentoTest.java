@@ -67,4 +67,18 @@ class TreinamentoTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Treinamento deve possuir ao menos um colaborador vinculado.");
     }
+
+    @Test
+    @DisplayName("Diagrama de Classes: Deve verificar status de treinamento unitário e coletivo")
+    void deveVerificarStatusTreinamentos() {
+        LocalDate hoje = LocalDate.now();
+        Treinamento t1 = Treinamento.cadastrar("NR-10", "Conteúdo", "Instrutor", hoje.minusDays(5), 8, List.of(1));
+        Treinamento t2 = Treinamento.cadastrar("NR-35", "Conteúdo", "Instrutor", hoje, 8, List.of(1));
+
+        assertThat(t1.verificarStatus()).isEqualTo("REALIZADO");
+        assertThat(t2.verificarStatus()).isEqualTo("REALIZADO");
+        assertThat(t1.verificarStatusTreinamentos(List.of(t1, t2))).isEqualTo("REALIZADO");
+        assertThat(t1.verificarStatusTreinamentos(List.of())).isEqualTo("PENDENTE");
+        assertThat(t1.verificarStatusTreinamentos(null)).isEqualTo("PENDENTE");
+    }
 }
