@@ -65,6 +65,18 @@ public class Treinamento {
         return cargaHoraria;
     }
 
+    public String verificarStatus() {
+        return (dataRealizacao != null && !dataRealizacao.isAfter(LocalDate.now())) ? "REALIZADO" : "PENDENTE";
+    }
+
+    public String verificarStatusTreinamentos(List<Treinamento> treinamentos) {
+        if (treinamentos == null || treinamentos.isEmpty()) {
+            return "PENDENTE";
+        }
+        boolean todosRealizados = treinamentos.stream().allMatch(t -> "REALIZADO".equals(t.verificarStatus()));
+        return todosRealizados ? "REALIZADO" : "PENDENTE";
+    }
+
     public List<Integer> getColaboradoresIds() {
         return Collections.unmodifiableList(colaboradoresIds);
     }

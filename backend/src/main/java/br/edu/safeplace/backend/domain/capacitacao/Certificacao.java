@@ -24,6 +24,9 @@ public class Certificacao {
         if (dataEmissao.isAfter(LocalDate.now())) {
             throw new IllegalArgumentException("Data de emissão não pode ser no futuro.");
         }
+        if (validarInconsistenciaCronologica(dataEmissao, dataVencimento)) {
+            throw new IllegalArgumentException("Data de emissão não pode ser posterior à data de vencimento.");
+        }
         if (colaboradorId == null) {
             throw new IllegalArgumentException("Colaborador é obrigatório.");
         }
@@ -34,6 +37,13 @@ public class Certificacao {
         this.dataEmissao = dataEmissao;
         this.colaboradorId = colaboradorId;
         this.status = calcularStatus(LocalDate.now());
+    }
+
+    public static boolean validarInconsistenciaCronologica(LocalDate dataEmissao, LocalDate dataValidade) {
+        if (dataEmissao == null || dataValidade == null) {
+            return false;
+        }
+        return dataEmissao.isAfter(dataValidade);
     }
 
     public static Certificacao cadastrar(String nome, LocalDate dataVencimento, LocalDate dataEmissao, Integer colaboradorId) {
