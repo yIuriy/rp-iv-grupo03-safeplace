@@ -11,62 +11,24 @@
  */
 package br.edu.safeplace.backend.adapters.out.capacitacao;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import br.edu.safeplace.backend.application.port.in.capacitacao.ConsultarCapacitacaoUseCase;
 import br.edu.safeplace.backend.application.port.out.ImpedimentoCapacitacaoPorta;
 
 @Component
 public class ImpedimentoCapacitacaoJdbcAdapter implements ImpedimentoCapacitacaoPorta {
-    private static final String EXIGENCIAS_DO_EPI = """
-            SELECT nome_capacitacao, tipo_capacitacao
-              FROM exigencias_capacitacao
-             WHERE tipo_alvo = 'EPI' AND alvo_id = ?
-            """;
-    private static final String CERTIFICACOES_VALIDAS = """
-            SELECT COUNT(*) FROM certificacoes
-             WHERE colaborador_id = ? AND LOWER(nome) = LOWER(?) AND data_vencimento >= ?
-            """;
-    private static final String TREINAMENTOS_REALIZADOS = """
-            SELECT COUNT(*) FROM treinamentos t
-              JOIN treinamentos_colaboradores tc ON tc.treinamento_id = t.id
-             WHERE tc.colaborador_id = ? AND LOWER(t.nome) = LOWER(?)
-            """;
 
-    private final JdbcTemplate jdbc;
+    private final ConsultarCapacitacaoUseCase consultarCapacitacaoUseCase;
 
-    public ImpedimentoCapacitacaoJdbcAdapter(JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
+    public ImpedimentoCapacitacaoJdbcAdapter(ConsultarCapacitacaoUseCase consultarCapacitacaoUseCase) {
+        this.consultarCapacitacaoUseCase = consultarCapacitacaoUseCase;
     }
 
     @Override
     public List<String> impedimentosParaEntrega(Integer colaboradorId, Integer epiId) {
-        LocalDate hoje = LocalDate.now();
-        List<String> impedimentos = new ArrayList<>();
-        jdbc.query(EXIGENCIAS_DO_EPI, rs -> {
-            String nome = rs.getString("nome_capacitacao");
-            String tipo = rs.getString("tipo_capacitacao");
-            if ("CERTIFICACAO".equals(tipo) && !possuiCertificacaoValida(colaboradorId, nome, hoje)) {
-                impedimentos.add("certificação " + nome + " ausente ou vencida");
-            } else if ("TREINAMENTO".equals(tipo) && !realizouTreinamento(colaboradorId, nome)) {
-                impedimentos.add("treinamento " + nome + " não registrado");
-            }
-        }, epiId);
-        return impedimentos;
-    }
-
-    private boolean possuiCertificacaoValida(Integer colaboradorId, String nome, LocalDate hoje) {
-        Integer total = jdbc.queryForObject(CERTIFICACOES_VALIDAS, Integer.class, colaboradorId, nome, hoje);
-        return Objects.requireNonNullElse(total, 0) > 0;
-    }
-
-    private boolean realizouTreinamento(Integer colaboradorId, String nome) {
-        Integer total = jdbc.queryForObject(TREINAMENTOS_REALIZADOS, Integer.class, colaboradorId, nome);
-        return Objects.requireNonNullElse(total, 0) > 0;
+        return consultarCapacitacaoUseCase.verificarImpedimentosParaEpi(colaboradorId, epiId);
     }
 }
