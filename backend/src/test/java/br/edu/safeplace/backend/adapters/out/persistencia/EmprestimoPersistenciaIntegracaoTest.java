@@ -179,7 +179,7 @@ class EmprestimoPersistenciaIntegracaoTest {
     @DisplayName("Duas entregas concorrentes não consomem a mesma disponibilidade: apenas uma confirma e saldo final é zero")
     void duasEntregasConcorrentesNaoConsomemMesmaDisponibilidade() throws Exception {
         Integer epiUnicoId = epis.cadastrarEpi(new CadastrarEpiInputDTO("Luva de Raspa", "54321", 1, 1,
-                LocalDate.now().plusYears(1), 180, "Luva proteção", ClassificacaoEPI.PROTECAO_DE_MAOS)).id();
+                LocalDate.now().plusYears(1), 180, "Luva proteção", ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES)).id();
 
         int threads = 2;
         ExecutorService executor = Executors.newFixedThreadPool(threads);
@@ -247,7 +247,7 @@ class EmprestimoPersistenciaIntegracaoTest {
     @DisplayName("Devolução repetida concorrente não duplica crédito de estoque: apenas uma confirma e saldo final é consistente")
     void devolucaoRepetidaConcorrenteNaoDuplicaCredito() throws Exception {
         Integer epiUnicoId = epis.cadastrarEpi(new CadastrarEpiInputDTO("Óculos de Proteção", "99999", 1, 1,
-                LocalDate.now().plusYears(1), 180, "Óculos", ClassificacaoEPI.PROTECAO_OCULAR)).id();
+                LocalDate.now().plusYears(1), 180, "Óculos", ClassificacaoEPI.PROTECAO_DE_OLHOS)).id();
 
         EmprestimoOutputDTO entregue = emprestimos.registrarEntrega(
                 new RegistrarEntregaInputDTO(epiUnicoId, colaboradorId, LocalDate.now().plusDays(5), false, null),
