@@ -13,5 +13,7 @@ public interface EmprestimoJpaRepository extends JpaRepository<EmprestimoEntity,
 
     List<EmprestimoEntity> findByColaboradorIdAndStatus(Integer colaboradorId, String status);
 
+    List<EmprestimoEntity> findByEpiIdOrderByDataRetiradaDesc(Integer epiId);
+
     List<EmprestimoEntity> findAllByOrderByDataRetiradaDesc();
 }
