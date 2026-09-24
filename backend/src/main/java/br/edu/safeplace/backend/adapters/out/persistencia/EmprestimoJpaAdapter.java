@@ -33,6 +33,11 @@ public class EmprestimoJpaAdapter implements EmprestimoRepositoryPort {
     }
 
     @Override
+    public Optional<Emprestimo> buscarPorIdComLock(Integer id) {
+        return repositorio.findByIdWithLock(id).map(this::paraDominio);
+    }
+
+    @Override
     public List<Emprestimo> listarTodos() {
         return repositorio.findAllByOrderByDataRetiradaDesc().stream().map(this::paraDominio).toList();
     }

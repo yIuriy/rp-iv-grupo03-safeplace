@@ -33,6 +33,7 @@ import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.emprestimo.Emprestimo;
 import br.edu.safeplace.backend.domain.emprestimo.EstadoDevolucao;
 import br.edu.safeplace.backend.domain.emprestimo.exception.DuplicidadeDePosseException;
+import br.edu.safeplace.backend.domain.emprestimo.exception.EmprestimoJaEncerradoException;
 import br.edu.safeplace.backend.domain.emprestimo.exception.EmprestimoNaoEncontradoException;
 import br.edu.safeplace.backend.domain.emprestimo.exception.EntregaImpedidaException;
 import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
@@ -95,8 +96,11 @@ public class EmprestimoUseCase implements ControlarEmprestimoUseCase {
     public EmprestimoOutputDTO registrarDevolucao(Integer emprestimoId, RegistrarDevolucaoInputDTO entrada,
                                                   String operadorEmail) {
         Colaborador operador = operadorAutenticado(operadorEmail);
-        Emprestimo emprestimo = emprestimos.buscarPorId(emprestimoId)
+        Emprestimo emprestimo = emprestimos.buscarPorIdComLock(emprestimoId)
                 .orElseThrow(() -> new EmprestimoNaoEncontradoException(emprestimoId));
+        if (!emprestimo.estaAtivo()) {
+            throw new EmprestimoJaEncerradoException(emprestimoId);
+        }
         Epi epi = epis.buscarPorIdComLock(emprestimo.getEpiId())
                 .orElseThrow(() -> new EpiNaoEncontradoException(emprestimo.getEpiId()));
         Colaborador beneficiario = usuarios.buscarPorId(emprestimo.getColaboradorId()).orElse(null);

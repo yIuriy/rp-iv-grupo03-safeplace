@@ -15,6 +15,10 @@ public interface EmprestimoRepositoryPort {
 
     Optional<Emprestimo> buscarPorId(Integer id);
 
+    default Optional<Emprestimo> buscarPorIdComLock(Integer id) {
+        return buscarPorId(id);
+    }
+
     List<Emprestimo> listarTodos();
 
     List<Emprestimo> listarPorColaborador(Integer colaboradorId);
