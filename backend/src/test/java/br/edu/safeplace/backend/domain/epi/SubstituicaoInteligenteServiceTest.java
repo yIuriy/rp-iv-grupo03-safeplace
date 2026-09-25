@@ -181,6 +181,32 @@ class SubstituicaoInteligenteServiceTest {
         assertTrue(alertas.isEmpty());
     }
 
+    @Test
+    @DisplayName("Deve antecipar data de descarte e emitir justificativa emergencial quando empréstimo foi devolvido para DESCARTE")
+    void deveAnteciparDescarteQuandoEmprestimoFoiDevolvidoComEstadoDescarte() {
+        LocalDate validadeCa = hoje.plusYears(2);
+        Epi epi = criarEpi(9, "Luva de Alta Tensão", 180, validadeCa, 10, 2);
+
+        LocalDateTime retirada = hoje.minusDays(10).atStartOfDay();
+        LocalDateTime devolucaoComAvaria = hoje.minusDays(2).atStartOfDay();
+
+        Emprestimo emprestimoAvariado = new Emprestimo(
+                100, 9, 10, 1, retirada,
+                retirada.toLocalDate().plusDays(15), "Termo", null,
+                devolucaoComAvaria, 1, EstadoDevolucao.DESCARTE, ClassificacaoEmprestimo.DISPONIVEL);
+
+        ProjecaoSubstituicao projecao = service.calcularProjecao(
+                epi, NivelPerigo.MEDIO, List.of(emprestimoAvariado), hoje, 90);
+
+        assertEquals(devolucaoComAvaria.toLocalDate(), projecao.getDataEstimadaDescarte());
+        assertTrue(projecao.getJustificativa().contains("Substituição imediata por avaria"));
+
+        // Alertas gerados devem incluir DESCARTE_PROXIMO com prioridade ALTA
+        List<AlertaSubstituicaoEpi> alertas = service.emitirAlertas(epi, projecao, hoje, 30L);
+        assertTrue(alertas.stream().anyMatch(a ->
+                a.getTipoAlerta() == TipoAlertaSubstituicao.DESCARTE_PROXIMO && "ALTA".equals(a.getPrioridade())));
+    }
+
     // Métodos auxiliares de criação de fixtures
     private Epi criarEpi(Integer id, String nome, Integer vidaUtilDias, LocalDate validadeCa,
                          int quantidade, int estoqueMinimo) {
