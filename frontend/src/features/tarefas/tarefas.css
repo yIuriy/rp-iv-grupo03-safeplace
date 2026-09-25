@@ -1,0 +1,50 @@
+.sp-busca-filtros {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex: 1 1 520px;
+}
+
+.sp-busca-campo {
+  min-width: min(100%, 340px);
+  flex: 1 1 340px;
+}
+
+.sp-busca-filtros .sp-field:has(.sp-select-wrap) {
+  min-width: 170px;
+  flex: 0 1 190px;
+}
+
+.sp-acoes-busca {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.sp-campo-somente-leitura {
+  margin-bottom: 16px;
+}
+
+.sp-descricao-tarefa {
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.sp-tag-status {
+  display: inline-block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.sp-tag-status--ativa {
+  background-color: var(--sp-color-success-subtle, #ecfdf5);
+  color: var(--sp-color-success-text, #065f46);
+}
+
+.sp-tag-status--pendente {
+  background-color: var(--sp-color-neutral-subtle, #f3f4f6);
+  color: var(--sp-color-neutral-text, #4b5563);
+}

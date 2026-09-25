@@ -1,0 +1,40 @@
+.sp-painel-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.sp-busca-filtros {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex: 1 1 520px;
+}
+
+.sp-busca-campo {
+  min-width: min(100%, 340px);
+  flex: 1 1 340px;
+}
+
+.sp-busca-filtros .sp-field:has(.sp-select-wrap) {
+  min-width: 170px;
+  flex: 0 1 190px;
+}
+
+.sp-acoes-busca {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.sp-lista-epis-vinculados {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

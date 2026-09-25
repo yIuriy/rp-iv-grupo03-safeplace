@@ -4,9 +4,11 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.emprestimo.Emprestimo;
+import br.edu.safeplace.backend.domain.emprestimo.EstadoDevolucao;
 import br.edu.safeplace.backend.domain.epi.exception.DadosInsuficientesParaProjecaoException;
 
 /**
@@ -88,9 +90,25 @@ public class SubstituicaoInteligenteService {
             dataReferencia = LocalDate.now();
         }
 
+        // 5. Integração com UC12 (Issue #107): Verificação de devolução com estado DESCARTE (avaria/dano)
+        Optional<Emprestimo> emprestimoDescartado = emprestimos.stream()
+                .filter(emp -> emp.getEstadoDevolucao() == EstadoDevolucao.DESCARTE)
+                .findFirst();
+
+        if (emprestimoDescartado.isPresent()) {
+            Emprestimo empDesc = emprestimoDescartado.get();
+            LocalDate dataDescarteOperacional = empDesc.getDataDevolucaoReal() != null
+                    ? empDesc.getDataDevolucaoReal().toLocalDate()
+                    : dataReferencia;
+            String justif = String.format(
+                    "Substituição imediata por avaria: EPI marcado para descarte na devolução em %s.",
+                    dataDescarteOperacional);
+            return ProjecaoSubstituicao.nova(epiId, dataReferencia, dataDescarteOperacional, justif);
+        }
+
         int janela = (diasAmostragem != null && diasAmostragem > 0) ? diasAmostragem : DIAS_AMOSTRAGEM_PADRAO;
 
-        // 5. Apuração dos dias de uso efetivo no histórico
+        // 6. Apuração dos dias de uso efetivo no histórico
         long totalDiasUsados = 0;
         for (Emprestimo emp : emprestimos) {
             LocalDate inicio = emp.getDataRetirada().toLocalDate();
