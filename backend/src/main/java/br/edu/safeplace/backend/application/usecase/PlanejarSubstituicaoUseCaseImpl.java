@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +39,7 @@ public class PlanejarSubstituicaoUseCaseImpl implements PlanejarSubstituicaoUseC
     private final ProjecaoSubstituicaoRepositoryPort projecaoRepository;
     private final SubstituicaoInteligenteService calculoService;
 
+    @Autowired
     public PlanejarSubstituicaoUseCaseImpl(
             EpiRepositoryPort epiRepository,
             EmprestimoRepositoryPort emprestimoRepository,
