@@ -57,6 +57,14 @@ public class EmprestimoJpaAdapter implements EmprestimoRepositoryPort {
                 .toList();
     }
 
+    @Override
+    public List<Emprestimo> listarPorEpi(Integer epiId) {
+        return repositorio.findByEpiIdOrderByDataRetiradaDesc(epiId)
+                .stream()
+                .map(this::paraDominio)
+                .toList();
+    }
+
     private EmprestimoEntity paraEntidade(Emprestimo dominio) {
         return new EmprestimoEntity(
                 dominio.getId(),

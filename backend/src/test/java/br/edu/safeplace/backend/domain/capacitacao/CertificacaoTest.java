@@ -104,7 +104,7 @@ class CertificacaoTest {
         assertThat(Certificacao.validarInconsistenciaCronologica(null, vencimento)).isFalse();
         assertThat(Certificacao.validarInconsistenciaCronologica(emissao, null)).isFalse();
 
-        assertThatThrownBy(() -> new Certificacao(null, "NR-10", emissao, vencimento.minusYears(2).plusDays(100), 10))
+        assertThatThrownBy(() -> new Certificacao(null, "NR-10", vencimento.minusYears(2).plusDays(100), emissao, 10))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

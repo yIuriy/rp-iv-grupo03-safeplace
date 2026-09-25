@@ -25,4 +25,12 @@ public interface EmprestimoRepositoryPort {
 
     /** Empréstimos ainda não devolvidos do colaborador, para a verificação de duplicidade (UC12, exceção III). */
     List<Emprestimo> listarAtivosPorColaborador(Integer colaboradorId);
+
+    /** Lista todos os empréstimos (ativos e encerrados) vinculados a um EPI para cálculo de frequência de uso (RF21, UC10). */
+    default List<Emprestimo> listarPorEpi(Integer epiId) {
+        if (epiId == null) {
+            return List.of();
+        }
+        return listarTodos().stream().filter(e -> epiId.equals(e.getEpiId())).toList();
+    }
 }
