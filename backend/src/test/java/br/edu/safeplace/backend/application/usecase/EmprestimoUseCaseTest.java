@@ -340,6 +340,11 @@ class EmprestimoUseCaseTest {
         public List<Emprestimo> listarAtivosPorColaborador(Integer colaboradorId) {
             return listarPorColaborador(colaboradorId).stream().filter(Emprestimo::estaAtivo).toList();
         }
+
+        @Override
+        public List<Emprestimo> listarPorEpi(Integer epiId) {
+            return registros.values().stream().filter(e -> e.getEpiId().equals(epiId)).toList();
+        }
     }
 
     private static class EpisEmMemoria implements EpiRepositoryPort {

@@ -79,6 +79,9 @@ public class SecurityConfig {
                         // secundario e apenas consulta as diretrizes.
                         .requestMatchers(HttpMethod.GET, "/api/areas-risco/**", "/api/tarefas/**", "/api/setores/**")
                                 .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        // UC10 (Issue #108, RF21): Planejar Substituição Inteligente de EPI
+                        .requestMatchers(HttpMethod.POST, "/api/projecoes/**").hasRole("GESTOR_SEGURANCA")
+                        .requestMatchers(HttpMethod.GET, "/api/projecoes/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         .requestMatchers("/api/areas-risco/**", "/api/tarefas/**", "/api/setores/**").hasRole("GESTOR_SEGURANCA")
                         .anyRequest().authenticated()
                 );

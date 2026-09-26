@@ -33,6 +33,11 @@ public class EmprestimoJpaAdapter implements EmprestimoRepositoryPort {
     }
 
     @Override
+    public Optional<Emprestimo> buscarPorIdComLock(Integer id) {
+        return repositorio.findByIdWithLock(id).map(this::paraDominio);
+    }
+
+    @Override
     public List<Emprestimo> listarTodos() {
         return repositorio.findAllByOrderByDataRetiradaDesc().stream().map(this::paraDominio).toList();
     }
@@ -47,6 +52,14 @@ public class EmprestimoJpaAdapter implements EmprestimoRepositoryPort {
     @Override
     public List<Emprestimo> listarAtivosPorColaborador(Integer colaboradorId) {
         return repositorio.findByColaboradorIdAndStatus(colaboradorId, ClassificacaoEmprestimo.INDISPONIVEL.name())
+                .stream()
+                .map(this::paraDominio)
+                .toList();
+    }
+
+    @Override
+    public List<Emprestimo> listarPorEpi(Integer epiId) {
+        return repositorio.findByEpiIdOrderByDataRetiradaDesc(epiId)
                 .stream()
                 .map(this::paraDominio)
                 .toList();

@@ -91,4 +91,20 @@ class CertificacaoTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Colaborador é obrigatório.");
     }
+
+    @Test
+    @DisplayName("Diagrama de Classes: Deve validar inconsistência cronológica entre emissão e validade")
+    void deveValidarInconsistenciaCronologica() {
+        LocalDate hoje = LocalDate.now();
+        LocalDate emissao = hoje.minusMonths(1);
+        LocalDate vencimento = hoje.plusYears(1);
+
+        assertThat(Certificacao.validarInconsistenciaCronologica(emissao, vencimento)).isFalse();
+        assertThat(Certificacao.validarInconsistenciaCronologica(vencimento, emissao)).isTrue();
+        assertThat(Certificacao.validarInconsistenciaCronologica(null, vencimento)).isFalse();
+        assertThat(Certificacao.validarInconsistenciaCronologica(emissao, null)).isFalse();
+
+        assertThatThrownBy(() -> new Certificacao(null, "NR-10", vencimento.minusYears(2).plusDays(100), emissao, 10))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
 }
