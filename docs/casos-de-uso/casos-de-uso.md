@@ -372,7 +372,7 @@ O alternativo II e a exceção I são cenários futuros. A verificação interna
 
 ## UC07 – Definir Plano de Ação por Acidente / Incidente
 
-Este caso de uso integra o MVP por RF07. Prazos, responsáveis, situação e alertas são acompanhados por ação, conforme os cenários abaixo. O responsável pode ser um Colaborador ou setor, mas isso não cria uma conta de acesso. O meio de notificar uma pessoa sem acesso e a representação das ações individuais no modelo de classes continuam pendentes de definição.
+Este caso de uso integra o MVP por RF07. Prazos, responsáveis, situação e alertas são acompanhados por ação, conforme os cenários abaixo. O responsável pode ser um Colaborador ou setor, mas isso não cria uma conta de acesso. A representação das ações individuais no modelo de classes e o meio de notificar uma pessoa sem acesso estão propostos na [correspondência Classes vs UC07](../arquitetura/correspondencia-classes-plano-de-acao.md), aguardando aprovação do grupo.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
