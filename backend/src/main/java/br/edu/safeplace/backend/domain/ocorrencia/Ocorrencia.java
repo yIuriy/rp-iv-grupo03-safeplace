@@ -122,6 +122,16 @@ public abstract class Ocorrencia {
         transicionarPara(StatusOcorrencia.ARQUIVADA);
     }
 
+    /**
+     * Indica se a ocorrência é grave para a regra 1 de UC07 (exige ação preventiva no plano). Só há
+     * escala aprovada em {@code Acidente.gravidade}; {@code Incidente.potencialDano} é texto livre e
+     * não é convertido em gravidade por suposição, então a regra não se aplica automaticamente a
+     * incidentes (decisão 2.4 da correspondência do plano de ação).
+     */
+    public boolean isGrave() {
+        return false;
+    }
+
     public Integer getId() {
         return idOcorrencia;
     }

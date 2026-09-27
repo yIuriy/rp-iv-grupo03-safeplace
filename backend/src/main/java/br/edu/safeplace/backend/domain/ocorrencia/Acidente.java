@@ -309,6 +309,7 @@ public class Acidente extends Ocorrencia {
         return gravidade;
     }
 
+    @Override
     public boolean isGrave() {
         return gravidade != null && gravidade.isPeloMenos(NivelPerigo.ALTO);
     }
