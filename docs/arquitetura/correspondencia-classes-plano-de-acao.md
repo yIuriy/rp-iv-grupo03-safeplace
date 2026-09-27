@@ -96,28 +96,28 @@ O atributo `status : String` do PNG é preservado como texto. O vocabulário ace
 
 ## 3. Matriz de Correspondência: Operações do Diagrama vs. Arquitetura Hexagonal
 
-Os elementos marcados como *a criar* são o contrato para #98/#99 e não existem no código desta entrega.
+Os elementos da camada de persistência foram implementados na issue #98 (`PlanoDeAcaoRepositoryPort`, `PlanoDeAcaoJpaAdapter`, `prorrogacoes_prazo`). A porta de entrada e API ficam para #99.
 
 | Operação no Diagrama | Destino / Camada Hexagonal | Papel arquitetural e semântica |
 | :--- | :--- | :--- |
 | `validarPlano(dadosPlano, ocorrencia, dataAtual)` | Domínio: `PlanoDeAcao.definir(...)` valida cada ação; `PlanoDeAcao.validarPlano(ocorrencia, acoes)` valida o conjunto | Vínculo com ocorrência registrada, medida, responsável único, prazo não retroativo e regra da ocorrência grave. Lança exceções de domínio em vez de devolver `boolean`. |
-| `salvarVinculado(idOcorrencia, dadosPlano)` | Porta de entrada `GerenciarPlanoDeAcaoUseCase.definirAcoes` e porta de saída `PlanoDeAcaoRepositoryPort.salvar` (*a criar*) | Grava as ações vinculadas à ocorrência numa transação, com auditoria. |
-| `buscarPlano(idPlano)` / `buscarAcao(idAcao)` | `PlanoDeAcaoRepositoryPort.buscarPorId` (*a criar*) | Mesmo identificador (seção 2.1). |
-| `buscarPorFiltros(criterios)` | `PlanoDeAcaoRepositoryPort.listarPorOcorrencia` e filtros por situação, responsável ou prazo (*a criar*) | Consulta do andamento (US07, critério 1; UC05, alternativo I, passo 9). |
+| `salvarVinculado(idOcorrencia, dadosPlano)` | Porta de entrada `GerenciarPlanoDeAcaoUseCase.definirAcoes` (*a criar em #99*) e porta de saída `PlanoDeAcaoRepositoryPort.salvar` (implementada em `PlanoDeAcaoJpaAdapter`, #98) | Grava as ações vinculadas à ocorrência numa transação, com auditoria. |
+| `buscarPlano(idPlano)` / `buscarAcao(idAcao)` | `PlanoDeAcaoRepositoryPort.buscarPorId` (implementada em `PlanoDeAcaoJpaAdapter`, #98) | Mesmo identificador (seção 2.1). |
+| `buscarPorFiltros(criterios)` | `PlanoDeAcaoRepositoryPort.listarPorOcorrencia` (implementada em `PlanoDeAcaoJpaAdapter`, #98) | Consulta do andamento (US07, critério 1; UC05, alternativo I, passo 9). |
 | `validarAtualizacaoStatus(idAcao, novoStatus)` | Domínio: `PlanoDeAcao.validarAtualizacaoStatus(StatusPlanoDeAcao)` | Apenas `ABERTA` → `CONCLUIDA`. |
-| `salvarStatusMedida(idAcao, novoStatus)` | Domínio: `PlanoDeAcao.atualizarStatus(...)`, gravado por `PlanoDeAcaoRepositoryPort.salvar` (*a criar*) | Grava a nova situação e registra a auditoria. |
+| `salvarStatusMedida(idAcao, novoStatus)` | Domínio: `PlanoDeAcao.atualizarStatus(...)`, gravado por `PlanoDeAcaoRepositoryPort.salvar` (`PlanoDeAcaoJpaAdapter`, #98) | Grava a nova situação e registra a auditoria. |
 | `validarProrrogacao(idAcao, novoPrazo, justificativa)` | Domínio: `PlanoDeAcao.validarProrrogacao(...)` | Justificativa obrigatória; novo prazo posterior ao atual e não retroativo. |
-| `atualizarPrazo(idAcao, novoPrazo)` | Domínio: `PlanoDeAcao.prorrogarPrazo(...)` → `ProrrogacaoPrazo` | Altera o prazo e devolve o registro para o histórico e a auditoria. |
-| `atualizarResponsavel(idAcao, novoResponsavel : Colaborador)` | Domínio: `PlanoDeAcao.atualizarResponsavel(Colaborador \| Setor, dataAtual)` → `AvisoAcao` | Reatribui e produz o aviso ao novo encarregado. A sobrecarga com `Setor` atende UC07/US07. |
-| Gatilho de alerta (UC07, regra 2) | Domínio: `configurarAlerta`, `getDataAlerta`, `deveEmitirAlerta`, `emitirAvisoPrazo`; porta de saída `NotificacaoAcaoPort.notificar(AvisoAcao)` (*a criar*) | Antecedência por ação, sem constante. Canal da seção 2.6. |
+| `atualizarPrazo(idAcao, novoPrazo)` | Domínio: `PlanoDeAcao.prorrogarPrazo(...)` → `ProrrogacaoPrazo`, gravado por `PlanoDeAcaoRepositoryPort.salvarProrrogacao` (#98) | Altera o prazo e devolve o registro para o histórico e a auditoria. |
+| `atualizarResponsavel(idAcao, novoResponsavel : Colaborador)` | Domínio: `PlanoDeAcao.atualizarResponsavel(Colaborador \| Setor, dataAtual)` → `AvisoAcao`, persistido por `PlanoDeAcaoRepositoryPort.salvar` (#98) | Reatribui e produz o aviso ao novo encarregado. A sobrecarga com `Setor` atende UC07/US07. |
+| Gatilho de alerta (UC07, regra 2) | Domínio: `configurarAlerta`, `getDataAlerta`, `deveEmitirAlerta`, `emitirAvisoPrazo`; persistido por `PlanoDeAcaoRepositoryPort.salvar` (#98); porta de saída `NotificacaoAcaoPort.notificar(AvisoAcao)` (*a criar*) | Antecedência por ação, sem constante. Canal da seção 2.6. |
 | Ocorrência grave | Domínio: `Ocorrencia.isGrave()` / `Acidente.isGrave()` | `gravidade` `ALTO` ou `CRITICO`; incidente sem escala aprovada. |
 
 ---
 
-## 4. Orientações para #98 (persistência) e #99 (API)
+## 4. Situação de Implementação (#98 e #99)
 
-- **#98**: nova migração com a próxima versão livre, evoluindo `planos_de_acao` sem recriá-la e sem reutilizar V5. Acrescentar `ocorrencia_id` (sem `ON DELETE CASCADE`), responsável `colaborador_id` ou `setor_id` com restrição de exclusividade, `alerta_ativo` e `antecedencia_alerta_dias` (≥ 0), identificação do gestor e registro das prorrogações. Manter `status` como texto com o vocabulário da seção 2.3. Teste com PostgreSQL de gravação seguida de nova consulta.
-- **#99**: operações do Gestor para definir ações, consultar o andamento, concluir, prorrogar com justificativa, reatribuir e configurar alertas. Em ocorrência grave, a falta de ação preventiva deve voltar como pendência de validação. Prazo retroativo é rejeitado sem gravação. O perfil do Supervisor nas consultas segue UC09/RNF03 e deve ser decidido ali.
+- **#98 (Entregue)**: migração Flyway `V22__evoluir_persistencia_planos_de_acao.sql` evoluindo `planos_de_acao` com `ocorrencia_id` (sem `ON DELETE CASCADE`), responsável `colaborador_id` ou `setor_id` com restrição `CHECK`, `alerta_ativo`, `antecedencia_alerta_dias` (≥ 0) e `gestor_id`. Criada tabela `prorrogacoes_prazo` para histórico estruturado de prazos com justificativas. Entidades JPA `PlanoDeAcaoEntity` e `ProrrogacaoPrazoEntity`, porta `PlanoDeAcaoRepositoryPort` e adaptador `PlanoDeAcaoJpaAdapter` com auditoria integrada (`LogAuditoriaRepositoryPort`). Coberto por testes unitários e de integração PostgreSQL.
+- **#99 (Próxima etapa - API)**: operações do Gestor para definir ações, consultar o andamento, concluir, prorrogar com justificativa, reatribuir e configurar alertas. Em ocorrência grave, a falta de ação preventiva deve voltar como pendência de validação. Prazo retroativo é rejeitado sem gravação. O perfil do Supervisor nas consultas segue UC09/RNF03 e deve ser decidido ali.
 
 ---
 
