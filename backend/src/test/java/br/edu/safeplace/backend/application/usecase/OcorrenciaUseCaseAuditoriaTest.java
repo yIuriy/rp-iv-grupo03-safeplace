@@ -105,6 +105,7 @@ class OcorrenciaUseCaseAuditoriaTest {
                 NivelPerigo.ALTO
         );
         when(repository.salvarAcidente(any(Acidente.class))).thenReturn(salvo);
+        when(repository.proximoSequencialCAT(anyInt(), anyInt())).thenReturn(1L);
 
         OcorrenciaOutputDTO dto = useCase.registrarAcidente(input);
 

@@ -4,11 +4,13 @@ import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
 import br.edu.safeplace.backend.application.port.out.AreaRiscoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.NotificacaoOcorrenciaPort;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
+import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
@@ -29,7 +31,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class OcorrenciaUseCaseTest {
@@ -292,28 +296,118 @@ class OcorrenciaUseCaseTest {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
         OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
 
-        OcorrenciaOutputDTO acidenteCadastrado = useCase.registrarAcidente(new RegistrarAcidenteInputDTO(
-                LocalDateTime.of(2026, 9, 12, 9, 0),
-                "Fundicao",
-                "Queimadura leve por respingo",
+        Acidente acidenteSemProtocolo = new Acidente(
                 null,
-                "FALHA_EPI",
+                "Queimadura leve por respingo",
+                LocalDateTime.of(2026, 9, 12, 9, 0),
+                LocalDateTime.now(),
+                StatusOcorrencia.ABERTA,
+                List.of(),
+                null,
+                List.of(),
+                null,
+                null,
+                "Fundicao",
+                null,
+                CausaRaizAcidente.FALHA_EPI,
                 "Queimadura",
                 "Braco esquerdo",
                 null,
                 "Posto de enfermagem"
-        ));
+        );
+        Acidente salvo = repository.salvarAcidente(acidenteSemProtocolo);
 
-        assertThat(acidenteCadastrado.numeroProtocoloCAT()).isNull();
+        assertThat(salvo.getNumeroProtocoloCAT()).isNull();
 
-        OcorrenciaOutputDTO consolidado = useCase.consolidarCAT(acidenteCadastrado.idOcorrencia());
+        OcorrenciaOutputDTO consolidado = useCase.consolidarCAT(salvo.getIdOcorrencia());
 
         assertThat(consolidado.numeroProtocoloCAT()).isEqualTo("CAT-2026-09-0001");
 
         // Tentativa de consolidar novamente deve ser proibida
-        assertThatThrownBy(() -> useCase.consolidarCAT(acidenteCadastrado.idOcorrencia()))
+        assertThatThrownBy(() -> useCase.consolidarCAT(salvo.getIdOcorrencia()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Protocolo CAT já emitido e não pode ser alterado.");
+    }
+
+    @Test
+    @DisplayName("Deve gerar automaticamente protocolo CAT quando omitido no registro de acidente")
+    void deveGerarProtocoloAutomaticoQuandoOmitido() {
+        OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+
+        RegistrarAcidenteInputDTO input = new RegistrarAcidenteInputDTO(
+                LocalDateTime.of(2026, 9, 10, 10, 0),
+                "Galpão",
+                "Queda de ferramenta",
+                null,
+                "OUTRO",
+                "Impacto",
+                "Contusão no pé",
+                null,
+                "Ambulatório"
+        );
+
+        OcorrenciaOutputDTO salvo = useCase.registrarAcidente(input);
+
+        assertThat(salvo.numeroProtocoloCAT()).isEqualTo("CAT-2026-09-0001");
+    }
+
+    @Test
+    @DisplayName("Deve preservar protocolo fornecido no registro de acidente se válido")
+    void devePreservarProtocoloFornecido() {
+        OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+
+        RegistrarAcidenteInputDTO input = new RegistrarAcidenteInputDTO(
+                LocalDateTime.of(2026, 9, 10, 10, 0),
+                "Galpão",
+                "Queda de ferramenta",
+                null,
+                "OUTRO",
+                "Impacto",
+                "Contusão no pé",
+                "CAT-2026-09-9999",
+                "Ambulatório"
+        );
+
+        OcorrenciaOutputDTO salvo = useCase.registrarAcidente(input);
+
+        assertThat(salvo.numeroProtocoloCAT()).isEqualTo("CAT-2026-09-9999");
+    }
+
+    @Test
+    @DisplayName("Deve acionar porta de notificação interna ao registrar acidente e incidente")
+    void deveNotificarGestorAoRegistrarAcidenteEIncidente() {
+        OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
+        NotificacaoOcorrenciaPort notificacaoPort = mock(NotificacaoOcorrenciaPort.class);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null, notificacaoPort);
+
+        RegistrarAcidenteInputDTO inputAcidente = new RegistrarAcidenteInputDTO(
+                LocalDateTime.of(2026, 9, 10, 10, 0),
+                "Galpão",
+                "Queda de ferramenta",
+                null,
+                "OUTRO",
+                "Impacto",
+                "Contusão no pé",
+                null,
+                "Ambulatório"
+        );
+        useCase.registrarAcidente(inputAcidente);
+
+        verify(notificacaoPort).notificarNovoRelato(any(Acidente.class));
+
+        RegistrarIncidenteInputDTO inputIncidente = new RegistrarIncidenteInputDTO(
+                LocalDateTime.of(2026, 9, 10, 11, 0),
+                "Galpão",
+                "Cabo exposto no chão",
+                null,
+                "Cabo energizado",
+                "Choque elétrico"
+        );
+        useCase.registrarIncidente(inputIncidente);
+
+        verify(notificacaoPort).notificarNovoRelato(any(Incidente.class));
     }
 
     @Test
