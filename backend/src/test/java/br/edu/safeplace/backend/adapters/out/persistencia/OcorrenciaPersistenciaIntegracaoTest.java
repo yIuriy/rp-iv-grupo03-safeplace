@@ -107,6 +107,7 @@ class OcorrenciaPersistenciaIntegracaoTest {
         jdbcTemplate.execute("DELETE FROM acidentes");
         jdbcTemplate.execute("DELETE FROM incidentes");
         jdbcTemplate.execute("DELETE FROM ocorrencias");
+        jdbcTemplate.execute("DELETE FROM prorrogacoes_prazo");
         jdbcTemplate.execute("DELETE FROM planos_de_acao");
         jdbcTemplate.execute("DELETE FROM sequencias_protocolo_cat");
         jdbcTemplate.update("DELETE FROM usuarios WHERE email LIKE ? OR cpf IN (?, ?)",
