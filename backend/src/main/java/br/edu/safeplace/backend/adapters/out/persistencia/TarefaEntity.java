@@ -21,14 +21,20 @@ public class TarefaEntity {
     @Column(name = "data_classificacao")
     private LocalDateTime dataClassificacao;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "responsavel_classificacao_id")
+    private GestorDeSegurancaEntidade responsavelClassificacao;
+
     public TarefaEntity() {
     }
 
-    public TarefaEntity(Integer id, String descricao, String nivelPerigo, LocalDateTime dataClassificacao) {
+    public TarefaEntity(Integer id, String descricao, String nivelPerigo, LocalDateTime dataClassificacao,
+            GestorDeSegurancaEntidade responsavelClassificacao) {
         this.id = id;
         this.descricao = descricao;
         this.nivelPerigo = nivelPerigo;
         this.dataClassificacao = dataClassificacao;
+        this.responsavelClassificacao = responsavelClassificacao;
     }
 
     public Integer getId() {
@@ -45,5 +51,9 @@ public class TarefaEntity {
 
     public LocalDateTime getDataClassificacao() {
         return dataClassificacao;
+    }
+
+    public GestorDeSegurancaEntidade getResponsavelClassificacao() {
+        return responsavelClassificacao;
     }
 }

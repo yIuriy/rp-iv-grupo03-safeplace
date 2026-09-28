@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,6 +23,8 @@ import br.edu.safeplace.backend.domain.tarefa.exception.TarefaNaoEncontradaExcep
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -144,14 +147,41 @@ class TarefaControllerTest {
     void gestorDeveClassificarTarefa() throws Exception {
         when(useCase.classificar(1, NivelPerigo.CRITICO))
                 .thenReturn(new TarefaOutputDTO(1, "Solda em altura", NivelPerigo.CRITICO, true,
-                        LocalDateTime.of(2026, 9, 13, 11, 0)));
+                        LocalDateTime.of(2026, 9, 13, 11, 0), 7, "Mariana"));
 
         mockMvc.perform(patch("/api/tarefas/1/classificacao")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nivelPerigo\": \"CRITICO\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nivelPerigo").value("CRITICO"))
-                .andExpect(jsonPath("$.classificada").value(true));
+                .andExpect(jsonPath("$.classificada").value(true))
+                .andExpect(jsonPath("$.responsavelClassificacaoId").value(7))
+                .andExpect(jsonPath("$.responsavelClassificacaoNome").value("Mariana"));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("#112: classificação sem responsável técnico identificável responde 403")
+    void classificacaoSemResponsavelRespondeProibido() throws Exception {
+        when(useCase.classificar(1, NivelPerigo.ALTO))
+                .thenThrow(new AccessDeniedException("sem Gestor de Segurança responsável"));
+
+        mockMvc.perform(patch("/api/tarefas/1/classificacao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nivelPerigo\": \"ALTO\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("#112: termos de UC11 fora do vocabulário único NivelPerigo são recusados")
+    void deveRecusarTermoForaDoVocabularioUnico() throws Exception {
+        mockMvc.perform(patch("/api/tarefas/1/classificacao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nivelPerigo\": \"LEVE\"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(useCase, never()).classificar(any(), any());
     }
 
     @Test

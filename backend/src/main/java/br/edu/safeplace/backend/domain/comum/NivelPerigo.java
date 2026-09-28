@@ -9,8 +9,10 @@ package br.edu.safeplace.backend.domain.comum;
  * {@code tarefa}.</p>
  *
  * <p>Os valores seguem o vocabulário de UC03 e do diagrama de classes (baixo, médio, alto e
- * crítico). UC11 e US06 ainda descrevem leve, moderado, grave e crítico; a unificação está
- * registrada na issue #77 e no glossário.</p>
+ * crítico). É o vocabulário único também para tarefas ({@code Tarefa.status : NivelPerigo}); os
+ * termos leve, moderado, grave e crítico de UC11 e US06 têm correspondência explícita, e não são
+ * valores aceitos, conforme {@code docs/arquitetura/correspondencia-classes-tarefa-uc11.md}
+ * (issue #112).</p>
  */
 public enum NivelPerigo {
     BAIXO(1),

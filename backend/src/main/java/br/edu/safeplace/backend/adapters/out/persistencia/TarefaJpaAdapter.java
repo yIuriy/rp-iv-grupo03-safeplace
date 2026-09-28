@@ -8,14 +8,17 @@ import org.springframework.stereotype.Repository;
 import br.edu.safeplace.backend.application.port.out.TarefaRepositoryPort;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.tarefa.Tarefa;
+import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
 @Repository
 public class TarefaJpaAdapter implements TarefaRepositoryPort {
 
     private final TarefaJpaRepository tarefaRepository;
+    private final UsuarioJpaRepositorio usuarioRepository;
 
-    public TarefaJpaAdapter(TarefaJpaRepository tarefaRepository) {
+    public TarefaJpaAdapter(TarefaJpaRepository tarefaRepository, UsuarioJpaRepositorio usuarioRepository) {
         this.tarefaRepository = tarefaRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @Override
@@ -45,7 +48,19 @@ public class TarefaJpaAdapter implements TarefaRepositoryPort {
                 domain.getId(),
                 domain.getDescricao(),
                 domain.getNivelPerigo() == null ? null : domain.getNivelPerigo().name(),
-                domain.getDataClassificacao());
+                domain.getDataClassificacao(),
+                carregarGestor(domain.getResponsavelClassificacao()));
+    }
+
+    private GestorDeSegurancaEntidade carregarGestor(GestorDeSeguranca gestor) {
+        if (gestor == null || gestor.getId() == null) {
+            return null;
+        }
+        return usuarioRepository.findById(gestor.getId())
+                .filter(GestorDeSegurancaEntidade.class::isInstance)
+                .map(GestorDeSegurancaEntidade.class::cast)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Responsável técnico não encontrado entre os gestores de segurança: " + gestor.getId()));
     }
 
     private Tarefa toDomain(TarefaEntity entity) {
@@ -53,6 +68,7 @@ public class TarefaJpaAdapter implements TarefaRepositoryPort {
                 entity.getId(),
                 entity.getDescricao(),
                 entity.getNivelPerigo() == null ? null : NivelPerigo.valueOf(entity.getNivelPerigo()),
-                entity.getDataClassificacao());
+                entity.getDataClassificacao(),
+                entity.getResponsavelClassificacao() == null ? null : entity.getResponsavelClassificacao().paraDominio());
     }
 }
