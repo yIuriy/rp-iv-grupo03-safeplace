@@ -14,6 +14,8 @@ export type Tarefa = {
   nivelPerigo: NivelPerigo | null
   classificada: boolean
   dataClassificacao: string | null
+  /** Nome do Gestor responsável técnico pela última classificação; nulo em registros anteriores a #112. */
+  responsavelClassificacaoNome: string | null
 }
 
 export type DadosCadastroTarefa = {
@@ -38,6 +40,8 @@ function lerTarefa(dado: unknown): Tarefa {
 
   const nivelPerigo = ehNivelPerigo(b.nivelPerigo) ? b.nivelPerigo : null
   const dataClassificacao = typeof b.dataClassificacao === 'string' ? b.dataClassificacao : null
+  const responsavelClassificacaoNome =
+    typeof b.responsavelClassificacaoNome === 'string' ? b.responsavelClassificacaoNome : null
 
   return {
     id: b.id,
@@ -45,6 +49,7 @@ function lerTarefa(dado: unknown): Tarefa {
     nivelPerigo,
     classificada: b.classificada,
     dataClassificacao,
+    responsavelClassificacaoNome,
   }
 }
 

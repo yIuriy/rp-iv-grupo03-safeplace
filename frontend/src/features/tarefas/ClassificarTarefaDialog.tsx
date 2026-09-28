@@ -74,7 +74,7 @@ export function ClassificarTarefaDialog({
           label="Grau de periculosidade *"
           value={nivelPerigo}
           onChange={e => setNivelPerigo(e.target.value as NivelPerigo)}
-          helper="Vocabulário aprovado de riscos (#112): Baixo, Médio, Alto ou Crítico."
+          helper="Mesma escala das áreas de risco: Baixo, Médio, Alto ou Crítico. Você ficará registrado como responsável técnico."
           required
         >
           {niveisPerigo.map(nivel => (

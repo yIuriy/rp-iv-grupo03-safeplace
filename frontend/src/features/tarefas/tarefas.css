@@ -48,3 +48,7 @@
   background-color: var(--sp-color-neutral-subtle, #f3f4f6);
   color: var(--sp-color-neutral-text, #4b5563);
 }
+
+.sp-responsavel-classificacao {
+  display: block;
+}

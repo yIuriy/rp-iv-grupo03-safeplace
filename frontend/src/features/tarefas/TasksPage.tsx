@@ -210,6 +210,13 @@ export function TasksPage() {
                           <time dateTime={tarefa.dataClassificacao ?? undefined}>
                             {formatarDataHora(tarefa.dataClassificacao)}
                           </time>
+                          {tarefa.classificada && (
+                            <span className="sp-texto-secundario sp-responsavel-classificacao">
+                              {tarefa.responsavelClassificacaoNome
+                                ? `por ${tarefa.responsavelClassificacaoNome}`
+                                : 'Responsável não registrado'}
+                            </span>
+                          )}
                         </td>
                         {gestor && (
                           <td>
