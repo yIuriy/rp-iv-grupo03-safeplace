@@ -13,6 +13,8 @@ Consulte o [guia de componentes](design-system/README.md) para conhecer as impor
 | `/usuarios` | Gestor: abas de supervisores e colaboradores, cadastro de supervisor com senha inicial, cadastro e edição de supervisores e colaboradores. Supervisor: busca, cadastro e edição de colaboradores. Integrada a `/api/usuarios`, com carregamento, lista vazia, erro e nova tentativa. |
 | `/ocorrencias` | Tela inicial de ocorrências. |
 | `/epis` | Tela inicial de EPIs. |
+| `/estoque` | Catálogo de EPIs com saldo, mínimo e situação crítica em texto, busca, detalhes com histórico e operador; o Gestor registra entradas e saídas (UC06, issues #123 e #133). Integrada a `/api/epis`. |
+| `/emprestimos` | Supervisor e Gestor: novo empréstimo com termo de cautela, duplicidade com justificativa, impedimentos informados pelo servidor, posse, atrasos e devolvidos por situação e devolução com condição e destino. Gestor: aba de projeções de substituição e lista de reposição, com análise e nova tentativa (UC12, UC10, issue #110). Integrada a `/api/emprestimos` e `/api/projecoes`. |
 | `/areas-risco` | Tela inicial de áreas de risco. |
 | `/tarefas` | Tela inicial de tarefas. |
 
@@ -54,6 +56,26 @@ Fora desta entrega: consulta offline de RNF08 (issues #105 e #127), a carga inic
 
 A especificação do MVP prevê que o primeiro Gestor de Segurança venha de carga inicial no banco, mas o repositório ainda não traz essa carga nem uma migração com esse registro. Para entrar na interface em um banco novo é preciso inserir um Gestor com hash BCrypt na tabela `usuarios`. A forma dessa carga é decisão pendente do grupo.
 
+### Empréstimos, devoluções e projeções
+
+A tela `/emprestimos` (issue #110) segue UC12, UC10, US11 e US21 e aplica a matriz do `SecurityConfig`:
+
+| Ação | Gestor | Supervisor | Endpoint |
+| --- | --- | --- | --- |
+| Consultar posse, atrasos e devolvidos | Sim | Sim | `GET /api/emprestimos?situacao=` com `PENDENTES`, `ATRASADOS` ou `TODOS` |
+| Registrar entrega | Sim | Sim | `POST /api/emprestimos` |
+| Registrar devolução | Sim | Sim | `POST /api/emprestimos/{id}/devolucao` |
+| Consultar projeções e lista de reposição | Sim | Não | `GET /api/projecoes` e `GET /api/projecoes/alertas` |
+| Solicitar análise de projeção | Sim | Não | `POST /api/projecoes/analise` |
+
+- A entrega lista colaboradores ativos de `GET /api/usuarios/colaboradores` e EPIs de `GET /api/emprestimos/epis-disponiveis` (situação Disponível, com saldo e CA válido). A data prevista de devolução é obrigatória e não pode ser anterior a hoje. Data, hora e responsável são registrados pelo servidor com o usuário do token.
+- Um 409 de duplicidade (mesmo tipo em posse, UC12 exceção III) abre a confirmação com justificativa obrigatória e reenvia com `confirmarSubstituicao: true`. Um 422 mostra o impedimento do servidor (saldo, CA, situação do EPI, capacitação ou colaborador inativo) e mantém os dados digitados.
+- Ao concluir, o diálogo mostra o termo de cautela devolvido pela API. Os detalhes mostram datas, responsáveis (nomes de `GET /api/usuarios/{id}`), condição da devolução e justificativa de substituição.
+- A devolução pede a condição (apto, manutenção ou descarte) e mostra o destino antes da confirmação: só o item apto volta ao saldo, e a baixa definitiva do descarte (RF14, backlog) não é feita nesta tela.
+- Projeções: a tabela mostra a projeção mais recente de cada EPI, com a data estimada e a justificativa do servidor. A lista de reposição segue a ordem da API, sem indicador de prioridade, que a US21 deixa a confirmar. Pendências da análise aparecem com o motivo e a opção de nova tentativa (UC10, exceção I); uma falha não cria alertas na tela. A API também aceita consultas do Supervisor, mas a issue #110 reserva as projeções ao Gestor.
+- Não há cópia offline: a issue #105 não aprova cache de empréstimos.
+- Implementação em `src/features/emprestimos/`: `api.ts` e `apiProjecoes.ts` (contratos e chamadas), `EmprestimosPage.tsx` (abas por perfil), `EmprestimosPainel.tsx`, `EmprestimosTabela.tsx`, `EntregaDialog.tsx`, `EntregaEtapas.tsx`, `DevolucaoDialog.tsx`, `EmprestimoDetalheDialog.tsx`, `ProjecoesPainel.tsx`, `validacaoEntrega.ts` e `formatos.ts`.
+
 ## Executar em desenvolvimento
 
 Use Node.js 22.12 ou superior com npm. A partir da raiz do repositório:
@@ -91,7 +113,7 @@ npx playwright install chromium
 npm test
 ```
 
-O lint verifica as regras de código configuradas. O build verifica os tipos e gera os arquivos em `dist/`. Os testes Playwright verificam a aplicação, o catálogo e seus exemplos no Chromium; sua configuração inicia um servidor local na porta 4173. Os testes da aplicação cobrem login, sessão, saída, expiração de token, matriz de perfis, cadastro de supervisor com senha inicial, cadastro, edição e busca de colaboradores e supervisores, navegação, histórico, teclado e larguras de 360, 768 e 1344 pixels. Somente as respostas HTTP são simuladas; componentes, rotas, sessão e cliente HTTP são executados. Esses testes não substituem a verificação contra o backend real com PostgreSQL.
+O lint verifica as regras de código configuradas. O build verifica os tipos e gera os arquivos em `dist/`. Os testes Playwright verificam a aplicação, o catálogo e seus exemplos no Chromium; sua configuração inicia um servidor local na porta 4173. Os testes da aplicação cobrem login, sessão, saída, expiração de token, matriz de perfis, cadastro de supervisor com senha inicial, cadastro, edição e busca de colaboradores e supervisores, estoque de EPIs, entrega, duplicidade, impedimento, devolução e detalhes de empréstimos, projeções com pendências e nova tentativa, navegação, histórico, teclado e larguras de 360, 768 e 1344 pixels. Somente as respostas HTTP são simuladas; componentes, rotas, sessão e cliente HTTP são executados. Esses testes não substituem a verificação contra o backend real com PostgreSQL.
 
 Para conferir o resultado do build no navegador:
 
@@ -106,6 +128,8 @@ Use o endereço exibido no terminal, normalmente [http://localhost:4173](http://
 - `src/app/`: composição do layout, navegação e estilo das páginas da aplicação.
 - `src/features/autenticacao/`: login, sessão e proteção de rotas.
 - `src/features/usuarios/`: consulta e cadastro de supervisores e colaboradores por perfil.
+- `src/features/estoque/`: catálogo, saldo, histórico e movimentação do estoque de EPIs.
+- `src/features/emprestimos/`: entregas, devoluções, posse e atrasos e, para o Gestor, projeções de substituição.
 - `src/features/ocorrencias/`, `epis/`, `areas-risco/` e `tarefas/`: telas iniciais por funcionalidade.
 - `src/features/design-system/`: catálogo e exemplos com dados fictícios.
 - `src/shared/components/` e `src/shared/layout/`: componentes e estrutura visual compartilhados.

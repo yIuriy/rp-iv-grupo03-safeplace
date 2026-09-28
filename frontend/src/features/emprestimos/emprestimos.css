@@ -1,0 +1,27 @@
+/* Estilos da tela de empréstimos (issue #110): termo de cautela, destino da devolução, condição em
+   coluna, campos de lista com estados e seções do painel de projeções. Só usa tokens do design system;
+   as classes genéricas de tabela, detalhes e opções vêm de estoque.css. */
+
+.sp-termo {
+  margin: 0;
+  padding: var(--sp-space-16);
+  border: var(--sp-stroke-default) solid var(--sp-border-default);
+  border-radius: var(--sp-radius-8);
+  background: var(--sp-surface-page);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.sp-destino {
+  margin: 0;
+  padding: var(--sp-space-12) var(--sp-space-16);
+  border-radius: var(--sp-radius-8);
+  background: var(--sp-surface-page);
+  box-shadow: inset 4px 0 0 var(--sp-border-default);
+}
+
+.sp-opcoes--coluna { flex-direction: column; }
+.sp-campo-lista { display: grid; gap: var(--sp-space-8); }
+.sp-secao { display: grid; gap: var(--sp-space-16); }
+.sp-secao h2, .sp-secao h3, .sp-secao > p { margin: 0; }
+.sp-pendencias { display: grid; gap: var(--sp-space-8); margin: 0; padding-left: var(--sp-space-24); }
