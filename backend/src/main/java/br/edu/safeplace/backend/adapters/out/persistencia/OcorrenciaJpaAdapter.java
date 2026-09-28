@@ -61,6 +61,14 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
     }
 
     @Override
+    public Optional<Ocorrencia> buscarPorProtocolo(String protocolo) {
+        if (protocolo == null || protocolo.isBlank()) {
+            return Optional.empty();
+        }
+        return repository.findByNumeroProtocolo(protocolo.trim()).map(this::toDomain);
+    }
+
+    @Override
     public long proximoSequencialCAT(int ano, int mes) {
         if (sequenciaProtocoloCatRepository == null) {
             throw new IllegalStateException(

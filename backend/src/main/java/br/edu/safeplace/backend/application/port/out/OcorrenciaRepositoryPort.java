@@ -16,6 +16,8 @@ public interface OcorrenciaRepositoryPort {
 
     Optional<Ocorrencia> buscarPorId(Integer id);
 
+    Optional<Ocorrencia> buscarPorProtocolo(String protocolo);
+
     long proximoSequencialCAT(int ano, int mes);
 
     default Optional<Acidente> buscarAcidentePorId(Integer id) {

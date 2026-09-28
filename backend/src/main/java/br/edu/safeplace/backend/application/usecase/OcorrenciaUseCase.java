@@ -227,6 +227,19 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
     @Override
     @Transactional(readOnly = true)
     public List<OcorrenciaOutputDTO> listar() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isSupervisor = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_SUPERVISOR".equals(a.getAuthority()));
+        String email = emailAutenticado();
+
+        if (isSupervisor && email != null && logAuditoriaRepositoryPort != null) {
+            List<Integer> idsRelatados = logAuditoriaRepositoryPort.buscarIdsPorResponsavelETipoOperacao(email, "CADASTRO");
+            return repository.listar().stream()
+                    .filter(o -> idsRelatados.contains(o.getIdOcorrencia()))
+                    .map(OcorrenciaOutputDTO::deDominio)
+                    .toList();
+        }
+
         return repository.listar().stream()
                 .map(OcorrenciaOutputDTO::deDominio)
                 .toList();
@@ -237,6 +250,17 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
     public OcorrenciaOutputDTO buscarPorId(Integer idOcorrencia) {
         Ocorrencia ocorrencia = repository.buscarPorId(idOcorrencia)
                 .orElseThrow(() -> new OcorrenciaNaoEncontradaException(idOcorrencia));
+        return OcorrenciaOutputDTO.deDominio(ocorrencia);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OcorrenciaOutputDTO buscarPorProtocolo(String protocolo) {
+        if (protocolo == null || protocolo.isBlank()) {
+            throw new IllegalArgumentException("Protocolo não pode ser vazio.");
+        }
+        Ocorrencia ocorrencia = repository.buscarPorProtocolo(protocolo.trim())
+                .orElseThrow(() -> new OcorrenciaNaoEncontradaException("Ocorrência não encontrada com o protocolo " + protocolo.trim() + "."));
         return OcorrenciaOutputDTO.deDominio(ocorrencia);
     }
 

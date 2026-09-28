@@ -4,6 +4,7 @@ import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
 import br.edu.safeplace.backend.application.port.out.AreaRiscoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.NotificacaoOcorrenciaPort;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
@@ -21,6 +22,9 @@ import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -420,6 +424,86 @@ class OcorrenciaUseCaseTest {
                 .isInstanceOf(OcorrenciaNaoEncontradaException.class);
     }
 
+    @Test
+    @DisplayName("Deve buscar ocorrencia por protocolo CAT com sucesso")
+    void deveBuscarPorProtocoloComSucesso() {
+        OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+
+        RegistrarAcidenteInputDTO input = new RegistrarAcidenteInputDTO(
+                LocalDateTime.of(2026, 9, 10, 10, 0),
+                "Galpão",
+                "Queda de ferramenta",
+                null,
+                "OUTRO",
+                "Impacto",
+                "Contusão no pé",
+                "CAT-2026-09-0010",
+                "Ambulatório"
+        );
+        useCase.registrarAcidente(input);
+
+        OcorrenciaOutputDTO encontrada = useCase.buscarPorProtocolo("CAT-2026-09-0010");
+        assertThat(encontrada).isNotNull();
+        assertThat(encontrada.numeroProtocoloCAT()).isEqualTo("CAT-2026-09-0010");
+    }
+
+    @Test
+    @DisplayName("Deve lancar excecao ao buscar por protocolo inexistente")
+    void deveLancarExcecaoAoBuscarPorProtocoloInexistente() {
+        OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+
+        assertThatThrownBy(() -> useCase.buscarPorProtocolo("CAT-2026-09-9999"))
+                .isInstanceOf(OcorrenciaNaoEncontradaException.class);
+    }
+
+    @Test
+    @DisplayName("Deve lancar excecao ao buscar por protocolo nulo ou vazio")
+    void deveLancarExcecaoAoBuscarPorProtocoloVazio() {
+        OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+
+        assertThatThrownBy(() -> useCase.buscarPorProtocolo("   "))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("Deve filtrar relatos do Supervisor ao listar")
+    void deveFiltrarRelatosDoSupervisorAoListar() {
+        try {
+            OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
+            LogAuditoriaRepositoryPort logRepo = mock(LogAuditoriaRepositoryPort.class);
+            OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, logRepo);
+
+            Acidente ac1 = new Acidente(1, "Desc 1", LocalDateTime.of(2026, 9, 1, 10, 0), LocalDateTime.now(),
+                    StatusOcorrencia.ABERTA, List.of(), null, List.of(), null, null, "Local 1", null,
+                    CausaRaizAcidente.OUTRO, null, null, "CAT-2026-09-0001", null, null);
+            Acidente ac2 = new Acidente(2, "Desc 2", LocalDateTime.of(2026, 9, 2, 10, 0), LocalDateTime.now(),
+                    StatusOcorrencia.ABERTA, List.of(), null, List.of(), null, null, "Local 2", null,
+                    CausaRaizAcidente.OUTRO, null, null, "CAT-2026-09-0002", null, null);
+            repository.salvarAcidente(ac1);
+            repository.salvarAcidente(ac2);
+
+            SecurityContextHolder.getContext().setAuthentication(
+                    new UsernamePasswordAuthenticationToken(
+                            "supervisor@safeplace.com",
+                            "senha",
+                            List.of(new SimpleGrantedAuthority("ROLE_SUPERVISOR"))
+                    )
+            );
+
+            when(logRepo.buscarIdsPorResponsavelETipoOperacao("supervisor@safeplace.com", "CADASTRO"))
+                    .thenReturn(List.of(1));
+
+            List<OcorrenciaOutputDTO> listaSupervisor = useCase.listar();
+            assertThat(listaSupervisor).hasSize(1);
+            assertThat(listaSupervisor.get(0).idOcorrencia()).isEqualTo(1);
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+    }
+
     private static class OcorrenciaRepositoryFake implements OcorrenciaRepositoryPort {
 
         private final List<Ocorrencia> ocorrencias = new ArrayList<>();
@@ -490,6 +574,19 @@ class OcorrenciaUseCaseTest {
         public Optional<Ocorrencia> buscarPorId(Integer id) {
             return ocorrencias.stream()
                     .filter(o -> o.getIdOcorrencia().equals(id))
+                    .findFirst();
+        }
+
+        @Override
+        public Optional<Ocorrencia> buscarPorProtocolo(String protocolo) {
+            if (protocolo == null || protocolo.isBlank()) {
+                return Optional.empty();
+            }
+            return ocorrencias.stream()
+                    .filter(Acidente.class::isInstance)
+                    .map(Acidente.class::cast)
+                    .filter(a -> protocolo.equalsIgnoreCase(a.getNumeroProtocoloCAT()))
+                    .map(Ocorrencia.class::cast)
                     .findFirst();
         }
 

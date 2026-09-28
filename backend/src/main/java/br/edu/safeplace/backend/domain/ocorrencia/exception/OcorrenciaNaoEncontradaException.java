@@ -4,4 +4,8 @@ public class OcorrenciaNaoEncontradaException extends RuntimeException {
     public OcorrenciaNaoEncontradaException(Integer id) {
         super(String.format("Ocorrência não encontrada com o identificador %d.", id));
     }
+
+    public OcorrenciaNaoEncontradaException(String mensagem) {
+        super(mensagem);
+    }
 }
