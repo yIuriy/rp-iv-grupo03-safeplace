@@ -573,7 +573,7 @@ O alternativo III, de exportação de relatório, pertence ao backlog de RF18. A
 
 ## UC11 – Classificar Nível de Periculosidade
 
-Este caso de uso integra o MVP por RF06. Os níveis leve, moderado, grave e crítico usados abaixo divergem de baixo, médio, alto e crítico usados em UC03 e na enumeração `NivelPerigo` do diagrama de classes. A padronização depende de decisão da equipe; os valores originais são preservados até essa definição. O recálculo de vínculos com EPIs no alternativo I depende de RF12, no backlog.
+Este caso de uso integra o MVP por RF06. Os níveis leve, moderado, grave e crítico usados abaixo divergem de baixo, médio, alto e crítico usados em UC03 e na enumeração `NivelPerigo` do diagrama de classes. A [correspondência Classes vs UC11](../arquitetura/correspondencia-classes-tarefa-uc11.md) propõe o vocabulário único `NivelPerigo`, com correspondência explícita (leve para baixo, moderado para médio, grave para alto, crítico para crítico), aguardando aprovação do grupo; os valores originais são preservados até essa definição. O recálculo de vínculos com EPIs no alternativo I depende de RF12, no backlog.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |

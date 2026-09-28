@@ -120,7 +120,7 @@ Perfil responsável por controlar EPIs, áreas de risco, acidentes, incidentes, 
 
 ### Grau de risco
 
-Classificação usada para indicar a gravidade ou intensidade do risco associado a uma área, atividade ou função. UC03 e a enumeração `NivelPerigo` do diagrama de classes usam baixo, médio, alto e crítico. UC11 e US06 usam leve, moderado, grave e crítico. A padronização ou a correspondência entre essas listas está pendente; elas não são consideradas equivalentes por este glossário.
+Classificação usada para indicar a gravidade ou intensidade do risco associado a uma área, atividade ou função. UC03 e a enumeração `NivelPerigo` do diagrama de classes usam baixo, médio, alto e crítico. UC11 e US06 usam leve, moderado, grave e crítico. A [correspondência Classes vs UC11](arquitetura/correspondencia-classes-tarefa-uc11.md) propõe, aguardando aprovação, o vocabulário único de `NivelPerigo` e uma correspondência explícita pela posição na escala (leve para baixo, moderado para médio, grave para alto, crítico para crítico). Até a aprovação, este glossário não trata as listas como equivalentes.
 
 ### Histórico de manutenção
 
