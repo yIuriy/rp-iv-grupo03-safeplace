@@ -1,4 +1,5 @@
 import { http } from '../../shared/api/https'
+import type { FeedbackTone } from '../../shared/components'
 
 export type NivelPerigo = 'BAIXO' | 'MEDIO' | 'ALTO' | 'CRITICO'
 
@@ -9,6 +10,13 @@ export const rotuloNivelPerigo: Record<NivelPerigo, string> = {
   MEDIO: 'Médio',
   ALTO: 'Alto',
   CRITICO: 'Crítico',
+}
+
+export const tomDoNivelPerigo: Record<NivelPerigo, FeedbackTone> = {
+  BAIXO: 'info',
+  MEDIO: 'warning',
+  ALTO: 'danger',
+  CRITICO: 'danger',
 }
 
 export type EpiResumo = {

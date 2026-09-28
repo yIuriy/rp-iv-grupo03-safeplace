@@ -12,7 +12,7 @@ import {
 import { FeaturePage } from '../../shared/layout/FeaturePage'
 import { useConsulta } from '../../shared/api/useConsulta'
 import { useSessaoAtiva } from '../autenticacao/contexto'
-import { tomDoNivelPerigo } from '../areas-risco/AreaRiscoDetalhesDialog'
+import { tomDoNivelPerigo } from '../areas-risco/api'
 import { ResultadoConsulta } from '../usuarios/ResultadoConsulta'
 import {
   listarTarefas,

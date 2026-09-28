@@ -9,6 +9,8 @@ import {
 } from '../../shared/components'
 import { FeaturePage } from '../../shared/layout/FeaturePage'
 import { useConsulta } from '../../shared/api/useConsulta'
+import { useConsultaOffline } from '../../shared/offline/useConsultaOffline'
+import { OfflineBanner } from '../../shared/offline/OfflineBanner'
 import { useSessaoAtiva } from '../autenticacao/contexto'
 import { listarEpis } from '../epis/api'
 import { ResultadoConsulta } from '../usuarios/ResultadoConsulta'
@@ -17,9 +19,10 @@ import {
   listarSetores,
   niveisPerigo,
   rotuloNivelPerigo,
+  tomDoNivelPerigo,
   type AreaRisco,
 } from './api'
-import { AreaRiscoDetalhesDialog, tomDoNivelPerigo } from './AreaRiscoDetalhesDialog'
+import { AreaRiscoDetalhesDialog } from './AreaRiscoDetalhesDialog'
 import { AreaRiscoFormDialog } from './AreaRiscoFormDialog'
 import './areas-risco.css'
 
@@ -43,8 +46,8 @@ export function RiskAreasPage() {
   const [areaEditando, setAreaEditando] = useState<AreaRisco | null>(null)
   const [mensagemSucesso, setMensagemSucesso] = useState('')
 
-  const consultaAreas = useConsulta('areas-risco', listarAreasRisco)
-  const consultaSetores = useConsulta('setores', listarSetores)
+  const consultaAreas = useConsultaOffline('areas-risco', listarAreasRisco)
+  const consultaSetores = useConsultaOffline('setores', listarSetores)
   const consultaEpis = useConsulta('epis', listarEpis)
 
   function aoFiltrarTexto(event: FormEvent<HTMLFormElement>) {
@@ -89,6 +92,10 @@ export function RiskAreasPage() {
       }
     >
       <div className="sp-painel">
+        <OfflineBanner
+          isOffline={consultaAreas.isOffline || consultaSetores.isOffline}
+          sincronizadoEm={consultaAreas.sincronizadoEm}
+        />
         <div className="sp-painel-topo">
           <form
             className="sp-busca-filtros"
@@ -132,6 +139,8 @@ export function RiskAreasPage() {
             <Button
               variant="primary"
               icon="plus"
+              disabled={consultaAreas.isOffline}
+              title={consultaAreas.isOffline ? 'Operação indisponível em modo offline' : undefined}
               onClick={() => {
                 setAreaEditando(null)
                 setFormularioAberto(true)

@@ -62,6 +62,17 @@ export function guardarSessao(sessao: Sessao) {
 }
 
 export function apagarSessao() {
+  const email = sessaoEmMemoria?.email
   sessaoEmMemoria = null
   try { window.sessionStorage.removeItem(CHAVE_SESSAO) } catch { /* nada a apagar */ }
+  if (email) {
+    try {
+      // Invalida cache local isolado por conta no logout/expiracao (RNF08 / Seguranca)
+      const prefixo = `safeplace.cache.${email}.`
+      for (let i = window.localStorage.length - 1; i >= 0; i--) {
+        const k = window.localStorage.key(i)
+        if (k && k.startsWith(prefixo)) window.localStorage.removeItem(k)
+      }
+    } catch { /* armazenamento inacessivel */ }
+  }
 }
