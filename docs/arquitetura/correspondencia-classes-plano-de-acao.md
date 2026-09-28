@@ -117,7 +117,19 @@ Os elementos da camada de persistência foram implementados na issue #98 (`Plano
 ## 4. Situação de Implementação (#98 e #99)
 
 - **#98 (Entregue)**: migração Flyway `V22__evoluir_persistencia_planos_de_acao.sql` evoluindo `planos_de_acao` com `ocorrencia_id` (sem `ON DELETE CASCADE`), responsável `colaborador_id` ou `setor_id` com restrição `CHECK`, `alerta_ativo`, `antecedencia_alerta_dias` (≥ 0) e `gestor_id`. Criada tabela `prorrogacoes_prazo` para histórico estruturado de prazos com justificativas. Entidades JPA `PlanoDeAcaoEntity` e `ProrrogacaoPrazoEntity`, porta `PlanoDeAcaoRepositoryPort` e adaptador `PlanoDeAcaoJpaAdapter` com auditoria integrada (`LogAuditoriaRepositoryPort`). Coberto por testes unitários e de integração PostgreSQL.
-- **#99 (Próxima etapa - API)**: operações do Gestor para definir ações, consultar o andamento, concluir, prorrogar com justificativa, reatribuir e configurar alertas. Em ocorrência grave, a falta de ação preventiva deve voltar como pendência de validação. Prazo retroativo é rejeitado sem gravação. O perfil do Supervisor nas consultas segue UC09/RNF03 e deve ser decidido ali.
+- **#99 (Entregue - API REST e Casos de Uso)**:
+  - Porta de entrada `GerenciarPlanoDeAcaoUseCase` e serviço de aplicação `PlanoDeAcaoUseCase`.
+  - Operações expostas via `PlanoDeAcaoController`:
+    - `POST /api/ocorrencias/{idOcorrencia}/planos-acao`: cadastro de ação vinculada (validação de ocorrência grave e prazos retroativos).
+    - `GET /api/ocorrencias/{idOcorrencia}/planos-acao`: listagem de ações vinculadas à ocorrência.
+    - `GET /api/planos-acao/{id}`: consulta de ação por identificador.
+    - `PATCH /api/planos-acao/{id}/status`: transição de status (`ABERTA` → `CONCLUIDA`).
+    - `POST /api/planos-acao/{id}/prorrogacoes`: prorrogação com justificativa obrigatória e persistência em `prorrogacoes_prazo`.
+    - `PATCH /api/planos-acao/{id}/responsavel`: reatribuição de responsável (colaborador ou setor).
+    - `PUT /api/planos-acao/{id}/alerta`: configuração de alerta e antecedência em dias.
+  - Tratamento de exceções via `PlanoDeAcaoExceptionHandler` (erros 400 mapeados para `AcaoPreventivaObrigatoriaException`, `PrazoAcaoInvalidoException` e `PlanoDeAcaoInvalidoException`).
+  - Segurança e RBAC configurados em `SecurityConfig`: mutações restritas a `GESTOR_SEGURANCA`; consultas de acompanhamento permitidas para `GESTOR_SEGURANCA` e `SUPERVISOR` (UC09).
+  - Coberto por testes unitários (`PlanoDeAcaoUseCaseTest`), testes web (`PlanoDeAcaoControllerTest`) e testes de segurança RBAC (`SegurancaOcorrenciaPlanoRbacTest`).
 
 ---
 
