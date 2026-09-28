@@ -1,12 +1,5 @@
-import { Alert, Badge, Button, Dialog, type FeedbackTone } from '../../shared/components'
-import { rotuloNivelPerigo, type AreaRisco, type NivelPerigo, type Setor } from './api'
-
-export const tomDoNivelPerigo: Record<NivelPerigo, FeedbackTone> = {
-  BAIXO: 'info',
-  MEDIO: 'warning',
-  ALTO: 'danger',
-  CRITICO: 'danger',
-}
+import { Alert, Badge, Button, Dialog } from '../../shared/components'
+import { rotuloNivelPerigo, tomDoNivelPerigo, type AreaRisco, type Setor } from './api'
 
 export function AreaRiscoDetalhesDialog({
   area,
