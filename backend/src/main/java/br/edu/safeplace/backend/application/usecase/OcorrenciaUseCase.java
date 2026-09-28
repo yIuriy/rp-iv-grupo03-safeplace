@@ -7,6 +7,7 @@ import br.edu.safeplace.backend.application.port.in.GerenciarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.RegistrarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.out.AreaRiscoRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.NotificacaoOcorrenciaPort;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
@@ -14,6 +15,7 @@ import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
+import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException;
@@ -33,16 +35,27 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
     private final AreaRiscoRepositoryPort areaRiscoRepository;
     private final UsuarioRepositorioPorta usuarioRepository;
     private final LogAuditoriaRepositoryPort logAuditoriaRepositoryPort;
+    private final NotificacaoOcorrenciaPort notificacaoOcorrenciaPort;
+
+    public OcorrenciaUseCase(
+            OcorrenciaRepositoryPort repository,
+            AreaRiscoRepositoryPort areaRiscoRepository,
+            UsuarioRepositorioPorta usuarioRepository,
+            LogAuditoriaRepositoryPort logAuditoriaRepositoryPort,
+            NotificacaoOcorrenciaPort notificacaoOcorrenciaPort) {
+        this.repository = repository;
+        this.areaRiscoRepository = areaRiscoRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.logAuditoriaRepositoryPort = logAuditoriaRepositoryPort;
+        this.notificacaoOcorrenciaPort = notificacaoOcorrenciaPort;
+    }
 
     public OcorrenciaUseCase(
             OcorrenciaRepositoryPort repository,
             AreaRiscoRepositoryPort areaRiscoRepository,
             UsuarioRepositorioPorta usuarioRepository,
             LogAuditoriaRepositoryPort logAuditoriaRepositoryPort) {
-        this.repository = repository;
-        this.areaRiscoRepository = areaRiscoRepository;
-        this.usuarioRepository = usuarioRepository;
-        this.logAuditoriaRepositoryPort = logAuditoriaRepositoryPort;
+        this(repository, areaRiscoRepository, usuarioRepository, logAuditoriaRepositoryPort, null);
     }
 
     @Override
@@ -52,6 +65,13 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
         Colaborador colaborador = resolverColaborador(inputDTO.colaboradorId());
         GestorDeSeguranca gestor = resolverRelator(inputDTO.gestorId());
         CausaRaizAcidente causaRaiz = converterCausaRaiz(inputDTO.causaRaiz());
+
+        String numeroProtocolo = inputDTO.numeroProtocolo();
+        if (numeroProtocolo == null || numeroProtocolo.isBlank()) {
+            LocalDateTime dataRef = inputDTO.dataOcorrencia() != null ? inputDTO.dataOcorrencia() : LocalDateTime.now();
+            long sequencial = repository.proximoSequencialCAT(dataRef.getYear(), dataRef.getMonthValue());
+            numeroProtocolo = NumeroProtocoloCAT.gerar(dataRef, sequencial).getValor();
+        }
 
         Acidente acidente = new Acidente(
                 null,
@@ -69,7 +89,7 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
                 causaRaiz,
                 inputDTO.tipo(),
                 inputDTO.dano(),
-                inputDTO.numeroProtocolo(),
+                numeroProtocolo,
                 inputDTO.destino(),
                 inputDTO.gravidade()
         );
@@ -83,6 +103,10 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
                     "Registro de Acidente de Trabalho"
             );
             logAuditoriaRepositoryPort.salvar(log);
+        }
+
+        if (notificacaoOcorrenciaPort != null) {
+            notificacaoOcorrenciaPort.notificarNovoRelato(salvo);
         }
 
         return OcorrenciaOutputDTO.deDominio(salvo);
@@ -121,6 +145,10 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
                     "Registro de Incidente"
             );
             logAuditoriaRepositoryPort.salvar(log);
+        }
+
+        if (notificacaoOcorrenciaPort != null) {
+            notificacaoOcorrenciaPort.notificarNovoRelato(salvo);
         }
 
         return OcorrenciaOutputDTO.deDominio(salvo);
@@ -199,6 +227,19 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
     @Override
     @Transactional(readOnly = true)
     public List<OcorrenciaOutputDTO> listar() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isSupervisor = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_SUPERVISOR".equals(a.getAuthority()));
+        String email = emailAutenticado();
+
+        if (isSupervisor && email != null && logAuditoriaRepositoryPort != null) {
+            List<Integer> idsRelatados = logAuditoriaRepositoryPort.buscarIdsPorResponsavelETipoOperacao(email, "CADASTRO");
+            return repository.listar().stream()
+                    .filter(o -> idsRelatados.contains(o.getIdOcorrencia()))
+                    .map(OcorrenciaOutputDTO::deDominio)
+                    .toList();
+        }
+
         return repository.listar().stream()
                 .map(OcorrenciaOutputDTO::deDominio)
                 .toList();
@@ -209,6 +250,17 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
     public OcorrenciaOutputDTO buscarPorId(Integer idOcorrencia) {
         Ocorrencia ocorrencia = repository.buscarPorId(idOcorrencia)
                 .orElseThrow(() -> new OcorrenciaNaoEncontradaException(idOcorrencia));
+        return OcorrenciaOutputDTO.deDominio(ocorrencia);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OcorrenciaOutputDTO buscarPorProtocolo(String protocolo) {
+        if (protocolo == null || protocolo.isBlank()) {
+            throw new IllegalArgumentException("Protocolo não pode ser vazio.");
+        }
+        Ocorrencia ocorrencia = repository.buscarPorProtocolo(protocolo.trim())
+                .orElseThrow(() -> new OcorrenciaNaoEncontradaException("Ocorrência não encontrada com o protocolo " + protocolo.trim() + "."));
         return OcorrenciaOutputDTO.deDominio(ocorrencia);
     }
 

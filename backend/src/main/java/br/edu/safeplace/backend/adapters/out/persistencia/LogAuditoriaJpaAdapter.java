@@ -28,4 +28,12 @@ public class LogAuditoriaJpaAdapter implements LogAuditoriaRepositoryPort {
                 .map(LogAuditoriaEntity::paraDominio)
                 .toList();
     }
+
+    @Override
+    public List<Integer> buscarIdsPorResponsavelETipoOperacao(String responsavel, String tipoOperacao) {
+        if (responsavel == null || tipoOperacao == null) {
+            return List.of();
+        }
+        return jpaRepository.buscarIdsPorResponsavelETipoOperacao(responsavel, tipoOperacao);
+    }
 }

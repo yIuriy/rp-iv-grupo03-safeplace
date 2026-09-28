@@ -70,9 +70,19 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/epis", "/api/epis/*/movimentacoes", "/api/epis/*/manutencoes")
                                 .hasRole("GESTOR_SEGURANCA")
                         // UC06: consulta de EPIs e movimentações permitida para Gestor e Supervisor
-                        .requestMatchers(HttpMethod.GET, "/api/epis/**")
+                        // UC05, UC07, UC09: Gestão de Ocorrências e Planos de Ação (#99)
+                        .requestMatchers(HttpMethod.PATCH, "/api/ocorrencias/*/triagem", "/api/ocorrencias/*/arquivar", "/api/ocorrencias/*/consolidar-cat")
+                                .hasRole("GESTOR_SEGURANCA")
+                        .requestMatchers(HttpMethod.POST, "/api/ocorrencias/*/planos-acao")
+                                .hasRole("GESTOR_SEGURANCA")
+                        .requestMatchers(HttpMethod.GET, "/api/ocorrencias/**", "/api/planos-acao/**")
                                 .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
-                        .requestMatchers("/api/ocorrencias/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        .requestMatchers(HttpMethod.POST, "/api/ocorrencias")
+                                .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        .requestMatchers("/api/planos-acao/**")
+                                .hasRole("GESTOR_SEGURANCA")
+                        .requestMatchers("/api/ocorrencias/**")
+                                .hasRole("GESTOR_SEGURANCA")
                         // UC12 (#106): Supervisor é o ator principal e o Gestor o secundário do empréstimo
                         .requestMatchers("/api/emprestimos/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         // UC03 e UC11: o Gestor de Seguranca mantem o cadastro; o Supervisor e ator
