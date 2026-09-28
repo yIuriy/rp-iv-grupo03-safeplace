@@ -11,6 +11,7 @@ import { UsersPage } from './features/usuarios/UsersPage'
 import { OccurrencesPage } from './features/ocorrencias/OccurrencesPage'
 import { EpiPage } from './features/epis/EpiPage'
 import { EstoquePage } from './features/estoque/EstoquePage'
+import { EmprestimosPage } from './features/emprestimos/EmprestimosPage'
 import { RiskAreasPage } from './features/areas-risco/RiskAreasPage'
 import { TasksPage } from './features/tarefas/TasksPage'
 import { Catalog } from './features/design-system/Catalog'
@@ -26,6 +27,7 @@ function App() {
         <Route path="ocorrencias" element={<OccurrencesPage />} />
         <Route path="epis" element={<EpiPage />} />
         <Route path="estoque" element={<EstoquePage />} />
+        <Route path="emprestimos" element={<EmprestimosPage />} />
         <Route path="areas-risco" element={<RiskAreasPage />} />
         <Route path="tarefas" element={<TasksPage />} />
         <Route path="*" element={<><h1 className="sp-type-heading-md">Página não encontrada</h1><Link to="/usuarios">Voltar ao início</Link></>} />

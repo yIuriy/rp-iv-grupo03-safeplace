@@ -1,5 +1,5 @@
-// Layout das telas autenticadas: menu entre as cinco funcionalidades, título da aba, foco no
-// conteúdo ao trocar de tela, nome e perfil da pessoa logada e botão Sair.
+// Layout das telas autenticadas: menu entre as funcionalidades, título da aba, foco no conteúdo ao
+// trocar de tela, nome e perfil da pessoa logada e botão Sair.
 
 import { useEffect, useRef } from 'react'
 import { matchPath, NavLink, Outlet, useLocation } from 'react-router-dom'
@@ -14,6 +14,7 @@ const navigation: { path: string; label: string; icon: IconName }[] = [
   { path: '/ocorrencias', label: 'Ocorrências', icon: 'clipboard' },
   { path: '/epis', label: 'EPIs', icon: 'package' },
   { path: '/estoque', label: 'Estoque de EPIs', icon: 'clipboard' },
+  { path: '/emprestimos', label: 'Empréstimos de EPIs', icon: 'calendar' },
   { path: '/areas-risco', label: 'Áreas de risco', icon: 'map-pin' },
   { path: '/tarefas', label: 'Tarefas', icon: 'check-circle' },
 ]

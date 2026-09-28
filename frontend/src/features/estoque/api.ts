@@ -46,7 +46,8 @@ function textoOuNulo(valor: unknown): string | null {
   return typeof valor === 'string' ? valor : null
 }
 
-function lerEpi(dado: unknown): Epi {
+/** Também lê `GET /api/emprestimos/epis-disponiveis`, que devolve o mesmo `EpiResponse` (issue #110). */
+export function lerEpi(dado: unknown): Epi {
   if (dado === null || typeof dado !== 'object') throw new Error('Registro de EPI inválido')
   const bruto = dado as Record<string, unknown>
   if (typeof bruto.id !== 'number' || typeof bruto.nome !== 'string' || typeof bruto.quantidade !== 'number'
@@ -107,7 +108,7 @@ export async function registrarMovimentacao(epiId: number, dados: DadosMovimenta
 // A API devolve só o id do operador (issue #132). Os nomes vêm de GET /api/usuarios/{id}, uma vez por id.
 const nomesDeOperadores = new Map<number, Promise<string>>()
 
-function nomeDoOperador(id: number, signal?: AbortSignal): Promise<string> {
+export function nomeDoOperador(id: number, signal?: AbortSignal): Promise<string> {
   const existente = nomesDeOperadores.get(id)
   if (existente) return existente
   const consulta = http.get<unknown>(`/usuarios/${id}`, { signal })
