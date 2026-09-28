@@ -7,6 +7,7 @@ const tarefa1 = {
   nivelPerigo: 'ALTO',
   classificada: true,
   dataClassificacao: '2026-09-20T14:30:00',
+  responsavelClassificacaoNome: 'Gestora Demonstração',
 }
 
 const tarefa2 = {
@@ -56,6 +57,7 @@ async function simularTarefas(page: Page, opcoes: { criacao?: unknown; classific
         nivelPerigo: body.nivelPerigo,
         classificada: true,
         dataClassificacao: '2026-09-24T18:00:00',
+        responsavelClassificacaoNome: 'Gestora Demonstração',
       }
       tarefas = tarefas.map(t => (t.id === 2 ? atualizada : t))
       return route.fulfill({ json: atualizada })
@@ -77,6 +79,9 @@ test.describe('Módulo Classificação de Tarefas (RF06, UC11, RNF11)', () => {
     await expect(tabela.getByText('Inspeção visual de esteira transportadora')).toBeVisible()
     await expect(tabela.getByText('Alto', { exact: true })).toBeVisible()
     await expect(tabela.getByText('Pendente de avaliação')).toBeVisible()
+    await expect(
+      tabela.getByRole('row').filter({ hasText: 'Corte a quente e oxicorte de tubulação' }).getByText('por Gestora Demonstração')
+    ).toBeVisible()
 
     // Filtro por ALTO
     await page.getByLabel('Grau de perigo').selectOption('ALTO')
@@ -142,6 +147,14 @@ test.describe('Módulo Classificação de Tarefas (RF06, UC11, RNF11)', () => {
     await expect(dialog).toBeVisible()
     await expect(dialog.getByText('Inspeção visual de esteira transportadora')).toBeVisible()
 
+    // #112: vocabulário único NivelPerigo, sem os termos leve, moderado ou grave de UC11
+    await expect(dialog.getByLabel('Grau de periculosidade *').locator('option')).toHaveText([
+      'Baixo',
+      'Médio',
+      'Alto',
+      'Crítico',
+    ])
+
     await dialog.getByLabel('Grau de periculosidade *').selectOption('CRITICO')
     await dialog.getByRole('button', { name: 'Salvar classificação' }).click()
     await expect(dialog).not.toBeVisible()
@@ -152,5 +165,19 @@ test.describe('Módulo Classificação de Tarefas (RF06, UC11, RNF11)', () => {
     expect(chamadas[0].body).toEqual({ nivelPerigo: 'CRITICO' })
 
     await expect(page.getByText('Grau de periculosidade atualizado para Crítico.')).toBeVisible()
+    await expect(
+      tabela.getByRole('row').filter({ hasText: 'Inspeção visual de esteira transportadora' }).getByText('por Gestora Demonstração')
+    ).toBeVisible()
+  })
+
+  test('tarefa classificada antes do registro de autoria indica responsável não registrado', async ({ page }) => {
+    await iniciarSessao(page, supervisor)
+    await page.route('**/api/tarefas', route =>
+      route.fulfill({ json: [{ ...tarefa1, responsavelClassificacaoNome: null }] })
+    )
+    await page.goto('/tarefas')
+
+    const tabela = page.getByRole('table', { name: 'Matriz de tarefas e classificação de periculosidade' })
+    await expect(tabela.getByText('Responsável não registrado')).toBeVisible()
   })
 })
