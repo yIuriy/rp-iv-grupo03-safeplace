@@ -37,12 +37,13 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
     private final LogAuditoriaRepositoryPort logAuditoriaRepositoryPort;
     private final NotificacaoOcorrenciaPort notificacaoOcorrenciaPort;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public OcorrenciaUseCase(
             OcorrenciaRepositoryPort repository,
             AreaRiscoRepositoryPort areaRiscoRepository,
             UsuarioRepositorioPorta usuarioRepository,
             LogAuditoriaRepositoryPort logAuditoriaRepositoryPort,
-            NotificacaoOcorrenciaPort notificacaoOcorrenciaPort) {
+            @org.springframework.beans.factory.annotation.Autowired(required = false) NotificacaoOcorrenciaPort notificacaoOcorrenciaPort) {
         this.repository = repository;
         this.areaRiscoRepository = areaRiscoRepository;
         this.usuarioRepository = usuarioRepository;
