@@ -21,6 +21,7 @@ import br.edu.safeplace.backend.domain.epi.TipoManutencao;
 import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
 import br.edu.safeplace.backend.domain.tarefa.Tarefa;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
+import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -206,8 +207,13 @@ class AuditoriaEvidenciaIntegracaoTest {
     @DisplayName("Deve realizar classificação de Tarefa seguida de consulta de evidência")
     void classificacaoTarefaSeguidaDeConsultaDeEvidencia() {
         TarefaUseCase tarefaUseCase = new TarefaUseCase(
-                tarefaRepositoryPort, logAuditoriaRepositoryPort
+                tarefaRepositoryPort, logAuditoriaRepositoryPort, usuarioRepositorioPorta
         );
+
+        GestorDeSeguranca auditor = new GestorDeSeguranca(3, "49216091040", "Gestor Auditor",
+                LocalDate.of(1988, 7, 20), "gestor.auditor@safeplace.com", "hash", true,
+                LocalDateTime.now(), LocalDateTime.now());
+        when(usuarioRepositorioPorta.buscarPorEmail("gestor.auditor@safeplace.com")).thenReturn(Optional.of(auditor));
 
         Tarefa tarefa = new Tarefa(15, "Manuseio de Prensa", NivelPerigo.BAIXO, LocalDateTime.now());
         when(tarefaRepositoryPort.buscarPorId(15)).thenReturn(Optional.of(tarefa));
@@ -224,6 +230,8 @@ class AuditoriaEvidenciaIntegracaoTest {
         assertThat(evidencia.getResponsavel()).isEqualTo("gestor.auditor@safeplace.com");
         assertThat(evidencia.getEntidade()).isEqualTo("Tarefa");
         assertThat(evidencia.getEntidadeId()).isEqualTo(15);
-        assertThat(evidencia.getJustificativa()).contains("Classificação de risco da Tarefa para CRITICO");
+        assertThat(evidencia.getJustificativa())
+                .contains("de BAIXO para CRITICO")
+                .contains("responsável técnico: Gestor Auditor (id 3)");
     }
 }

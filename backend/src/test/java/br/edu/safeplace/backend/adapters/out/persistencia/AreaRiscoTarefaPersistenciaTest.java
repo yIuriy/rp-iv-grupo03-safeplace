@@ -3,12 +3,17 @@ package br.edu.safeplace.backend.adapters.out.persistencia;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,9 +25,11 @@ import br.edu.safeplace.backend.application.dto.output.TarefaOutputDTO;
 import br.edu.safeplace.backend.application.port.in.ClassificarTarefaUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarAreaRiscoUseCase;
 import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.area_risco.exception.CodigoAreaRiscoDuplicadoException;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.Epi;
+import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import br.edu.safeplace.backend.suporte.PostgresDeTeste;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -64,6 +71,32 @@ class AreaRiscoTarefaPersistenciaTest {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    /**
+     * Gestor de Segurança criado dentro da transação de cada teste (e desfeito no rollback); é o
+     * responsável técnico das classificações. Não se usa a conta de demonstração da V17, que
+     * outros testes de integração podem remover do banco compartilhado.
+     */
+    private static final String EMAIL_GESTOR = "gestor.tarefas@safeplace-teste-112.local";
+    private static final String CPF_GESTOR = "73194628500";
+
+    @Autowired
+    private UsuarioRepositorioPorta usuarioRepositorio;
+
+    private Integer idGestor;
+
+    @BeforeEach
+    void autenticarGestor() {
+        idGestor = usuarioRepositorio.salvar(GestorDeSeguranca.novo(
+                "Gestor Tarefas 112", CPF_GESTOR, LocalDate.of(1985, 1, 15), EMAIL_GESTOR, "hash-de-teste")).getId();
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                EMAIL_GESTOR, null, List.of(new SimpleGrantedAuthority("ROLE_GESTOR_SEGURANCA"))));
+    }
+
+    @AfterEach
+    void limparAutenticacao() {
+        SecurityContextHolder.clearContext();
+    }
 
     private Integer novoEpi(String nome, String numeroCa) {
         Epi salvo = epiRepositoryPort.salvar(Epi.novo(nome, numeroCa, 10, 2,
@@ -201,5 +234,51 @@ class AreaRiscoTarefaPersistenciaTest {
                 Integer.class, "Trabalho em espaço confinado");
         assertThat(linhas).isEqualTo(1);
         assertThat(tarefaUseCase.buscarPorId(tarefa.id()).nivelPerigo()).isEqualTo(NivelPerigo.CRITICO);
+    }
+
+    @Test
+    @DisplayName("#112: classificação e reavaliação gravam responsável técnico e histórico com valor anterior")
+    void classificacaoGravaResponsavelEHistorico() {
+        TarefaOutputDTO tarefa = tarefaUseCase.cadastrarTarefa(
+                new CadastrarTarefaInputDTO("Manutenção de painel elétrico", NivelPerigo.CRITICO));
+        tarefaUseCase.classificar(tarefa.id(), NivelPerigo.ALTO);
+
+        reiniciarContexto();
+
+        TarefaOutputDTO lida = tarefaUseCase.buscarPorId(tarefa.id());
+        assertThat(lida.nivelPerigo()).isEqualTo(NivelPerigo.ALTO);
+        assertThat(lida.responsavelClassificacaoId()).isEqualTo(idGestor);
+        assertThat(lida.responsavelClassificacaoNome()).isEqualTo("Gestor Tarefas 112");
+
+        Integer responsavelGravado = jdbcTemplate.queryForObject(
+                "SELECT responsavel_classificacao_id FROM tarefas WHERE id = ?", Integer.class, tarefa.id());
+        assertThat(responsavelGravado).isEqualTo(idGestor);
+
+        List<String> historico = jdbcTemplate.queryForList("""
+                SELECT justificativa FROM logs_auditoria
+                WHERE entidade = 'Tarefa' AND entidade_id = ? AND responsavel = ?
+                  AND justificativa LIKE 'Classificação de periculosidade%'
+                ORDER BY id
+                """, String.class, tarefa.id(), EMAIL_GESTOR);
+        assertThat(historico).satisfiesExactly(
+                primeira -> assertThat(primeira).contains("de sem classificação para CRITICO"),
+                segunda -> assertThat(segunda).contains("de CRITICO para ALTO"));
+    }
+
+    @Test
+    @DisplayName("#112: tarefa classificada antes do registro de autoria é lida sem responsável inventado")
+    void classificacaoLegadaSemResponsavel() {
+        jdbcTemplate.update("""
+                INSERT INTO tarefas (descricao, nivel_perigo, data_classificacao)
+                VALUES ('Tarefa legada', 'MEDIO', TIMESTAMP '2026-09-01 09:00:00')
+                """);
+        Integer id = jdbcTemplate.queryForObject(
+                "SELECT id FROM tarefas WHERE descricao = 'Tarefa legada'", Integer.class);
+
+        TarefaOutputDTO lida = tarefaUseCase.buscarPorId(id);
+
+        assertThat(lida.classificada()).isTrue();
+        assertThat(lida.nivelPerigo()).isEqualTo(NivelPerigo.MEDIO);
+        assertThat(lida.responsavelClassificacaoId()).isNull();
     }
 }

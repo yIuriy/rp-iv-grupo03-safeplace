@@ -1,38 +1,76 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarTarefaInputDTO;
 import br.edu.safeplace.backend.application.dto.output.TarefaOutputDTO;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.TarefaRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.tarefa.Tarefa;
 import br.edu.safeplace.backend.domain.tarefa.exception.TarefaNaoEncontradaException;
+import br.edu.safeplace.backend.domain.usuario.Colaborador;
+import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
+import br.edu.safeplace.backend.domain.usuario.Supervisor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TarefaUseCaseTest {
 
+    private static final String EMAIL_GESTOR = "mariana@empresa.com";
+    private static final String EMAIL_SUPERVISOR = "paulo@empresa.com";
+
     private TarefaRepositoryFake repository;
+    private LogAuditoriaFake auditoria;
     private TarefaUseCase useCase;
 
     @BeforeEach
     void setUp() {
         repository = new TarefaRepositoryFake();
-        useCase = new TarefaUseCase(repository);
+        auditoria = new LogAuditoriaFake();
+        UsuarioRepositorioFake usuarios = new UsuarioRepositorioFake(List.of(
+                new GestorDeSeguranca(7, "49216091040", "Mariana", LocalDate.of(1988, 7, 20), EMAIL_GESTOR,
+                        "hash", true, LocalDateTime.now(), LocalDateTime.now()),
+                new Supervisor(8, "87455877074", "Paulo", LocalDate.of(1990, 1, 10), EMAIL_SUPERVISOR,
+                        "hash", true, LocalDateTime.now(), LocalDateTime.now())));
+        useCase = new TarefaUseCase(repository, auditoria, usuarios);
+        autenticarComo(EMAIL_GESTOR);
+    }
+
+    @AfterEach
+    void limparAutenticacao() {
+        SecurityContextHolder.clearContext();
+    }
+
+    private static void autenticarComo(String email) {
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(email, null));
+    }
+
+    private List<LogAuditoria> classificacoesRegistradas(Integer idTarefa) {
+        return auditoria.listarPorEntidade("Tarefa", idTarefa).stream()
+                .filter(log -> log.getJustificativa().startsWith("Classificação de periculosidade"))
+                .toList();
     }
 
     @Test
-    @DisplayName("Deve cadastrar tarefa já classificada")
+    @DisplayName("Deve cadastrar tarefa já classificada com responsável técnico e histórico")
     void deveCadastrarTarefaClassificada() {
         TarefaOutputDTO salva = useCase.cadastrarTarefa(
                 new CadastrarTarefaInputDTO("Solda em altura", NivelPerigo.ALTO));
@@ -42,21 +80,33 @@ class TarefaUseCaseTest {
         assertThat(salva.nivelPerigo()).isEqualTo(NivelPerigo.ALTO);
         assertThat(salva.classificada()).isTrue();
         assertThat(salva.dataClassificacao()).isNotNull();
+        assertThat(salva.responsavelClassificacaoId()).isEqualTo(7);
+        assertThat(salva.responsavelClassificacaoNome()).isEqualTo("Mariana");
+
+        assertThat(classificacoesRegistradas(1)).singleElement().satisfies(log -> {
+            assertThat(log.getResponsavel()).isEqualTo(EMAIL_GESTOR);
+            assertThat(log.getJustificativa()).contains("de sem classificação para ALTO");
+            assertThat(log.getDataHora()).isEqualTo(salva.dataClassificacao());
+        });
     }
 
     @Test
-    @DisplayName("UC11: deve cadastrar tarefa sem classificação prévia")
+    @DisplayName("UC11: deve cadastrar tarefa sem classificação prévia, sem exigir responsável")
     void deveCadastrarTarefaSemClassificacao() {
+        SecurityContextHolder.clearContext();
+
         TarefaOutputDTO salva = useCase.cadastrarTarefa(
                 new CadastrarTarefaInputDTO("Inspeção visual", null));
 
         assertThat(salva.classificada()).isFalse();
         assertThat(salva.nivelPerigo()).isNull();
         assertThat(salva.dataClassificacao()).isNull();
+        assertThat(salva.responsavelClassificacaoId()).isNull();
+        assertThat(classificacoesRegistradas(salva.id())).isEmpty();
     }
 
     @Test
-    @DisplayName("UC11: deve classificar tarefa existente e persistir a alteração")
+    @DisplayName("UC11: deve classificar tarefa existente registrando responsável técnico")
     void deveClassificarTarefaExistente() {
         Integer id = useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Inspeção visual", null)).id();
 
@@ -64,11 +114,16 @@ class TarefaUseCaseTest {
 
         assertThat(classificada.nivelPerigo()).isEqualTo(NivelPerigo.CRITICO);
         assertThat(classificada.classificada()).isTrue();
+        assertThat(classificada.responsavelClassificacaoNome()).isEqualTo("Mariana");
         assertThat(useCase.buscarPorId(id).nivelPerigo()).isEqualTo(NivelPerigo.CRITICO);
+        assertThat(classificacoesRegistradas(id)).singleElement()
+                .satisfies(log -> assertThat(log.getJustificativa())
+                        .contains("de sem classificação para CRITICO")
+                        .contains("responsável técnico: Mariana (id 7)"));
     }
 
     @Test
-    @DisplayName("UC11 alternativo I: reavaliação substitui o grau anterior")
+    @DisplayName("UC11 alternativo I: reavaliação substitui o grau e preserva o valor anterior no histórico")
     void reavaliacaoSubstituiGrauAnterior() {
         Integer id = useCase.cadastrarTarefa(
                 new CadastrarTarefaInputDTO("Solda em altura", NivelPerigo.CRITICO)).id();
@@ -76,6 +131,31 @@ class TarefaUseCaseTest {
         useCase.classificar(id, NivelPerigo.BAIXO);
 
         assertThat(useCase.buscarPorId(id).nivelPerigo()).isEqualTo(NivelPerigo.BAIXO);
+        assertThat(classificacoesRegistradas(id))
+                .extracting(LogAuditoria::getJustificativa)
+                .satisfiesExactly(
+                        primeira -> assertThat(primeira).contains("de sem classificação para CRITICO"),
+                        segunda -> assertThat(segunda).contains("de CRITICO para BAIXO"));
+    }
+
+    @Test
+    @DisplayName("Classificação sem Gestor de Segurança identificável é recusada sem gravar nada")
+    void classificacaoSemGestorERecusada() {
+        Integer id = useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Inspeção visual", null)).id();
+
+        autenticarComo(EMAIL_SUPERVISOR);
+        assertThatThrownBy(() -> useCase.classificar(id, NivelPerigo.ALTO))
+                .isInstanceOf(AccessDeniedException.class);
+
+        SecurityContextHolder.clearContext();
+        assertThatThrownBy(() -> useCase.classificar(id, NivelPerigo.ALTO))
+                .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Solda", NivelPerigo.ALTO)))
+                .isInstanceOf(AccessDeniedException.class);
+
+        assertThat(useCase.buscarPorId(id).classificada()).isFalse();
+        assertThat(classificacoesRegistradas(id)).isEmpty();
+        assertThat(useCase.listar()).hasSize(1);
     }
 
     @Test
@@ -120,7 +200,7 @@ class TarefaUseCaseTest {
         public Tarefa salvar(Tarefa tarefa) {
             Integer id = tarefa.getId() != null ? tarefa.getId() : nextId++;
             Tarefa salva = new Tarefa(id, tarefa.getDescricao(), tarefa.getNivelPerigo(),
-                    tarefa.getDataClassificacao());
+                    tarefa.getDataClassificacao(), tarefa.getResponsavelClassificacao());
             storage.put(id, salva);
             return salva;
         }
@@ -140,6 +220,61 @@ class TarefaUseCaseTest {
             return storage.values().stream()
                     .filter(tarefa -> tarefa.getNivelPerigo() == nivelPerigo)
                     .toList();
+        }
+    }
+
+    private static class LogAuditoriaFake implements LogAuditoriaRepositoryPort {
+        private final List<LogAuditoria> logs = new ArrayList<>();
+
+        @Override
+        public LogAuditoria salvar(LogAuditoria log) {
+            logs.add(log);
+            return log;
+        }
+
+        @Override
+        public List<LogAuditoria> listarPorEntidade(String entidade, Integer entidadeId) {
+            return logs.stream()
+                    .filter(log -> entidade.equals(log.getEntidade()) && entidadeId.equals(log.getEntidadeId()))
+                    .toList();
+        }
+    }
+
+    private static class UsuarioRepositorioFake implements UsuarioRepositorioPorta {
+        private final List<Colaborador> pessoas;
+
+        UsuarioRepositorioFake(List<Colaborador> pessoas) {
+            this.pessoas = pessoas;
+        }
+
+        @Override
+        public Colaborador salvar(Colaborador colaborador) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Optional<Colaborador> buscarPorId(Integer id) {
+            return pessoas.stream().filter(p -> id.equals(p.getId())).findFirst();
+        }
+
+        @Override
+        public Optional<Colaborador> buscarPorCpf(String cpf) {
+            return pessoas.stream().filter(p -> cpf.equals(p.getCpf())).findFirst();
+        }
+
+        @Override
+        public Optional<Colaborador> buscarPorEmail(String email) {
+            return pessoas.stream().filter(p -> email.equals(p.getEmail())).findFirst();
+        }
+
+        @Override
+        public List<Colaborador> listarTodos() {
+            return pessoas;
+        }
+
+        @Override
+        public List<Colaborador> listarColaboradores(String nome, String cpf) {
+            return List.of();
         }
     }
 }
