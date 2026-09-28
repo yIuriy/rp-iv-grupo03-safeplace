@@ -1,8 +1,9 @@
 // Testes Playwright da tela de empréstimos (/emprestimos, issue #110): posse com prazo e atraso em
 // texto, filtro por situação na API, entrega com termo de cautela, duplicidade com justificativa,
 // impedimento informado pelo servidor, validação local, devolução com destino confirmado, detalhes
-// com responsáveis, projeções e lista de reposição do Gestor, falha da análise com nova tentativa,
-// recarga da página, teclado e larguras de 360, 768 e 1344 px. Somente as respostas HTTP são simuladas.
+// com responsáveis, projeções e lista de reposição do Gestor, análise concluída com as listas
+// recarregadas, pendências e falha da análise com nova tentativa, recarga da página, teclado e
+// larguras de 360, 768 e 1344 px. Somente as respostas HTTP são simuladas.
 
 import { test, expect, type Page } from '@playwright/test'
 import { gestora, iniciarSessao, pessoas, supervisor } from './helpers/sessao'
@@ -79,6 +80,8 @@ const projecoes = [
     justificativa: 'Substituição antecipada pelo vencimento legal do CA em 2027-06-30, antes do término da vida útil física projetada (2027-08-10).',
     validadeCa: '2027-06-30', quantidadeDisponivel: 5, estoqueMinimo: 5 },
 ]
+/** Como no backend, a análise devolve as projeções montadas antes de salvar, ainda sem `id`. */
+const projecaoDaAnalise = { ...projecoes[1], id: null }
 const alertas = [
   { epiId: 1, nomeEpi: 'Capacete classe B', tipoAlerta: 'DESCARTE_PROXIMO', dataLimiteEstimada: '2026-10-20', diasRestantes: 22,
     mensagem: 'Substituição preventiva recomendada por aproximação da data estimada de descarte', prioridade: 'ALTA' },
@@ -430,12 +433,32 @@ test('Gestor sees the latest projection of each EPI and the replenishment list f
   await expect(page.getByText('ALTA', { exact: true })).toHaveCount(0)
 })
 
+test('a successful analysis reports the calculated EPIs and reloads the saved lists', async ({ page }) => {
+  await iniciarSessao(page, gestora)
+  const chamadas = await simularApi(page, {
+    analises: [{ status: 200, json: {
+      projecoes: [projecaoDaAnalise], pendenciasFalhas: [], alertas: [], totalProcessados: 1, totalSucesso: 1, totalPendencias: 0,
+    } }],
+  })
+  const leituras = (caminho: string) => chamadas.filter(chamada => chamada.metodo === 'GET' && chamada.caminho === caminho).length
+  await page.goto('/emprestimos')
+  await page.getByRole('tab', { name: 'Projeções de substituição' }).click()
+  await expect(page.getByRole('table', { name: 'Projeções de substituição de EPIs' }).getByRole('row')).toHaveCount(3)
+  const antes = { projecoes: leituras('/api/projecoes'), alertas: leituras('/api/projecoes/alertas') }
+
+  await page.getByRole('button', { name: 'Solicitar análise de projeção' }).click()
+  await expect(page.getByText('Análise concluída', { exact: true })).toBeVisible()
+  await expect(page.getByText('1 EPI com projeção calculada.')).toBeVisible()
+  await expect.poll(() => leituras('/api/projecoes')).toBeGreaterThan(antes.projecoes)
+  await expect.poll(() => leituras('/api/projecoes/alertas')).toBeGreaterThan(antes.alertas)
+})
+
 test('analysis lists pending EPIs with a new attempt, and a failure shows an error without new alerts', async ({ page }) => {
   await iniciarSessao(page, gestora)
   const chamadas = await simularApi(page, {
     analises: [
       { status: 200, json: {
-        projecoes: [projecoes[1]], alertas: [], totalProcessados: 2, totalSucesso: 1, totalPendencias: 1,
+        projecoes: [projecaoDaAnalise], alertas: [], totalProcessados: 2, totalSucesso: 1, totalPendencias: 1,
         pendenciasFalhas: [{ epiId: 3, nomeEpi: 'Protetor auricular', motivoFalha: 'EPI sem histórico de empréstimos no período de amostragem.' }],
       } },
       { status: 500, json: { status: 500, error: 'Erro Interno' } },

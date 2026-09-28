@@ -31,10 +31,12 @@ export type AlertaReposicao = {
 
 export type PendenciaProjecao = { epiId: number | null; nomeEpi: string; motivo: string }
 
+/**
+ * Resumo de `POST /api/projecoes/analise`. As projeções e os alertas da resposta não são lidos: o
+ * servidor monta as projeções antes de salvá-las, com `id` nulo, e a tela recarrega as listas salvas.
+ */
 export type ResultadoAnalise = {
-  projecoes: Projecao[]
   pendencias: PendenciaProjecao[]
-  alertas: AlertaReposicao[]
   totalProcessados: number
   totalSucesso: number
   totalPendencias: number
@@ -107,14 +109,12 @@ function lerLista<T>(dados: unknown, ler: (dado: unknown) => T): T[] {
 
 function lerResultado(dado: unknown): ResultadoAnalise {
   const bruto = registro(dado, 'Resultado da análise')
-  const projecoes = lerLista(bruto.projecoes, lerProjecao)
+  const calculadas = Array.isArray(bruto.projecoes) ? bruto.projecoes.length : 0
   const pendencias = lerLista(bruto.pendenciasFalhas, lerPendencia)
   return {
-    projecoes,
     pendencias,
-    alertas: lerLista(bruto.alertas, lerAlerta),
-    totalProcessados: numeroOuNulo(bruto.totalProcessados) ?? projecoes.length + pendencias.length,
-    totalSucesso: numeroOuNulo(bruto.totalSucesso) ?? projecoes.length,
+    totalProcessados: numeroOuNulo(bruto.totalProcessados) ?? calculadas + pendencias.length,
+    totalSucesso: numeroOuNulo(bruto.totalSucesso) ?? calculadas,
     totalPendencias: numeroOuNulo(bruto.totalPendencias) ?? pendencias.length,
   }
 }
