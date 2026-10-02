@@ -99,6 +99,9 @@ public class SecurityConfig {
                         // UC10 (Issue #108, RF21): Planejar Substituição Inteligente de EPI
                         .requestMatchers(HttpMethod.POST, "/api/projecoes/**").hasRole("GESTOR_SEGURANCA")
                         .requestMatchers(HttpMethod.GET, "/api/projecoes/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        // RF10, UC02 e UC11 (#117): Alocação operacional de tarefas permitida para Gestor e Supervisor
+                        .requestMatchers(HttpMethod.POST, "/api/tarefas/*/alocacoes")
+                                .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         .requestMatchers("/api/areas-risco/**", "/api/tarefas/**", "/api/setores/**").hasRole("GESTOR_SEGURANCA")
                         .anyRequest().authenticated()
                 );
