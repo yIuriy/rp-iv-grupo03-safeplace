@@ -11,7 +11,7 @@ Consulte o [guia de componentes](design-system/README.md) para conhecer as impor
 | `/login` | Formulário de e-mail e senha que chama `POST /api/auth/login`. Sem sessão, qualquer rota da aplicação redireciona para aqui e volta ao destino pedido depois de entrar. |
 | `/` | Redireciona para `/usuarios`. |
 | `/usuarios` | Gestor: abas de supervisores e colaboradores, cadastro de supervisor com senha inicial, cadastro e edição de supervisores e colaboradores. Supervisor: busca, cadastro e edição de colaboradores. Integrada a `/api/usuarios`, com carregamento, lista vazia, erro e nova tentativa. |
-| `/ocorrencias` | Tela inicial de ocorrências. |
+| `/ocorrencias` | Consulta de acidentes e incidentes por período da data do fato, setor e colaborador envolvido, no servidor, e por texto, tipo e situação, na tela; busca de acidente pelo protocolo CAT; detalhe de cada ocorrência (UC05, UC09, issue #128). O Gestor vê todos os relatos e o Supervisor, os que registrou. Integrada a `/api/ocorrencias`, `/api/setores` e `/api/usuarios/colaboradores`. |
 | `/epis` | Tela inicial de EPIs. |
 | `/estoque` | Catálogo de EPIs com saldo, mínimo e situação crítica em texto, busca, detalhes com histórico e operador; o Gestor registra entradas e saídas (UC06, issues #123 e #133). Integrada a `/api/epis`. |
 | `/emprestimos` | Supervisor e Gestor: novo empréstimo com termo de cautela, duplicidade com justificativa, impedimentos informados pelo servidor, posse, atrasos e devolvidos por situação e devolução com condição e destino. Gestor: aba de projeções de substituição e lista de reposição, com análise e nova tentativa (UC12, UC10, issue #110). Integrada a `/api/emprestimos` e `/api/projecoes`. |
@@ -94,6 +94,24 @@ A aba "Setores físicos" de `/areas-risco` (issue #174) cobre o passo 2 do UC03,
 - Fora desta entrega: edição e exclusão de setor, que a API não oferece, e a carga inicial de setores, que segue a mesma pendência do primeiro Gestor.
 - Implementação em `src/features/areas-risco/`: `SetoresPainel.tsx`, `SetorFormDialog.tsx` e `validacaoSetor.ts`, além do contrato `Setor` e de `cadastrarSetor` em `api.ts`.
 
+### Consulta de ocorrências
+
+A tela `/ocorrencias` (issue #128) segue UC05, UC09, US13 e US16 e a decisão DS09, e aplica a matriz do `SecurityConfig` e do caso de uso:
+
+| Ação | Gestor | Supervisor | Endpoint |
+| --- | --- | --- | --- |
+| Consultar ocorrências por critérios | Todas | Só as que registrou | `GET /api/ocorrencias?dataInicio=&dataFim=&setorId=&colaboradorId=` |
+| Ver detalhes | Todas | Só as que registrou | `GET /api/ocorrencias/{id}` |
+| Buscar acidente pelo protocolo CAT | Todos | Só os que registrou | `GET /api/ocorrencias/protocolo/{protocolo}` |
+
+- Critérios enviados ao servidor: período da data do fato (os dois dias incluídos), setor e colaborador envolvido. O setor é o da área de risco da ocorrência, porque a ocorrência não tem vínculo direto com setor (DS09, seção 2.3). Data inicial posterior à final é barrada na tela, com foco na data final, e o servidor também a recusa com 400.
+- Texto, tipo e situação refinam a lista já recebida, sem nova consulta. A mensagem de lista vazia distingue "nenhuma ocorrência registrada" de "nenhuma ocorrência atende aos critérios".
+- O detalhe é sempre consultado no servidor e mostra a data do fato separada da data do registro, a área, o colaborador envolvido e os dados próprios de acidente (protocolo CAT, gravidade, causa raiz, tipo de lesão, dano e destino) ou de incidente (situação de risco e potencial de dano). Um 404 informa que a ocorrência não existe ou não está entre as que o perfil pode consultar.
+- Só acidentes têm protocolo, o número da CAT (DS09, seção 2.1). Protocolo inexistente gera aviso e lembra que incidentes se consultam pelos critérios.
+- A lista mantém a cópia offline por conta e por combinação de critérios (RNF08). Sem conexão, a busca por protocolo e o registro de relato ficam desabilitados.
+- Fora desta entrega: o registro de relato, a triagem e os planos de ação na interface, que pertencem à issue #100.
+- Implementação em `src/features/ocorrencias/`: `api.ts`, `OccurrencesPage.tsx`, `ConsultaOcorrenciasForm.tsx`, `criteriosConsulta.ts`, `ProtocoloBusca.tsx`, `OcorrenciaDetalheDialog.tsx`, `formatos.ts` e `ocorrencias.css`.
+
 ## Executar em desenvolvimento
 
 Use Node.js 22.12 ou superior com npm. A partir da raiz do repositório:
@@ -131,7 +149,7 @@ npx playwright install chromium
 npm test
 ```
 
-O lint verifica as regras de código configuradas. O build verifica os tipos e gera os arquivos em `dist/`. Os testes Playwright verificam a aplicação, o catálogo e seus exemplos no Chromium; sua configuração inicia um servidor local na porta 4173. Os testes da aplicação cobrem login, sessão, saída, expiração de token, matriz de perfis, cadastro de supervisor com senha inicial, cadastro, edição e busca de colaboradores e supervisores, estoque de EPIs, entrega, duplicidade, impedimento, devolução e detalhes de empréstimos, projeções com pendências e nova tentativa, áreas de risco, cadastro e consulta de setores físicos, navegação, histórico, teclado e larguras de 360, 768 e 1344 pixels. Somente as respostas HTTP são simuladas; componentes, rotas, sessão e cliente HTTP são executados. Esses testes não substituem a verificação contra o backend real com PostgreSQL.
+O lint verifica as regras de código configuradas. O build verifica os tipos e gera os arquivos em `dist/`. Os testes Playwright verificam a aplicação, o catálogo e seus exemplos no Chromium; sua configuração inicia um servidor local na porta 4173. Os testes da aplicação cobrem login, sessão, saída, expiração de token, matriz de perfis, cadastro de supervisor com senha inicial, cadastro, edição e busca de colaboradores e supervisores, estoque de EPIs, entrega, duplicidade, impedimento, devolução e detalhes de empréstimos, projeções com pendências e nova tentativa, áreas de risco, cadastro e consulta de setores físicos, consulta de ocorrências por critérios, protocolo e detalhe, navegação, histórico, teclado e larguras de 360, 768 e 1344 pixels. Somente as respostas HTTP são simuladas; componentes, rotas, sessão e cliente HTTP são executados. Esses testes não substituem a verificação contra o backend real com PostgreSQL.
 
 Para conferir o resultado do build no navegador:
 
@@ -149,7 +167,8 @@ Use o endereço exibido no terminal, normalmente [http://localhost:4173](http://
 - `src/features/estoque/`: catálogo, saldo, histórico e movimentação do estoque de EPIs.
 - `src/features/emprestimos/`: entregas, devoluções, posse e atrasos e, para o Gestor, projeções de substituição.
 - `src/features/areas-risco/`: áreas de risco e setores físicos (UC03).
-- `src/features/ocorrencias/`, `epis/` e `tarefas/`: telas por funcionalidade.
+- `src/features/ocorrencias/`: consulta, protocolo CAT e detalhe de ocorrências (UC05, UC09).
+- `src/features/epis/` e `tarefas/`: telas por funcionalidade.
 - `src/features/design-system/`: catálogo e exemplos com dados fictícios.
 - `src/shared/components/` e `src/shared/layout/`: componentes e estrutura visual compartilhados.
 - `src/shared/api/`: cliente HTTP para a integração com a API.
