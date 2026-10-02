@@ -15,7 +15,7 @@ Consulte o [guia de componentes](design-system/README.md) para conhecer as impor
 | `/epis` | Tela inicial de EPIs. |
 | `/estoque` | Catálogo de EPIs com saldo, mínimo e situação crítica em texto, busca, detalhes com histórico e operador; o Gestor registra entradas e saídas (UC06, issues #123 e #133). Integrada a `/api/epis`. |
 | `/emprestimos` | Supervisor e Gestor: novo empréstimo com termo de cautela, duplicidade com justificativa, impedimentos informados pelo servidor, posse, atrasos e devolvidos por situação e devolução com condição e destino. Gestor: aba de projeções de substituição e lista de reposição, com análise e nova tentativa (UC12, UC10, issue #110). Integrada a `/api/emprestimos` e `/api/projecoes`. |
-| `/areas-risco` | Tela inicial de áreas de risco. |
+| `/areas-risco` | Abas de áreas de risco e de setores físicos (UC03). Áreas: busca, filtro por grau de perigo e consulta; o Gestor cadastra e edita. Setores: lista com grau de perigo e áreas vinculadas; o Gestor cadastra (issue #174). Integrada a `/api/areas-risco`, `/api/setores` e `/api/epis`. |
 | `/tarefas` | Tela inicial de tarefas. |
 
 As quatro telas iniciais identificam a funcionalidade como em desenvolvimento. Não exibem cadastros fictícios nem oferecem operações de criação ou edição. Embora o backend já tenha operações de ocorrências e EPIs, suas interfaces completas não fazem parte desta base.
@@ -76,6 +76,24 @@ A tela `/emprestimos` (issue #110) segue UC12, UC10, US11 e US21 e aplica a matr
 - Não há cópia offline: a issue #105 não aprova cache de empréstimos.
 - Implementação em `src/features/emprestimos/`: `api.ts` e `apiProjecoes.ts` (contratos e chamadas), `EmprestimosPage.tsx` (abas por perfil), `EmprestimosPainel.tsx`, `EmprestimosTabela.tsx`, `EntregaDialog.tsx`, `EntregaEtapas.tsx`, `DevolucaoDialog.tsx`, `EmprestimoDetalheDialog.tsx`, `ProjecoesPainel.tsx`, `validacaoEntrega.ts` e `formatos.ts`.
 
+### Setores físicos
+
+A aba "Setores físicos" de `/areas-risco` (issue #174) cobre o passo 2 do UC03, que exibe os setores cadastrados, e aplica a matriz do `SecurityConfig`:
+
+| Ação | Gestor | Supervisor | Endpoint |
+| --- | --- | --- | --- |
+| Consultar setores | Sim | Sim | `GET /api/setores` |
+| Cadastrar setor | Sim | Não | `POST /api/setores` |
+
+- O formulário segue `CriarSetorRequest` e o `Setor` do diagrama de classes: nome e grau de perigo obrigatórios, localização e descrição opcionais. Campos opcionais vazios não são enviados. A validação local repete os obrigatórios e os tamanhos das colunas da migração V13 (nome com até 160 caracteres e localização com até 255).
+- O setor não tem código: o modelo não define esse atributo e a API não o devolve. Seletores e cartões mostram o nome e, quando houver, a localização.
+- A lista de setores é carregada pela tela de áreas e compartilhada com o formulário de área. Um setor cadastrado aparece no seletor sem recarregar a página.
+- A coluna "Áreas de risco" conta as áreas que apontam para o setor (associação entre `AreaRisco` e `Setor` no diagrama de classes). Se as áreas não carregarem, a contagem aparece como indisponível, e não como zero.
+- O grau de perigo do setor é lido pela projeção de substituição de EPIs (UC10): a análise associa um EPI ao setor cujo nome é igual à localização do EPI. Por isso a ajuda do campo pede o mesmo nome usado na localização dos EPIs.
+- A consulta usa a cópia offline por conta já existente nas áreas de risco; sem conexão, o cadastro fica desabilitado.
+- Fora desta entrega: edição e exclusão de setor, que a API não oferece, e a carga inicial de setores, que segue a mesma pendência do primeiro Gestor.
+- Implementação em `src/features/areas-risco/`: `SetoresPainel.tsx`, `SetorFormDialog.tsx` e `validacaoSetor.ts`, além do contrato `Setor` e de `cadastrarSetor` em `api.ts`.
+
 ## Executar em desenvolvimento
 
 Use Node.js 22.12 ou superior com npm. A partir da raiz do repositório:
@@ -113,7 +131,7 @@ npx playwright install chromium
 npm test
 ```
 
-O lint verifica as regras de código configuradas. O build verifica os tipos e gera os arquivos em `dist/`. Os testes Playwright verificam a aplicação, o catálogo e seus exemplos no Chromium; sua configuração inicia um servidor local na porta 4173. Os testes da aplicação cobrem login, sessão, saída, expiração de token, matriz de perfis, cadastro de supervisor com senha inicial, cadastro, edição e busca de colaboradores e supervisores, estoque de EPIs, entrega, duplicidade, impedimento, devolução e detalhes de empréstimos, projeções com pendências e nova tentativa, navegação, histórico, teclado e larguras de 360, 768 e 1344 pixels. Somente as respostas HTTP são simuladas; componentes, rotas, sessão e cliente HTTP são executados. Esses testes não substituem a verificação contra o backend real com PostgreSQL.
+O lint verifica as regras de código configuradas. O build verifica os tipos e gera os arquivos em `dist/`. Os testes Playwright verificam a aplicação, o catálogo e seus exemplos no Chromium; sua configuração inicia um servidor local na porta 4173. Os testes da aplicação cobrem login, sessão, saída, expiração de token, matriz de perfis, cadastro de supervisor com senha inicial, cadastro, edição e busca de colaboradores e supervisores, estoque de EPIs, entrega, duplicidade, impedimento, devolução e detalhes de empréstimos, projeções com pendências e nova tentativa, áreas de risco, cadastro e consulta de setores físicos, navegação, histórico, teclado e larguras de 360, 768 e 1344 pixels. Somente as respostas HTTP são simuladas; componentes, rotas, sessão e cliente HTTP são executados. Esses testes não substituem a verificação contra o backend real com PostgreSQL.
 
 Para conferir o resultado do build no navegador:
 
@@ -130,7 +148,8 @@ Use o endereço exibido no terminal, normalmente [http://localhost:4173](http://
 - `src/features/usuarios/`: consulta e cadastro de supervisores e colaboradores por perfil.
 - `src/features/estoque/`: catálogo, saldo, histórico e movimentação do estoque de EPIs.
 - `src/features/emprestimos/`: entregas, devoluções, posse e atrasos e, para o Gestor, projeções de substituição.
-- `src/features/ocorrencias/`, `epis/`, `areas-risco/` e `tarefas/`: telas iniciais por funcionalidade.
+- `src/features/areas-risco/`: áreas de risco e setores físicos (UC03).
+- `src/features/ocorrencias/`, `epis/` e `tarefas/`: telas por funcionalidade.
 - `src/features/design-system/`: catálogo e exemplos com dados fictícios.
 - `src/shared/components/` e `src/shared/layout/`: componentes e estrutura visual compartilhados.
 - `src/shared/api/`: cliente HTTP para a integração com a API.
