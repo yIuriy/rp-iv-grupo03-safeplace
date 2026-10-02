@@ -1,3 +1,7 @@
+// Tela /areas-risco (RF05, UC03): abas de áreas de risco, com busca, filtro por grau, consulta,
+// cadastro e edição, e de setores físicos (issue #174). O Gestor mantém os cadastros; o Supervisor
+// consulta. Os setores são carregados aqui para que um setor novo apareça no formulário de área.
+
 import { useState, useTransition, type FormEvent } from 'react'
 import {
   Button,
@@ -5,6 +9,7 @@ import {
   RiskAreaCard,
   SearchInput,
   Select,
+  Tabs,
   Toast,
 } from '../../shared/components'
 import { FeaturePage } from '../../shared/layout/FeaturePage'
@@ -15,6 +20,7 @@ import { useSessaoAtiva } from '../autenticacao/contexto'
 import { listarEpis } from '../epis/api'
 import { ResultadoConsulta } from '../usuarios/ResultadoConsulta'
 import {
+  descreverSetor,
   listarAreasRisco,
   listarSetores,
   niveisPerigo,
@@ -24,6 +30,7 @@ import {
 } from './api'
 import { AreaRiscoDetalhesDialog } from './AreaRiscoDetalhesDialog'
 import { AreaRiscoFormDialog } from './AreaRiscoFormDialog'
+import { SetoresPainel } from './SetoresPainel'
 import './areas-risco.css'
 
 function normalizar(texto: string): string {
@@ -37,6 +44,7 @@ export function RiskAreasPage() {
   const sessao = useSessaoAtiva()
   const gestor = sessao.perfil === 'GESTOR_SEGURANCA'
 
+  const [aba, setAba] = useState('areas')
   const [busca, setBusca] = useState('')
   const [filtroNivel, setFiltroNivel] = useState<string>('')
   const [, startTransition] = useTransition()
@@ -91,165 +99,185 @@ export function RiskAreasPage() {
           : 'Consulte o mapa de riscos, agentes mapeados e as diretrizes de proteção para acesso aos setores (RF05, UC03).'
       }
     >
-      <div className="sp-painel">
-        <OfflineBanner
-          isOffline={consultaAreas.isOffline || consultaSetores.isOffline}
-          sincronizadoEm={consultaAreas.sincronizadoEm}
-        />
-        <div className="sp-painel-topo">
-          <form
-            className="sp-busca-filtros"
-            role="search"
-            aria-label="Buscar e filtrar áreas de risco"
-            onSubmit={aoFiltrarTexto}
-            onReset={limparFiltros}
-          >
-            <SearchInput
-              label="Buscar área"
-              name="busca"
-              className="sp-busca-campo"
-              hiddenLabel={false}
-              placeholder="Código, nome ou demarcação"
-              autoComplete="off"
+      <Tabs label="Conteúdo do mapa de riscos" value={aba} onValueChange={setAba} items={[
+        {
+          id: 'areas',
+          label: 'Áreas de risco',
+          content: (
+          <div className="sp-painel">
+            <OfflineBanner
+              isOffline={consultaAreas.isOffline || consultaSetores.isOffline}
+              sincronizadoEm={consultaAreas.sincronizadoEm}
             />
-            <Select
-              label="Grau de perigo"
-              name="nivelPerigo"
-              value={filtroNivel}
-              onChange={e => setFiltroNivel(e.target.value)}
-            >
-              <option value="">Todos os graus</option>
-              {niveisPerigo.map(nivel => (
-                <option key={nivel} value={nivel}>
-                  {rotuloNivelPerigo[nivel]}
-                </option>
-              ))}
-            </Select>
-            <div className="sp-acoes-busca">
-              <Button type="submit" variant="secondary" icon="search">
-                Buscar
-              </Button>
-              <Button type="reset" variant="quiet">
-                Limpar
-              </Button>
-            </div>
-          </form>
+            <div className="sp-painel-topo">
+              <form
+                className="sp-busca-filtros"
+                role="search"
+                aria-label="Buscar e filtrar áreas de risco"
+                onSubmit={aoFiltrarTexto}
+                onReset={limparFiltros}
+              >
+                <SearchInput
+                  label="Buscar área"
+                  name="busca"
+                  className="sp-busca-campo"
+                  hiddenLabel={false}
+                  placeholder="Código, nome ou demarcação"
+                  autoComplete="off"
+                />
+                <Select
+                  label="Grau de perigo"
+                  name="nivelPerigo"
+                  value={filtroNivel}
+                  onChange={e => setFiltroNivel(e.target.value)}
+                >
+                  <option value="">Todos os graus</option>
+                  {niveisPerigo.map(nivel => (
+                    <option key={nivel} value={nivel}>
+                      {rotuloNivelPerigo[nivel]}
+                    </option>
+                  ))}
+                </Select>
+                <div className="sp-acoes-busca">
+                  <Button type="submit" variant="secondary" icon="search">
+                    Buscar
+                  </Button>
+                  <Button type="reset" variant="quiet">
+                    Limpar
+                  </Button>
+                </div>
+              </form>
 
-          {gestor && (
-            <Button
-              variant="primary"
-              icon="plus"
-              disabled={consultaAreas.isOffline}
-              title={consultaAreas.isOffline ? 'Operação indisponível em modo offline' : undefined}
-              onClick={() => {
-                setAreaEditando(null)
-                setFormularioAberto(true)
+              {gestor && (
+                <Button
+                  variant="primary"
+                  icon="plus"
+                  disabled={consultaAreas.isOffline}
+                  title={consultaAreas.isOffline ? 'Operação indisponível em modo offline' : undefined}
+                  onClick={() => {
+                    setAreaEditando(null)
+                    setFormularioAberto(true)
+                  }}
+                >
+                  Cadastrar área
+                </Button>
+              )}
+            </div>
+
+            <ResultadoConsulta
+              consulta={consultaAreas}
+              carregandoLabel="Carregando áreas de risco..."
+              erroTitulo="Não foi possível carregar as áreas de risco."
+              vazio={{
+                title: 'Nenhuma área de risco cadastrada',
+                description: 'As áreas de risco cadastradas aparecerão aqui.',
               }}
             >
-              Cadastrar área
-            </Button>
-          )}
-        </div>
+              {areas => {
+                const termo = normalizar(busca.trim())
+                const filtradas = areas.filter(area => {
+                  if (filtroNivel && area.nivelPerigo !== filtroNivel) return false
+                  if (!termo) return true
+                  const texto = normalizar(
+                    `${area.codigo} ${area.nome} ${area.descricao ?? ''} ${area.limites ?? ''} ${area.agentesRisco.join(' ')}`
+                  )
+                  return texto.includes(termo)
+                })
 
-        <ResultadoConsulta
-          consulta={consultaAreas}
-          carregandoLabel="Carregando áreas de risco..."
-          erroTitulo="Não foi possível carregar as áreas de risco."
-          vazio={{
-            title: 'Nenhuma área de risco cadastrada',
-            description: 'As áreas de risco cadastradas aparecerão aqui.',
-          }}
-        >
-          {areas => {
-            const termo = normalizar(busca.trim())
-            const filtradas = areas.filter(area => {
-              if (filtroNivel && area.nivelPerigo !== filtroNivel) return false
-              if (!termo) return true
-              const texto = normalizar(
-                `${area.codigo} ${area.nome} ${area.descricao ?? ''} ${area.limites ?? ''} ${area.agentesRisco.join(' ')}`
-              )
-              return texto.includes(termo)
-            })
+                if (filtradas.length === 0) {
+                  return (
+                    <EmptyState
+                      title="Nenhuma área encontrada"
+                      description="Ajuste o termo de busca ou selecione outro grau de perigo."
+                      actionLabel="Limpar filtros"
+                      onAction={limparFiltros}
+                    />
+                  )
+                }
 
-            if (filtradas.length === 0) {
-              return (
-                <EmptyState
-                  title="Nenhuma área encontrada"
-                  description="Ajuste o termo de busca ou selecione outro grau de perigo."
-                  actionLabel="Limpar filtros"
-                  onAction={limparFiltros}
-                />
-              )
-            }
+                return (
+                  <>
+                    <p className="sp-texto-secundario" role="status">
+                      {filtradas.length}{' '}
+                      {filtradas.length === 1 ? 'área encontrada' : 'áreas encontradas'}
+                    </p>
+                    <div className="ds-risk-grid">
+                      {filtradas.map(area => {
+                        const setor =
+                          area.setorId !== null
+                            ? setores.find(s => s.id === area.setorId)
+                            : null
+                        const localizacao = setor
+                          ? descreverSetor(setor)
+                          : area.limites || 'Localização não especificada'
+                        const hazards =
+                          area.agentesRisco.length > 0
+                            ? area.agentesRisco.join(', ')
+                            : 'Nenhum perigo específico mapeado'
+                        const ppe =
+                          area.episObrigatorios.length > 0
+                            ? area.episObrigatorios.map(e => e.nome).join('; ')
+                            : 'Nenhum EPI obrigatório cadastrado'
 
-            return (
-              <>
-                <p className="sp-texto-secundario" role="status">
-                  {filtradas.length}{' '}
-                  {filtradas.length === 1 ? 'área encontrada' : 'áreas encontradas'}
-                </p>
-                <div className="ds-risk-grid">
-                  {filtradas.map(area => {
-                    const setor =
-                      area.setorId !== null
-                        ? setores.find(s => s.id === area.setorId)
-                        : null
-                    const localizacao = setor
-                      ? `${setor.codigo} • ${setor.nome}`
-                      : area.limites || 'Localização não especificada'
-                    const hazards =
-                      area.agentesRisco.length > 0
-                        ? area.agentesRisco.join(', ')
-                        : 'Nenhum perigo específico mapeado'
-                    const ppe =
-                      area.episObrigatorios.length > 0
-                        ? area.episObrigatorios.map(e => e.nome).join('; ')
-                        : 'Nenhum EPI obrigatório cadastrado'
+                        return (
+                          <RiskAreaCard
+                            key={area.id}
+                            title={`${area.codigo} - ${area.nome}`}
+                            location={localizacao}
+                            hazards={hazards}
+                            ppe={ppe}
+                            riskLabel={rotuloNivelPerigo[area.nivelPerigo]}
+                            riskTone={tomDoNivelPerigo[area.nivelPerigo]}
+                            onConsult={() => setAreaDetalhando(area)}
+                          />
+                        )
+                      })}
+                    </div>
+                  </>
+                )
+              }}
+            </ResultadoConsulta>
 
-                    return (
-                      <RiskAreaCard
-                        key={area.id}
-                        title={`${area.codigo} - ${area.nome}`}
-                        location={localizacao}
-                        hazards={hazards}
-                        ppe={ppe}
-                        riskLabel={rotuloNivelPerigo[area.nivelPerigo]}
-                        riskTone={tomDoNivelPerigo[area.nivelPerigo]}
-                        onConsult={() => setAreaDetalhando(area)}
-                      />
-                    )
-                  })}
-                </div>
-              </>
-            )
-          }}
-        </ResultadoConsulta>
+            <AreaRiscoDetalhesDialog
+              area={areaDetalhando}
+              setores={setores}
+              podeEditar={gestor}
+              aoFechar={() => setAreaDetalhando(null)}
+              aoEditar={abrirEdicao}
+            />
 
-        <AreaRiscoDetalhesDialog
-          area={areaDetalhando}
-          setores={setores}
-          podeEditar={gestor}
-          aoFechar={() => setAreaDetalhando(null)}
-          aoEditar={abrirEdicao}
-        />
+            <AreaRiscoFormDialog
+              open={formularioAberto}
+              area={areaEditando}
+              setores={setores}
+              epis={epis}
+              aoFechar={() => {
+                setFormularioAberto(false)
+                setAreaEditando(null)
+              }}
+              aoSalvar={aoSalvarArea}
+            />
 
-        <AreaRiscoFormDialog
-          open={formularioAberto}
-          area={areaEditando}
-          setores={setores}
-          epis={epis}
-          aoFechar={() => {
-            setFormularioAberto(false)
-            setAreaEditando(null)
-          }}
-          aoSalvar={aoSalvarArea}
-        />
-
-        <Toast
-          message={mensagemSucesso}
-          onDismiss={() => setMensagemSucesso('')}
-        />
-      </div>
+            <Toast
+              message={mensagemSucesso}
+              onDismiss={() => setMensagemSucesso('')}
+            />
+          </div>
+          ),
+        },
+        {
+          id: 'setores',
+          label: 'Setores físicos',
+          content: (
+            <SetoresPainel
+              consulta={consultaSetores}
+              areas={consultaAreas.dados}
+              gestor={gestor}
+              aoCadastrar={() => consultaSetores.recarregar()}
+            />
+          ),
+        },
+      ]} />
     </FeaturePage>
   )
 }
