@@ -15,7 +15,7 @@ Consulte o [guia de componentes](design-system/README.md) para conhecer as impor
 | `/epis` | Tela inicial de EPIs. |
 | `/estoque` | Catálogo de EPIs com saldo, mínimo e situação crítica em texto, busca, detalhes com histórico e operador; o Gestor registra entradas e saídas (UC06, issues #123 e #133). Integrada a `/api/epis`. |
 | `/emprestimos` | Supervisor e Gestor: novo empréstimo com termo de cautela, duplicidade com justificativa, impedimentos informados pelo servidor, posse, atrasos e devolvidos por situação e devolução com condição e destino. Gestor: aba de projeções de substituição e lista de reposição, com análise e nova tentativa (UC12, UC10, issue #110). Integrada a `/api/emprestimos` e `/api/projecoes`. |
-| `/areas-risco` | Abas de áreas de risco e de setores físicos (UC03). Áreas: busca, filtro por grau de perigo e consulta; o Gestor cadastra e edita. Setores: lista com grau de perigo e áreas vinculadas; o Gestor cadastra (issue #174). No detalhe da área, o Gestor abre o histórico de alterações (issue #114). Integrada a `/api/areas-risco`, `/api/setores` e `/api/epis`. |
+| `/areas-risco` | Abas de áreas de risco e de setores físicos (UC03). Áreas: busca, filtro por grau de perigo e consulta; o Gestor cadastra e edita. Setores: lista com grau de perigo e áreas vinculadas; o Gestor cadastra (issue #174). No detalhe da área, o Gestor abre o histórico de alterações (issue #114). Inspeções: só o Gestor vê a aba, consulta e registra (RF09, issue #136). Integrada a `/api/areas-risco`, `/api/areas-risco/{id}/inspecoes`, `/api/setores` e `/api/epis`. |
 | `/tarefas` | Matriz de periculosidade com busca e filtro por grau de perigo (UC11). O Gestor cadastra, classifica e reavalia tarefas e abre o histórico de cada uma (issue #114); o Supervisor consulta. Integrada a `/api/tarefas`. |
 
 As quatro telas iniciais identificam a funcionalidade como em desenvolvimento. Não exibem cadastros fictícios nem oferecem operações de criação ou edição. Embora o backend já tenha operações de ocorrências e EPIs, suas interfaces completas não fazem parte desta base.
@@ -109,6 +109,21 @@ O detalhe da área de risco e a matriz de tarefas mostram ao Gestor o histórico
 - O Supervisor não vê os botões, e a API responde 403 se ele chamar as rotas diretamente.
 - Implementação em `HistoricoAlteracoes.tsx` e `historico.css` (`src/features/areas-risco/`), `HistoricoTarefaDialog.tsx` (`src/features/tarefas/`) e no contrato `RegistroHistorico` de `areas-risco/api.ts`.
 
+### Inspeções de áreas de risco
+
+A aba "Inspeções" de `/areas-risco` (issue #136; RF09 e US09, backlog) segue a proposta da [correspondência Classes vs RF09](../docs/arquitetura/correspondencia-classes-inspecao-rf09.md) (issue #134), ainda aguardando aprovação do grupo:
+
+| Ação | Gestor | Supervisor | Endpoint |
+| --- | --- | --- | --- |
+| Consultar inspeções de uma área | Sim | Não (aba oculta; API responde 403) | `GET /api/areas-risco/{id}/inspecoes` |
+| Registrar inspeção | Sim | Não | `POST /api/areas-risco/{id}/inspecoes` |
+
+- O Gestor escolhe a área e vê as inspeções da data mais recente para a mais antiga: data, quem registrou, quantidade de itens e de não conformidades e, em cada item, a referência avaliada, o resultado em texto ("Conformidade" ou "Não conformidade") e as observações.
+- O formulário pede a data (hoje por padrão, sem datas futuras) e ao menos um item verificado com referência e resultado; observações são opcionais. Itens podem ser acrescentados e removidos. A validação local repete a da API, foca o primeiro campo com erro e mantém o que foi preenchido; a mensagem de recusa do servidor aparece no diálogo.
+- Inspeção registrada não é editada nem excluída. Não há situação da área, interdição, periodicidade nem anexos, que dependem de decisões ainda não tomadas.
+- Sem conexão, o registro fica desabilitado; o histórico de inspeções não tem cópia offline.
+- Implementação em `src/features/areas-risco/`: `InspecoesPainel.tsx`, `InspecaoFormDialog.tsx`, `validacaoInspecao.ts`, `apiInspecoes.ts` e `inspecoes.css`.
+
 ### Consulta de ocorrências
 
 A tela `/ocorrencias` (issue #128) segue UC05, UC09, US13 e US16 e a decisão DS09, e aplica a matriz do `SecurityConfig` e do caso de uso:
@@ -164,7 +179,7 @@ npx playwright install chromium
 npm test
 ```
 
-O lint verifica as regras de código configuradas. O build verifica os tipos e gera os arquivos em `dist/`. Os testes Playwright verificam a aplicação, o catálogo e seus exemplos no Chromium; sua configuração inicia um servidor local na porta 4173. Os testes da aplicação cobrem login, sessão, saída, expiração de token, matriz de perfis, cadastro de supervisor com senha inicial, cadastro, edição e busca de colaboradores e supervisores, estoque de EPIs, entrega, duplicidade, impedimento, devolução e detalhes de empréstimos, projeções com pendências e nova tentativa, áreas de risco, cadastro e consulta de setores físicos, histórico de alterações de áreas e tarefas, consulta de ocorrências por critérios, protocolo e detalhe, navegação, histórico, teclado e larguras de 360, 768 e 1344 pixels. Somente as respostas HTTP são simuladas; componentes, rotas, sessão e cliente HTTP são executados. Esses testes não substituem a verificação contra o backend real com PostgreSQL.
+O lint verifica as regras de código configuradas. O build verifica os tipos e gera os arquivos em `dist/`. Os testes Playwright verificam a aplicação, o catálogo e seus exemplos no Chromium; sua configuração inicia um servidor local na porta 4173. Os testes da aplicação cobrem login, sessão, saída, expiração de token, matriz de perfis, cadastro de supervisor com senha inicial, cadastro, edição e busca de colaboradores e supervisores, estoque de EPIs, entrega, duplicidade, impedimento, devolução e detalhes de empréstimos, projeções com pendências e nova tentativa, áreas de risco, cadastro e consulta de setores físicos, histórico de alterações de áreas e tarefas, consulta e registro de inspeções, consulta de ocorrências por critérios, protocolo e detalhe, navegação, histórico, teclado e larguras de 360, 768 e 1344 pixels. Somente as respostas HTTP são simuladas; componentes, rotas, sessão e cliente HTTP são executados. Esses testes não substituem a verificação contra o backend real com PostgreSQL.
 
 Para conferir o resultado do build no navegador:
 

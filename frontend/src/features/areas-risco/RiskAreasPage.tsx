@@ -1,6 +1,7 @@
 // Tela /areas-risco (RF05, UC03): abas de áreas de risco, com busca, filtro por grau, consulta,
-// cadastro e edição, e de setores físicos (issue #174). O Gestor mantém os cadastros; o Supervisor
-// consulta. Os setores são carregados aqui para que um setor novo apareça no formulário de área.
+// cadastro e edição, de setores físicos (issue #174) e, só para o Gestor, de inspeções (RF09, #136).
+// O Gestor mantém os cadastros; o Supervisor consulta. Os setores são carregados aqui para que um
+// setor novo apareça no formulário de área.
 
 import { useState, useTransition, type FormEvent } from 'react'
 import {
@@ -30,6 +31,7 @@ import {
 } from './api'
 import { AreaRiscoDetalhesDialog } from './AreaRiscoDetalhesDialog'
 import { AreaRiscoFormDialog } from './AreaRiscoFormDialog'
+import { InspecoesPainel } from './InspecoesPainel'
 import { SetoresPainel } from './SetoresPainel'
 import './areas-risco.css'
 
@@ -277,6 +279,14 @@ export function RiskAreasPage() {
             />
           ),
         },
+        ...(gestor ? [{
+          id: 'inspecoes',
+          label: 'Inspeções',
+          // Montada só com a aba aberta: as opções do seletor não repetem os títulos dos cartões de área.
+          content: aba === 'inspecoes'
+            ? <InspecoesPainel areas={consultaAreas.dados} offline={consultaAreas.isOffline} />
+            : null,
+        }] : []),
       ]} />
     </FeaturePage>
   )
