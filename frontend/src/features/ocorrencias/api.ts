@@ -1,3 +1,6 @@
+// Contratos e chamadas de ocorrências (UC05/UC09): leitura validada de OcorrenciaResponse, consulta
+// por critérios no servidor, detalhe por id e busca de acidente pelo protocolo CAT (issue #128).
+
 import { http } from '../../shared/api/https'
 
 export type TipoOcorrencia = 'ACIDENTE' | 'INCIDENTE'
@@ -19,6 +22,10 @@ export type OcorrenciaResumo = {
   local?: string | null
   numeroProtocoloCAT?: string | null
   gravidade?: string | null
+  causaRaiz?: string | null
+  tipo?: string | null
+  dano?: string | null
+  destino?: string | null
   situacaoRisco?: string | null
   potencialDano?: string | null
   areaId?: number | null
@@ -54,6 +61,10 @@ function lerOcorrenciaResumo(dado: unknown): OcorrenciaResumo {
     local: typeof b.local === 'string' ? b.local : null,
     numeroProtocoloCAT: typeof b.numeroProtocoloCAT === 'string' ? b.numeroProtocoloCAT : null,
     gravidade: typeof b.gravidade === 'string' ? b.gravidade : null,
+    causaRaiz: typeof b.causaRaiz === 'string' ? b.causaRaiz : null,
+    tipo: typeof b.tipo === 'string' ? b.tipo : null,
+    dano: typeof b.dano === 'string' ? b.dano : null,
+    destino: typeof b.destino === 'string' ? b.destino : null,
     situacaoRisco: typeof b.situacaoRisco === 'string' ? b.situacaoRisco : null,
     potencialDano: typeof b.potencialDano === 'string' ? b.potencialDano : null,
     areaId: typeof b.areaId === 'number' ? b.areaId : null,
@@ -65,10 +76,32 @@ function lerOcorrenciaResumo(dado: unknown): OcorrenciaResumo {
   }
 }
 
-export async function listarOcorrencias(signal?: AbortSignal): Promise<OcorrenciaResumo[]> {
-  const { data } = await http.get<unknown>('/ocorrencias', { signal })
+/**
+ * Critérios enviados ao servidor em `GET /api/ocorrencias` (issue #128). Datas no formato AAAA-MM-DD,
+ * referentes à data do fato; o setor é o da área de risco; o colaborador é o envolvido.
+ */
+export type FiltroOcorrencias = {
+  dataInicio?: string
+  dataFim?: string
+  setorId?: number
+  colaboradorId?: number
+}
+
+export function temCriterios(filtro: FiltroOcorrencias): boolean {
+  return Object.values(filtro).some(valor => valor !== undefined)
+}
+
+export async function listarOcorrencias(filtro: FiltroOcorrencias, signal?: AbortSignal): Promise<OcorrenciaResumo[]> {
+  const params = Object.fromEntries(Object.entries(filtro).filter(([, valor]) => valor !== undefined))
+  const { data } = await http.get<unknown>('/ocorrencias', { params, signal })
   if (!Array.isArray(data)) throw new Error('Esperava uma lista de ocorrências')
   return data.map(lerOcorrenciaResumo)
+}
+
+/** Só acidentes têm protocolo, o número da CAT (decisão DS09, seção 2.1). */
+export async function buscarOcorrenciaPorProtocolo(protocolo: string, signal?: AbortSignal): Promise<OcorrenciaResumo> {
+  const { data } = await http.get<unknown>(`/ocorrencias/protocolo/${encodeURIComponent(protocolo)}`, { signal })
+  return lerOcorrenciaResumo(data)
 }
 
 export async function buscarOcorrenciaPorId(id: number, signal?: AbortSignal): Promise<OcorrenciaResumo> {

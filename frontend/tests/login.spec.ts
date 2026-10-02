@@ -29,8 +29,10 @@ test('redirects anonymous visitors to the login page and returns them to the req
 
   await page.getByRole('navigation', { name: 'Navegação principal' }).getByRole('link', { name: 'Usuários', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Usuários', exact: true })).toBeVisible()
-  await expect.poll(() => chamadas.length).toBe(1)
-  expect(chamadas.map(chamada => chamada.authorization)).toEqual([`Bearer ${gestora.token}`])
+  // A tela de ocorrências também carrega os colaboradores para o filtro (issue #128); aqui importa a
+  // listagem de supervisores da tela de Usuários e que toda chamada leve o token da sessão.
+  await expect.poll(() => chamadas.filter(chamada => chamada.url.pathname === '/api/usuarios').length).toBe(1)
+  expect(new Set(chamadas.map(chamada => chamada.authorization))).toEqual(new Set([`Bearer ${gestora.token}`]))
 })
 
 test('keeps the typed e-mail and announces invalid credentials without leaving the page', async ({ page }) => {

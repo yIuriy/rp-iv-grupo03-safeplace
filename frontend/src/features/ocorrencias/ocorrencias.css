@@ -1,0 +1,10 @@
+/* Layout da consulta de ocorrências (issue #128): grade de critérios que vira uma coluna em telas
+   estreitas, área de consulta pelo protocolo CAT e item largo no detalhe. */
+.sp-consulta-ocorrencias { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: var(--sp-space-16); align-items: end; }
+.sp-consulta-ocorrencias .sp-consulta-texto { grid-column: 1 / -1; }
+.sp-consulta-cabecalho { display: flex; flex-wrap: wrap; gap: var(--sp-space-16); align-items: flex-end; justify-content: space-between; }
+.sp-protocolo { display: grid; gap: var(--sp-space-12); flex: 1 1 320px; }
+.sp-protocolo-busca { display: flex; flex-wrap: wrap; gap: var(--sp-space-12); align-items: flex-end; }
+.sp-protocolo-busca .sp-field { flex: 1 1 220px; }
+.sp-detalhes .sp-detalhes-largo { grid-column: 1 / -1; }
+.sp-descricao-ocorrencia { max-width: 320px; white-space: pre-wrap; }
