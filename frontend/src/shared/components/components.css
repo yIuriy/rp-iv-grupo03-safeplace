@@ -127,7 +127,8 @@
 .sp-dialog-description { margin-top: var(--sp-space-24); color: var(--sp-text-secondary); }
 .sp-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--sp-space-16); margin-top: var(--sp-space-24); }
 .sp-dialog > .sp-button { margin-top: var(--sp-space-24); }
-.sp-tab-list { display: flex; overflow-x: auto; border-bottom: 1px solid var(--sp-border-default); padding: 6px; margin: -6px -6px 0; }
+/* contain: inline-size impede que a soma das abas alargue a página em telas estreitas; a lista rola por dentro. */
+.sp-tab-list { display: flex; overflow-x: auto; contain: inline-size; border-bottom: 1px solid var(--sp-border-default); padding: 6px; margin: -6px -6px 0; }
 .sp-tab { min-height: var(--sp-size-control); min-width: 168px; padding: var(--sp-space-12) var(--sp-space-16); border: 0; border-bottom: 2px solid transparent; font: 600 14px / 20px var(--sp-font-body), sans-serif; background: transparent; color: var(--sp-text-secondary); cursor: pointer; }
 .sp-tab[aria-selected="true"] { border-bottom-color: var(--sp-brand-primary); color: var(--sp-brand-primary); }
 .sp-tab:hover { background: var(--sp-brand-soft); }
@@ -164,6 +165,8 @@
   .sp-dialog-actions > .sp-button { width: 100%; }
   .sp-empty-state { flex-wrap: wrap; padding: var(--sp-space-24); }
   .sp-empty-state > .sp-button { width: 100%; }
+  /* Abas do tamanho do rótulo: a última aparece cortada e indica que a lista rola para o lado. */
+  .sp-tab { min-width: auto; flex: none; }
 }
 @media (forced-colors: active) {
   .sp-icon { background: CanvasText; }
