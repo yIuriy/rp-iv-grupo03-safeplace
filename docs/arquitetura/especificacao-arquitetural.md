@@ -173,4 +173,4 @@ Pontos ainda não atendidos ou fora da entrega:
 - A [configuração de segurança](../../backend/src/main/java/br/edu/safeplace/backend/config/SecurityConfig.java) aplica controle de acesso por perfil (RBAC) e autenticação via JWT (RNF03). Rotas públicas limitam-se a autenticação, documentação Swagger e health check.
 - RNF05 está atendido no módulo de áreas de risco através do registro de logs de auditoria imutáveis com autoria e data/hora (`LogAuditoria`); sua extensão para os demais fluxos do sistema permanece no backlog.
 - O Compose fornece `VITE_API_URL` e o cliente HTTP a lê, aceitando `VITE_URL_API` como nome anterior; o valor local padrão está documentado no README do frontend.
-- A carga inicial do primeiro Gestor de Segurança, prevista na seção 3.1 da especificação do MVP, ainda não existe no repositório: sem um registro inserido à mão na tabela `usuarios`, não há como entrar na interface.
+- A carga inicial do primeiro Gestor de Segurança, prevista na seção 3.1 da especificação do MVP, é feita pela migração V17, que cria contas locais de demonstração de Gestor, Supervisor e Colaborador.
