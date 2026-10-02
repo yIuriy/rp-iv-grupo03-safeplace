@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarTarefaInputDTO;
 import br.edu.safeplace.backend.application.dto.output.TarefaOutputDTO;
+import br.edu.safeplace.backend.application.port.in.AlocarColaboradorTarefaUseCase;
 import br.edu.safeplace.backend.application.port.in.ClassificarTarefaUseCase;
 import br.edu.safeplace.backend.config.SecurityConfig;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
@@ -41,6 +42,9 @@ class TarefaControllerTest {
 
     @MockitoBean
     private ClassificarTarefaUseCase useCase;
+
+    @MockitoBean
+    private AlocarColaboradorTarefaUseCase alocarUseCase;
 
     private static TarefaOutputDTO tarefaClassificada() {
         return new TarefaOutputDTO(1, "Solda em altura", NivelPerigo.ALTO, true,
@@ -213,5 +217,69 @@ class TarefaControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nivelPerigo\": \"ALTO\"}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR", username = "supervisor@safeplace.com")
+    @DisplayName("Supervisor deve alocar colaborador com sucesso (201 Created)")
+    void deveAlocarColaboradorComSucesso() throws Exception {
+        br.edu.safeplace.backend.application.dto.output.AlocacaoTarefaOutputDTO dto =
+                new br.edu.safeplace.backend.application.dto.output.AlocacaoTarefaOutputDTO(
+                        1, 10, "Solda em altura", 2, "Carlos", LocalDateTime.now(), 5, "Supervisor Bruno", "Observação");
+
+        when(alocarUseCase.alocar(eq(10), any(), eq("supervisor@safeplace.com"))).thenReturn(dto);
+
+        mockMvc.perform(post("/api/tarefas/10/alocacoes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"colaboradorId\": 2, \"observacao\": \"Observação\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.colaboradorNome").value("Carlos"));
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR", username = "supervisor@safeplace.com")
+    @DisplayName("Deve retornar 409 Conflict ao alocar em tarefa sem classificação")
+    void deveRetornar409AoAlocarEmTarefaSemClassificacao() throws Exception {
+        when(alocarUseCase.alocar(eq(10), any(), any()))
+                .thenThrow(new br.edu.safeplace.backend.domain.tarefa.exception.TarefaSemClassificacaoException("Solda em altura"));
+
+        mockMvc.perform(post("/api/tarefas/10/alocacoes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"colaboradorId\": 2}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").value("Tarefa Sem Classificação"));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA", username = "gestor@safeplace.com")
+    @DisplayName("Deve retornar 422 Unprocessable Entity ao alocar com capacitação pendente")
+    void deveRetornar422AoAlocarComCapacitacaoPendente() throws Exception {
+        when(alocarUseCase.alocar(eq(10), any(), any()))
+                .thenThrow(new br.edu.safeplace.backend.domain.capacitacao.exception.AlocacaoBloqueadaException(
+                        List.of("certificação 'NR-35' ausente ou vencida")));
+
+        mockMvc.perform(post("/api/tarefas/10/alocacoes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"colaboradorId\": 2}"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error").value("Alocação Bloqueada"))
+                .andExpect(jsonPath("$.impedimentos[0]").value("certificação 'NR-35' ausente ou vencida"));
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("Deve consultar aptidão prévia com sucesso (200 OK)")
+    void deveConsultarAptidaoPrevia() throws Exception {
+        br.edu.safeplace.backend.application.dto.output.ConsultaAptidaoOutputDTO dto =
+                br.edu.safeplace.backend.application.dto.output.ConsultaAptidaoOutputDTO.inapto(
+                        10, "Solda em altura", 2, "Carlos", List.of("NR-35 ausente"));
+
+        when(alocarUseCase.consultarAptidao(10, 2)).thenReturn(dto);
+
+        mockMvc.perform(get("/api/tarefas/10/aptidao/2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.apto").value(false))
+                .andExpect(jsonPath("$.impedimentos[0]").value("NR-35 ausente"));
     }
 }

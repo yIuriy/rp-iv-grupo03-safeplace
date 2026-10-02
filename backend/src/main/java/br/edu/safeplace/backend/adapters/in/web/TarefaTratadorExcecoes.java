@@ -34,4 +34,28 @@ public class TarefaTratadorExcecoes {
                 "error", "Tarefa Sem Classificação",
                 "message", ex.getMessage()));
     }
+
+    /**
+     * RF10, UC02 e UC11: bloqueio impeditivo por pendências de certificação ou treinamento.
+     */
+    @ExceptionHandler(br.edu.safeplace.backend.domain.capacitacao.exception.AlocacaoBloqueadaException.class)
+    public ResponseEntity<Map<String, Object>> handleAlocacaoBloqueada(
+            br.edu.safeplace.backend.domain.capacitacao.exception.AlocacaoBloqueadaException ex) {
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.UNPROCESSABLE_ENTITY.value());
+        body.put("error", "Alocação Bloqueada");
+        body.put("message", ex.getMessage());
+        body.put("impedimentos", ex.getImpedimentos());
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.BAD_REQUEST.value(),
+                "error", "Requisição Inválida",
+                "message", ex.getMessage()));
+    }
 }

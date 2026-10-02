@@ -9,7 +9,13 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.core.Authentication;
+
+import br.edu.safeplace.backend.application.dto.input.AlocarColaboradorInputDTO;
+import br.edu.safeplace.backend.application.dto.output.AlocacaoTarefaOutputDTO;
+import br.edu.safeplace.backend.application.dto.output.ConsultaAptidaoOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.TarefaOutputDTO;
+import br.edu.safeplace.backend.application.port.in.AlocarColaboradorTarefaUseCase;
 import br.edu.safeplace.backend.application.port.in.ClassificarTarefaUseCase;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,13 +26,15 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/tarefas")
-@Tag(name = "Tarefas", description = "Endpoints para classificação do nível de periculosidade das tarefas (RF06)")
+@Tag(name = "Tarefas", description = "Endpoints para classificação de periculosidade e alocação em tarefas (RF06, RF10, UC02, UC11)")
 public class TarefaController {
 
     private final ClassificarTarefaUseCase useCase;
+    private final AlocarColaboradorTarefaUseCase alocarUseCase;
 
-    public TarefaController(ClassificarTarefaUseCase useCase) {
+    public TarefaController(ClassificarTarefaUseCase useCase, AlocarColaboradorTarefaUseCase alocarUseCase) {
         this.useCase = useCase;
+        this.alocarUseCase = alocarUseCase;
     }
 
     @PostMapping
@@ -89,5 +97,42 @@ public class TarefaController {
         return useCase.listarHistorico(id).stream()
                 .map(RegistroHistoricoResponse::fromOutputDTO)
                 .toList();
+    }
+
+    @PostMapping("/{id}/alocacoes")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Aloca um colaborador em uma tarefa classificada, validando impedimentos normativos de capacitação")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Alocação confirmada e registrada"),
+            @ApiResponse(responseCode = "400", description = "Dados da alocação inválidos"),
+            @ApiResponse(responseCode = "404", description = "Tarefa ou colaborador não encontrado"),
+            @ApiResponse(responseCode = "409", description = "Tarefa sem grau de periculosidade classificado"),
+            @ApiResponse(responseCode = "422", description = "Alocação bloqueada por certificações vencidas ou treinamentos pendentes")
+    })
+    public AlocacaoTarefaOutputDTO alocar(@PathVariable Integer id,
+                                          @Valid @RequestBody AlocarColaboradorInputDTO request,
+                                          Authentication autenticacao) {
+        return alocarUseCase.alocar(id, request, autenticacao.getName());
+    }
+
+    @GetMapping("/{id}/alocacoes")
+    @Operation(summary = "Lista o histórico de alocações registradas para uma tarefa")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista de alocações da tarefa"),
+            @ApiResponse(responseCode = "404", description = "Tarefa não existe")
+    })
+    public List<AlocacaoTarefaOutputDTO> listarAlocacoes(@PathVariable Integer id) {
+        return alocarUseCase.listarPorTarefa(id);
+    }
+
+    @GetMapping("/{id}/aptidao/{colaboradorId}")
+    @Operation(summary = "Consulta preventiva de aptidão de um colaborador para uma tarefa")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Diagnóstico de aptidão e pendências retornado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Tarefa ou colaborador não encontrado")
+    })
+    public ConsultaAptidaoOutputDTO consultarAptidao(@PathVariable Integer id,
+                                                    @PathVariable Integer colaboradorId) {
+        return alocarUseCase.consultarAptidao(id, colaboradorId);
     }
 }

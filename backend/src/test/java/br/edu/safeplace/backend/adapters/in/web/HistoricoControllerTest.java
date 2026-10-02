@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import br.edu.safeplace.backend.application.dto.output.AreaRiscoOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.RegistroHistoricoOutputDTO;
+import br.edu.safeplace.backend.application.port.in.AlocarColaboradorTarefaUseCase;
 import br.edu.safeplace.backend.application.port.in.ClassificarTarefaUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarAreaRiscoUseCase;
 import br.edu.safeplace.backend.config.SecurityConfig;
@@ -48,6 +49,9 @@ class HistoricoControllerTest {
 
     @MockitoBean
     private ClassificarTarefaUseCase tarefaUseCase;
+
+    @MockitoBean
+    private AlocarColaboradorTarefaUseCase alocarUseCase;
 
     @Test
     @WithMockUser(roles = "GESTOR_SEGURANCA")

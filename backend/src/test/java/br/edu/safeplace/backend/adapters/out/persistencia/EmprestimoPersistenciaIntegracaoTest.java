@@ -104,10 +104,14 @@ class EmprestimoPersistenciaIntegracaoTest {
     @AfterEach
     void limparRegistrosDoTeste() {
         jdbc.execute("DELETE FROM emprestimos");
+        jdbc.execute("DELETE FROM projecoes_substituicao");
         jdbc.execute("DELETE FROM exigencias_capacitacao");
         jdbc.execute("DELETE FROM certificacoes");
-        jdbc.execute("DELETE FROM movimentacoes_estoque");
-        jdbc.execute("DELETE FROM epis");
+        jdbc.execute("DELETE FROM treinamentos_colaboradores");
+        jdbc.execute("DELETE FROM treinamentos");
+        jdbc.execute("DELETE FROM movimentacoes_estoque WHERE epi_id IN (SELECT id FROM epis WHERE numero_ca IN ('12345', '54321', '99999', '88888'))");
+        jdbc.execute("DELETE FROM areas_risco_epis WHERE epi_id IN (SELECT id FROM epis WHERE numero_ca IN ('12345', '54321', '99999', '88888'))");
+        jdbc.execute("DELETE FROM epis WHERE numero_ca IN ('12345', '54321', '99999', '88888')");
         jdbc.update("DELETE FROM usuarios WHERE cpf IN (?, ?, ?)", CPF_SUPERVISOR, CPF_COLABORADOR, CPF_COLABORADOR_2);
     }
 
@@ -169,6 +173,30 @@ class EmprestimoPersistenciaIntegracaoTest {
 
         jdbc.update("INSERT INTO certificacoes (nome, data_vencimento, data_emissao, colaborador_id) VALUES (?, ?, ?, ?)",
                 "NR-35 Trabalho em altura", LocalDate.now().plusYears(1), LocalDate.now(), colaboradorId);
+
+        assertThat(emprestimos.registrarEntrega(entrega(), EMAIL_SUPERVISOR).status())
+                .isEqualTo(ClassificacaoEmprestimo.INDISPONIVEL);
+        assertThat(saldo()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Treinamento obrigatório exigido pelo EPI pendente impede a entrega e NÃO movimenta estoque (UC12)")
+    void treinamentoPendenteImpedeEntregaENaoMovimentaEstoque() {
+        jdbc.update("INSERT INTO exigencias_capacitacao (nome_capacitacao, tipo_capacitacao, alvo_id, tipo_alvo) VALUES (?, 'TREINAMENTO', ?, 'EPI')",
+                "Treinamento de Proteção Respiratória", capaceteId);
+
+        assertThatThrownBy(() -> emprestimos.registrarEntrega(entrega(), EMAIL_SUPERVISOR))
+                .isInstanceOf(EntregaImpedidaException.class)
+                .hasMessageContaining("Proteção Respiratória");
+
+        assertThat(saldo()).isEqualTo(3);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM emprestimos", Integer.class)).isZero();
+
+        // Concluindo o treinamento, a entrega é liberada e debita 1 do estoque
+        Integer treinoId = jdbc.queryForObject(
+                "INSERT INTO treinamentos (nome, conteudo, instrutor, data_realizacao, carga_horaria) VALUES (?, ?, ?, ?, ?) RETURNING id",
+                Integer.class, "Treinamento de Proteção Respiratória", "Uso correto", "Instrutor", LocalDate.now().minusDays(1), 8);
+        jdbc.update("INSERT INTO treinamentos_colaboradores (treinamento_id, colaborador_id) VALUES (?, ?)", treinoId, colaboradorId);
 
         assertThat(emprestimos.registrarEntrega(entrega(), EMAIL_SUPERVISOR).status())
                 .isEqualTo(ClassificacaoEmprestimo.INDISPONIVEL);
