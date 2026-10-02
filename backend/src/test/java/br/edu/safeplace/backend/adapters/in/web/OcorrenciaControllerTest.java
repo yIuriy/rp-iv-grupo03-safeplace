@@ -1,5 +1,10 @@
+/*
+ * Testes do OcorrenciaController com MockMvc: relato, consulta por critérios, detalhe, protocolo,
+ * triagem e erros, com os casos de uso simulados.
+ */
 package br.edu.safeplace.backend.adapters.in.web;
 
+import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
@@ -105,7 +110,7 @@ class OcorrenciaControllerTest {
     @WithMockUser(roles = "SUPERVISOR")
     @DisplayName("Supervisor deve listar ocorrencias via GET /api/ocorrencias")
     void supervisorDeveListarOcorrencias() throws Exception {
-        when(registrarUseCase.listar()).thenReturn(List.of(acidenteDTO(1, "ABERTA", "CAT-2026-09-0001")));
+        when(registrarUseCase.listar(any(FiltroOcorrenciasDTO.class))).thenReturn(List.of(acidenteDTO(1, "ABERTA", "CAT-2026-09-0001")));
 
         mockMvc.perform(get("/api/ocorrencias"))
                 .andExpect(status().isOk())

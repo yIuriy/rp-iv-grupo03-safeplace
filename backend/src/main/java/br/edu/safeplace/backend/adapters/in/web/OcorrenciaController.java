@@ -1,7 +1,13 @@
+/*
+ * API REST de ocorrências (UC05/UC09): relato de acidente e incidente, consulta por critérios (issue
+ * #128), detalhe, busca por protocolo CAT, triagem, arquivamento e consolidação da CAT.
+ */
 package br.edu.safeplace.backend.adapters.in.web;
 
+import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -9,12 +15,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.RegistrarOcorrenciaUseCase;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -46,10 +55,20 @@ public class OcorrenciaController {
     }
 
     @GetMapping
-    @Operation(summary = "Lista ocorrências registradas (filtradas por relator para Supervisor, visão global para Gestor)")
-    public List<OcorrenciaResponse> listar() {
+    @Operation(summary = "Lista ocorrências por critérios opcionais (filtradas por relator para Supervisor, visão global para Gestor)",
+            description = "Critérios combináveis (UC05/UC09, issue #128). O período usa a data do fato e inclui os dois dias; "
+                    + "o setor é o da área de risco da ocorrência. Resultado na ordem de registro.")
+    public List<OcorrenciaResponse> listar(
+            @Parameter(description = "Primeiro dia do período da data do fato (AAAA-MM-DD)", example = "2026-09-01")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @Parameter(description = "Último dia do período da data do fato (AAAA-MM-DD)", example = "2026-09-30")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
+            @Parameter(description = "Setor físico da área de risco onde o fato ocorreu")
+            @RequestParam(required = false) Integer setorId,
+            @Parameter(description = "Colaborador envolvido na ocorrência")
+            @RequestParam(required = false) Integer colaboradorId) {
         return registrarUseCase
-                .listar()
+                .listar(new FiltroOcorrenciasDTO(dataInicio, dataFim, setorId, colaboradorId))
                 .stream()
                 .map(OcorrenciaResponse::fromOutputDTO)
                 .toList();

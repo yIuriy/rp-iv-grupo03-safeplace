@@ -1,5 +1,11 @@
+/*
+ * Caso de uso de ocorrências (UC05/UC09): registra acidentes e incidentes com auditoria e notificação,
+ * consulta por critérios, id e protocolo CAT respeitando o perfil (issue #128) e conduz triagem,
+ * arquivamento e consolidação da CAT.
+ */
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
@@ -28,9 +34,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.function.Predicate;
 
 @Service
 public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarOcorrenciaUseCase {
+    /** Nomes de entidade gravados na auditoria ao registrar um relato (ver registrarAcidente e registrarIncidente). */
+    static final List<String> ENTIDADES_DE_RELATO = List.of("Acidente", "Incidente");
+
     private final OcorrenciaRepositoryPort repository;
     private final AreaRiscoRepositoryPort areaRiscoRepository;
     private final UsuarioRepositorioPorta usuarioRepository;
@@ -227,29 +237,37 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
 
     @Override
     @Transactional(readOnly = true)
-    public List<OcorrenciaOutputDTO> listar() {
+    public List<OcorrenciaOutputDTO> listar(FiltroOcorrenciasDTO filtro) {
+        Predicate<Ocorrencia> visivel = visibilidadeDoUsuarioAtual();
+        return repository.listar(filtro != null ? filtro : FiltroOcorrenciasDTO.SEM_FILTRO).stream()
+                .filter(visivel)
+                .map(OcorrenciaOutputDTO::deDominio)
+                .toList();
+    }
+
+    /**
+     * O Supervisor acompanha os relatos que registrou (UC09); o Gestor vê todos (UC05). A mesma regra
+     * vale para a lista, o detalhe e a busca por protocolo, para que o detalhe não revele o que a lista
+     * esconde. Sem sessão ou sem trilha de auditoria, a consulta não é restringida.
+     */
+    private Predicate<Ocorrencia> visibilidadeDoUsuarioAtual() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isSupervisor = auth != null && auth.getAuthorities().stream()
                 .anyMatch(a -> "ROLE_SUPERVISOR".equals(a.getAuthority()));
         String email = emailAutenticado();
-
-        if (isSupervisor && email != null && logAuditoriaRepositoryPort != null) {
-            List<Integer> idsRelatados = logAuditoriaRepositoryPort.buscarIdsPorResponsavelETipoOperacao(email, "CADASTRO");
-            return repository.listar().stream()
-                    .filter(o -> idsRelatados.contains(o.getIdOcorrencia()))
-                    .map(OcorrenciaOutputDTO::deDominio)
-                    .toList();
+        if (!isSupervisor || email == null || logAuditoriaRepositoryPort == null) {
+            return ocorrencia -> true;
         }
-
-        return repository.listar().stream()
-                .map(OcorrenciaOutputDTO::deDominio)
-                .toList();
+        List<Integer> idsRelatados = logAuditoriaRepositoryPort
+                .buscarIdsPorResponsavelETipoOperacao(email, "CADASTRO", ENTIDADES_DE_RELATO);
+        return ocorrencia -> idsRelatados.contains(ocorrencia.getIdOcorrencia());
     }
 
     @Override
     @Transactional(readOnly = true)
     public OcorrenciaOutputDTO buscarPorId(Integer idOcorrencia) {
         Ocorrencia ocorrencia = repository.buscarPorId(idOcorrencia)
+                .filter(visibilidadeDoUsuarioAtual())
                 .orElseThrow(() -> new OcorrenciaNaoEncontradaException(idOcorrencia));
         return OcorrenciaOutputDTO.deDominio(ocorrencia);
     }
@@ -261,6 +279,7 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
             throw new IllegalArgumentException("Protocolo não pode ser vazio.");
         }
         Ocorrencia ocorrencia = repository.buscarPorProtocolo(protocolo.trim())
+                .filter(visibilidadeDoUsuarioAtual())
                 .orElseThrow(() -> new OcorrenciaNaoEncontradaException("Ocorrência não encontrada com o protocolo " + protocolo.trim() + "."));
         return OcorrenciaOutputDTO.deDominio(ocorrencia);
     }
