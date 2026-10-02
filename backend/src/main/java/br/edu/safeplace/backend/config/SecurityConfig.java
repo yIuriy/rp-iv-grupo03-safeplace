@@ -89,6 +89,9 @@ public class SecurityConfig {
                         // Seguranca; precisa vir antes da regra geral de leitura abaixo.
                         .requestMatchers(HttpMethod.GET, "/api/areas-risco/*/historico", "/api/tarefas/*/historico")
                                 .hasRole("GESTOR_SEGURANCA")
+                        // Issue #134 (RF09, US09): o Gestor de Seguranca registra e consulta inspecoes; a
+                        // consulta pelo Supervisor aguarda decisao do grupo.
+                        .requestMatchers("/api/areas-risco/*/inspecoes").hasRole("GESTOR_SEGURANCA")
                         // UC03 e UC11: o Gestor de Seguranca mantem o cadastro; o Supervisor e ator
                         // secundario e apenas consulta as diretrizes.
                         .requestMatchers(HttpMethod.GET, "/api/areas-risco/**", "/api/tarefas/**", "/api/setores/**")
