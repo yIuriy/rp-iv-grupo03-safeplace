@@ -1,3 +1,6 @@
+// Testes da aba de áreas de risco (RF05, UC03): filtro, consulta, matriz de perfis, cadastro e
+// edição, com respostas HTTP simuladas no formato da API.
+
 import { test, expect, type Page } from '@playwright/test'
 import { gestora, iniciarSessao, supervisor } from './helpers/sessao'
 
@@ -6,9 +9,10 @@ const episMock = [
   { id: 2, nome: 'Óculos de proteção', numeroCa: '67890', quantidade: 15, estoqueMinimo: 5, status: 'DISPONIVEL', dataValidadeCa: '2028-01-01' },
 ]
 
+// Formato de `SetorResponse` do backend: o setor não tem código (issue #174).
 const setoresMock = [
-  { id: 1, codigo: 'SET-001', nome: 'Galpão Principal', descricao: 'Área de manufatura e usinagem' },
-  { id: 2, codigo: 'SET-002', nome: 'Doca de Carga', descricao: 'Movimentação e logística' },
+  { id: 1, nome: 'Galpão Principal', descricao: 'Área de manufatura e usinagem', localizacao: 'Bloco 1', status: 'ALTO' },
+  { id: 2, nome: 'Doca de Carga', descricao: 'Movimentação e logística', localizacao: null, status: 'MEDIO' },
 ]
 
 const area1 = {

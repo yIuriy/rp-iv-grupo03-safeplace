@@ -1,3 +1,6 @@
+// Cadastro e edição de área de risco pelo Gestor (UC03): código, grau, setor físico, agentes,
+// limites e EPIs obrigatórios, com justificativa na edição.
+
 import { useEffect, useState, type FormEvent } from 'react'
 import { Alert, Button, Checkbox, Dialog, Select, TextArea, TextField } from '../../shared/components'
 import { mensagemDaApi } from '../../shared/api/erros'
@@ -5,6 +8,7 @@ import type { Epi } from '../epis/api'
 import {
   atualizarAreaRisco,
   cadastrarAreaRisco,
+  descreverSetor,
   niveisPerigo,
   rotuloNivelPerigo,
   type AreaRisco,
@@ -192,7 +196,7 @@ export function AreaRiscoFormDialog({
             <option value="">Sem setor físico específico</option>
             {setores.map(s => (
               <option key={s.id} value={s.id}>
-                {s.codigo} - {s.nome}
+                {descreverSetor(s)}
               </option>
             ))}
           </Select>

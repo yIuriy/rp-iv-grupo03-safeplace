@@ -1,5 +1,8 @@
+// Consulta de uma área de risco: setor físico, agentes, limites e EPIs obrigatórios para acesso
+// (UC03). O Gestor pode seguir para a edição; o Supervisor apenas consulta.
+
 import { Alert, Badge, Button, Dialog } from '../../shared/components'
-import { rotuloNivelPerigo, tomDoNivelPerigo, type AreaRisco, type Setor } from './api'
+import { descreverSetor, rotuloNivelPerigo, tomDoNivelPerigo, type AreaRisco, type Setor } from './api'
 
 export function AreaRiscoDetalhesDialog({
   area,
@@ -18,7 +21,7 @@ export function AreaRiscoDetalhesDialog({
 
   const setorEncontrado = area.setorId !== null ? setores.find(s => s.id === area.setorId) : null
   const localizacao = setorEncontrado
-    ? `${setorEncontrado.codigo} - ${setorEncontrado.nome}`
+    ? descreverSetor(setorEncontrado)
     : area.limites || 'Não informado'
 
   return (
