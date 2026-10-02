@@ -119,5 +119,5 @@ A revisão de escopo da issue #112 consultou o PNG no commit `34d6b6d` (14/09/20
 | Critérios para atribuir cada nível | US06, regra 4: ainda precisam ser detalhados. A correspondência da seção 2.1 não define critério. |
 | Relações com `Setor` e `AreaRisco` | Dependem de #111 e #113, incluindo o mínimo 1..* do lado da tarefa na associação com `Setor`. |
 | Ponto de alocação | A operação de alocação e seu ator ainda não estão especificados (#126). |
-| Consulta do histórico pela API | O histórico fica gravado em `logs_auditoria`; uma rota de consulta desse histórico por tarefa pode ser avaliada em #114. |
+| Consulta do histórico pela API | Resolvida na #114: `GET /api/tarefas/{id}/historico` devolve os registros de `logs_auditoria` da tarefa, do mais recente ao mais antigo, e é exclusiva do Gestor de Segurança. A interface mostra esse histórico na matriz de tarefas. |
 | Atualização textual de UC11 e US06 | Após a aprovação do vocabulário (2.1). |

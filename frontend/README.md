@@ -15,8 +15,8 @@ Consulte o [guia de componentes](design-system/README.md) para conhecer as impor
 | `/epis` | Tela inicial de EPIs. |
 | `/estoque` | Catálogo de EPIs com saldo, mínimo e situação crítica em texto, busca, detalhes com histórico e operador; o Gestor registra entradas e saídas (UC06, issues #123 e #133). Integrada a `/api/epis`. |
 | `/emprestimos` | Supervisor e Gestor: novo empréstimo com termo de cautela, duplicidade com justificativa, impedimentos informados pelo servidor, posse, atrasos e devolvidos por situação e devolução com condição e destino. Gestor: aba de projeções de substituição e lista de reposição, com análise e nova tentativa (UC12, UC10, issue #110). Integrada a `/api/emprestimos` e `/api/projecoes`. |
-| `/areas-risco` | Abas de áreas de risco e de setores físicos (UC03). Áreas: busca, filtro por grau de perigo e consulta; o Gestor cadastra e edita. Setores: lista com grau de perigo e áreas vinculadas; o Gestor cadastra (issue #174). Integrada a `/api/areas-risco`, `/api/setores` e `/api/epis`. |
-| `/tarefas` | Tela inicial de tarefas. |
+| `/areas-risco` | Abas de áreas de risco e de setores físicos (UC03). Áreas: busca, filtro por grau de perigo e consulta; o Gestor cadastra e edita. Setores: lista com grau de perigo e áreas vinculadas; o Gestor cadastra (issue #174). No detalhe da área, o Gestor abre o histórico de alterações (issue #114). Integrada a `/api/areas-risco`, `/api/setores` e `/api/epis`. |
+| `/tarefas` | Matriz de periculosidade com busca e filtro por grau de perigo (UC11). O Gestor cadastra, classifica e reavalia tarefas e abre o histórico de cada uma (issue #114); o Supervisor consulta. Integrada a `/api/tarefas`. |
 
 As quatro telas iniciais identificam a funcionalidade como em desenvolvimento. Não exibem cadastros fictícios nem oferecem operações de criação ou edição. Embora o backend já tenha operações de ocorrências e EPIs, suas interfaces completas não fazem parte desta base.
 
@@ -94,6 +94,21 @@ A aba "Setores físicos" de `/areas-risco` (issue #174) cobre o passo 2 do UC03,
 - Fora desta entrega: edição e exclusão de setor, que a API não oferece, e a carga inicial de setores, que segue a mesma pendência do primeiro Gestor.
 - Implementação em `src/features/areas-risco/`: `SetoresPainel.tsx`, `SetorFormDialog.tsx` e `validacaoSetor.ts`, além do contrato `Setor` e de `cadastrarSetor` em `api.ts`.
 
+### Histórico de alterações
+
+O detalhe da área de risco e a matriz de tarefas mostram ao Gestor o histórico gravado na auditoria (issue #114; UC03, cenário alternativo II, passo 4; UC11, regra 1):
+
+| Ação | Gestor | Supervisor | Endpoint |
+| --- | --- | --- | --- |
+| Histórico de uma área de risco | Sim | Não | `GET /api/areas-risco/{id}/historico` |
+| Histórico de uma tarefa | Sim | Não | `GET /api/tarefas/{id}/historico` |
+
+- Cada entrada mostra data e hora, tipo da operação, e-mail de quem a fez e o que mudou, com o valor anterior e o novo, do registro mais recente ao mais antigo. Na área, o texto também traz a justificativa informada na edição.
+- Na área, o botão "Ver histórico de alterações" fica no detalhe e só consulta a API quando aberto. Na tarefa, o botão "Histórico" da linha abre uma janela.
+- Falha de rede mostra um aviso com "Tentar novamente". Não há cópia offline do histórico.
+- O Supervisor não vê os botões, e a API responde 403 se ele chamar as rotas diretamente.
+- Implementação em `HistoricoAlteracoes.tsx` e `historico.css` (`src/features/areas-risco/`), `HistoricoTarefaDialog.tsx` (`src/features/tarefas/`) e no contrato `RegistroHistorico` de `areas-risco/api.ts`.
+
 ### Consulta de ocorrências
 
 A tela `/ocorrencias` (issue #128) segue UC05, UC09, US13 e US16 e a decisão DS09, e aplica a matriz do `SecurityConfig` e do caso de uso:
@@ -149,7 +164,7 @@ npx playwright install chromium
 npm test
 ```
 
-O lint verifica as regras de código configuradas. O build verifica os tipos e gera os arquivos em `dist/`. Os testes Playwright verificam a aplicação, o catálogo e seus exemplos no Chromium; sua configuração inicia um servidor local na porta 4173. Os testes da aplicação cobrem login, sessão, saída, expiração de token, matriz de perfis, cadastro de supervisor com senha inicial, cadastro, edição e busca de colaboradores e supervisores, estoque de EPIs, entrega, duplicidade, impedimento, devolução e detalhes de empréstimos, projeções com pendências e nova tentativa, áreas de risco, cadastro e consulta de setores físicos, consulta de ocorrências por critérios, protocolo e detalhe, navegação, histórico, teclado e larguras de 360, 768 e 1344 pixels. Somente as respostas HTTP são simuladas; componentes, rotas, sessão e cliente HTTP são executados. Esses testes não substituem a verificação contra o backend real com PostgreSQL.
+O lint verifica as regras de código configuradas. O build verifica os tipos e gera os arquivos em `dist/`. Os testes Playwright verificam a aplicação, o catálogo e seus exemplos no Chromium; sua configuração inicia um servidor local na porta 4173. Os testes da aplicação cobrem login, sessão, saída, expiração de token, matriz de perfis, cadastro de supervisor com senha inicial, cadastro, edição e busca de colaboradores e supervisores, estoque de EPIs, entrega, duplicidade, impedimento, devolução e detalhes de empréstimos, projeções com pendências e nova tentativa, áreas de risco, cadastro e consulta de setores físicos, histórico de alterações de áreas e tarefas, consulta de ocorrências por critérios, protocolo e detalhe, navegação, histórico, teclado e larguras de 360, 768 e 1344 pixels. Somente as respostas HTTP são simuladas; componentes, rotas, sessão e cliente HTTP são executados. Esses testes não substituem a verificação contra o backend real com PostgreSQL.
 
 Para conferir o resultado do build no navegador:
 
