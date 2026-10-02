@@ -235,6 +235,17 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
         }
     }
 
+    /**
+     * Sobrescreve o método default da porta para que a consulta sem filtro também abra a transação:
+     * o default chamaria listar(filtro) dentro do próprio objeto, sem passar pelo proxy do Spring, e
+     * a área de risco carregada sob demanda falharia sem sessão.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<OcorrenciaOutputDTO> listar() {
+        return listar(FiltroOcorrenciasDTO.SEM_FILTRO);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<OcorrenciaOutputDTO> listar(FiltroOcorrenciasDTO filtro) {
