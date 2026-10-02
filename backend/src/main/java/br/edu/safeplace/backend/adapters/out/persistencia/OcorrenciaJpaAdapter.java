@@ -1,3 +1,7 @@
+/*
+ * Adaptador JPA da porta de ocorrências: converte entre entidades e domínio (Acidente e Incidente),
+ * grava, consulta por id, protocolo CAT e critérios (issue #128) e gera o sequencial da CAT.
+ */
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
 import java.util.List;
@@ -5,6 +9,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
+import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
@@ -50,6 +55,14 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
     @Override
     public List<Ocorrencia> listar() {
         return repository.findAll().stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public List<Ocorrencia> listar(FiltroOcorrenciasDTO filtro) {
+        return repository.findAll(OcorrenciaEspecificacoes.atendem(filtro), OcorrenciaEspecificacoes.ORDEM_DE_REGISTRO)
+                .stream()
+                .map(this::toDomain)
+                .toList();
     }
 
     @Override

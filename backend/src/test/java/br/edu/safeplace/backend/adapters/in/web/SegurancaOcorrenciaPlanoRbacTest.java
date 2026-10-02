@@ -1,5 +1,10 @@
+/*
+ * Testes da matriz de perfis (RNF03) nas rotas de ocorrências e planos de ação: 401 sem token, 403 para
+ * o perfil sem permissão e acesso liberado conforme o SecurityConfig.
+ */
 package br.edu.safeplace.backend.adapters.in.web;
 
+import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
 import br.edu.safeplace.backend.application.dto.input.AtualizarStatusPlanoInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CriarAcaoPlanoInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
@@ -268,7 +273,7 @@ class SegurancaOcorrenciaPlanoRbacTest {
         @WithMockUser(roles = "SUPERVISOR")
         @DisplayName("Supervisor pode consultar ocorrências")
         void supervisorPodeConsultarOcorrencias() throws Exception {
-            when(registrarOcorrenciaUseCase.listar()).thenReturn(List.of(mockOcorrencia()));
+            when(registrarOcorrenciaUseCase.listar(any(FiltroOcorrenciasDTO.class))).thenReturn(List.of(mockOcorrencia()));
 
             mockMvc.perform(get("/api/ocorrencias"))
                     .andExpect(status().isOk());

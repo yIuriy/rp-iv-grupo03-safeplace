@@ -1,5 +1,10 @@
+/*
+ * Adaptador JPA da trilha de auditoria: converte LogAuditoria em entidade, grava, lista por entidade e
+ * localiza ids registrados por um responsável, filtrando pelo tipo de entidade.
+ */
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
@@ -30,10 +35,11 @@ public class LogAuditoriaJpaAdapter implements LogAuditoriaRepositoryPort {
     }
 
     @Override
-    public List<Integer> buscarIdsPorResponsavelETipoOperacao(String responsavel, String tipoOperacao) {
-        if (responsavel == null || tipoOperacao == null) {
+    public List<Integer> buscarIdsPorResponsavelETipoOperacao(
+            String responsavel, String tipoOperacao, Collection<String> entidades) {
+        if (responsavel == null || tipoOperacao == null || entidades == null || entidades.isEmpty()) {
             return List.of();
         }
-        return jpaRepository.buscarIdsPorResponsavelETipoOperacao(responsavel, tipoOperacao);
+        return jpaRepository.buscarIdsPorResponsavelETipoOperacao(responsavel, tipoOperacao, entidades);
     }
 }

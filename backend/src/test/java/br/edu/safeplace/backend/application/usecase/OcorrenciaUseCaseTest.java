@@ -1,3 +1,7 @@
+/*
+ * Testes unitários do OcorrenciaUseCase com repositório em memória: relato de acidente e incidente,
+ * protocolo CAT, transições de status e visibilidade dos relatos para o Supervisor.
+ */
 package br.edu.safeplace.backend.application.usecase;
 
 import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
@@ -493,7 +497,7 @@ class OcorrenciaUseCaseTest {
                     )
             );
 
-            when(logRepo.buscarIdsPorResponsavelETipoOperacao("supervisor@safeplace.com", "CADASTRO"))
+            when(logRepo.buscarIdsPorResponsavelETipoOperacao("supervisor@safeplace.com", "CADASTRO", OcorrenciaUseCase.ENTIDADES_DE_RELATO))
                     .thenReturn(List.of(1));
 
             List<OcorrenciaOutputDTO> listaSupervisor = useCase.listar();
