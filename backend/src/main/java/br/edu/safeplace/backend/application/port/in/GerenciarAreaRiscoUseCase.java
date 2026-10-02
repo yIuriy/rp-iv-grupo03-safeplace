@@ -1,3 +1,7 @@
+/*
+ * Porta de entrada do mapeamento de áreas de risco (RF05 / UC03): cadastro, atualização, consultas
+ * e histórico de alterações (issue #114).
+ */
 package br.edu.safeplace.backend.application.port.in;
 
 import java.util.List;
@@ -5,6 +9,7 @@ import java.util.List;
 import br.edu.safeplace.backend.application.dto.input.AtualizarAreaRiscoInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarAreaRiscoInputDTO;
 import br.edu.safeplace.backend.application.dto.output.AreaRiscoOutputDTO;
+import br.edu.safeplace.backend.application.dto.output.RegistroHistoricoOutputDTO;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 
 /**
@@ -24,4 +29,10 @@ public interface GerenciarAreaRiscoUseCase {
     List<AreaRiscoOutputDTO> listarPorNivelPerigo(NivelPerigo nivelPerigo);
 
     AreaRiscoOutputDTO buscarPorId(Integer id);
+
+    /**
+     * UC03, cenário alternativo II, passo 4: alterações registradas da área, da mais recente para a
+     * mais antiga, com valor anterior, novo, data, hora e operador.
+     */
+    List<RegistroHistoricoOutputDTO> listarHistorico(Integer id);
 }

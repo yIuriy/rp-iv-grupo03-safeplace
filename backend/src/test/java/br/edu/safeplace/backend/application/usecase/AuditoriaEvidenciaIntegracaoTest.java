@@ -1,3 +1,7 @@
+/*
+ * Testes de evidência de auditoria (RNF05): alteração de área de risco e de colaborador, movimentação
+ * de estoque de EPI e classificação de tarefa, cada uma seguida da consulta do LogAuditoria gravado.
+ */
 package br.edu.safeplace.backend.application.usecase;
 
 import br.edu.safeplace.backend.application.dto.input.AtualizarAreaRiscoInputDTO;
@@ -137,7 +141,11 @@ class AuditoriaEvidenciaIntegracaoTest {
         assertThat(evidencia.getResponsavel()).isEqualTo("gestor.auditor@safeplace.com");
         assertThat(evidencia.getEntidade()).isEqualTo("AreaRisco");
         assertThat(evidencia.getEntidadeId()).isEqualTo(10);
-        assertThat(evidencia.getJustificativa()).isEqualTo("Reclassificação de risco");
+        // Issue #114: a evidência guarda o valor anterior e o novo de cada campo, e depois a justificativa
+        assertThat(evidencia.getJustificativa())
+                .startsWith("Alteração da área de risco: ")
+                .contains("nível de perigo: de \"BAIXO\" para \"ALTO\"")
+                .endsWith("Justificativa: Reclassificação de risco");
         assertThat(evidencia.getDataHora()).isNotNull();
     }
 

@@ -85,6 +85,10 @@ public class SecurityConfig {
                                 .hasRole("GESTOR_SEGURANCA")
                         // UC12 (#106): Supervisor é o ator principal e o Gestor o secundário do empréstimo
                         .requestMatchers("/api/emprestimos/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        // Issue #114: o historico de alteracoes de areas e tarefas e consulta do Gestor de
+                        // Seguranca; precisa vir antes da regra geral de leitura abaixo.
+                        .requestMatchers(HttpMethod.GET, "/api/areas-risco/*/historico", "/api/tarefas/*/historico")
+                                .hasRole("GESTOR_SEGURANCA")
                         // UC03 e UC11: o Gestor de Seguranca mantem o cadastro; o Supervisor e ator
                         // secundario e apenas consulta as diretrizes.
                         .requestMatchers(HttpMethod.GET, "/api/areas-risco/**", "/api/tarefas/**", "/api/setores/**")

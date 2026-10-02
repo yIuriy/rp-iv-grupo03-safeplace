@@ -1,9 +1,14 @@
+// Contratos e chamadas do módulo de tarefas (RF06, UC11): matriz de periculosidade, classificação
+// com responsável técnico e histórico das classificações (#114).
+
 import { http } from '../../shared/api/https'
 import {
   ehNivelPerigo,
+  lerHistorico,
   niveisPerigo,
   rotuloNivelPerigo,
   type NivelPerigo,
+  type RegistroHistorico,
 } from '../areas-risco/api'
 
 export { niveisPerigo, rotuloNivelPerigo, type NivelPerigo }
@@ -75,4 +80,10 @@ export async function classificarTarefa(
 ): Promise<Tarefa> {
   const { data } = await http.patch<unknown>(`/tarefas/${id}/classificacao`, dados)
   return lerTarefa(data)
+}
+
+/** Somente o Gestor de Segurança consulta o histórico; o `SecurityConfig` recusa os demais perfis. */
+export async function listarHistoricoTarefa(id: number, signal?: AbortSignal): Promise<RegistroHistorico[]> {
+  const { data } = await http.get<unknown>(`/tarefas/${id}/historico`, { signal })
+  return lerHistorico(data)
 }

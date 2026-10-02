@@ -1,3 +1,7 @@
+/*
+ * Caso de uso da classificação de periculosidade das tarefas (RF06 / UC11): cadastro, classificação
+ * com responsável técnico e histórico em LogAuditoria (#112) e leitura desse histórico (#114).
+ */
 package br.edu.safeplace.backend.application.usecase;
 
 import java.util.List;
@@ -10,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarTarefaInputDTO;
+import br.edu.safeplace.backend.application.dto.output.RegistroHistoricoOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.TarefaOutputDTO;
 import br.edu.safeplace.backend.application.port.in.ClassificarTarefaUseCase;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
@@ -102,6 +107,18 @@ public class TarefaUseCase implements ClassificarTarefaUseCase {
         registrarClassificacao(registro);
 
         return TarefaOutputDTO.deDominio(salva);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RegistroHistoricoOutputDTO> listarHistorico(Integer id) {
+        buscarTarefa(id);
+        if (logAuditoriaRepositoryPort == null) {
+            return List.of();
+        }
+        return logAuditoriaRepositoryPort.listarPorEntidade(ENTIDADE, id).stream()
+                .map(RegistroHistoricoOutputDTO::deDominio)
+                .toList();
     }
 
     private void registrarClassificacao(RegistroClassificacaoTarefa registro) {

@@ -1,5 +1,6 @@
-// Contratos e chamadas do módulo de áreas de risco (RF05, UC03): áreas, setores físicos e o
-// vocabulário NivelPerigo. Os leitores validam a resposta da API antes de entregá-la às telas.
+// Contratos e chamadas do módulo de áreas de risco (RF05, UC03): áreas, setores físicos, o
+// vocabulário NivelPerigo e o histórico de alterações (#114). Os leitores validam a resposta da API
+// antes de entregá-la às telas.
 
 import { http } from '../../shared/api/https'
 import type { FeedbackTone } from '../../shared/components'
@@ -80,6 +81,18 @@ export type DadosAtualizacaoAreaRisco = {
   justificativa?: string
 }
 
+/**
+ * Entrada do histórico de alterações no formato de `RegistroHistoricoResponse` (#114), usada por
+ * áreas de risco e tarefas. `descricao` traz o que mudou, com valor anterior e novo.
+ */
+export type RegistroHistorico = {
+  id: number
+  tipoOperacao: string
+  dataHora: string
+  responsavel: string
+  descricao: string | null
+}
+
 export function ehNivelPerigo(valor: unknown): valor is NivelPerigo {
   return typeof valor === 'string' && niveisPerigo.includes(valor as NivelPerigo)
 }
@@ -129,6 +142,32 @@ function lerAreaRisco(dado: unknown): AreaRisco {
   }
 }
 
+function lerRegistroHistorico(dado: unknown): RegistroHistorico {
+  if (dado === null || typeof dado !== 'object') throw new Error('Registro de histórico inválido na resposta')
+  const b = dado as Record<string, unknown>
+  if (
+    typeof b.id !== 'number' ||
+    typeof b.tipoOperacao !== 'string' ||
+    typeof b.dataHora !== 'string' ||
+    typeof b.responsavel !== 'string'
+  ) {
+    throw new Error('Registro de histórico incompatível com contrato da API')
+  }
+  return {
+    id: b.id,
+    tipoOperacao: b.tipoOperacao,
+    dataHora: b.dataHora,
+    responsavel: b.responsavel,
+    descricao: typeof b.descricao === 'string' ? b.descricao : null,
+  }
+}
+
+/** Valida a lista devolvida pelas rotas `/historico` de áreas de risco e tarefas. */
+export function lerHistorico(data: unknown): RegistroHistorico[] {
+  if (!Array.isArray(data)) throw new Error('Esperava uma lista de registros de histórico')
+  return data.map(lerRegistroHistorico)
+}
+
 function lerSetor(dado: unknown): Setor {
   if (dado === null || typeof dado !== 'object') throw new Error('Setor inválido na resposta')
   const b = dado as Record<string, unknown>
@@ -163,6 +202,12 @@ export async function cadastrarAreaRisco(dados: DadosCadastroAreaRisco): Promise
 export async function atualizarAreaRisco(id: number, dados: DadosAtualizacaoAreaRisco): Promise<AreaRisco> {
   const { data } = await http.put<unknown>(`/areas-risco/${id}`, dados)
   return lerAreaRisco(data)
+}
+
+/** Somente o Gestor de Segurança consulta o histórico; o `SecurityConfig` recusa os demais perfis. */
+export async function listarHistoricoAreaRisco(id: number, signal?: AbortSignal): Promise<RegistroHistorico[]> {
+  const { data } = await http.get<unknown>(`/areas-risco/${id}/historico`, { signal })
+  return lerHistorico(data)
 }
 
 export async function listarSetores(signal?: AbortSignal): Promise<Setor[]> {

@@ -1,8 +1,17 @@
+/*
+ * Área de risco do UC03: delimitação de perigo com agentes, limites e EPIs obrigatórios de acesso.
+ * Valida cadastro e atualização (RN1) e compara versões para o histórico de alterações (#114).
+ */
 package br.edu.safeplace.backend.domain.area_risco;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import br.edu.safeplace.backend.domain.area_risco.exception.AreaRiscoSemEpiObrigatorioException;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
@@ -161,6 +170,59 @@ public class AreaRisco {
                 novosAgentes != null ? novosAgentes : this.agentesRisco,
                 novosLimites != null ? novosLimites : this.limites,
                 novosEpis);
+    }
+
+    /**
+     * UC03, cenário alternativo II, passo 4 ("registrar nova versão no histórico"), e US05, regra 4:
+     * compara esta versão com a {@code atualizada} e devolve cada campo que mudou, com o valor
+     * anterior e o novo. Sem isso, a atualização sobrescreve a linha e o valor antigo se perde.
+     *
+     * @param descreverSetor nome do setor a partir do id; a área guarda só o id do {@link Setor}
+     */
+    public List<AlteracaoAreaRisco> compararCom(AreaRisco atualizada, Function<Integer, String> descreverSetor) {
+        List<AlteracaoAreaRisco> alteracoes = new ArrayList<>();
+        registrarSeMudou(alteracoes, "nome", nome, atualizada.nome);
+        registrarSeMudou(alteracoes, "descrição", descricao, atualizada.descricao);
+        registrarSeMudou(alteracoes, "nível de perigo", nomeDoNivel(nivelPerigo), nomeDoNivel(atualizada.nivelPerigo));
+        if (!Objects.equals(setorId, atualizada.setorId)) {
+            alteracoes.add(new AlteracaoAreaRisco("setor",
+                    descreverSetorOuNulo(setorId, descreverSetor),
+                    descreverSetorOuNulo(atualizada.setorId, descreverSetor)));
+        }
+        registrarSeMudou(alteracoes, "agentes de risco", juntar(agentesRisco), juntar(atualizada.agentesRisco));
+        registrarSeMudou(alteracoes, "limites", limites, atualizada.limites);
+        if (!idsDosEpis().equals(atualizada.idsDosEpis())) {
+            alteracoes.add(new AlteracaoAreaRisco("EPIs obrigatórios", nomesDosEpis(), atualizada.nomesDosEpis()));
+        }
+        return alteracoes;
+    }
+
+    private static void registrarSeMudou(List<AlteracaoAreaRisco> alteracoes, String campo, String anterior, String novo) {
+        if (!Objects.equals(anterior, novo)) {
+            alteracoes.add(new AlteracaoAreaRisco(campo, anterior, novo));
+        }
+    }
+
+    private static String nomeDoNivel(NivelPerigo nivel) {
+        return nivel != null ? nivel.name() : null;
+    }
+
+    private static String descreverSetorOuNulo(Integer id, Function<Integer, String> descreverSetor) {
+        return id != null ? descreverSetor.apply(id) : null;
+    }
+
+    private static String juntar(List<String> valores) {
+        return valores.isEmpty() ? null : String.join(", ", valores);
+    }
+
+    private Set<Integer> idsDosEpis() {
+        return episObrigatorios.stream().map(Epi::getId).filter(Objects::nonNull)
+                .collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    private String nomesDosEpis() {
+        return episObrigatorios.isEmpty() ? null
+                : episObrigatorios.stream().map(Epi::getNome).collect(Collectors.joining(", "));
     }
 
     /**

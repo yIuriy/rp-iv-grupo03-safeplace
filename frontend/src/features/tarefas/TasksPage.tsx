@@ -1,3 +1,6 @@
+// Aba de tarefas (RF06, UC11): matriz de periculosidade com busca e filtro por grau. O Gestor
+// cadastra, classifica e consulta o histórico de cada tarefa (#114); o Supervisor só consulta.
+
 import { useState, useTransition, type FormEvent } from 'react'
 import {
   Badge,
@@ -21,6 +24,7 @@ import {
   type Tarefa,
 } from './api'
 import { ClassificarTarefaDialog } from './ClassificarTarefaDialog'
+import { HistoricoTarefaDialog } from './HistoricoTarefaDialog'
 import { TarefaFormDialog } from './TarefaFormDialog'
 import './tarefas.css'
 
@@ -49,6 +53,7 @@ export function TasksPage() {
 
   const [formularioAberto, setFormularioAberto] = useState(false)
   const [tarefaClassificando, setTarefaClassificando] = useState<Tarefa | null>(null)
+  const [tarefaHistorico, setTarefaHistorico] = useState<Tarefa | null>(null)
   const [mensagemSucesso, setMensagemSucesso] = useState('')
 
   const consultaTarefas = useConsulta('tarefas', listarTarefas)
@@ -220,15 +225,24 @@ export function TasksPage() {
                         </td>
                         {gestor && (
                           <td>
-                            <Button
-                              variant="secondary"
-                              onClick={() => setTarefaClassificando(tarefa)}
-                              aria-label={`${
-                                tarefa.classificada ? 'Reavaliar' : 'Classificar'
-                              } risco da tarefa: ${tarefa.descricao}`}
-                            >
-                              {tarefa.classificada ? 'Reavaliar risco' : 'Classificar'}
-                            </Button>
+                            <div className="sp-acoes-tarefa">
+                              <Button
+                                variant="secondary"
+                                onClick={() => setTarefaClassificando(tarefa)}
+                                aria-label={`${
+                                  tarefa.classificada ? 'Reavaliar' : 'Classificar'
+                                } risco da tarefa: ${tarefa.descricao}`}
+                              >
+                                {tarefa.classificada ? 'Reavaliar risco' : 'Classificar'}
+                              </Button>
+                              <Button
+                                variant="quiet"
+                                onClick={() => setTarefaHistorico(tarefa)}
+                                aria-label={`Ver histórico da tarefa: ${tarefa.descricao}`}
+                              >
+                                Histórico
+                              </Button>
+                            </div>
                           </td>
                         )}
                       </TableRow>
@@ -250,6 +264,11 @@ export function TasksPage() {
           tarefa={tarefaClassificando}
           aoFechar={() => setTarefaClassificando(null)}
           aoSalvar={aoSalvarClassificacao}
+        />
+
+        <HistoricoTarefaDialog
+          tarefa={tarefaHistorico}
+          aoFechar={() => setTarefaHistorico(null)}
         />
 
         <Toast
