@@ -1,8 +1,10 @@
 // Consulta de uma área de risco: setor físico, agentes, limites e EPIs obrigatórios para acesso
-// (UC03). O Gestor pode seguir para a edição; o Supervisor apenas consulta.
+// (UC03). O Gestor pode seguir para a edição e abrir o histórico de alterações (#114); o
+// Supervisor apenas consulta.
 
 import { Alert, Badge, Button, Dialog } from '../../shared/components'
 import { descreverSetor, rotuloNivelPerigo, tomDoNivelPerigo, type AreaRisco, type Setor } from './api'
+import { HistoricoAreaRisco } from './HistoricoAlteracoes'
 
 export function AreaRiscoDetalhesDialog({
   area,
@@ -87,6 +89,8 @@ export function AreaRiscoDetalhesDialog({
           Estes EPIs são exigidos para qualquer pessoa que acesse ou circule neste setor físico.
           Não se trata do recálculo automático de vínculos de proteção por função (RF12).
         </Alert>
+
+        {podeEditar && <HistoricoAreaRisco key={area.id} areaId={area.id} />}
 
         <div className="sp-dialog-actions">
           <Button variant="secondary" onClick={aoFechar}>

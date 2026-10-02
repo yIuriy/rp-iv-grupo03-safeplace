@@ -1,3 +1,6 @@
+/* Estilos da aba de tarefas (RF06, UC11): busca, matriz, situação da classificação e as ações do
+   Gestor em cada linha (classificar e ver histórico, #114). */
+
 .sp-busca-filtros {
   display: flex;
   align-items: flex-end;
@@ -51,4 +54,10 @@
 
 .sp-responsavel-classificacao {
   display: block;
+}
+
+.sp-acoes-tarefa {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }

@@ -1,0 +1,19 @@
+/* Estilos do histórico de alterações (#114), usado no detalhe da área de risco e na janela de
+   histórico da tarefa: botão que abre a lista e a lista sem marcadores de HistoryItem. */
+
+.sp-historico-area {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.sp-historico-area > div {
+  align-self: stretch;
+}
+
+.sp-historico-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
