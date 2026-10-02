@@ -106,7 +106,7 @@ docker compose up -d backend
 | Contrato da API | [OpenAPI](http://localhost:8080/v3/api-docs) | Deve retornar a descrição da API em JSON. |
 | Banco | `localhost:5432` | Banco `safeplace`, usuário `safeplace` e senha de desenvolvimento `safeplace`, conforme o Compose. |
 
-Para entrar na interface é preciso existir um Gestor de Segurança na tabela `usuarios`. O repositório ainda não traz essa carga inicial; a pendência está registrada na [especificação do MVP, seção 3.1](docs/mvp/especificacao-mvp-arquitetura.md#31-pessoas-cadastradas-fluxo-de-acesso-e-ausência-de-autocadastro) e no [README do frontend](frontend/README.md#primeiro-acesso).
+Para entrar na interface é preciso existir um Gestor de Segurança na tabela `usuarios`, conforme a carga inicial prevista na [especificação do MVP, seção 3.1](docs/mvp/especificacao-mvp-arquitetura.md#31-pessoas-cadastradas-fluxo-de-acesso-e-ausência-de-autocadastro). A migração [V17](backend/src/main/resources/db/migration/V17__inserir_usuarios_demonstracao.sql) cria contas locais de demonstração de Gestor, Supervisor e Colaborador; o primeiro comentário dessa migração informa a senha dos dois perfis com acesso. Os detalhes estão no [README do frontend](frontend/README.md#primeiro-acesso).
 
 Para encerrar os serviços mantendo os dados do volume do PostgreSQL:
 

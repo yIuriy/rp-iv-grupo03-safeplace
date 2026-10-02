@@ -50,11 +50,19 @@ A tela `/usuarios` aplica a matriz de RF23 que o `SecurityConfig` do backend tam
 - A edição (issue #122) reaproveita o formulário do cadastro com os dados atuais. Só nome, data de nascimento e e-mail são enviados; o CPF aparece somente leitura e não vai no corpo, porque a alteração de CPF e a desativação aguardam decisão do grupo (especificação do MVP, seção 11.1). Perfil e senha nunca mudam por esse caminho: a API recusa esses campos com 400. Um 404 na edição indica que o cadastro mudou de perfil ou não existe mais.
 - Implementação em `src/features/usuarios/`: `api.ts` (contratos e chamadas), `UsersPage.tsx` (abas por perfil), `SupervisoresPainel.tsx`, `ColaboradoresPainel.tsx`, `CadastroDialog.tsx`, `PessoaFormulario.tsx` e `validacaoPessoa.ts`.
 
-Fora desta entrega: consulta offline de RNF08 (issues #105 e #127), a carga inicial do primeiro Gestor, descrita a seguir, e a autoria das alterações, que depende do módulo de auditoria (issue #121).
+Fora desta entrega: consulta offline de RNF08 (issues #105 e #127) e a autoria das alterações, que depende do módulo de auditoria (issue #121).
 
 ### Primeiro acesso
 
-A especificação do MVP prevê que o primeiro Gestor de Segurança venha de carga inicial no banco, mas o repositório ainda não traz essa carga nem uma migração com esse registro. Para entrar na interface em um banco novo é preciso inserir um Gestor com hash BCrypt na tabela `usuarios`. A forma dessa carga é decisão pendente do grupo.
+A especificação do MVP prevê que o primeiro Gestor de Segurança venha de carga inicial no banco. A migração [V17](../backend/src/main/resources/db/migration/V17__inserir_usuarios_demonstracao.sql) cria três contas locais de demonstração; a V18 e a V20 corrigem seus CPFs.
+
+| Perfil | E-mail | Acesso |
+| --- | --- | --- |
+| Gestor de Segurança | `gestor.demo@safeplace.com` | Entra na interface |
+| Supervisor | `supervisor.demo@safeplace.com` | Entra na interface |
+| Colaborador | `colaborador.demo@safeplace.com` | Sem senha nem acesso (RF23) |
+
+O primeiro comentário da V17 informa a senha do Gestor e do Supervisor, a mesma para os dois; o banco guarda só o hash BCrypt. A migração não sobrescreve cadastros que já usem esses CPFs ou e-mails.
 
 ### Empréstimos, devoluções e projeções
 
@@ -91,7 +99,7 @@ A aba "Setores físicos" de `/areas-risco` (issue #174) cobre o passo 2 do UC03,
 - A coluna "Áreas de risco" conta as áreas que apontam para o setor (associação entre `AreaRisco` e `Setor` no diagrama de classes). Se as áreas não carregarem, a contagem aparece como indisponível, e não como zero.
 - O grau de perigo do setor é lido pela projeção de substituição de EPIs (UC10): a análise associa um EPI ao setor cujo nome é igual à localização do EPI. Por isso a ajuda do campo pede o mesmo nome usado na localização dos EPIs.
 - A consulta usa a cópia offline por conta já existente nas áreas de risco; sem conexão, o cadastro fica desabilitado.
-- Fora desta entrega: edição e exclusão de setor, que a API não oferece, e a carga inicial de setores, que segue a mesma pendência do primeiro Gestor.
+- Fora desta entrega: edição e exclusão de setor, que a API não oferece, e a carga inicial de setores, que depende de decisão do grupo.
 - Implementação em `src/features/areas-risco/`: `SetoresPainel.tsx`, `SetorFormDialog.tsx` e `validacaoSetor.ts`, além do contrato `Setor` e de `cadastrarSetor` em `api.ts`.
 
 ### Histórico de alterações
