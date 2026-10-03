@@ -5,6 +5,7 @@ import java.util.List;
 import br.edu.safeplace.backend.application.dto.capacitacao.PendenciasColaboradorDTO;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
+import br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
 
 public interface ConsultarCapacitacaoUseCase {
@@ -16,4 +17,8 @@ public interface ConsultarCapacitacaoUseCase {
     List<String> verificarImpedimentosParaEpi(Integer colaboradorId, Integer epiId);
     List<String> verificarImpedimentosParaTarefa(Integer colaboradorId, Integer tarefaId);
     boolean colaboradorPossuiPendencias(Integer colaboradorId, Integer tarefaId);
+
+    List<Certificacao> listarTodasCertificacoes();
+    List<Treinamento> listarTodosTreinamentos();
+    List<Integer> listarColaboradoresPorStatusCertificacao(StatusCertificacao status);
 }
