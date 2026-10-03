@@ -1,6 +1,7 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -15,10 +16,15 @@ public class TarefaJpaAdapter implements TarefaRepositoryPort {
 
     private final TarefaJpaRepository tarefaRepository;
     private final UsuarioJpaRepositorio usuarioRepository;
+    private final AreaRiscoJpaRepository areaRiscoRepository;
+    private final SetorJpaRepository setorRepository;
 
-    public TarefaJpaAdapter(TarefaJpaRepository tarefaRepository, UsuarioJpaRepositorio usuarioRepository) {
+    public TarefaJpaAdapter(TarefaJpaRepository tarefaRepository, UsuarioJpaRepositorio usuarioRepository,
+            AreaRiscoJpaRepository areaRiscoRepository, SetorJpaRepository setorRepository) {
         this.tarefaRepository = tarefaRepository;
         this.usuarioRepository = usuarioRepository;
+        this.areaRiscoRepository = areaRiscoRepository;
+        this.setorRepository = setorRepository;
     }
 
     @Override
@@ -49,7 +55,9 @@ public class TarefaJpaAdapter implements TarefaRepositoryPort {
                 domain.getDescricao(),
                 domain.getNivelPerigo() == null ? null : domain.getNivelPerigo().name(),
                 domain.getDataClassificacao(),
-                carregarGestor(domain.getResponsavelClassificacao()));
+                carregarGestor(domain.getResponsavelClassificacao()),
+                carregarAreaRisco(domain.getAreaRiscoId()),
+                carregarSetores(domain.getSetoresIds()));
     }
 
     private GestorDeSegurancaEntidade carregarGestor(GestorDeSeguranca gestor) {
@@ -63,12 +71,31 @@ public class TarefaJpaAdapter implements TarefaRepositoryPort {
                         "Responsável técnico não encontrado entre os gestores de segurança: " + gestor.getId()));
     }
 
+    private AreaRiscoEntity carregarAreaRisco(Integer areaRiscoId) {
+        return areaRiscoId == null ? null : areaRiscoRepository.findById(areaRiscoId)
+                .orElseThrow(() -> new IllegalArgumentException("Área de risco não encontrada com id: " + areaRiscoId));
+    }
+
+    private List<SetorEntity> carregarSetores(List<Integer> setoresIds) {
+        if (setoresIds == null || setoresIds.isEmpty()) {
+            return List.of();
+        }
+        List<Integer> ids = setoresIds.stream().filter(Objects::nonNull).distinct().toList();
+        List<SetorEntity> setores = setorRepository.findAllById(ids);
+        if (setores.size() != ids.size()) {
+            throw new IllegalArgumentException("Um ou mais setores informados não existem.");
+        }
+        return setores;
+    }
+
     private Tarefa toDomain(TarefaEntity entity) {
         return new Tarefa(
                 entity.getId(),
                 entity.getDescricao(),
                 entity.getNivelPerigo() == null ? null : NivelPerigo.valueOf(entity.getNivelPerigo()),
                 entity.getDataClassificacao(),
-                entity.getResponsavelClassificacao() == null ? null : entity.getResponsavelClassificacao().paraDominio());
+                entity.getResponsavelClassificacao() == null ? null : entity.getResponsavelClassificacao().paraDominio(),
+                entity.getAreaRisco() == null ? null : entity.getAreaRisco().getId(),
+                entity.getSetores().stream().map(SetorEntity::getId).toList());
     }
 }

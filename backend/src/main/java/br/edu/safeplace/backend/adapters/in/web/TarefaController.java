@@ -101,7 +101,10 @@ public class TarefaController {
 
     @PostMapping("/{id}/alocacoes")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Aloca um colaborador em uma tarefa classificada, validando impedimentos normativos de capacitação")
+    @Operation(summary = "Confirma a alocação de um colaborador em tarefa classificada",
+            description = "Mutação final: consulta novamente as exigências de capacitação da tarefa e as "
+                    + "certificações/treinamentos do colaborador. Uma consulta prévia de aptidão não autoriza "
+                    + "esta operação futura por si só.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Alocação confirmada e registrada"),
             @ApiResponse(responseCode = "400", description = "Dados da alocação inválidos"),
@@ -126,7 +129,9 @@ public class TarefaController {
     }
 
     @GetMapping("/{id}/aptidao/{colaboradorId}")
-    @Operation(summary = "Consulta preventiva de aptidão de um colaborador para uma tarefa")
+    @Operation(summary = "Consulta preventiva de aptidão de um colaborador para uma tarefa",
+            description = "Operação somente de leitura. O resultado é informativo; a confirmação de alocação "
+                    + "executa nova validação.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Diagnóstico de aptidão e pendências retornado com sucesso"),
             @ApiResponse(responseCode = "404", description = "Tarefa ou colaborador não encontrado")

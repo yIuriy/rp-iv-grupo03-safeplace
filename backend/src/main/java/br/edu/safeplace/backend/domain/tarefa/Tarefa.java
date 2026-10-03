@@ -1,6 +1,7 @@
 package br.edu.safeplace.backend.domain.tarefa;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.tarefa.exception.TarefaSemClassificacaoException;
@@ -29,6 +30,8 @@ public class Tarefa {
     private NivelPerigo nivelPerigo;
     private LocalDateTime dataClassificacao;
     private GestorDeSeguranca responsavelClassificacao;
+    private final Integer areaRiscoId;
+    private final List<Integer> setoresIds;
 
     /**
      * Reconstitui uma tarefa gravada. {@code responsavelClassificacao} é nulo em classificações
@@ -36,6 +39,11 @@ public class Tarefa {
      */
     public Tarefa(Integer id, String descricao, NivelPerigo nivelPerigo, LocalDateTime dataClassificacao,
             GestorDeSeguranca responsavelClassificacao) {
+        this(id, descricao, nivelPerigo, dataClassificacao, responsavelClassificacao, null, List.of());
+    }
+
+    public Tarefa(Integer id, String descricao, NivelPerigo nivelPerigo, LocalDateTime dataClassificacao,
+            GestorDeSeguranca responsavelClassificacao, Integer areaRiscoId, List<Integer> setoresIds) {
         if (descricao == null || descricao.isBlank()) {
             throw new IllegalArgumentException("Descrição da tarefa é obrigatória.");
         }
@@ -47,6 +55,8 @@ public class Tarefa {
                 ? LocalDateTime.now()
                 : dataClassificacao;
         this.responsavelClassificacao = nivelPerigo != null ? responsavelClassificacao : null;
+        this.areaRiscoId = areaRiscoId;
+        this.setoresIds = setoresIds == null ? List.of() : setoresIds.stream().distinct().toList();
     }
 
     public Tarefa(Integer id, String descricao, NivelPerigo nivelPerigo, LocalDateTime dataClassificacao) {
@@ -59,6 +69,10 @@ public class Tarefa {
      */
     public static Tarefa cadastrar(String descricao) {
         return new Tarefa(null, descricao, null, null, null);
+    }
+
+    public static Tarefa cadastrarComRelacoes(String descricao, Integer areaRiscoId, List<Integer> setoresIds) {
+        return new Tarefa(null, descricao, null, null, null, areaRiscoId, setoresIds);
     }
 
     /**
@@ -126,5 +140,13 @@ public class Tarefa {
 
     public GestorDeSeguranca getResponsavelClassificacao() {
         return responsavelClassificacao;
+    }
+
+    public Integer getAreaRiscoId() {
+        return areaRiscoId;
+    }
+
+    public List<Integer> getSetoresIds() {
+        return setoresIds;
     }
 }

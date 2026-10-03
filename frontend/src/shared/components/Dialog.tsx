@@ -27,7 +27,7 @@ export function Dialog({ open, title, description, onClose, children, className 
   }, [open])
 
   return <dialog ref={ref} className={`sp-dialog ${className}`}
-    aria-labelledby={`${id}-title`} aria-describedby={description ? `${id}-description` : undefined}
+    aria-modal="true" aria-labelledby={`${id}-title`} aria-describedby={description ? `${id}-description` : undefined}
     onKeyDown={event => {
       if (event.key !== 'Tab') return
       const dialog = event.currentTarget

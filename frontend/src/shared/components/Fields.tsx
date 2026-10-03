@@ -32,7 +32,8 @@ function Field({ label, helper, error, id, messageId, className = '', hiddenLabe
   return <div className={`sp-field ${className}`}>
     <label className={hiddenLabel ? 'sp-sr-only' : 'sp-field-label'} htmlFor={id}>{label}</label>
     {children}
-    {(error || helper) && <p id={messageId} className={`sp-field-message ${error ? 'sp-field-message--error' : ''}`}>
+    {(error || helper) && <p id={messageId} role={error ? 'alert' : undefined}
+      className={`sp-field-message ${error ? 'sp-field-message--error' : ''}`}>
       {error || helper}
     </p>}
   </div>

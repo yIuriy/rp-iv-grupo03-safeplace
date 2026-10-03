@@ -13,14 +13,13 @@ const navigation: { path: string; label: string; icon: IconName }[] = [
   { path: '/usuarios', label: 'Usuários', icon: 'users' },
   { path: '/ocorrencias', label: 'Ocorrências', icon: 'clipboard' },
   { path: '/epis', label: 'EPIs', icon: 'package' },
-  { path: '/estoque', label: 'Estoque de EPIs', icon: 'clipboard' },
   { path: '/emprestimos', label: 'Empréstimos de EPIs', icon: 'calendar' },
   { path: '/areas-risco', label: 'Áreas de risco', icon: 'map-pin' },
   { path: '/tarefas', label: 'Tarefas', icon: 'check-circle' },
 ]
 
 export function AppLayout() {
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const previousPath = useRef(pathname)
   const { sair } = useAutenticacao()
   const sessao = useSessaoAtiva()
@@ -28,13 +27,16 @@ export function AppLayout() {
   useEffect(() => {
     const previousTitle = document.title
     const currentPage = navigation.find(item => matchPath(item.path, pathname))
-    document.title = `${currentPage?.label ?? 'Página não encontrada'} | SafePlace`
+    const titulo = pathname === '/epis'
+      ? `EPIs — ${new URLSearchParams(search).get('aba') === 'manutencao' ? 'Manutenção' : 'Catálogo e estoque'}`
+      : currentPage?.label ?? 'Página não encontrada'
+    document.title = `${titulo} | SafePlace`
     if (previousPath.current !== pathname) {
       document.getElementById('main-content')?.focus()
       previousPath.current = pathname
     }
     return () => { document.title = previousTitle }
-  }, [pathname])
+  }, [pathname, search])
 
   return <AppShell roleLabel={`${sessao.nome} · ${rotuloDoPerfil[sessao.perfil]}`}
     actions={<Button variant="quiet" onClick={sair}>Sair</Button>}

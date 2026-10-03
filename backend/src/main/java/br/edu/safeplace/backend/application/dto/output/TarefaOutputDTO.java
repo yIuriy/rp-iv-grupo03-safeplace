@@ -1,6 +1,7 @@
 package br.edu.safeplace.backend.application.dto.output;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.tarefa.Tarefa;
@@ -13,11 +14,20 @@ public record TarefaOutputDTO(
         boolean classificada,
         LocalDateTime dataClassificacao,
         Integer responsavelClassificacaoId,
-        String responsavelClassificacaoNome) {
+        String responsavelClassificacaoNome,
+        Integer areaRiscoId,
+        List<Integer> setoresIds) {
 
     public TarefaOutputDTO(Integer id, String descricao, NivelPerigo nivelPerigo, boolean classificada,
             LocalDateTime dataClassificacao) {
-        this(id, descricao, nivelPerigo, classificada, dataClassificacao, null, null);
+        this(id, descricao, nivelPerigo, classificada, dataClassificacao, null, null, null, List.of());
+    }
+
+    public TarefaOutputDTO(Integer id, String descricao, NivelPerigo nivelPerigo, boolean classificada,
+            LocalDateTime dataClassificacao, Integer responsavelClassificacaoId,
+            String responsavelClassificacaoNome) {
+        this(id, descricao, nivelPerigo, classificada, dataClassificacao, responsavelClassificacaoId,
+                responsavelClassificacaoNome, null, List.of());
     }
 
     public static TarefaOutputDTO deDominio(Tarefa tarefa) {
@@ -29,6 +39,8 @@ public record TarefaOutputDTO(
                 tarefa.estaClassificada(),
                 tarefa.getDataClassificacao(),
                 responsavel != null ? responsavel.getId() : null,
-                responsavel != null ? responsavel.getNome() : null);
+                responsavel != null ? responsavel.getNome() : null,
+                tarefa.getAreaRiscoId(),
+                tarefa.getSetoresIds());
     }
 }

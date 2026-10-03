@@ -51,7 +51,7 @@ test('supports direct URLs, browser history and recovery from unknown routes', a
   await expect(page.getByRole('heading', { name: 'Tarefas', exact: true })).toBeVisible()
   await page.getByRole('link', { name: 'EPIs', exact: true }).click()
   await expect(page.getByRole('main')).toBeFocused()
-  await expect(page).toHaveTitle('EPIs | SafePlace')
+  await expect(page).toHaveTitle('EPIs — Catálogo e estoque | SafePlace')
   await page.goBack()
   await expect(page.getByRole('heading', { name: 'Tarefas', exact: true })).toBeVisible()
   await page.goForward()

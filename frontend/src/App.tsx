@@ -9,8 +9,7 @@ import { ExigirSessao } from './features/autenticacao/ExigirSessao'
 import { LoginPage } from './features/autenticacao/LoginPage'
 import { UsersPage } from './features/usuarios/UsersPage'
 import { OccurrencesPage } from './features/ocorrencias/OccurrencesPage'
-import { EpiPage } from './features/epis/EpiPage'
-import { EstoquePage } from './features/estoque/EstoquePage'
+import { EpisUnificadosPage } from './features/epis/EpisUnificadosPage'
 import { EmprestimosPage } from './features/emprestimos/EmprestimosPage'
 import { RiskAreasPage } from './features/areas-risco/RiskAreasPage'
 import { TasksPage } from './features/tarefas/TasksPage'
@@ -25,8 +24,8 @@ function App() {
         <Route index element={<Navigate to="/usuarios" replace />} />
         <Route path="usuarios" element={<UsersPage />} />
         <Route path="ocorrencias" element={<OccurrencesPage />} />
-        <Route path="epis" element={<EpiPage />} />
-        <Route path="estoque" element={<EstoquePage />} />
+        <Route path="epis" element={<EpisUnificadosPage />} />
+        <Route path="estoque" element={<Navigate to="/epis" replace />} />
         <Route path="emprestimos" element={<EmprestimosPage />} />
         <Route path="areas-risco" element={<RiskAreasPage />} />
         <Route path="tarefas" element={<TasksPage />} />

@@ -1,6 +1,8 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import jakarta.persistence.*;
 
@@ -25,16 +27,32 @@ public class TarefaEntity {
     @JoinColumn(name = "responsavel_classificacao_id")
     private GestorDeSegurancaEntidade responsavelClassificacao;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "area_risco_id")
+    private AreaRiscoEntity areaRisco;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "tarefas_setores", joinColumns = @JoinColumn(name = "tarefa_id"),
+            inverseJoinColumns = @JoinColumn(name = "setor_id"))
+    private List<SetorEntity> setores = new ArrayList<>();
+
     public TarefaEntity() {
     }
 
     public TarefaEntity(Integer id, String descricao, String nivelPerigo, LocalDateTime dataClassificacao,
             GestorDeSegurancaEntidade responsavelClassificacao) {
+        this(id, descricao, nivelPerigo, dataClassificacao, responsavelClassificacao, null, List.of());
+    }
+
+    public TarefaEntity(Integer id, String descricao, String nivelPerigo, LocalDateTime dataClassificacao,
+            GestorDeSegurancaEntidade responsavelClassificacao, AreaRiscoEntity areaRisco, List<SetorEntity> setores) {
         this.id = id;
         this.descricao = descricao;
         this.nivelPerigo = nivelPerigo;
         this.dataClassificacao = dataClassificacao;
         this.responsavelClassificacao = responsavelClassificacao;
+        this.areaRisco = areaRisco;
+        this.setores = setores != null ? new ArrayList<>(setores) : new ArrayList<>();
     }
 
     public Integer getId() {
@@ -55,5 +73,13 @@ public class TarefaEntity {
 
     public GestorDeSegurancaEntidade getResponsavelClassificacao() {
         return responsavelClassificacao;
+    }
+
+    public AreaRiscoEntity getAreaRisco() {
+        return areaRisco;
+    }
+
+    public List<SetorEntity> getSetores() {
+        return setores;
     }
 }
