@@ -67,7 +67,8 @@ public class TarefaUseCase implements ClassificarTarefaUseCase {
     @Transactional
     public TarefaOutputDTO cadastrarTarefa(CadastrarTarefaInputDTO inputDTO) {
         validarRelacoes(inputDTO.areaRiscoId(), inputDTO.setoresIds());
-        Tarefa novaTarefa = Tarefa.cadastrar(inputDTO.descricao(), inputDTO.areaRiscoId(), inputDTO.setoresIds());
+        Tarefa novaTarefa = Tarefa.cadastrarComRelacoes(
+                inputDTO.descricao(), inputDTO.areaRiscoId(), inputDTO.setoresIds());
         GestorDeSeguranca responsavel = null;
         if (inputDTO.nivelPerigo() != null) {
             responsavel = resolverResponsavelTecnico();

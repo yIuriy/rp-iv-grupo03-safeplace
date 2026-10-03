@@ -71,7 +71,7 @@ public class Tarefa {
         return new Tarefa(null, descricao, null, null, null);
     }
 
-    public static Tarefa cadastrar(String descricao, Integer areaRiscoId, List<Integer> setoresIds) {
+    public static Tarefa cadastrarComRelacoes(String descricao, Integer areaRiscoId, List<Integer> setoresIds) {
         return new Tarefa(null, descricao, null, null, null, areaRiscoId, setoresIds);
     }
 
