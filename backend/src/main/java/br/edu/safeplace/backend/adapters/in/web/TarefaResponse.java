@@ -1,6 +1,7 @@
 package br.edu.safeplace.backend.adapters.in.web;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import br.edu.safeplace.backend.application.dto.output.TarefaOutputDTO;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
@@ -20,7 +21,11 @@ public record TarefaResponse(
 
         @Schema(description = "Identificador do Gestor de Segurança responsável técnico pela última classificação. Nulo em classificações anteriores ao registro de autoria.", example = "1") Integer responsavelClassificacaoId,
 
-        @Schema(description = "Nome do responsável técnico pela última classificação", example = "Gestor Demonstração") String responsavelClassificacaoNome) {
+        @Schema(description = "Nome do responsável técnico pela última classificação", example = "Gestor Demonstração") String responsavelClassificacaoNome,
+
+        @Schema(description = "Área de risco opcional vinculada à tarefa", example = "3") Integer areaRiscoId,
+
+        @Schema(description = "Setores físicos vinculados à tarefa", example = "[1, 2]") List<Integer> setoresIds) {
 
     public static TarefaResponse fromOutputDTO(TarefaOutputDTO dto) {
         return new TarefaResponse(
@@ -30,6 +35,8 @@ public record TarefaResponse(
                 dto.classificada(),
                 dto.dataClassificacao(),
                 dto.responsavelClassificacaoId(),
-                dto.responsavelClassificacaoNome());
+                dto.responsavelClassificacaoNome(),
+                dto.areaRiscoId(),
+                dto.setoresIds());
     }
 }

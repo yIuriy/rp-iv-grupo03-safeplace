@@ -18,6 +18,8 @@ import br.edu.safeplace.backend.application.dto.output.RegistroHistoricoOutputDT
 import br.edu.safeplace.backend.application.dto.output.TarefaOutputDTO;
 import br.edu.safeplace.backend.application.port.in.ClassificarTarefaUseCase;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.AreaRiscoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.SetorRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.TarefaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
@@ -42,19 +44,30 @@ public class TarefaUseCase implements ClassificarTarefaUseCase {
     private final TarefaRepositoryPort repositoryPort;
     private final LogAuditoriaRepositoryPort logAuditoriaRepositoryPort;
     private final UsuarioRepositorioPorta usuarioRepositorio;
+    private final AreaRiscoRepositoryPort areaRiscoRepositoryPort;
+    private final SetorRepositoryPort setorRepositoryPort;
 
     @Autowired
     public TarefaUseCase(TarefaRepositoryPort repositoryPort, LogAuditoriaRepositoryPort logAuditoriaRepositoryPort,
-            UsuarioRepositorioPorta usuarioRepositorio) {
+            UsuarioRepositorioPorta usuarioRepositorio, AreaRiscoRepositoryPort areaRiscoRepositoryPort,
+            SetorRepositoryPort setorRepositoryPort) {
         this.repositoryPort = repositoryPort;
         this.logAuditoriaRepositoryPort = logAuditoriaRepositoryPort;
         this.usuarioRepositorio = usuarioRepositorio;
+        this.areaRiscoRepositoryPort = areaRiscoRepositoryPort;
+        this.setorRepositoryPort = setorRepositoryPort;
+    }
+
+    public TarefaUseCase(TarefaRepositoryPort repositoryPort, LogAuditoriaRepositoryPort logAuditoriaRepositoryPort,
+            UsuarioRepositorioPorta usuarioRepositorio) {
+        this(repositoryPort, logAuditoriaRepositoryPort, usuarioRepositorio, null, null);
     }
 
     @Override
     @Transactional
     public TarefaOutputDTO cadastrarTarefa(CadastrarTarefaInputDTO inputDTO) {
-        Tarefa novaTarefa = Tarefa.cadastrar(inputDTO.descricao());
+        validarRelacoes(inputDTO.areaRiscoId(), inputDTO.setoresIds());
+        Tarefa novaTarefa = Tarefa.cadastrar(inputDTO.descricao(), inputDTO.areaRiscoId(), inputDTO.setoresIds());
         GestorDeSeguranca responsavel = null;
         if (inputDTO.nivelPerigo() != null) {
             responsavel = resolverResponsavelTecnico();
@@ -178,5 +191,24 @@ public class TarefaUseCase implements ClassificarTarefaUseCase {
     private Tarefa buscarTarefa(Integer id) {
         return repositoryPort.buscarPorId(id)
                 .orElseThrow(() -> new TarefaNaoEncontradaException(id));
+    }
+
+    private void validarRelacoes(Integer areaRiscoId, List<Integer> setoresIds) {
+        if (areaRiscoId != null && areaRiscoRepositoryPort != null) {
+            areaRiscoRepositoryPort.buscarPorId(areaRiscoId)
+                    .orElseThrow(() -> new IllegalArgumentException("Área de risco não encontrada com id: " + areaRiscoId));
+        }
+        if (setoresIds == null || setoresIds.isEmpty()) {
+            return;
+        }
+        if (setoresIds.stream().anyMatch(java.util.Objects::isNull)) {
+            throw new IllegalArgumentException("Identificador de setor não pode ser nulo.");
+        }
+        if (setorRepositoryPort == null) {
+            return;
+        }
+        setoresIds.stream().distinct().forEach(setorId ->
+                setorRepositoryPort.buscarPorId(setorId)
+                        .orElseThrow(() -> new IllegalArgumentException("Setor não encontrado com id: " + setorId)));
     }
 }
