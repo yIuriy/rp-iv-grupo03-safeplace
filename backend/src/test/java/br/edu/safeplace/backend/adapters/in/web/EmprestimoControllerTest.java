@@ -141,14 +141,17 @@ class EmprestimoControllerTest {
         EmprestimoOutputDTO devolvido = new EmprestimoOutputDTO(7, 1, "Capacete", 3, "João da Silva", 2,
                 LocalDateTime.of(2026, 9, 21, 9, 0), LocalDate.of(2026, 9, 28),
                 LocalDateTime.of(2026, 9, 25, 17, 0), 2, EstadoDevolucao.MANUTENCAO,
-                ClassificacaoEmprestimo.DISPONIVEL, false, "Termo de cautela", null);
+                ClassificacaoEmprestimo.DISPONIVEL, false, "Termo de cautela", null,
+                "MANUTENCAO", 5);
         when(useCase.registrarDevolucao(eq(7), any(), eq("supervisor@safeplace.test"))).thenReturn(devolvido);
 
         mockMvc.perform(post("/api/emprestimos/7/devolucao").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"estado\": \"MANUTENCAO\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("DISPONIVEL"))
-                .andExpect(jsonPath("$.estadoDevolucao").value("MANUTENCAO"));
+                .andExpect(jsonPath("$.emprestimoId").value(7))
+                .andExpect(jsonPath("$.estadoDevolucao").value("MANUTENCAO"))
+                .andExpect(jsonPath("$.destinoAprovado").value("MANUTENCAO"))
+                .andExpect(jsonPath("$.saldoPersistido").value(5));
 
         ArgumentCaptor<RegistrarDevolucaoInputDTO> entrada = ArgumentCaptor.forClass(RegistrarDevolucaoInputDTO.class);
         verify(useCase).registrarDevolucao(eq(7), entrada.capture(), eq("supervisor@safeplace.test"));
