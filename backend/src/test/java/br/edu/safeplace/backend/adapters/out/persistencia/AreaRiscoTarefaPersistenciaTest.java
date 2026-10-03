@@ -19,11 +19,13 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarAreaRiscoInputDTO;
+import br.edu.safeplace.backend.application.dto.input.CadastrarSetorInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarTarefaInputDTO;
 import br.edu.safeplace.backend.application.dto.output.AreaRiscoOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.TarefaOutputDTO;
 import br.edu.safeplace.backend.application.port.in.ClassificarTarefaUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarAreaRiscoUseCase;
+import br.edu.safeplace.backend.application.port.in.GerenciarSetorUseCase;
 import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.area_risco.exception.CodigoAreaRiscoDuplicadoException;
@@ -59,6 +61,9 @@ class AreaRiscoTarefaPersistenciaTest {
 
     @Autowired
     private GerenciarAreaRiscoUseCase areaRiscoUseCase;
+
+    @Autowired
+    private GerenciarSetorUseCase setorUseCase;
 
     @Autowired
     private ClassificarTarefaUseCase tarefaUseCase;
@@ -280,5 +285,46 @@ class AreaRiscoTarefaPersistenciaTest {
         assertThat(lida.classificada()).isTrue();
         assertThat(lida.nivelPerigo()).isEqualTo(NivelPerigo.MEDIO);
         assertThat(lida.responsavelClassificacaoId()).isNull();
+    }
+
+    @Test
+    @DisplayName("#113: tarefa reconstrói área e setores vinculados após leitura do PostgreSQL")
+    void tarefaDeveReconstruirAreaESetoresVinculados() {
+        Integer epiId = novoEpi("Protetor auricular", "91005");
+        var setorA = setorUseCase.cadastrarSetor(new CadastrarSetorInputDTO(
+                "Prensa", "Prensas hidráulicas", "Galpão A", NivelPerigo.ALTO));
+        var setorB = setorUseCase.cadastrarSetor(new CadastrarSetorInputDTO(
+                "Expedição", "Área de carga", "Galpão B", NivelPerigo.MEDIO));
+        AreaRiscoOutputDTO area = areaRiscoUseCase.cadastrarAreaRisco(new CadastrarAreaRiscoInputDTO(
+                "AR-TAR-113", "Prensas", null, NivelPerigo.ALTO, setorA.id(), List.of("Ruído"),
+                "Faixa de segurança", List.of(epiId)));
+
+        TarefaOutputDTO salva = tarefaUseCase.cadastrarTarefa(new CadastrarTarefaInputDTO(
+                "Operar prensa hidráulica", null, area.id(), List.of(setorA.id(), setorB.id())));
+
+        reiniciarContexto();
+
+        TarefaOutputDTO reconstruida = tarefaUseCase.buscarPorId(salva.id());
+        assertThat(reconstruida.areaRiscoId()).isEqualTo(area.id());
+        assertThat(reconstruida.setoresIds()).containsExactlyInAnyOrder(setorA.id(), setorB.id());
+    }
+
+    @Test
+    @DisplayName("#113: setor ou área inexistente não grava tarefa")
+    void relacaoInexistenteNaoDeveGravarTarefa() {
+        assertThatThrownBy(() -> tarefaUseCase.cadastrarTarefa(new CadastrarTarefaInputDTO(
+                "Tarefa sem vínculo válido", null, 999999, List.of())))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Área de risco não encontrada");
+
+        assertThatThrownBy(() -> tarefaUseCase.cadastrarTarefa(new CadastrarTarefaInputDTO(
+                "Tarefa sem setor válido", null, null, List.of(999999))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Setor não encontrado");
+
+        Integer gravadas = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM tarefas WHERE descricao IN ('Tarefa sem vínculo válido', 'Tarefa sem setor válido')",
+                Integer.class);
+        assertThat(gravadas).isZero();
     }
 }
