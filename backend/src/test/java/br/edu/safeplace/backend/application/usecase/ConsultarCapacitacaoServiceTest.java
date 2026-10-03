@@ -166,5 +166,68 @@ class ConsultarCapacitacaoServiceTest {
         public Optional<Treinamento> buscarTreinamentoPorId(Integer id) {
             return treinamentos.stream().filter(t -> t.getId().equals(id)).findFirst();
         }
+
+        @Override
+        public List<Certificacao> listarTodasCertificacoes() {
+            return new ArrayList<>(certificacoes);
+        }
+
+        @Override
+        public List<Treinamento> listarTodosTreinamentos() {
+            return new ArrayList<>(treinamentos);
+        }
+    }
+
+    @Test
+    @DisplayName("UC02 Cenário IV: Filtrar colaboradores por status de certificação (em dia, próxima do vencimento, vencida)")
+    void deveFiltrarColaboradoresPorStatusCertificacao() {
+        LocalDate hoje = LocalDate.now();
+
+        // Colaborador 1: Vencida
+        repositorio.salvarCertificacao(new Certificacao(1, "NR-10", hoje.minusDays(5), hoje.minusYears(1), 1));
+        // Colaborador 2: Próxima do vencimento (20 dias)
+        repositorio.salvarCertificacao(new Certificacao(2, "NR-35", hoje.plusDays(20), hoje.minusMonths(11), 2));
+        // Colaborador 3: Em dia (60 dias)
+        repositorio.salvarCertificacao(new Certificacao(3, "NR-33", hoje.plusDays(60), hoje.minusMonths(6), 3));
+
+        List<Integer> vencidos = service.listarColaboradoresPorStatusCertificacao(br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao.VENCIDA);
+        List<Integer> proximos = service.listarColaboradoresPorStatusCertificacao(br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao.PROXIMA_DO_VENCIMENTO);
+        List<Integer> emDia = service.listarColaboradoresPorStatusCertificacao(br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao.EM_DIA);
+
+        assertThat(vencidos).containsExactly(1);
+        assertThat(proximos).containsExactly(2);
+        assertThat(emDia).containsExactly(3);
+    }
+
+    @Test
+    @DisplayName("UC02: Listar todas as certificações e treinamentos com status reavaliado")
+    void deveListarTodasCertificacoesETreinamentos() {
+        LocalDate hoje = LocalDate.now();
+        repositorio.salvarCertificacao(new Certificacao(10, "NR-35", hoje.plusDays(10), hoje.minusMonths(11), 1));
+        repositorio.salvarTreinamento(new Treinamento(20, "Treinamento Trabalho em Altura", "Conteúdo", "Instrutor", hoje.minusMonths(2), 8, List.of(1, 2)));
+
+        List<Certificacao> certs = service.listarTodasCertificacoes();
+        List<Treinamento> treinos = service.listarTodosTreinamentos();
+
+        assertThat(certs).hasSize(1);
+        assertThat(certs.get(0).getStatus()).isEqualTo(br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao.PROXIMA_DO_VENCIMENTO);
+        assertThat(treinos).hasSize(1);
+        assertThat(treinos.get(0).getColaboradoresIds()).containsExactlyInAnyOrder(1, 2);
+    }
+
+    @Test
+    @DisplayName("UC02 Cenários I, II e III: Gerar mensagens textuais de avisos e pendências")
+    void deveGerarMensagensAvisosCorretamente() {
+        // Sem capacitações: pendência admissional e trilha de integração
+        PendenciasColaboradorDTO pendenciaAdmissional = service.consultarPendenciasColaborador(99);
+        assertThat(pendenciaAdmissional.obterMensagensAvisos())
+                .contains("Pendência da trilha inicial de integração", "Pendência de treinamentos admissionais");
+
+        // Com certificação vencida
+        LocalDate hoje = LocalDate.now();
+        repositorio.salvarCertificacao(new Certificacao(1, "NR-10", hoje.minusDays(2), hoje.minusYears(1), 50));
+        PendenciasColaboradorDTO pendenciaVencida = service.consultarPendenciasColaborador(50);
+        assertThat(pendenciaVencida.obterMensagensAvisos())
+                .anyMatch(msg -> msg.contains("vencida(s) necessitando de renovação imediata"));
     }
 }
