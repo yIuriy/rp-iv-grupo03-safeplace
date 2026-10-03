@@ -1,4 +1,4 @@
-// Testes Playwright da tela de estoque de EPIs (/estoque) (issues #123 e #133): catálogo com situação crítica textual,
+// Testes Playwright da aba de catálogo e estoque de EPIs (/epis) (issues #123, #133 e #175): catálogo com situação crítica textual,
 // detalhes com histórico e operador, matriz de perfis (só o Gestor movimenta), registro de entrada
 // com atualização de saldo e histórico, recusa de saída acima do saldo mantendo os dados, validação
 // local, teclado e largura móvel. Somente as respostas HTTP são simuladas.
@@ -47,7 +47,7 @@ async function simularEstoque(page: Page, opcoes: { movimentacao?: { status: num
 test('catalog shows balance, minimum and a textual critical badge, not only a color', async ({ page }) => {
   await iniciarSessao(page, gestora)
   await simularEstoque(page)
-  await page.goto('/estoque')
+  await page.goto('/epis')
 
   const tabela = page.getByRole('table', { name: 'Catálogo de EPIs em estoque' })
   await expect(tabela.getByRole('row')).toHaveCount(3)
@@ -65,7 +65,7 @@ test('catalog shows balance, minimum and a textual critical badge, not only a co
 test('details dialog lists history with operator, date and time, quantity, reason and balance', async ({ page }) => {
   await iniciarSessao(page, supervisor)
   await simularEstoque(page)
-  await page.goto('/estoque')
+  await page.goto('/epis')
 
   await page.getByRole('button', { name: 'Detalhes e histórico de Capacete classe B' }).click()
   const dialogo = page.getByRole('dialog', { name: 'Capacete classe B' })
@@ -86,7 +86,7 @@ test('details dialog lists history with operator, date and time, quantity, reaso
 test('Supervisor consults stock but has no movement action', async ({ page }) => {
   await iniciarSessao(page, supervisor)
   await simularEstoque(page)
-  await page.goto('/estoque')
+  await page.goto('/epis')
 
   await expect(page.getByRole('table', { name: 'Catálogo de EPIs em estoque' })).toBeVisible()
   await expect(page.getByText('Entradas e saídas são registradas pelo Gestor de Segurança.')).toBeVisible()
@@ -97,7 +97,7 @@ test('Supervisor consults stock but has no movement action', async ({ page }) =>
 test('Gestor registers an entry: request body, toast, refreshed balance and history', async ({ page }) => {
   await iniciarSessao(page, gestora)
   const chamadas = await simularEstoque(page)
-  await page.goto('/estoque')
+  await page.goto('/epis')
 
   await page.getByRole('button', { name: 'Movimentar estoque de Capacete classe B' }).click()
   const dialogo = page.getByRole('dialog', { name: 'Registrar movimentação' })
@@ -121,7 +121,7 @@ test('exit above the balance is refused by the API and the form keeps its data',
   const chamadas = await simularEstoque(page, {
     movimentacao: { status: 400, json: { status: 400, error: 'Saldo Insuficiente', message: 'Saldo insuficiente em estoque. Saldo atual: 10, quantidade solicitada: 11' } },
   })
-  await page.goto('/estoque')
+  await page.goto('/epis')
 
   await page.getByRole('button', { name: 'Movimentar estoque de Capacete classe B' }).click()
   const dialogo = page.getByRole('dialog', { name: 'Registrar movimentação' })
@@ -148,7 +148,7 @@ test('exit above the balance is refused by the API and the form keeps its data',
 test('zero quantity and empty reason are blocked locally without calling the API', async ({ page }) => {
   await iniciarSessao(page, gestora)
   const chamadas = await simularEstoque(page)
-  await page.goto('/estoque')
+  await page.goto('/epis')
 
   await page.getByRole('button', { name: 'Movimentar estoque de Capacete classe B' }).click()
   const dialogo = page.getByRole('dialog', { name: 'Registrar movimentação' })
@@ -164,7 +164,7 @@ test('zero quantity and empty reason are blocked locally without calling the API
 test('search filters by name or location and the keyboard reaches every action', async ({ page }) => {
   await iniciarSessao(page, gestora)
   await simularEstoque(page)
-  await page.goto('/estoque')
+  await page.goto('/epis')
 
   await page.getByRole('searchbox', { name: 'Nome ou localização' }).fill('almoxarifado')
   await page.getByRole('button', { name: 'Buscar' }).click()
@@ -193,7 +193,7 @@ for (const width of [360, 768, 1344]) {
     await page.setViewportSize({ width, height: 960 })
     await iniciarSessao(page, gestora)
     await simularEstoque(page)
-    await page.goto('/estoque')
+    await page.goto('/epis')
 
     await expect(page.getByRole('table', { name: 'Catálogo de EPIs em estoque' })).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
