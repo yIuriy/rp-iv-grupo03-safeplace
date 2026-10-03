@@ -19,4 +19,7 @@ public interface CapacitacaoRepositoryPort {
     
     Optional<Certificacao> buscarCertificacaoPorId(Integer id);
     Optional<Treinamento> buscarTreinamentoPorId(Integer id);
+
+    List<Certificacao> listarTodasCertificacoes();
+    List<Treinamento> listarTodosTreinamentos();
 }

@@ -48,13 +48,21 @@ public class CapacitacaoJdbcAdapter implements CapacitacaoRepositoryPort {
         return new ExigenciaCapacitacao(id, nomeCapacitacao, tipoCapacitacao, alvoId, alvo);
     };
 
+    private Integer extrairIdGerado(KeyHolder keyHolder) {
+        if (keyHolder.getKeys() != null && keyHolder.getKeys().containsKey("id")) {
+            return ((Number) keyHolder.getKeys().get("id")).intValue();
+        }
+        Number key = keyHolder.getKey();
+        return (key != null) ? key.intValue() : null;
+    }
+
     @Override
     public Certificacao salvarCertificacao(Certificacao certificacao) {
         if (certificacao.getId() == null) {
             String sql = "INSERT INTO certificacoes (nome, data_vencimento, data_emissao, colaborador_id) VALUES (?, ?, ?, ?)";
             KeyHolder keyHolder = new GeneratedKeyHolder();
             jdbc.update(connection -> {
-                PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+                PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
                 ps.setString(1, certificacao.getNome());
                 ps.setDate(2, Date.valueOf(certificacao.getDataVencimento()));
                 ps.setDate(3, Date.valueOf(certificacao.getDataEmissao()));
@@ -62,8 +70,7 @@ public class CapacitacaoJdbcAdapter implements CapacitacaoRepositoryPort {
                 return ps;
             }, keyHolder);
 
-            Number key = keyHolder.getKey();
-            Integer id = (key != null) ? key.intValue() : null;
+            Integer id = extrairIdGerado(keyHolder);
             return new Certificacao(id, certificacao.getNome(), certificacao.getDataVencimento(), certificacao.getDataEmissao(), certificacao.getColaboradorId());
         } else {
             String sql = "UPDATE certificacoes SET nome = ?, data_vencimento = ?, data_emissao = ?, colaborador_id = ? WHERE id = ?";
@@ -79,7 +86,7 @@ public class CapacitacaoJdbcAdapter implements CapacitacaoRepositoryPort {
             String sql = "INSERT INTO treinamentos (nome, conteudo, instrutor, data_realizacao, carga_horaria) VALUES (?, ?, ?, ?, ?)";
             KeyHolder keyHolder = new GeneratedKeyHolder();
             jdbc.update(connection -> {
-                PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+                PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
                 ps.setString(1, treinamento.getNome());
                 ps.setString(2, treinamento.getConteudo());
                 ps.setString(3, treinamento.getInstrutor());
@@ -92,8 +99,7 @@ public class CapacitacaoJdbcAdapter implements CapacitacaoRepositoryPort {
                 return ps;
             }, keyHolder);
 
-            Number key = keyHolder.getKey();
-            treinamentoId = (key != null) ? key.intValue() : null;
+            treinamentoId = extrairIdGerado(keyHolder);
         } else {
             String sql = "UPDATE treinamentos SET nome = ?, conteudo = ?, instrutor = ?, data_realizacao = ?, carga_horaria = ? WHERE id = ?";
             jdbc.update(sql, treinamento.getNome(), treinamento.getConteudo(), treinamento.getInstrutor(), Date.valueOf(treinamento.getDataRealizacao()), treinamento.getCargaHoraria(), treinamentoId);
@@ -119,7 +125,7 @@ public class CapacitacaoJdbcAdapter implements CapacitacaoRepositoryPort {
             String sql = "INSERT INTO exigencias_capacitacao (nome_capacitacao, tipo_capacitacao, alvo_id, tipo_alvo) VALUES (?, ?, ?, ?)";
             KeyHolder keyHolder = new GeneratedKeyHolder();
             jdbc.update(connection -> {
-                PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+                PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
                 ps.setString(1, exigencia.getNomeCapacitacao());
                 ps.setString(2, exigencia.getTipoCapacitacao().name());
                 ps.setInt(3, exigencia.getAlvoId());
@@ -127,8 +133,7 @@ public class CapacitacaoJdbcAdapter implements CapacitacaoRepositoryPort {
                 return ps;
             }, keyHolder);
 
-            Number key = keyHolder.getKey();
-            Integer id = (key != null) ? key.intValue() : null;
+            Integer id = extrairIdGerado(keyHolder);
             return new ExigenciaCapacitacao(id, exigencia.getNomeCapacitacao(), exigencia.getTipoCapacitacao(), exigencia.getAlvoId(), exigencia.getAlvo());
         } else {
             String sql = "UPDATE exigencias_capacitacao SET nome_capacitacao = ?, tipo_capacitacao = ?, alvo_id = ?, tipo_alvo = ? WHERE id = ?";
@@ -205,5 +210,26 @@ public class CapacitacaoJdbcAdapter implements CapacitacaoRepositoryPort {
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public List<Certificacao> listarTodasCertificacoes() {
+        String sql = "SELECT id, nome, data_vencimento, data_emissao, colaborador_id FROM certificacoes ORDER BY data_vencimento ASC";
+        return jdbc.query(sql, certificacaoMapper);
+    }
+
+    @Override
+    public List<Treinamento> listarTodosTreinamentos() {
+        String sql = "SELECT id, nome, conteudo, instrutor, data_realizacao, carga_horaria FROM treinamentos ORDER BY data_realizacao DESC";
+        return jdbc.query(sql, (rs, rowNum) -> {
+            Integer id = rs.getInt("id");
+            String nome = rs.getString("nome");
+            String conteudo = rs.getString("conteudo");
+            String instrutor = rs.getString("instrutor");
+            LocalDate dataRealizacao = rs.getDate("data_realizacao").toLocalDate();
+            Integer cargaHoraria = (Integer) rs.getObject("carga_horaria");
+            List<Integer> colabIds = buscarColaboradoresDoTreinamento(id);
+            return new Treinamento(id, nome, conteudo, instrutor, dataRealizacao, cargaHoraria, colabIds.isEmpty() ? List.of(0) : colabIds);
+        });
     }
 }
