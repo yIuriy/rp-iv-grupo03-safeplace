@@ -206,4 +206,25 @@ public class CapacitacaoJdbcAdapter implements CapacitacaoRepositoryPort {
             return Optional.empty();
         }
     }
+
+    @Override
+    public List<Certificacao> listarTodasCertificacoes() {
+        String sql = "SELECT id, nome, data_vencimento, data_emissao, colaborador_id FROM certificacoes ORDER BY data_vencimento ASC";
+        return jdbc.query(sql, certificacaoMapper);
+    }
+
+    @Override
+    public List<Treinamento> listarTodosTreinamentos() {
+        String sql = "SELECT id, nome, conteudo, instrutor, data_realizacao, carga_horaria FROM treinamentos ORDER BY data_realizacao DESC";
+        return jdbc.query(sql, (rs, rowNum) -> {
+            Integer id = rs.getInt("id");
+            String nome = rs.getString("nome");
+            String conteudo = rs.getString("conteudo");
+            String instrutor = rs.getString("instrutor");
+            LocalDate dataRealizacao = rs.getDate("data_realizacao").toLocalDate();
+            Integer cargaHoraria = (Integer) rs.getObject("carga_horaria");
+            List<Integer> colabIds = buscarColaboradoresDoTreinamento(id);
+            return new Treinamento(id, nome, conteudo, instrutor, dataRealizacao, cargaHoraria, colabIds.isEmpty() ? List.of(0) : colabIds);
+        });
+    }
 }
