@@ -1,11 +1,11 @@
-// Tela /estoque, menu "Estoque de EPIs" do UC06 (RF03, UC06, US03; issues #123 e #133): catálogo com saldo e situação crítica,
+// Painel de catálogo e estoque na entrada /epis do UC06 (RF03, UC06, US03; issues #123, #133 e #175): saldo e situação crítica,
 // busca por nome, detalhes com histórico e, para o Gestor de Segurança, registro de entrada e
 // saída. O Supervisor consulta; a movimentação segue a mesma matriz de papéis do SecurityConfig.
 
 import { useState, type FormEvent } from 'react'
 import { Button, SearchInput, Toast } from '../../shared/components'
 import { FeaturePage } from '../../shared/layout/FeaturePage'
-import { useConsulta } from '../../shared/api/useConsulta'
+import { useConsulta, type Consulta } from '../../shared/api/useConsulta'
 import { useSessaoAtiva } from '../autenticacao/contexto'
 import { listarEpis, type Epi, type Movimentacao } from './api'
 import { EpiDetalheDialog } from './EpiDetalheDialog'
@@ -27,7 +27,8 @@ function mensagemDeMovimentacao(epi: Epi, mov: Movimentacao): string {
   return `${rotuloDoTipo[mov.tipo]} de ${mov.quantidade} ${unidades} registrada para ${epi.nome}. Saldo atual: ${mov.saldoAtual}.`
 }
 
-export function EstoquePage() {
+/** Painel de catálogo e estoque. Recebe o catálogo já carregado pela tela unificada. */
+export function EstoquePainel({ consulta }: { consulta: Consulta<Epi[]> }) {
   const sessao = useSessaoAtiva()
   const gestor = sessao.perfil === 'GESTOR_SEGURANCA'
   const [termo, setTermo] = useState('')
@@ -35,7 +36,6 @@ export function EstoquePage() {
   const [movimentando, setMovimentando] = useState<Epi | null>(null)
   const [versaoHistorico, setVersaoHistorico] = useState(0)
   const [aviso, setAviso] = useState('')
-  const consulta = useConsulta('epis', listarEpis)
 
   function buscar(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -50,11 +50,10 @@ export function EstoquePage() {
 
   const criticos = consulta.dados?.filter(epi => epi.estoqueCritico).length ?? 0
 
-  return <FeaturePage title="Estoque de EPIs"
-    description={gestor
-      ? 'Consulte o catálogo, o saldo e o histórico de cada EPI e registre entradas e saídas de estoque.'
-      : 'Consulte o catálogo, o saldo e o histórico de cada EPI. Entradas e saídas são registradas pelo Gestor de Segurança.'}>
-    <div className="sp-painel">
+  return <div className="sp-painel">
+      <p className="sp-texto-secundario">{gestor
+        ? 'Consulte o catálogo, o saldo e o histórico de cada EPI e registre entradas e saídas de estoque.'
+        : 'Consulte o catálogo, o saldo e o histórico de cada EPI. Entradas e saídas são registradas pelo Gestor de Segurança.'}</p>
       <form className="sp-busca" role="search" aria-label="Buscar EPIs" onSubmit={buscar} onReset={() => setTermo('')}>
         <SearchInput label="Nome ou localização" name="busca" hiddenLabel={false} placeholder="Parte do nome ou da localização" autoComplete="off" />
         <span />
@@ -78,6 +77,17 @@ export function EstoquePage() {
       <MovimentacaoDialog epi={movimentando} aoFechar={() => setMovimentando(null)}
         aoSalvar={mov => { if (movimentando) aoMovimentar(movimentando, mov) }} />
       <Toast message={aviso} onDismiss={() => setAviso('')} />
-    </div>
+  </div>
+}
+
+/** Compatibilidade para uso isolado do painel fora da rota unificada. */
+export function EstoquePage() {
+  const consulta = useConsulta('epis', listarEpis)
+  const gestor = useSessaoAtiva().perfil === 'GESTOR_SEGURANCA'
+  return <FeaturePage title="Estoque de EPIs"
+    description={gestor
+      ? 'Consulte o catálogo, o saldo e o histórico de cada EPI e registre entradas e saídas de estoque.'
+      : 'Consulte o catálogo, o saldo e o histórico de cada EPI. Entradas e saídas são registradas pelo Gestor de Segurança.'}>
+    <EstoquePainel consulta={consulta} />
   </FeaturePage>
 }

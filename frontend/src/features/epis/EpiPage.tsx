@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useState, type FormEvent } from 'react'
 import { mensagemDaApi, statusDoErro } from '../../shared/api/erros'
-import { useConsulta } from '../../shared/api/useConsulta'
+import { useConsulta, type Consulta } from '../../shared/api/useConsulta'
 import { Alert, Badge, Button, Dialog, EmptyState, HistoryItem, Select, Table, TableRow, TextArea, TextField, Toast } from '../../shared/components'
+import { FeaturePage } from '../../shared/layout/FeaturePage'
 import { useSessaoAtiva } from '../autenticacao/contexto'
-import { cadastrarEpi, listarEpis, listarHistorico, registrarManutencao, type ClassificacaoEpi, type DadosCadastroEpi, type DadosManutencao, type Epi, type StatusEpi } from './api'
+import { listarEpis, type Epi, type StatusEpi } from '../estoque/api'
+import { cadastrarEpi, listarHistorico, registrarManutencao, type ClassificacaoEpi, type DadosCadastroEpi, type DadosManutencao } from './api'
 
 const statusOperacionais: readonly StatusEpi[] = ['DISPONIVEL', 'EM_USO', 'EM_MANUTENCAO', 'ESGOTADO']
 const rotulos: Record<StatusEpi, string> = {
@@ -40,7 +42,7 @@ function numeroOpcional(form: FormData, nome: string): number | undefined {
 function DialogoCadastroEpi({ aberto, aoFechar, aoSalvar }: {
   aberto: boolean
   aoFechar: () => void
-  aoSalvar: (epi: Epi) => void
+  aoSalvar: (epi: Pick<Epi, 'id'>) => void
 }) {
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
@@ -159,15 +161,14 @@ function DialogoManutencao({ epi, aberto, aoFechar, aoSalvar }: {
   </Dialog>
 }
 
-export function EpiPage() {
+/** Painel de cadastro e manutenção. Recebe o catálogo já carregado pela tela unificada. */
+export function EpiManutencaoPainel({ epis }: { epis: Consulta<Epi[]> }) {
   const sessao = useSessaoAtiva()
   const [filtro, setFiltro] = useState<StatusEpi | 'TODOS'>('TODOS')
   const [selecionadoId, setSelecionadoId] = useState<number | null>(null)
   const [dialogoAberto, setDialogoAberto] = useState(false)
   const [cadastroAberto, setCadastroAberto] = useState(false)
   const [aviso, setAviso] = useState('')
-  const carregarEpis = useCallback((signal: AbortSignal) => listarEpis(signal), [])
-  const epis = useConsulta('epis', carregarEpis)
   const selecionado = epis.dados?.find(epi => epi.id === selecionadoId) ?? null
   const carregarHistorico = useCallback((signal: AbortSignal) =>
     selecionadoId === null ? Promise.resolve([]) : listarHistorico(selecionadoId, signal), [selecionadoId])
@@ -196,10 +197,7 @@ export function EpiPage() {
     epis.recarregar()
   }
 
-  return <section className="sp-feature-page">
-    <header className="sp-feature-heading"><h1 className="sp-type-heading-md">EPIs</h1>
-      <p>Consulte EPIs ativos, filtre situação e acompanhe o histórico de manutenção.</p></header>
-
+  return <>
     {podeRegistrar && <div className="sp-epi-page-actions"><Button icon="plus" onClick={() => setCadastroAberto(true)}>Cadastrar EPI</Button></div>}
 
     <div className="sp-epi-filter">
@@ -245,5 +243,14 @@ export function EpiPage() {
       aoFechar={() => setDialogoAberto(false)} aoSalvar={aposSalvar} />}
     {podeRegistrar && <DialogoCadastroEpi aberto={cadastroAberto} aoFechar={() => setCadastroAberto(false)} aoSalvar={aposCadastrar} />}
     <Toast message={aviso} onDismiss={() => setAviso('')} />
-  </section>
+  </>
+}
+
+/** Compatibilidade para uso isolado do painel fora da rota unificada. */
+export function EpiPage() {
+  const carregarEpis = useCallback((signal: AbortSignal) => listarEpis(signal), [])
+  const epis = useConsulta('epis', carregarEpis)
+  return <FeaturePage title="EPIs" description="Consulte EPIs ativos, filtre situação e acompanhe o histórico de manutenção.">
+    <EpiManutencaoPainel epis={epis} />
+  </FeaturePage>
 }
