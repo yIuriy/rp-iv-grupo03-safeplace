@@ -58,11 +58,15 @@ A revisão de escopo da issue #112 consultou o PNG no commit `34d6b6d` (14/09/20
 - **Responsável técnico**: é o Gestor de Segurança autenticado, resolvido pelo e-mail da sessão. Sem um Gestor identificável, a classificação é recusada (HTTP 403) e nada é gravado. O cadastro de tarefa **sem** nível não exige responsável.
 - **Dados anteriores**: tarefas classificadas antes da V23 continuam com nível e data, mas com responsável nulo. Não se preenche autoria retroativa; a interface mostra "Responsável não registrado".
 
-### 2.4. Tarefa sem classificação e bloqueio de alocação
+### 2.4. Alocação confirmada e bloqueios
 
-- **Identificação**: `Tarefa.estaClassificada()` e o campo `classificada` da API; na interface, "Não classificada" e "Pendente de avaliação".
-- **Bloqueio**: `Tarefa.validarClassificacaoParaAlocacao()` lança `TarefaSemClassificacaoException` (tratada como HTTP 409 por `TarefaTratadorExcecoes`) para tarefa sem grau de risco (UC11, exceção I; US06, critério 3).
-- **Ponto de alocação**: não existe operação de alocação no sistema. A chamada dessa verificação no momento da confirmação da alocação pertence a #117 e #126, que devem usá-la na mutação final, não apenas em consulta prévia.
+- **Ator e operação**: Gestor de Segurança ou Supervisor confirma a alocação por `POST /api/tarefas/{id}/alocacoes`, com o colaborador no corpo. O e-mail do ator vem da autenticação; o cliente não informa o responsável pela alocação.
+- **Ponto de bloqueio**: `AlocarColaboradorTarefaUseCase.alocar` é a mutação final. Ele busca a tarefa, o colaborador e os dados de capacitação novamente antes de criar `AlocacaoTarefa`.
+- **Origem das exigências**: `exigencias_capacitacao`, filtrada por `tipo_alvo = TAREFA` e `alvo_id = tarefa.id`; certificações vêm de `certificacoes` e treinamentos realizados de `treinamentos`/`treinamentos_colaboradores`.
+- **Sem classificação**: `Tarefa.validarClassificacaoParaAlocacao()` lança `TarefaSemClassificacaoException`, tratada como HTTP 409, sem inserir alocação ou auditoria.
+- **Capacitação inválida**: `ValidadorAptidaoColaboradorService` lança `AlocacaoBloqueadaException` com as pendências de certificação ou treinamento; a API responde HTTP 422, sem inserir alocação ou auditoria.
+- **Efeito permitido**: a alocação entra em `tarefas_alocacoes` com tarefa, colaborador, data/hora e operador; `LogAuditoria` registra a mutação como `AlocacaoTarefa`.
+- **Consulta prévia**: `GET /api/tarefas/{id}/aptidao/{colaboradorId}` é somente leitura e não grava nem autoriza uma futura confirmação. O `POST` sempre revalida os dados atuais.
 
 ### 2.5. O que não é criado
 
@@ -81,7 +85,7 @@ A revisão de escopo da issue #112 consultou o PNG no commit `34d6b6d` (14/09/20
 | `consultarTarefas()` | Porta de entrada `ClassificarTarefaUseCase.listar` e `listarPorNivelPerigo`; `GET /api/tarefas?nivelPerigo=` | Matriz de periculosidade para Gestor e Supervisor. |
 | Classificar e reavaliar (UC11, passos 3 a 6 e alternativo I) | `ClassificarTarefaUseCase.classificar`; domínio `Tarefa.classificar(nivel, responsavel)`; `PATCH /api/tarefas/{id}/classificacao` | Grava nível, data, hora e responsável técnico e devolve `RegistroClassificacaoTarefa`. |
 | Registro com data, hora e responsável técnico (UC11, regra 1) | `LogAuditoriaRepositoryPort.salvar` e `tarefas.responsavel_classificacao_id` | Histórico com valor anterior e novo (RNF05). |
-| Bloqueio de alocação (UC11, exceção I) | Domínio `Tarefa.validarClassificacaoParaAlocacao()` | Usado pelo ponto de alocação de #117 e #126. |
+| Bloqueio de alocação (UC11, exceção I) | `AlocarColaboradorTarefaUseCase.alocar` → `ValidadorAptidaoColaboradorService` → `Tarefa.validarClassificacaoParaAlocacao()` | Bloqueio ocorre na confirmação, antes de persistir `AlocacaoTarefa`. |
 | `associarEPIs(...)` / `verificarEPIsObrigatoriosTarefa()` | Sem correspondência no MVP | RF12, backlog. |
 | Associações com `Setor` e `AreaRisco` | `Tarefa.areaRiscoId` e `Tarefa.setoresIds`; `TarefaJpaAdapter` | V26, preservadas na leitura e expostas pela API. |
 
@@ -118,6 +122,6 @@ A revisão de escopo da issue #112 consultou o PNG no commit `34d6b6d` (14/09/20
 | Representação das exigências normativas | Resolvida na #117 via `ExigenciaCapacitacao` e migração V15. |
 | Critérios para atribuir cada nível | US06, regra 4: ainda precisam ser detalhados. A correspondência da seção 2.1 não define critério. |
 | Relações com `Setor` e `AreaRisco` | Resolvidas na #113 com `tarefas.area_risco_id` e `tarefas_setores`; a multiplicidade não impõe setor no cadastro de tarefa. |
-| Ponto de alocação | Resolvido na #117: endpoint `POST /api/tarefas/{id}/alocacoes` operado por Gestor e Supervisor. |
+| Ponto de alocação | Resolvido na #126: `POST /api/tarefas/{id}/alocacoes`, operado por Gestor e Supervisor; a origem das exigências e a revalidação estão registradas na seção 2.4. |
 | Consulta do histórico pela API | Resolvida na #114: `GET /api/tarefas/{id}/historico` devolve os registros de `logs_auditoria` da tarefa, do mais recente ao mais antigo, e é exclusiva do Gestor de Segurança. A interface mostra esse histórico na matriz de tarefas. |
 | Atualização textual de UC11 e US06 | Após a aprovação do vocabulário (2.1). |

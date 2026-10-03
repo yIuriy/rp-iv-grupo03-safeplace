@@ -64,7 +64,7 @@ Essa é a organização lógica prevista, não uma lista de módulos já impleme
 | `ocorrencias` | Registrar e acompanhar acidentes e incidentes, com envolvidos, protocolo, triagem, atualização, arquivamento e planos de ação. | RF01, RF02, RF07, RF13 e RF16; UC05, UC07 e UC09 |
 | `epis` | Estoque, movimentações, manutenção, empréstimos, devoluções e previsão de substituição com alertas. | RF03, RF04, RF11 e RF21; UC01, UC06, UC10 e UC12 |
 | `areas-de-risco` | Gestão de setores físicos e áreas de risco vinculadas (1:N), com cadastro, consulta, atualização de limites, agentes de risco e EPIs exigidos para acesso. | RF05; UC03 |
-| `tarefas` | Classificar e consultar a periculosidade das tarefas. O vínculo entre tarefa e EPI permanece no backlog de RF12. | RF06; UC11 |
+| `tarefas` | Classificar e consultar a periculosidade das tarefas, além de confirmar alocações somente após revalidar classificação e capacitações. O vínculo entre tarefa e EPI permanece no backlog de RF12. | RF06, RF10; UC02 e UC11 |
 | `capacitacoes` | Consultar certificações e treinamentos, controlar vencimentos e aplicar os impedimentos previstos para alocação e empréstimo. O fluxo de cadastro ainda precisa ser identificado. | RF10; UC02 e UC12 |
 
 A auditoria acompanha as operações que alteram dados em todas essas funcionalidades, conforme RNF05. O registro deve identificar usuário, data, hora e dado alterado, com imutabilidade e retenção mínima de 5 anos. A classe `LogAuditoria` no diagrama não comprova, por si só, a cobertura de todas as operações na implementação.
