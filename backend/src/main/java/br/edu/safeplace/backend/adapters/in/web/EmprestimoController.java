@@ -36,23 +36,26 @@ public class EmprestimoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Registra a entrega de um EPI a um colaborador, com termo de cautela e débito de uma unidade do estoque")
+    @Operation(summary = "Registra a entrega de um EPI a um colaborador, com termo de cautela e débito de uma unidade do estoque",
+            description = "Valida saldo, CA, duplicidade de posse ativa e pendências de capacitação no servidor antes de confirmar.")
     public EmprestimoResponse registrarEntrega(@Valid @RequestBody RegistrarEntregaRequest request,
                                                Authentication autenticacao) {
         return EmprestimoResponse.fromOutputDTO(useCase.registrarEntrega(request.toInputDTO(), autenticacao.getName()));
     }
 
     @PostMapping("/{id}/devolucao")
-    @Operation(summary = "Registra a devolução do EPI com estado apto, manutenção ou descarte; só o item apto volta ao saldo")
-    public EmprestimoResponse registrarDevolucao(@PathVariable Integer id,
-                                                 @Valid @RequestBody RegistrarDevolucaoRequest request,
-                                                 Authentication autenticacao) {
-        return EmprestimoResponse.fromOutputDTO(
+    @Operation(summary = "Registra a devolução do EPI com estado apto, manutenção ou descarte, refletindo destino aprovado e saldo persistido",
+            description = "Itens aptos retornam ao saldo de estoque; itens em manutenção ou descarte não creditam saldo.")
+    public DevolucaoResponse registrarDevolucao(@PathVariable Integer id,
+                                                @Valid @RequestBody RegistrarDevolucaoRequest request,
+                                                Authentication autenticacao) {
+        return DevolucaoResponse.fromOutputDTO(
                 useCase.registrarDevolucao(id, request.toInputDTO(), autenticacao.getName()));
     }
 
     @GetMapping
-    @Operation(summary = "Consulta empréstimos; situacao=PENDENTES ou ATRASADOS e colaboradorId filtram a lista")
+    @Operation(summary = "Consulta empréstimos e posse de EPIs conforme UC12",
+            description = "Filtra por situacao=PENDENTES ou ATRASADOS e colaboradorId. Para consultar a posse ativa do colaborador, utilize colaboradorId e situacao=PENDENTES.")
     public List<EmprestimoResponse> listar(@RequestParam(required = false) Situacao situacao,
                                            @RequestParam(required = false) Integer colaboradorId) {
         return useCase.listar(situacao, colaboradorId).stream()
@@ -61,7 +64,7 @@ public class EmprestimoController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Consulta um empréstimo")
+    @Operation(summary = "Consulta os detalhes de um empréstimo por identificador")
     public EmprestimoResponse buscarPorId(@PathVariable Integer id) {
         return EmprestimoResponse.fromOutputDTO(useCase.buscarPorId(id));
     }

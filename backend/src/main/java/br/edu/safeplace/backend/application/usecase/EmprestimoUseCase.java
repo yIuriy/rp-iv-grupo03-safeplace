@@ -118,7 +118,14 @@ public class EmprestimoUseCase implements ControlarEmprestimoUseCase {
         Emprestimo salvo = emprestimos.salvar(emprestimo);
         auditar(LogAuditoria.registrarAlteracao(operadorEmail, ENTIDADE_AUDITADA, salvo.getId(),
                 "Devolução do EPI " + epi.getNome() + " com estado " + estado));
-        return saida(salvo, epi, beneficiario);
+        String destinoAprovado = switch (estado) {
+            case APTO -> "ESTOQUE";
+            case MANUTENCAO -> "MANUTENCAO";
+            case DESCARTE -> "DESCARTE";
+        };
+        return EmprestimoOutputDTO.deDominio(salvo, epi.getNome(),
+                beneficiario != null ? beneficiario.getNome() : null,
+                LocalDate.now(), destinoAprovado, epi.getQuantidade());
     }
 
     @Override

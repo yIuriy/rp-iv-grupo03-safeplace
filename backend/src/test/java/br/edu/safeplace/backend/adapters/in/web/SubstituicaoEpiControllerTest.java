@@ -90,8 +90,18 @@ class SubstituicaoEpiControllerTest {
 
     @Test
     @WithMockUser(roles = "SUPERVISOR")
-    @DisplayName("Supervisor e Gestor podem consultar alertas preventivos (HTTP 200)")
-    void deveConsultarAlertas() throws Exception {
+    @DisplayName("Supervisor não tem permissão para consultar alertas preventivos de projeção (HTTP 403)")
+    void supervisorNaoPodeConsultarAlertas() throws Exception {
+        mockMvc.perform(get("/api/projecoes/alertas")
+                        .param("dataReferencia", "2026-09-24")
+                        .param("diasAntecedencia", "30"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Gestor de Segurança pode consultar alertas preventivos (HTTP 200)")
+    void gestorPodeConsultarAlertas() throws Exception {
         AlertaSubstituicaoOutputDTO alerta = new AlertaSubstituicaoOutputDTO(
                 1, "Óculos", "ESTOQUE_CRITICO", "Saldo 1 <= Mínimo 2", null, null, "ALTA");
 

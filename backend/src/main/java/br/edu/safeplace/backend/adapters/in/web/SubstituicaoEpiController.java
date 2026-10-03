@@ -18,6 +18,9 @@ import br.edu.safeplace.backend.application.dto.output.AlertaSubstituicaoOutputD
 import br.edu.safeplace.backend.application.dto.output.ProjecaoSubstituicaoOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.ResultadoAnaliseSubstituicaoDTO;
 import br.edu.safeplace.backend.application.port.in.PlanejarSubstituicaoUseCase;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * Adaptador Web REST para o Caso de Uso UC10 – Planejar Substituição Inteligente de EPI
@@ -25,6 +28,7 @@ import br.edu.safeplace.backend.application.port.in.PlanejarSubstituicaoUseCase;
  */
 @RestController
 @RequestMapping("/api/projecoes")
+@Tag(name = "Substituição Inteligente de EPI", description = "Projeções de desgaste, alertas preventivos e reposição de EPIs (UC10, RF21)")
 public class SubstituicaoEpiController {
 
     private final PlanejarSubstituicaoUseCase planejarSubstituicaoUseCase;
@@ -38,6 +42,9 @@ public class SubstituicaoEpiController {
      * persistindo as projeções calculadas e retornando os dados consolidados.
      */
     @PostMapping("/analise")
+    @Operation(summary = "Gera análise de projeção de desgaste para EPIs, persistindo resultados e reportando pendências",
+            description = "Executa o cálculo de projeção considerando histórico de uso, periculosidade e CA legal. Erros ou pendências são reportados para permitir nova tentativa.")
+    @ApiResponse(responseCode = "200", description = "Análise processada com sucesso")
     public ResponseEntity<ResultadoAnaliseSubstituicaoDTO> gerarAnalise(
             @RequestBody(required = false) GerarAnaliseProjecaoInputDTO input) {
         if (input == null) {
@@ -51,6 +58,7 @@ public class SubstituicaoEpiController {
      * Lista todas as projeções de substituição registradas no histórico.
      */
     @GetMapping
+    @Operation(summary = "Lista todas as projeções de substituição registradas no histórico")
     public ResponseEntity<List<ProjecaoSubstituicaoOutputDTO>> listarProjecoes() {
         return ResponseEntity.ok(planejarSubstituicaoUseCase.listarProjecoes());
     }
@@ -59,6 +67,7 @@ public class SubstituicaoEpiController {
      * Lista o histórico de projeções de um EPI específico.
      */
     @GetMapping("/epi/{epiId}")
+    @Operation(summary = "Lista o histórico de projeções de um EPI específico")
     public ResponseEntity<List<ProjecaoSubstituicaoOutputDTO>> listarPorEpi(@PathVariable Integer epiId) {
         return ResponseEntity.ok(planejarSubstituicaoUseCase.listarProjecoesPorEpi(epiId));
     }
@@ -68,6 +77,8 @@ public class SubstituicaoEpiController {
      * (descarte ou CA próximo do vencimento em até diasAntecedencia e estoque crítico).
      */
     @GetMapping("/alertas")
+    @Operation(summary = "Emite alertas preventivos de substituição de EPIs",
+            description = "Lista EPIs com descarte próximo, CA com validade próxima do vencimento ou estoque em nível crítico.")
     public ResponseEntity<List<AlertaSubstituicaoOutputDTO>> emitirAlertas(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataReferencia,
             @RequestParam(required = false, defaultValue = "30") Long diasAntecedencia) {

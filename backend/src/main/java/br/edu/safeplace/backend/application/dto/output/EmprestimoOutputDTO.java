@@ -27,10 +27,38 @@ public record EmprestimoOutputDTO(
         ClassificacaoEmprestimo status,
         boolean atrasado,
         String termoCautela,
-        String justificativaSubstituicao) {
+        String justificativaSubstituicao,
+        String destinoAprovado,
+        Integer saldoPersistido) {
+
+    public EmprestimoOutputDTO(
+            Integer id,
+            Integer epiId,
+            String epiNome,
+            Integer colaboradorId,
+            String colaboradorNome,
+            Integer responsavelEntregaId,
+            LocalDateTime dataRetirada,
+            LocalDate dataDevolucaoPrevista,
+            LocalDateTime dataDevolucaoReal,
+            Integer responsavelDevolucaoId,
+            EstadoDevolucao estadoDevolucao,
+            ClassificacaoEmprestimo status,
+            boolean atrasado,
+            String termoCautela,
+            String justificativaSubstituicao) {
+        this(id, epiId, epiNome, colaboradorId, colaboradorNome, responsavelEntregaId, dataRetirada,
+                dataDevolucaoPrevista, dataDevolucaoReal, responsavelDevolucaoId, estadoDevolucao,
+                status, atrasado, termoCautela, justificativaSubstituicao, null, null);
+    }
 
     public static EmprestimoOutputDTO deDominio(Emprestimo emprestimo, String epiNome, String colaboradorNome,
                                                 LocalDate hoje) {
+        return deDominio(emprestimo, epiNome, colaboradorNome, hoje, null, null);
+    }
+
+    public static EmprestimoOutputDTO deDominio(Emprestimo emprestimo, String epiNome, String colaboradorNome,
+                                                LocalDate hoje, String destinoAprovado, Integer saldoPersistido) {
         return new EmprestimoOutputDTO(
                 emprestimo.getId(),
                 emprestimo.getEpiId(),
@@ -46,6 +74,8 @@ public record EmprestimoOutputDTO(
                 emprestimo.classificarEm(hoje),
                 emprestimo.estaAtrasadoEm(hoje),
                 emprestimo.getTermoCautela(),
-                emprestimo.getJustificativaSubstituicao());
+                emprestimo.getJustificativaSubstituicao(),
+                destinoAprovado,
+                saldoPersistido);
     }
 }
