@@ -44,8 +44,8 @@ A revisão de escopo da issue #112 consultou o PNG no commit `34d6b6d` (14/09/20
 
 | Associação no PNG | Leitura | Situação |
 | --- | --- | --- |
-| `Setor` 0..* para `Tarefa` 1..* | Cada setor se relaciona com uma ou mais tarefas; cada tarefa, com zero ou mais setores. | **Não implementada.** Depende do contrato espacial de [#111](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/111) e da persistência de #113. O mínimo 1..* do lado da tarefa não é imposto ao cadastro de setor, que já existe sem tarefas; a divergência fica registrada para #111. |
-| `AreaRisco` 0..1 para `Tarefa` 0..* | Cada tarefa pertence a no máximo uma área de risco; uma área tem zero ou mais tarefas. | **Não implementada.** Mesma dependência de #111 e #113. Não se deriva área ou setor de texto livre. |
+| `Setor` 0..* para `Tarefa` 1..* | Cada setor se relaciona com uma ou mais tarefas; cada tarefa, com zero ou mais setores. | Implementada em `tarefas_setores` (V26), com chaves estrangeiras para `tarefas` e `setores`. O cadastro recebe ids de setores e os valida antes de gravar; ids repetidos não criam vínculos duplicados. |
+| `AreaRisco` 0..1 para `Tarefa` 0..* | Cada tarefa pertence a no máximo uma área de risco; uma área tem zero ou mais tarefas. | Implementada em `tarefas.area_risco_id` (V26), chave estrangeira opcional. O cadastro recebe o id e valida a área existente; exclusão da área desvincula a tarefa sem apagar seu histórico. |
 | `Tarefa` 0..* para `EPI` 0..* (`associarEPIs`, `verificarEPIsObrigatoriosTarefa`) | EPIs exigidos para executar a tarefa. | **Fora do MVP** (RF12, UC08, backlog). Não é exigido e não é confundido com os EPIs de acesso à área (UC03). |
 
 ### 2.3. Classificação, reavaliação e autoria
@@ -83,7 +83,7 @@ A revisão de escopo da issue #112 consultou o PNG no commit `34d6b6d` (14/09/20
 | Registro com data, hora e responsável técnico (UC11, regra 1) | `LogAuditoriaRepositoryPort.salvar` e `tarefas.responsavel_classificacao_id` | Histórico com valor anterior e novo (RNF05). |
 | Bloqueio de alocação (UC11, exceção I) | Domínio `Tarefa.validarClassificacaoParaAlocacao()` | Usado pelo ponto de alocação de #117 e #126. |
 | `associarEPIs(...)` / `verificarEPIsObrigatoriosTarefa()` | Sem correspondência no MVP | RF12, backlog. |
-| Associações com `Setor` e `AreaRisco` | Sem correspondência nesta entrega | Dependem de #111 e #113 (seção 2.2). |
+| Associações com `Setor` e `AreaRisco` | `Tarefa.areaRiscoId` e `Tarefa.setoresIds`; `TarefaJpaAdapter` | V26, preservadas na leitura e expostas pela API. |
 
 ---
 
@@ -117,7 +117,7 @@ A revisão de escopo da issue #112 consultou o PNG no commit `34d6b6d` (14/09/20
 | --- | --- |
 | Representação das exigências normativas | Resolvida na #117 via `ExigenciaCapacitacao` e migração V15. |
 | Critérios para atribuir cada nível | US06, regra 4: ainda precisam ser detalhados. A correspondência da seção 2.1 não define critério. |
-| Relações com `Setor` e `AreaRisco` | Dependem de #111 e #113, incluindo o mínimo 1..* do lado da tarefa na associação com `Setor`. |
+| Relações com `Setor` e `AreaRisco` | Resolvidas na #113 com `tarefas.area_risco_id` e `tarefas_setores`; a multiplicidade não impõe setor no cadastro de tarefa. |
 | Ponto de alocação | Resolvido na #117: endpoint `POST /api/tarefas/{id}/alocacoes` operado por Gestor e Supervisor. |
 | Consulta do histórico pela API | Resolvida na #114: `GET /api/tarefas/{id}/historico` devolve os registros de `logs_auditoria` da tarefa, do mais recente ao mais antigo, e é exclusiva do Gestor de Segurança. A interface mostra esse histórico na matriz de tarefas. |
 | Atualização textual de UC11 e US06 | Após a aprovação do vocabulário (2.1). |
