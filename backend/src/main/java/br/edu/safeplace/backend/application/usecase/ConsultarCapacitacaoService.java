@@ -161,4 +161,47 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
 
         return impedimentos;
     }
+
+    @Override
+    public List<Certificacao> listarTodasCertificacoes() {
+        LocalDate hoje = LocalDate.now();
+        List<Certificacao> lista = capacitacaoRepository.listarTodasCertificacoes();
+        lista.forEach(cert -> cert.reavaliarStatus(hoje));
+        return lista;
+    }
+
+    @Override
+    public List<Treinamento> listarTodosTreinamentos() {
+        return capacitacaoRepository.listarTodosTreinamentos();
+    }
+
+    @Override
+    public List<Integer> listarColaboradoresPorStatusCertificacao(StatusCertificacao status) {
+        if (status == null) {
+            return List.of();
+        }
+        List<Certificacao> todas = listarTodasCertificacoes();
+        java.util.Map<Integer, List<Certificacao>> porColaborador = todas.stream()
+                .collect(java.util.stream.Collectors.groupingBy(Certificacao::getColaboradorId));
+
+        List<Integer> resultado = new ArrayList<>();
+        for (java.util.Map.Entry<Integer, List<Certificacao>> entry : porColaborador.entrySet()) {
+            Integer colabId = entry.getKey();
+            List<Certificacao> certs = entry.getValue();
+
+            boolean temVencida = certs.stream().anyMatch(c -> c.getStatus() == StatusCertificacao.VENCIDA);
+            boolean temProxima = certs.stream().anyMatch(c -> c.getStatus() == StatusCertificacao.PROXIMA_DO_VENCIMENTO);
+            boolean todasEmDia = certs.stream().allMatch(c -> c.getStatus() == StatusCertificacao.EM_DIA);
+
+            if (status == StatusCertificacao.VENCIDA && temVencida) {
+                resultado.add(colabId);
+            } else if (status == StatusCertificacao.PROXIMA_DO_VENCIMENTO && temProxima && !temVencida) {
+                resultado.add(colabId);
+            } else if (status == StatusCertificacao.EM_DIA && todasEmDia && !certs.isEmpty()) {
+                resultado.add(colabId);
+            }
+        }
+        resultado.sort(Integer::compareTo);
+        return java.util.Collections.unmodifiableList(resultado);
+    }
 }
