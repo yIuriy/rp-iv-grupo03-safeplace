@@ -13,6 +13,7 @@ import { EpisUnificadosPage } from './features/epis/EpisUnificadosPage'
 import { EmprestimosPage } from './features/emprestimos/EmprestimosPage'
 import { RiskAreasPage } from './features/areas-risco/RiskAreasPage'
 import { TasksPage } from './features/tarefas/TasksPage'
+import { CapacitacoesPage } from './features/capacitacoes/CapacitacoesPage'
 import { Catalog } from './features/design-system/Catalog'
 import { RiskAreasExample } from './features/design-system/RiskAreasExample'
 
@@ -23,6 +24,7 @@ function App() {
       <Route element={<AppLayout />}>
         <Route index element={<Navigate to="/usuarios" replace />} />
         <Route path="usuarios" element={<UsersPage />} />
+        <Route path="capacitacoes" element={<CapacitacoesPage />} />
         <Route path="ocorrencias" element={<OccurrencesPage />} />
         <Route path="epis" element={<EpisUnificadosPage />} />
         <Route path="estoque" element={<Navigate to="/epis" replace />} />

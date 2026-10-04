@@ -56,3 +56,20 @@ Nenhum atributo novo foi persistido. `id` é identificador técnico. Os campos d
 
 - **Data de vencimento**: na própria data de vencimento a certificação já está `VENCIDA`, regra testada em `CertificacaoTest` desde #116. A aptidão para tarefa (#117) e a entrega de EPI (UC12) consideravam a certificação válida nesse dia, e a API devolvia "vencida" nos alertas e "apto" na aptidão para a mesma certificação. As três regras passaram a usar `Certificacao.estaValidaEm`, derivado do status: a certificação habilita até a véspera do vencimento.
 - **Pendência de integração (UC02, cenário III; US10, regra 4)**: a ausência de certificações basta para a pendência da trilha inicial de integração e dos treinamentos admissionais. Antes, a pendência só aparecia quando o colaborador também não tinha treinamento. A pendência é informativa: não bloqueia alocação nem entrega, que dependem das exigências da tarefa ou do EPI.
+
+## 7. Interface web (issue #120)
+
+Tela `/capacitacoes` em `frontend/src/features/capacitacoes/`, para Gestor de Segurança e Supervisor.
+
+| UC02 / US10 | Na tela | Endpoint |
+| --- | --- | --- |
+| Passos 1 e 2: acessar o menu e carregar a listagem | Menu "Capacitações", aba "Colaboradores" com a situação das certificações de cada pessoa | `GET /colaboradores` |
+| Cenário IV: filtrar por situação | Campo "Situação das certificações" (em dia, próximas do vencimento em até 30 dias, vencidas) | `GET /colaboradores?situacao=` |
+| Passos 3 a 7: selecionar e visualizar | Diálogo com certificações (nome, emissão, vencimento, situação) e treinamentos (nome, conteúdo, instrutor, realização, carga horária, situação), sem validade de treinamento | `GET /colaboradores/{id}` |
+| Regra 1 e cenário I: alertar vencimentos | Aviso-resumo ao abrir a tela e aba "Alertas de vencimento" | `GET /alertas` |
+| Cenário III e US10, critério 5: ausência de histórico | "Sem certificações cadastradas" na listagem, no detalhe e nos alertas, com a pendência de integração | `GET /colaboradores`, `GET /alertas` |
+| Exceção I, cenário II e US10, critérios 3 e 4: impedimento | "Aptidão para tarefa": motivos do bloqueio informados pelo servidor | `GET /colaboradores/{id}/aptidao?tarefaId=` |
+
+- A tela só consulta. Não há cadastro (#116, #126) nem ação de alocação; a confirmação continua validada pelo servidor.
+- Não há cópia offline: a #105 não aprova cache de capacitações, e a #127 depende dela.
+- Aba, filtro e colaborador aberto ficam na URL e sobrevivem à recarga.
