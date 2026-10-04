@@ -13,6 +13,7 @@ import './app.css'
 
 const navigation: { path: string; label: string; icon: IconName }[] = [
   { path: '/usuarios', label: 'Usuários', icon: 'users' },
+  { path: '/capacitacoes', label: 'Capacitações', icon: 'check' },
   { path: '/ocorrencias', label: 'Ocorrências', icon: 'clipboard' },
   { path: '/epis', label: 'EPIs', icon: 'package' },
   { path: '/emprestimos', label: 'Empréstimos de EPIs', icon: 'calendar' },

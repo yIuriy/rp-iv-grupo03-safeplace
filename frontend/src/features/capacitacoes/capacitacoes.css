@@ -1,0 +1,26 @@
+/* Estilos da tela de capacitações (issue #120): diálogo largo para as tabelas de detalhe, lista de
+   pendências de integração e formulário da consulta de aptidão. Só usa tokens do design system; as
+   classes de tabela, detalhes e seções vêm de estoque.css e emprestimos.css. */
+
+.sp-dialog.sp-dialog--largo { width: 880px; }
+
+.sp-lista-pendencias { display: grid; gap: var(--sp-space-12); margin: 0; padding: 0; list-style: none; }
+.sp-lista-pendencias li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-space-12);
+  padding: var(--sp-space-12) var(--sp-space-16);
+  border: var(--sp-stroke-default) solid var(--sp-border-default);
+  border-radius: var(--sp-radius-8);
+  background: var(--sp-surface-white);
+}
+.sp-lista-pendencias p { margin: var(--sp-space-4) 0 0; }
+
+.sp-aptidao { padding-top: var(--sp-space-16); border-top: var(--sp-stroke-default) solid var(--sp-border-default); }
+.sp-aptidao-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--sp-space-16); align-items: end; }
+
+@media (max-width: 767px) {
+  .sp-aptidao-form { grid-template-columns: 1fr; }
+}
