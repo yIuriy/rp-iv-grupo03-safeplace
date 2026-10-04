@@ -4,10 +4,11 @@
  * treinamentos_colaboradores. Não altera essas tabelas nem o domínio de capacitações.
  *
  * Regra aplicada (UC12, exceção I): para cada exigência vinculada ao EPI (tipo_alvo = 'EPI'),
- * uma CERTIFICACAO precisa existir para o colaborador com o mesmo nome e data de vencimento não
- * ultrapassada; um TREINAMENTO precisa constar para o colaborador com o mesmo nome. A tabela de
- * treinamentos não possui data de vencimento, então um treinamento só é impedimento quando falta;
- * a revalidação periódica depende de decisão registrada nas issues #116/#117.
+ * uma CERTIFICACAO precisa existir para o colaborador com o mesmo nome e vencimento posterior à data
+ * da entrega (na data de vencimento ela já está vencida, como no status do UC02); um TREINAMENTO
+ * precisa constar para o colaborador com o mesmo nome. A tabela de treinamentos não possui data de
+ * vencimento, então um treinamento só é impedimento quando falta; a revalidação periódica depende
+ * de decisão registrada nas issues #116/#117.
  */
 package br.edu.safeplace.backend.adapters.out.capacitacao;
 

@@ -102,8 +102,7 @@ public class ValidadorAptidaoColaboradorService {
             if (exigencia.getTipoCapacitacao() == ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO) {
                 // UC02 Exceção I: certificação obrigatória vencida ou não cadastrada impede alocação
                 boolean possuiValida = certs.stream()
-                        .anyMatch(c -> c.getNome().equalsIgnoreCase(nomeExigido)
-                                && (c.getDataVencimento().isAfter(dataBase) || c.getDataVencimento().isEqual(dataBase)));
+                        .anyMatch(c -> c.getNome().equalsIgnoreCase(nomeExigido) && c.estaValidaEm(dataBase));
                 if (!possuiValida) {
                     impedimentos.add("certificação obrigatória '" + nomeExigido + "' ausente ou vencida");
                 }

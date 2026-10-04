@@ -62,37 +62,7 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
     public PendenciasColaboradorDTO consultarPendenciasColaborador(Integer colaboradorId) {
         List<Certificacao> certificacoes = listarCertificacoesDoColaborador(colaboradorId);
         List<Treinamento> treinamentos = listarTreinamentosDoColaborador(colaboradorId);
-
-        int totalCertificacoes = certificacoes.size();
-        List<Certificacao> alertasVencimento = new ArrayList<>();
-        List<Certificacao> certificacoesVencidasLista = new ArrayList<>();
-        int emDia = 0;
-
-        for (Certificacao cert : certificacoes) {
-            StatusCertificacao status = cert.getStatus();
-            if (status == StatusCertificacao.PROXIMA_DO_VENCIMENTO) {
-                alertasVencimento.add(cert);
-            } else if (status == StatusCertificacao.VENCIDA) {
-                certificacoesVencidasLista.add(cert);
-            } else if (status == StatusCertificacao.EM_DIA) {
-                emDia++;
-            }
-        }
-
-        boolean pendenteIntegracaoAdmissional = certificacoes.isEmpty() && treinamentos.isEmpty();
-
-        return new PendenciasColaboradorDTO(
-                colaboradorId,
-                totalCertificacoes,
-                emDia,
-                alertasVencimento.size(),
-                certificacoesVencidasLista.size(),
-                treinamentos.size(),
-                pendenteIntegracaoAdmissional,
-                alertasVencimento,
-                certificacoesVencidasLista,
-                treinamentos
-        );
+        return PendenciasColaboradorDTO.avaliar(colaboradorId, certificacoes, treinamentos);
     }
 
     @Override
@@ -144,8 +114,7 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
             String nomeExigido = exigencia.getNomeCapacitacao();
             if (exigencia.getTipoCapacitacao() == ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO) {
                 boolean possuiValida = certificacoes.stream()
-                        .anyMatch(c -> c.getNome().equalsIgnoreCase(nomeExigido)
-                                && (c.getDataVencimento().isAfter(hoje) || c.getDataVencimento().isEqual(hoje)));
+                        .anyMatch(c -> c.getNome().equalsIgnoreCase(nomeExigido) && c.estaValidaEm(hoje));
                 if (!possuiValida) {
                     impedimentos.add("certificação " + nomeExigido + " ausente ou vencida");
                 }

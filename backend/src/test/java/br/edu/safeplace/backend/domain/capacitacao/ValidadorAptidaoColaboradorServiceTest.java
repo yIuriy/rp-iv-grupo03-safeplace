@@ -83,6 +83,28 @@ class ValidadorAptidaoColaboradorServiceTest {
     }
 
     @Test
+    @DisplayName("Bloqueia alocação na data exata de vencimento, coerente com o status VENCIDA (UC02, Exceção I)")
+    void deveBloquearAlocacaoNaDataDeVencimento() {
+        Tarefa tarefa = new Tarefa(10, "Trabalho em altura", NivelPerigo.ALTO, hoje.atStartOfDay());
+        ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(1, "NR-35 Altura",
+                ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, 10, ExigenciaCapacitacao.TipoAlvo.TAREFA);
+        Certificacao venceHoje = new Certificacao(1, "NR-35 Altura", hoje, hoje.minusYears(1), 1);
+        Certificacao venceAmanha = new Certificacao(2, "NR-35 Altura", hoje.plusDays(1), hoje.minusYears(1), 1);
+
+        assertThat(venceHoje.getStatus()).isEqualTo(StatusCertificacao.VENCIDA);
+        assertThatThrownBy(() -> validador.validarAptidaoParaTarefa(colaborador, tarefa,
+                List.of(venceHoje), List.of(), List.of(exigencia), hoje))
+                .isInstanceOf(AlocacaoBloqueadaException.class)
+                .hasMessageContaining("NR-35 Altura");
+        assertThat(validador.obterImpedimentos(colaborador, tarefa,
+                List.of(venceHoje), List.of(), List.of(exigencia), hoje))
+                .containsExactly("certificação obrigatória 'NR-35 Altura' ausente ou vencida");
+        assertThatCode(() -> validador.validarAptidaoParaTarefa(colaborador, tarefa,
+                List.of(venceAmanha), List.of(), List.of(exigencia), hoje))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
     @DisplayName("Permite alocação se a certificação obrigatória estiver válida na data da alocação")
     void devePermitirAlocacaoComCertificacaoValida() {
         Tarefa tarefa = new Tarefa(10, "Trabalho em altura", NivelPerigo.ALTO, hoje.atStartOfDay());
