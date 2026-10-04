@@ -14,30 +14,36 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarTarefaInputDTO;
+import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.RegistroHistoricoOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.TarefaOutputDTO;
 import br.edu.safeplace.backend.application.port.in.ClassificarTarefaUseCase;
-import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
+import br.edu.safeplace.backend.application.port.in.GerenciarEpiTarefaUseCase;
 import br.edu.safeplace.backend.application.port.out.AreaRiscoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.SetorRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.TarefaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.epi.Epi;
+import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 import br.edu.safeplace.backend.domain.tarefa.RegistroClassificacaoTarefa;
 import br.edu.safeplace.backend.domain.tarefa.Tarefa;
 import br.edu.safeplace.backend.domain.tarefa.exception.TarefaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
 /**
- * Classificação do nível de periculosidade das tarefas (RF06 / UC11).
+ * Classificação do nível de periculosidade das tarefas (RF06 / UC11)
+ * e vinculação de EPIs obrigatórios (RF12 / UC08).
  *
  * <p>Toda classificação, no cadastro ou em reavaliação, identifica o Gestor de Segurança
  * autenticado como responsável técnico e grava em {@code LogAuditoria} o nível anterior e o novo
  * (UC11, regra 1; US06, critério 2).</p>
  */
 @Service
-public class TarefaUseCase implements ClassificarTarefaUseCase {
+public class TarefaUseCase implements ClassificarTarefaUseCase, GerenciarEpiTarefaUseCase {
 
     private static final String ENTIDADE = "Tarefa";
 
@@ -46,21 +52,29 @@ public class TarefaUseCase implements ClassificarTarefaUseCase {
     private final UsuarioRepositorioPorta usuarioRepositorio;
     private final AreaRiscoRepositoryPort areaRiscoRepositoryPort;
     private final SetorRepositoryPort setorRepositoryPort;
+    private final EpiRepositoryPort epiRepositoryPort;
 
     @Autowired
     public TarefaUseCase(TarefaRepositoryPort repositoryPort, LogAuditoriaRepositoryPort logAuditoriaRepositoryPort,
             UsuarioRepositorioPorta usuarioRepositorio, AreaRiscoRepositoryPort areaRiscoRepositoryPort,
-            SetorRepositoryPort setorRepositoryPort) {
+            SetorRepositoryPort setorRepositoryPort, EpiRepositoryPort epiRepositoryPort) {
         this.repositoryPort = repositoryPort;
         this.logAuditoriaRepositoryPort = logAuditoriaRepositoryPort;
         this.usuarioRepositorio = usuarioRepositorio;
         this.areaRiscoRepositoryPort = areaRiscoRepositoryPort;
         this.setorRepositoryPort = setorRepositoryPort;
+        this.epiRepositoryPort = epiRepositoryPort;
+    }
+
+    public TarefaUseCase(TarefaRepositoryPort repositoryPort, LogAuditoriaRepositoryPort logAuditoriaRepositoryPort,
+            UsuarioRepositorioPorta usuarioRepositorio, AreaRiscoRepositoryPort areaRiscoRepositoryPort,
+            SetorRepositoryPort setorRepositoryPort) {
+        this(repositoryPort, logAuditoriaRepositoryPort, usuarioRepositorio, areaRiscoRepositoryPort, setorRepositoryPort, null);
     }
 
     public TarefaUseCase(TarefaRepositoryPort repositoryPort, LogAuditoriaRepositoryPort logAuditoriaRepositoryPort,
             UsuarioRepositorioPorta usuarioRepositorio) {
-        this(repositoryPort, logAuditoriaRepositoryPort, usuarioRepositorio, null, null);
+        this(repositoryPort, logAuditoriaRepositoryPort, usuarioRepositorio, null, null, null);
     }
 
     @Override
@@ -132,6 +146,42 @@ public class TarefaUseCase implements ClassificarTarefaUseCase {
         }
         return logAuditoriaRepositoryPort.listarPorEntidade(ENTIDADE, id).stream()
                 .map(RegistroHistoricoOutputDTO::deDominio)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public TarefaOutputDTO associarEpis(Integer tarefaId, List<Integer> epiIds) {
+        Tarefa tarefa = buscarTarefa(tarefaId);
+        List<Epi> epis = resolverEpis(epiIds);
+        tarefa.associarEpis(epis);
+        Tarefa salva = repositoryPort.salvar(tarefa);
+        return TarefaOutputDTO.deDominio(salva);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EpiOutputDTO> listarEpisObrigatorios(Integer tarefaId) {
+        Tarefa tarefa = buscarTarefa(tarefaId);
+        return tarefa.verificarEpisObrigatoriosTarefa().stream()
+                .map(EpiOutputDTO::deDominio)
+                .toList();
+    }
+
+    private List<Epi> resolverEpis(List<Integer> epiIds) {
+        if (epiIds == null || epiIds.isEmpty()) {
+            return List.of();
+        }
+        if (epiIds.stream().anyMatch(java.util.Objects::isNull)) {
+            throw new IllegalArgumentException("Identificador de EPI não pode ser nulo.");
+        }
+        if (epiRepositoryPort == null) {
+            return List.of();
+        }
+        return epiIds.stream()
+                .distinct()
+                .map(epiId -> epiRepositoryPort.buscarPorId(epiId)
+                        .orElseThrow(() -> new EpiNaoEncontradoException(epiId)))
                 .toList();
     }
 

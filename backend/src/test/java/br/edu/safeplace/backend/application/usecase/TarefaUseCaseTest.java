@@ -17,12 +17,18 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarTarefaInputDTO;
+import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.TarefaOutputDTO;
+import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.TarefaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.epi.Epi;
+import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
+import br.edu.safeplace.backend.domain.epi.StatusEpi;
+import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 import br.edu.safeplace.backend.domain.tarefa.Tarefa;
 import br.edu.safeplace.backend.domain.tarefa.exception.TarefaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
@@ -39,18 +45,20 @@ class TarefaUseCaseTest {
 
     private TarefaRepositoryFake repository;
     private LogAuditoriaFake auditoria;
+    private EpiRepositoryFake epiRepository;
     private TarefaUseCase useCase;
 
     @BeforeEach
     void setUp() {
         repository = new TarefaRepositoryFake();
         auditoria = new LogAuditoriaFake();
+        epiRepository = new EpiRepositoryFake();
         UsuarioRepositorioFake usuarios = new UsuarioRepositorioFake(List.of(
                 new GestorDeSeguranca(7, "49216091040", "Mariana", LocalDate.of(1988, 7, 20), EMAIL_GESTOR,
                         "hash", true, LocalDateTime.now(), LocalDateTime.now()),
                 new Supervisor(8, "87455877074", "Paulo", LocalDate.of(1990, 1, 10), EMAIL_SUPERVISOR,
                         "hash", true, LocalDateTime.now(), LocalDateTime.now())));
-        useCase = new TarefaUseCase(repository, auditoria, usuarios);
+        useCase = new TarefaUseCase(repository, auditoria, usuarios, null, null, epiRepository);
         autenticarComo(EMAIL_GESTOR);
     }
 
@@ -192,6 +200,77 @@ class TarefaUseCaseTest {
         assertThat(useCase.listar()).hasSize(3);
     }
 
+    private static Epi epi(Integer id, String nome) {
+        return new Epi(id, nome, "CA-" + id, 10, 2, StatusEpi.DISPONIVEL,
+                LocalDate.now().plusYears(1), 365, null, null);
+    }
+
+    @Test
+    @DisplayName("RF12 / UC08: deve associar EPIs a uma tarefa e listar EPIs obrigatórios")
+    void deveAssociarEpisEListarObrigatorios() {
+        Integer tarefaId = useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Trabalho em altura", null)).id();
+        Epi capacete = epi(1, "Capacete de Segurança");
+        Epi cinto = epi(2, "Cinto Paraquedista");
+        epiRepository.adicionar(capacete);
+        epiRepository.adicionar(cinto);
+
+        TarefaOutputDTO resultado = useCase.associarEpis(tarefaId, List.of(1, 2));
+
+        assertThat(resultado.episIds()).containsExactly(1, 2);
+
+        List<EpiOutputDTO> epis = useCase.listarEpisObrigatorios(tarefaId);
+        assertThat(epis).hasSize(2);
+        assertThat(epis.stream().map(EpiOutputDTO::id)).containsExactly(1, 2);
+        assertThat(epis.stream().map(EpiOutputDTO::nome)).containsExactly("Capacete de Segurança", "Cinto Paraquedista");
+    }
+
+    @Test
+    @DisplayName("RF12 / UC08: deve falhar ao associar EPI inexistente")
+    void deveFalharAoAssociarEpiInexistente() {
+        Integer tarefaId = useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Solda", null)).id();
+
+        assertThatThrownBy(() -> useCase.associarEpis(tarefaId, List.of(999)))
+                .isInstanceOf(EpiNaoEncontradoException.class)
+                .hasMessageContaining("999");
+    }
+
+    @Test
+    @DisplayName("RF12 / UC08: deve falhar ao associar com id de EPI nulo")
+    void deveFalharAoAssociarEpiNulo() {
+        Integer tarefaId = useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Solda", null)).id();
+        List<Integer> ids = new ArrayList<>();
+        ids.add(null);
+
+        assertThatThrownBy(() -> useCase.associarEpis(tarefaId, ids))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Identificador de EPI não pode ser nulo.");
+    }
+
+    @Test
+    @DisplayName("RF12 / UC08: deve falhar ao associar EPIs a tarefa inexistente")
+    void deveFalharAoAssociarEpisATarefaInexistente() {
+        assertThatThrownBy(() -> useCase.associarEpis(999, List.of(1)))
+                .isInstanceOf(TarefaNaoEncontradaException.class);
+
+        assertThatThrownBy(() -> useCase.listarEpisObrigatorios(999))
+                .isInstanceOf(TarefaNaoEncontradaException.class);
+    }
+
+    @Test
+    @DisplayName("RF12 / UC08: deve permitir associar lista vazia de EPIs desvinculando anteriores")
+    void devePermitirListaVaziaDeEpis() {
+        Integer tarefaId = useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Inspeção", null)).id();
+        Epi luva = epi(5, "Luva");
+        epiRepository.adicionar(luva);
+
+        useCase.associarEpis(tarefaId, List.of(5));
+        assertThat(useCase.listarEpisObrigatorios(tarefaId)).hasSize(1);
+
+        TarefaOutputDTO resultado = useCase.associarEpis(tarefaId, List.of());
+        assertThat(resultado.episIds()).isEmpty();
+        assertThat(useCase.listarEpisObrigatorios(tarefaId)).isEmpty();
+    }
+
     private static class TarefaRepositoryFake implements TarefaRepositoryPort {
         private final Map<Integer, Tarefa> storage = new HashMap<>();
         private int nextId = 1;
@@ -200,7 +279,8 @@ class TarefaUseCaseTest {
         public Tarefa salvar(Tarefa tarefa) {
             Integer id = tarefa.getId() != null ? tarefa.getId() : nextId++;
             Tarefa salva = new Tarefa(id, tarefa.getDescricao(), tarefa.getNivelPerigo(),
-                    tarefa.getDataClassificacao(), tarefa.getResponsavelClassificacao());
+                    tarefa.getDataClassificacao(), tarefa.getResponsavelClassificacao(),
+                    tarefa.getAreaRiscoId(), tarefa.getSetoresIds(), tarefa.getEpisObrigatorios());
             storage.put(id, salva);
             return salva;
         }
@@ -220,6 +300,50 @@ class TarefaUseCaseTest {
             return storage.values().stream()
                     .filter(tarefa -> tarefa.getNivelPerigo() == nivelPerigo)
                     .toList();
+        }
+    }
+
+    private static class EpiRepositoryFake implements EpiRepositoryPort {
+        private final Map<Integer, Epi> storage = new HashMap<>();
+
+        void adicionar(Epi epi) {
+            storage.put(epi.getId(), epi);
+        }
+
+        @Override
+        public Epi salvar(Epi epi) {
+            storage.put(epi.getId(), epi);
+            return epi;
+        }
+
+        @Override
+        public Optional<Epi> buscarPorId(Integer id) {
+            return Optional.ofNullable(storage.get(id));
+        }
+
+        @Override
+        public Optional<Epi> buscarPorCA(String numeroCa) {
+            return storage.values().stream().filter(e -> numeroCa.equals(e.getNumeroCa())).findFirst();
+        }
+
+        @Override
+        public List<Epi> listarTodos() {
+            return new ArrayList<>(storage.values());
+        }
+
+        @Override
+        public Epi atualizarSaldo(Epi epi) {
+            return salvar(epi);
+        }
+
+        @Override
+        public MovimentacaoEstoque salvarMovimentacao(MovimentacaoEstoque movimentacao) {
+            return movimentacao;
+        }
+
+        @Override
+        public List<MovimentacaoEstoque> listarMovimentacoesPorEpi(Integer epiId) {
+            return List.of();
         }
     }
 
