@@ -1,5 +1,6 @@
-/* Layout da consulta de ocorrências (issue #128): grade de critérios que vira uma coluna em telas
-   estreitas, área de consulta pelo protocolo CAT e item largo no detalhe. */
+/* Layout da tela de ocorrências (issues #128 e #100): grade de critérios que vira uma coluna em telas
+   estreitas, consulta pelo protocolo CAT, formulário de relato, protocolo em destaque na confirmação,
+   painel de novos relatos e ações do plano. */
 .sp-consulta-ocorrencias { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: var(--sp-space-16); align-items: end; }
 .sp-consulta-ocorrencias .sp-consulta-texto { grid-column: 1 / -1; }
 .sp-consulta-cabecalho { display: flex; flex-wrap: wrap; gap: var(--sp-space-16); align-items: flex-end; justify-content: space-between; }
@@ -8,3 +9,32 @@
 .sp-protocolo-busca .sp-field { flex: 1 1 220px; }
 .sp-detalhes .sp-detalhes-largo { grid-column: 1 / -1; }
 .sp-descricao-ocorrencia { max-width: 320px; white-space: pre-wrap; }
+.sp-acoes-linha { display: flex; flex-wrap: wrap; gap: var(--sp-space-8); }
+
+.sp-dialog.sp-dialog--largo { width: 880px; }
+.sp-relato-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: var(--sp-space-16); align-items: start; }
+.sp-relato-grade > legend { grid-column: 1 / -1; }
+
+.sp-protocolo-destaque { display: grid; gap: var(--sp-space-8); justify-items: center; text-align: center; padding: var(--sp-space-24); border: 2px solid var(--sp-brand-primary); border-radius: var(--sp-radius-16); background: var(--sp-brand-soft); }
+.sp-protocolo-rotulo { font-weight: 600; color: var(--sp-text-secondary); }
+.sp-protocolo-numero { font-family: var(--sp-font-heading); font-size: clamp(1.5rem, 6vw, 2.25rem); line-height: 1.2; color: var(--sp-brand-deep); overflow-wrap: anywhere; }
+
+.sp-novos-relatos { display: block; }
+.sp-novos-relatos-lista { list-style: none; margin: var(--sp-space-12) 0 0; padding: 0; display: grid; gap: var(--sp-space-8); }
+.sp-novos-relatos-lista li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-space-8); }
+
+.sp-ocorrencia-gestao { display: grid; gap: var(--sp-space-12); }
+.sp-plano { display: grid; gap: var(--sp-space-16); }
+.sp-plano-topo { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-space-12); }
+.sp-plano-resumo { color: var(--sp-text-secondary); }
+.sp-acoes-lista { display: grid; gap: var(--sp-space-16); }
+.sp-acao { display: grid; gap: var(--sp-space-12); padding: var(--sp-space-16); border: 1px solid var(--sp-border-default); border-radius: var(--sp-radius-8); }
+.sp-acao-cabecalho { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-space-8); }
+.sp-acao-titulo { margin: 0; font-size: 1rem; }
+.sp-acao-marcas { display: flex; flex-wrap: wrap; gap: var(--sp-space-8); }
+.sp-acao-dados { margin-bottom: 0; }
+.sp-acao-dados dd { overflow-wrap: anywhere; }
+.sp-acao-botoes { display: flex; flex-wrap: wrap; gap: var(--sp-space-8); }
+.sp-acao-operacao { padding: var(--sp-space-16); border-radius: var(--sp-radius-8); background: var(--sp-surface-page); }
+.sp-acao-operacao .sp-dialog-actions { margin-top: 0; }
+.sp-prorrogacoes { margin: 0; padding-left: var(--sp-space-24); display: grid; gap: var(--sp-space-4); }
