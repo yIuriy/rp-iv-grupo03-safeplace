@@ -1,0 +1,210 @@
+package br.edu.safeplace.backend.adapters.in.web;
+
+import java.time.LocalDate;
+import java.util.List;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import br.edu.safeplace.backend.application.dto.capacitacao.AlertaCertificacaoOutputDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.AlertasCapacitacaoOutputDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.CapacitacoesColaboradorOutputDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.CertificacaoOutputDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.ColaboradorCapacitacaoResumoOutputDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.PendenciaColaboradorOutputDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.TreinamentoOutputDTO;
+import br.edu.safeplace.backend.application.dto.output.ConsultaAptidaoOutputDTO;
+import br.edu.safeplace.backend.application.port.in.AlocarColaboradorTarefaUseCase;
+import br.edu.safeplace.backend.application.port.in.capacitacao.AcompanharCapacitacoesUseCase;
+import br.edu.safeplace.backend.config.RestSegurancaTratadorExcecoes;
+import br.edu.safeplace.backend.config.SecurityConfig;
+import br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao;
+import br.edu.safeplace.backend.domain.tarefa.exception.TarefaNaoEncontradaException;
+import br.edu.safeplace.backend.domain.usuario.exception.UsuarioNaoEncontradoException;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest({CapacitacaoController.class, UsuarioTratadorExcecoes.class, TarefaTratadorExcecoes.class})
+@Import({SecurityConfig.class, RestSegurancaTratadorExcecoes.class})
+class CapacitacaoControllerTest {
+
+    private static final LocalDate VENCIMENTO = LocalDate.of(2026, 10, 20);
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private AcompanharCapacitacoesUseCase acompanharUseCase;
+
+    @MockitoBean
+    private AlocarColaboradorTarefaUseCase alocarUseCase;
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("UC02 cenário IV: Supervisor lista colaboradores filtrando pela situação")
+    void deveListarColaboradoresFiltrados() throws Exception {
+        when(acompanharUseCase.listarColaboradores(StatusCertificacao.VENCIDA)).thenReturn(List.of(
+                new ColaboradorCapacitacaoResumoOutputDTO(3, "Ana", StatusCertificacao.VENCIDA, false, 2, 1, false)));
+
+        mockMvc.perform(get("/api/capacitacoes/colaboradores").param("situacao", "VENCIDA"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].colaboradorId").value(3))
+                .andExpect(jsonPath("$[0].situacaoCertificacoes").value("VENCIDA"))
+                .andExpect(jsonPath("$[0].semCertificacoes").value(false))
+                .andExpect(jsonPath("$[0].cpf").doesNotExist())
+                .andExpect(jsonPath("$[0].email").doesNotExist());
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Situação fora do vocabulário é recusada com 400")
+    void deveRecusarSituacaoInvalida() throws Exception {
+        mockMvc.perform(get("/api/capacitacoes/colaboradores").param("situacao", "QUALQUER"))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(acompanharUseCase);
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("UC02 passos 4 e 5: Gestor consulta os detalhes de capacitação do colaborador")
+    void deveDetalharColaborador() throws Exception {
+        CertificacaoOutputDTO certificacao = new CertificacaoOutputDTO(
+                1, "NR-35", StatusCertificacao.PROXIMA_DO_VENCIMENTO, VENCIMENTO, LocalDate.of(2025, 10, 20));
+        TreinamentoOutputDTO treinamento = new TreinamentoOutputDTO(
+                2, "NR-10", "Riscos elétricos", "Eng. Paula", LocalDate.of(2026, 3, 10), 40, "REALIZADO");
+        when(acompanharUseCase.consultarColaborador(3)).thenReturn(new CapacitacoesColaboradorOutputDTO(
+                3, "Ana", StatusCertificacao.PROXIMA_DO_VENCIMENTO, List.of(certificacao), List.of(treinamento),
+                List.of(), List.of(certificacao), false,
+                List.of("Colaborador possui 1 certificação(ões) próxima(s) do vencimento (30 dias)")));
+
+        mockMvc.perform(get("/api/capacitacoes/colaboradores/3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.colaboradorNome").value("Ana"))
+                .andExpect(jsonPath("$.certificacoes[0].nome").value("NR-35"))
+                .andExpect(jsonPath("$.certificacoes[0].status").value("PROXIMA_DO_VENCIMENTO"))
+                .andExpect(jsonPath("$.certificacoes[0].dataVencimento").value("2026-10-20"))
+                .andExpect(jsonPath("$.certificacoes[0].dataEmissao").value("2025-10-20"))
+                .andExpect(jsonPath("$.treinamentos[0].conteudo").value("Riscos elétricos"))
+                .andExpect(jsonPath("$.treinamentos[0].instrutor").value("Eng. Paula"))
+                .andExpect(jsonPath("$.treinamentos[0].dataRealizacao").value("2026-03-10"))
+                .andExpect(jsonPath("$.treinamentos[0].cargaHoraria").value(40))
+                .andExpect(jsonPath("$.certificacoesProximasDoVencimento[0].id").value(1))
+                .andExpect(jsonPath("$.pendencias[0]").value(
+                        "Colaborador possui 1 certificação(ões) próxima(s) do vencimento (30 dias)"));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Colaborador inexistente devolve 404")
+    void deveDevolver404ParaColaboradorInexistente() throws Exception {
+        when(acompanharUseCase.consultarColaborador(99))
+                .thenThrow(new UsuarioNaoEncontradoException("Colaborador não encontrado: 99"));
+
+        mockMvc.perform(get("/api/capacitacoes/colaboradores/99"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Colaborador não encontrado: 99"));
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("UC02 regra 1: alertas trazem próximos vencimentos, vencidas e pendências")
+    void deveConsultarAlertas() throws Exception {
+        when(acompanharUseCase.consultarAlertas()).thenReturn(new AlertasCapacitacaoOutputDTO(
+                LocalDate.of(2026, 10, 4), 30,
+                List.of(new AlertaCertificacaoOutputDTO(1, "NR-35", StatusCertificacao.PROXIMA_DO_VENCIMENTO,
+                        VENCIMENTO, LocalDate.of(2025, 10, 20), 3, "Ana")),
+                List.of(new AlertaCertificacaoOutputDTO(2, "NR-10", StatusCertificacao.VENCIDA,
+                        LocalDate.of(2026, 9, 1), LocalDate.of(2024, 9, 1), 4, "Bruno")),
+                List.of(new PendenciaColaboradorOutputDTO(5, "Carla",
+                        List.of("Pendência da trilha inicial de integração")))));
+
+        mockMvc.perform(get("/api/capacitacoes/alertas"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.diasAntecedenciaAlerta").value(30))
+                .andExpect(jsonPath("$.proximasDoVencimento[0].colaboradorNome").value("Ana"))
+                .andExpect(jsonPath("$.vencidas[0].status").value("VENCIDA"))
+                .andExpect(jsonPath("$.pendencias[0].mensagens[0]").value("Pendência da trilha inicial de integração"));
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("#117: consulta de aptidão delega à mesma regra da alocação e informa impedimentos")
+    void deveConsultarAptidaoPelaRegraDaAlocacao() throws Exception {
+        when(alocarUseCase.consultarAptidao(7, 3)).thenReturn(ConsultaAptidaoOutputDTO.inapto(
+                7, "Trabalho em altura", 3, "Ana", List.of("certificação obrigatória 'NR-35' ausente ou vencida")));
+
+        mockMvc.perform(get("/api/capacitacoes/colaboradores/3/aptidao").param("tarefaId", "7"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.apto").value(false))
+                .andExpect(jsonPath("$.impedimentos[0]").value("certificação obrigatória 'NR-35' ausente ou vencida"));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Consulta de aptidão exige a tarefa pretendida")
+    void deveExigirTarefaNaConsultaDeAptidao() throws Exception {
+        mockMvc.perform(get("/api/capacitacoes/colaboradores/3/aptidao"))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(alocarUseCase);
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Consulta de aptidão para tarefa inexistente devolve 404")
+    void deveDevolver404ParaTarefaInexistente() throws Exception {
+        when(alocarUseCase.consultarAptidao(anyInt(), any())).thenThrow(new TarefaNaoEncontradaException(70));
+
+        mockMvc.perform(get("/api/capacitacoes/colaboradores/3/aptidao").param("tarefaId", "70"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("RNF03: consulta sem autenticação devolve 401")
+    void deveExigirAutenticacao() throws Exception {
+        mockMvc.perform(get("/api/capacitacoes/alertas"))
+                .andExpect(status().isUnauthorized());
+        verifyNoInteractions(acompanharUseCase);
+    }
+
+    @Test
+    @WithMockUser(roles = "COLABORADOR")
+    @DisplayName("RNF03: perfil sem acesso não consulta capacitações")
+    void deveNegarPerfilSemAcesso() throws Exception {
+        mockMvc.perform(get("/api/capacitacoes/colaboradores"))
+                .andExpect(status().isForbidden());
+        verifyNoInteractions(acompanharUseCase);
+    }
+
+    @Test
+    @WithMockUser(roles = {"GESTOR_SEGURANCA", "SUPERVISOR"})
+    @DisplayName("Escrita não é liberada a nenhum perfil enquanto o fluxo de cadastro não for aprovado")
+    void deveNegarEscrita() throws Exception {
+        String corpo = "{\"nome\": \"NR-35\", \"colaboradorId\": 3}";
+
+        mockMvc.perform(post("/api/capacitacoes/certificacoes").contentType(MediaType.APPLICATION_JSON).content(corpo))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/capacitacoes/treinamentos").contentType(MediaType.APPLICATION_JSON).content(corpo))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(put("/api/capacitacoes/colaboradores/3").contentType(MediaType.APPLICATION_JSON).content(corpo))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(delete("/api/capacitacoes/colaboradores/3"))
+                .andExpect(status().isForbidden());
+        verifyNoInteractions(acompanharUseCase, alocarUseCase);
+    }
+}
