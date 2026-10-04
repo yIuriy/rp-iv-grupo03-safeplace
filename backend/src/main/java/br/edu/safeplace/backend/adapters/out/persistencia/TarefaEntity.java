@@ -36,16 +36,27 @@ public class TarefaEntity {
             inverseJoinColumns = @JoinColumn(name = "setor_id"))
     private List<SetorEntity> setores = new ArrayList<>();
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "tarefas_epis", joinColumns = @JoinColumn(name = "tarefa_id"),
+            inverseJoinColumns = @JoinColumn(name = "epi_id"))
+    private List<EpiEntity> epis = new ArrayList<>();
+
     public TarefaEntity() {
     }
 
     public TarefaEntity(Integer id, String descricao, String nivelPerigo, LocalDateTime dataClassificacao,
             GestorDeSegurancaEntidade responsavelClassificacao) {
-        this(id, descricao, nivelPerigo, dataClassificacao, responsavelClassificacao, null, List.of());
+        this(id, descricao, nivelPerigo, dataClassificacao, responsavelClassificacao, null, List.of(), List.of());
     }
 
     public TarefaEntity(Integer id, String descricao, String nivelPerigo, LocalDateTime dataClassificacao,
             GestorDeSegurancaEntidade responsavelClassificacao, AreaRiscoEntity areaRisco, List<SetorEntity> setores) {
+        this(id, descricao, nivelPerigo, dataClassificacao, responsavelClassificacao, areaRisco, setores, List.of());
+    }
+
+    public TarefaEntity(Integer id, String descricao, String nivelPerigo, LocalDateTime dataClassificacao,
+            GestorDeSegurancaEntidade responsavelClassificacao, AreaRiscoEntity areaRisco, List<SetorEntity> setores,
+            List<EpiEntity> epis) {
         this.id = id;
         this.descricao = descricao;
         this.nivelPerigo = nivelPerigo;
@@ -53,6 +64,7 @@ public class TarefaEntity {
         this.responsavelClassificacao = responsavelClassificacao;
         this.areaRisco = areaRisco;
         this.setores = setores != null ? new ArrayList<>(setores) : new ArrayList<>();
+        this.epis = epis != null ? new ArrayList<>(epis) : new ArrayList<>();
     }
 
     public Integer getId() {
@@ -81,5 +93,9 @@ public class TarefaEntity {
 
     public List<SetorEntity> getSetores() {
         return setores;
+    }
+
+    public List<EpiEntity> getEpis() {
+        return epis;
     }
 }

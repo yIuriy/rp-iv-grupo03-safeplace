@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import br.edu.safeplace.backend.application.port.out.TarefaRepositoryPort;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.tarefa.Tarefa;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
@@ -18,13 +19,16 @@ public class TarefaJpaAdapter implements TarefaRepositoryPort {
     private final UsuarioJpaRepositorio usuarioRepository;
     private final AreaRiscoJpaRepository areaRiscoRepository;
     private final SetorJpaRepository setorRepository;
+    private final EpiJpaRepository epiRepository;
 
     public TarefaJpaAdapter(TarefaJpaRepository tarefaRepository, UsuarioJpaRepositorio usuarioRepository,
-            AreaRiscoJpaRepository areaRiscoRepository, SetorJpaRepository setorRepository) {
+            AreaRiscoJpaRepository areaRiscoRepository, SetorJpaRepository setorRepository,
+            EpiJpaRepository epiRepository) {
         this.tarefaRepository = tarefaRepository;
         this.usuarioRepository = usuarioRepository;
         this.areaRiscoRepository = areaRiscoRepository;
         this.setorRepository = setorRepository;
+        this.epiRepository = epiRepository;
     }
 
     @Override
@@ -57,7 +61,16 @@ public class TarefaJpaAdapter implements TarefaRepositoryPort {
                 domain.getDataClassificacao(),
                 carregarGestor(domain.getResponsavelClassificacao()),
                 carregarAreaRisco(domain.getAreaRiscoId()),
-                carregarSetores(domain.getSetoresIds()));
+                carregarSetores(domain.getSetoresIds()),
+                carregarEpisGerenciados(domain));
+    }
+
+    private List<EpiEntity> carregarEpisGerenciados(Tarefa domain) {
+        List<Integer> ids = domain.verificarEpisObrigatoriosTarefa().stream()
+                .map(Epi::getId)
+                .filter(Objects::nonNull)
+                .toList();
+        return ids.isEmpty() ? List.of() : epiRepository.findAllById(ids);
     }
 
     private GestorDeSegurancaEntidade carregarGestor(GestorDeSeguranca gestor) {
@@ -96,6 +109,7 @@ public class TarefaJpaAdapter implements TarefaRepositoryPort {
                 entity.getDataClassificacao(),
                 entity.getResponsavelClassificacao() == null ? null : entity.getResponsavelClassificacao().paraDominio(),
                 entity.getAreaRisco() == null ? null : entity.getAreaRisco().getId(),
-                entity.getSetores().stream().map(SetorEntity::getId).toList());
+                entity.getSetores().stream().map(SetorEntity::getId).toList(),
+                entity.getEpis().stream().map(EpiEntityMapper::toDomain).toList());
     }
 }

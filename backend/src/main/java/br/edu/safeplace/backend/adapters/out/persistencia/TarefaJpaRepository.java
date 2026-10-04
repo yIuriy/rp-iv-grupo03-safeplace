@@ -9,13 +9,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface TarefaJpaRepository extends JpaRepository<TarefaEntity, Integer> {
 
     @Override
-    @EntityGraph(attributePaths = {"responsavelClassificacao", "areaRisco", "setores"})
+    @EntityGraph(attributePaths = {"responsavelClassificacao", "areaRisco", "setores", "epis"})
     Optional<TarefaEntity> findById(Integer id);
 
     @Override
-    @EntityGraph(attributePaths = {"responsavelClassificacao", "areaRisco", "setores"})
+    @EntityGraph(attributePaths = {"responsavelClassificacao", "areaRisco", "setores", "epis"})
     List<TarefaEntity> findAll();
 
-    @EntityGraph(attributePaths = {"responsavelClassificacao", "areaRisco", "setores"})
+    @EntityGraph(attributePaths = {"responsavelClassificacao", "areaRisco", "setores", "epis"})
     List<TarefaEntity> findByNivelPerigo(String nivelPerigo);
 }
