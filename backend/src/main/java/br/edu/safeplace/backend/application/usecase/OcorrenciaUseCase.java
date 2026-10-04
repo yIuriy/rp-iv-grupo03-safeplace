@@ -5,6 +5,7 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.application.dto.input.AtualizarOcorrenciaInputDTO;
 import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
@@ -18,6 +19,7 @@ import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
+import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
@@ -33,7 +35,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 @Service
@@ -293,6 +297,117 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
                 .filter(visibilidadeDoUsuarioAtual())
                 .orElseThrow(() -> new OcorrenciaNaoEncontradaException("Ocorrência não encontrada com o protocolo " + protocolo.trim() + "."));
         return OcorrenciaOutputDTO.deDominio(ocorrencia);
+    }
+
+    /**
+     * Edita os dados do relato (UC05, cenário alternativo IV). Preserva tipo, data do registro,
+     * situação, relator, protocolo CAT e plano embutido; registra na auditoria quais campos mudaram.
+     * Ocorrência arquivada encerrou o acompanhamento e não é editada.
+     */
+    @Override
+    @Transactional
+    public OcorrenciaOutputDTO atualizar(Integer idOcorrencia, AtualizarOcorrenciaInputDTO inputDTO) {
+        if (inputDTO == null) {
+            throw new IllegalArgumentException("Dados da ocorrência não podem ser nulos.");
+        }
+        Ocorrencia atual = repository.buscarPorId(idOcorrencia)
+                .orElseThrow(() -> new OcorrenciaNaoEncontradaException(idOcorrencia));
+        if (atual.getStatusOcorrencia() == StatusOcorrencia.ARQUIVADA) {
+            throw new IllegalStateException("Ocorrência arquivada não pode ser editada.");
+        }
+
+        AreaRisco area = resolverArea(inputDTO.areaId());
+        Colaborador colaborador = resolverColaborador(inputDTO.colaboradorId());
+
+        Ocorrencia salva;
+        if (atual instanceof Acidente acidente) {
+            NivelPerigo gravidade = inputDTO.gravidade() == null || inputDTO.gravidade().isBlank()
+                    ? acidente.getGravidade()
+                    : converterGravidade(inputDTO.gravidade());
+            salva = repository.salvarAcidente(new Acidente(
+                    acidente.getIdOcorrencia(),
+                    inputDTO.descricao(),
+                    inputDTO.dataOcorrencia(),
+                    acidente.getDataRegistro(),
+                    acidente.getStatusOcorrencia(),
+                    acidente.getTestemunhas(),
+                    colaborador,
+                    acidente.getMidias(),
+                    area,
+                    acidente.getGestor(),
+                    acidente.getLocalInformado(),
+                    acidente.getPlanoDeAcao(),
+                    converterCausaRaiz(inputDTO.causaRaiz()),
+                    inputDTO.tipo(),
+                    inputDTO.dano(),
+                    acidente.getNumeroProtocoloCAT(),
+                    inputDTO.destino(),
+                    gravidade));
+        } else if (atual instanceof Incidente incidente) {
+            salva = repository.salvarIncidente(new Incidente(
+                    incidente.getIdOcorrencia(),
+                    inputDTO.descricao(),
+                    inputDTO.dataOcorrencia(),
+                    incidente.getDataRegistro(),
+                    incidente.getStatusOcorrencia(),
+                    incidente.getTestemunhas(),
+                    colaborador,
+                    incidente.getMidias(),
+                    area,
+                    incidente.getGestor(),
+                    incidente.getLocalInformado(),
+                    incidente.getPlanoDeAcao(),
+                    inputDTO.situacaoRisco(),
+                    inputDTO.potencialDano()));
+        } else {
+            throw new IllegalStateException("Tipo de ocorrência não suportado.");
+        }
+
+        if (logAuditoriaRepositoryPort != null) {
+            logAuditoriaRepositoryPort.salvar(LogAuditoria.registrarAlteracao(
+                    resolverOperador(),
+                    salva instanceof Acidente ? "Acidente" : "Incidente",
+                    salva.getId(),
+                    "Atualização de ocorrência. Campos alterados: " + descreverAlteracoes(atual, salva)));
+        }
+
+        return OcorrenciaOutputDTO.deDominio(salva);
+    }
+
+    private static String descreverAlteracoes(Ocorrencia antes, Ocorrencia depois) {
+        List<String> campos = new ArrayList<>();
+        if (!Objects.equals(antes.getDataOcorrencia(), depois.getDataOcorrencia())) campos.add("dataOcorrencia");
+        if (!Objects.equals(antes.getDescricao(), depois.getDescricao())) campos.add("descricao");
+        if (!Objects.equals(idDaArea(antes), idDaArea(depois))) campos.add("area");
+        if (!Objects.equals(idDoColaborador(antes), idDoColaborador(depois))) campos.add("colaborador");
+        if (antes instanceof Acidente a && depois instanceof Acidente d) {
+            if (a.getCausaRaiz() != d.getCausaRaiz()) campos.add("causaRaiz");
+            if (a.getGravidade() != d.getGravidade()) campos.add("gravidade");
+            if (!Objects.equals(a.getTipo(), d.getTipo())) campos.add("tipo");
+            if (!Objects.equals(a.getDano(), d.getDano())) campos.add("dano");
+            if (!Objects.equals(a.getDestino(), d.getDestino())) campos.add("destino");
+        }
+        if (antes instanceof Incidente a && depois instanceof Incidente d) {
+            if (!Objects.equals(a.getSituacaoRisco(), d.getSituacaoRisco())) campos.add("situacaoRisco");
+            if (!Objects.equals(a.getPotencialDano(), d.getPotencialDano())) campos.add("potencialDano");
+        }
+        return campos.isEmpty() ? "nenhum" : String.join(", ", campos);
+    }
+
+    private static Integer idDaArea(Ocorrencia ocorrencia) {
+        return ocorrencia.getArea() != null ? ocorrencia.getArea().getId() : null;
+    }
+
+    private static Integer idDoColaborador(Ocorrencia ocorrencia) {
+        return ocorrencia.getColaborador() != null ? ocorrencia.getColaborador().getId() : null;
+    }
+
+    private static NivelPerigo converterGravidade(String gravidade) {
+        try {
+            return NivelPerigo.valueOf(gravidade.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Gravidade inválida: " + gravidade);
+        }
     }
 
     @Override

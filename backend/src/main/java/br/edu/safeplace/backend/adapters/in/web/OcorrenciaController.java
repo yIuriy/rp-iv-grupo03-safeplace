@@ -1,6 +1,6 @@
 /*
  * API REST de ocorrências (UC05/UC09): relato de acidente e incidente, consulta por critérios (issue
- * #128), detalhe, busca por protocolo CAT, triagem, arquivamento e consolidação da CAT.
+ * #128), detalhe, busca por protocolo CAT, edição, triagem, arquivamento e consolidação da CAT.
  */
 package br.edu.safeplace.backend.adapters.in.web;
 
@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -84,6 +85,14 @@ public class OcorrenciaController {
     @Operation(summary = "Busca uma ocorrência pelo número de protocolo CAT")
     public OcorrenciaResponse buscarPorProtocolo(@PathVariable String protocolo) {
         return OcorrenciaResponse.fromOutputDTO(gerenciarUseCase.buscarPorProtocolo(protocolo));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Edita os dados de uma ocorrência não arquivada (exclusivo do Gestor de Segurança)",
+            description = "UC05, cenário alternativo IV. Tipo, data do registro, situação, relator e protocolo CAT são "
+                    + "preservados; os campos alterados ficam registrados na auditoria.")
+    public OcorrenciaResponse atualizar(@PathVariable Integer id, @Valid @RequestBody AtualizarOcorrenciaRequest request) {
+        return OcorrenciaResponse.fromOutputDTO(gerenciarUseCase.atualizar(id, request.toInputDTO()));
     }
 
     @PatchMapping("/{id}/triagem")
