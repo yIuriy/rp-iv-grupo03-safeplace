@@ -39,6 +39,7 @@ public class TarefaEntity {
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "tarefas_epis", joinColumns = @JoinColumn(name = "tarefa_id"),
             inverseJoinColumns = @JoinColumn(name = "epi_id"))
+    @org.hibernate.annotations.BatchSize(size = 50)
     private List<EpiEntity> epis = new ArrayList<>();
 
     public TarefaEntity() {

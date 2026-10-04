@@ -208,6 +208,14 @@ class TarefaEpiApiIntegracaoTest {
     }
 
     @Test
+    @DisplayName("Gestor lista tarefas cadastradas na matriz de tarefas")
+    void gestorListaTarefas() throws Exception {
+        mockMvc.perform(get("/api/tarefas").with(gestor()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
     @DisplayName("O contrato OpenAPI publica os endpoints /api/tarefas/{id}/epis")
     void contratoOpenApiPublicaEndpointsEpisTarefa() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
