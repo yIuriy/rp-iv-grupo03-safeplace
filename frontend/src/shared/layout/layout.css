@@ -31,3 +31,4 @@
 @media (max-width: 767px) {
   .sp-main { padding: var(--sp-layout-mobile-padding); }
 }
+.sp-nav-contador { margin-left: auto; min-width: 24px; padding: 0 var(--sp-space-8); border-radius: 999px; background: var(--sp-feedback-danger); color: var(--sp-text-inverse); font-size: 12px; line-height: 24px; text-align: center; }
