@@ -232,4 +232,19 @@ class PlanoDeAcaoUseCaseTest {
 
         assertThat(output.status()).isEqualTo("CONCLUIDA");
     }
+
+    @Test
+    @DisplayName("Consulta do plano segue a visibilidade do relato: relato alheio ao Supervisor responde não encontrada")
+    void consultaDoPlanoRespeitaVisibilidadeDaOcorrencia() {
+        br.edu.safeplace.backend.application.port.in.GerenciarOcorrenciaUseCase consulta =
+                org.mockito.Mockito.mock(br.edu.safeplace.backend.application.port.in.GerenciarOcorrenciaUseCase.class);
+        when(consulta.buscarPorId(9)).thenThrow(
+                new br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException(9));
+        PlanoDeAcaoUseCase comVisibilidade = new PlanoDeAcaoUseCase(
+                planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository, consulta);
+
+        assertThatThrownBy(() -> comVisibilidade.listarPorOcorrencia(9))
+                .isInstanceOf(br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException.class);
+        org.mockito.Mockito.verifyNoInteractions(planoDeAcaoRepository);
+    }
 }

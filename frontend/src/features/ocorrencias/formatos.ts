@@ -2,7 +2,8 @@
 // usados na lista e no detalhe. Valor desconhecido aparece como veio, sem ser descartado.
 
 import { ehNivelPerigo, rotuloNivelPerigo } from '../areas-risco/api'
-import type { TipoOcorrencia } from './api'
+import type { FeedbackTone } from '../../shared/components'
+import type { StatusOcorrencia, TipoOcorrencia } from './api'
 
 export const rotuloTipoOcorrencia: Record<TipoOcorrencia, string> = {
   ACIDENTE: 'Acidente',
@@ -28,4 +29,11 @@ export function descreverGravidade(valor: string | null | undefined): string {
 
 export function textoOuPadrao(valor: string | null | undefined, padrao = 'Não informado'): string {
   return valor && valor.trim() ? valor : padrao
+}
+
+/** Cor do selo da situação: aberta aguarda triagem, em triagem está em análise, arquivada encerrou. */
+export function tomDoStatus(status: StatusOcorrencia): FeedbackTone {
+  if (status === 'EM_TRIAGEM') return 'warning'
+  if (status === 'ARQUIVADA') return 'success'
+  return 'info'
 }
