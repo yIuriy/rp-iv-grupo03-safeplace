@@ -53,6 +53,9 @@ class HistoricoControllerTest {
     @MockitoBean
     private AlocarColaboradorTarefaUseCase alocarUseCase;
 
+    @MockitoBean
+    private br.edu.safeplace.backend.application.port.in.GerenciarEpiTarefaUseCase gerenciarEpiUseCase;
+
     @Test
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("Gestor consulta o histórico de uma área com data, operador e o que mudou")

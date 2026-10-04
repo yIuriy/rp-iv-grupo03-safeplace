@@ -25,7 +25,9 @@ public record TarefaResponse(
 
         @Schema(description = "Área de risco opcional vinculada à tarefa", example = "3") Integer areaRiscoId,
 
-        @Schema(description = "Setores físicos vinculados à tarefa", example = "[1, 2]") List<Integer> setoresIds) {
+        @Schema(description = "Setores físicos vinculados à tarefa", example = "[1, 2]") List<Integer> setoresIds,
+
+        @Schema(description = "Identificadores dos EPIs obrigatórios vinculados à tarefa (RF12 / UC08)", example = "[1, 2]") List<Integer> episIds) {
 
     public static TarefaResponse fromOutputDTO(TarefaOutputDTO dto) {
         return new TarefaResponse(
@@ -37,6 +39,7 @@ public record TarefaResponse(
                 dto.responsavelClassificacaoId(),
                 dto.responsavelClassificacaoNome(),
                 dto.areaRiscoId(),
-                dto.setoresIds());
+                dto.setoresIds(),
+                dto.episIds());
     }
 }

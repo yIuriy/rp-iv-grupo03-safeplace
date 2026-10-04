@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 import br.edu.safeplace.backend.domain.tarefa.exception.TarefaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.tarefa.exception.TarefaSemClassificacaoException;
 
@@ -16,6 +17,15 @@ public class TarefaTratadorExcecoes {
 
     @ExceptionHandler(TarefaNaoEncontradaException.class)
     public ResponseEntity<Map<String, Object>> handleTarefaNaoEncontrada(TarefaNaoEncontradaException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.NOT_FOUND.value(),
+                "error", "Não Encontrado",
+                "message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(EpiNaoEncontradoException.class)
+    public ResponseEntity<Map<String, Object>> handleEpiNaoEncontrado(EpiNaoEncontradoException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
                 "timestamp", LocalDateTime.now(),
                 "status", HttpStatus.NOT_FOUND.value(),

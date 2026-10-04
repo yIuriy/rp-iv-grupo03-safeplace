@@ -101,6 +101,8 @@ public class SecurityConfig {
                         // RF10, UC02 e UC11 (#117): Alocação operacional de tarefas permitida para Gestor e Supervisor
                         .requestMatchers(HttpMethod.POST, "/api/tarefas/*/alocacoes")
                                 .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        // RF12, UC08 / US12 (#135): Vinculação de EPIs a tarefas exclusiva do Gestor de Segurança
+                        .requestMatchers(HttpMethod.PUT, "/api/tarefas/*/epis").hasRole("GESTOR_SEGURANCA")
                         .requestMatchers("/api/areas-risco/**", "/api/tarefas/**", "/api/setores/**").hasRole("GESTOR_SEGURANCA")
                         .anyRequest().authenticated()
                 );
