@@ -2,9 +2,14 @@
 // Exclusivo do Gestor de Segurança: seleciona quais EPIs do catálogo são obrigatórios.
 
 import { useEffect, useState, type FormEvent } from 'react'
-import { Alert, Button, Checkbox, Dialog } from '../../shared/components'
+import { Alert, Button, Checkbox, Dialog, Select } from '../../shared/components'
 import { mensagemDaApi } from '../../shared/api/erros'
-import { listarEpis, type Epi } from '../epis/api'
+import {
+  classificacoesEpi,
+  listarEpis,
+  rotuloClassificacaoEpi,
+  type Epi,
+} from '../epis/api'
 import {
   associarEpisTarefa,
   listarEpisTarefa,
@@ -22,6 +27,7 @@ export function VincularEpisTarefaDialog({
 }) {
   const [episDisponiveis, setEpisDisponiveis] = useState<Epi[]>([])
   const [episSelecionados, setEpisSelecionados] = useState<number[]>([])
+  const [filtroClassificacao, setFiltroClassificacao] = useState<string>('')
   const [carregando, setCarregando] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
@@ -29,6 +35,7 @@ export function VincularEpisTarefaDialog({
   useEffect(() => {
     if (tarefa) {
       setErro(null)
+      setFiltroClassificacao('')
       setCarregando(true)
       if (tarefa.episIds) {
         setEpisSelecionados(tarefa.episIds)
@@ -55,6 +62,7 @@ export function VincularEpisTarefaDialog({
     } else {
       setEpisDisponiveis([])
       setEpisSelecionados([])
+      setFiltroClassificacao('')
       setErro(null)
     }
   }, [tarefa])
@@ -86,6 +94,12 @@ export function VincularEpisTarefaDialog({
     }
   }
 
+  const episFiltrados = episDisponiveis.filter(epi => {
+    if (!filtroClassificacao) return true
+    if (filtroClassificacao === 'SEM_CLASSIFICACAO') return !epi.classificacao
+    return epi.classificacao === filtroClassificacao
+  })
+
   return (
     <Dialog
       open={!!tarefa}
@@ -104,6 +118,21 @@ export function VincularEpisTarefaDialog({
           <p className="sp-field-label">Descrição da atividade</p>
           <p className="sp-descricao-tarefa">{tarefa.descricao}</p>
         </div>
+
+        <Select
+          label="Filtrar por classificação do EPI"
+          value={filtroClassificacao}
+          onChange={e => setFiltroClassificacao(e.target.value)}
+          helper="Filtre os EPIs do catálogo por tipo de proteção para facilitar a busca."
+        >
+          <option value="">Todas as classificações</option>
+          {classificacoesEpi.map(classificacao => (
+            <option key={classificacao} value={classificacao}>
+              {rotuloClassificacaoEpi[classificacao]}
+            </option>
+          ))}
+          <option value="SEM_CLASSIFICACAO">Outros / Sem classificação</option>
+        </Select>
 
         <fieldset className="sp-field">
           <legend className="sp-field-label">
@@ -131,15 +160,21 @@ export function VincularEpisTarefaDialog({
               <p className="sp-texto-secundario" style={{ padding: '8px' }}>
                 Carregando catálogo de EPIs...
               </p>
-            ) : episDisponiveis.length === 0 ? (
+            ) : episFiltrados.length === 0 ? (
               <p className="sp-texto-secundario" style={{ padding: '8px' }}>
-                Nenhum EPI disponível no catálogo.
+                {filtroClassificacao
+                  ? 'Nenhum EPI encontrado para a classificação selecionada.'
+                  : 'Nenhum EPI disponível no catálogo.'}
               </p>
             ) : (
-              episDisponiveis.map(epi => (
+              episFiltrados.map(epi => (
                 <Checkbox
                   key={epi.id}
-                  label={`${epi.nome} (CA ${epi.numeroCa})`}
+                  label={`${epi.nome} (CA ${epi.numeroCa})${
+                    epi.classificacao
+                      ? ` — ${rotuloClassificacaoEpi[epi.classificacao]}`
+                      : ''
+                  }`}
                   checked={episSelecionados.includes(epi.id)}
                   onChange={() => alternarEpi(epi.id)}
                   disabled={enviando}
@@ -150,7 +185,13 @@ export function VincularEpisTarefaDialog({
           {!carregando && episDisponiveis.length > 0 && (
             <p className="sp-texto-secundario" style={{ marginTop: '8px' }}>
               {episSelecionados.length}{' '}
-              {episSelecionados.length === 1 ? 'EPI selecionado' : 'EPIs selecionados'}
+              {episSelecionados.length === 1
+                ? 'EPI selecionado no total'
+                : 'EPIs selecionados no total'}
+              {filtroClassificacao &&
+                ` (${episFiltrados.length} ${
+                  episFiltrados.length === 1 ? 'visível' : 'visíveis'
+                })`}
             </p>
           )}
         </fieldset>

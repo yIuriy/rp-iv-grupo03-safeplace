@@ -7,6 +7,30 @@ export type ClassificacaoEpi =
   | 'PROTECAO_DE_TRONCO' | 'PROTECAO_RESPIRATORIA' | 'PROTECAO_AUDITIVA' | 'PROTECAO_DE_OLHOS'
   | 'PROTECAO_DE_FACE' | 'PROTECAO_DE_CABECA'
 
+export const classificacoesEpi: readonly ClassificacaoEpi[] = [
+  'PROTECAO_CONTRA_QUEDAS',
+  'PROTECAO_DE_MEMBROS_INFERIORES',
+  'PROTECAO_DE_MEMBROS_SUPERIORES',
+  'PROTECAO_DE_TRONCO',
+  'PROTECAO_RESPIRATORIA',
+  'PROTECAO_AUDITIVA',
+  'PROTECAO_DE_OLHOS',
+  'PROTECAO_DE_FACE',
+  'PROTECAO_DE_CABECA',
+]
+
+export const rotuloClassificacaoEpi: Record<ClassificacaoEpi, string> = {
+  PROTECAO_CONTRA_QUEDAS: 'Proteção contra quedas',
+  PROTECAO_DE_MEMBROS_INFERIORES: 'Proteção de membros inferiores',
+  PROTECAO_DE_MEMBROS_SUPERIORES: 'Proteção de membros superiores',
+  PROTECAO_DE_TRONCO: 'Proteção de tronco',
+  PROTECAO_RESPIRATORIA: 'Proteção respiratória',
+  PROTECAO_AUDITIVA: 'Proteção auditiva',
+  PROTECAO_DE_OLHOS: 'Proteção de olhos',
+  PROTECAO_DE_FACE: 'Proteção de face',
+  PROTECAO_DE_CABECA: 'Proteção de cabeça',
+}
+
 export type Epi = {
   id: number
   nome: string
@@ -15,6 +39,7 @@ export type Epi = {
   estoqueMinimo: number
   status: StatusEpi
   dataValidadeCa: string | null
+  classificacao?: ClassificacaoEpi | null
 }
 
 export type ManutencaoEpi = {
@@ -55,6 +80,9 @@ const resultados: readonly ResultadoManutencao[] = ['APROVADO', 'REPROVADO']
 
 function ehStatus(valor: unknown): valor is StatusEpi { return status.includes(valor as StatusEpi) }
 function ehResultado(valor: unknown): valor is ResultadoManutencao { return resultados.includes(valor as ResultadoManutencao) }
+function ehClassificacao(valor: unknown): valor is ClassificacaoEpi {
+  return typeof valor === 'string' && classificacoesEpi.includes(valor as ClassificacaoEpi)
+}
 
 function lerEpi(dado: unknown): Epi {
   if (dado === null || typeof dado !== 'object') throw new Error('EPI inválido na resposta da API')
@@ -67,6 +95,7 @@ function lerEpi(dado: unknown): Epi {
     id: bruto.id, nome: bruto.nome, numeroCa: bruto.numeroCa, quantidade: bruto.quantidade,
     estoqueMinimo: bruto.estoqueMinimo, status: bruto.status,
     dataValidadeCa: typeof bruto.dataValidadeCa === 'string' ? bruto.dataValidadeCa : null,
+    classificacao: ehClassificacao(bruto.classificacao) ? bruto.classificacao : null,
   }
 }
 
