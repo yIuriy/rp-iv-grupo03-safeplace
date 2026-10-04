@@ -4,6 +4,7 @@
  */
 package br.edu.safeplace.backend.adapters.in.web;
 
+import br.edu.safeplace.backend.application.dto.input.AtualizarOcorrenciaInputDTO;
 import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
@@ -33,6 +34,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -201,6 +203,59 @@ class OcorrenciaControllerTest {
         mockMvc.perform(patch("/api/ocorrencias/1/consolidar-cat"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.numeroProtocoloCAT").value("CAT-2026-09-0001"));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Gestor edita ocorrência pelo PUT e recebe os dados atualizados")
+    void gestorDeveEditarOcorrencia() throws Exception {
+        when(gerenciarUseCase.atualizar(org.mockito.ArgumentMatchers.eq(1), any(AtualizarOcorrenciaInputDTO.class)))
+                .thenReturn(acidenteDTO(1, StatusOcorrencia.EM_TRIAGEM.name(), "CAT-2026-09-0001"));
+
+        mockMvc.perform(put("/api/ocorrencias/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"dataOcorrencia":"2026-09-10T10:00:00","descricao":"Queimadura por fagulha",
+                                 "areaId":1,"colaboradorId":2,"causaRaiz":"FALHA_EPI","gravidade":"MEDIO"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.idOcorrencia").value(1))
+                .andExpect(jsonPath("$.statusOcorrencia").value("EM_TRIAGEM"))
+                .andExpect(jsonPath("$.numeroProtocoloCAT").value("CAT-2026-09-0001"));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Edição sem descrição ou data do fato responde 400")
+    void edicaoSemCamposObrigatoriosDeveResponder400() throws Exception {
+        mockMvc.perform(put("/api/ocorrencias/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"descricao\":\" \"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Edição de ocorrência arquivada responde 400 com a mensagem do domínio")
+    void edicaoDeArquivadaDeveResponder400() throws Exception {
+        when(gerenciarUseCase.atualizar(org.mockito.ArgumentMatchers.eq(1), any(AtualizarOcorrenciaInputDTO.class)))
+                .thenThrow(new IllegalStateException("Ocorrência arquivada não pode ser editada."));
+
+        mockMvc.perform(put("/api/ocorrencias/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"dataOcorrencia\":\"2026-09-10T10:00:00\",\"descricao\":\"Texto\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Ocorrência arquivada não pode ser editada."));
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("Supervisor não edita ocorrência (403)")
+    void supervisorNaoDeveEditarOcorrencia() throws Exception {
+        mockMvc.perform(put("/api/ocorrencias/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"dataOcorrencia\":\"2026-09-10T10:00:00\",\"descricao\":\"Texto\"}"))
+                .andExpect(status().isForbidden());
     }
 
     @Test

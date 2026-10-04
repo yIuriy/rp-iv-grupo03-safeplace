@@ -4,6 +4,7 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.application.dto.input.AtualizarOcorrenciaInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
@@ -13,6 +14,7 @@ import br.edu.safeplace.backend.application.port.out.NotificacaoOcorrenciaPort;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
@@ -503,6 +505,98 @@ class OcorrenciaUseCaseTest {
             List<OcorrenciaOutputDTO> listaSupervisor = useCase.listar();
             assertThat(listaSupervisor).hasSize(1);
             assertThat(listaSupervisor.get(0).idOcorrencia()).isEqualTo(1);
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+    }
+
+    @Test
+    @DisplayName("Edição de acidente altera os dados e preserva tipo, registro, situação e protocolo CAT")
+    void deveEditarAcidentePreservandoIdentidade() {
+        OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaOutputDTO cadastrado = useCase.registrarAcidente(new RegistrarAcidenteInputDTO(
+                LocalDateTime.of(2026, 9, 6, 14, 30), null, "Corte na mao.", null,
+                "FATOR_HUMANO", "Corte", "Leve", "CAT-2026-09-0007", "Ambulatorio", NivelPerigo.BAIXO));
+        useCase.enviarParaTriagem(cadastrado.idOcorrencia());
+
+        OcorrenciaOutputDTO editado = useCase.atualizar(cadastrado.idOcorrencia(), new AtualizarOcorrenciaInputDTO(
+                LocalDateTime.of(2026, 9, 6, 13, 0), "Corte profundo na mao direita.", null, null,
+                "FALHA_EPI", "ALTO", "Laceracao", "Moderado", "Hospital", null, null));
+
+        assertThat(editado.idOcorrencia()).isEqualTo(cadastrado.idOcorrencia());
+        assertThat(editado.tipoOcorrencia()).isEqualTo("ACIDENTE");
+        assertThat(editado.descricao()).isEqualTo("Corte profundo na mao direita.");
+        assertThat(editado.dataOcorrencia()).isEqualTo(LocalDateTime.of(2026, 9, 6, 13, 0));
+        assertThat(editado.dataRegistro()).isEqualTo(cadastrado.dataRegistro());
+        assertThat(editado.statusOcorrencia()).isEqualTo("EM_TRIAGEM");
+        assertThat(editado.numeroProtocoloCAT()).isEqualTo("CAT-2026-09-0007");
+        assertThat(editado.causaRaiz()).isEqualTo("FALHA_EPI");
+        assertThat(editado.gravidade()).isEqualTo("ALTO");
+        assertThat(editado.destino()).isEqualTo("Hospital");
+    }
+
+    @Test
+    @DisplayName("Edição de incidente exige situação de risco e potencial de dano")
+    void deveEditarIncidenteValidandoCamposProprios() {
+        OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaOutputDTO cadastrado = useCase.registrarIncidente(new RegistrarIncidenteInputDTO(
+                LocalDateTime.of(2026, 9, 10, 10, 0), null, "Oleo no piso", null, "Piso escorregadio", "Queda"));
+
+        OcorrenciaOutputDTO editado = useCase.atualizar(cadastrado.idOcorrencia(), new AtualizarOcorrenciaInputDTO(
+                LocalDateTime.of(2026, 9, 10, 10, 0), "Oleo no piso da doca", null, null,
+                null, null, null, null, null, "Vazamento de empilhadeira", "Queda com fratura"));
+
+        assertThat(editado.situacaoRisco()).isEqualTo("Vazamento de empilhadeira");
+        assertThat(editado.potencialDano()).isEqualTo("Queda com fratura");
+        assertThatThrownBy(() -> useCase.atualizar(cadastrado.idOcorrencia(), new AtualizarOcorrenciaInputDTO(
+                LocalDateTime.of(2026, 9, 10, 10, 0), "Oleo", null, null,
+                null, null, null, null, null, " ", "Queda")))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("Ocorrência arquivada não é editada e inexistente responde não encontrada")
+    void deveRecusarEdicaoDeArquivadaOuInexistente() {
+        OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaOutputDTO cadastrado = useCase.registrarIncidente(new RegistrarIncidenteInputDTO(
+                LocalDateTime.of(2026, 9, 10, 10, 0), null, "Oleo no piso", null, "Piso escorregadio", "Queda"));
+        useCase.enviarParaTriagem(cadastrado.idOcorrencia());
+        useCase.arquivar(cadastrado.idOcorrencia());
+        AtualizarOcorrenciaInputDTO dados = new AtualizarOcorrenciaInputDTO(
+                LocalDateTime.of(2026, 9, 10, 10, 0), "Nova descricao", null, null,
+                null, null, null, null, null, "Piso", "Queda");
+
+        assertThatThrownBy(() -> useCase.atualizar(cadastrado.idOcorrencia(), dados))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("arquivada");
+        assertThatThrownBy(() -> useCase.atualizar(999, dados))
+                .isInstanceOf(OcorrenciaNaoEncontradaException.class);
+    }
+
+    @Test
+    @DisplayName("Edição registra na auditoria o operador e os campos alterados")
+    void deveAuditarCamposAlteradosNaEdicao() {
+        OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
+        LogAuditoriaRepositoryPort logRepo = mock(LogAuditoriaRepositoryPort.class);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, logRepo);
+        OcorrenciaOutputDTO cadastrado = useCase.registrarIncidente(new RegistrarIncidenteInputDTO(
+                LocalDateTime.of(2026, 9, 10, 10, 0), null, "Oleo no piso", null, "Piso escorregadio", "Queda"));
+        try {
+            SecurityContextHolder.getContext().setAuthentication(
+                    new UsernamePasswordAuthenticationToken("gestor@safeplace.com", "senha"));
+            useCase.atualizar(cadastrado.idOcorrencia(), new AtualizarOcorrenciaInputDTO(
+                    LocalDateTime.of(2026, 9, 10, 10, 0), "Oleo no piso da doca", null, null,
+                    null, null, null, null, null, "Piso escorregadio", "Queda grave"));
+
+            org.mockito.ArgumentCaptor<LogAuditoria> captor = org.mockito.ArgumentCaptor.forClass(LogAuditoria.class);
+            verify(logRepo, org.mockito.Mockito.times(2)).salvar(captor.capture());
+            LogAuditoria edicao = captor.getAllValues().get(1);
+            assertThat(edicao.getTipoOperacao()).isEqualTo("ALTERACAO");
+            assertThat(edicao.getResponsavel()).isEqualTo("gestor@safeplace.com");
+            assertThat(edicao.getJustificativa()).contains("descricao", "potencialDano").doesNotContain("situacaoRisco");
         } finally {
             SecurityContextHolder.clearContext();
         }
