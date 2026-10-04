@@ -33,6 +33,7 @@ async function simular(page: Page, opcoes: Opcoes = {}) {
   const registros = [acidente, incidente]
   await page.route('**/api/setores', route => route.fulfill({ json: setores }))
   await page.route('**/api/usuarios/colaboradores**', route => route.fulfill({ json: colaboradores }))
+  await page.route('**/api/usuarios', route => route.fulfill({ json: colaboradores }))
   await page.route(url => url.pathname.startsWith('/api/ocorrencias'), route => {
     const url = new URL(route.request().url())
     const protocolo = url.pathname.match(/\/api\/ocorrencias\/protocolo\/(.+)$/)
@@ -188,6 +189,7 @@ test.describe('Consulta de ocorrências (UC05/UC09, issue #128)', () => {
     await busca.getByRole('button', { name: 'Consultar protocolo' }).click()
     await expect(page.getByRole('dialog', { name: 'Ocorrência #1' })).toBeVisible()
     await page.keyboard.press('Escape')
+    await expect(page.getByRole('dialog', { name: 'Ocorrência #1' })).not.toBeVisible()
 
     await busca.getByLabel('Protocolo CAT').fill('CAT-2026-09-9999')
     await busca.getByRole('button', { name: 'Consultar protocolo' }).click()
@@ -199,7 +201,7 @@ test.describe('Consulta de ocorrências (UC05/UC09, issue #128)', () => {
     await iniciarSessao(page, supervisor)
     await simular(page, { detalheIndisponivel: 2 })
     await page.goto('/ocorrencias')
-    await expect(page.getByText('Consulte os relatos de acidentes e incidentes que você registrou (UC09).')).toBeVisible()
+    await expect(page.getByText('Relate acidentes e incidentes e acompanhe os relatos que você registrou (UC09).')).toBeVisible()
 
     await page.getByRole('button', { name: 'Ver detalhes da ocorrência 2' }).click()
     await expect(page.getByRole('dialog', { name: 'Ocorrência #2' }).getByRole('status'))

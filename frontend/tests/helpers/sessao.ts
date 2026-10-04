@@ -25,11 +25,22 @@ export const pessoas = {
   colaborador: { id: 3, nome: 'João da Silva', cpf: '12345678909', dataNascimento: '1992-06-18', email: null, perfil: 'COLABORADOR', ativo: true },
 }
 
+/**
+ * Para o Gestor, o menu consulta os novos relatos em `GET /api/ocorrencias` em qualquer tela. Essa
+ * consulta responde lista vazia por padrão, para que nenhum teste dependa de um backend real (um 401
+ * encerraria a sessão). Testes que simulam ocorrências registram a própria rota depois e têm precedência.
+ */
+async function semNovosRelatos(page: Page) {
+  await page.route(url => url.pathname === '/api/ocorrencias', route =>
+    route.request().method() === 'GET' ? route.fulfill({ json: [] }) : route.fallback())
+}
+
 /** Grava a sessão antes de cada carregamento, como se o login já tivesse acontecido nesta aba. */
 export async function iniciarSessao(page: Page, sessao: SessaoTeste = gestora) {
   await page.addInitScript(valor => {
     window.sessionStorage.setItem('safeplace.sessao', JSON.stringify(valor))
   }, sessao)
+  await semNovosRelatos(page)
 }
 
 export type ChamadaApi = { url: URL; method: string; authorization: string | undefined }
@@ -45,6 +56,7 @@ function resolver(lista: Lista | undefined, url: URL): unknown[] {
  * passam adiante (`fallback`) para os manipuladores registrados pelo próprio teste.
  */
 export async function simularListagens(page: Page, dados: { usuarios?: Lista; colaboradores?: Lista } = {}) {
+  await semNovosRelatos(page)
   const chamadas: ChamadaApi[] = []
   const atender = (lista: Lista | undefined) => (route: Route) => {
     const request = route.request()
