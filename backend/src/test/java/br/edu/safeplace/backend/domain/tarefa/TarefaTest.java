@@ -2,6 +2,7 @@ package br.edu.safeplace.backend.domain.tarefa;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,8 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.epi.Epi;
+import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.tarefa.exception.TarefaSemClassificacaoException;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
@@ -22,6 +25,11 @@ class TarefaTest {
     private static GestorDeSeguranca gestor(Integer id) {
         return new GestorDeSeguranca(id, "49216091040", "Mariana", LocalDate.of(1988, 7, 20),
                 "mariana@empresa.com", "hash", true, LocalDateTime.now(), LocalDateTime.now());
+    }
+
+    private static Epi epi(Integer id, String nome) {
+        return new Epi(id, nome, "CA-" + id, 10, 2, StatusEpi.DISPONIVEL,
+                LocalDate.now().plusYears(1), 365, null, null);
     }
 
     @Test
@@ -140,5 +148,57 @@ class TarefaTest {
         tarefa.classificar(NivelPerigo.BAIXO, gestor(7));
 
         assertThatCode(tarefa::validarClassificacaoParaAlocacao).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("RF12 / UC08: deve associar e verificar EPIs obrigatórios da tarefa")
+    void deveAssociarEVerificarEpisObrigatorios() {
+        Tarefa tarefa = Tarefa.cadastrar("Trabalho em tubulação");
+        Epi capacete = epi(1, "Capacete de Segurança");
+        Epi luva = epi(2, "Luva de Vaqueta");
+
+        boolean resultado = tarefa.associarEpis(List.of(capacete, luva));
+
+        assertThat(resultado).isTrue();
+        assertThat(tarefa.verificarEpisObrigatoriosTarefa()).containsExactly(capacete, luva);
+        assertThat(tarefa.getEpisObrigatorios()).containsExactly(capacete, luva);
+        assertThat(tarefa.verificarEPIsObrigatoriosTarefa()).containsExactly(capacete, luva);
+    }
+
+    @Test
+    @DisplayName("RF12 / UC08: deve permitir tarefa sem EPI associado com lista vazia ou nula")
+    void devePermitirTarefaSemEpisAssociados() {
+        Tarefa tarefa = Tarefa.cadastrar("Inspeção visual");
+        assertThat(tarefa.getEpisObrigatorios()).isEmpty();
+
+        tarefa.associarEpis(null);
+        assertThat(tarefa.getEpisObrigatorios()).isEmpty();
+
+        tarefa.associarEpis(List.of());
+        assertThat(tarefa.getEpisObrigatorios()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("RF12 / UC08: deve verificar se determinado EPI é exigido pela tarefa")
+    void deveVerificarSeExigeEpi() {
+        Tarefa tarefa = Tarefa.cadastrar("Manutenção elétrica");
+        Epi bota = epi(10, "Bota Isolante");
+        tarefa.associarEpis(List.of(bota));
+
+        assertThat(tarefa.exigeEpi(10)).isTrue();
+        assertThat(tarefa.exigeEpi(99)).isFalse();
+        assertThat(tarefa.exigeEpi(null)).isFalse();
+    }
+
+    @Test
+    @DisplayName("RF12 / UC08: lista de EPIs obrigatórios deve ser imutável externamente")
+    void listaDeEpisDeveSerImutavelExternamente() {
+        Tarefa tarefa = Tarefa.cadastrar("Pintura");
+        Epi mascara = epi(5, "Máscara PFF2");
+        tarefa.associarEpis(List.of(mascara));
+
+        List<Epi> epis = tarefa.verificarEpisObrigatoriosTarefa();
+        assertThatThrownBy(() -> epis.add(epi(6, "Óculos")))
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 }
