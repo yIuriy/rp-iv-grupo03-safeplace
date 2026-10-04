@@ -7,6 +7,7 @@ import br.edu.safeplace.backend.application.dto.input.CriarAcaoPlanoInputDTO;
 import br.edu.safeplace.backend.application.dto.input.ProrrogarPrazoInputDTO;
 import br.edu.safeplace.backend.application.dto.output.PlanoDeAcaoOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.ProrrogacaoPrazoOutputDTO;
+import br.edu.safeplace.backend.application.port.in.GerenciarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarPlanoDeAcaoUseCase;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.PlanoDeAcaoRepositoryPort;
@@ -20,6 +21,7 @@ import br.edu.safeplace.backend.domain.ocorrencia.StatusPlanoDeAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -36,16 +38,42 @@ public class PlanoDeAcaoUseCase implements GerenciarPlanoDeAcaoUseCase {
     private final OcorrenciaRepositoryPort ocorrenciaRepository;
     private final UsuarioRepositorioPorta usuarioRepository;
     private final SetorRepositoryPort setorRepository;
+    private final GerenciarOcorrenciaUseCase consultaOcorrencia;
+
+    @Autowired
+    public PlanoDeAcaoUseCase(
+            PlanoDeAcaoRepositoryPort planoDeAcaoRepository,
+            OcorrenciaRepositoryPort ocorrenciaRepository,
+            UsuarioRepositorioPorta usuarioRepository,
+            SetorRepositoryPort setorRepository,
+            @Autowired(required = false) GerenciarOcorrenciaUseCase consultaOcorrencia) {
+        this.planoDeAcaoRepository = planoDeAcaoRepository;
+        this.ocorrenciaRepository = ocorrenciaRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.setorRepository = setorRepository;
+        this.consultaOcorrencia = consultaOcorrencia;
+    }
 
     public PlanoDeAcaoUseCase(
             PlanoDeAcaoRepositoryPort planoDeAcaoRepository,
             OcorrenciaRepositoryPort ocorrenciaRepository,
             UsuarioRepositorioPorta usuarioRepository,
             SetorRepositoryPort setorRepository) {
-        this.planoDeAcaoRepository = planoDeAcaoRepository;
-        this.ocorrenciaRepository = ocorrenciaRepository;
-        this.usuarioRepository = usuarioRepository;
-        this.setorRepository = setorRepository;
+        this(planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository, null);
+    }
+
+    /**
+     * As consultas do plano seguem a visibilidade do detalhe da ocorrência (UC09, issue #100): o
+     * Supervisor só acompanha o plano dos relatos que registrou; um relato alheio responde como
+     * inexistente, do mesmo modo que o detalhe.
+     */
+    private void garantirOcorrenciaVisivel(Integer idOcorrencia) {
+        if (consultaOcorrencia != null) {
+            consultaOcorrencia.buscarPorId(idOcorrencia);
+            return;
+        }
+        ocorrenciaRepository.buscarPorId(idOcorrencia)
+                .orElseThrow(() -> new OcorrenciaNaoEncontradaException(idOcorrencia));
     }
 
     @Override
@@ -93,8 +121,7 @@ public class PlanoDeAcaoUseCase implements GerenciarPlanoDeAcaoUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<PlanoDeAcaoOutputDTO> listarPorOcorrencia(Integer idOcorrencia) {
-        ocorrenciaRepository.buscarPorId(idOcorrencia)
-                .orElseThrow(() -> new OcorrenciaNaoEncontradaException(idOcorrencia));
+        garantirOcorrenciaVisivel(idOcorrencia);
 
         return planoDeAcaoRepository.listarPorOcorrencia(idOcorrencia).stream()
                 .map(PlanoDeAcaoOutputDTO::deDominio)
@@ -106,6 +133,9 @@ public class PlanoDeAcaoUseCase implements GerenciarPlanoDeAcaoUseCase {
     public PlanoDeAcaoOutputDTO buscarPorId(Integer idAcao) {
         PlanoDeAcao acao = planoDeAcaoRepository.buscarPorId(idAcao)
                 .orElseThrow(() -> new IllegalArgumentException("Ação não encontrada para o ID: " + idAcao));
+        if (acao.getIdOcorrencia() != null) {
+            garantirOcorrenciaVisivel(acao.getIdOcorrencia());
+        }
         return PlanoDeAcaoOutputDTO.deDominio(acao);
     }
 
@@ -151,8 +181,11 @@ public class PlanoDeAcaoUseCase implements GerenciarPlanoDeAcaoUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<ProrrogacaoPrazoOutputDTO> listarProrrogacoes(Integer idAcao) {
-        planoDeAcaoRepository.buscarPorId(idAcao)
+        PlanoDeAcao acao = planoDeAcaoRepository.buscarPorId(idAcao)
                 .orElseThrow(() -> new IllegalArgumentException("Ação não encontrada para o ID: " + idAcao));
+        if (acao.getIdOcorrencia() != null) {
+            garantirOcorrenciaVisivel(acao.getIdOcorrencia());
+        }
 
         return planoDeAcaoRepository.listarProrrogacoes(idAcao).stream()
                 .map(ProrrogacaoPrazoOutputDTO::deDominio)
