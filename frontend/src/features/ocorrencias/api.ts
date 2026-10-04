@@ -1,6 +1,8 @@
 // Contratos e chamadas de ocorrências (UC05/UC09): leitura validada de OcorrenciaResponse, consulta
-// por critérios no servidor, detalhe por id e busca de acidente pelo protocolo CAT (issue #128).
+// por critérios no servidor, detalhe por id, busca de acidente pelo protocolo CAT (issue #128),
+// relato, edição, triagem e arquivamento (issue #100).
 
+import { mensagemDaApi, statusDoErro } from '../../shared/api/erros'
 import { http } from '../../shared/api/https'
 
 export type TipoOcorrencia = 'ACIDENTE' | 'INCIDENTE'
@@ -107,4 +109,67 @@ export async function buscarOcorrenciaPorProtocolo(protocolo: string, signal?: A
 export async function buscarOcorrenciaPorId(id: number, signal?: AbortSignal): Promise<OcorrenciaResumo> {
   const { data } = await http.get<unknown>(`/ocorrencias/${id}`, { signal })
   return lerOcorrenciaResumo(data)
+}
+
+/**
+ * Dados do relato (UC05/UC09) no formato de `CriarOcorrenciaRequest`. A data do fato vai como
+ * `AAAA-MM-DDTHH:MM:SS`; a data do registro é gerada pelo servidor. O setor não tem campo próprio:
+ * é o da área de risco (decisão DS09, seção 2.3). Campos de acidente e de incidente são exclusivos.
+ */
+export type DadosOcorrencia = {
+  dataOcorrencia: string
+  descricao: string
+  areaId: number
+  colaboradorId: number
+  causaRaiz?: string
+  gravidade?: string
+  tipo?: string
+  dano?: string
+  destino?: string
+  situacaoRisco?: string
+  potencialDano?: string
+}
+
+export async function registrarOcorrencia(tipoOcorrencia: TipoOcorrencia, dados: DadosOcorrencia): Promise<OcorrenciaResumo> {
+  const { data } = await http.post<unknown>('/ocorrencias', { tipoOcorrencia, ...dados })
+  return lerOcorrenciaResumo(data)
+}
+
+/** Edição pelo Gestor (UC05, alternativo IV): tipo, registro, situação e protocolo são preservados. */
+export async function atualizarOcorrencia(id: number, dados: DadosOcorrencia): Promise<OcorrenciaResumo> {
+  const { data } = await http.put<unknown>(`/ocorrencias/${id}`, dados)
+  return lerOcorrenciaResumo(data)
+}
+
+/** Transições aprovadas (decisão DS09, seção 2.6): Aberta → Em triagem → Arquivada. */
+export async function enviarParaTriagem(id: number): Promise<OcorrenciaResumo> {
+  const { data } = await http.patch<unknown>(`/ocorrencias/${id}/triagem`)
+  return lerOcorrenciaResumo(data)
+}
+
+export async function arquivarOcorrencia(id: number): Promise<OcorrenciaResumo> {
+  const { data } = await http.patch<unknown>(`/ocorrencias/${id}/arquivar`)
+  return lerOcorrenciaResumo(data)
+}
+
+/** Mensagem para recusas da API, mantendo os dados preenchidos na tela. */
+export function descreverFalhaDeOcorrencia(erro: unknown): string {
+  const status = statusDoErro(erro)
+  if (status === 401) return 'Sua sessão expirou. Entre novamente para continuar.'
+  if (status === 403) return 'Seu perfil não tem permissão para esta operação.'
+  if (status === 404) return mensagemDaApi(erro) ?? 'Ocorrência não encontrada. Recarregue a lista e tente novamente.'
+  if (status === 400 || status === 409 || status === 422) {
+    return mensagemDaApi(erro) ?? 'Os dados informados foram recusados pelo servidor. Revise os campos e tente novamente.'
+  }
+  return 'Não foi possível concluir a operação agora. Os dados preenchidos foram mantidos; verifique sua conexão e tente novamente.'
+}
+
+/**
+ * Aviso de que os dados de ocorrências mudaram (relato, edição, triagem, arquivamento ou plano), para
+ * que a lista e a notificação de novos relatos se atualizem sem recarregar a página.
+ */
+export const EVENTO_OCORRENCIAS_ALTERADAS = 'safeplace:ocorrencias-alteradas'
+
+export function avisarOcorrenciasAlteradas() {
+  window.dispatchEvent(new Event(EVENTO_OCORRENCIAS_ALTERADAS))
 }
