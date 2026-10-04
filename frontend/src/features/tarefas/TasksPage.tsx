@@ -26,6 +26,7 @@ import {
 import { ClassificarTarefaDialog } from './ClassificarTarefaDialog'
 import { HistoricoTarefaDialog } from './HistoricoTarefaDialog'
 import { TarefaFormDialog } from './TarefaFormDialog'
+import { VincularEpisTarefaDialog } from './VincularEpisTarefaDialog'
 import './tarefas.css'
 
 function normalizar(texto: string): string {
@@ -53,6 +54,7 @@ export function TasksPage() {
 
   const [formularioAberto, setFormularioAberto] = useState(false)
   const [tarefaClassificando, setTarefaClassificando] = useState<Tarefa | null>(null)
+  const [tarefaEpis, setTarefaEpis] = useState<Tarefa | null>(null)
   const [tarefaHistorico, setTarefaHistorico] = useState<Tarefa | null>(null)
   const [mensagemSucesso, setMensagemSucesso] = useState('')
 
@@ -80,6 +82,14 @@ export function TasksPage() {
   function aoSalvarClassificacao(tarefa: Tarefa) {
     const grau = tarefa.nivelPerigo ? rotuloNivelPerigo[tarefa.nivelPerigo] : ''
     setMensagemSucesso(`Grau de periculosidade atualizado para ${grau}.`)
+    consultaTarefas.recarregar()
+  }
+
+  function aoSalvarEpis(tarefa: Tarefa) {
+    const qtd = tarefa.episIds?.length ?? 0
+    setMensagemSucesso(
+      `EPIs da tarefa atualizados com sucesso (${qtd} vinculado${qtd === 1 ? '' : 's'}).`
+    )
     consultaTarefas.recarregar()
   }
 
@@ -192,6 +202,15 @@ export function TasksPage() {
                       <TableRow key={tarefa.id}>
                         <td>
                           <strong>{tarefa.descricao}</strong>
+                          {tarefa.episIds && tarefa.episIds.length > 0 && (
+                            <span
+                              className="sp-texto-secundario"
+                              style={{ display: 'block', fontSize: '0.8125rem', marginTop: '2px' }}
+                            >
+                              {tarefa.episIds.length}{' '}
+                              {tarefa.episIds.length === 1 ? 'EPI obrigatório' : 'EPIs obrigatórios'}
+                            </span>
+                          )}
                         </td>
                         <td>
                           {tarefa.nivelPerigo ? (
@@ -236,6 +255,13 @@ export function TasksPage() {
                                 {tarefa.classificada ? 'Reavaliar risco' : 'Classificar'}
                               </Button>
                               <Button
+                                variant="secondary"
+                                onClick={() => setTarefaEpis(tarefa)}
+                                aria-label={`Vincular EPIs à tarefa: ${tarefa.descricao}`}
+                              >
+                                EPIs{tarefa.episIds && tarefa.episIds.length > 0 ? ` (${tarefa.episIds.length})` : ''}
+                              </Button>
+                              <Button
                                 variant="quiet"
                                 onClick={() => setTarefaHistorico(tarefa)}
                                 aria-label={`Ver histórico da tarefa: ${tarefa.descricao}`}
@@ -269,6 +295,12 @@ export function TasksPage() {
         <HistoricoTarefaDialog
           tarefa={tarefaHistorico}
           aoFechar={() => setTarefaHistorico(null)}
+        />
+
+        <VincularEpisTarefaDialog
+          tarefa={tarefaEpis}
+          aoFechar={() => setTarefaEpis(null)}
+          aoSalvar={aoSalvarEpis}
         />
 
         <Toast

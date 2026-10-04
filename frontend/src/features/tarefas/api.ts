@@ -4,14 +4,16 @@
 import { http } from '../../shared/api/https'
 import {
   ehNivelPerigo,
+  lerEpiResumo,
   lerHistorico,
   niveisPerigo,
   rotuloNivelPerigo,
+  type EpiResumo,
   type NivelPerigo,
   type RegistroHistorico,
 } from '../areas-risco/api'
 
-export { niveisPerigo, rotuloNivelPerigo, type NivelPerigo }
+export { niveisPerigo, rotuloNivelPerigo, type NivelPerigo, type EpiResumo }
 
 export type Tarefa = {
   id: number
@@ -21,6 +23,7 @@ export type Tarefa = {
   dataClassificacao: string | null
   /** Nome do Gestor responsável técnico pela última classificação; nulo em registros anteriores a #112. */
   responsavelClassificacaoNome: string | null
+  episIds?: number[]
 }
 
 export type DadosCadastroTarefa = {
@@ -47,6 +50,9 @@ function lerTarefa(dado: unknown): Tarefa {
   const dataClassificacao = typeof b.dataClassificacao === 'string' ? b.dataClassificacao : null
   const responsavelClassificacaoNome =
     typeof b.responsavelClassificacaoNome === 'string' ? b.responsavelClassificacaoNome : null
+  const episIds = Array.isArray(b.episIds)
+    ? b.episIds.filter((item): item is number => typeof item === 'number')
+    : undefined
 
   return {
     id: b.id,
@@ -55,6 +61,7 @@ function lerTarefa(dado: unknown): Tarefa {
     classificada: b.classificada,
     dataClassificacao,
     responsavelClassificacaoNome,
+    episIds,
   }
 }
 
@@ -86,4 +93,15 @@ export async function classificarTarefa(
 export async function listarHistoricoTarefa(id: number, signal?: AbortSignal): Promise<RegistroHistorico[]> {
   const { data } = await http.get<unknown>(`/tarefas/${id}/historico`, { signal })
   return lerHistorico(data)
+}
+
+export async function associarEpisTarefa(id: number, epiIds: number[]): Promise<Tarefa> {
+  const { data } = await http.put<unknown>(`/tarefas/${id}/epis`, { epiIds })
+  return lerTarefa(data)
+}
+
+export async function listarEpisTarefa(id: number, signal?: AbortSignal): Promise<EpiResumo[]> {
+  const { data } = await http.get<unknown>(`/tarefas/${id}/epis`, { signal })
+  if (!Array.isArray(data)) throw new Error('Esperava uma lista de EPIs')
+  return data.map(lerEpiResumo)
 }

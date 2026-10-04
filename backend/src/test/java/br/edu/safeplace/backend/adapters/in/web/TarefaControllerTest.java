@@ -16,10 +16,15 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarTarefaInputDTO;
 import br.edu.safeplace.backend.application.dto.output.TarefaOutputDTO;
+import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
 import br.edu.safeplace.backend.application.port.in.AlocarColaboradorTarefaUseCase;
 import br.edu.safeplace.backend.application.port.in.ClassificarTarefaUseCase;
+import br.edu.safeplace.backend.application.port.in.GerenciarEpiTarefaUseCase;
 import br.edu.safeplace.backend.config.SecurityConfig;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
+import br.edu.safeplace.backend.domain.epi.StatusEpi;
+import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 import br.edu.safeplace.backend.domain.tarefa.exception.TarefaNaoEncontradaException;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -30,6 +35,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -45,6 +51,9 @@ class TarefaControllerTest {
 
     @MockitoBean
     private AlocarColaboradorTarefaUseCase alocarUseCase;
+
+    @MockitoBean
+    private GerenciarEpiTarefaUseCase gerenciarEpiUseCase;
 
     private static TarefaOutputDTO tarefaClassificada() {
         return new TarefaOutputDTO(1, "Solda em altura", NivelPerigo.ALTO, true,
@@ -281,5 +290,106 @@ class TarefaControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.apto").value(false))
                 .andExpect(jsonPath("$.impedimentos[0]").value("NR-35 ausente"));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("RF12 / UC08: Gestor de Segurança deve associar EPIs obrigatórios a uma tarefa (200 OK)")
+    void gestorDeveAssociarEpisComSucesso() throws Exception {
+        TarefaOutputDTO dto = new TarefaOutputDTO(1, "Solda em altura", NivelPerigo.ALTO, true,
+                LocalDateTime.of(2026, 9, 13, 10, 15, 30), null, null, null, List.of(), List.of(10, 20));
+
+        when(gerenciarEpiUseCase.associarEpis(eq(1), eq(List.of(10, 20)))).thenReturn(dto);
+
+        String json = """
+                {
+                    "epiIds": [10, 20]
+                }
+                """;
+
+        mockMvc.perform(put("/api/tarefas/1/epis")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.episIds[0]").value(10))
+                .andExpect(jsonPath("$.episIds[1]").value(20));
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("RF12 / UC08: Supervisor não pode associar EPIs à tarefa (403 Forbidden)")
+    void supervisorNaoDeveAssociarEpis() throws Exception {
+        mockMvc.perform(put("/api/tarefas/1/epis")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"epiIds\": [10]}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("RF12 / UC08: Deve retornar 404 ao associar EPIs em tarefa inexistente")
+    void deveRetornar404AoAssociarEpisEmTarefaInexistente() throws Exception {
+        when(gerenciarEpiUseCase.associarEpis(eq(99), any()))
+                .thenThrow(new TarefaNaoEncontradaException(99));
+
+        mockMvc.perform(put("/api/tarefas/99/epis")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"epiIds\": [10]}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Não Encontrado"));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("RF12 / UC08: Deve retornar 404 ao associar EPI que não existe no catálogo")
+    void deveRetornar404AoAssociarEpiNaoExistente() throws Exception {
+        when(gerenciarEpiUseCase.associarEpis(eq(1), any()))
+                .thenThrow(new EpiNaoEncontradoException(999));
+
+        mockMvc.perform(put("/api/tarefas/1/epis")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"epiIds\": [999]}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Não Encontrado"));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("RF12 / UC08: Deve retornar 400 ao enviar corpo de requisição sem lista de EPIs")
+    void deveRecusarAssociacaoComListaNula() throws Exception {
+        mockMvc.perform(put("/api/tarefas/1/epis")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("RF12 / UC08: Supervisor deve consultar EPIs obrigatórios da tarefa (200 OK)")
+    void supervisorDeveConsultarEpisObrigatorios() throws Exception {
+        EpiOutputDTO epiDto = new EpiOutputDTO(
+                10, "Capacete", "12345", 5, 2,
+                StatusEpi.DISPONIVEL, null, 365, false,
+                "Capacete de proteção", ClassificacaoEPI.PROTECAO_DE_CABECA);
+
+        when(gerenciarEpiUseCase.listarEpisObrigatorios(1)).thenReturn(List.of(epiDto));
+
+        mockMvc.perform(get("/api/tarefas/1/epis"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(10))
+                .andExpect(jsonPath("$[0].nome").value("Capacete"));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("RF12 / UC08: Gestor deve consultar EPIs obrigatórios da tarefa (200 OK)")
+    void gestorDeveConsultarEpisObrigatorios() throws Exception {
+        when(gerenciarEpiUseCase.listarEpisObrigatorios(1)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/tarefas/1/epis"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
     }
 }

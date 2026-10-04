@@ -1,9 +1,11 @@
 package br.edu.safeplace.backend.domain.tarefa;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.tarefa.exception.TarefaSemClassificacaoException;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
@@ -21,7 +23,8 @@ import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
  * classificada, a tarefa não volta a ficar sem grau de risco.</p>
  *
  * <p>O vínculo entre tarefa e EPIs ({@code associarEPIs} e {@code verificarEPIsObrigatoriosTarefa}
- * no diagrama de classes) pertence a RF12, que permanece no backlog e não faz parte deste módulo.</p>
+ * no diagrama de classes) atende ao RF12 e UC08 (backlog), vinculando os equipamentos
+ * obrigatórios para a execução da atividade, separado dos EPIs de acesso à área (UC03).</p>
  */
 public class Tarefa {
 
@@ -32,6 +35,7 @@ public class Tarefa {
     private GestorDeSeguranca responsavelClassificacao;
     private final Integer areaRiscoId;
     private final List<Integer> setoresIds;
+    private List<Epi> episObrigatorios;
 
     /**
      * Reconstitui uma tarefa gravada. {@code responsavelClassificacao} é nulo em classificações
@@ -39,11 +43,17 @@ public class Tarefa {
      */
     public Tarefa(Integer id, String descricao, NivelPerigo nivelPerigo, LocalDateTime dataClassificacao,
             GestorDeSeguranca responsavelClassificacao) {
-        this(id, descricao, nivelPerigo, dataClassificacao, responsavelClassificacao, null, List.of());
+        this(id, descricao, nivelPerigo, dataClassificacao, responsavelClassificacao, null, List.of(), List.of());
     }
 
     public Tarefa(Integer id, String descricao, NivelPerigo nivelPerigo, LocalDateTime dataClassificacao,
             GestorDeSeguranca responsavelClassificacao, Integer areaRiscoId, List<Integer> setoresIds) {
+        this(id, descricao, nivelPerigo, dataClassificacao, responsavelClassificacao, areaRiscoId, setoresIds, List.of());
+    }
+
+    public Tarefa(Integer id, String descricao, NivelPerigo nivelPerigo, LocalDateTime dataClassificacao,
+            GestorDeSeguranca responsavelClassificacao, Integer areaRiscoId, List<Integer> setoresIds,
+            List<Epi> episObrigatorios) {
         if (descricao == null || descricao.isBlank()) {
             throw new IllegalArgumentException("Descrição da tarefa é obrigatória.");
         }
@@ -57,6 +67,7 @@ public class Tarefa {
         this.responsavelClassificacao = nivelPerigo != null ? responsavelClassificacao : null;
         this.areaRiscoId = areaRiscoId;
         this.setoresIds = setoresIds == null ? List.of() : setoresIds.stream().distinct().toList();
+        this.episObrigatorios = episObrigatorios != null ? List.copyOf(episObrigatorios) : List.of();
     }
 
     public Tarefa(Integer id, String descricao, NivelPerigo nivelPerigo, LocalDateTime dataClassificacao) {
@@ -148,5 +159,44 @@ public class Tarefa {
 
     public List<Integer> getSetoresIds() {
         return setoresIds;
+    }
+
+    /**
+     * Operação {@code associarEPIs} do diagrama de classes (RF12 / UC08).
+     * Vincula a lista de EPIs obrigatórios para a realização da tarefa.
+     */
+    public boolean associarEpis(List<Epi> novosEpis) {
+        this.episObrigatorios = novosEpis != null ? List.copyOf(novosEpis) : List.of();
+        return true;
+    }
+
+    public boolean associarEPIs(List<Epi> novosEpis) {
+        return associarEpis(novosEpis);
+    }
+
+    /**
+     * Operação {@code verificarEPIsObrigatoriosTarefa()} do diagrama de classes (RF12 / UC08).
+     * Retorna a lista de EPIs obrigatórios vinculados a esta tarefa.
+     */
+    public List<Epi> verificarEpisObrigatoriosTarefa() {
+        return Collections.unmodifiableList(episObrigatorios);
+    }
+
+    public List<Epi> verificarEPIsObrigatoriosTarefa() {
+        return verificarEpisObrigatoriosTarefa();
+    }
+
+    public List<Epi> getEpisObrigatorios() {
+        return Collections.unmodifiableList(episObrigatorios);
+    }
+
+    /**
+     * Verifica se determinado EPI é exigido para a tarefa.
+     */
+    public boolean exigeEpi(Integer epiId) {
+        if (epiId == null || episObrigatorios == null) {
+            return false;
+        }
+        return episObrigatorios.stream().anyMatch(epi -> epiId.equals(epi.getId()));
     }
 }

@@ -97,7 +97,7 @@ export function ehNivelPerigo(valor: unknown): valor is NivelPerigo {
   return typeof valor === 'string' && niveisPerigo.includes(valor as NivelPerigo)
 }
 
-function lerEpiResumo(dado: unknown): EpiResumo {
+export function lerEpiResumo(dado: unknown): EpiResumo {
   if (dado === null || typeof dado !== 'object') throw new Error('EPI resumo inválido na resposta')
   const b = dado as Record<string, unknown>
   if (typeof b.id !== 'number' || typeof b.nome !== 'string' || typeof b.numeroCa !== 'string') {

@@ -17,6 +17,7 @@ import br.edu.safeplace.backend.application.dto.output.ConsultaAptidaoOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.TarefaOutputDTO;
 import br.edu.safeplace.backend.application.port.in.AlocarColaboradorTarefaUseCase;
 import br.edu.safeplace.backend.application.port.in.ClassificarTarefaUseCase;
+import br.edu.safeplace.backend.application.port.in.GerenciarEpiTarefaUseCase;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -31,10 +32,14 @@ public class TarefaController {
 
     private final ClassificarTarefaUseCase useCase;
     private final AlocarColaboradorTarefaUseCase alocarUseCase;
+    private final GerenciarEpiTarefaUseCase gerenciarEpiUseCase;
 
-    public TarefaController(ClassificarTarefaUseCase useCase, AlocarColaboradorTarefaUseCase alocarUseCase) {
+    public TarefaController(ClassificarTarefaUseCase useCase,
+                            AlocarColaboradorTarefaUseCase alocarUseCase,
+                            GerenciarEpiTarefaUseCase gerenciarEpiUseCase) {
         this.useCase = useCase;
         this.alocarUseCase = alocarUseCase;
+        this.gerenciarEpiUseCase = gerenciarEpiUseCase;
     }
 
     @PostMapping
@@ -139,5 +144,33 @@ public class TarefaController {
     public ConsultaAptidaoOutputDTO consultarAptidao(@PathVariable Integer id,
                                                     @PathVariable Integer colaboradorId) {
         return alocarUseCase.consultarAptidao(id, colaboradorId);
+    }
+
+    @PutMapping("/{id}/epis")
+    @Operation(summary = "Associa a lista de EPIs obrigatórios a uma tarefa cadastrada (RF12 / UC08 / US12)",
+            description = "Operação restrita ao Gestor de Segurança. Substitui a lista de EPIs exigidos da tarefa pelos IDs informados.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "EPIs associados com sucesso à tarefa"),
+            @ApiResponse(responseCode = "400", description = "Lista inválida ou contém identificadores nulos"),
+            @ApiResponse(responseCode = "403", description = "Perfil sem permissão: apenas Gestor de Segurança pode associar EPIs"),
+            @ApiResponse(responseCode = "404", description = "Tarefa ou algum dos EPIs informados não foi encontrado")
+    })
+    public TarefaResponse associarEpis(@PathVariable Integer id,
+                                       @Valid @RequestBody AssociarEpisTarefaRequest request) {
+        TarefaOutputDTO atualizada = gerenciarEpiUseCase.associarEpis(id, request.epiIds());
+        return TarefaResponse.fromOutputDTO(atualizada);
+    }
+
+    @GetMapping("/{id}/epis")
+    @Operation(summary = "Lista os EPIs obrigatórios vinculados a uma tarefa (RF12 / UC08 / US12)",
+            description = "Consulta permitida para Gestor de Segurança e Supervisor.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista de EPIs obrigatórios da tarefa"),
+            @ApiResponse(responseCode = "404", description = "Tarefa não existe")
+    })
+    public List<EpiResponse> listarEpisObrigatorios(@PathVariable Integer id) {
+        return gerenciarEpiUseCase.listarEpisObrigatorios(id).stream()
+                .map(EpiResponse::fromOutputDTO)
+                .toList();
     }
 }
