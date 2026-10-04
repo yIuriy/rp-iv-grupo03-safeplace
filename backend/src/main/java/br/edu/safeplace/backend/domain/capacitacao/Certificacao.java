@@ -4,6 +4,11 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 public class Certificacao {
+    /**
+     * Antecedência do alerta de vencimento (UC02, regra 1; US10, regra 2).
+     */
+    public static final int DIAS_ANTECEDENCIA_ALERTA = 30;
+
     private final Integer id;
     private final String nome;
     private StatusCertificacao status;
@@ -58,10 +63,19 @@ public class Certificacao {
             return StatusCertificacao.VENCIDA;
         }
         long diasParaVencer = ChronoUnit.DAYS.between(dataReferencia, dataVencimento);
-        if (diasParaVencer <= 30) {
+        if (diasParaVencer <= DIAS_ANTECEDENCIA_ALERTA) {
             return StatusCertificacao.PROXIMA_DO_VENCIMENTO;
         }
         return StatusCertificacao.EM_DIA;
+    }
+
+    /**
+     * Indica se a certificação habilita o colaborador na data de referência. Segue a regra do
+     * status: na própria data de vencimento ela já está vencida (UC02, cenário alternativo I), e a
+     * alocação ou entrega que a exige é impedida (UC02, exceção I; UC12, exceção I).
+     */
+    public boolean estaValidaEm(LocalDate dataReferencia) {
+        return calcularStatus(dataReferencia) != StatusCertificacao.VENCIDA;
     }
 
     public void reavaliarStatus(LocalDate dataReferencia) {

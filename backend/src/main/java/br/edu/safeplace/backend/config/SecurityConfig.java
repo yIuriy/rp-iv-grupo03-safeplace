@@ -104,6 +104,11 @@ public class SecurityConfig {
                         // RF12, UC08 / US12 (#135): Vinculação de EPIs a tarefas exclusiva do Gestor de Segurança
                         .requestMatchers(HttpMethod.PUT, "/api/tarefas/*/epis").hasRole("GESTOR_SEGURANCA")
                         .requestMatchers("/api/areas-risco/**", "/api/tarefas/**", "/api/setores/**").hasRole("GESTOR_SEGURANCA")
+                        // RF10, UC02 e US10 (#119): Gestor e Supervisor consultam capacitações. A escrita
+                        // não é liberada a nenhum perfil até a definição do fluxo de cadastro (#116, #126).
+                        .requestMatchers(HttpMethod.GET, "/api/capacitacoes/**")
+                                .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        .requestMatchers("/api/capacitacoes/**").denyAll()
                         .anyRequest().authenticated()
                 );
 

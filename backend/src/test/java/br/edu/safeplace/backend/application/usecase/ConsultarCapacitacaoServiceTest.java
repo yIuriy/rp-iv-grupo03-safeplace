@@ -94,6 +94,37 @@ class ConsultarCapacitacaoServiceTest {
     }
 
     @Test
+    @DisplayName("UC12 Exceção I: Impedir entrega de EPI na data exata de vencimento da certificação exigida")
+    void deveImpedirEntregaNaDataDeVencimento() {
+        LocalDate hoje = LocalDate.now();
+        Integer epiId = 101;
+        Integer colaboradorId = 3;
+        repositorio.salvarExigencia(new ExigenciaCapacitacao(1, "NR-10", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, epiId, ExigenciaCapacitacao.TipoAlvo.EPI));
+
+        repositorio.salvarCertificacao(new Certificacao(1, "NR-10", hoje, hoje.minusYears(1), colaboradorId));
+        assertThat(service.verificarImpedimentosParaEpi(colaboradorId, epiId))
+                .containsExactly("certificação NR-10 ausente ou vencida");
+
+        repositorio.salvarCertificacao(new Certificacao(1, "NR-10", hoje.plusDays(1), hoje.minusYears(1), colaboradorId));
+        assertThat(service.verificarImpedimentosParaEpi(colaboradorId, epiId)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("UC02 Cenário Alternativo III: ausência de certificações é pendência mesmo com treinamentos registrados")
+    void deveApontarPendenciaSemCertificacoesMesmoComTreinamento() {
+        LocalDate hoje = LocalDate.now();
+        repositorio.salvarTreinamento(new Treinamento(30, "Integração", "Normas internas", "Instrutor", hoje.minusDays(3), 8, List.of(7)));
+
+        PendenciasColaboradorDTO pendencias = service.consultarPendenciasColaborador(7);
+
+        assertThat(pendencias.totalCertificacoes()).isZero();
+        assertThat(pendencias.totalTreinamentosRealizados()).isEqualTo(1);
+        assertThat(pendencias.pendenteIntegracaoAdmissional()).isTrue();
+        assertThat(pendencias.obterMensagensAvisos())
+                .contains("Pendência da trilha inicial de integração", "Pendência de treinamentos admissionais");
+    }
+
+    @Test
     @DisplayName("UC02 Exceção I: Impedir alocação em tarefa quando certificação estiver vencida")
     void deveVerificarImpedimentosParaTarefa() {
         LocalDate hoje = LocalDate.now();

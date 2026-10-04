@@ -1,0 +1,58 @@
+# Correspondência entre Diagrama de Classes e UC02 (Certificação, Treinamento e consulta pela API)
+
+## 1. Visão Geral e Contexto
+
+Este documento registra a correspondência entre as classes `Certificacao`, `Treinamento`, `ExigenciaCapacitacao` e `Colaborador` do **Diagrama de Classes** e a API de consulta de capacitações entregue na [issue #119](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/119) (RF10; RNF03; UC02; US10).
+
+- **Situação**: a consulta, os filtros e os alertas estão implementados. O cadastro de certificações e treinamentos não é exposto pela API, porque o fluxo textual e os papéis de escrita aguardam decisão ([#116](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/116), [#126](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/126)).
+- **Fontes**: [Diagrama de classes](../diagramas/classes/Diagrama%20de%20Classes%20-%20SafePlace.png), [UC02](../casos-de-uso/casos-de-uso.md#uc02--controlar-certificações-e-treinamentos), [US10](../historias-de-usuario.md#us10--acompanhar-certificações-e-treinamentos), [RF10](../requisitos/requisitos-funcionais.md#rf10-o-sistema-deve-controlar-o-vencimento-das-certificações-e-treinamentos-obrigatórios-dos-funcionários) e [RNF03](../requisitos/requisitos-nao-funcionais.md).
+- **Implementação de referência**: domínio em `backend/src/main/java/br/edu/safeplace/backend/domain/capacitacao/`; casos de uso `ConsultarCapacitacaoService` e `AcompanharCapacitacoesService`; persistência `CapacitacaoJdbcAdapter` sobre a migração `V15__create_capacitacoes.sql`; API `CapacitacaoController` em `/api/capacitacoes`.
+
+---
+
+## 2. Atributos
+
+| Classe no PNG | Atributo e tipo no PNG | Campo na API | Observação |
+| --- | --- | --- | --- |
+| `Certificacao` | `nome : String` | `nome` | |
+| `Certificacao` | `status : String` | `status` | Calculado na data da consulta com os valores de UC02 (cenário IV): `EM_DIA`, `PROXIMA_DO_VENCIMENTO` e `VENCIDA`. Trafega como texto. |
+| `Certificacao` | `dataVencimento : Date` | `dataVencimento` | Data ISO (`aaaa-mm-dd`). |
+| `Certificacao` | `dataEmissao : Date` | `dataEmissao` | Data ISO. |
+| `Treinamento` | `nome : String` | `nome` | |
+| `Treinamento` | `conteudo : String` | `conteudo` | |
+| `Treinamento` | `instrutor : String` | `instrutor` | |
+| `Treinamento` | `dataRealizacao : Date` | `dataRealizacao` | Data ISO. |
+| `Treinamento` | `cargaHoraria : int` | `cargaHoraria` | Inteiro. |
+| `Treinamento` | (sem atributo) | `status` | Resultado de `verificarStatusTreinamentos` (US10: realizado ou pendente); não é persistido. |
+| `Colaborador` | `nome : String` | `colaboradorNome` | A pessoa é identificada por `id` e `nome`. CPF, e-mail e senha não são expostos nem exigidos (RNF03). |
+
+Nenhum atributo novo foi persistido. `id` é identificador técnico. Os campos de agregação (`situacaoCertificacoes`, `semCertificacoes`, `pendenteIntegracaoAdmissional`, `pendencias`) são derivados na consulta.
+
+## 3. Operações
+
+| Operação no PNG | Correspondência na API |
+| --- | --- |
+| `Colaborador.buscarColaboradores()` | `GET /api/capacitacoes/colaboradores` (UC02, passo 2). |
+| `Colaborador.buscarColaboradoresPorStatus(status)` e `Certificacao.verificarStatusCertificacoes(lista)` | `GET /api/capacitacoes/colaboradores?situacao=` (UC02, cenário IV). A situação do colaborador é a mais crítica entre suas certificações. |
+| `Certificacao.buscarCertificacoes(cpf)` e `Treinamento.buscarTreinamentos()` | `GET /api/capacitacoes/colaboradores/{colaboradorId}` (UC02, passos 4 e 5). |
+| `Certificacao.verificarCertificacaoObrigatoria(cpf, tarefa)` | `GET /api/capacitacoes/colaboradores/{colaboradorId}/aptidao?tarefaId=`, que reutiliza a regra de #117 (`ValidadorAptidaoColaboradorService`). |
+| Regra 1 do UC02 (alerta de 30 dias) e cenários I e III | `GET /api/capacitacoes/alertas`. |
+| `Certificacao.validarInconsistenciaCronologica(...)` | Aplicada no domínio. Só tem efeito no cadastro, que não está exposto. |
+
+- **CPF e identificador**: o PNG recebe `cpf` em `buscarCertificacoes` e `verificarCertificacaoObrigatoria`. A API usa o identificador do colaborador, como as demais rotas do sistema; a busca por CPF continua em `/api/usuarios`. A divergência de assinaturas CPF ou lista no PNG está registrada como pendente em #116 e não é resolvida aqui.
+
+## 4. Acesso (RNF03)
+
+- `GET /api/capacitacoes/**`: Gestor de Segurança (ator principal do UC02) e Supervisor (ator secundário; US10, regra 1).
+- Qualquer outro método em `/api/capacitacoes/**` é negado a todos os perfis até a aprovação do fluxo de cadastro.
+
+## 5. Limites e pendências
+
+- **Treinamentos pendentes (UC02, cenário II)**: a obrigatoriedade de um treinamento vem das exigências da tarefa (`ExigenciaCapacitacao`). Sem tarefa, não há critério para dizer que um treinamento falta; por isso o pendente é informado na consulta de aptidão para a tarefa pretendida (US10, dicionário: "Tarefa pretendida", condicional). Não se criou matriz geral de aptidão (#126).
+- **A consulta de aptidão não autoriza a alocação**: `POST /api/tarefas/{id}/alocacoes` valida novamente no momento da confirmação (#117).
+- **Cadastro**: aguarda decisão em #116/#126.
+
+## 6. Ajustes de consistência feitos na issue #119
+
+- **Data de vencimento**: na própria data de vencimento a certificação já está `VENCIDA`, regra testada em `CertificacaoTest` desde #116. A aptidão para tarefa (#117) e a entrega de EPI (UC12) consideravam a certificação válida nesse dia, e a API devolvia "vencida" nos alertas e "apto" na aptidão para a mesma certificação. As três regras passaram a usar `Certificacao.estaValidaEm`, derivado do status: a certificação habilita até a véspera do vencimento.
+- **Pendência de integração (UC02, cenário III; US10, regra 4)**: a ausência de certificações basta para a pendência da trilha inicial de integração e dos treinamentos admissionais. Antes, a pendência só aparecia quando o colaborador também não tinha treinamento. A pendência é informativa: não bloqueia alocação nem entrega, que dependem das exigências da tarefa ou do EPI.

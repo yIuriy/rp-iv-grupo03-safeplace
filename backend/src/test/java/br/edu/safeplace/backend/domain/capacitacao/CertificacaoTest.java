@@ -55,6 +55,17 @@ class CertificacaoTest {
     }
 
     @Test
+    @DisplayName("UC02: Certificação habilita até a véspera do vencimento e deixa de habilitar na data de vencimento")
+    void deveSerValidaAteAVesperaDoVencimento() {
+        LocalDate vencimento = LocalDate.of(2026, 9, 21);
+        Certificacao cert = new Certificacao(1, "NR-10", vencimento, vencimento.minusYears(1), 10);
+
+        assertThat(cert.estaValidaEm(vencimento.minusDays(1))).isTrue();
+        assertThat(cert.estaValidaEm(vencimento)).isFalse();
+        assertThat(cert.estaValidaEm(vencimento.plusDays(1))).isFalse();
+    }
+
+    @Test
     @DisplayName("Deve rejeitar cadastro com data de vencimento no passado ou presente")
     void deveRejeitarCadastroComVencimentoInvalido() {
         LocalDate hoje = LocalDate.now();
