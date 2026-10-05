@@ -1,7 +1,7 @@
 // Cadastro e edição de área de risco pelo Gestor (UC03): código, grau, setor físico, agentes,
 // limites e EPIs obrigatórios, com justificativa na edição.
 
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Alert, Button, Checkbox, Dialog, Select, TextArea, TextField } from '../../shared/components'
 import { mensagemDaApi } from '../../shared/api/erros'
 import type { Epi } from '../epis/api'
@@ -33,45 +33,57 @@ export function AreaRiscoFormDialog({
 }) {
   const editando = !!area
 
-  const [codigo, setCodigo] = useState('')
-  const [nome, setNome] = useState('')
-  const [descricao, setDescricao] = useState('')
-  const [nivelPerigo, setNivelPerigo] = useState<NivelPerigo>('MEDIO')
-  const [setorId, setSetorId] = useState<string>('')
-  const [agentesTexto, setAgentesTexto] = useState('')
-  const [limites, setLimites] = useState('')
-  const [episSelecionados, setEpisSelecionados] = useState<number[]>([])
+  return (
+    <Dialog
+      open={open}
+      title={editando ? `Editar área: ${area?.codigo}` : 'Cadastrar área de risco'}
+      description={
+        editando
+          ? 'Atualize perigos, agentes, limites e os EPIs obrigatórios para acesso (UC03).'
+          : 'Cadastre um novo setor ou área de risco com as diretrizes e EPIs de acesso (UC03).'
+      }
+      onClose={aoFechar}
+    >
+      {open && (
+        <FormularioArea
+          key={area?.id ?? 'nova'}
+          area={area ?? null}
+          setores={setores}
+          epis={epis}
+          aoFechar={aoFechar}
+          aoSalvar={aoSalvar}
+        />
+      )}
+    </Dialog>
+  )
+}
+
+function FormularioArea({
+  area,
+  setores,
+  epis,
+  aoFechar,
+  aoSalvar,
+}: {
+  area: AreaRisco | null
+  setores: Setor[]
+  epis: Epi[]
+  aoFechar: () => void
+  aoSalvar: (area: AreaRisco, modo: 'criado' | 'atualizado') => void
+}) {
+  const editando = !!area
+
+  const [codigo, setCodigo] = useState(area?.codigo ?? '')
+  const [nome, setNome] = useState(area?.nome ?? '')
+  const [descricao, setDescricao] = useState(area?.descricao ?? '')
+  const [nivelPerigo, setNivelPerigo] = useState<NivelPerigo>(area?.nivelPerigo ?? 'MEDIO')
+  const [setorId, setSetorId] = useState<string>(area && area.setorId !== null ? String(area.setorId) : '')
+  const [agentesTexto, setAgentesTexto] = useState(area ? area.agentesRisco.join(', ') : '')
+  const [limites, setLimites] = useState(area?.limites ?? '')
+  const [episSelecionados, setEpisSelecionados] = useState<number[]>(area ? area.episObrigatorios.map(e => e.id) : [])
   const [justificativa, setJustificativa] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (open) {
-      if (area) {
-        setCodigo(area.codigo)
-        setNome(area.nome)
-        setDescricao(area.descricao ?? '')
-        setNivelPerigo(area.nivelPerigo)
-        setSetorId(area.setorId !== null ? String(area.setorId) : '')
-        setAgentesTexto(area.agentesRisco.join(', '))
-        setLimites(area.limites ?? '')
-        setEpisSelecionados(area.episObrigatorios.map(e => e.id))
-        setJustificativa('')
-      } else {
-        setCodigo('')
-        setNome('')
-        setDescricao('')
-        setNivelPerigo('MEDIO')
-        setSetorId('')
-        setAgentesTexto('')
-        setLimites('')
-        setEpisSelecionados([])
-        setJustificativa('')
-      }
-      setErro(null)
-      setEnviando(false)
-    }
-  }, [open, area])
 
   function alternarEpi(id: number) {
     setEpisSelecionados(atual =>
@@ -138,16 +150,6 @@ export function AreaRiscoFormDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      title={editando ? `Editar área: ${area?.codigo}` : 'Cadastrar área de risco'}
-      description={
-        editando
-          ? 'Atualize perigos, agentes, limites e os EPIs obrigatórios para acesso (UC03).'
-          : 'Cadastre um novo setor ou área de risco com as diretrizes e EPIs de acesso (UC03).'
-      }
-      onClose={aoFechar}
-    >
       <form onSubmit={submeter} className="sp-dialog-body" noValidate>
         {erro && (
           <Alert tone="danger" title="Não foi possível salvar" live="assertive">
@@ -268,6 +270,5 @@ export function AreaRiscoFormDialog({
           </Button>
         </div>
       </form>
-    </Dialog>
   )
 }

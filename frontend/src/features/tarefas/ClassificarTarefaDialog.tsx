@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Alert, Button, Dialog, Select } from '../../shared/components'
 import { mensagemDaApi } from '../../shared/api/erros'
 import {
@@ -18,19 +18,22 @@ export function ClassificarTarefaDialog({
   aoFechar: () => void
   aoSalvar: (tarefa: Tarefa) => void
 }) {
-  const [nivelPerigo, setNivelPerigo] = useState<NivelPerigo>('MEDIO')
+  if (!tarefa) return null
+  return <DialogoClassificacao key={tarefa.id} tarefa={tarefa} aoFechar={aoFechar} aoSalvar={aoSalvar} />
+}
+
+function DialogoClassificacao({
+  tarefa,
+  aoFechar,
+  aoSalvar,
+}: {
+  tarefa: Tarefa
+  aoFechar: () => void
+  aoSalvar: (tarefa: Tarefa) => void
+}) {
+  const [nivelPerigo, setNivelPerigo] = useState<NivelPerigo>(tarefa.nivelPerigo ?? 'MEDIO')
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (tarefa) {
-      setNivelPerigo(tarefa.nivelPerigo ?? 'MEDIO')
-      setErro(null)
-      setEnviando(false)
-    }
-  }, [tarefa])
-
-  if (!tarefa) return null
 
   async function submeter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -38,7 +41,7 @@ export function ClassificarTarefaDialog({
     setEnviando(true)
 
     try {
-      const atualizada = await classificarTarefa(tarefa!.id, { nivelPerigo })
+      const atualizada = await classificarTarefa(tarefa.id, { nivelPerigo })
       aoSalvar(atualizada)
       aoFechar()
     } catch (err: unknown) {
@@ -53,7 +56,7 @@ export function ClassificarTarefaDialog({
 
   return (
     <Dialog
-      open={!!tarefa}
+      open
       title={tarefa.classificada ? 'Reavaliar periculosidade da tarefa' : 'Classificar tarefa'}
       description="Atribua o grau de periculosidade da atividade operacional conforme a avaliação técnica de segurança (RF06, UC11)."
       onClose={aoFechar}

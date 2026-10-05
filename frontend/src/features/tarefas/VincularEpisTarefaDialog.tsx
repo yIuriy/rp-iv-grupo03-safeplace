@@ -25,49 +25,47 @@ export function VincularEpisTarefaDialog({
   aoFechar: () => void
   aoSalvar: (tarefa: Tarefa) => void
 }) {
+  if (!tarefa) return null
+  return <DialogoVinculo key={tarefa.id} tarefa={tarefa} aoFechar={aoFechar} aoSalvar={aoSalvar} />
+}
+
+function DialogoVinculo({
+  tarefa,
+  aoFechar,
+  aoSalvar,
+}: {
+  tarefa: Tarefa
+  aoFechar: () => void
+  aoSalvar: (tarefa: Tarefa) => void
+}) {
   const [episDisponiveis, setEpisDisponiveis] = useState<Epi[]>([])
-  const [episSelecionados, setEpisSelecionados] = useState<number[]>([])
+  const [episSelecionados, setEpisSelecionados] = useState<number[]>(tarefa.episIds ?? [])
   const [filtroClassificacao, setFiltroClassificacao] = useState<string>('')
-  const [carregando, setCarregando] = useState(false)
+  const [carregando, setCarregando] = useState(true)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
   useEffect(() => {
-    if (tarefa) {
-      setErro(null)
-      setFiltroClassificacao('')
-      setCarregando(true)
-      if (tarefa.episIds) {
-        setEpisSelecionados(tarefa.episIds)
-      }
-      Promise.all([
-        listarEpis(),
-        tarefa.episIds ? Promise.resolve([]) : listarEpisTarefa(tarefa.id),
-      ])
-        .then(([catalogo, episVinculados]) => {
-          setEpisDisponiveis(catalogo.filter(e => e.status !== 'DESCARTADO'))
-          if (!tarefa.episIds) {
-            setEpisSelecionados(episVinculados.map(e => e.id))
-          }
-        })
-        .catch(err => {
-          setErro(
-            mensagemDaApi(err) ||
-              'Não foi possível carregar os EPIs. Verifique sua conexão.'
-          )
-        })
-        .finally(() => {
-          setCarregando(false)
-        })
-    } else {
-      setEpisDisponiveis([])
-      setEpisSelecionados([])
-      setFiltroClassificacao('')
-      setErro(null)
-    }
+    Promise.all([
+      listarEpis(),
+      tarefa.episIds ? Promise.resolve([]) : listarEpisTarefa(tarefa.id),
+    ])
+      .then(([catalogo, episVinculados]) => {
+        setEpisDisponiveis(catalogo.filter(e => e.status !== 'DESCARTADO'))
+        if (!tarefa.episIds) {
+          setEpisSelecionados(episVinculados.map(e => e.id))
+        }
+      })
+      .catch(err => {
+        setErro(
+          mensagemDaApi(err) ||
+            'Não foi possível carregar os EPIs. Verifique sua conexão.'
+        )
+      })
+      .finally(() => {
+        setCarregando(false)
+      })
   }, [tarefa])
-
-  if (!tarefa) return null
 
   function alternarEpi(id: number) {
     setEpisSelecionados(atuais =>
@@ -81,7 +79,7 @@ export function VincularEpisTarefaDialog({
     setEnviando(true)
 
     try {
-      const atualizada = await associarEpisTarefa(tarefa!.id, episSelecionados)
+      const atualizada = await associarEpisTarefa(tarefa.id, episSelecionados)
       aoSalvar(atualizada)
       aoFechar()
     } catch (err: unknown) {
@@ -102,7 +100,7 @@ export function VincularEpisTarefaDialog({
 
   return (
     <Dialog
-      open={!!tarefa}
+      open
       title="Vincular EPIs obrigatórios"
       description="Selecione os equipamentos de proteção individual necessários para a realização desta atividade operacional (RF12, UC08)."
       onClose={aoFechar}

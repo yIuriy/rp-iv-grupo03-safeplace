@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Alert, Button, Dialog, Select, TextArea } from '../../shared/components'
 import { mensagemDaApi } from '../../shared/api/erros'
 import {
@@ -18,19 +18,29 @@ export function TarefaFormDialog({
   aoFechar: () => void
   aoSalvar: (tarefa: Tarefa) => void
 }) {
+  return (
+    <Dialog
+      open={open}
+      title="Cadastrar nova tarefa"
+      description="Informe a descrição da atividade operacional. A classificação de periculosidade pode ser definida agora ou atribuída posteriormente pelo Gestor de Segurança (UC11)."
+      onClose={aoFechar}
+    >
+      {open && <FormularioTarefa aoFechar={aoFechar} aoSalvar={aoSalvar} />}
+    </Dialog>
+  )
+}
+
+function FormularioTarefa({
+  aoFechar,
+  aoSalvar,
+}: {
+  aoFechar: () => void
+  aoSalvar: (tarefa: Tarefa) => void
+}) {
   const [descricao, setDescricao] = useState('')
   const [nivelPerigo, setNivelPerigo] = useState<string>('')
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (open) {
-      setDescricao('')
-      setNivelPerigo('')
-      setErro(null)
-      setEnviando(false)
-    }
-  }, [open])
 
   async function submeter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -57,12 +67,6 @@ export function TarefaFormDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      title="Cadastrar nova tarefa"
-      description="Informe a descrição da atividade operacional. A classificação de periculosidade pode ser definida agora ou atribuída posteriormente pelo Gestor de Segurança (UC11)."
-      onClose={aoFechar}
-    >
       <form onSubmit={submeter} className="sp-dialog-body" noValidate>
         {erro && (
           <Alert tone="danger" title="Não foi possível salvar" live="assertive">
@@ -102,6 +106,5 @@ export function TarefaFormDialog({
           </Button>
         </div>
       </form>
-    </Dialog>
   )
 }

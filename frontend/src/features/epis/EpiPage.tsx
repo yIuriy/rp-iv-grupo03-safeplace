@@ -190,7 +190,7 @@ export function EpiManutencaoPainel({ epis }: { epis: Consulta<Epi[]> }) {
     historico.recarregar()
   }
 
-  function aposCadastrar(epi: Epi) {
+  function aposCadastrar(epi: Pick<Epi, 'id'>) {
     setCadastroAberto(false)
     setSelecionadoId(epi.id)
     setAviso('EPI cadastrado. A listagem foi atualizada.')
