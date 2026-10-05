@@ -225,7 +225,7 @@ Como proposta de modelagem, o grupo pode separar `EPI`, representando o tipo de 
 
 ## 9. Matriz de rastreabilidade
 
-As situações abaixo descrevem a cobertura documental, não o atendimento pela implementação. A base técnica existente e seus limites estão na [especificação arquitetural](../arquitetura/especificacao-arquitetural.md#7-base-técnica-existente-e-limites).
+As situações abaixo descrevem a cobertura documental, não o atendimento pela implementação. Evidências de teste, falhas e pendências por requisito estão na [matriz de rastreabilidade com evidências](matriz-rastreabilidade-evidencias.md). A base técnica existente e seus limites estão na [especificação arquitetural](../arquitetura/especificacao-arquitetural.md#7-base-técnica-existente-e-limites).
 
 | ID | Requisito | Caso de uso | Elemento arquitetural | Situação |
 | --- | --- | --- | --- | --- |
