@@ -16,6 +16,7 @@ Consulte o [guia de componentes](design-system/README.md) para conhecer as impor
 | `/estoque` | Catálogo de EPIs com saldo, mínimo e situação crítica em texto, busca, detalhes com histórico e operador; o Gestor registra entradas e saídas (UC06, issues #123 e #133). Integrada a `/api/epis`. |
 | `/emprestimos` | Supervisor e Gestor: novo empréstimo com termo de cautela, duplicidade com justificativa, impedimentos informados pelo servidor, posse, atrasos e devolvidos por situação e devolução com condição e destino. Gestor: aba de projeções de substituição e lista de reposição, com análise e nova tentativa (UC12, UC10, issue #110). Integrada a `/api/emprestimos` e `/api/projecoes`. |
 | `/areas-risco` | Abas de áreas de risco e de setores físicos (UC03). Áreas: busca, filtro por grau de perigo e consulta; o Gestor cadastra e edita. Setores: lista com grau de perigo e áreas vinculadas; o Gestor cadastra (issue #174). No detalhe da área, o Gestor abre o histórico de alterações (issue #114). Inspeções: só o Gestor vê a aba, consulta e registra (RF09, issue #136). Integrada a `/api/areas-risco`, `/api/areas-risco/{id}/inspecoes`, `/api/setores` e `/api/epis`. |
+| `/perfil` | Gestor e Supervisor: dados cadastrais da própria conta, somente consulta, e as 20 ações mais recentes que a pessoa registrou na trilha de auditoria (RNF05). Abre pelo atalho no rodapé do menu. Integrada a `/api/usuarios/me` e `/api/usuarios/me/historico`. |
 | `/tarefas` | Matriz de periculosidade com busca e filtro por grau de perigo (UC11). O Gestor cadastra, classifica e reavalia tarefas e abre o histórico de cada uma (issue #114); o Supervisor consulta. Integrada a `/api/tarefas`. |
 
 As quatro telas iniciais identificam a funcionalidade como em desenvolvimento. Não exibem cadastros fictícios nem oferecem operações de criação ou edição. Embora o backend já tenha operações de ocorrências e EPIs, suas interfaces completas não fazem parte desta base.
@@ -116,6 +117,19 @@ O detalhe da área de risco e a matriz de tarefas mostram ao Gestor o histórico
 - Falha de rede mostra um aviso com "Tentar novamente". Não há cópia offline do histórico.
 - O Supervisor não vê os botões, e a API responde 403 se ele chamar as rotas diretamente.
 - Implementação em `HistoricoAlteracoes.tsx` e `historico.css` (`src/features/areas-risco/`), `HistoricoTarefaDialog.tsx` (`src/features/tarefas/`) e no contrato `RegistroHistorico` de `areas-risco/api.ts`.
+
+### Ações recentes no perfil
+
+A tela `/perfil` mostra, abaixo dos dados cadastrais, as ações que a pessoa logada registrou (RNF05). O servidor identifica a pessoa pelo e-mail do token, sem receber id, então cada um vê apenas as próprias ações.
+
+| Ação | Gestor | Supervisor | Endpoint |
+| --- | --- | --- | --- |
+| Ações recentes da própria conta | Sim | Sim | `GET /api/usuarios/me/historico?limite=20` |
+
+- Cada linha mostra data e hora, operação (Cadastro, Alteração ou Remoção), registro afetado com o id, como "Inspeção 5", e a descrição gravada no log, quando houver.
+- A lista mostra o que já é gravado na auditoria. Registros sem log, como o cadastro de áreas de risco e de setores, não aparecem.
+- Falha de rede mostra um aviso com "Tentar novamente" sem esconder os dados do perfil.
+- Implementação em `HistoricoAcoes.tsx`, `apiHistorico.ts` e `perfil.css` (`src/features/usuarios/`).
 
 ### Inspeções de áreas de risco
 

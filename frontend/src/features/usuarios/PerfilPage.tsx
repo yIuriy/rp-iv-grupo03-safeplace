@@ -1,5 +1,6 @@
 // Tela /perfil: dados cadastrais do Gestor de Segurança ou do Supervisor logado, somente para
-// consulta (GET /api/usuarios/me). A atualização de cadastros continua nas rotas por papel de RF23.
+// consulta (GET /api/usuarios/me), e as ações recentes da pessoa na trilha de auditoria (RNF05). A
+// atualização de cadastros continua nas rotas por papel de RF23.
 
 import { Alert, Button } from '../../shared/components'
 import { useConsulta } from '../../shared/api/useConsulta'
@@ -8,6 +9,7 @@ import { rotuloDoPerfil } from '../autenticacao/sessao'
 import { buscarMeuPerfil, type MeuPerfil, type PerfilUsuario } from './api'
 import { CpfOculto } from './CpfOculto'
 import { formatarData } from './formatos'
+import { HistoricoAcoes } from './HistoricoAcoes'
 import './perfil.css'
 
 function rotuloDoPerfilUsuario(perfil: PerfilUsuario): string {
@@ -39,5 +41,6 @@ export function PerfilPage() {
       : consulta.dados === null
         ? <p role="status">Carregando perfil...</p>
         : <Dados perfil={consulta.dados} />}
+    <HistoricoAcoes />
   </FeaturePage>
 }

@@ -1,2 +1,6 @@
-/* Tela de perfil: valores longos, como o e-mail, quebram linha em vez de invadir a coluna vizinha. */
+/* Tela de perfil: valores longos, como o e-mail, quebram linha em vez de invadir a coluna vizinha;
+   a seção de ações recentes fica separada dos dados e limita a largura da descrição. */
 .sp-perfil-dados dd { overflow-wrap: anywhere; }
+.sp-perfil-historico { display: grid; gap: var(--sp-space-12); margin-top: var(--sp-space-24); }
+.sp-perfil-historico > h2, .sp-perfil-historico > p { margin: 0; }
+.sp-perfil-acao-descricao { min-width: 240px; max-width: 480px; overflow-wrap: anywhere; }

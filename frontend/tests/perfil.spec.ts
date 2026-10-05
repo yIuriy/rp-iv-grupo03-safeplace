@@ -1,13 +1,29 @@
 // Testes Playwright da tela de perfil: atalho no rodapé do menu lateral, dados da pessoa logada
-// vindos de GET /api/usuarios/me, CPF oculto, falha com nova tentativa e atalho no menu em
-// diálogo das telas menores.
+// vindos de GET /api/usuarios/me, CPF oculto, falha com nova tentativa, atalho no menu em diálogo
+// das telas menores e ações recentes de GET /api/usuarios/me/historico (RNF05).
 
 import { test, expect, type Page } from '@playwright/test'
 import { gestora, iniciarSessao, pessoas, supervisor } from './helpers/sessao'
 
 type ChamadaPerfil = { authorization: string | undefined }
 
-async function simularPerfil(page: Page, respostas: Array<Record<string, unknown> | 'erro'>) {
+type RespostaHistorico = Array<Record<string, unknown>> | 'erro'
+
+/** Ações recentes: lista vazia por padrão, para os testes do perfil não dependerem de um backend real. */
+async function simularHistorico(page: Page, respostas: RespostaHistorico[] = [[]]) {
+  const limites: Array<string | null> = []
+  await page.route(url => url.pathname === '/api/usuarios/me/historico', route => {
+    limites.push(new URL(route.request().url()).searchParams.get('limite'))
+    const resposta = respostas[Math.min(limites.length - 1, respostas.length - 1)]
+    return resposta === 'erro'
+      ? route.fulfill({ status: 500, json: { message: 'Falha interna' } })
+      : route.fulfill({ json: resposta })
+  })
+  return limites
+}
+
+async function simularPerfil(page: Page, respostas: Array<Record<string, unknown> | 'erro'>, historico?: RespostaHistorico[]) {
+  await simularHistorico(page, historico)
   const chamadas: ChamadaPerfil[] = []
   await page.route(url => url.pathname === '/api/usuarios/me', route => {
     chamadas.push({ authorization: route.request().headers().authorization })
@@ -92,4 +108,54 @@ test('em telas menores o atalho do perfil fica no menu em diálogo', async ({ pa
   await expect(menu).toBeHidden()
   await expect(page).toHaveURL(/\/perfil$/)
   await expect(page.getByRole('main').getByText(supervisor.email, { exact: true })).toBeVisible()
+})
+
+const acoes = [
+  { id: 31, tipoOperacao: 'CADASTRO', dataHora: '2026-10-05T20:53:27.1', entidade: 'Inspecao', entidadeId: 5,
+    descricao: 'Inspeção de 03/10/2026 na área AR-03 - Corredor de estoque: 2 itens verificados, 0 não conformidades.' },
+  { id: 20, tipoOperacao: 'ALTERACAO', dataHora: '2026-10-04T09:10:00', entidade: 'Epi', entidadeId: 3, descricao: null },
+  { id: 12, tipoOperacao: 'REMOCAO', dataHora: '2026-10-01T08:00:00', entidade: 'NovoRegistro', entidadeId: null, descricao: 'Retirado' },
+]
+
+test.describe('Ações recentes no perfil (RNF05)', () => {
+  test('Gestor vê as próprias ações com data, operação, registro e descrição', async ({ page }) => {
+    await iniciarSessao(page, gestora)
+    await simularPerfil(page, [{ ...pessoas.gestora, criadoEm: null }])
+    const limites = await simularHistorico(page, [acoes])
+    await page.goto('/perfil')
+
+    const secao = page.getByRole('region', { name: 'Minhas ações recentes' })
+    await expect(secao.getByRole('heading', { level: 2, name: 'Minhas ações recentes' })).toBeVisible()
+    const linhas = secao.getByRole('row')
+    await expect(linhas).toHaveCount(4)
+    await expect(linhas.nth(1)).toContainText('05/10/2026 20:53')
+    await expect(linhas.nth(1)).toContainText('Cadastro')
+    await expect(linhas.nth(1)).toContainText('Inspeção 5')
+    await expect(linhas.nth(1)).toContainText('Corredor de estoque')
+    await expect(linhas.nth(2)).toContainText('Alteração')
+    await expect(linhas.nth(2)).toContainText('EPI 3')
+    await expect(linhas.nth(2)).toContainText('Sem descrição')
+    await expect(linhas.nth(3)).toContainText('Remoção')
+    await expect(linhas.nth(3)).toContainText('NovoRegistro')
+    expect(limites).toEqual(['20'])
+  })
+
+  test('sem ações registradas, a seção explica o que aparecerá', async ({ page }) => {
+    await iniciarSessao(page, supervisor)
+    await simularPerfil(page, [supervisoraLogada], [[]])
+    await page.goto('/perfil')
+
+    await expect(page.getByRole('heading', { name: 'Nenhuma ação registrada' })).toBeVisible()
+  })
+
+  test('falha no histórico não esconde os dados do perfil e permite tentar de novo', async ({ page }) => {
+    await iniciarSessao(page, supervisor)
+    await simularPerfil(page, [supervisoraLogada], ['erro', acoes])
+    await page.goto('/perfil')
+
+    await expect(page.getByRole('main').getByText(supervisor.email, { exact: true })).toBeVisible()
+    await expect(page.getByRole('alert')).toContainText('Não foi possível carregar as suas ações.')
+    await page.getByRole('button', { name: 'Tentar novamente' }).click()
+    await expect(page.getByRole('region', { name: 'Minhas ações recentes' }).getByText('Inspeção 5')).toBeVisible()
+  })
 })
