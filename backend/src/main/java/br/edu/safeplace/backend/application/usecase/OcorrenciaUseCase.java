@@ -121,7 +121,7 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
         }
 
         if (notificacaoOcorrenciaPort != null) {
-            notificacaoOcorrenciaPort.notificarNovoRelato(salvo);
+            notificacaoOcorrenciaPort.notificarGestor(salvo);
         }
 
         return OcorrenciaOutputDTO.deDominio(salvo);
@@ -163,7 +163,7 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
         }
 
         if (notificacaoOcorrenciaPort != null) {
-            notificacaoOcorrenciaPort.notificarNovoRelato(salvo);
+            notificacaoOcorrenciaPort.notificarGestor(salvo);
         }
 
         return OcorrenciaOutputDTO.deDominio(salvo);

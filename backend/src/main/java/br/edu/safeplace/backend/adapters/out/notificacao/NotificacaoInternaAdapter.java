@@ -18,7 +18,7 @@ public class NotificacaoInternaAdapter implements NotificacaoOcorrenciaPort {
     private static final Logger log = LoggerFactory.getLogger(NotificacaoInternaAdapter.class);
 
     @Override
-    public void notificarNovoRelato(Ocorrencia ocorrencia) {
+    public void notificarGestor(Ocorrencia ocorrencia) {
         if (ocorrencia == null) {
             return;
         }

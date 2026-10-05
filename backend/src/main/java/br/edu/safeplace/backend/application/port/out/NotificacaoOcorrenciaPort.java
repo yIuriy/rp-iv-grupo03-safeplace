@@ -8,5 +8,5 @@ import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
  */
 public interface NotificacaoOcorrenciaPort {
 
-    void notificarNovoRelato(Ocorrencia ocorrencia);
+    void notificarGestor(Ocorrencia ocorrencia);
 }
