@@ -93,7 +93,10 @@ test.describe('Inspeções de áreas de risco (RF09, US09, #136)', () => {
     await page.getByRole('tab', { name: 'Inspeções' }).click()
 
     await expect(page.getByRole('heading', { name: 'Escolha uma área de risco' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Registrar inspeção' })).toBeDisabled()
+    await page.getByRole('button', { name: 'Registrar inspeção' }).click()
+    await expect(page.getByText('Selecione a área de risco para registrar a inspeção.')).toBeVisible()
+    await expect(page.getByLabel('Área de risco inspecionada')).toBeFocused()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
     await page.getByLabel('Área de risco inspecionada').selectOption({ label: 'SET-01 - Linha de Solda' })
 
     const historico = page.getByRole('region', { name: 'Histórico de inspeções: SET-01 - Linha de Solda' })

@@ -45,6 +45,8 @@ export function InspecoesPainel({ areas, offline }: { areas: AreaRisco[] | null;
   const [areaId, setAreaId] = useState<number | null>(null)
   const [registrando, setRegistrando] = useState(false)
   const [mensagem, setMensagem] = useState('')
+  const [erroArea, setErroArea] = useState<string>()
+  const idArea = useId()
   const carregar = useCallback(
     (signal: AbortSignal) => (areaId === null ? Promise.resolve([]) : listarInspecoes(areaId, signal)),
     [areaId]
@@ -52,17 +54,30 @@ export function InspecoesPainel({ areas, offline }: { areas: AreaRisco[] | null;
   const consulta = useConsulta(`inspecoes-${areaId ?? 'nenhuma'}`, carregar)
   const area = areas?.find(atual => atual.id === areaId) ?? null
 
+  function abrirRegistro() {
+    if (area === null) {
+      setErroArea('Selecione a área de risco para registrar a inspeção.')
+      document.getElementById(idArea)?.focus()
+      return
+    }
+    setRegistrando(true)
+  }
+
   return <div className="sp-painel">
-    <div className="sp-painel-topo">
-      <Select label="Área de risco inspecionada" value={areaId ?? ''} className="sp-inspecao-area"
-        onChange={e => setAreaId(e.target.value ? Number(e.target.value) : null)}
+    <div className="sp-painel-topo sp-inspecao-topo">
+      <Select id={idArea} label="Área de risco inspecionada" value={areaId ?? ''} className="sp-inspecao-area"
+        error={erroArea}
+        onChange={e => {
+          setAreaId(e.target.value ? Number(e.target.value) : null)
+          setErroArea(undefined)
+        }}
         helper="O histórico mostra as inspeções da mais recente para a mais antiga.">
         <option value="">Selecione a área</option>
         {(areas ?? []).map(atual => <option key={atual.id} value={atual.id}>{`${atual.codigo} - ${atual.nome}`}</option>)}
       </Select>
-      <Button variant="primary" icon="plus" disabled={area === null || offline}
+      <Button variant="primary" icon="plus" disabled={offline}
         title={offline ? 'Operação indisponível em modo offline' : undefined}
-        onClick={() => setRegistrando(true)}>
+        onClick={abrirRegistro}>
         Registrar inspeção
       </Button>
     </div>

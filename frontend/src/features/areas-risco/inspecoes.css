@@ -6,6 +6,16 @@
   flex: 1 1 340px;
 }
 
+/* O botão desce a altura do rótulo para ficar na linha do seletor, e não na do texto de ajuda. */
+.sp-painel-topo.sp-inspecao-topo {
+  align-items: flex-start;
+  row-gap: 0;
+}
+
+.sp-inspecao-topo > .sp-button {
+  margin-top: calc(var(--sp-type-label-md-line-height) + var(--sp-space-8));
+}
+
 .sp-inspecoes-lista,
 .sp-inspecao-itens {
   list-style: none;
