@@ -171,7 +171,7 @@ Pontos ainda não atendidos ou fora da entrega:
 - O barramento de eventos não faz parte do MVP.
 - Não há adaptadores para sensores ou dispositivos IoT.
 - Relatórios, CAT, dashboards e integrações externas permanecem fora do MVP, conforme a priorização.
-- RNF08 permanece no MVP, com escopo pendente e sem implementação de cache ou sincronização na interface atual.
+- RNF08 permanece no MVP, com escopo ainda pendente de decisão registrada (#105). Recorte provisório implementado na #127, somente leitura: cópia local por conta (`frontend/src/shared/offline`) das listas de ocorrências, áreas de risco e setores, com indicação da última sincronização. A cópia é sinalizada como local até o servidor confirmar a atualização, que é refeita quando a rede volta. Sem sessão não há cópia, e o logout apaga a cópia da conta. Não há criação ou envio offline (UC09/DS09), nem cache de catálogo de pessoas, EPIs, empréstimos, capacitações ou mapa. A consulta de estatísticas, indicadores e relatórios do texto de RNF08 segue pendente (RF17/RF18 fora do MVP). Se #105 decidir outro recorte, ajustar as chaves consultadas.
 - A [configuração de segurança](../../backend/src/main/java/br/edu/safeplace/backend/config/SecurityConfig.java) aplica controle de acesso por perfil (RBAC) e autenticação via JWT (RNF03). Rotas públicas limitam-se a autenticação, documentação Swagger e health check.
 - RNF05 está atendido no módulo de áreas de risco através do registro de logs de auditoria imutáveis com autoria e data/hora (`LogAuditoria`); sua extensão para os demais fluxos do sistema permanece no backlog.
 - O Compose fornece `VITE_API_URL` e o cliente HTTP a lê, aceitando `VITE_URL_API` como nome anterior; o valor local padrão está documentado no README do frontend.
