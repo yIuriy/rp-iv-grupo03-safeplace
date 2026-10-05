@@ -8,6 +8,7 @@ import { AppShell } from '../shared/layout'
 import { Button, Icon, type IconName } from '../shared/components'
 import { useAutenticacao, useSessaoAtiva } from '../features/autenticacao/contexto'
 import { rotuloDoPerfil } from '../features/autenticacao/sessao'
+import { NotificacoesMenu } from '../features/ocorrencias/NotificacoesMenu'
 import { useNovosRelatos } from '../features/ocorrencias/useNovosRelatos'
 import './app.css'
 
@@ -26,7 +27,8 @@ export function AppLayout() {
   const previousPath = useRef(pathname)
   const { sair } = useAutenticacao()
   const sessao = useSessaoAtiva()
-  const novosRelatos = useNovosRelatos(sessao.perfil === 'GESTOR_SEGURANCA').relatos.length
+  const novosRelatosData = useNovosRelatos(sessao.perfil === 'GESTOR_SEGURANCA')
+  const novosRelatos = novosRelatosData.relatos.length
 
   useEffect(() => {
     const previousTitle = document.title
@@ -47,6 +49,9 @@ export function AppLayout() {
       {novosRelatos > 0 && <span id="nav-novos-relatos" hidden>
         {novosRelatos === 1 ? '1 novo relato aguardando triagem' : `${novosRelatos} novos relatos aguardando triagem`}
       </span>}
+      {sessao.perfil === 'GESTOR_SEGURANCA' && (
+        <NotificacoesMenu relatos={novosRelatosData.relatos} />
+      )}
       <Button variant="quiet" onClick={sair}>Sair</Button>
     </>}
     navigation={navigation.map(item => {

@@ -23,6 +23,7 @@ import loader from '../../../design-system/assets/icons/loader.svg'
 import checkCircle from '../../../design-system/assets/icons/check-circle.svg'
 import eye from '../../../design-system/assets/icons/eye.svg'
 import eyeOff from '../../../design-system/assets/icons/eye-off.svg'
+import bell from '../../../design-system/assets/icons/bell.svg'
 
 const icons = {
   plus, check, x, info, 'alert-triangle': alertTriangle, search,
@@ -30,7 +31,7 @@ const icons = {
   'arrow-left': arrowLeft, calendar, paperclip, clipboard,
   package: packageIcon, 'map-pin': mapPin, users,
   'more-horizontal': moreHorizontal, filter, loader, 'check-circle': checkCircle,
-  eye, 'eye-off': eyeOff,
+  eye, 'eye-off': eyeOff, bell,
 }
 
 export type IconName = keyof typeof icons
