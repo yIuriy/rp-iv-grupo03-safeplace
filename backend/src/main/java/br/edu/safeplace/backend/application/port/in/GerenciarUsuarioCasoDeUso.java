@@ -63,4 +63,9 @@ public interface GerenciarUsuarioCasoDeUso {
     UsuarioSaidaDTO buscarPorId(Integer id);
 
     UsuarioSaidaDTO buscarPorCpf(String cpf);
+
+    /**
+     * Perfil da pessoa autenticada: busca o cadastro pelo e-mail usado no login.
+     */
+    UsuarioSaidaDTO buscarPorEmail(String email);
 }

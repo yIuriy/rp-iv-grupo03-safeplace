@@ -8,6 +8,7 @@ import { AutenticacaoProvider } from './features/autenticacao/AutenticacaoProvid
 import { ExigirSessao } from './features/autenticacao/ExigirSessao'
 import { LoginPage } from './features/autenticacao/LoginPage'
 import { UsersPage } from './features/usuarios/UsersPage'
+import { PerfilPage } from './features/usuarios/PerfilPage'
 import { OccurrencesPage } from './features/ocorrencias/OccurrencesPage'
 import { EpisUnificadosPage } from './features/epis/EpisUnificadosPage'
 import { EmprestimosPage } from './features/emprestimos/EmprestimosPage'
@@ -24,6 +25,7 @@ function App() {
       <Route element={<AppLayout />}>
         <Route index element={<Navigate to="/usuarios" replace />} />
         <Route path="usuarios" element={<UsersPage />} />
+        <Route path="perfil" element={<PerfilPage />} />
         <Route path="capacitacoes" element={<CapacitacoesPage />} />
         <Route path="ocorrencias" element={<OccurrencesPage />} />
         <Route path="epis" element={<EpisUnificadosPage />} />

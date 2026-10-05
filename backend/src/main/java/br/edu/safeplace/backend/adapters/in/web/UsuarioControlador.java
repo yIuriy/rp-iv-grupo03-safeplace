@@ -111,6 +111,17 @@ public class UsuarioControlador {
                 .toList();
     }
 
+    /**
+     * Perfil do Gestor ou Supervisor autenticado: os dados vêm do e-mail do token, sem que o
+     * cliente informe um id. Somente consulta; a atualização segue as rotas por papel de RF23.
+     */
+    @GetMapping("/me")
+    @Operation(summary = "Consulta os dados cadastrais do usuário autenticado")
+    public UsuarioResposta buscarProprioPerfil() {
+        Authentication autenticacao = SecurityContextHolder.getContext().getAuthentication();
+        return UsuarioResposta.aPartirDe(casoDeUso.buscarPorEmail(autenticacao.getName()));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Busca detalhes de um usuário por ID")
     public UsuarioResposta buscarPorId(@PathVariable Integer id) {

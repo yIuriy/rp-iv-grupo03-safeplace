@@ -1,6 +1,6 @@
 /*
- * Estilos da estrutura da aplicação: cabeçalho, barra lateral, menu em diálogo, item de navegação
- * e área principal.
+ * Estilos da estrutura da aplicação: cabeçalho, barra lateral com o atalho do perfil no rodapé,
+ * menu em diálogo, item de navegação e área principal.
  */
 .sp-app-shell { min-height: 100dvh; }
 .sp-app-header { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-space-16); height: var(--sp-layout-header); padding: var(--sp-space-16); background: var(--sp-surface-white); }
@@ -10,7 +10,7 @@
 .sp-role-label { font-size: 14px; line-height: 20px; color: var(--sp-text-secondary); }
 .sp-menu-button { display: none; }
 .sp-app-body { display: flex; min-height: calc(100dvh - var(--sp-layout-header)); }
-.sp-sidebar { flex: 0 0 var(--sp-layout-sidebar); width: var(--sp-layout-sidebar); padding: var(--sp-space-16); background: var(--sp-surface-white); }
+.sp-sidebar { display: flex; flex-direction: column; flex: 0 0 var(--sp-layout-sidebar); width: var(--sp-layout-sidebar); padding: var(--sp-space-16); background: var(--sp-surface-white); }
 .sp-sidebar nav, .sp-navigation-dialog nav { display: flex; flex-direction: column; gap: var(--sp-space-8); }
 .sp-nav-item { display: flex; align-items: center; gap: var(--sp-space-12); min-height: var(--sp-size-control); padding: var(--sp-space-12); border-radius: var(--sp-radius-8); text-decoration: none; color: var(--sp-text-secondary); font-size: 14px; line-height: 20px; font-weight: 600; }
 .sp-nav-item:hover { background: var(--sp-surface-page); }
@@ -32,3 +32,10 @@
   .sp-main { padding: var(--sp-layout-mobile-padding); }
 }
 .sp-nav-contador { margin-left: auto; min-width: 24px; padding: 0 var(--sp-space-8); border-radius: 999px; background: var(--sp-feedback-danger); color: var(--sp-text-inverse); font-size: 12px; line-height: 24px; text-align: center; }
+.sp-sidebar-rodape { position: sticky; bottom: 0; margin: auto calc(-1 * var(--sp-space-16)) calc(-1 * var(--sp-space-16)); padding: var(--sp-space-12) var(--sp-space-16) var(--sp-space-16); border-top: 1px solid var(--sp-border-default); background: var(--sp-surface-white); }
+.sp-navigation-dialog .sp-nav-perfil { margin-top: var(--sp-space-16); border-top: 1px solid var(--sp-border-default); border-radius: 0; padding-top: var(--sp-space-16); }
+.sp-avatar { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 32px; width: 32px; height: 32px; border-radius: 999px; background: var(--sp-brand-soft); color: var(--sp-brand-primary); font-size: 12px; line-height: 16px; font-weight: 700; }
+.sp-nav-perfil[aria-current="page"] .sp-avatar { background: var(--sp-surface-white); }
+.sp-nav-perfil-texto { display: flex; flex-direction: column; min-width: 0; }
+.sp-nav-perfil-nome { color: var(--sp-text-primary); overflow-wrap: anywhere; }
+.sp-nav-perfil-papel { font-size: 12px; line-height: 16px; font-weight: 400; }

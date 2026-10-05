@@ -1,5 +1,6 @@
 // Estrutura visual da aplicação: cabeçalho com logo, perfil e ações (Sair), menu lateral
-// responsivo (diálogo em telas pequenas), link de pular para o conteúdo e área principal.
+// responsivo (diálogo em telas pequenas) com rodapé opcional, link de pular para o conteúdo e
+// área principal.
 
 import { useEffect, useId, useState, type ReactNode, type ComponentProps } from 'react'
 import logo from '../../../design-system/assets/logo-primary.svg'
@@ -28,10 +29,12 @@ export function AppHeader({ roleLabel, actions, onMenuClick, menuOpen, menuId }:
   </header>
 }
 
-export function AppShell({ roleLabel, actions, navigation, children }: {
+export function AppShell({ roleLabel, actions, navigation, sidebarFooter, children }: {
   roleLabel: string
   actions?: ReactNode
   navigation: ReactNode
+  /** Conteúdo fixo no fim da barra lateral, como o atalho do perfil. */
+  sidebarFooter?: ReactNode
   children: ReactNode
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -48,14 +51,15 @@ export function AppShell({ roleLabel, actions, navigation, children }: {
     <a href="#main-content" className="sp-skip-link">Pular para o conteúdo</a>
     <AppHeader {...{ roleLabel, actions, menuOpen }} menuId={id} onMenuClick={() => setMenuOpen(true)} />
     <div className="sp-app-body">
-      <aside className="sp-sidebar"><nav aria-label="Navegação principal">{navigation}</nav></aside>
+      <aside className="sp-sidebar"><nav aria-label="Navegação principal">{navigation}</nav>
+        {sidebarFooter && <div className="sp-sidebar-rodape">{sidebarFooter}</div>}</aside>
       <main id="main-content" className="sp-main" tabIndex={-1}>{children}</main>
     </div>
     <Dialog open={menuOpen} title="Navegação" onClose={() => setMenuOpen(false)} className="sp-navigation-dialog">
       <div id={id}>
         <nav aria-label="Navegação principal" onClick={event => {
           if ((event.target as HTMLElement).closest('a')) setMenuOpen(false)
-        }}>{navigation}</nav>
+        }}>{navigation}{sidebarFooter}</nav>
       </div>
       <Button variant="secondary" onClick={() => setMenuOpen(false)}>Fechar menu</Button>
     </Dialog>

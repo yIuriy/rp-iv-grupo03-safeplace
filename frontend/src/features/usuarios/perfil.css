@@ -1,0 +1,2 @@
+/* Tela de perfil: valores longos, como o e-mail, quebram linha em vez de invadir a coluna vizinha. */
+.sp-perfil-dados dd { overflow-wrap: anywhere; }

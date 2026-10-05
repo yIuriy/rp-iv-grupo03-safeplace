@@ -1,6 +1,7 @@
 // Layout das telas autenticadas: menu entre as funcionalidades, título da aba, foco no conteúdo ao
-// trocar de tela, nome e perfil da pessoa logada, botão Sair e, para o Gestor de Segurança, o
-// contador de novos relatos aguardando triagem no item Ocorrências (UC09, passo 12).
+// trocar de tela, nome e perfil da pessoa logada, atalho para /perfil no rodapé do menu, botão Sair
+// e, para o Gestor de Segurança, o contador de novos relatos aguardando triagem no item Ocorrências
+// (UC09, passo 12).
 
 import { useEffect, useRef } from 'react'
 import { matchPath, NavLink, Outlet, useLocation } from 'react-router-dom'
@@ -10,6 +11,7 @@ import { useAutenticacao, useSessaoAtiva } from '../features/autenticacao/contex
 import { rotuloDoPerfil } from '../features/autenticacao/sessao'
 import { useNovosRelatos } from '../features/ocorrencias/useNovosRelatos'
 import './app.css'
+import { PerfilAtalho } from './PerfilAtalho'
 
 const navigation: { path: string; label: string; icon: IconName }[] = [
   { path: '/usuarios', label: 'Usuários', icon: 'users' },
@@ -33,7 +35,7 @@ export function AppLayout() {
     const currentPage = navigation.find(item => matchPath(item.path, pathname))
     const titulo = pathname === '/epis'
       ? `EPIs — ${new URLSearchParams(search).get('aba') === 'manutencao' ? 'Manutenção' : 'Catálogo e estoque'}`
-      : currentPage?.label ?? 'Página não encontrada'
+      : pathname === '/perfil' ? 'Meu perfil' : currentPage?.label ?? 'Página não encontrada'
     document.title = `${titulo} | SafePlace`
     if (previousPath.current !== pathname) {
       document.getElementById('main-content')?.focus()
@@ -43,6 +45,7 @@ export function AppLayout() {
   }, [pathname, search])
 
   return <AppShell roleLabel={`${sessao.nome} · ${rotuloDoPerfil[sessao.perfil]}`}
+    sidebarFooter={<PerfilAtalho />}
     actions={<>
       {novosRelatos > 0 && <span id="nav-novos-relatos" hidden>
         {novosRelatos === 1 ? '1 novo relato aguardando triagem' : `${novosRelatos} novos relatos aguardando triagem`}
