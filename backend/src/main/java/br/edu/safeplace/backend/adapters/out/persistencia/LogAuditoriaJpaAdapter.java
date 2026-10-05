@@ -1,12 +1,14 @@
 /*
- * Adaptador JPA da trilha de auditoria: converte LogAuditoria em entidade, grava, lista por entidade e
- * localiza ids registrados por um responsável, filtrando pelo tipo de entidade.
+ * Adaptador JPA da trilha de auditoria: converte LogAuditoria em entidade, grava, lista por entidade,
+ * localiza ids registrados por um responsável, filtrando pelo tipo de entidade, e lista as ações
+ * recentes de um responsável.
  */
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
 import java.util.Collection;
 import java.util.List;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
@@ -41,5 +43,16 @@ public class LogAuditoriaJpaAdapter implements LogAuditoriaRepositoryPort {
             return List.of();
         }
         return jpaRepository.buscarIdsPorResponsavelETipoOperacao(responsavel, tipoOperacao, entidades);
+    }
+
+    @Override
+    public List<LogAuditoria> listarPorResponsavel(String responsavel, int limite) {
+        if (responsavel == null || responsavel.isBlank() || limite < 1) {
+            return List.of();
+        }
+        return jpaRepository.findByResponsavelOrderByDataHoraDescIdDesc(responsavel, PageRequest.of(0, limite))
+                .stream()
+                .map(LogAuditoriaEntity::paraDominio)
+                .toList();
     }
 }

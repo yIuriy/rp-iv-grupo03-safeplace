@@ -125,6 +125,8 @@ O estoque segue a mesma organização: `EpiController` recebe as requisições, 
 | Atualizar dados cadastrais de Supervisor (Gestor de Segurança) | `PUT /api/usuarios/supervisores/{id}` |
 | Atualizar dados cadastrais de Colaborador (Supervisor ou Gestor) | `PUT /api/usuarios/colaboradores/{id}` |
 | Consultar um usuário | `GET /api/usuarios/{id}` |
+| Consultar os próprios dados cadastrais (Gestor de Segurança ou Supervisor, pelo e-mail do token) | `GET /api/usuarios/me` |
+| Listar as próprias ações recentes da trilha de auditoria, da mais recente para a mais antiga (limite de 1 a 100, padrão 20) | `GET /api/usuarios/me/historico?limite={n}` |
 | Cadastrar e listar ocorrências | `POST /api/ocorrencias` e `GET /api/ocorrencias` |
 | Consultar ocorrências por período da data do fato, setor e colaborador envolvido (critérios opcionais e combináveis) | `GET /api/ocorrencias?dataInicio={AAAA-MM-DD}&dataFim={AAAA-MM-DD}&setorId={id}&colaboradorId={id}` |
 | Consultar uma ocorrência e buscar acidente pelo protocolo CAT (Supervisor: só os próprios relatos) | `GET /api/ocorrencias/{id}` e `GET /api/ocorrencias/protocolo/{protocolo}` |

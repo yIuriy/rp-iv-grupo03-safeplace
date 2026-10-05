@@ -1,6 +1,7 @@
 /*
  * Testes do caso de uso de inspeções (issue #134) com portas simuladas: Gestor autenticado como
- * responsável, recusa sem Gestor identificável sem gravar nada, área inexistente e consulta do histórico.
+ * responsável, registro do cadastro na trilha de auditoria (RNF05), recusa sem Gestor identificável sem
+ * gravar nada, área inexistente e consulta do histórico.
  */
 package br.edu.safeplace.backend.application.usecase;
 
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,9 +23,11 @@ import br.edu.safeplace.backend.application.dto.input.RegistrarInspecaoInputDTO;
 import br.edu.safeplace.backend.application.dto.output.InspecaoOutputDTO;
 import br.edu.safeplace.backend.application.port.out.AreaRiscoRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.InspecaoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.area_risco.exception.AreaRiscoNaoEncontradaException;
+import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.inspecao.Inspecao;
 import br.edu.safeplace.backend.domain.inspecao.ItemVerificado;
@@ -48,12 +52,14 @@ class InspecaoUseCaseTest {
 
     private InspecaoRepositoryPort inspecoes;
     private AreaRiscoRepositoryPort areas;
+    private LogAuditoriaRepositoryPort logs;
     private InspecaoUseCase useCase;
 
     @BeforeEach
     void setUp() {
         inspecoes = mock(InspecaoRepositoryPort.class);
         areas = mock(AreaRiscoRepositoryPort.class);
+        logs = mock(LogAuditoriaRepositoryPort.class);
         UsuarioRepositorioPorta usuarios = mock(UsuarioRepositorioPorta.class);
         when(usuarios.buscarPorEmail(EMAIL_GESTOR)).thenReturn(Optional.of(GESTOR));
         when(usuarios.buscarPorEmail(EMAIL_SUPERVISOR)).thenReturn(Optional.of(new Supervisor(2, "11144477735",
@@ -66,7 +72,7 @@ class InspecaoUseCaseTest {
             Inspecao nova = chamada.getArgument(0);
             return new Inspecao(10, nova.getAreaRiscoId(), nova.getDataInspecao(), nova.getResponsavel(), nova.getItens());
         });
-        useCase = new InspecaoUseCase(inspecoes, areas, usuarios);
+        useCase = new InspecaoUseCase(inspecoes, areas, usuarios, logs);
         autenticarComo(EMAIL_GESTOR);
     }
 
@@ -99,6 +105,21 @@ class InspecaoUseCaseTest {
     }
 
     @Test
+    @DisplayName("Grava o cadastro da inspeção na trilha de auditoria com o e-mail do Gestor")
+    void gravaCadastroNaAuditoria() {
+        useCase.registrar(4, registro(LocalDate.of(2026, 9, 10)));
+
+        ArgumentCaptor<LogAuditoria> log = ArgumentCaptor.forClass(LogAuditoria.class);
+        verify(logs).salvar(log.capture());
+        assertThat(log.getValue().getTipoOperacao()).isEqualTo("CADASTRO");
+        assertThat(log.getValue().getResponsavel()).isEqualTo(EMAIL_GESTOR);
+        assertThat(log.getValue().getEntidade()).isEqualTo("Inspecao");
+        assertThat(log.getValue().getEntidadeId()).isEqualTo(10);
+        assertThat(log.getValue().getJustificativa())
+                .isEqualTo("Inspeção de 10/09/2026 na área AR-04 - Solda: 2 itens verificados, 1 não conformidade.");
+    }
+
+    @Test
     @DisplayName("Sem Gestor identificável, o registro é recusado e nada é gravado")
     void recusaSemGestor() {
         autenticarComo(EMAIL_SUPERVISOR);
@@ -109,6 +130,7 @@ class InspecaoUseCaseTest {
         assertThatThrownBy(() -> useCase.registrar(4, registro(LocalDate.now())))
                 .isInstanceOf(AccessDeniedException.class);
         verify(inspecoes, never()).salvar(any());
+        verify(logs, never()).salvar(any());
     }
 
     @Test

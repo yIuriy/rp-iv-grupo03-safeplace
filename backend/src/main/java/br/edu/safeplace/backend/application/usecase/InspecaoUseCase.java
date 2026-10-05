@@ -1,10 +1,12 @@
 /*
  * Caso de uso do histórico de inspeções (RF09, US09, issue #134): confere a área, identifica o Gestor
- * de Segurança autenticado como responsável, valida o registro e consulta o histórico da área.
+ * de Segurança autenticado como responsável, valida o registro, grava o cadastro na trilha de
+ * auditoria (RNF05) e consulta o histórico da área.
  */
 package br.edu.safeplace.backend.application.usecase;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import org.springframework.security.access.AccessDeniedException;
@@ -18,8 +20,11 @@ import br.edu.safeplace.backend.application.dto.output.InspecaoOutputDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarInspecaoUseCase;
 import br.edu.safeplace.backend.application.port.out.AreaRiscoRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.InspecaoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.area_risco.exception.AreaRiscoNaoEncontradaException;
+import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.inspecao.Inspecao;
 import br.edu.safeplace.backend.domain.inspecao.ItemVerificado;
 import br.edu.safeplace.backend.domain.inspecao.exception.InspecaoInvalidaException;
@@ -28,25 +33,34 @@ import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 @Service
 public class InspecaoUseCase implements GerenciarInspecaoUseCase {
 
+    private static final String ENTIDADE_LOG = "Inspecao";
+    private static final DateTimeFormatter DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
     private final InspecaoRepositoryPort inspecaoRepositoryPort;
     private final AreaRiscoRepositoryPort areaRiscoRepositoryPort;
     private final UsuarioRepositorioPorta usuarioRepositorio;
+    private final LogAuditoriaRepositoryPort logAuditoria;
 
     public InspecaoUseCase(InspecaoRepositoryPort inspecaoRepositoryPort,
-            AreaRiscoRepositoryPort areaRiscoRepositoryPort, UsuarioRepositorioPorta usuarioRepositorio) {
+            AreaRiscoRepositoryPort areaRiscoRepositoryPort, UsuarioRepositorioPorta usuarioRepositorio,
+            LogAuditoriaRepositoryPort logAuditoria) {
         this.inspecaoRepositoryPort = inspecaoRepositoryPort;
         this.areaRiscoRepositoryPort = areaRiscoRepositoryPort;
         this.usuarioRepositorio = usuarioRepositorio;
+        this.logAuditoria = logAuditoria;
     }
 
     @Override
     @Transactional
     public InspecaoOutputDTO registrar(Integer areaRiscoId, RegistrarInspecaoInputDTO inputDTO) {
-        exigirArea(areaRiscoId);
+        AreaRisco area = exigirArea(areaRiscoId);
         GestorDeSeguranca responsavel = resolverGestorAutenticado();
         Inspecao inspecao = Inspecao.registrar(
                 areaRiscoId, inputDTO.dataInspecao(), responsavel, converterItens(inputDTO.itens()), LocalDate.now());
-        return InspecaoOutputDTO.deDominio(inspecaoRepositoryPort.salvar(inspecao));
+        InspecaoOutputDTO salva = InspecaoOutputDTO.deDominio(inspecaoRepositoryPort.salvar(inspecao));
+        logAuditoria.salvar(LogAuditoria.registrarCadastro(
+                responsavel.getEmail(), ENTIDADE_LOG, salva.id(), descreverCadastro(area, salva)));
+        return salva;
     }
 
     @Override
@@ -58,9 +72,18 @@ public class InspecaoUseCase implements GerenciarInspecaoUseCase {
                 .toList();
     }
 
-    private void exigirArea(Integer areaRiscoId) {
-        areaRiscoRepositoryPort.buscarPorId(areaRiscoId)
+    private AreaRisco exigirArea(Integer areaRiscoId) {
+        return areaRiscoRepositoryPort.buscarPorId(areaRiscoId)
                 .orElseThrow(() -> new AreaRiscoNaoEncontradaException(areaRiscoId));
+    }
+
+    /** Ex.: "Inspeção de 10/09/2026 na área AR-01 - Cabine de solda: 3 itens verificados, 1 não conformidade." */
+    private static String descreverCadastro(AreaRisco area, InspecaoOutputDTO inspecao) {
+        int itens = inspecao.itens().size();
+        long falhas = inspecao.naoConformidades();
+        return "Inspeção de " + DATA.format(inspecao.dataInspecao()) + " na área " + area.getCodigo() + " - "
+                + area.getNome() + ": " + itens + (itens == 1 ? " item verificado, " : " itens verificados, ")
+                + falhas + (falhas == 1 ? " não conformidade." : " não conformidades.");
     }
 
     private static List<ItemVerificado> converterItens(List<RegistrarInspecaoInputDTO.Item> itens) {
