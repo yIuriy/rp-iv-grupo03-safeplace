@@ -354,7 +354,7 @@ test.describe('Acompanhamento pelo Gestor (UC05/UC09, issue #100)', () => {
     await expect(detalhe.getByText('Ocorrência arquivada', { exact: true })).toBeVisible()
     await expect(detalhe.getByRole('button', { name: 'Editar dados' })).toHaveCount(0)
     await page.keyboard.press('Escape')
-    await expect(page.getByRole('row', { name: /#1 / })).toContainText('Arquivada')
+    await expect(page.getByRole('row', { name: /^1 / })).toContainText('Arquivada')
   })
 
   test('notificação chega sem recarregar quando um relato é registrado na mesma sessão', async ({ page }) => {
@@ -371,7 +371,7 @@ test.describe('Acompanhamento pelo Gestor (UC05/UC09, issue #100)', () => {
     await form.getByRole('button', { name: 'Enviar relato' }).click()
     await page.getByRole('dialog', { name: 'Relato registrado' }).getByRole('button', { name: 'Fechar' }).click()
     await expect(page.getByRole('region', { name: '1 novo relato aguardando triagem' })).toBeVisible()
-    await expect(page.getByRole('row', { name: /#100 / })).toBeVisible()
+    await expect(page.getByRole('row', { name: /^100 / })).toBeVisible()
   })
 
   test('Gestor edita o relato com os dados atuais preenchidos e vê a alteração gravada', async ({ page }) => {
@@ -566,7 +566,7 @@ test.describe('Persistência, teclado e larguras (issue #100)', () => {
     await expect(page).not.toHaveURL(/ocorrencia=/)
     await page.reload()
     await expect(page.getByRole('dialog', { name: 'Ocorrência #1' })).not.toBeVisible()
-    await expect(page.getByRole('row', { name: /#1 / })).toContainText('Em triagem')
+    await expect(page.getByRole('row', { name: /^1 / })).toContainText('Em triagem')
   })
 
   test('ocorrência inexistente na URL mostra aviso em vez de quebrar a tela', async ({ page }) => {
@@ -589,7 +589,7 @@ test.describe('Persistência, teclado e larguras (issue #100)', () => {
       })
       const semRolagem = () => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
       await page.goto('/ocorrencias')
-      await expect(page.getByRole('row', { name: /#1 / })).toBeVisible()
+      await expect(page.getByRole('row', { name: /^1 / })).toBeVisible()
       expect(await semRolagem()).toBe(true)
 
       await page.getByRole('button', { name: 'Relatar ocorrência' }).click()

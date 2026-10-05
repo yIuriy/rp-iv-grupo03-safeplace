@@ -186,21 +186,21 @@ export function OccurrencesPage() {
                 <Table caption="Lista de ocorrências registradas">
                   <thead>
                     <tr>
-                      <th scope="col">ID / Tipo</th>
+                      <th scope="col">ID</th>
+                      <th scope="col">Tipo</th>
                       <th scope="col">Data do fato</th>
                       <th scope="col">Situação</th>
                       <th scope="col">Colaborador</th>
                       <th scope="col">Área de risco</th>
                       <th scope="col">Protocolo CAT</th>
-                      <th scope="col">Descrição</th>
                       <th scope="col">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filtradas.map(oc => (
                       <TableRow key={oc.idOcorrencia}>
+                        <td><strong>{oc.idOcorrencia}</strong></td>
                         <td>
-                          <strong>#{oc.idOcorrencia}</strong> ·{' '}
                           <Badge tone={oc.tipoOcorrencia === 'ACIDENTE' ? 'danger' : 'warning'}>
                             {rotuloTipoOcorrencia[oc.tipoOcorrencia]}
                           </Badge>
@@ -220,7 +220,6 @@ export function OccurrencesPage() {
                             <span className="sp-texto-secundario">Sem protocolo</span>
                           )}
                         </td>
-                        <td className="sp-descricao-ocorrencia">{oc.descricao}</td>
                         <td>
                           <div className="sp-acoes-linha">
                             <Button variant="secondary" onClick={() => abrirDetalhe(oc.idOcorrencia)}

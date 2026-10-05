@@ -12,7 +12,6 @@
 .sp-protocolo-busca > .sp-button,
 .sp-consulta-cabecalho > .sp-button { margin-top: calc(var(--sp-type-label-md-line-height) + var(--sp-space-8)); }
 .sp-detalhes .sp-detalhes-largo { grid-column: 1 / -1; }
-.sp-descricao-ocorrencia { max-width: 320px; white-space: pre-wrap; }
 .sp-acoes-linha { display: flex; flex-wrap: wrap; gap: var(--sp-space-8); }
 
 .sp-dialog.sp-dialog--largo { width: 880px; }
@@ -24,8 +23,15 @@
 .sp-protocolo-numero { font-family: var(--sp-font-heading); font-size: clamp(1.5rem, 6vw, 2.25rem); line-height: 1.2; color: var(--sp-brand-deep); overflow-wrap: anywhere; }
 
 .sp-novos-relatos { display: block; }
+.sp-novos-relatos-titulo { margin: 0; font: var(--sp-type-label-md-weight) var(--sp-type-label-md-size) / var(--sp-type-label-md-line-height) var(--sp-font-body), sans-serif; }
 .sp-novos-relatos-lista { list-style: none; margin: var(--sp-space-12) 0 0; padding: 0; display: grid; gap: var(--sp-space-8); }
-.sp-novos-relatos-lista li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-space-8); }
+/* Cada relato é um cartão separado, como uma lista de notificações: ícone na cor do tipo, área e
+   data do fato no centro, data do registro e ação à direita. */
+.sp-novo-relato { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-space-12) var(--sp-space-16); padding: var(--sp-space-12) var(--sp-space-16); border: 1px solid var(--sp-border-default); border-radius: var(--sp-radius-8); background: var(--sp-surface-white); }
+.sp-novo-relato-icone { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 40px; height: 40px; border-radius: var(--sp-radius-8); color: var(--sp-tone); background: var(--sp-tone-bg); }
+.sp-novo-relato-texto { display: grid; gap: var(--sp-space-4); flex: 1 1 220px; min-width: 0; }
+.sp-novo-relato-detalhe { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-space-8); }
+.sp-novo-relato-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-space-12); margin-left: auto; }
 
 .sp-ocorrencia-gestao { display: grid; gap: var(--sp-space-12); }
 .sp-plano { display: grid; gap: var(--sp-space-16); }

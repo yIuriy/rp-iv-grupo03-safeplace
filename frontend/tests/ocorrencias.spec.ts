@@ -63,7 +63,7 @@ async function simular(page: Page, opcoes: Opcoes = {}) {
 }
 
 const consulta = (page: Page) => page.getByRole('search', { name: 'Consultar ocorrências' })
-const linha = (page: Page, id: number) => page.getByRole('row', { name: new RegExp(`#${id} `) })
+const linha = (page: Page, id: number) => page.getByRole('row', { name: new RegExp(`^${id} `) })
 
 test.describe('Consulta de ocorrências (UC05/UC09, issue #128)', () => {
   test('período, setor e colaborador vão ao servidor e a lista mostra só o que atende', async ({ page }) => {
