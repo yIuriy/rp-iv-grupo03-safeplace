@@ -288,6 +288,15 @@ public class UsuarioCasoDeUso implements GerenciarUsuarioCasoDeUso {
                 .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com CPF: " + cpfSanitizado));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public UsuarioSaidaDTO buscarPorEmail(String email) {
+        String emailSanitizado = email == null ? "" : email.trim().toLowerCase();
+        return repositorioPorta.buscarPorEmail(emailSanitizado)
+                .map(UsuarioSaidaDTO::deDominio)
+                .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com e-mail: " + emailSanitizado));
+    }
+
     /**
      * Valida o CPF e garante que nem ele nem o e-mail já estejam em uso.
      *

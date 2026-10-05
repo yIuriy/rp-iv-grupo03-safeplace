@@ -1,6 +1,6 @@
 // Cliente tipado da API de usuários (/api/usuarios): tipos Usuario e DadosPessoa, validação das
 // respostas e funções de listar, cadastrar e atualizar supervisores e colaboradores (RF23, issues
-// #94 e #122).
+// #94 e #122), além da consulta do perfil da pessoa logada.
 
 import { http } from '../../shared/api/https'
 import { mensagemDaApi, statusDoErro } from '../../shared/api/erros'
@@ -66,6 +66,17 @@ export async function listarColaboradores(filtro: FiltroColaboradores, signal?: 
   if (filtro.cpf) params.cpf = filtro.cpf
   const { data } = await http.get<unknown>('/usuarios/colaboradores', { params, signal })
   return lerLista(data)
+}
+
+/** Dados da pessoa logada, com a data do cadastro (`criadoEm`, data e hora ISO, ou nulo). */
+export type MeuPerfil = Usuario & { criadoEm: string | null }
+
+/** `GET /api/usuarios/me`: o servidor identifica a pessoa pelo token, sem receber id. */
+export async function buscarMeuPerfil(signal?: AbortSignal): Promise<MeuPerfil> {
+  const { data } = await http.get<unknown>('/usuarios/me', { signal })
+  const { id, nome, cpf, dataNascimento, email, perfil, ativo } = lerUsuario(data)
+  const criadoEm = (data as Record<string, unknown>).criadoEm
+  return { id, nome, cpf, dataNascimento, email, perfil, ativo, criadoEm: typeof criadoEm === 'string' ? criadoEm : null }
 }
 
 /** Exclusivo do Gestor (RF23). O backend gera a senha inicial e a devolve uma única vez. */
