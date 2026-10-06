@@ -184,7 +184,8 @@ class SubstituicaoInteligenteServiceTest {
     @Test
     @DisplayName("#199: devolução em DESCARTE não antecipa a projeção; a regra não consta do DS10")
     void devolucaoEmDescarteSegueAFormulaDoDs10() {
-        Epi epi = criarEpi(9, "Luva de Alta Tensão", 180, hoje.plusYears(2), 10, 2);
+        // CA distante: 8 dias de uso em 90 projetam ~1530 dias, abaixo do teto do CA
+        Epi epi = criarEpi(9, "Luva de Alta Tensão", 180, hoje.plusYears(10), 10, 2);
         LocalDateTime retirada = hoje.minusDays(10).atStartOfDay();
         Emprestimo emprestimoAvariado = new Emprestimo(
                 100, 9, 10, 1, retirada,
