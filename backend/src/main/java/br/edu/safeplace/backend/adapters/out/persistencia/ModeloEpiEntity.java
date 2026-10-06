@@ -22,4 +22,11 @@ public class ModeloEpiEntity {
     public Integer getCa() { return ca; }
     public String getMarca() { return marca; }
     public LocalDate getValidadeCA() { return validadeCA; }
+
+    /** Preenche a marca ausente dos modelos gravados antes de a API persisti-la; não sobrescreve. */
+    void completarMarca(String novaMarca) {
+        if (marca == null && novaMarca != null && !novaMarca.isBlank()) {
+            marca = novaMarca.strip();
+        }
+    }
 }

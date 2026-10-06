@@ -73,7 +73,6 @@ class CapacitacaoPersistenciaIntegracaoTest {
         jdbc.update("DELETE FROM certificacoes");
         jdbc.update("DELETE FROM treinamentos_colaboradores");
         jdbc.update("DELETE FROM treinamentos");
-        jdbc.update("DELETE FROM logs_auditoria WHERE entidade IN ('Certificacao', 'Treinamento', 'ExigenciaCapacitacao')");
         jdbc.update("DELETE FROM usuarios WHERE cpf IN (?, ?, ?, ?)", CPF_COLAB_1, CPF_COLAB_2, CPF_COLAB_3, CPF_COLAB_SEM_DADOS);
 
         // Criação de Colaboradores operacionais: sem senha/conta conforme RF23
@@ -221,9 +220,10 @@ class CapacitacaoPersistenciaIntegracaoTest {
         assertThat(exigenciasEpi).hasSize(1);
         assertThat(exigenciasEpi.get(0).getNomeCapacitacao()).isEqualTo("Treinamento de Cinto");
 
+        // RNF05 (#193): logs_auditoria não aceita DELETE; conta só os registros destas exigências.
         int logs = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM logs_auditoria WHERE entidade = 'ExigenciaCapacitacao'",
-                Integer.class);
+                "SELECT COUNT(*) FROM logs_auditoria WHERE entidade = 'ExigenciaCapacitacao' AND entidade_id IN (?, ?)",
+                Integer.class, exTarefa.getId(), exEpi.getId());
         assertThat(logs).isEqualTo(2);
     }
 }

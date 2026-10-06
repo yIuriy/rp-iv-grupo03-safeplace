@@ -48,8 +48,9 @@ public class AreaRiscoController {
             @ApiResponse(responseCode = "404", description = "EPI informado não existe no catálogo"),
             @ApiResponse(responseCode = "409", description = "Código de área já em uso (UC03, exceção I)")
     })
-    public AreaRiscoResponse criar(@Valid @RequestBody CriarAreaRiscoRequest request) {
-        AreaRiscoOutputDTO salva = useCase.cadastrarAreaRisco(request.toInputDTO());
+    public AreaRiscoResponse criar(@Valid @RequestBody CriarAreaRiscoRequest request, Authentication authentication) {
+        String responsavel = authentication != null ? authentication.getName() : "SISTEMA";
+        AreaRiscoOutputDTO salva = useCase.cadastrarAreaRisco(request.toInputDTO(), responsavel);
         return AreaRiscoResponse.fromOutputDTO(salva);
     }
 

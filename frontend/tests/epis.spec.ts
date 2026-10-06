@@ -49,6 +49,7 @@ test('Gestor cadastra EPI e registra manutenção pela tela unificada', async ({
   const cadastro = page.getByRole('dialog', { name: 'Cadastrar EPI' })
   await cadastro.getByLabel('Nome do EPI').fill('Luva nitrílica')
   await cadastro.getByLabel('Número do CA').fill('67890')
+  await cadastro.getByLabel('Validade do CA').fill('2028-06-30')
   await cadastro.getByLabel('Quantidade inicial').fill('8')
   await cadastro.getByLabel('Estoque mínimo').fill('3')
   await cadastro.getByRole('button', { name: 'Cadastrar EPI' }).click()
@@ -62,4 +63,43 @@ test('Gestor cadastra EPI e registra manutenção pela tela unificada', async ({
   await manutencao.getByLabel('Resultado').selectOption('APROVADO')
   await manutencao.getByRole('button', { name: 'Salvar manutenção' }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Manutenção registrada' })).toBeVisible()
+})
+
+test('cadastro exige validade do CA antes de enviar à API (#197)', async ({ page }) => {
+  await iniciarSessao(page, gestora)
+  let cadastros = 0
+  await page.route('**/api/epis', route => {
+    if (route.request().method() === 'GET') return route.fulfill({ json: [epi] })
+    cadastros += 1
+    return route.fulfill({ status: 201, json: { ...epi, id: 2 } })
+  })
+
+  await page.goto('/epis?aba=manutencao')
+  await page.getByRole('button', { name: 'Cadastrar EPI' }).click()
+  const cadastro = page.getByRole('dialog', { name: 'Cadastrar EPI' })
+  await cadastro.getByLabel('Nome do EPI').fill('Luva nitrílica')
+  await cadastro.getByLabel('Número do CA').fill('67890')
+  await cadastro.getByLabel('Quantidade inicial').fill('8')
+  await cadastro.getByLabel('Estoque mínimo').fill('3')
+  await cadastro.getByRole('button', { name: 'Cadastrar EPI' }).click()
+
+  await expect(cadastro.getByLabel('Validade do CA')).toHaveJSProperty('validity.valueMissing', true)
+  await expect(cadastro).toBeVisible()
+  expect(cadastros).toBe(0)
+})
+
+test('filtro de manutenção lista apenas EPIs com CA vencido e não oferece situações não gravadas (#197)', async ({ page }) => {
+  await iniciarSessao(page, gestora)
+  const vencido = { ...epi, id: 3, nome: 'Óculos com CA vencido', numeroCa: '55555', dataValidadeCa: '2020-01-31' }
+  await page.route('**/api/epis', route => route.fulfill({ json: [epi, vencido] }))
+
+  await page.goto('/epis?aba=manutencao')
+  const filtro = page.getByLabel('Filtrar por situação')
+  await expect(filtro.locator('option')).toHaveText(
+    ['Todas as situações ativas', 'Disponível', 'Em manutenção', 'Esgotado', 'CA vencido'])
+
+  await filtro.selectOption('CA_VENCIDO')
+  await expect(page.getByRole('status').filter({ hasText: '1 EPI ativo encontrado' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Consultar histórico de Óculos com CA vencido' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Consultar histórico de Capacete classe B' })).toHaveCount(0)
 })

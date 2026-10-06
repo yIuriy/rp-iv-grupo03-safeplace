@@ -63,7 +63,8 @@ export type DadosCadastroEpi = {
   numeroCa: string
   quantidade: number
   estoqueMinimo: number
-  dataValidadeCa?: string
+  /** Obrigatória: o CA e sua validade ficam no modelo do EPI (decisão #124). */
+  dataValidadeCa: string
   vidaUtilDias?: number
   descricao?: string
   classificacao?: ClassificacaoEpi

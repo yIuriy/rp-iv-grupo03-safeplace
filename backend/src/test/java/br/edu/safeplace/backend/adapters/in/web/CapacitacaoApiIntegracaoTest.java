@@ -120,13 +120,19 @@ class CapacitacaoApiIntegracaoTest {
         for (Integer id : tarefas) {
             jdbc.update("DELETE FROM exigencias_capacitacao WHERE tipo_alvo = 'TAREFA' AND alvo_id = ?", id);
             jdbc.update("DELETE FROM tarefas_alocacoes WHERE tarefa_id = ?", id);
-            jdbc.update("DELETE FROM logs_auditoria WHERE entidade IN ('Tarefa', 'AlocacaoTarefa') AND entidade_id = ?", id);
             jdbc.update("DELETE FROM tarefas WHERE id = ?", id);
         }
         List<Integer> usuarios = jdbc.queryForList("SELECT id FROM usuarios WHERE cpf IN (?, ?, ?, ?, ?) OR email = ?",
                 Integer.class, CPF_GESTOR, CPF_VENCIDO, CPF_PROXIMO, CPF_SEM_HISTORICO, CPF_SO_TREINAMENTO, EMAIL_GESTOR);
         for (Integer id : usuarios) {
-            jdbc.update("DELETE FROM treinamentos WHERE id IN (SELECT treinamento_id FROM treinamentos_colaboradores WHERE colaborador_id = ?)", id);
+            // V29 (#193): os vínculos restringem a exclusão; removê-los antes dos treinamentos.
+            List<Integer> treinamentos = jdbc.queryForList(
+                    "SELECT treinamento_id FROM treinamentos_colaboradores WHERE colaborador_id = ?", Integer.class, id);
+            jdbc.update("DELETE FROM treinamentos_colaboradores WHERE colaborador_id = ?", id);
+            for (Integer treinamentoId : treinamentos) {
+                jdbc.update("DELETE FROM treinamentos WHERE id = ? AND NOT EXISTS "
+                        + "(SELECT 1 FROM treinamentos_colaboradores WHERE treinamento_id = ?)", treinamentoId, treinamentoId);
+            }
             jdbc.update("DELETE FROM certificacoes WHERE colaborador_id = ?", id);
             jdbc.update("DELETE FROM usuarios WHERE id = ?", id);
         }

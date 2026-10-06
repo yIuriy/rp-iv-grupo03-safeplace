@@ -2,6 +2,7 @@ package br.edu.safeplace.backend.adapters.out.persistencia;
 
 import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
 import br.edu.safeplace.backend.domain.epi.Epi;
+import br.edu.safeplace.backend.domain.epi.ModeloEPI;
 import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
 import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
 import org.springframework.stereotype.Repository;
@@ -13,15 +14,20 @@ import java.util.Optional;
 public class EpiJpaAdapter implements EpiRepositoryPort {
     private final EpiJpaRepository epiRepository;
     private final MovimentacaoEstoqueJpaRepository movimentacaoRepository;
+    private final ModeloEpiJpaRepository modeloRepository;
 
-    public EpiJpaAdapter(EpiJpaRepository epiRepository, MovimentacaoEstoqueJpaRepository movimentacaoRepository) {
+    public EpiJpaAdapter(EpiJpaRepository epiRepository, MovimentacaoEstoqueJpaRepository movimentacaoRepository,
+                         ModeloEpiJpaRepository modeloRepository) {
         this.epiRepository = epiRepository;
         this.movimentacaoRepository = movimentacaoRepository;
+        this.modeloRepository = modeloRepository;
     }
 
     @Override
     public Epi salvar(Epi epi) {
-        EpiEntity salvo = epiRepository.save(toEntity(epi));
+        EpiEntity entity = toEntity(epi);
+        vincularModeloPersistido(entity.getLote());
+        EpiEntity salvo = epiRepository.save(entity);
         return toDomain(salvo);
     }
 
@@ -38,6 +44,13 @@ public class EpiJpaAdapter implements EpiRepositoryPort {
     @Override
     public List<Epi> listarTodos() {
         return epiRepository.findAll().stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public Optional<ModeloEPI> buscarModeloPorCa(int ca) {
+        return modeloRepository.findFirstByCaOrderByIdAsc(ca)
+                .map(modelo -> new ModeloEPI(modelo.getId(), modelo.getCa(), modelo.getMarca(),
+                        modelo.getValidadeCA()));
     }
 
     @Override
@@ -61,29 +74,50 @@ public class EpiJpaAdapter implements EpiRepositoryPort {
 
     @Override
     public List<Epi> listarPorCA(String numeroCa) {
-        if (numeroCa == null || numeroCa.isBlank()) {
+        Integer ca = caNumerico(numeroCa);
+        if (ca == null) {
             return List.of();
         }
-        String normalizado = numeroCa.strip();
-        if (normalizado.toUpperCase().startsWith("CA-")) {
-            normalizado = normalizado.substring(3).strip();
-        }
-        List<Epi> encontrados = epiRepository.findAllByNumeroCa(normalizado)
+        return epiRepository.findAllByCa(ca)
                 .stream()
                 .map(this::toDomain)
                 .toList();
-        if (encontrados.isEmpty() && !normalizado.equals(numeroCa)) {
-            encontrados = epiRepository.findAllByNumeroCa(numeroCa)
-                    .stream()
-                    .map(this::toDomain)
-                    .toList();
-        }
-        return encontrados;
     }
 
     @Override
     public Epi atualizarSaldo(Epi epi) {
         return salvar(epi);
+    }
+
+    /**
+     * Um modelo com ID já existe no banco: o lote passa a referenciar a instância gerenciada, em vez
+     * de uma cópia destacada que a cascata de persistência recusaria.
+     */
+    private void vincularModeloPersistido(LoteEpiEntity lote) {
+        ModeloEpiEntity convertido = lote.getModelo();
+        if (convertido.getId() == null) {
+            return;
+        }
+        ModeloEpiEntity persistido = modeloRepository.findById(convertido.getId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Modelo de EPI " + convertido.getId() + " não encontrado."));
+        persistido.completarMarca(convertido.getMarca());
+        lote.vincularModelo(persistido);
+    }
+
+    private static Integer caNumerico(String numeroCa) {
+        if (numeroCa == null || numeroCa.isBlank()) {
+            return null;
+        }
+        String normalizado = numeroCa.strip();
+        if (normalizado.toUpperCase().startsWith("CA-")) {
+            normalizado = normalizado.substring(3).strip();
+        }
+        if (!normalizado.matches("[0-9]{1,10}")) {
+            return null;
+        }
+        long valor = Long.parseLong(normalizado);
+        return valor > Integer.MAX_VALUE ? null : (int) valor;
     }
 
     private EpiEntity toEntity(Epi domain) {

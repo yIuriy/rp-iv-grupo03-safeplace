@@ -52,7 +52,7 @@ class SetorControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("Gestor de Segurança deve cadastrar setor físico")
     void gestorDeveCadastrarSetor() throws Exception {
-        when(useCase.cadastrarSetor(any(CadastrarSetorInputDTO.class))).thenReturn(setorSalvo());
+        when(useCase.cadastrarSetor(any(CadastrarSetorInputDTO.class), any())).thenReturn(setorSalvo());
 
         mockMvc.perform(post("/api/setores")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -139,11 +139,38 @@ class PlanejarSubstituicaoUseCaseTest {
         when(epiRepository.listarTodos()).thenReturn(List.of(epi));
         when(projecaoRepository.buscarUltimaPorEpi(1)).thenReturn(Optional.of(projecao));
 
-        List<AlertaSubstituicaoOutputDTO> alertas = useCase.emitirAlertasPreventivos(hoje, 30L);
+        List<AlertaSubstituicaoOutputDTO> alertas = useCase.emitirAlertasPreventivos(hoje);
 
         assertNotNull(alertas);
         // Espera alerta de estoque crítico (1 <= 5), descarte próximo (20 dias) e CA próximo (25 dias)
         assertEquals(3, alertas.size());
+    }
+
+    @Test
+    @DisplayName("#199: setor informado e inexistente é recusado, sem processar nem persistir")
+    void setorInformadoInexistenteERecusado() {
+        when(setorRepository.buscarPorId(99)).thenReturn(Optional.empty());
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> useCase.gerarAnalise(new GerarAnaliseProjecaoInputDTO(hoje, 99, null)));
+
+        org.mockito.Mockito.verifyNoInteractions(projecaoRepository);
+    }
+
+    @Test
+    @DisplayName("#199: localização numérica não é tratada como id de setor; gera pendência e mantém alertas")
+    void localizacaoNumericaGeraPendenciaEMantemAlertas() {
+        // Saldo 1 <= mínimo 5: alerta de estoque crítico independe da projeção (DS10, 2.4)
+        Epi epi = new Epi(1, "Máscara Facial", "33333", 1, 5, StatusEpi.DISPONIVEL,
+                hoje.plusYears(1), 180, "Proteção resp.", ClassificacaoEPI.PROTECAO_RESPIRATORIA, "10");
+        when(epiRepository.listarTodos()).thenReturn(List.of(epi));
+
+        ResultadoAnaliseSubstituicaoDTO resultado = useCase.gerarAnalise(new GerarAnaliseProjecaoInputDTO(hoje, null, null));
+
+        assertEquals(1, resultado.totalPendencias());
+        assertTrue(resultado.pendenciasFalhas().get(0).motivoFalha().contains("setor"));
+        assertTrue(resultado.alertas().stream().anyMatch(a -> "ESTOQUE_CRITICO".equals(a.tipoAlerta())));
+        org.mockito.Mockito.verify(setorRepository, org.mockito.Mockito.never()).buscarPorId(any());
     }
 
     @Test

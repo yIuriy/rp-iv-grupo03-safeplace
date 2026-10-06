@@ -6,6 +6,8 @@
 
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
+
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,6 +41,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class UsuarioCasoDeUsoAtualizacaoTest {
 
+    /** RNF05: a porta de auditoria é obrigatória nos casos de uso. */
+    private final TrilhaAuditoriaEmMemoria auditoria = new TrilhaAuditoriaEmMemoria();
+
     private static final String CPF_SUPERVISORA = "52998224725";
     private static final String CPF_OUTRA_SUPERVISORA = "11144477735";
     private static final String CPF_COLABORADOR = "12345678909";
@@ -51,7 +56,7 @@ class UsuarioCasoDeUsoAtualizacaoTest {
     @BeforeEach
     void setUp() {
         repositorio = new RepositorioEmMemoria();
-        casoDeUso = new UsuarioCasoDeUso(repositorio, new CodificadorFake(), () -> "SenhaGerada#1");
+        casoDeUso = new UsuarioCasoDeUso(repositorio, new CodificadorFake(), () -> "SenhaGerada#1", auditoria);
         idSupervisora = casoDeUso.cadastrarSupervisor(new CadastrarSupervisorInputDTO(
                 "Joana Ribeiro", CPF_SUPERVISORA, LocalDate.of(1988, 4, 20), "joana@safeplace.com")).id();
         idColaborador = casoDeUso.cadastrarColaborador(new CadastrarColaboradorInputDTO(

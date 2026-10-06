@@ -193,8 +193,6 @@ class OcorrenciaConsultaPersistenciaIntegracaoTest {
     private void limpar() {
         String minhasOcorrencias = "SELECT o.id_ocorrencia FROM ocorrencias o JOIN usuarios u ON u.id = o.colaborador_id"
                 + " WHERE u.email LIKE '%" + DOMINIO + "'";
-        jdbc.update("DELETE FROM logs_auditoria WHERE responsavel LIKE ? OR (entidade IN ('Acidente', 'Incidente')"
-                + " AND entidade_id IN (" + minhasOcorrencias + "))", "%" + DOMINIO);
         jdbc.update("DELETE FROM incidentes WHERE id_ocorrencia IN (" + minhasOcorrencias + ")");
         jdbc.update("DELETE FROM ocorrencias WHERE id_ocorrencia IN (" + minhasOcorrencias + ")");
         jdbc.update("DELETE FROM usuarios WHERE email LIKE ?", "%" + DOMINIO);

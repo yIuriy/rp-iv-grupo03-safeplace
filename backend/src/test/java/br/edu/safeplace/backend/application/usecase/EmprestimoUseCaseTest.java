@@ -6,6 +6,8 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -65,7 +67,7 @@ class EmprestimoUseCaseTest {
         epis = new EpisEmMemoria();
         usuarios = new UsuariosEmMemoria();
         capacitacoes = new CapacitacoesEmMemoria();
-        useCase = new EmprestimoUseCase(emprestimos, epis, usuarios, capacitacoes, null);
+        useCase = new EmprestimoUseCase(emprestimos, epis, usuarios, capacitacoes, new TrilhaAuditoriaEmMemoria());
 
         supervisorId = usuarios.salvar(Supervisor.novo("Bruno Souza", "52998224725",
                 LocalDate.of(1985, 3, 10), EMAIL_SUPERVISOR, "hash")).getId();

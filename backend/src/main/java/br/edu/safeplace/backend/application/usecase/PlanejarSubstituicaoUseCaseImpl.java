@@ -70,16 +70,18 @@ public class PlanejarSubstituicaoUseCaseImpl implements PlanejarSubstituicaoUseC
     @Transactional
     public ResultadoAnaliseSubstituicaoDTO gerarAnalise(GerarAnaliseProjecaoInputDTO input) {
         if (input == null) {
-            input = new GerarAnaliseProjecaoInputDTO(LocalDate.now(), null, 90);
+            input = new GerarAnaliseProjecaoInputDTO(LocalDate.now(), null, null);
         }
 
         LocalDate dataReferencia = input.obterDataReferencia();
-        int diasAmostragem = input.obterDiasAmostragem();
+        Integer diasAmostragem = input.obterDiasAmostragem();
 
-        // 1. Resolução do setor global caso informado nos parâmetros
+        // 1. Setor informado na requisição: inexistente é erro, não é ignorado
         Optional<Setor> setorParametro = Optional.empty();
         if (input.setorId() != null) {
-            setorParametro = setorRepository.buscarPorId(input.setorId());
+            Integer setorId = input.setorId();
+            setorParametro = Optional.of(setorRepository.buscarPorId(setorId)
+                    .orElseThrow(() -> new IllegalArgumentException("Setor não encontrado com id: " + setorId)));
         }
 
         List<Epi> epis = epiRepository.listarTodos();
@@ -98,6 +100,7 @@ public class PlanejarSubstituicaoUseCaseImpl implements PlanejarSubstituicaoUseC
             if (setorResolvido.isEmpty()) {
                 falhasDTO.add(new FalhaProjecaoOutputDTO(epiId, nomeEpi,
                         "EPI não possui setor com periculosidade associado nem foi informado setor na requisição."));
+                adicionarAlertas(alertasDTO, epi, null, dataReferencia);
                 continue;
             }
 
@@ -114,15 +117,13 @@ public class PlanejarSubstituicaoUseCaseImpl implements PlanejarSubstituicaoUseC
                         projecao, nomeEpi, epi.getDataValidadeCa(), epi.getQuantidade(), epi.getEstoqueMinimo()));
 
                 // Emite alertas preventivos para a projeção bem-sucedida
-                List<AlertaSubstituicaoEpi> alertasEpi = calculoService.emitirAlertas(
-                        epi, projecao, dataReferencia, SubstituicaoInteligenteService.DIAS_ANTECEDENCIA_PADRAO);
-                for (AlertaSubstituicaoEpi al : alertasEpi) {
-                    alertasDTO.add(AlertaSubstituicaoOutputDTO.aPartirDe(al));
-                }
+                adicionarAlertas(alertasDTO, epi, projecao, dataReferencia);
 
             } catch (DadosInsuficientesParaProjecaoException ex) {
-                // Falha detectada conforme UC10 Exceção I: registra pendência para permitir nova tentativa
+                // Falha detectada conforme UC10 Exceção I: registra pendência para permitir nova tentativa.
+                // Estoque crítico e CA (DS10, 2.4) independem da projeção e continuam sinalizados.
                 falhasDTO.add(new FalhaProjecaoOutputDTO(epiId, nomeEpi, ex.getMessage()));
+                adicionarAlertas(alertasDTO, epi, null, dataReferencia);
             } catch (Exception ex) {
                 falhasDTO.add(new FalhaProjecaoOutputDTO(epiId, nomeEpi,
                         "Erro inesperado no cálculo: " + ex.getMessage()));
@@ -175,11 +176,10 @@ public class PlanejarSubstituicaoUseCaseImpl implements PlanejarSubstituicaoUseC
 
     @Override
     @Transactional(readOnly = true)
-    public List<AlertaSubstituicaoOutputDTO> emitirAlertasPreventivos(LocalDate dataReferencia, Long diasAntecedencia) {
+    public List<AlertaSubstituicaoOutputDTO> emitirAlertasPreventivos(LocalDate dataReferencia) {
         if (dataReferencia == null) {
             dataReferencia = LocalDate.now();
         }
-        long antecedencia = (diasAntecedencia != null && diasAntecedencia > 0) ? diasAntecedencia : SubstituicaoInteligenteService.DIAS_ANTECEDENCIA_PADRAO;
 
         List<Epi> epis = epiRepository.listarTodos();
         List<AlertaSubstituicaoOutputDTO> resultado = new ArrayList<>();
@@ -188,33 +188,27 @@ public class PlanejarSubstituicaoUseCaseImpl implements PlanejarSubstituicaoUseC
             Integer epiId = epi.getId() != null ? epi.getId() : epi.getCodigoEPI();
             Optional<ProjecaoSubstituicao> ultimaProjecao = projecaoRepository.buscarUltimaPorEpi(epiId);
 
-            List<AlertaSubstituicaoEpi> alertas = calculoService.emitirAlertas(
-                    epi, ultimaProjecao.orElse(null), dataReferencia, antecedencia);
-
-            for (AlertaSubstituicaoEpi a : alertas) {
-                resultado.add(AlertaSubstituicaoOutputDTO.aPartirDe(a));
-            }
+            adicionarAlertas(resultado, epi, ultimaProjecao.orElse(null), dataReferencia);
         }
 
         return resultado;
     }
 
+    private void adicionarAlertas(List<AlertaSubstituicaoOutputDTO> destino, Epi epi,
+                                  ProjecaoSubstituicao projecao, LocalDate dataReferencia) {
+        for (AlertaSubstituicaoEpi alerta : calculoService.emitirAlertas(epi, projecao, dataReferencia)) {
+            destino.add(AlertaSubstituicaoOutputDTO.aPartirDe(alerta));
+        }
+    }
+
+    /**
+     * O modelo de classes não associa EPI a Setor; a ligação usa EPI.localizacao igual ao nome de um
+     * setor cadastrado. Localização que não é nome de setor gera pendência, sem outra inferência.
+     */
     private Optional<Setor> resolverSetorEpi(Epi epi) {
         if (epi.getLocalizacao() == null || epi.getLocalizacao().isBlank()) {
             return Optional.empty();
         }
-        String localizacao = epi.getLocalizacao().trim();
-        // Tenta buscar por nome do setor
-        Optional<Setor> porNome = setorRepository.buscarPorNome(localizacao);
-        if (porNome.isPresent()) {
-            return porNome;
-        }
-        // Tenta buscar por id numérico caso a localização seja um id
-        try {
-            int id = Integer.parseInt(localizacao);
-            return setorRepository.buscarPorId(id);
-        } catch (NumberFormatException ignored) {
-            return Optional.empty();
-        }
+        return setorRepository.buscarPorNome(epi.getLocalizacao().trim());
     }
 }

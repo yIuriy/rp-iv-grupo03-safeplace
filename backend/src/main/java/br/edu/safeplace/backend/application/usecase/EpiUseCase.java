@@ -31,14 +31,6 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
     private final UsuarioRepositorioPorta usuarioRepositorio;
     private final LogAuditoriaRepositoryPort logAuditoriaRepositoryPort;
 
-    public EpiUseCase(EpiRepositoryPort repositoryPort) {
-        this(repositoryPort, null, null);
-    }
-
-    public EpiUseCase(EpiRepositoryPort repositoryPort, UsuarioRepositorioPorta usuarioRepositorio) {
-        this(repositoryPort, usuarioRepositorio, null);
-    }
-
     @Autowired
     public EpiUseCase(
             EpiRepositoryPort repositoryPort,
@@ -46,13 +38,20 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
             LogAuditoriaRepositoryPort logAuditoriaRepositoryPort) {
         this.repositoryPort = repositoryPort;
         this.usuarioRepositorio = usuarioRepositorio;
-        this.logAuditoriaRepositoryPort = logAuditoriaRepositoryPort;
+        // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
+        this.logAuditoriaRepositoryPort = java.util.Objects.requireNonNull(
+                logAuditoriaRepositoryPort, "Porta de auditoria é obrigatória (RNF05).");
     }
 
     @Override
     @Transactional
     public EpiOutputDTO cadastrarEpi(CadastrarEpiInputDTO inputDTO) {
-        ModeloEPI modelo = ModeloEPI.deCadastroLegado(inputDTO.numeroCa(), inputDTO.dataValidadeCa());
+        ModeloEPI informado = ModeloEPI.deCadastroLegado(
+                inputDTO.numeroCa(), inputDTO.marca(), inputDTO.dataValidadeCa());
+        // Decisão #124: o CA tem fonte única; um CA já cadastrado reaproveita o mesmo modelo.
+        ModeloEPI modelo = repositoryPort.buscarModeloPorCa(informado.getCa())
+                .map(existente -> existente.reutilizarPara(informado))
+                .orElse(informado);
         LoteEPI lote = new LoteEPI(null, inputDTO.numeroLote(), inputDTO.notaFiscal(),
                 inputDTO.dataFabricacao(), inputDTO.validadeLote(), inputDTO.quantidade(), modelo);
         Epi novoEpi = Epi.novo(
@@ -65,15 +64,13 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
                 inputDTO.classificacao(), inputDTO.localizacao());
         Epi salvo = repositoryPort.salvar(novoEpi);
 
-        if (logAuditoriaRepositoryPort != null) {
-            LogAuditoria log = LogAuditoria.registrarCadastro(
-                    resolverOperador(null),
-                    "Epi",
-                    salvo.getId(),
-                    "Cadastro de EPI: " + salvo.getNome()
-            );
-            logAuditoriaRepositoryPort.salvar(log);
-        }
+        LogAuditoria log = LogAuditoria.registrarCadastro(
+                resolverOperador(null),
+                "Epi",
+                salvo.getId(),
+                "Cadastro de EPI: " + salvo.getNome()
+        );
+        logAuditoriaRepositoryPort.salvar(log);
 
         return EpiOutputDTO.deDominio(salvo);
     }
@@ -107,7 +104,7 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
             String motivo, String responsavelEmail) {
         Epi epi = repositoryPort.buscarPorIdComLock(epiId)
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId));
-        Integer responsavelId = buscarResponsavelId(responsavelEmail);
+        Integer responsavelId = buscarResponsavelId(emailDoUsuarioAutenticado(responsavelEmail));
 
         MovimentacaoEstoque movimentacao;
         if (tipo == TipoMovimentacao.ENTRADA) {
@@ -121,20 +118,23 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
         repositoryPort.atualizarSaldo(epi);
         MovimentacaoEstoque salvo = repositoryPort.salvarMovimentacao(movimentacao);
 
-        if (logAuditoriaRepositoryPort != null) {
-            LogAuditoria log = LogAuditoria.registrarAlteracao(
-                    resolverOperador(responsavelEmail),
-                    "Epi",
-                    epi.getId(),
-                    "Movimentação de estoque: " + tipo + " (" + quantidade + " un). Motivo: " + motivo
-            );
-            logAuditoriaRepositoryPort.salvar(log);
-        }
+        LogAuditoria log = LogAuditoria.registrarAlteracao(
+                resolverOperador(responsavelEmail),
+                "Epi",
+                epi.getId(),
+                "Movimentação de estoque: " + tipo + " (" + quantidade + " un). Motivo: " + motivo
+        );
+        logAuditoriaRepositoryPort.salvar(log);
 
         return MovimentacaoEstoqueOutputDTO.deDominio(salvo, epi.getQuantidade());
     }
 
     private String resolverOperador(String explicit) {
+        String email = emailDoUsuarioAutenticado(explicit);
+        return email != null ? email : "SISTEMA";
+    }
+
+    private static String emailDoUsuarioAutenticado(String explicit) {
         if (explicit != null && !explicit.isBlank()) {
             return explicit.trim();
         }
@@ -142,7 +142,7 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
         if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
             return auth.getName().trim();
         }
-        return "SISTEMA";
+        return null;
     }
 
     @Override
@@ -164,9 +164,14 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
         return historico;
     }
 
+    /** US03: o responsável pela movimentação é o usuário autenticado e é obrigatório. */
     private Integer buscarResponsavelId(String responsavelEmail) {
-        if (responsavelEmail == null || responsavelEmail.isBlank() || usuarioRepositorio == null) {
-            return null;
+        if (responsavelEmail == null || responsavelEmail.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Responsável pela movimentação é obrigatório: nenhum usuário autenticado.");
+        }
+        if (usuarioRepositorio == null) {
+            throw new IllegalStateException("Consulta de usuários indisponível para identificar o responsável.");
         }
         return usuarioRepositorio.buscarPorEmail(responsavelEmail.toLowerCase())
                 .map(usuario -> usuario.getId())

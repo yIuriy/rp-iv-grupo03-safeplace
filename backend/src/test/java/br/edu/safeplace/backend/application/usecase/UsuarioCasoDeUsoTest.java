@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
+
 import br.edu.safeplace.backend.application.dto.input.CadastrarUsuarioEntradaDTO;
 import br.edu.safeplace.backend.application.dto.output.UsuarioSaidaDTO;
 import br.edu.safeplace.backend.application.port.out.CodificadorSenhaPorta;
@@ -29,6 +31,9 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class UsuarioCasoDeUsoTest {
 
+    /** RNF05: a porta de auditoria é obrigatória nos casos de uso. */
+    private final TrilhaAuditoriaEmMemoria auditoria = new TrilhaAuditoriaEmMemoria();
+
     @Mock
     private UsuarioRepositorioPorta repositorioPorta;
 
@@ -44,7 +49,7 @@ class UsuarioCasoDeUsoTest {
 
     @BeforeEach
     void setUp() {
-        casoDeUso = new UsuarioCasoDeUso(repositorioPorta, codificadorSenhaPorta, geradorSenhaPorta);
+        casoDeUso = new UsuarioCasoDeUso(repositorioPorta, codificadorSenhaPorta, geradorSenhaPorta, auditoria);
     }
 
     @Test

@@ -15,7 +15,7 @@ public interface EpiJpaRepository extends JpaRepository<EpiEntity, Integer> {
     @Query("SELECT e FROM EpiEntity e WHERE e.id = :id")
     Optional<EpiEntity> findByIdWithLock(@Param("id") Integer id);
 
-    Optional<EpiEntity> findByNumeroCa(String numeroCa);
-
-    List<EpiEntity> findAllByNumeroCa(String numeroCa);
+    /** O CA tem fonte única no modelo do lote (decisão #124). */
+    @Query("SELECT e FROM EpiEntity e WHERE e.lote.modelo.ca = :ca ORDER BY e.id")
+    List<EpiEntity> findAllByCa(@Param("ca") Integer ca);
 }

@@ -220,7 +220,7 @@ class PlanoDeAcaoJpaAdapterTest {
 
         ArgumentCaptor<LogAuditoria> captor = ArgumentCaptor.forClass(LogAuditoria.class);
         verify(auditoriaRepository).salvar(captor.capture());
-        assertThat(captor.getValue().getJustificativa()).contains("Reatribuição de responsável");
+        assertThat(captor.getValue().getJustificativa()).isEqualTo("Reatribuição de responsável da ação: de colaborador id 1 para setor id 5");
     }
 
     @Test
@@ -245,7 +245,7 @@ class PlanoDeAcaoJpaAdapterTest {
 
         ArgumentCaptor<LogAuditoria> captor = ArgumentCaptor.forClass(LogAuditoria.class);
         verify(auditoriaRepository).salvar(captor.capture());
-        assertThat(captor.getValue().getJustificativa()).contains("Alteração de situação da ação para CONCLUIDA");
+        assertThat(captor.getValue().getJustificativa()).isEqualTo("Alteração de situação da ação: de ABERTA para CONCLUIDA");
     }
 
     @Test

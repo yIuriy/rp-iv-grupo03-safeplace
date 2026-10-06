@@ -103,7 +103,6 @@ class OcorrenciaPersistenciaIntegracaoTest {
     }
 
     private void limparDados() {
-        jdbcTemplate.execute("DELETE FROM logs_auditoria");
         jdbcTemplate.execute("DELETE FROM acidentes");
         jdbcTemplate.execute("DELETE FROM incidentes");
         jdbcTemplate.execute("DELETE FROM ocorrencias");

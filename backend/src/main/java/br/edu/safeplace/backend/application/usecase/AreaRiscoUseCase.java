@@ -5,6 +5,7 @@
 package br.edu.safeplace.backend.application.usecase;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,18 +53,14 @@ public class AreaRiscoUseCase implements GerenciarAreaRiscoUseCase {
         this.areaRiscoRepositoryPort = areaRiscoRepositoryPort;
         this.epiRepositoryPort = epiRepositoryPort;
         this.setorRepositoryPort = setorRepositoryPort;
-        this.logAuditoriaRepositoryPort = logAuditoriaRepositoryPort;
-    }
-
-    public AreaRiscoUseCase(
-            AreaRiscoRepositoryPort areaRiscoRepositoryPort,
-            EpiRepositoryPort epiRepositoryPort) {
-        this(areaRiscoRepositoryPort, epiRepositoryPort, null, null);
+        // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
+        this.logAuditoriaRepositoryPort = Objects.requireNonNull(
+                logAuditoriaRepositoryPort, "Porta de auditoria é obrigatória (RNF05).");
     }
 
     @Override
     @Transactional
-    public AreaRiscoOutputDTO cadastrarAreaRisco(CadastrarAreaRiscoInputDTO inputDTO) {
+    public AreaRiscoOutputDTO cadastrarAreaRisco(CadastrarAreaRiscoInputDTO inputDTO, String operador) {
         String codigo = inputDTO.codigo();
 
         if (codigo != null && !codigo.isBlank()) {
@@ -90,7 +87,14 @@ public class AreaRiscoUseCase implements GerenciarAreaRiscoUseCase {
                 inputDTO.limites(),
                 episObrigatorios);
 
-        return AreaRiscoOutputDTO.deDominio(areaRiscoRepositoryPort.salvar(novaArea));
+        AreaRisco salva = areaRiscoRepositoryPort.salvar(novaArea);
+        logAuditoriaRepositoryPort.salvar(LogAuditoria.registrarCadastro(
+                operador != null ? operador : "sistema",
+                ENTIDADE,
+                salva.getId(),
+                "Cadastro da área de risco " + salva.getCodigo() + " - " + salva.getNome()));
+
+        return AreaRiscoOutputDTO.deDominio(salva);
     }
 
     @Override
@@ -118,15 +122,12 @@ public class AreaRiscoUseCase implements GerenciarAreaRiscoUseCase {
         List<AlteracaoAreaRisco> alteracoes = existente.compararCom(atualizada, this::descreverSetor);
         AreaRisco salva = areaRiscoRepositoryPort.atualizar(atualizada);
 
-        if (logAuditoriaRepositoryPort != null) {
-            LogAuditoria log = LogAuditoria.registrarAlteracao(
-                    operador != null ? operador : "sistema",
-                    ENTIDADE,
-                    id,
-                    descreverHistorico(alteracoes, inputDTO.justificativa())
-            );
-            logAuditoriaRepositoryPort.salvar(log);
-        }
+        logAuditoriaRepositoryPort.salvar(LogAuditoria.registrarAlteracao(
+                operador != null ? operador : "sistema",
+                ENTIDADE,
+                id,
+                descreverHistorico(alteracoes, inputDTO.justificativa())
+        ));
 
         return AreaRiscoOutputDTO.deDominio(salva);
     }
@@ -162,9 +163,6 @@ public class AreaRiscoUseCase implements GerenciarAreaRiscoUseCase {
     @Transactional(readOnly = true)
     public List<RegistroHistoricoOutputDTO> listarHistorico(Integer id) {
         areaRiscoRepositoryPort.buscarPorId(id).orElseThrow(() -> new AreaRiscoNaoEncontradaException(id));
-        if (logAuditoriaRepositoryPort == null) {
-            return List.of();
-        }
         return logAuditoriaRepositoryPort.listarPorEntidade(ENTIDADE, id).stream()
                 .map(RegistroHistoricoOutputDTO::deDominio)
                 .toList();

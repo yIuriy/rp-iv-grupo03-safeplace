@@ -61,7 +61,9 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
         this.repository = repository;
         this.areaRiscoRepository = areaRiscoRepository;
         this.usuarioRepository = usuarioRepository;
-        this.logAuditoriaRepositoryPort = logAuditoriaRepositoryPort;
+        // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
+        this.logAuditoriaRepositoryPort = java.util.Objects.requireNonNull(
+                logAuditoriaRepositoryPort, "Porta de auditoria é obrigatória (RNF05).");
         this.notificacaoOcorrenciaPort = notificacaoOcorrenciaPort;
     }
 
@@ -110,15 +112,13 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
         );
         Acidente salvo = repository.salvarAcidente(acidente);
 
-        if (logAuditoriaRepositoryPort != null) {
-            LogAuditoria log = LogAuditoria.registrarCadastro(
-                    resolverOperador(),
-                    "Acidente",
-                    salvo.getId(),
-                    "Registro de Acidente de Trabalho"
-            );
-            logAuditoriaRepositoryPort.salvar(log);
-        }
+        LogAuditoria log = LogAuditoria.registrarCadastro(
+                resolverOperador(),
+                "Acidente",
+                salvo.getId(),
+                "Registro de Acidente de Trabalho"
+        );
+        logAuditoriaRepositoryPort.salvar(log);
 
         if (notificacaoOcorrenciaPort != null) {
             notificacaoOcorrenciaPort.notificarGestor(salvo);
@@ -152,15 +152,13 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
         );
         Incidente salvo = repository.salvarIncidente(incidente);
 
-        if (logAuditoriaRepositoryPort != null) {
-            LogAuditoria log = LogAuditoria.registrarCadastro(
-                    resolverOperador(),
-                    "Incidente",
-                    salvo.getId(),
-                    "Registro de Incidente"
-            );
-            logAuditoriaRepositoryPort.salvar(log);
-        }
+        LogAuditoria log = LogAuditoria.registrarCadastro(
+                resolverOperador(),
+                "Incidente",
+                salvo.getId(),
+                "Registro de Incidente"
+        );
+        logAuditoriaRepositoryPort.salvar(log);
 
         if (notificacaoOcorrenciaPort != null) {
             notificacaoOcorrenciaPort.notificarGestor(salvo);
@@ -263,14 +261,14 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
     /**
      * O Supervisor acompanha os relatos que registrou (UC09); o Gestor vê todos (UC05). A mesma regra
      * vale para a lista, o detalhe e a busca por protocolo, para que o detalhe não revele o que a lista
-     * esconde. Sem sessão ou sem trilha de auditoria, a consulta não é restringida.
+     * esconde. Sem sessão, a consulta não é restringida.
      */
     private Predicate<Ocorrencia> visibilidadeDoUsuarioAtual() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isSupervisor = auth != null && auth.getAuthorities().stream()
                 .anyMatch(a -> "ROLE_SUPERVISOR".equals(a.getAuthority()));
         String email = emailAutenticado();
-        if (!isSupervisor || email == null || logAuditoriaRepositoryPort == null) {
+        if (!isSupervisor || email == null) {
             return ocorrencia -> true;
         }
         List<Integer> idsRelatados = logAuditoriaRepositoryPort
@@ -363,13 +361,11 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
             throw new IllegalStateException("Tipo de ocorrência não suportado.");
         }
 
-        if (logAuditoriaRepositoryPort != null) {
-            logAuditoriaRepositoryPort.salvar(LogAuditoria.registrarAlteracao(
-                    resolverOperador(),
-                    salva instanceof Acidente ? "Acidente" : "Incidente",
-                    salva.getId(),
-                    "Atualização de ocorrência. Campos alterados: " + descreverAlteracoes(atual, salva)));
-        }
+        logAuditoriaRepositoryPort.salvar(LogAuditoria.registrarAlteracao(
+                resolverOperador(),
+                salva instanceof Acidente ? "Acidente" : "Incidente",
+                salva.getId(),
+                "Atualização de ocorrência. Campos alterados: " + descreverAlteracoes(atual, salva)));
 
         return OcorrenciaOutputDTO.deDominio(salva);
     }
@@ -420,15 +416,13 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
 
         Ocorrencia salva = salvarOcorrencia(ocorrencia);
 
-        if (logAuditoriaRepositoryPort != null) {
-            LogAuditoria log = LogAuditoria.registrarAlteracao(
-                    resolverOperador(),
-                    salva instanceof Acidente ? "Acidente" : "Incidente",
-                    salva.getId(),
-                    "Envio de ocorrência para triagem"
-            );
-            logAuditoriaRepositoryPort.salvar(log);
-        }
+        LogAuditoria log = LogAuditoria.registrarAlteracao(
+                resolverOperador(),
+                salva instanceof Acidente ? "Acidente" : "Incidente",
+                salva.getId(),
+                "Envio de ocorrência para triagem"
+        );
+        logAuditoriaRepositoryPort.salvar(log);
 
         return OcorrenciaOutputDTO.deDominio(salva);
     }
@@ -443,15 +437,13 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
 
         Ocorrencia salva = salvarOcorrencia(ocorrencia);
 
-        if (logAuditoriaRepositoryPort != null) {
-            LogAuditoria log = LogAuditoria.registrarAlteracao(
-                    resolverOperador(),
-                    salva instanceof Acidente ? "Acidente" : "Incidente",
-                    salva.getId(),
-                    "Arquivamento de ocorrência"
-            );
-            logAuditoriaRepositoryPort.salvar(log);
-        }
+        LogAuditoria log = LogAuditoria.registrarAlteracao(
+                resolverOperador(),
+                salva instanceof Acidente ? "Acidente" : "Incidente",
+                salva.getId(),
+                "Arquivamento de ocorrência"
+        );
+        logAuditoriaRepositoryPort.salvar(log);
 
         return OcorrenciaOutputDTO.deDominio(salva);
     }
@@ -470,15 +462,13 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
         Acidente consolidado = acidente.consolidarCAT(sequencial);
         Acidente salvo = repository.salvarAcidente(consolidado);
 
-        if (logAuditoriaRepositoryPort != null) {
-            LogAuditoria log = LogAuditoria.registrarAlteracao(
-                    resolverOperador(),
-                    "Acidente",
-                    salvo.getId(),
-                    "Consolidação de CAT com protocolo " + salvo.getNumeroProtocolo()
-            );
-            logAuditoriaRepositoryPort.salvar(log);
-        }
+        LogAuditoria log = LogAuditoria.registrarAlteracao(
+                resolverOperador(),
+                "Acidente",
+                salvo.getId(),
+                "Consolidação de CAT com protocolo " + salvo.getNumeroProtocolo()
+        );
+        logAuditoriaRepositoryPort.salvar(log);
 
         return OcorrenciaOutputDTO.deDominio(salvo);
     }

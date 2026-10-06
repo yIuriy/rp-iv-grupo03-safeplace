@@ -32,4 +32,7 @@ public class LoteEpiEntity {
     public LocalDate getValidade() { return validade; }
     public Integer getQuantidadeRecebida() { return quantidadeRecebida; }
     public ModeloEpiEntity getModelo() { return modelo; }
+
+    /** Troca o modelo convertido do domínio pela instância gerenciada já persistida. */
+    void vincularModelo(ModeloEpiEntity modeloPersistido) { this.modelo = modeloPersistido; }
 }

@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
+
 import br.edu.safeplace.backend.adapters.out.persistencia.InMemoryManutencaoEpiRepository;
 import br.edu.safeplace.backend.application.dto.input.ConcluirManutencaoInputDTO;
 import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
@@ -24,6 +26,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ControlarManutencaoEpiServiceTest {
 
+    /** RNF05: a porta de auditoria é obrigatória nos casos de uso. */
+    private final TrilhaAuditoriaEmMemoria auditoria = new TrilhaAuditoriaEmMemoria();
+
     private EpiRepositoryFake epiRepository;
     private InMemoryManutencaoEpiRepository manutencaoRepository;
     private ControlarManutencaoEpiService service;
@@ -32,7 +37,7 @@ class ControlarManutencaoEpiServiceTest {
     void setUp() {
         epiRepository = new EpiRepositoryFake();
         manutencaoRepository = new InMemoryManutencaoEpiRepository();
-        service = new ControlarManutencaoEpiService(epiRepository, manutencaoRepository);
+        service = new ControlarManutencaoEpiService(epiRepository, manutencaoRepository, null, auditoria);
     }
 
     @Test

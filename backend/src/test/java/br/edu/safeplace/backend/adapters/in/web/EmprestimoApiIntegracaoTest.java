@@ -99,8 +99,6 @@ class EmprestimoApiIntegracaoTest {
         oculosCaVencidoId = gerenciarEpiUseCase.cadastrarEpi(new CadastrarEpiInputDTO(
                 "Oculos com CA Vencido API", "77889", 3, 1,
                 LocalDate.now().plusMonths(6), 365, "Oculos", ClassificacaoEPI.PROTECAO_DE_OLHOS)).id();
-        jdbc.update("UPDATE epis SET data_validade_ca = ? WHERE id = ?",
-                LocalDate.now().minusDays(1), oculosCaVencidoId);
         jdbc.update("UPDATE modelos_epi SET validade_ca = ? WHERE id IN "
                 + "(SELECT l.modelo_id FROM lotes_epi l JOIN epis e ON e.lote_id = l.id WHERE e.id = ?)",
                 LocalDate.now().minusDays(1), oculosCaVencidoId);
@@ -125,8 +123,11 @@ class EmprestimoApiIntegracaoTest {
         jdbc.update("DELETE FROM certificacoes");
         jdbc.update("DELETE FROM treinamentos_colaboradores");
         jdbc.update("DELETE FROM treinamentos");
-        jdbc.update("DELETE FROM logs_auditoria WHERE entidade = 'Emprestimo'");
         jdbc.update("DELETE FROM epis WHERE nome LIKE '%API%'");
+        // Decisão #124: o CA é reaproveitado entre cadastros; modelos órfãos não podem vazar para o próximo teste.
+        jdbc.update("DELETE FROM lotes_epi l WHERE NOT EXISTS (SELECT 1 FROM epis e WHERE e.lote_id = l.id) "
+                + "AND NOT EXISTS (SELECT 1 FROM movimentacoes_estoque m WHERE m.lote_id = l.id)");
+        jdbc.update("DELETE FROM modelos_epi o WHERE NOT EXISTS (SELECT 1 FROM lotes_epi l WHERE l.modelo_id = o.id)");
         jdbc.update("DELETE FROM usuarios WHERE cpf IN (?, ?)", CPF_SUPERVISOR, CPF_COLABORADOR);
     }
 

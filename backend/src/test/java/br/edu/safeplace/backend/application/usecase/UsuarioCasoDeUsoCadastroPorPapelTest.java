@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -33,6 +35,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class UsuarioCasoDeUsoCadastroPorPapelTest {
 
+    /** RNF05: a porta de auditoria é obrigatória nos casos de uso. */
+    private final TrilhaAuditoriaEmMemoria auditoria = new TrilhaAuditoriaEmMemoria();
+
     private static final String CPF_VALIDO = "52998224725";
     private static final String OUTRO_CPF_VALIDO = "11144477735";
 
@@ -48,7 +53,7 @@ class UsuarioCasoDeUsoCadastroPorPapelTest {
             geradorDeSenhaFoiChamado = true;
             return "SenhaGerada#1";
         };
-        casoDeUso = new UsuarioCasoDeUso(repositorio, new CodificadorSenhaFake(), gerador);
+        casoDeUso = new UsuarioCasoDeUso(repositorio, new CodificadorSenhaFake(), gerador, auditoria);
     }
 
     /**

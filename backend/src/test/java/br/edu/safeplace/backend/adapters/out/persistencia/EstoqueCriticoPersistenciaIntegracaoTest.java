@@ -34,6 +34,9 @@ import br.edu.safeplace.backend.suporte.PostgresDeTeste;
 @DisplayName("Estoque crítico persistido: cruzamento do mínimo com saldo 10 (issue #123)")
 class EstoqueCriticoPersistenciaIntegracaoTest {
 
+    /** Gestor semeado pela V17; US03 exige o responsável em toda movimentação. */
+    private static final String GESTOR_DEMO = "gestor.demo@safeplace.com";
+
     static boolean bancoDisponivel() {
         return PostgresDeTeste.disponivel();
     }
@@ -55,6 +58,10 @@ class EstoqueCriticoPersistenciaIntegracaoTest {
     void prepararEpiComSaldoDez() {
         jdbcTemplate.execute("DELETE FROM movimentacoes_estoque");
         jdbcTemplate.execute("DELETE FROM epis");
+        // Decisão #124: o CA é reaproveitado entre cadastros; modelos órfãos não podem vazar para o próximo teste.
+        jdbcTemplate.execute("DELETE FROM lotes_epi l WHERE NOT EXISTS (SELECT 1 FROM epis e WHERE e.lote_id = l.id) "
+                + "AND NOT EXISTS (SELECT 1 FROM movimentacoes_estoque m WHERE m.lote_id = l.id)");
+        jdbcTemplate.execute("DELETE FROM modelos_epi o WHERE NOT EXISTS (SELECT 1 FROM lotes_epi l WHERE l.modelo_id = o.id)");
         EpiOutputDTO salvo = useCase.cadastrarEpi(new CadastrarEpiInputDTO(
                 "Luva nitrílica", "12345", 10, 5, LocalDate.now().plusYears(1), 180,
                 "Luva de proteção química", ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES));
@@ -66,14 +73,14 @@ class EstoqueCriticoPersistenciaIntegracaoTest {
     void cruzarOMinimoPorSaidaEEntrada() {
         assertThat(useCase.buscarPorId(epiId).estoqueCritico()).isFalse();
 
-        useCase.registrarMovimentacao(epiId, TipoMovimentacao.SAIDA, 5, "Entrega semanal", null);
+        useCase.registrarMovimentacao(epiId, TipoMovimentacao.SAIDA, 5, "Entrega semanal", GESTOR_DEMO);
 
         assertThat(saldoNoBanco()).isEqualTo(5);
         EpiOutputDTO critico = useCase.buscarPorId(epiId);
         assertThat(critico.quantidade()).isEqualTo(5);
         assertThat(critico.estoqueCritico()).isTrue();
 
-        useCase.registrarMovimentacao(epiId, TipoMovimentacao.ENTRADA, 1, "Reposição", null);
+        useCase.registrarMovimentacao(epiId, TipoMovimentacao.ENTRADA, 1, "Reposição", GESTOR_DEMO);
 
         assertThat(saldoNoBanco()).isEqualTo(6);
         assertThat(useCase.buscarPorId(epiId).estoqueCritico()).isFalse();
@@ -83,7 +90,7 @@ class EstoqueCriticoPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Saída de 11 sobre saldo 10 falha, mantém as 10 unidades e não grava histórico")
     void saidaAcimaDoSaldoNaoAlteraBanco() {
-        assertThatThrownBy(() -> useCase.registrarMovimentacao(epiId, TipoMovimentacao.SAIDA, 11, "Indevida", null))
+        assertThatThrownBy(() -> useCase.registrarMovimentacao(epiId, TipoMovimentacao.SAIDA, 11, "Indevida", GESTOR_DEMO))
                 .isInstanceOf(SaldoInsuficienteException.class);
 
         assertThat(saldoNoBanco()).isEqualTo(10);

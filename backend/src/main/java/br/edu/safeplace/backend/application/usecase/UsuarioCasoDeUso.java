@@ -41,17 +41,6 @@ public class UsuarioCasoDeUso implements GerenciarUsuarioCasoDeUso {
     private final GeradorSenhaPorta geradorSenhaPorta;
     private final LogAuditoriaRepositoryPort logAuditoriaRepositoryPort;
 
-    public UsuarioCasoDeUso(UsuarioRepositorioPorta repositorioPorta,
-                            CodificadorSenhaPorta codificadorSenhaPorta) {
-        this(repositorioPorta, codificadorSenhaPorta, null, null);
-    }
-
-    public UsuarioCasoDeUso(UsuarioRepositorioPorta repositorioPorta,
-                            CodificadorSenhaPorta codificadorSenhaPorta,
-                            GeradorSenhaPorta geradorSenhaPorta) {
-        this(repositorioPorta, codificadorSenhaPorta, geradorSenhaPorta, null);
-    }
-
     @org.springframework.beans.factory.annotation.Autowired
     public UsuarioCasoDeUso(UsuarioRepositorioPorta repositorioPorta,
                             CodificadorSenhaPorta codificadorSenhaPorta,
@@ -60,7 +49,9 @@ public class UsuarioCasoDeUso implements GerenciarUsuarioCasoDeUso {
         this.repositorioPorta = repositorioPorta;
         this.codificadorSenhaPorta = codificadorSenhaPorta;
         this.geradorSenhaPorta = geradorSenhaPorta;
-        this.logAuditoriaRepositoryPort = logAuditoriaRepositoryPort;
+        // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
+        this.logAuditoriaRepositoryPort = java.util.Objects.requireNonNull(
+                logAuditoriaRepositoryPort, "Porta de auditoria é obrigatória (RNF05).");
     }
 
     @Override
@@ -94,15 +85,13 @@ public class UsuarioCasoDeUso implements GerenciarUsuarioCasoDeUso {
 
         Colaborador salvo = repositorioPorta.salvar(novoUsuario);
 
-        if (logAuditoriaRepositoryPort != null) {
-            LogAuditoria log = LogAuditoria.registrarCadastro(
-                    resolverOperador(operador),
-                    salvo.getPerfil() != null ? salvo.getPerfil().name() : "Usuario",
-                    salvo.getId(),
-                    "Cadastro de " + nomeDoPerfil(salvo.getPerfil())
-            );
-            logAuditoriaRepositoryPort.salvar(log);
-        }
+        LogAuditoria log = LogAuditoria.registrarCadastro(
+                resolverOperador(operador),
+                salvo.getPerfil() != null ? salvo.getPerfil().name() : "Usuario",
+                salvo.getId(),
+                "Cadastro de " + nomeDoPerfil(salvo.getPerfil())
+        );
+        logAuditoriaRepositoryPort.salvar(log);
 
         return UsuarioSaidaDTO.deDominio(salvo).comSenhaInicial(senhaInicial);
     }
@@ -127,15 +116,13 @@ public class UsuarioCasoDeUso implements GerenciarUsuarioCasoDeUso {
 
         Colaborador salvo = repositorioPorta.salvar(novoSupervisor);
 
-        if (logAuditoriaRepositoryPort != null) {
-            LogAuditoria log = LogAuditoria.registrarCadastro(
-                    resolverOperador(operador),
-                    "Supervisor",
-                    salvo.getId(),
-                    "Cadastro de Supervisor"
-            );
-            logAuditoriaRepositoryPort.salvar(log);
-        }
+        LogAuditoria log = LogAuditoria.registrarCadastro(
+                resolverOperador(operador),
+                "Supervisor",
+                salvo.getId(),
+                "Cadastro de Supervisor"
+        );
+        logAuditoriaRepositoryPort.salvar(log);
 
         return UsuarioSaidaDTO.deDominio(salvo).comSenhaInicial(senhaInicial);
     }
@@ -156,15 +143,13 @@ public class UsuarioCasoDeUso implements GerenciarUsuarioCasoDeUso {
 
         Colaborador salvo = repositorioPorta.salvar(novoColaborador);
 
-        if (logAuditoriaRepositoryPort != null) {
-            LogAuditoria log = LogAuditoria.registrarCadastro(
-                    resolverOperador(operador),
-                    "Colaborador",
-                    salvo.getId(),
-                    "Cadastro de Colaborador"
-            );
-            logAuditoriaRepositoryPort.salvar(log);
-        }
+        LogAuditoria log = LogAuditoria.registrarCadastro(
+                resolverOperador(operador),
+                "Colaborador",
+                salvo.getId(),
+                "Cadastro de Colaborador"
+        );
+        logAuditoriaRepositoryPort.salvar(log);
 
         // Sem senha inicial: o Colaborador não possui conta de acesso.
         return UsuarioSaidaDTO.deDominio(salvo);
@@ -210,17 +195,34 @@ public class UsuarioCasoDeUso implements GerenciarUsuarioCasoDeUso {
         Colaborador atualizado = atual.comDadosAtualizados(entrada.nome(), entrada.dataNascimento(), entrada.email());
         Colaborador salvo = repositorioPorta.salvar(atualizado);
 
-        if (logAuditoriaRepositoryPort != null) {
-            LogAuditoria log = LogAuditoria.registrarAlteracao(
-                    resolverOperador(operador),
-                    nomeDoPerfil(perfilEsperado),
-                    salvo.getId(),
-                    "Atualização cadastral de " + nomeDoPerfil(perfilEsperado)
-            );
-            logAuditoriaRepositoryPort.salvar(log);
-        }
+        LogAuditoria log = LogAuditoria.registrarAlteracao(
+                resolverOperador(operador),
+                nomeDoPerfil(perfilEsperado),
+                salvo.getId(),
+                "Atualização cadastral de " + nomeDoPerfil(perfilEsperado) + ": " + descreverAlteracoes(atual, salvo)
+        );
+        logAuditoriaRepositoryPort.salvar(log);
 
         return UsuarioSaidaDTO.deDominio(salvo);
+    }
+
+    /**
+     * RNF05 exige o dado alterado: cada campo mudado com valor anterior e novo, no formato
+     * "de ... para ..." já usado no histórico de áreas e tarefas. Senha nunca entra (RNF05, item 3).
+     */
+    private static String descreverAlteracoes(Colaborador anterior, Colaborador atual) {
+        List<String> mudancas = new java.util.ArrayList<>();
+        adicionarMudanca(mudancas, "nome", anterior.getNome(), atual.getNome());
+        adicionarMudanca(mudancas, "data de nascimento", anterior.getDataNascimento(), atual.getDataNascimento());
+        adicionarMudanca(mudancas, "e-mail", anterior.getEmail(), atual.getEmail());
+        return mudancas.isEmpty() ? "sem mudança de dados." : String.join("; ", mudancas) + ".";
+    }
+
+    private static void adicionarMudanca(List<String> mudancas, String campo, Object anterior, Object atual) {
+        if (!java.util.Objects.equals(anterior, atual)) {
+            mudancas.add(campo + " de " + (anterior != null ? anterior : "não informado")
+                    + " para " + (atual != null ? atual : "não informado"));
+        }
     }
 
     private String resolverOperador(String operador) {

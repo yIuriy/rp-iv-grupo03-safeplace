@@ -53,8 +53,11 @@ public class AlertaSubstituicaoEpi {
     public static AlertaSubstituicaoEpi caProximoVencimento(Integer epiId, String nomeEpi,
                                                             LocalDate validadeCa, long diasRestantes) {
         String prioridade = diasRestantes <= 10 ? "ALTA" : "MEDIA";
-        String msg = String.format("O CA do EPI '%s' (ID %d) expirará em %s (%d dias restantes).",
-                nomeEpi, epiId, validadeCa, diasRestantes);
+        String msg = diasRestantes < 0
+                ? String.format("O CA do EPI '%s' (ID %d) venceu em %s (há %d dias).",
+                        nomeEpi, epiId, validadeCa, -diasRestantes)
+                : String.format("O CA do EPI '%s' (ID %d) expirará em %s (%d dias restantes).",
+                        nomeEpi, epiId, validadeCa, diasRestantes);
         return new AlertaSubstituicaoEpi(epiId, nomeEpi, TipoAlertaSubstituicao.CA_PROXIMO_VENCIMENTO,
                 msg, validadeCa, diasRestantes, prioridade);
     }
