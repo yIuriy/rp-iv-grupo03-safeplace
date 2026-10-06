@@ -405,7 +405,7 @@ class OcorrenciaUseCaseTest {
         );
         useCase.registrarAcidente(inputAcidente);
 
-        verify(notificacaoPort).notificarNovoRelato(any(Acidente.class));
+        verify(notificacaoPort).notificarGestor(any(Acidente.class));
 
         RegistrarIncidenteInputDTO inputIncidente = new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 10, 11, 0),
@@ -417,7 +417,7 @@ class OcorrenciaUseCaseTest {
         );
         useCase.registrarIncidente(inputIncidente);
 
-        verify(notificacaoPort).notificarNovoRelato(any(Incidente.class));
+        verify(notificacaoPort).notificarGestor(any(Incidente.class));
     }
 
     @Test
