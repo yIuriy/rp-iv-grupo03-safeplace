@@ -6,6 +6,8 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -41,6 +43,9 @@ import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
 class EstoqueCriticoConsultaUseCaseTest {
 
+    /** RNF05: a porta de auditoria é obrigatória nos casos de uso. */
+    private final TrilhaAuditoriaEmMemoria auditoria = new TrilhaAuditoriaEmMemoria();
+
     private static final String EMAIL_GESTOR = "gestor@empresa.com";
 
     private EpiRepositoryEmMemoria repositorio;
@@ -62,7 +67,7 @@ class EstoqueCriticoConsultaUseCaseTest {
                 LocalDateTime.now(), LocalDateTime.now())));
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(EMAIL_GESTOR, null, List.of()));
-        useCase = new EpiUseCase(repositorio, usuarios);
+        useCase = new EpiUseCase(repositorio, usuarios, auditoria);
         EpiOutputDTO salvo = useCase.cadastrarEpi(new CadastrarEpiInputDTO(
                 "Luva nitrílica", "12345", 10, 5, LocalDate.now().plusYears(1), 180,
                 "Luva de proteção química", ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES));

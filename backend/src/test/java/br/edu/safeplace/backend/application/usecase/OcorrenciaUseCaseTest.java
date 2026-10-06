@@ -4,6 +4,8 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
+
 import br.edu.safeplace.backend.application.dto.input.AtualizarOcorrenciaInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
@@ -52,7 +54,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Deve registrar acidente com sucesso")
     void deveRegistrarAcidente() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
 
         RegistrarAcidenteInputDTO input = new RegistrarAcidenteInputDTO(
                 LocalDateTime.of(2026, 9, 6, 14, 30),
@@ -84,7 +86,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Deve registrar acidente com gravidade informada")
     void deveRegistrarAcidenteComGravidade() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
 
         RegistrarAcidenteInputDTO input = new RegistrarAcidenteInputDTO(
                 LocalDateTime.of(2026, 9, 6, 14, 30),
@@ -109,7 +111,7 @@ class OcorrenciaUseCaseTest {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
         AreaRiscoRepositoryPort areaRepo = mock(AreaRiscoRepositoryPort.class);
         UsuarioRepositorioPorta usuarioRepo = mock(UsuarioRepositorioPorta.class);
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, areaRepo, usuarioRepo, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, areaRepo, usuarioRepo, new TrilhaAuditoriaEmMemoria());
 
         AreaRisco area = new AreaRisco(10, "AR-10", "Laminação", "Setor L", NivelPerigo.ALTO, 5, List.of(), "Galpão", List.of());
         Colaborador colaborador = new Colaborador(20, "11122233344", "Carlos", LocalDate.of(1995, 2, 2), "carlos@email.com", true, LocalDateTime.now(), LocalDateTime.now());
@@ -151,7 +153,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Deve registrar incidente com sucesso")
     void deveRegistrarIncidente() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
 
         RegistrarIncidenteInputDTO input = new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 6, 15, 10),
@@ -180,7 +182,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Deve listar ocorrências registradas")
     void deveListarOcorrenciasRegistradas() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
 
         useCase.registrarIncidente(new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 6, 16, 0),
@@ -212,7 +214,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Deve buscar ocorrência por ID com sucesso")
     void deveBuscarOcorrenciaPorId() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
 
         OcorrenciaOutputDTO cadastrado = useCase.registrarIncidente(new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 10, 10, 0),
@@ -233,7 +235,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Deve lançar exceção ao buscar ocorrência inexistente")
     void deveLancarExcecaoAoBuscarOcorrenciaInexistente() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
 
         assertThatThrownBy(() -> useCase.buscarPorId(999))
                 .isInstanceOf(OcorrenciaNaoEncontradaException.class)
@@ -244,7 +246,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Deve transicionar ocorrência para EM_TRIAGEM")
     void deveEnviarOcorrenciaParaTriagem() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
 
         OcorrenciaOutputDTO cadastrado = useCase.registrarIncidente(new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 10, 10, 0),
@@ -264,7 +266,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Deve arquivar ocorrência após triagem")
     void deveArquivarOcorrenciaAposTriagem() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
 
         OcorrenciaOutputDTO cadastrado = useCase.registrarIncidente(new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 10, 10, 0),
@@ -285,7 +287,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Deve proibir arquivamento direto de ocorrência ABERTA")
     void deveProibirArquivamentoDiretoDeOcorrenciaAberta() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
 
         OcorrenciaOutputDTO cadastrado = useCase.registrarIncidente(new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 10, 10, 0),
@@ -304,7 +306,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Deve consolidar CAT de acidente gerando protocolo sequencial único e imutável")
     void deveConsolidarCATDeAcidente() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
 
         Acidente acidenteSemProtocolo = new Acidente(
                 null,
@@ -343,7 +345,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Deve gerar automaticamente protocolo CAT quando omitido no registro de acidente")
     void deveGerarProtocoloAutomaticoQuandoOmitido() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
 
         RegistrarAcidenteInputDTO input = new RegistrarAcidenteInputDTO(
                 LocalDateTime.of(2026, 9, 10, 10, 0),
@@ -366,7 +368,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Deve preservar protocolo fornecido no registro de acidente se válido")
     void devePreservarProtocoloFornecido() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
 
         RegistrarAcidenteInputDTO input = new RegistrarAcidenteInputDTO(
                 LocalDateTime.of(2026, 9, 10, 10, 0),
@@ -390,7 +392,7 @@ class OcorrenciaUseCaseTest {
     void deveNotificarGestorAoRegistrarAcidenteEIncidente() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
         NotificacaoOcorrenciaPort notificacaoPort = mock(NotificacaoOcorrenciaPort.class);
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null, notificacaoPort);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria(), notificacaoPort);
 
         RegistrarAcidenteInputDTO inputAcidente = new RegistrarAcidenteInputDTO(
                 LocalDateTime.of(2026, 9, 10, 10, 0),
@@ -424,7 +426,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Deve lançar exceção ao consolidar CAT de identificador inexistente")
     void deveLancarExcecaoAoConsolidarCATDeIdInexistente() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
 
         assertThatThrownBy(() -> useCase.consolidarCAT(404))
                 .isInstanceOf(OcorrenciaNaoEncontradaException.class);
@@ -434,7 +436,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Deve buscar ocorrencia por protocolo CAT com sucesso")
     void deveBuscarPorProtocoloComSucesso() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
 
         RegistrarAcidenteInputDTO input = new RegistrarAcidenteInputDTO(
                 LocalDateTime.of(2026, 9, 10, 10, 0),
@@ -458,7 +460,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Deve lancar excecao ao buscar por protocolo inexistente")
     void deveLancarExcecaoAoBuscarPorProtocoloInexistente() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
 
         assertThatThrownBy(() -> useCase.buscarPorProtocolo("CAT-2026-09-9999"))
                 .isInstanceOf(OcorrenciaNaoEncontradaException.class);
@@ -468,7 +470,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Deve lancar excecao ao buscar por protocolo nulo ou vazio")
     void deveLancarExcecaoAoBuscarPorProtocoloVazio() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
 
         assertThatThrownBy(() -> useCase.buscarPorProtocolo("   "))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -514,7 +516,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Edição de acidente altera os dados e preserva tipo, registro, situação e protocolo CAT")
     void deveEditarAcidentePreservandoIdentidade() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
         OcorrenciaOutputDTO cadastrado = useCase.registrarAcidente(new RegistrarAcidenteInputDTO(
                 LocalDateTime.of(2026, 9, 6, 14, 30), null, "Corte na mao.", null,
                 "FATOR_HUMANO", "Corte", "Leve", "CAT-2026-09-0007", "Ambulatorio", NivelPerigo.BAIXO));
@@ -540,7 +542,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Edição de incidente exige situação de risco e potencial de dano")
     void deveEditarIncidenteValidandoCamposProprios() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
         OcorrenciaOutputDTO cadastrado = useCase.registrarIncidente(new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 10, 10, 0), null, "Oleo no piso", null, "Piso escorregadio", "Queda"));
 
@@ -560,7 +562,7 @@ class OcorrenciaUseCaseTest {
     @DisplayName("Ocorrência arquivada não é editada e inexistente responde não encontrada")
     void deveRecusarEdicaoDeArquivadaOuInexistente() {
         OcorrenciaRepositoryFake repository = new OcorrenciaRepositoryFake();
-        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, null);
+        OcorrenciaUseCase useCase = new OcorrenciaUseCase(repository, null, null, new TrilhaAuditoriaEmMemoria());
         OcorrenciaOutputDTO cadastrado = useCase.registrarIncidente(new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 10, 10, 0), null, "Oleo no piso", null, "Piso escorregadio", "Queda"));
         useCase.enviarParaTriagem(cadastrado.idOcorrencia());

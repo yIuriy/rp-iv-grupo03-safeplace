@@ -59,7 +59,9 @@ public class TarefaUseCase implements ClassificarTarefaUseCase, GerenciarEpiTare
             UsuarioRepositorioPorta usuarioRepositorio, AreaRiscoRepositoryPort areaRiscoRepositoryPort,
             SetorRepositoryPort setorRepositoryPort, EpiRepositoryPort epiRepositoryPort) {
         this.repositoryPort = repositoryPort;
-        this.logAuditoriaRepositoryPort = logAuditoriaRepositoryPort;
+        // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
+        this.logAuditoriaRepositoryPort = java.util.Objects.requireNonNull(
+                logAuditoriaRepositoryPort, "Porta de auditoria é obrigatória (RNF05).");
         this.usuarioRepositorio = usuarioRepositorio;
         this.areaRiscoRepositoryPort = areaRiscoRepositoryPort;
         this.setorRepositoryPort = setorRepositoryPort;
@@ -141,9 +143,6 @@ public class TarefaUseCase implements ClassificarTarefaUseCase, GerenciarEpiTare
     @Transactional(readOnly = true)
     public List<RegistroHistoricoOutputDTO> listarHistorico(Integer id) {
         buscarTarefa(id);
-        if (logAuditoriaRepositoryPort == null) {
-            return List.of();
-        }
         return logAuditoriaRepositoryPort.listarPorEntidade(ENTIDADE, id).stream()
                 .map(RegistroHistoricoOutputDTO::deDominio)
                 .toList();
@@ -154,9 +153,25 @@ public class TarefaUseCase implements ClassificarTarefaUseCase, GerenciarEpiTare
     public TarefaOutputDTO associarEpis(Integer tarefaId, List<Integer> epiIds) {
         Tarefa tarefa = buscarTarefa(tarefaId);
         List<Epi> epis = resolverEpis(epiIds);
+        String anteriores = descreverEpis(tarefa.verificarEpisObrigatoriosTarefa());
         tarefa.associarEpis(epis);
         Tarefa salva = repositoryPort.salvar(tarefa);
+
+        // RNF05: o vínculo registra operador e o dado alterado (EPIs anteriores e novos).
+        registrarLog(LogAuditoria.registrarAlteracao(
+                resolverOperador(), ENTIDADE, salva.getId(),
+                "EPIs obrigatórios da tarefa: de " + anteriores + " para "
+                        + descreverEpis(salva.verificarEpisObrigatoriosTarefa())));
         return TarefaOutputDTO.deDominio(salva);
+    }
+
+    private static String descreverEpis(List<Epi> epis) {
+        if (epis == null || epis.isEmpty()) {
+            return "nenhum";
+        }
+        return epis.stream()
+                .map(epi -> epi.getNome() + " (id " + epi.getId() + ")")
+                .collect(java.util.stream.Collectors.joining(", ", "[", "]"));
     }
 
     @Override
@@ -200,9 +215,7 @@ public class TarefaUseCase implements ClassificarTarefaUseCase, GerenciarEpiTare
     }
 
     private void registrarLog(LogAuditoria log) {
-        if (logAuditoriaRepositoryPort != null) {
-            logAuditoriaRepositoryPort.salvar(log);
-        }
+        logAuditoriaRepositoryPort.salvar(log);
     }
 
     /**

@@ -271,6 +271,24 @@ class TarefaUseCaseTest {
         assertThat(useCase.listarEpisObrigatorios(tarefaId)).isEmpty();
     }
 
+    @Test
+    @DisplayName("RNF05 (#193): o vínculo de EPIs registra em LogAuditoria os EPIs anteriores e os novos")
+    void vinculoDeEpisRegistraAuditoriaComValorAnteriorENovo() {
+        Integer tarefaId = useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Inspeção de telhado", null)).id();
+        epiRepository.adicionar(epi(5, "Luva"));
+        epiRepository.adicionar(epi(6, "Cinto"));
+
+        useCase.associarEpis(tarefaId, List.of(5));
+        useCase.associarEpis(tarefaId, List.of(6));
+
+        assertThat(auditoria.listarPorEntidade("Tarefa", tarefaId))
+                .extracting(LogAuditoria::getJustificativa)
+                .filteredOn(texto -> texto.startsWith("EPIs obrigatórios da tarefa"))
+                .containsExactlyInAnyOrder(
+                        "EPIs obrigatórios da tarefa: de nenhum para [Luva (id 5)]",
+                        "EPIs obrigatórios da tarefa: de [Luva (id 5)] para [Cinto (id 6)]");
+    }
+
     private static class TarefaRepositoryFake implements TarefaRepositoryPort {
         private final Map<Integer, Tarefa> storage = new HashMap<>();
         private int nextId = 1;

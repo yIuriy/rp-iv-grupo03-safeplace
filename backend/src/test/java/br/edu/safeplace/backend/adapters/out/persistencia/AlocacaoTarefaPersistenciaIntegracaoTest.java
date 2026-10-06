@@ -70,7 +70,6 @@ class AlocacaoTarefaPersistenciaIntegracaoTest {
         jdbc.update("DELETE FROM certificacoes");
         jdbc.update("DELETE FROM treinamentos_colaboradores");
         jdbc.update("DELETE FROM treinamentos");
-        jdbc.update("DELETE FROM logs_auditoria WHERE entidade = 'AlocacaoTarefa'");
         jdbc.update("DELETE FROM tarefas WHERE descricao LIKE '%Teste Alocacao%'");
         jdbc.update("DELETE FROM usuarios WHERE cpf IN (?, ?)", CPF_GESTOR, CPF_COLABORADOR);
 
@@ -113,6 +112,8 @@ class AlocacaoTarefaPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Tarefa sem classificação bloqueia alocação e NÃO grava nada no banco")
     void tarefaSemClassificacaoNaoGravaNada() {
+        // RNF05 (#193): logs_auditoria não aceita DELETE; compara com o total antes da tentativa.
+        int auditoriaAntes = totalAuditoriaDeAlocacao();
         assertThatThrownBy(() -> alocacaoUseCase.alocar(
                 tarefaSemClassificacaoId,
                 new AlocarColaboradorInputDTO(colaboradorId, "Tentativa indevida"),
@@ -124,10 +125,12 @@ class AlocacaoTarefaPersistenciaIntegracaoTest {
                 Integer.class, tarefaSemClassificacaoId);
         assertThat(totalAlocacoes).isZero();
 
-        int totalAuditoria = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM logs_auditoria WHERE entidade = 'AlocacaoTarefa'",
-                Integer.class);
-        assertThat(totalAuditoria).isZero();
+        assertThat(totalAuditoriaDeAlocacao()).isEqualTo(auditoriaAntes);
+    }
+
+    private int totalAuditoriaDeAlocacao() {
+        return jdbc.queryForObject(
+                "SELECT COUNT(*) FROM logs_auditoria WHERE entidade = 'AlocacaoTarefa'", Integer.class);
     }
 
     @Test

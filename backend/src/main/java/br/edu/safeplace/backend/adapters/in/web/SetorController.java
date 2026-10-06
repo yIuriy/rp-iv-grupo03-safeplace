@@ -3,6 +3,7 @@ package br.edu.safeplace.backend.adapters.in.web;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,8 +32,9 @@ public class SetorController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Cadastra um novo setor físico da planta")
-    public SetorResponse criar(@Valid @RequestBody CriarSetorRequest request) {
-        SetorOutputDTO salvo = useCase.cadastrarSetor(request.toInputDTO());
+    public SetorResponse criar(@Valid @RequestBody CriarSetorRequest request, Authentication authentication) {
+        String responsavel = authentication != null ? authentication.getName() : "SISTEMA";
+        SetorOutputDTO salvo = useCase.cadastrarSetor(request.toInputDTO(), responsavel);
         return SetorResponse.fromOutputDTO(salvo);
     }
 

@@ -95,11 +95,9 @@ class TarefaEpiApiIntegracaoTest {
     private void limpar() {
         if (tarefaId != null) {
             jdbc.update("DELETE FROM tarefas_epis WHERE tarefa_id = ?", tarefaId);
-            jdbc.update("DELETE FROM logs_auditoria WHERE entidade = 'Tarefa' AND entidade_id = ?", tarefaId);
             jdbc.update("DELETE FROM tarefas WHERE id = ?", tarefaId);
         } else {
             jdbc.update("DELETE FROM tarefas_epis WHERE tarefa_id IN (SELECT id FROM tarefas WHERE descricao = ?)", DESCRICAO_TAREFA);
-            jdbc.update("DELETE FROM logs_auditoria WHERE entidade = 'Tarefa' AND entidade_id IN (SELECT id FROM tarefas WHERE descricao = ?)", DESCRICAO_TAREFA);
             jdbc.update("DELETE FROM tarefas WHERE descricao = ?", DESCRICAO_TAREFA);
         }
         removerEpisDoTeste();

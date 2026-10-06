@@ -123,7 +123,6 @@ class EmprestimoApiIntegracaoTest {
         jdbc.update("DELETE FROM certificacoes");
         jdbc.update("DELETE FROM treinamentos_colaboradores");
         jdbc.update("DELETE FROM treinamentos");
-        jdbc.update("DELETE FROM logs_auditoria WHERE entidade = 'Emprestimo'");
         jdbc.update("DELETE FROM epis WHERE nome LIKE '%API%'");
         // Decisão #124: o CA é reaproveitado entre cadastros; modelos órfãos não podem vazar para o próximo teste.
         jdbc.update("DELETE FROM lotes_epi l WHERE NOT EXISTS (SELECT 1 FROM epis e WHERE e.lote_id = l.id) "

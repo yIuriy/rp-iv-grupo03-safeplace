@@ -29,17 +29,6 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
     private final UsuarioRepositorioPorta usuarioRepositorioPorta;
     private final LogAuditoriaRepositoryPort logAuditoriaRepositoryPort;
 
-    public ControlarManutencaoEpiService(EpiRepositoryPort epiRepositoryPort,
-                                         ManutencaoEpiRepositoryPort manutencaoEpiRepositoryPort) {
-        this(epiRepositoryPort, manutencaoEpiRepositoryPort, null, null);
-    }
-
-    public ControlarManutencaoEpiService(EpiRepositoryPort epiRepositoryPort,
-                                         ManutencaoEpiRepositoryPort manutencaoEpiRepositoryPort,
-                                         UsuarioRepositorioPorta usuarioRepositorioPorta) {
-        this(epiRepositoryPort, manutencaoEpiRepositoryPort, usuarioRepositorioPorta, null);
-    }
-
     @Autowired
     public ControlarManutencaoEpiService(EpiRepositoryPort epiRepositoryPort,
                                          ManutencaoEpiRepositoryPort manutencaoEpiRepositoryPort,
@@ -48,7 +37,9 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
         this.epiRepositoryPort = epiRepositoryPort;
         this.manutencaoEpiRepositoryPort = manutencaoEpiRepositoryPort;
         this.usuarioRepositorioPorta = usuarioRepositorioPorta;
-        this.logAuditoriaRepositoryPort = logAuditoriaRepositoryPort;
+        // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
+        this.logAuditoriaRepositoryPort = java.util.Objects.requireNonNull(
+                logAuditoriaRepositoryPort, "Porta de auditoria é obrigatória (RNF05).");
     }
 
     @Override
@@ -60,15 +51,13 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
         epi.enviarParaManutencao();
         Epi salvo = epiRepositoryPort.salvar(epi);
 
-        if (logAuditoriaRepositoryPort != null) {
-            LogAuditoria log = LogAuditoria.registrarAlteracao(
-                    resolverOperador(null),
-                    "Epi",
-                    salvo.getId(),
-                    "EPI enviado para manutenção"
-            );
-            logAuditoriaRepositoryPort.salvar(log);
-        }
+        LogAuditoria log = LogAuditoria.registrarAlteracao(
+                resolverOperador(null),
+                "Epi",
+                salvo.getId(),
+                "EPI enviado para manutenção"
+        );
+        logAuditoriaRepositoryPort.salvar(log);
 
         return EpiOutputDTO.deDominio(salvo);
     }
@@ -114,15 +103,13 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
 
         ManutencaoEpi salva = manutencaoEpiRepositoryPort.salvar(manutencao);
 
-        if (logAuditoriaRepositoryPort != null) {
-            LogAuditoria log = LogAuditoria.registrarAlteracao(
-                    resolverOperador(responsavelEmail),
-                    "ManutencaoEpi",
-                    salva.getId(),
-                    "Manutenção de EPI concluída com resultado: " + inputDTO.resultado()
-            );
-            logAuditoriaRepositoryPort.salvar(log);
-        }
+        LogAuditoria log = LogAuditoria.registrarAlteracao(
+                resolverOperador(responsavelEmail),
+                "ManutencaoEpi",
+                salva.getId(),
+                "Manutenção de EPI concluída com resultado: " + inputDTO.resultado()
+        );
+        logAuditoriaRepositoryPort.salvar(log);
 
         return ManutencaoEpiOutputDTO.deDominio(salva, epi.getStatus());
     }

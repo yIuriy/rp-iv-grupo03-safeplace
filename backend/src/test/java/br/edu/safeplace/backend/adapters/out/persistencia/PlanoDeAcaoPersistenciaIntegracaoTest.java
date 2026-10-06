@@ -106,7 +106,6 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
     }
 
     private void limparDados() {
-        jdbcTemplate.execute("DELETE FROM logs_auditoria");
         jdbcTemplate.execute("DELETE FROM prorrogacoes_prazo");
         jdbcTemplate.execute("DELETE FROM ocorrencias");
         jdbcTemplate.execute("DELETE FROM planos_de_acao");

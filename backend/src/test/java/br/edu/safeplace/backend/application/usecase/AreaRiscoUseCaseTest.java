@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,6 +32,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AreaRiscoUseCaseTest {
 
+    /** RNF05: a porta de auditoria é obrigatória nos casos de uso. */
+    private final TrilhaAuditoriaEmMemoria auditoria = new TrilhaAuditoriaEmMemoria();
+
     private AreaRiscoRepositoryFake areaRepository;
     private EpiRepositoryFake epiRepository;
     private AreaRiscoUseCase useCase;
@@ -40,7 +45,7 @@ class AreaRiscoUseCaseTest {
         epiRepository = new EpiRepositoryFake();
         epiRepository.adicionar(epi(1, "Capacete"));
         epiRepository.adicionar(epi(2, "Luva térmica"));
-        useCase = new AreaRiscoUseCase(areaRepository, epiRepository);
+        useCase = new AreaRiscoUseCase(areaRepository, epiRepository, null, auditoria);
     }
 
     private static Epi epi(Integer id, String nome) {
@@ -64,6 +69,23 @@ class AreaRiscoUseCaseTest {
         assertThat(salva.episObrigatorios().get(0).nome()).isEqualTo("Capacete");
         // o domínio normaliza o CA removendo o prefixo "CA-"
         assertThat(salva.episObrigatorios().get(0).numeroCa()).isEqualTo("1001");
+    }
+
+    @Test
+    @DisplayName("RNF05 (#193): o cadastro da área é registrado com operador; código duplicado não gera registro")
+    void cadastroDaAreaGeraAuditoria() {
+        AreaRiscoOutputDTO salva = useCase.cadastrarAreaRisco(
+                input("SET-07", NivelPerigo.MEDIO, List.of(1)), "gestor@empresa.com");
+
+        assertThat(auditoria.listarPorEntidade("AreaRisco", salva.id())).singleElement().satisfies(log -> {
+            assertThat(log.getTipoOperacao()).isEqualTo("CADASTRO");
+            assertThat(log.getResponsavel()).isEqualTo("gestor@empresa.com");
+            assertThat(log.getJustificativa()).contains("SET-07");
+        });
+
+        assertThatThrownBy(() -> useCase.cadastrarAreaRisco(input("SET-07", NivelPerigo.BAIXO, List.of(2)), "gestor@empresa.com"))
+                .isInstanceOf(CodigoAreaRiscoDuplicadoException.class);
+        assertThat(auditoria.registros()).hasSize(1);
     }
 
     @Test

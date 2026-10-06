@@ -178,7 +178,8 @@ class AuditoriaEvidenciaIntegracaoTest {
         assertThat(evidencia.getResponsavel()).isEqualTo("gestor.auditor@safeplace.com");
         assertThat(evidencia.getEntidade()).isEqualTo("Colaborador");
         assertThat(evidencia.getEntidadeId()).isEqualTo(25);
-        assertThat(evidencia.getJustificativa()).isEqualTo("Atualização cadastral de Colaborador");
+        assertThat(evidencia.getJustificativa()).isEqualTo("Atualização cadastral de Colaborador: nome de Marcos Silva para Marcos Silva Jr; "
+                + "e-mail de marcos@safeplace.com para marcos.jr@safeplace.com.");
     }
 
     @Test

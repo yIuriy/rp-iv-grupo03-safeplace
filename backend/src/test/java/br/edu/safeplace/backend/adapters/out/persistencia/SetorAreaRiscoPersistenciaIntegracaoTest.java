@@ -62,7 +62,6 @@ class SetorAreaRiscoPersistenciaIntegracaoTest {
 
     @BeforeEach
     void setup() {
-        jdbcTemplate.execute("DELETE FROM logs_auditoria");
         jdbcTemplate.execute("DELETE FROM ocorrencias");
         jdbcTemplate.execute("DELETE FROM areas_risco_epis");
         jdbcTemplate.execute("DELETE FROM areas_risco");

@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
+
 import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
 import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.MovimentacaoEstoqueOutputDTO;
@@ -34,6 +36,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class EpiUseCaseTest {
 
+    /** RNF05: a porta de auditoria é obrigatória nos casos de uso. */
+    private final TrilhaAuditoriaEmMemoria auditoria = new TrilhaAuditoriaEmMemoria();
+
     private static final String EMAIL_GESTOR = "gestor@empresa.com";
     private static final int ID_GESTOR = 7;
 
@@ -47,7 +52,7 @@ class EpiUseCaseTest {
         when(usuarios.buscarPorEmail(EMAIL_GESTOR)).thenReturn(Optional.of(new GestorDeSeguranca(
                 ID_GESTOR, "49216091040", "Mariana", LocalDate.of(1988, 7, 20), EMAIL_GESTOR, "hash", true,
                 LocalDateTime.now(), LocalDateTime.now())));
-        useCase = new EpiUseCase(repository, usuarios);
+        useCase = new EpiUseCase(repository, usuarios, auditoria);
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(EMAIL_GESTOR, null, List.of()));
     }

@@ -61,7 +61,9 @@ public class EmprestimoUseCase implements ControlarEmprestimoUseCase {
         this.epis = epis;
         this.usuarios = usuarios;
         this.capacitacoes = capacitacoes;
-        this.auditoria = auditoria;
+        // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
+        this.auditoria = java.util.Objects.requireNonNull(
+                auditoria, "Porta de auditoria é obrigatória (RNF05).");
     }
 
     @Override
@@ -252,8 +254,6 @@ public class EmprestimoUseCase implements ControlarEmprestimoUseCase {
     }
 
     private void auditar(LogAuditoria log) {
-        if (auditoria != null) {
-            auditoria.salvar(log);
-        }
+        auditoria.salvar(log);
     }
 }

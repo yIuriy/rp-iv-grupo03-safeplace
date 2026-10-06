@@ -109,13 +109,9 @@ class AreaRiscoTarefaApiIntegracaoTest {
     }
 
     private void limpar() {
-        jdbc.update("DELETE FROM logs_auditoria WHERE entidade = 'AreaRisco' AND entidade_id IN "
-                + "(SELECT id FROM areas_risco WHERE codigo = ?)", CODIGO_AREA);
         jdbc.update("DELETE FROM areas_risco_epis WHERE area_risco_id IN "
                 + "(SELECT id FROM areas_risco WHERE codigo = ?)", CODIGO_AREA);
         jdbc.update("DELETE FROM areas_risco WHERE codigo = ?", CODIGO_AREA);
-        jdbc.update("DELETE FROM logs_auditoria WHERE entidade = 'Tarefa' AND entidade_id IN "
-                + "(SELECT id FROM tarefas WHERE descricao = ?)", DESCRICAO_TAREFA);
         jdbc.update("DELETE FROM tarefas WHERE descricao = ?", DESCRICAO_TAREFA);
         jdbc.update("DELETE FROM setores WHERE nome = 'Usinagem 114'");
         removerEpisDoTeste();
@@ -171,7 +167,9 @@ class AreaRiscoTarefaApiIntegracaoTest {
 
         mockMvc.perform(get("/api/areas-risco/{id}/historico", areaId).with(gestor()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
+                // RNF05 (#193): o cadastro da área também entra no histórico, como registro mais antigo.
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[1].tipoOperacao").value("CADASTRO"))
                 .andExpect(jsonPath("$[0].tipoOperacao").value("ALTERACAO"))
                 .andExpect(jsonPath("$[0].responsavel").value(EMAIL_GESTOR))
                 .andExpect(jsonPath("$[0].dataHora").exists())
@@ -189,7 +187,7 @@ class AreaRiscoTarefaApiIntegracaoTest {
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/areas-risco/{id}/historico", areaId).with(gestor()))
-                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$", hasSize(3)))
                 .andExpect(jsonPath("$[0].descricao").value(
                         "Alteração da área de risco: limites: de \"Entre as linhas A e C\" para \"Linha amarela\"."));
     }
@@ -225,7 +223,7 @@ class AreaRiscoTarefaApiIntegracaoTest {
 
         assertThat(linhaDaArea()).isEqualTo(antes);
         assertThat(episDaArea()).isEqualTo(episAntes);
-        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM logs_auditoria WHERE entidade = 'AreaRisco' AND entidade_id = ?",
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM logs_auditoria WHERE entidade = 'AreaRisco' AND entidade_id = ? AND tipo_operacao = 'ALTERACAO'",
                 Integer.class, areaId)).isZero();
     }
 

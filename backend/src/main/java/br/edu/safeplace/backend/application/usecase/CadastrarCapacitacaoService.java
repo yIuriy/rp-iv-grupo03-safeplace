@@ -3,7 +3,6 @@ package br.edu.safeplace.backend.application.usecase;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -26,9 +25,11 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
 
     public CadastrarCapacitacaoService(
             CapacitacaoRepositoryPort capacitacaoRepository,
-            @Autowired(required = false) LogAuditoriaRepositoryPort logAuditoriaRepository) {
+            LogAuditoriaRepositoryPort logAuditoriaRepository) {
         this.capacitacaoRepository = capacitacaoRepository;
-        this.logAuditoriaRepository = logAuditoriaRepository;
+        // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
+        this.logAuditoriaRepository = java.util.Objects.requireNonNull(
+                logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
     }
 
     @Override
@@ -68,11 +69,9 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
     }
 
     private void registrarAuditoria(String entidade, Integer entidadeId, String justificativa) {
-        if (logAuditoriaRepository != null) {
-            String responsavel = resolverOperador();
-            LogAuditoria log = LogAuditoria.registrarCadastro(responsavel, entidade, entidadeId, justificativa);
-            logAuditoriaRepository.salvar(log);
-        }
+        String responsavel = resolverOperador();
+        LogAuditoria log = LogAuditoria.registrarCadastro(responsavel, entidade, entidadeId, justificativa);
+        logAuditoriaRepository.salvar(log);
     }
 
     private String resolverOperador() {

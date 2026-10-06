@@ -31,14 +31,6 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
     private final UsuarioRepositorioPorta usuarioRepositorio;
     private final LogAuditoriaRepositoryPort logAuditoriaRepositoryPort;
 
-    public EpiUseCase(EpiRepositoryPort repositoryPort) {
-        this(repositoryPort, null, null);
-    }
-
-    public EpiUseCase(EpiRepositoryPort repositoryPort, UsuarioRepositorioPorta usuarioRepositorio) {
-        this(repositoryPort, usuarioRepositorio, null);
-    }
-
     @Autowired
     public EpiUseCase(
             EpiRepositoryPort repositoryPort,
@@ -46,7 +38,9 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
             LogAuditoriaRepositoryPort logAuditoriaRepositoryPort) {
         this.repositoryPort = repositoryPort;
         this.usuarioRepositorio = usuarioRepositorio;
-        this.logAuditoriaRepositoryPort = logAuditoriaRepositoryPort;
+        // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
+        this.logAuditoriaRepositoryPort = java.util.Objects.requireNonNull(
+                logAuditoriaRepositoryPort, "Porta de auditoria é obrigatória (RNF05).");
     }
 
     @Override
@@ -70,15 +64,13 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
                 inputDTO.classificacao(), inputDTO.localizacao());
         Epi salvo = repositoryPort.salvar(novoEpi);
 
-        if (logAuditoriaRepositoryPort != null) {
-            LogAuditoria log = LogAuditoria.registrarCadastro(
-                    resolverOperador(null),
-                    "Epi",
-                    salvo.getId(),
-                    "Cadastro de EPI: " + salvo.getNome()
-            );
-            logAuditoriaRepositoryPort.salvar(log);
-        }
+        LogAuditoria log = LogAuditoria.registrarCadastro(
+                resolverOperador(null),
+                "Epi",
+                salvo.getId(),
+                "Cadastro de EPI: " + salvo.getNome()
+        );
+        logAuditoriaRepositoryPort.salvar(log);
 
         return EpiOutputDTO.deDominio(salvo);
     }
@@ -126,15 +118,13 @@ public class EpiUseCase implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
         repositoryPort.atualizarSaldo(epi);
         MovimentacaoEstoque salvo = repositoryPort.salvarMovimentacao(movimentacao);
 
-        if (logAuditoriaRepositoryPort != null) {
-            LogAuditoria log = LogAuditoria.registrarAlteracao(
-                    resolverOperador(responsavelEmail),
-                    "Epi",
-                    epi.getId(),
-                    "Movimentação de estoque: " + tipo + " (" + quantidade + " un). Motivo: " + motivo
-            );
-            logAuditoriaRepositoryPort.salvar(log);
-        }
+        LogAuditoria log = LogAuditoria.registrarAlteracao(
+                resolverOperador(responsavelEmail),
+                "Epi",
+                epi.getId(),
+                "Movimentação de estoque: " + tipo + " (" + quantidade + " un). Motivo: " + motivo
+        );
+        logAuditoriaRepositoryPort.salvar(log);
 
         return MovimentacaoEstoqueOutputDTO.deDominio(salvo, epi.getQuantidade());
     }
