@@ -48,7 +48,7 @@ public class SubstituicaoEpiController {
     public ResponseEntity<ResultadoAnaliseSubstituicaoDTO> gerarAnalise(
             @RequestBody(required = false) GerarAnaliseProjecaoInputDTO input) {
         if (input == null) {
-            input = new GerarAnaliseProjecaoInputDTO(LocalDate.now(), null, 90);
+            input = new GerarAnaliseProjecaoInputDTO(LocalDate.now(), null, null);
         }
         ResultadoAnaliseSubstituicaoDTO resultado = planejarSubstituicaoUseCase.gerarAnalise(input);
         return ResponseEntity.ok(resultado);
@@ -74,17 +74,16 @@ public class SubstituicaoEpiController {
 
     /**
      * Operação emitirListaReposicao() do DS10: retorna a lista de alertas preventivos
-     * (descarte ou CA próximo do vencimento em até diasAntecedencia e estoque crítico).
+     * (descarte ou CA vencido ou a vencer em até 30 dias, DS10 2.4, e estoque crítico).
      */
     @GetMapping("/alertas")
     @Operation(summary = "Emite alertas preventivos de substituição de EPIs",
-            description = "Lista EPIs com descarte próximo, CA com validade próxima do vencimento ou estoque em nível crítico.")
+            description = "Lista EPIs com descarte em até 30 dias, CA vencido ou a vencer em até 30 dias ou estoque em nível crítico.")
     public ResponseEntity<List<AlertaSubstituicaoOutputDTO>> emitirAlertas(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataReferencia,
-            @RequestParam(required = false, defaultValue = "30") Long diasAntecedencia) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataReferencia) {
         if (dataReferencia == null) {
             dataReferencia = LocalDate.now();
         }
-        return ResponseEntity.ok(planejarSubstituicaoUseCase.emitirAlertasPreventivos(dataReferencia, diasAntecedencia));
+        return ResponseEntity.ok(planejarSubstituicaoUseCase.emitirAlertasPreventivos(dataReferencia));
     }
 }

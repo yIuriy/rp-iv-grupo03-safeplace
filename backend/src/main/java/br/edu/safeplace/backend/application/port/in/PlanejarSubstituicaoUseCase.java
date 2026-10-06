@@ -31,8 +31,8 @@ public interface PlanejarSubstituicaoUseCase {
     List<ProjecaoSubstituicaoOutputDTO> listarProjecoesPorEpi(Integer epiId);
 
     /**
-     * Operação emitirListaReposicao() do DS10: emite alertas preventivos de descarte iminente (<= 30 dias),
-     * validade de CA e estoque crítico.
+     * Operação emitirListaReposicao() do DS10: emite alertas preventivos de descarte iminente,
+     * validade de CA e estoque crítico, com a antecedência fixa de 30 dias do DS10, 2.4.
      */
-    List<AlertaSubstituicaoOutputDTO> emitirAlertasPreventivos(LocalDate dataReferencia, Long diasAntecedencia);
+    List<AlertaSubstituicaoOutputDTO> emitirAlertasPreventivos(LocalDate dataReferencia);
 }

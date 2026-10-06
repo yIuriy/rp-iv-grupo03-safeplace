@@ -159,7 +159,7 @@ class SubstituicaoInteligenteServiceTest {
 
         ProjecaoSubstituicao projecao = ProjecaoSubstituicao.nova(7, hoje, descarteProximo, "Teste");
 
-        List<AlertaSubstituicaoEpi> alertas = service.emitirAlertas(epi, projecao, hoje, 30L);
+        List<AlertaSubstituicaoEpi> alertas = service.emitirAlertas(epi, projecao, hoje);
 
         assertEquals(3, alertas.size());
         assertTrue(alertas.stream().anyMatch(a -> a.getTipoAlerta() == TipoAlertaSubstituicao.ESTOQUE_CRITICO));
@@ -176,35 +176,92 @@ class SubstituicaoInteligenteServiceTest {
 
         ProjecaoSubstituicao projecao = ProjecaoSubstituicao.nova(8, hoje, descarteLonge, "Teste seguro");
 
-        List<AlertaSubstituicaoEpi> alertas = service.emitirAlertas(epi, projecao, hoje, 30L);
+        List<AlertaSubstituicaoEpi> alertas = service.emitirAlertas(epi, projecao, hoje);
 
         assertTrue(alertas.isEmpty());
     }
 
     @Test
-    @DisplayName("Deve antecipar data de descarte e emitir justificativa emergencial quando empréstimo foi devolvido para DESCARTE")
-    void deveAnteciparDescarteQuandoEmprestimoFoiDevolvidoComEstadoDescarte() {
-        LocalDate validadeCa = hoje.plusYears(2);
-        Epi epi = criarEpi(9, "Luva de Alta Tensão", 180, validadeCa, 10, 2);
-
+    @DisplayName("#199: devolução em DESCARTE não antecipa a projeção; a regra não consta do DS10")
+    void devolucaoEmDescarteSegueAFormulaDoDs10() {
+        Epi epi = criarEpi(9, "Luva de Alta Tensão", 180, hoje.plusYears(2), 10, 2);
         LocalDateTime retirada = hoje.minusDays(10).atStartOfDay();
-        LocalDateTime devolucaoComAvaria = hoje.minusDays(2).atStartOfDay();
-
         Emprestimo emprestimoAvariado = new Emprestimo(
                 100, 9, 10, 1, retirada,
                 retirada.toLocalDate().plusDays(15), "Termo", null,
-                devolucaoComAvaria, 1, EstadoDevolucao.DESCARTE, ClassificacaoEmprestimo.DISPONIVEL);
+                hoje.minusDays(2).atStartOfDay(), 1, EstadoDevolucao.DESCARTE, ClassificacaoEmprestimo.DISPONIVEL);
 
         ProjecaoSubstituicao projecao = service.calcularProjecao(
                 epi, NivelPerigo.MEDIO, List.of(emprestimoAvariado), hoje, 90);
 
-        assertEquals(devolucaoComAvaria.toLocalDate(), projecao.getDataEstimadaDescarte());
-        assertTrue(projecao.getJustificativa().contains("Substituição imediata por avaria"));
+        assertFalse(projecao.getJustificativa().contains("avaria"));
+        assertTrue(projecao.getJustificativa().contains("MEDIO"));
+    }
 
-        // Alertas gerados devem incluir DESCARTE_PROXIMO com prioridade ALTA
-        List<AlertaSubstituicaoEpi> alertas = service.emitirAlertas(epi, projecao, hoje, 30L);
-        assertTrue(alertas.stream().anyMatch(a ->
-                a.getTipoAlerta() == TipoAlertaSubstituicao.DESCARTE_PROXIMO && "ALTA".equals(a.getPrioridade())));
+    @Test
+    @DisplayName("#199: sem período informado, a amostragem vai da primeira retirada até a referência")
+    void periodoDeAmostragemDerivadoDoHistorico() {
+        Epi epi = criarEpi(10, "Capacete", 180, hoje.plusYears(2), 10, 2);
+        // 30 dias de uso em 40 dias de histórico: U = 0,75; ALTO (1,5): TD = 1,125; desgaste = 45
+        // dias restantes = (180 - 45) / 1,125 = 120
+        List<Emprestimo> emprestimos = List.of(
+                criarEmprestimo(10, 10, hoje.minusDays(40).atStartOfDay(), hoje.minusDays(10).atStartOfDay()));
+
+        ProjecaoSubstituicao projecao = service.calcularProjecao(epi, NivelPerigo.ALTO, emprestimos, hoje, null);
+
+        assertEquals(hoje.plusDays(120), projecao.getDataEstimadaDescarte());
+        assertTrue(projecao.getJustificativa().contains("75,0%") || projecao.getJustificativa().contains("75.0%"));
+    }
+
+    @Test
+    @DisplayName("#199: uso baixo não é elevado a um piso fictício de 5%")
+    void taxaDeUsoSemPisoFicticio() {
+        Epi epi = criarEpi(11, "Avental", 360, hoje.plusYears(500), 10, 2);
+        List<Emprestimo> emprestimos = List.of(
+                criarEmprestimo(11, 11, hoje.minusDays(200).atStartOfDay(), hoje.minusDays(199).atStartOfDay()));
+
+        ProjecaoSubstituicao projecao = service.calcularProjecao(epi, NivelPerigo.BAIXO, emprestimos, hoje, 365);
+
+        // U = 1/365 = 0,3%; com o piso antigo a justificativa mostraria 5,0%
+        assertTrue(projecao.getJustificativa().contains("0,3%") || projecao.getJustificativa().contains("0.3%"));
+    }
+
+    @Test
+    @DisplayName("#199: sem uso no período de amostragem informado, gera pendência em vez de estimativa")
+    void semUsoNoPeriodoGeraPendencia() {
+        Epi epi = criarEpi(12, "Botina", 180, hoje.plusYears(1), 10, 2);
+        List<Emprestimo> emprestimos = List.of(
+                criarEmprestimo(12, 12, hoje.minusDays(200).atStartOfDay(), hoje.minusDays(190).atStartOfDay()));
+
+        DadosInsuficientesParaProjecaoException ex = assertThrows(DadosInsuficientesParaProjecaoException.class,
+                () -> service.calcularProjecao(epi, NivelPerigo.BAIXO, emprestimos, hoje, 30));
+
+        assertTrue(ex.getMessage().contains("não possui uso registrado no período de amostragem"));
+    }
+
+    @Test
+    @DisplayName("#199 / DS10 2.3: CA vencido não gera estimativa, gera pendência")
+    void caVencidoGeraPendencia() {
+        Epi epi = criarEpi(13, "Respirador", 180, hoje.minusDays(1), 10, 2);
+        List<Emprestimo> emprestimos = List.of(criarEmprestimo(13, 13, hoje.minusDays(5).atStartOfDay(), null));
+
+        DadosInsuficientesParaProjecaoException ex = assertThrows(DadosInsuficientesParaProjecaoException.class,
+                () -> service.calcularProjecao(epi, NivelPerigo.BAIXO, emprestimos, hoje, 90));
+
+        assertTrue(ex.getMessage().contains("venceu em " + hoje.minusDays(1)));
+    }
+
+    @Test
+    @DisplayName("#199 / DS10 2.4: CA já vencido gera alerta de CA mesmo sem projeção")
+    void caVencidoGeraAlertaSemProjecao() {
+        Epi epi = criarEpi(14, "Respirador", 180, hoje.minusDays(3), 10, 2);
+
+        List<AlertaSubstituicaoEpi> alertas = service.emitirAlertas(epi, null, hoje);
+
+        assertEquals(1, alertas.size());
+        assertEquals(TipoAlertaSubstituicao.CA_PROXIMO_VENCIMENTO, alertas.get(0).getTipoAlerta());
+        assertTrue(alertas.get(0).getMensagem().contains("venceu em " + hoje.minusDays(3)));
+        assertEquals(-3L, alertas.get(0).getDiasRestantes());
     }
 
     // Métodos auxiliares de criação de fixtures

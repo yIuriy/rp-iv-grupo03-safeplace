@@ -93,8 +93,7 @@ class SubstituicaoEpiControllerTest {
     @DisplayName("Supervisor não tem permissão para consultar alertas preventivos de projeção (HTTP 403)")
     void supervisorNaoPodeConsultarAlertas() throws Exception {
         mockMvc.perform(get("/api/projecoes/alertas")
-                        .param("dataReferencia", "2026-09-24")
-                        .param("diasAntecedencia", "30"))
+                        .param("dataReferencia", "2026-09-24"))
                 .andExpect(status().isForbidden());
     }
 
@@ -105,12 +104,11 @@ class SubstituicaoEpiControllerTest {
         AlertaSubstituicaoOutputDTO alerta = new AlertaSubstituicaoOutputDTO(
                 1, "Óculos", "ESTOQUE_CRITICO", "Saldo 1 <= Mínimo 2", null, null, "ALTA");
 
-        when(planejarSubstituicaoUseCase.emitirAlertasPreventivos(any(LocalDate.class), eq(30L)))
+        when(planejarSubstituicaoUseCase.emitirAlertasPreventivos(any(LocalDate.class)))
                 .thenReturn(List.of(alerta));
 
         mockMvc.perform(get("/api/projecoes/alertas")
-                        .param("dataReferencia", "2026-09-24")
-                        .param("diasAntecedencia", "30"))
+                        .param("dataReferencia", "2026-09-24"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].nomeEpi").value("Óculos"))
                 .andExpect(jsonPath("$[0].tipoAlerta").value("ESTOQUE_CRITICO"));

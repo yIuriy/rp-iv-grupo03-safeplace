@@ -138,10 +138,21 @@ class ProjecaoApiIntegracaoTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
 
-        mockMvc.perform(get("/api/projecoes/alertas")
-                        .param("diasAntecedencia", "30"))
+        mockMvc.perform(get("/api/projecoes/alertas"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    @WithMockUser(username = EMAIL_GESTOR, roles = "GESTOR_SEGURANCA")
+    @DisplayName("#199: setor inexistente na análise responde 400 e não grava projeções")
+    void setorInexistenteNaAnaliseERecusado() throws Exception {
+        mockMvc.perform(post("/api/projecoes/analise")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"setorId\": 999999}"))
+                .andExpect(status().isBadRequest());
+
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM projecoes_substituicao", Integer.class)).isZero();
     }
 
     @Test
