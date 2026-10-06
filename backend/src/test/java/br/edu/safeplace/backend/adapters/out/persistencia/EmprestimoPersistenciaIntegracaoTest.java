@@ -109,9 +109,13 @@ class EmprestimoPersistenciaIntegracaoTest {
         jdbc.execute("DELETE FROM certificacoes");
         jdbc.execute("DELETE FROM treinamentos_colaboradores");
         jdbc.execute("DELETE FROM treinamentos");
-        jdbc.execute("DELETE FROM movimentacoes_estoque WHERE epi_id IN (SELECT id FROM epis WHERE numero_ca IN ('12345', '54321', '99999', '88888'))");
-        jdbc.execute("DELETE FROM areas_risco_epis WHERE epi_id IN (SELECT id FROM epis WHERE numero_ca IN ('12345', '54321', '99999', '88888'))");
-        jdbc.execute("DELETE FROM epis WHERE numero_ca IN ('12345', '54321', '99999', '88888')");
+        jdbc.execute("DELETE FROM movimentacoes_estoque WHERE epi_id IN (SELECT e.id FROM epis e JOIN lotes_epi l ON l.id = e.lote_id JOIN modelos_epi m ON m.id = l.modelo_id WHERE m.ca IN (12345, 54321, 99999, 88888))");
+        jdbc.execute("DELETE FROM areas_risco_epis WHERE epi_id IN (SELECT e.id FROM epis e JOIN lotes_epi l ON l.id = e.lote_id JOIN modelos_epi m ON m.id = l.modelo_id WHERE m.ca IN (12345, 54321, 99999, 88888))");
+        jdbc.execute("DELETE FROM epis WHERE id IN (SELECT e.id FROM epis e JOIN lotes_epi l ON l.id = e.lote_id JOIN modelos_epi m ON m.id = l.modelo_id WHERE m.ca IN (12345, 54321, 99999, 88888))");
+        // Decisão #124: o CA é reaproveitado entre cadastros; modelos órfãos não podem vazar para o próximo teste.
+        jdbc.execute("DELETE FROM lotes_epi l WHERE NOT EXISTS (SELECT 1 FROM epis e WHERE e.lote_id = l.id) "
+                + "AND NOT EXISTS (SELECT 1 FROM movimentacoes_estoque m WHERE m.lote_id = l.id)");
+        jdbc.execute("DELETE FROM modelos_epi o WHERE NOT EXISTS (SELECT 1 FROM lotes_epi l WHERE l.modelo_id = o.id)");
         jdbc.update("DELETE FROM usuarios WHERE cpf IN (?, ?, ?)", CPF_SUPERVISOR, CPF_COLABORADOR, CPF_COLABORADOR_2);
     }
 

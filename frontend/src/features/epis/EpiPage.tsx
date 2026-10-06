@@ -7,9 +7,23 @@ import { useSessaoAtiva } from '../autenticacao/contexto'
 import { listarEpis, type Epi, type StatusEpi } from '../estoque/api'
 import { cadastrarEpi, listarHistorico, registrarManutencao, type ClassificacaoEpi, type DadosCadastroEpi, type DadosManutencao } from './api'
 
-const statusOperacionais: readonly StatusEpi[] = ['DISPONIVEL', 'EM_USO', 'EM_MANUTENCAO', 'ESGOTADO']
+// Somente situações que o backend atribui hoje; EM_USO e DESCARTADO não são gravadas no MVP (#197).
+const statusOperacionais: readonly StatusEpi[] = ['DISPONIVEL', 'EM_MANUTENCAO', 'ESGOTADO']
 const rotulos: Record<StatusEpi, string> = {
   DISPONIVEL: 'Disponível', EM_USO: 'Em uso', EM_MANUTENCAO: 'Em manutenção', ESGOTADO: 'Esgotado', DESCARTADO: 'Descartado',
+}
+const FILTRO_CA_VENCIDO = 'CA_VENCIDO'
+type FiltroEpi = StatusEpi | 'TODOS' | typeof FILTRO_CA_VENCIDO
+
+function hojeLocal() {
+  const agora = new Date()
+  const dois = (valor: number) => String(valor).padStart(2, '0')
+  return `${agora.getFullYear()}-${dois(agora.getMonth() + 1)}-${dois(agora.getDate())}`
+}
+
+/** UC01 alternativo I: mesma regra do domínio, vencido quando a validade é anterior a hoje. */
+function caVencido(epi: Epi, hoje: string) {
+  return epi.dataValidadeCa !== null && epi.dataValidadeCa < hoje
 }
 
 function tomDoStatus(status: StatusEpi): 'success' | 'info' | 'warning' | 'danger' {
@@ -53,7 +67,7 @@ function DialogoCadastroEpi({ aberto, aoFechar, aoSalvar }: {
     const dados: DadosCadastroEpi = {
       nome: textoOpcional(form, 'nome') ?? '', numeroCa: textoOpcional(form, 'numeroCa') ?? '',
       quantidade: Number(form.get('quantidade')), estoqueMinimo: Number(form.get('estoqueMinimo')),
-      dataValidadeCa: textoOpcional(form, 'dataValidadeCa'), vidaUtilDias: numeroOpcional(form, 'vidaUtilDias'),
+      dataValidadeCa: textoOpcional(form, 'dataValidadeCa') ?? '', vidaUtilDias: numeroOpcional(form, 'vidaUtilDias'),
       descricao: textoOpcional(form, 'descricao'), classificacao: textoOpcional(form, 'classificacao') as ClassificacaoEpi | undefined,
       localizacao: textoOpcional(form, 'localizacao'), numeroLote: textoOpcional(form, 'numeroLote'),
       notaFiscal: textoOpcional(form, 'notaFiscal'), dataFabricacao: textoOpcional(form, 'dataFabricacao'),
@@ -71,7 +85,7 @@ function DialogoCadastroEpi({ aberto, aoFechar, aoSalvar }: {
   }
 
   return <Dialog open={aberto} title="Cadastrar EPI"
-    description="Nome, CA, quantidade inicial e estoque mínimo são obrigatórios. Campos adicionais são opcionais." onClose={() => { if (!enviando) aoFechar() }}>
+    description="Nome, CA, validade do CA, quantidade inicial e estoque mínimo são obrigatórios. Campos adicionais são opcionais." onClose={() => { if (!enviando) aoFechar() }}>
     {aberto && <form className="sp-form" onSubmit={enviar}>
       {erro && <Alert tone="danger" title="Cadastro não concluído" live="assertive">{erro}</Alert>}
       <div className="sp-epi-form-grid">
@@ -79,7 +93,7 @@ function DialogoCadastroEpi({ aberto, aoFechar, aoSalvar }: {
         <TextField label="Número do CA" name="numeroCa" required maxLength={255} />
         <TextField label="Quantidade inicial" name="quantidade" type="number" min="0" step="1" required />
         <TextField label="Estoque mínimo" name="estoqueMinimo" type="number" min="0" step="1" required />
-        <TextField label="Validade do CA" name="dataValidadeCa" type="date" />
+        <TextField label="Validade do CA" name="dataValidadeCa" type="date" required />
         <TextField label="Vida útil estimada (dias)" name="vidaUtilDias" type="number" min="1" step="1" />
         <TextArea className="sp-epi-form-full" label="Descrição" name="descricao" maxLength={1000}
           helper="Especificação opcional do equipamento." />
@@ -164,7 +178,7 @@ function DialogoManutencao({ epi, aberto, aoFechar, aoSalvar }: {
 /** Painel de cadastro e manutenção. Recebe o catálogo já carregado pela tela unificada. */
 export function EpiManutencaoPainel({ epis }: { epis: Consulta<Epi[]> }) {
   const sessao = useSessaoAtiva()
-  const [filtro, setFiltro] = useState<StatusEpi | 'TODOS'>('TODOS')
+  const [filtro, setFiltro] = useState<FiltroEpi>('TODOS')
   const [selecionadoId, setSelecionadoId] = useState<number | null>(null)
   const [dialogoAberto, setDialogoAberto] = useState(false)
   const [cadastroAberto, setCadastroAberto] = useState(false)
@@ -173,9 +187,13 @@ export function EpiManutencaoPainel({ epis }: { epis: Consulta<Epi[]> }) {
   const carregarHistorico = useCallback((signal: AbortSignal) =>
     selecionadoId === null ? Promise.resolve([]) : listarHistorico(selecionadoId, signal), [selecionadoId])
   const historico = useConsulta(`historico:${selecionadoId ?? 'nenhum'}`, carregarHistorico)
-  const listaOperacional = useMemo(() => (epis.dados ?? [])
-    .filter(epi => epi.status !== 'DESCARTADO')
-    .filter(epi => filtro === 'TODOS' || epi.status === filtro), [epis.dados, filtro])
+  const listaOperacional = useMemo(() => {
+    const hoje = hojeLocal()
+    return (epis.dados ?? [])
+      .filter(epi => epi.status !== 'DESCARTADO')
+      .filter(epi => filtro === 'TODOS'
+        || (filtro === FILTRO_CA_VENCIDO ? caVencido(epi, hoje) : epi.status === filtro))
+  }, [epis.dados, filtro])
   const podeRegistrar = sessao.perfil === 'GESTOR_SEGURANCA'
 
   function selecionar(epi: Epi) {
@@ -201,9 +219,10 @@ export function EpiManutencaoPainel({ epis }: { epis: Consulta<Epi[]> }) {
     {podeRegistrar && <div className="sp-epi-page-actions"><Button icon="plus" onClick={() => setCadastroAberto(true)}>Cadastrar EPI</Button></div>}
 
     <div className="sp-epi-filter">
-      <Select label="Filtrar por situação" value={filtro} onChange={event => setFiltro(event.target.value as StatusEpi | 'TODOS')}>
+      <Select label="Filtrar por situação" value={filtro} onChange={event => setFiltro(event.target.value as FiltroEpi)}>
         <option value="TODOS">Todas as situações ativas</option>
         {statusOperacionais.map(status => <option key={status} value={status}>{rotulos[status]}</option>)}
+        <option value={FILTRO_CA_VENCIDO}>CA vencido</option>
       </Select>
       <p role="status">{listaOperacional.length} {listaOperacional.length === 1 ? 'EPI ativo encontrado' : 'EPIs ativos encontrados'}.</p>
     </div>

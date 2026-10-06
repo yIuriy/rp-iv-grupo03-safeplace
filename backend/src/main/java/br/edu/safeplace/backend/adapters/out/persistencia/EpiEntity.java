@@ -2,8 +2,9 @@ package br.edu.safeplace.backend.adapters.out.persistencia;
 
 import jakarta.persistence.*;
 
-import java.time.LocalDate;
-
+/**
+ * Saldo de um lote de EPI (decisão #124). CA e validade do CA vêm apenas do modelo do lote (V28).
+ */
 @Entity
 @Table(name = "epis")
 public class EpiEntity {
@@ -14,9 +15,6 @@ public class EpiEntity {
     @Column(nullable = false, length = 160)
     private String nome;
 
-    @Column(name = "numero_ca", nullable = false, length = 80)
-    private String numeroCa;
-
     @Column(nullable = false)
     private Integer quantidade;
 
@@ -25,9 +23,6 @@ public class EpiEntity {
 
     @Column(nullable = false, length = 50)
     private String status;
-
-    @Column(name = "data_validade_ca")
-    private LocalDate dataValidadeCa;
 
     @Column(name = "vida_util_dias")
     private Integer vidaUtilDias;
@@ -41,48 +36,25 @@ public class EpiEntity {
     @Column(columnDefinition = "text")
     private String localizacao;
 
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "lote_id")
+    @ManyToOne(cascade = CascadeType.ALL, optional = false)
+    @JoinColumn(name = "lote_id", nullable = false)
     private LoteEpiEntity lote;
-
-    public String getLocalizacao() {
-        return localizacao;
-    }
-
-    public LoteEpiEntity getLote() { return lote; }
 
     public EpiEntity() {
     }
 
-    public EpiEntity(Integer id, String nome, String numeroCa, Integer quantidade,
-            Integer estoqueMinimo, String status, LocalDate dataValidadeCa, Integer vidaUtilDias, String descricao,
-            String classificacao) {
-        this(id, nome, numeroCa, quantidade, estoqueMinimo, status, dataValidadeCa,
-                vidaUtilDias, descricao, classificacao, null);
-    }
-
-    public EpiEntity(Integer id, String nome, String numeroCa, Integer quantidade,
-                     Integer estoqueMinimo, String status, LocalDate dataValidadeCa,
-                     Integer vidaUtilDias, String descricao, String classificacao, String localizacao) {
-        this(id, nome, numeroCa, quantidade, estoqueMinimo, status, dataValidadeCa,
-                vidaUtilDias, descricao, classificacao, localizacao, null);
-    }
-
-    public EpiEntity(Integer id, String nome, String numeroCa, Integer quantidade,
-                     Integer estoqueMinimo, String status, LocalDate dataValidadeCa,
+    public EpiEntity(Integer id, String nome, Integer quantidade, Integer estoqueMinimo, String status,
                      Integer vidaUtilDias, String descricao, String classificacao, String localizacao,
                      LoteEpiEntity lote) {
-        this.localizacao = localizacao;
         this.id = id;
         this.nome = nome;
-        this.numeroCa = numeroCa;
         this.quantidade = quantidade;
         this.estoqueMinimo = estoqueMinimo;
         this.status = status;
-        this.dataValidadeCa = dataValidadeCa;
         this.vidaUtilDias = vidaUtilDias;
         this.descricao = descricao;
         this.classificacao = classificacao;
+        this.localizacao = localizacao;
         this.lote = lote;
     }
 
@@ -92,10 +64,6 @@ public class EpiEntity {
 
     public String getNome() {
         return nome;
-    }
-
-    public String getNumeroCa() {
-        return numeroCa;
     }
 
     public Integer getQuantidade() {
@@ -110,10 +78,6 @@ public class EpiEntity {
         return status;
     }
 
-    public LocalDate getDataValidadeCa() {
-        return dataValidadeCa;
-    }
-
     public Integer getVidaUtilDias() {
         return vidaUtilDias;
     }
@@ -124,5 +88,13 @@ public class EpiEntity {
 
     public String getClassificacao() {
         return classificacao;
+    }
+
+    public String getLocalizacao() {
+        return localizacao;
+    }
+
+    public LoteEpiEntity getLote() {
+        return lote;
     }
 }

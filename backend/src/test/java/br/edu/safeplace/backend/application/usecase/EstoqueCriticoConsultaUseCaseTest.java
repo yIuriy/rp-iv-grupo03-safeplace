@@ -9,37 +9,60 @@ package br.edu.safeplace.backend.application.usecase;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
 import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.MovimentacaoEstoqueOutputDTO;
 import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
 import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
 import br.edu.safeplace.backend.domain.epi.exception.SaldoInsuficienteException;
+import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
 class EstoqueCriticoConsultaUseCaseTest {
+
+    private static final String EMAIL_GESTOR = "gestor@empresa.com";
 
     private EpiRepositoryEmMemoria repositorio;
     private EpiUseCase useCase;
     private Integer epiId;
 
+    @AfterEach
+    void limparAutenticacao() {
+        SecurityContextHolder.clearContext();
+    }
+
     @BeforeEach
     void cadastrarEpiComSaldoDezEMinimoCinco() {
         repositorio = new EpiRepositoryEmMemoria();
-        useCase = new EpiUseCase(repositorio);
+        // US03: toda movimentação identifica o usuário autenticado como responsável.
+        UsuarioRepositorioPorta usuarios = mock(UsuarioRepositorioPorta.class);
+        when(usuarios.buscarPorEmail(EMAIL_GESTOR)).thenReturn(Optional.of(new GestorDeSeguranca(
+                7, "49216091040", "Mariana", LocalDate.of(1988, 7, 20), EMAIL_GESTOR, "hash", true,
+                LocalDateTime.now(), LocalDateTime.now())));
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(EMAIL_GESTOR, null, List.of()));
+        useCase = new EpiUseCase(repositorio, usuarios);
         EpiOutputDTO salvo = useCase.cadastrarEpi(new CadastrarEpiInputDTO(
                 "Luva nitrílica", "12345", 10, 5, LocalDate.now().plusYears(1), 180,
                 "Luva de proteção química", ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES));

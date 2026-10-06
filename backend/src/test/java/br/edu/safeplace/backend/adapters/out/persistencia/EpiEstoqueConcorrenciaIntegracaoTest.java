@@ -34,6 +34,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("Testes de Integração de Concorrência e Transacionalidade do Estoque de EPIs")
 class EpiEstoqueConcorrenciaIntegracaoTest {
 
+    /** Gestor semeado pela V17; US03 exige o responsável em toda movimentação. */
+    private static final String GESTOR_DEMO = "gestor.demo@safeplace.com";
+
     static boolean bancoDisponivel() {
         return PostgresDeTeste.disponivel();
     }
@@ -56,6 +59,10 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
     void limparTabelas() {
         jdbcTemplate.execute("DELETE FROM movimentacoes_estoque");
         jdbcTemplate.execute("DELETE FROM epis");
+        // Decisão #124: o CA é reaproveitado entre cadastros; modelos órfãos não podem vazar para o próximo teste.
+        jdbcTemplate.execute("DELETE FROM lotes_epi l WHERE NOT EXISTS (SELECT 1 FROM epis e WHERE e.lote_id = l.id) "
+                + "AND NOT EXISTS (SELECT 1 FROM movimentacoes_estoque m WHERE m.lote_id = l.id)");
+        jdbcTemplate.execute("DELETE FROM modelos_epi o WHERE NOT EXISTS (SELECT 1 FROM lotes_epi l WHERE l.modelo_id = o.id)");
     }
 
     private Integer criarEpi(String nome, String numeroCa, int quantidadeInicial) {
@@ -89,7 +96,7 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
         Callable<Void> tarefa = () -> {
             latch.await();
             try {
-                epiUseCase.registrarMovimentacao(epiId, TipoMovimentacao.SAIDA, 8, "Saída concorrente", null);
+                epiUseCase.registrarMovimentacao(epiId, TipoMovimentacao.SAIDA, 8, "Saída concorrente", GESTOR_DEMO);
                 sucessos.incrementAndGet();
             } catch (SaldoInsuficienteException e) {
                 falhasSaldoInsuficiente.incrementAndGet();
@@ -144,7 +151,7 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
             tarefas.add(() -> {
                 latch.await();
                 try {
-                    epiUseCase.registrarMovimentacao(epiId, TipoMovimentacao.ENTRADA, qtdEntrada, "Reposição concorrente", null);
+                    epiUseCase.registrarMovimentacao(epiId, TipoMovimentacao.ENTRADA, qtdEntrada, "Reposição concorrente", GESTOR_DEMO);
                     sucessos.incrementAndGet();
                 } catch (Throwable t) {
                     falhas.add(t);
@@ -157,7 +164,7 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
             tarefas.add(() -> {
                 latch.await();
                 try {
-                    epiUseCase.registrarMovimentacao(epiId, TipoMovimentacao.SAIDA, qtdSaida, "Retirada concorrente", null);
+                    epiUseCase.registrarMovimentacao(epiId, TipoMovimentacao.SAIDA, qtdSaida, "Retirada concorrente", GESTOR_DEMO);
                     sucessos.incrementAndGet();
                 } catch (Throwable t) {
                     falhas.add(t);
@@ -210,7 +217,7 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
         Integer epiId = criarEpi("Protetor Auricular", "CA-33333", 5);
 
         try {
-            epiUseCase.registrarMovimentacao(epiId, TipoMovimentacao.SAIDA, 10, "Tentativa excessiva", null);
+            epiUseCase.registrarMovimentacao(epiId, TipoMovimentacao.SAIDA, 10, "Tentativa excessiva", GESTOR_DEMO);
         } catch (SaldoInsuficienteException ignored) {
         }
 

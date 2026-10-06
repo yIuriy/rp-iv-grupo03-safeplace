@@ -19,7 +19,7 @@ public record CriarEpiRequest(
 
         @NotNull(message = "Estoque mínimo é obrigatório") @Min(value = 0, message = "Estoque mínimo não pode ser negativo") @Schema(description = "Limite de estoque mínimo para alertas", example = "5") Integer estoqueMinimo,
 
-        @Schema(description = "Data de validade do CA (opcional para base do RF21)", example = "2027-12-31") LocalDate dataValidadeCa,
+        @NotNull(message = "Validade do CA é obrigatória") @Schema(description = "Data de validade do CA, gravada no modelo do EPI", example = "2027-12-31") LocalDate dataValidadeCa,
 
         @Schema(description = "Vida útil estimada em dias (opcional para base do RF21)", example = "365") Integer vidaUtilDias,
 

@@ -66,8 +66,9 @@ class TarefaJpaAdapterTest {
     }
 
     private static EpiEntity epiEntity(Integer id, String nome) {
-        return new EpiEntity(id, nome, "CA-" + id, 10, 2, "DISPONIVEL",
-                LocalDate.now().plusYears(1), 365, "Descrição", null);
+        LoteEpiEntity lote = new LoteEpiEntity(id, null, null, null, null, 10,
+                new ModeloEpiEntity(id, id, null, LocalDate.now().plusYears(1)));
+        return new EpiEntity(id, nome, 10, 2, "DISPONIVEL", 365, "Descrição", null, null, lote);
     }
 
     @Test

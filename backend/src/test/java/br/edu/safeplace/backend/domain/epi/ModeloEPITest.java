@@ -98,4 +98,46 @@ class ModeloEPITest {
         assertThat(vencido.verificarCA()).isFalse();
         assertThat(vigente.verificarCA()).isTrue();
     }
+
+    @Test
+    void deveGuardarMarcaDoCadastroLegadoSemEspacos() {
+        ModeloEPI modelo = ModeloEPI.deCadastroLegado("CA-1234", "  Protege ", REFERENCIA);
+
+        assertThat(modelo.getCa()).isEqualTo(1234);
+        assertThat(modelo.getMarca()).isEqualTo("Protege");
+        assertThat(ModeloEPI.deCadastroLegado("1234", " ", REFERENCIA).getMarca()).isNull();
+    }
+
+    @Test
+    void deveReutilizarModeloDoMesmoCaECompletarMarcaAusente() {
+        ModeloEPI existente = new ModeloEPI(9, 1234, null, REFERENCIA);
+
+        ModeloEPI reutilizado = existente.reutilizarPara(new ModeloEPI(1234, "Protege", REFERENCIA));
+
+        assertThat(reutilizado.getId()).isEqualTo(9);
+        assertThat(reutilizado.getMarca()).isEqualTo("Protege");
+        assertThat(reutilizado.getValidadeCA()).isEqualTo(REFERENCIA);
+    }
+
+    @Test
+    void deveManterMarcaExistenteQuandoCadastroNaoInformaMarca() {
+        ModeloEPI existente = new ModeloEPI(9, 1234, "Protege", REFERENCIA);
+
+        assertThat(existente.reutilizarPara(new ModeloEPI(1234, null, REFERENCIA)).getMarca())
+                .isEqualTo("Protege");
+    }
+
+    @Test
+    void deveRecusarMesmoCaComValidadeOuMarcaDivergente() {
+        ModeloEPI existente = new ModeloEPI(9, 1234, "Protege", REFERENCIA);
+
+        assertThatThrownBy(() -> existente.reutilizarPara(new ModeloEPI(1234, "Protege", REFERENCIA.plusDays(1))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("já cadastrado com validade");
+        assertThatThrownBy(() -> existente.reutilizarPara(new ModeloEPI(1234, "Outra", REFERENCIA)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("já cadastrado com a marca");
+        assertThatThrownBy(() -> existente.reutilizarPara(new ModeloEPI(5678, "Protege", REFERENCIA)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
 }
