@@ -26,6 +26,7 @@ import br.edu.safeplace.backend.application.port.in.capacitacao.AcompanharCapaci
 import br.edu.safeplace.backend.config.RestSegurancaTratadorExcecoes;
 import br.edu.safeplace.backend.config.SecurityConfig;
 import br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao;
+import br.edu.safeplace.backend.domain.capacitacao.StatusTreinamento;
 import br.edu.safeplace.backend.domain.tarefa.exception.TarefaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.usuario.exception.UsuarioNaoEncontradoException;
 
@@ -87,7 +88,7 @@ class CapacitacaoControllerTest {
         CertificacaoOutputDTO certificacao = new CertificacaoOutputDTO(
                 1, "NR-35", StatusCertificacao.PROXIMA_DO_VENCIMENTO, VENCIMENTO, LocalDate.of(2025, 10, 20));
         TreinamentoOutputDTO treinamento = new TreinamentoOutputDTO(
-                2, "NR-10", "Riscos elétricos", "Eng. Paula", LocalDate.of(2026, 3, 10), 40, "REALIZADO");
+                2, "NR-10", "Riscos elétricos", "Eng. Paula", LocalDate.of(2026, 3, 10), 40, null, null, StatusTreinamento.REALIZADO);
         when(acompanharUseCase.consultarColaborador(3)).thenReturn(new CapacitacoesColaboradorOutputDTO(
                 3, "Ana", StatusCertificacao.PROXIMA_DO_VENCIMENTO, List.of(certificacao), List.of(treinamento),
                 List.of(), List.of(certificacao), false,

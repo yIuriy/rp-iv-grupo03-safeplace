@@ -15,6 +15,7 @@ import br.edu.safeplace.backend.application.port.in.capacitacao.ConsultarCapacit
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao;
+import br.edu.safeplace.backend.domain.capacitacao.StatusTreinamento;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.exception.UsuarioNaoEncontradoException;
@@ -108,7 +109,7 @@ class AcompanharCapacitacoesServiceTest {
             assertThat(t.conteudo()).isEqualTo("Riscos elétricos");
             assertThat(t.instrutor()).isEqualTo("Eng. Paula");
             assertThat(t.cargaHoraria()).isEqualTo(40);
-            assertThat(t.status()).isEqualTo("REALIZADO");
+            assertThat(t.status()).isEqualTo(StatusTreinamento.REALIZADO);
         });
         assertThat(detalhe.pendenteIntegracaoAdmissional()).isFalse();
         assertThat(detalhe.pendencias()).anyMatch(m -> m.contains("vencida"))

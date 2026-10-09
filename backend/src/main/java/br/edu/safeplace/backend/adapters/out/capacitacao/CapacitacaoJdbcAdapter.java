@@ -2,6 +2,8 @@ package br.edu.safeplace.backend.adapters.out.capacitacao;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -83,7 +85,7 @@ public class CapacitacaoJdbcAdapter implements CapacitacaoRepositoryPort {
     public Treinamento salvarTreinamento(Treinamento treinamento) {
         Integer treinamentoId = treinamento.getId();
         if (treinamentoId == null) {
-            String sql = "INSERT INTO treinamentos (nome, conteudo, instrutor, data_realizacao, carga_horaria) VALUES (?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO treinamentos (nome, conteudo, instrutor, data_realizacao, carga_horaria, validade_meses) VALUES (?, ?, ?, ?, ?, ?)";
             KeyHolder keyHolder = new GeneratedKeyHolder();
             jdbc.update(connection -> {
                 PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
@@ -96,13 +98,18 @@ public class CapacitacaoJdbcAdapter implements CapacitacaoRepositoryPort {
                 } else {
                     ps.setNull(5, java.sql.Types.INTEGER);
                 }
+                if (treinamento.getValidadeMeses() != null) {
+                    ps.setInt(6, treinamento.getValidadeMeses());
+                } else {
+                    ps.setNull(6, java.sql.Types.INTEGER);
+                }
                 return ps;
             }, keyHolder);
 
             treinamentoId = extrairIdGerado(keyHolder);
         } else {
-            String sql = "UPDATE treinamentos SET nome = ?, conteudo = ?, instrutor = ?, data_realizacao = ?, carga_horaria = ? WHERE id = ?";
-            jdbc.update(sql, treinamento.getNome(), treinamento.getConteudo(), treinamento.getInstrutor(), Date.valueOf(treinamento.getDataRealizacao()), treinamento.getCargaHoraria(), treinamentoId);
+            String sql = "UPDATE treinamentos SET nome = ?, conteudo = ?, instrutor = ?, data_realizacao = ?, carga_horaria = ?, validade_meses = ? WHERE id = ?";
+            jdbc.update(sql, treinamento.getNome(), treinamento.getConteudo(), treinamento.getInstrutor(), Date.valueOf(treinamento.getDataRealizacao()), treinamento.getCargaHoraria(), treinamento.getValidadeMeses(), treinamentoId);
             jdbc.update("DELETE FROM treinamentos_colaboradores WHERE treinamento_id = ?", treinamentoId);
         }
 
@@ -116,7 +123,7 @@ public class CapacitacaoJdbcAdapter implements CapacitacaoRepositoryPort {
         }
 
         return new Treinamento(treinamentoId, treinamento.getNome(), treinamento.getConteudo(), treinamento.getInstrutor(),
-                treinamento.getDataRealizacao(), treinamento.getCargaHoraria(), treinamento.getColaboradoresIds());
+                treinamento.getDataRealizacao(), treinamento.getCargaHoraria(), treinamento.getValidadeMeses(), treinamento.getColaboradoresIds());
     }
 
     @Override
@@ -151,26 +158,13 @@ public class CapacitacaoJdbcAdapter implements CapacitacaoRepositoryPort {
     @Override
     public List<Treinamento> buscarTreinamentosPorColaborador(Integer colaboradorId) {
         String sql = """
-                SELECT t.id, t.nome, t.conteudo, t.instrutor, t.data_realizacao, t.carga_horaria
+                SELECT t.id, t.nome, t.conteudo, t.instrutor, t.data_realizacao, t.carga_horaria, t.validade_meses
                   FROM treinamentos t
                   JOIN treinamentos_colaboradores tc ON tc.treinamento_id = t.id
                  WHERE tc.colaborador_id = ?
                  ORDER BY t.data_realizacao DESC
                 """;
-        return jdbc.query(sql, (rs, rowNum) -> {
-            Integer id = rs.getInt("id");
-            String nome = rs.getString("nome");
-            String conteudo = rs.getString("conteudo");
-            String instrutor = rs.getString("instrutor");
-            LocalDate dataRealizacao = rs.getDate("data_realizacao").toLocalDate();
-            Integer cargaHoraria = (Integer) rs.getObject("carga_horaria");
-
-            List<Integer> colabIds = buscarColaboradoresDoTreinamento(id);
-            if (colabIds.isEmpty()) {
-                colabIds = List.of(colaboradorId);
-            }
-            return new Treinamento(id, nome, conteudo, instrutor, dataRealizacao, cargaHoraria, colabIds);
-        }, colaboradorId);
+        return jdbc.query(sql, (rs, rowNum) -> lerTreinamento(rs, colaboradorId), colaboradorId);
     }
 
     private List<Integer> buscarColaboradoresDoTreinamento(Integer treinamentoId) {
@@ -196,17 +190,9 @@ public class CapacitacaoJdbcAdapter implements CapacitacaoRepositoryPort {
 
     @Override
     public Optional<Treinamento> buscarTreinamentoPorId(Integer id) {
-        String sql = "SELECT id, nome, conteudo, instrutor, data_realizacao, carga_horaria FROM treinamentos WHERE id = ?";
+        String sql = "SELECT id, nome, conteudo, instrutor, data_realizacao, carga_horaria, validade_meses FROM treinamentos WHERE id = ?";
         try {
-            return Optional.ofNullable(jdbc.queryForObject(sql, (rs, rowNum) -> {
-                String nome = rs.getString("nome");
-                String conteudo = rs.getString("conteudo");
-                String instrutor = rs.getString("instrutor");
-                LocalDate dataRealizacao = rs.getDate("data_realizacao").toLocalDate();
-                Integer cargaHoraria = (Integer) rs.getObject("carga_horaria");
-                List<Integer> colabIds = buscarColaboradoresDoTreinamento(id);
-                return new Treinamento(id, nome, conteudo, instrutor, dataRealizacao, cargaHoraria, colabIds.isEmpty() ? List.of(0) : colabIds);
-            }, id));
+            return Optional.ofNullable(jdbc.queryForObject(sql, (rs, rowNum) -> lerTreinamento(rs, 0), id));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -220,16 +206,16 @@ public class CapacitacaoJdbcAdapter implements CapacitacaoRepositoryPort {
 
     @Override
     public List<Treinamento> listarTodosTreinamentos() {
-        String sql = "SELECT id, nome, conteudo, instrutor, data_realizacao, carga_horaria FROM treinamentos ORDER BY data_realizacao DESC";
-        return jdbc.query(sql, (rs, rowNum) -> {
-            Integer id = rs.getInt("id");
-            String nome = rs.getString("nome");
-            String conteudo = rs.getString("conteudo");
-            String instrutor = rs.getString("instrutor");
-            LocalDate dataRealizacao = rs.getDate("data_realizacao").toLocalDate();
-            Integer cargaHoraria = (Integer) rs.getObject("carga_horaria");
-            List<Integer> colabIds = buscarColaboradoresDoTreinamento(id);
-            return new Treinamento(id, nome, conteudo, instrutor, dataRealizacao, cargaHoraria, colabIds.isEmpty() ? List.of(0) : colabIds);
-        });
+        String sql = "SELECT id, nome, conteudo, instrutor, data_realizacao, carga_horaria, validade_meses FROM treinamentos ORDER BY data_realizacao DESC";
+        return jdbc.query(sql, (rs, rowNum) -> lerTreinamento(rs, 0));
+    }
+
+    private Treinamento lerTreinamento(ResultSet rs, Integer colaboradorPadrao) throws SQLException {
+        Integer id = rs.getInt("id");
+        List<Integer> colaboradoresIds = buscarColaboradoresDoTreinamento(id);
+        return new Treinamento(id, rs.getString("nome"), rs.getString("conteudo"), rs.getString("instrutor"),
+                rs.getDate("data_realizacao").toLocalDate(), (Integer) rs.getObject("carga_horaria"),
+                (Integer) rs.getObject("validade_meses"),
+                colaboradoresIds.isEmpty() ? List.of(colaboradorPadrao) : colaboradoresIds);
     }
 }

@@ -161,4 +161,34 @@ class ValidadorAptidaoColaboradorServiceTest {
         assertThat(impedimentos).anyMatch(msg -> msg.contains("sem grau de periculosidade classificado"));
         assertThat(impedimentos).anyMatch(msg -> msg.contains("NR-10"));
     }
+
+    @Test
+    @DisplayName("Bloqueia alocação com treinamento obrigatório vencido e informa a data de vencimento")
+    void deveBloquearComTreinamentoVencido() {
+        Tarefa tarefa = new Tarefa(10, "Espaço Confinado", NivelPerigo.ALTO, hoje.atStartOfDay());
+        ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(1, "NR-33 Vigia",
+                ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO, 10, ExigenciaCapacitacao.TipoAlvo.TAREFA);
+        Treinamento vencido = new Treinamento(1, "NR-33 Vigia", "Prática", "Instrutor A",
+                hoje.minusMonths(13), 16, 12, List.of(colaborador.getId()));
+
+        assertThatThrownBy(() -> validador.validarAptidaoParaTarefa(colaborador, tarefa,
+                List.of(), List.of(vencido), List.of(exigencia), hoje))
+                .isInstanceOf(AlocacaoBloqueadaException.class)
+                .hasMessageContaining("NR-33 Vigia")
+                .hasMessageContaining("vencido em " + hoje.minusMonths(1).format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+    }
+
+    @Test
+    @DisplayName("Treinamento próximo do vencimento ainda permite alocação")
+    void devePermitirAlocacaoComTreinamentoProximoDoVencimento() {
+        Tarefa tarefa = new Tarefa(10, "Espaço Confinado", NivelPerigo.ALTO, hoje.atStartOfDay());
+        ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(1, "NR-33 Vigia",
+                ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO, 10, ExigenciaCapacitacao.TipoAlvo.TAREFA);
+        Treinamento proximo = new Treinamento(1, "NR-33 Vigia", "Prática", "Instrutor A",
+                hoje.minusMonths(12).plusDays(10), 16, 12, List.of(colaborador.getId()));
+
+        assertThatCode(() -> validador.validarAptidaoParaTarefa(colaborador, tarefa,
+                List.of(), List.of(proximo), List.of(exigencia), hoje))
+                .doesNotThrowAnyException();
+    }
 }

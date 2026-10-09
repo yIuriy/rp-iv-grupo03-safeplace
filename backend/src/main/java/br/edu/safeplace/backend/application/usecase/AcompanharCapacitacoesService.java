@@ -28,6 +28,7 @@ import br.edu.safeplace.backend.application.port.in.capacitacao.AcompanharCapaci
 import br.edu.safeplace.backend.application.port.in.capacitacao.ConsultarCapacitacaoUseCase;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
+import br.edu.safeplace.backend.domain.capacitacao.PrazoVencimento;
 import br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
@@ -114,7 +115,7 @@ public class AcompanharCapacitacoesService implements AcompanharCapacitacoesUseC
                         p.obterMensagensAvisos()))
                 .toList();
 
-        return new AlertasCapacitacaoOutputDTO(LocalDate.now(), Certificacao.DIAS_ANTECEDENCIA_ALERTA,
+        return new AlertasCapacitacaoOutputDTO(LocalDate.now(), PrazoVencimento.DIAS_ANTECEDENCIA_ALERTA,
                 proximas, vencidas, pendencias);
     }
 

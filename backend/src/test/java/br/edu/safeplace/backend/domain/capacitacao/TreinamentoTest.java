@@ -7,6 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -75,10 +76,47 @@ class TreinamentoTest {
         Treinamento t1 = Treinamento.cadastrar("NR-10", "Conteúdo", "Instrutor", hoje.minusDays(5), 8, List.of(1));
         Treinamento t2 = Treinamento.cadastrar("NR-35", "Conteúdo", "Instrutor", hoje, 8, List.of(1));
 
-        assertThat(t1.verificarStatus()).isEqualTo("REALIZADO");
-        assertThat(t2.verificarStatus()).isEqualTo("REALIZADO");
+        assertThat(t1.calcularStatus(hoje)).isEqualTo(StatusTreinamento.REALIZADO);
+        assertThat(t2.calcularStatus(hoje)).isEqualTo(StatusTreinamento.REALIZADO);
         assertThat(t1.verificarStatusTreinamentos(List.of(t1, t2))).isEqualTo("REALIZADO");
         assertThat(t1.verificarStatusTreinamentos(List.of())).isEqualTo("PENDENTE");
         assertThat(t1.verificarStatusTreinamentos(null)).isEqualTo("PENDENTE");
+    }
+
+    @Test
+    @DisplayName("Treinamento sem validade nunca vence")
+    void treinamentoSemValidadeNaoVence() {
+        LocalDate hoje = LocalDate.of(2026, 10, 9);
+        Treinamento treinamento = Treinamento.cadastrar("NR-10", "Conteúdo", "Instrutor", hoje.minusYears(20), 8, List.of(1));
+
+        assertThat(treinamento.getDataVencimento()).isEmpty();
+        assertThat(treinamento.calcularStatus(hoje)).isEqualTo(StatusTreinamento.REALIZADO);
+    }
+
+    @Test
+    @DisplayName("Vencimento é a data de realização somada à validade em meses")
+    void deveCalcularDataVencimento() {
+        Treinamento treinamento = Treinamento.cadastrar("NR-35", "Conteúdo", "Instrutor", LocalDate.of(2025, 10, 9), 8, 12, List.of(1));
+
+        assertThat(treinamento.getDataVencimento()).contains(LocalDate.of(2026, 10, 9));
+    }
+
+    @ParameterizedTest(name = "{0} dias antes do vencimento -> {1}")
+    @CsvSource({"31,REALIZADO", "30,PROXIMO_DO_VENCIMENTO", "1,PROXIMO_DO_VENCIMENTO", "0,VENCIDO", "-1,VENCIDO"})
+    @DisplayName("Fronteiras de vencimento seguem a regra das certificações")
+    void deveAplicarFronteirasDeVencimento(long diasParaVencer, StatusTreinamento esperado) {
+        LocalDate vencimento = LocalDate.of(2026, 10, 9);
+        Treinamento treinamento = Treinamento.cadastrar("NR-35", "Conteúdo", "Instrutor", vencimento.minusMonths(12), 8, 12, List.of(1));
+
+        assertThat(treinamento.calcularStatus(vencimento.minusDays(diasParaVencer))).isEqualTo(esperado);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, -3})
+    @DisplayName("Validade deve ser de ao menos 1 mês")
+    void deveRejeitarValidadeInvalida(int validade) {
+        assertThatThrownBy(() -> Treinamento.cadastrar("NR-10", "Conteúdo", "Instrutor", LocalDate.now(), 4, validade, List.of(1)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Validade do treinamento deve ser de ao menos 1 mês.");
     }
 }

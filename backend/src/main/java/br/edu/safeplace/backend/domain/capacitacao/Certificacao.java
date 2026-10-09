@@ -1,13 +1,11 @@
 package br.edu.safeplace.backend.domain.capacitacao;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 
 public class Certificacao {
     /**
      * Antecedência do alerta de vencimento (UC02, regra 1; US10, regra 2).
      */
-    public static final int DIAS_ANTECEDENCIA_ALERTA = 30;
 
     private final Integer id;
     private final String nome;
@@ -59,11 +57,10 @@ public class Certificacao {
     }
 
     public StatusCertificacao calcularStatus(LocalDate dataReferencia) {
-        if (dataReferencia.isAfter(dataVencimento) || dataReferencia.isEqual(dataVencimento)) {
+        if (PrazoVencimento.estaVencido(dataReferencia, dataVencimento)) {
             return StatusCertificacao.VENCIDA;
         }
-        long diasParaVencer = ChronoUnit.DAYS.between(dataReferencia, dataVencimento);
-        if (diasParaVencer <= DIAS_ANTECEDENCIA_ALERTA) {
+        if (PrazoVencimento.estaProximoDoVencimento(dataReferencia, dataVencimento)) {
             return StatusCertificacao.PROXIMA_DO_VENCIMENTO;
         }
         return StatusCertificacao.EM_DIA;
