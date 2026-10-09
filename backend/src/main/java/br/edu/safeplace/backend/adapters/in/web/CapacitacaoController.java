@@ -1,8 +1,7 @@
 /*
  * Endpoints REST somente leitura de certificações e treinamentos (RF10, UC02, US10, issue #119):
  * listagem com filtro por situação, detalhes por colaborador, alertas de vencimento e consulta de
- * aptidão para uma tarefa. O cadastro não é exposto até a definição do fluxo e dos papéis de
- * escrita (#116, #126).
+ * aptidão para uma tarefa. O cadastro fica em CapacitacaoCadastroController (#192).
  */
 package br.edu.safeplace.backend.adapters.in.web;
 

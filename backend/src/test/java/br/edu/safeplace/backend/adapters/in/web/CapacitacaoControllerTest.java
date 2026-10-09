@@ -18,13 +18,16 @@ import br.edu.safeplace.backend.application.dto.capacitacao.AlertasCapacitacaoOu
 import br.edu.safeplace.backend.application.dto.capacitacao.CapacitacoesColaboradorOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.CertificacaoOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.ColaboradorCapacitacaoResumoOutputDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.ExigenciaCapacitacaoOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.PendenciaColaboradorOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.TreinamentoOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.ConsultaAptidaoOutputDTO;
 import br.edu.safeplace.backend.application.port.in.AlocarColaboradorTarefaUseCase;
 import br.edu.safeplace.backend.application.port.in.capacitacao.AcompanharCapacitacoesUseCase;
+import br.edu.safeplace.backend.application.port.in.capacitacao.CadastrarCapacitacaoUseCase;
 import br.edu.safeplace.backend.config.RestSegurancaTratadorExcecoes;
 import br.edu.safeplace.backend.config.SecurityConfig;
+import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
 import br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao;
 import br.edu.safeplace.backend.domain.capacitacao.StatusTreinamento;
 import br.edu.safeplace.backend.domain.tarefa.exception.TarefaNaoEncontradaException;
@@ -41,7 +44,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest({CapacitacaoController.class, UsuarioTratadorExcecoes.class, TarefaTratadorExcecoes.class})
+@WebMvcTest({CapacitacaoController.class, CapacitacaoCadastroController.class, UsuarioTratadorExcecoes.class, TarefaTratadorExcecoes.class})
 @Import({SecurityConfig.class, RestSegurancaTratadorExcecoes.class})
 class CapacitacaoControllerTest {
 
@@ -55,6 +58,9 @@ class CapacitacaoControllerTest {
 
     @MockitoBean
     private AlocarColaboradorTarefaUseCase alocarUseCase;
+
+    @MockitoBean
+    private CadastrarCapacitacaoUseCase cadastrarUseCase;
 
     @Test
     @WithMockUser(roles = "SUPERVISOR")
@@ -193,19 +199,69 @@ class CapacitacaoControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = {"GESTOR_SEGURANCA", "SUPERVISOR"})
-    @DisplayName("Escrita não é liberada a nenhum perfil enquanto o fluxo de cadastro não for aprovado")
-    void deveNegarEscrita() throws Exception {
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("#192: Gestor cadastra certificação, treinamento e exigência")
+    void gestorDeveCadastrar() throws Exception {
+        when(cadastrarUseCase.cadastrarCertificacao(any())).thenReturn(
+                new CertificacaoOutputDTO(1, "NR-35", StatusCertificacao.EM_DIA, VENCIMENTO.plusYears(1), VENCIMENTO.minusYears(1)));
+        when(cadastrarUseCase.cadastrarTreinamento(any())).thenReturn(new TreinamentoOutputDTO(
+                2, "NR-10", null, null, VENCIMENTO.minusDays(5), 8, 12, VENCIMENTO.plusMonths(12), StatusTreinamento.REALIZADO));
+        when(cadastrarUseCase.definirExigencia(any())).thenReturn(new ExigenciaCapacitacaoOutputDTO(
+                3, "NR-35", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, ExigenciaCapacitacao.TipoAlvo.TAREFA, 5));
+
+        mockMvc.perform(post("/api/capacitacoes/certificacoes").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"NR-35\",\"dataVencimento\":\"2027-10-20\",\"dataEmissao\":\"2025-10-20\",\"colaboradorId\":3}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1));
+        mockMvc.perform(post("/api/capacitacoes/treinamentos").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"NR-10\",\"dataRealizacao\":\"2026-10-15\",\"cargaHoraria\":8,\"validadeMeses\":12,\"colaboradoresIds\":[3]}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.validadeMeses").value(12))
+                .andExpect(jsonPath("$.status").value("REALIZADO"));
+        mockMvc.perform(post("/api/capacitacoes/exigencias").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nomeCapacitacao\":\"NR-35\",\"tipoCapacitacao\":\"CERTIFICACAO\",\"alvo\":\"TAREFA\",\"alvoId\":5}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.alvo").value("TAREFA"));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("#192: corpo inválido é recusado com 400 sem chamar o caso de uso")
+    void deveRecusarCorpoInvalido() throws Exception {
+        mockMvc.perform(post("/api/capacitacoes/certificacoes").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\" \",\"colaboradorId\":3}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/capacitacoes/treinamentos").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"NR-10\",\"dataRealizacao\":\"2026-10-15\",\"validadeMeses\":0,\"colaboradoresIds\":[]}"))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(cadastrarUseCase);
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("#192: Supervisor não cadastra capacitações")
+    void supervisorNaoDeveCadastrar() throws Exception {
         String corpo = "{\"nome\": \"NR-35\", \"colaboradorId\": 3}";
 
         mockMvc.perform(post("/api/capacitacoes/certificacoes").contentType(MediaType.APPLICATION_JSON).content(corpo))
                 .andExpect(status().isForbidden());
         mockMvc.perform(post("/api/capacitacoes/treinamentos").contentType(MediaType.APPLICATION_JSON).content(corpo))
                 .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/capacitacoes/exigencias").contentType(MediaType.APPLICATION_JSON).content(corpo))
+                .andExpect(status().isForbidden());
+        verifyNoInteractions(cadastrarUseCase);
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Métodos de escrita além do cadastro continuam negados")
+    void deveNegarOutrosMetodosDeEscrita() throws Exception {
+        String corpo = "{\"nome\": \"NR-35\", \"colaboradorId\": 3}";
+
         mockMvc.perform(put("/api/capacitacoes/colaboradores/3").contentType(MediaType.APPLICATION_JSON).content(corpo))
                 .andExpect(status().isForbidden());
         mockMvc.perform(delete("/api/capacitacoes/colaboradores/3"))
                 .andExpect(status().isForbidden());
-        verifyNoInteractions(acompanharUseCase, alocarUseCase);
+        verifyNoInteractions(acompanharUseCase, alocarUseCase, cadastrarUseCase);
     }
 }
