@@ -18,6 +18,10 @@ public record AlertasCapacitacaoOutputDTO(
         @Schema(description = "Certificações vencidas, da mais antiga para a mais recente")
         List<AlertaCertificacaoOutputDTO> vencidas,
         @Schema(description = "Colaboradores sem histórico de capacitação")
-        List<PendenciaColaboradorOutputDTO> pendencias
+        List<PendenciaColaboradorOutputDTO> pendencias,
+        @Schema(description = "Treinamentos com validade que vencem dentro da antecedência de alerta, do mais próximo para o mais distante")
+        List<AlertaTreinamentoOutputDTO> treinamentosProximosDoVencimento,
+        @Schema(description = "Treinamentos com validade vencidos, do mais antigo para o mais recente")
+        List<AlertaTreinamentoOutputDTO> treinamentosVencidos
 ) {
 }

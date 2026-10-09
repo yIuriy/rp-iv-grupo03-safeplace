@@ -14,6 +14,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import br.edu.safeplace.backend.application.dto.capacitacao.AlertaCertificacaoOutputDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.AlertaTreinamentoOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.AlertasCapacitacaoOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.CapacitacoesColaboradorOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.CertificacaoOutputDTO;
@@ -139,14 +140,20 @@ class CapacitacaoControllerTest {
                 List.of(new AlertaCertificacaoOutputDTO(2, "NR-10", StatusCertificacao.VENCIDA,
                         LocalDate.of(2026, 9, 1), LocalDate.of(2024, 9, 1), 4, "Bruno")),
                 List.of(new PendenciaColaboradorOutputDTO(5, "Carla",
-                        List.of("Pendência da trilha inicial de integração")))));
+                        List.of("Pendência da trilha inicial de integração"))),
+                List.of(new AlertaTreinamentoOutputDTO(7, "NR-33", StatusTreinamento.PROXIMO_DO_VENCIMENTO,
+                        LocalDate.of(2025, 10, 25), VENCIMENTO.plusDays(5), 3, "Ana")),
+                List.of(new AlertaTreinamentoOutputDTO(8, "NR-10", StatusTreinamento.VENCIDO,
+                        LocalDate.of(2025, 1, 10), LocalDate.of(2026, 1, 10), 4, "Bruno"))));
 
         mockMvc.perform(get("/api/capacitacoes/alertas"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.diasAntecedenciaAlerta").value(30))
                 .andExpect(jsonPath("$.proximasDoVencimento[0].colaboradorNome").value("Ana"))
                 .andExpect(jsonPath("$.vencidas[0].status").value("VENCIDA"))
-                .andExpect(jsonPath("$.pendencias[0].mensagens[0]").value("Pendência da trilha inicial de integração"));
+                .andExpect(jsonPath("$.pendencias[0].mensagens[0]").value("Pendência da trilha inicial de integração"))
+                .andExpect(jsonPath("$.treinamentosProximosDoVencimento[0].nome").value("NR-33"))
+                .andExpect(jsonPath("$.treinamentosVencidos[0].status").value("VENCIDO"));
     }
 
     @Test

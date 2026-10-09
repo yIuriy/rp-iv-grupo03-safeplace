@@ -141,6 +141,28 @@ class AcompanharCapacitacoesServiceTest {
     }
 
     @Test
+    @DisplayName("RF10: alertas incluem treinamentos com validade, nas fronteiras de 30 dias e do vencimento")
+    void deveAlertarTreinamentosComValidade() {
+        Treinamento proximo = new Treinamento(30, "NR-33", null, null, HOJE.minusMonths(12).plusDays(30), 8, 12, List.of(1, 2));
+        Treinamento foraDaJanela = new Treinamento(31, "NR-35", null, null, HOJE.minusMonths(12).plusDays(31), 8, 12, List.of(1));
+        Treinamento venceHoje = new Treinamento(32, "NR-10", null, null, HOJE.minusMonths(12), 8, 12, List.of(2));
+        Treinamento vencido = new Treinamento(33, "NR-12", null, null, HOJE.minusMonths(30), 8, 12, List.of(1));
+        Treinamento semValidade = new Treinamento(34, "Integração", null, null, HOJE.minusYears(10), 8, List.of(3));
+        when(consultarCapacitacao.listarTodosTreinamentos())
+                .thenReturn(List.of(proximo, foraDaJanela, venceHoje, vencido, semValidade));
+
+        AlertasCapacitacaoOutputDTO alertas = service.consultarAlertas();
+
+        assertThat(alertas.treinamentosProximosDoVencimento())
+                .extracting(a -> a.nome() + "/" + a.colaboradorNome())
+                .containsExactly("NR-33/Ana", "NR-33/Bruno");
+        assertThat(alertas.treinamentosProximosDoVencimento().get(0).dataVencimento()).isEqualTo(HOJE.plusDays(30));
+        assertThat(alertas.treinamentosVencidos())
+                .extracting(a -> a.nome() + "/" + a.colaboradorNome())
+                .containsExactly("NR-12/Ana", "NR-10/Bruno");
+    }
+
+    @Test
     @DisplayName("UC02 regra 1 e cenários I e III: alertas separam fronteiras de 30 dias, vencidas e pendências")
     void deveMontarAlertas() {
         AlertasCapacitacaoOutputDTO alertas = service.consultarAlertas();

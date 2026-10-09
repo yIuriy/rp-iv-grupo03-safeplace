@@ -249,6 +249,28 @@ class CapacitacaoApiIntegracaoTest {
     }
 
     @Test
+    @DisplayName("#192: vencimento de treinamento cadastrado pela API aparece nos alertas")
+    void deveAlertarVencimentoDeTreinamentoCadastrado() throws Exception {
+        LocalDate hoje = LocalDate.now();
+        String corpo = "{\"nome\": \"%s\", \"dataRealizacao\": \"%s\", \"validadeMeses\": 12, \"colaboradoresIds\": [%d]}";
+        mockMvc.perform(post("/api/capacitacoes/treinamentos").with(gestor()).contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo.formatted("Brigada Próxima", hoje.minusMonths(12).plusDays(30), proximoId)))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/api/capacitacoes/treinamentos").with(gestor()).contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo.formatted("Brigada Vencida", hoje.minusMonths(12), vencidoId)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/capacitacoes/alertas").with(supervisor()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.treinamentosProximosDoVencimento[?(@.colaboradorId == %d)].nome".formatted(proximoId),
+                        contains("Brigada Próxima")))
+                .andExpect(jsonPath("$.treinamentosVencidos[?(@.colaboradorId == %d)].nome".formatted(vencidoId),
+                        contains("Brigada Vencida")))
+                .andExpect(jsonPath("$.treinamentosVencidos[?(@.colaboradorId == %d)].dataVencimento".formatted(vencidoId),
+                        contains(hoje.toString())));
+    }
+
+    @Test
     @DisplayName("#192: cadastro com dados inválidos é recusado com 400 e nada é gravado")
     void deveRecusarCadastroInvalido() throws Exception {
         mockMvc.perform(post("/api/capacitacoes/certificacoes").with(gestor())
