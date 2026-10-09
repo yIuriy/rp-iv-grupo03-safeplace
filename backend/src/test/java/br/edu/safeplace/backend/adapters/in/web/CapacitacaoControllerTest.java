@@ -14,18 +14,23 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import br.edu.safeplace.backend.application.dto.capacitacao.AlertaCertificacaoOutputDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.AlertaTreinamentoOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.AlertasCapacitacaoOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.CapacitacoesColaboradorOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.CertificacaoOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.ColaboradorCapacitacaoResumoOutputDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.ExigenciaCapacitacaoOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.PendenciaColaboradorOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.TreinamentoOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.ConsultaAptidaoOutputDTO;
 import br.edu.safeplace.backend.application.port.in.AlocarColaboradorTarefaUseCase;
 import br.edu.safeplace.backend.application.port.in.capacitacao.AcompanharCapacitacoesUseCase;
+import br.edu.safeplace.backend.application.port.in.capacitacao.CadastrarCapacitacaoUseCase;
 import br.edu.safeplace.backend.config.RestSegurancaTratadorExcecoes;
 import br.edu.safeplace.backend.config.SecurityConfig;
+import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
 import br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao;
+import br.edu.safeplace.backend.domain.capacitacao.StatusTreinamento;
 import br.edu.safeplace.backend.domain.tarefa.exception.TarefaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.usuario.exception.UsuarioNaoEncontradoException;
 
@@ -40,7 +45,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest({CapacitacaoController.class, UsuarioTratadorExcecoes.class, TarefaTratadorExcecoes.class})
+@WebMvcTest({CapacitacaoController.class, CapacitacaoCadastroController.class, UsuarioTratadorExcecoes.class, TarefaTratadorExcecoes.class})
 @Import({SecurityConfig.class, RestSegurancaTratadorExcecoes.class})
 class CapacitacaoControllerTest {
 
@@ -54,6 +59,9 @@ class CapacitacaoControllerTest {
 
     @MockitoBean
     private AlocarColaboradorTarefaUseCase alocarUseCase;
+
+    @MockitoBean
+    private CadastrarCapacitacaoUseCase cadastrarUseCase;
 
     @Test
     @WithMockUser(roles = "SUPERVISOR")
@@ -87,7 +95,7 @@ class CapacitacaoControllerTest {
         CertificacaoOutputDTO certificacao = new CertificacaoOutputDTO(
                 1, "NR-35", StatusCertificacao.PROXIMA_DO_VENCIMENTO, VENCIMENTO, LocalDate.of(2025, 10, 20));
         TreinamentoOutputDTO treinamento = new TreinamentoOutputDTO(
-                2, "NR-10", "Riscos elétricos", "Eng. Paula", LocalDate.of(2026, 3, 10), 40, "REALIZADO");
+                2, "NR-10", "Riscos elétricos", "Eng. Paula", LocalDate.of(2026, 3, 10), 40, null, null, StatusTreinamento.REALIZADO);
         when(acompanharUseCase.consultarColaborador(3)).thenReturn(new CapacitacoesColaboradorOutputDTO(
                 3, "Ana", StatusCertificacao.PROXIMA_DO_VENCIMENTO, List.of(certificacao), List.of(treinamento),
                 List.of(), List.of(certificacao), false,
@@ -132,14 +140,20 @@ class CapacitacaoControllerTest {
                 List.of(new AlertaCertificacaoOutputDTO(2, "NR-10", StatusCertificacao.VENCIDA,
                         LocalDate.of(2026, 9, 1), LocalDate.of(2024, 9, 1), 4, "Bruno")),
                 List.of(new PendenciaColaboradorOutputDTO(5, "Carla",
-                        List.of("Pendência da trilha inicial de integração")))));
+                        List.of("Pendência da trilha inicial de integração"))),
+                List.of(new AlertaTreinamentoOutputDTO(7, "NR-33", StatusTreinamento.PROXIMO_DO_VENCIMENTO,
+                        LocalDate.of(2025, 10, 25), VENCIMENTO.plusDays(5), 3, "Ana")),
+                List.of(new AlertaTreinamentoOutputDTO(8, "NR-10", StatusTreinamento.VENCIDO,
+                        LocalDate.of(2025, 1, 10), LocalDate.of(2026, 1, 10), 4, "Bruno"))));
 
         mockMvc.perform(get("/api/capacitacoes/alertas"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.diasAntecedenciaAlerta").value(30))
                 .andExpect(jsonPath("$.proximasDoVencimento[0].colaboradorNome").value("Ana"))
                 .andExpect(jsonPath("$.vencidas[0].status").value("VENCIDA"))
-                .andExpect(jsonPath("$.pendencias[0].mensagens[0]").value("Pendência da trilha inicial de integração"));
+                .andExpect(jsonPath("$.pendencias[0].mensagens[0]").value("Pendência da trilha inicial de integração"))
+                .andExpect(jsonPath("$.treinamentosProximosDoVencimento[0].nome").value("NR-33"))
+                .andExpect(jsonPath("$.treinamentosVencidos[0].status").value("VENCIDO"));
     }
 
     @Test
@@ -192,19 +206,69 @@ class CapacitacaoControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = {"GESTOR_SEGURANCA", "SUPERVISOR"})
-    @DisplayName("Escrita não é liberada a nenhum perfil enquanto o fluxo de cadastro não for aprovado")
-    void deveNegarEscrita() throws Exception {
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("#192: Gestor cadastra certificação, treinamento e exigência")
+    void gestorDeveCadastrar() throws Exception {
+        when(cadastrarUseCase.cadastrarCertificacao(any())).thenReturn(
+                new CertificacaoOutputDTO(1, "NR-35", StatusCertificacao.EM_DIA, VENCIMENTO.plusYears(1), VENCIMENTO.minusYears(1)));
+        when(cadastrarUseCase.cadastrarTreinamento(any())).thenReturn(new TreinamentoOutputDTO(
+                2, "NR-10", null, null, VENCIMENTO.minusDays(5), 8, 12, VENCIMENTO.plusMonths(12), StatusTreinamento.REALIZADO));
+        when(cadastrarUseCase.definirExigencia(any())).thenReturn(new ExigenciaCapacitacaoOutputDTO(
+                3, "NR-35", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, ExigenciaCapacitacao.TipoAlvo.TAREFA, 5));
+
+        mockMvc.perform(post("/api/capacitacoes/certificacoes").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"NR-35\",\"dataVencimento\":\"2027-10-20\",\"dataEmissao\":\"2025-10-20\",\"colaboradorId\":3}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1));
+        mockMvc.perform(post("/api/capacitacoes/treinamentos").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"NR-10\",\"dataRealizacao\":\"2026-10-15\",\"cargaHoraria\":8,\"validadeMeses\":12,\"colaboradoresIds\":[3]}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.validadeMeses").value(12))
+                .andExpect(jsonPath("$.status").value("REALIZADO"));
+        mockMvc.perform(post("/api/capacitacoes/exigencias").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nomeCapacitacao\":\"NR-35\",\"tipoCapacitacao\":\"CERTIFICACAO\",\"alvo\":\"TAREFA\",\"alvoId\":5}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.alvo").value("TAREFA"));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("#192: corpo inválido é recusado com 400 sem chamar o caso de uso")
+    void deveRecusarCorpoInvalido() throws Exception {
+        mockMvc.perform(post("/api/capacitacoes/certificacoes").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\" \",\"colaboradorId\":3}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/capacitacoes/treinamentos").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"NR-10\",\"dataRealizacao\":\"2026-10-15\",\"validadeMeses\":0,\"colaboradoresIds\":[]}"))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(cadastrarUseCase);
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("#192: Supervisor não cadastra capacitações")
+    void supervisorNaoDeveCadastrar() throws Exception {
         String corpo = "{\"nome\": \"NR-35\", \"colaboradorId\": 3}";
 
         mockMvc.perform(post("/api/capacitacoes/certificacoes").contentType(MediaType.APPLICATION_JSON).content(corpo))
                 .andExpect(status().isForbidden());
         mockMvc.perform(post("/api/capacitacoes/treinamentos").contentType(MediaType.APPLICATION_JSON).content(corpo))
                 .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/capacitacoes/exigencias").contentType(MediaType.APPLICATION_JSON).content(corpo))
+                .andExpect(status().isForbidden());
+        verifyNoInteractions(cadastrarUseCase);
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Métodos de escrita além do cadastro continuam negados")
+    void deveNegarOutrosMetodosDeEscrita() throws Exception {
+        String corpo = "{\"nome\": \"NR-35\", \"colaboradorId\": 3}";
+
         mockMvc.perform(put("/api/capacitacoes/colaboradores/3").contentType(MediaType.APPLICATION_JSON).content(corpo))
                 .andExpect(status().isForbidden());
         mockMvc.perform(delete("/api/capacitacoes/colaboradores/3"))
                 .andExpect(status().isForbidden());
-        verifyNoInteractions(acompanharUseCase, alocarUseCase);
+        verifyNoInteractions(acompanharUseCase, alocarUseCase, cadastrarUseCase);
     }
 }

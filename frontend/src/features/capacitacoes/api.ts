@@ -1,7 +1,8 @@
-// Cliente tipado da API de capacitações (/api/capacitacoes, issue #119): listagem com filtro por
-// situação, detalhes do colaborador, alertas de vencimento e consulta de aptidão para uma tarefa
-// (RF10, UC02, US10). Só leitura: o cadastro aguarda o fluxo de #116 e #126.
+// Cliente tipado da API de capacitações (/api/capacitacoes, issues #119 e #192): listagem com filtro
+// por situação, detalhes do colaborador, alertas de vencimento, consulta de aptidão para uma tarefa,
+// cadastro de certificações, treinamentos e exigências, e tentativa de alocação (RF10, UC02, US10).
 
+import { isAxiosError } from 'axios'
 import { http } from '../../shared/api/https'
 import { mensagemDaApi, statusDoErro } from '../../shared/api/erros'
 
@@ -30,7 +31,12 @@ export type Certificacao = {
   dataEmissao: string
 }
 
-/** Atributos de `Treinamento` no diagrama de classes. Treinamento não tem data de validade. */
+/** Situação de `Treinamento.status`; os dois últimos valores só existem para treinamento com validade. */
+export type SituacaoTreinamento = 'PENDENTE' | 'REALIZADO' | 'PROXIMO_DO_VENCIMENTO' | 'VENCIDO'
+
+const situacoesTreinamento: readonly SituacaoTreinamento[] = ['PENDENTE', 'REALIZADO', 'PROXIMO_DO_VENCIMENTO', 'VENCIDO']
+
+/** Atributos de `Treinamento` no diagrama de classes, mais a validade opcional em meses (#192). */
 export type Treinamento = {
   id: number
   nome: string
@@ -38,7 +44,10 @@ export type Treinamento = {
   instrutor: string | null
   dataRealizacao: string
   cargaHoraria: number | null
-  status: 'REALIZADO' | 'PENDENTE'
+  /** Sem validade o treinamento não vence. */
+  validadeMeses: number | null
+  dataVencimento: string | null
+  status: SituacaoTreinamento
 }
 
 export type CapacitacoesColaborador = {
@@ -63,6 +72,16 @@ export type AlertaCertificacao = {
   colaboradorNome: string
 }
 
+export type AlertaTreinamento = {
+  treinamentoId: number
+  nome: string
+  status: SituacaoTreinamento
+  dataRealizacao: string
+  dataVencimento: string
+  colaboradorId: number
+  colaboradorNome: string
+}
+
 export type PendenciaColaborador = { colaboradorId: number; colaboradorNome: string; mensagens: string[] }
 
 export type AlertasCapacitacao = {
@@ -71,6 +90,8 @@ export type AlertasCapacitacao = {
   proximasDoVencimento: AlertaCertificacao[]
   vencidas: AlertaCertificacao[]
   pendencias: PendenciaColaborador[]
+  treinamentosProximosDoVencimento: AlertaTreinamento[]
+  treinamentosVencidos: AlertaTreinamento[]
 }
 
 /** Resultado informativo da regra de #117; não autoriza a alocação. */
@@ -154,7 +175,9 @@ function lerTreinamento(dado: unknown): Treinamento {
     instrutor: texto(b.instrutor),
     dataRealizacao: b.dataRealizacao as string,
     cargaHoraria: typeof b.cargaHoraria === 'number' ? b.cargaHoraria : null,
-    status: b.status === 'PENDENTE' ? 'PENDENTE' : 'REALIZADO',
+    validadeMeses: typeof b.validadeMeses === 'number' ? b.validadeMeses : null,
+    dataVencimento: texto(b.dataVencimento),
+    status: situacoesTreinamento.includes(b.status as SituacaoTreinamento) ? b.status as SituacaoTreinamento : 'REALIZADO',
   }
 }
 
@@ -190,6 +213,22 @@ function lerAlerta(dado: unknown): AlertaCertificacao {
   }
 }
 
+function lerAlertaTreinamento(dado: unknown): AlertaTreinamento {
+  const b = objeto(dado, 'Alerta de treinamento')
+  exigir(typeof b.treinamentoId === 'number' && typeof b.nome === 'string'
+    && situacoesTreinamento.includes(b.status as SituacaoTreinamento)
+    && typeof b.dataVencimento === 'string' && typeof b.colaboradorId === 'number', 'Alerta de treinamento')
+  return {
+    treinamentoId: b.treinamentoId as number,
+    nome: b.nome as string,
+    status: b.status as SituacaoTreinamento,
+    dataRealizacao: typeof b.dataRealizacao === 'string' ? b.dataRealizacao : '',
+    dataVencimento: b.dataVencimento as string,
+    colaboradorId: b.colaboradorId as number,
+    colaboradorNome: texto(b.colaboradorNome) ?? `Colaborador #${b.colaboradorId}`,
+  }
+}
+
 function lerPendencia(dado: unknown): PendenciaColaborador {
   const b = objeto(dado, 'Pendência')
   exigir(typeof b.colaboradorId === 'number', 'Pendência')
@@ -209,6 +248,8 @@ function lerAlertas(dado: unknown): AlertasCapacitacao {
     proximasDoVencimento: lista(b.proximasDoVencimento ?? [], lerAlerta, 'alertas'),
     vencidas: lista(b.vencidas ?? [], lerAlerta, 'alertas'),
     pendencias: lista(b.pendencias ?? [], lerPendencia, 'pendências'),
+    treinamentosProximosDoVencimento: lista(b.treinamentosProximosDoVencimento ?? [], lerAlertaTreinamento, 'alertas de treinamento'),
+    treinamentosVencidos: lista(b.treinamentosVencidos ?? [], lerAlertaTreinamento, 'alertas de treinamento'),
   }
 }
 
@@ -254,4 +295,66 @@ export function descreverFalha(erro: unknown, naoEncontrado: string): string {
   if (status === 404) return mensagemDaApi(erro) ?? naoEncontrado
   if (status === 400) return mensagemDaApi(erro) ?? 'A consulta foi recusada pelo servidor. Revise os dados e tente novamente.'
   return 'Não foi possível consultar agora. Verifique sua conexão ou tente novamente em alguns instantes.'
+}
+
+export type DadosCertificacao = { nome: string; dataEmissao: string; dataVencimento: string; colaboradorId: number }
+
+export type DadosTreinamento = {
+  nome: string
+  conteudo?: string
+  instrutor?: string
+  dataRealizacao: string
+  cargaHoraria?: number
+  validadeMeses?: number
+  colaboradoresIds: number[]
+}
+
+export type TipoCapacitacao = 'CERTIFICACAO' | 'TREINAMENTO'
+export type AlvoExigencia = 'TAREFA' | 'EPI'
+
+export type DadosExigencia = { nomeCapacitacao: string; tipoCapacitacao: TipoCapacitacao; alvo: AlvoExigencia; alvoId: number }
+
+export async function cadastrarCertificacao(dados: DadosCertificacao): Promise<Certificacao> {
+  const { data } = await http.post<unknown>('/capacitacoes/certificacoes', dados)
+  return lerCertificacao(data)
+}
+
+export async function cadastrarTreinamento(dados: DadosTreinamento): Promise<Treinamento> {
+  const { data } = await http.post<unknown>('/capacitacoes/treinamentos', dados)
+  return lerTreinamento(data)
+}
+
+export async function definirExigencia(dados: DadosExigencia): Promise<void> {
+  await http.post('/capacitacoes/exigencias', dados)
+}
+
+/** Resultado da tentativa de alocação: a API valida de novo as exigências no momento da confirmação. */
+export type ResultadoAlocacao =
+  | { alocada: true }
+  | { alocada: false; titulo: string; mensagem: string; impedimentos: string[] }
+
+export async function alocarColaborador(tarefaId: number, colaboradorId: number): Promise<ResultadoAlocacao> {
+  try {
+    await http.post(`/tarefas/${tarefaId}/alocacoes`, { colaboradorId })
+    return { alocada: true }
+  } catch (erro) {
+    if (statusDoErro(erro) !== 422) throw erro
+    const corpo: unknown = isAxiosError(erro) ? erro.response?.data : undefined
+    const impedimentos = corpo !== null && typeof corpo === 'object' ? textos((corpo as Bruto).impedimentos) : []
+    const colaboradorNaoAlocavel = corpo !== null && typeof corpo === 'object' && (corpo as Bruto).error === 'Colaborador Não Alocável'
+    return {
+      alocada: false,
+      titulo: colaboradorNaoAlocavel ? 'Esta pessoa não pode ser alocada' : 'Alocação impedida por capacitação',
+      mensagem: mensagemDaApi(erro) ?? 'O servidor recusou a alocação.',
+      impedimentos,
+    }
+  }
+}
+
+/** Mensagem para falhas do cadastro: perfil sem acesso, dados recusados ou erro de rede. */
+export function descreverFalhaCadastro(erro: unknown): string {
+  const status = statusDoErro(erro)
+  if (status === 403) return 'Seu perfil não tem permissão para cadastrar capacitações.'
+  if (status === 400) return mensagemDaApi(erro) ?? 'O servidor recusou os dados. Revise os campos e tente novamente.'
+  return 'O servidor não confirmou o cadastro. Verifique a conexão e tente novamente.'
 }

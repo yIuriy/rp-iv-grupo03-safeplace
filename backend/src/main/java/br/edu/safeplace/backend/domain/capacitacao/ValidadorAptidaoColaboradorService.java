@@ -1,11 +1,14 @@
 package br.edu.safeplace.backend.domain.capacitacao;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import br.edu.safeplace.backend.domain.capacitacao.exception.AlocacaoBloqueadaException;
+import br.edu.safeplace.backend.domain.capacitacao.exception.ColaboradorNaoAlocavelException;
 import br.edu.safeplace.backend.domain.tarefa.Tarefa;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 
@@ -25,6 +28,7 @@ public class ValidadorAptidaoColaboradorService {
      * @param exigencias Exigências de capacitação cadastradas para a tarefa.
      * @param dataReferencia Data base para verificação cronológica (hoje).
      * @throws br.edu.safeplace.backend.domain.tarefa.exception.TarefaSemClassificacaoException se a tarefa não for classificada.
+     * @throws ColaboradorNaoAlocavelException se a pessoa não tiver o perfil de colaborador.
      * @throws AlocacaoBloqueadaException se houver certificações vencidas ou treinamentos pendentes.
      */
     public void validarAptidaoParaTarefa(Colaborador colaborador, Tarefa tarefa,
@@ -37,6 +41,10 @@ public class ValidadorAptidaoColaboradorService {
         }
         if (tarefa == null) {
             throw new IllegalArgumentException("Tarefa é obrigatória para validação de aptidão.");
+        }
+
+        if (!colaborador.podeSerAlocado()) {
+            throw new ColaboradorNaoAlocavelException(colaborador.getNome());
         }
 
         // 1. UC11 Exceção I / US06 Regra 3: Tarefa sem classificação não aceita alocação
@@ -67,6 +75,11 @@ public class ValidadorAptidaoColaboradorService {
         if (colaborador == null) {
             impedimentos.add("colaborador não informado");
             return impedimentos;
+        }
+
+        if (!colaborador.podeSerAlocado()) {
+            impedimentos.add(new ColaboradorNaoAlocavelException(colaborador.getNome()).getMessage());
+            return Collections.unmodifiableList(impedimentos);
         }
 
         if (!tarefa.estaClassificada()) {
@@ -108,16 +121,26 @@ public class ValidadorAptidaoColaboradorService {
                 }
             } else if (exigencia.getTipoCapacitacao() == ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO) {
                 // UC02 Cenário Alternativo II: pendência de treinamento não realizado impede alocação
-                boolean realizou = treinos.stream()
-                        .anyMatch(t -> t.getNome().equalsIgnoreCase(nomeExigido)
-                                && "REALIZADO".equals(t.verificarStatus())
-                                && !t.getDataRealizacao().isAfter(dataBase));
-                if (!realizou) {
-                    impedimentos.add("treinamento obrigatório '" + nomeExigido + "' pendente ou não realizado");
+                List<Treinamento> mesmoNome = treinos.stream()
+                        .filter(t -> t.getNome().equalsIgnoreCase(nomeExigido))
+                        .toList();
+                boolean atende = mesmoNome.stream().anyMatch(t -> t.calcularStatus(dataBase).atendeExigencia());
+                if (!atende) {
+                    impedimentos.add(descreverPendenciaTreinamento(nomeExigido, mesmoNome, dataBase));
                 }
             }
         }
 
         return impedimentos;
+    }
+
+    private String descreverPendenciaTreinamento(String nomeExigido, List<Treinamento> mesmoNome, LocalDate dataBase) {
+        return mesmoNome.stream()
+                .filter(t -> t.calcularStatus(dataBase) == StatusTreinamento.VENCIDO)
+                .flatMap(t -> t.getDataVencimento().stream())
+                .max(Comparator.naturalOrder())
+                .map(vencimento -> "treinamento obrigatório '" + nomeExigido + "' vencido em "
+                        + vencimento.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
+                .orElse("treinamento obrigatório '" + nomeExigido + "' pendente ou não realizado");
     }
 }

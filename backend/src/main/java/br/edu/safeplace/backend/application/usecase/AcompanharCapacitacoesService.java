@@ -12,11 +12,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.edu.safeplace.backend.application.dto.capacitacao.AlertaCertificacaoOutputDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.AlertaTreinamentoOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.AlertasCapacitacaoOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.CapacitacoesColaboradorOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.CertificacaoOutputDTO;
@@ -28,7 +30,9 @@ import br.edu.safeplace.backend.application.port.in.capacitacao.AcompanharCapaci
 import br.edu.safeplace.backend.application.port.in.capacitacao.ConsultarCapacitacaoUseCase;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
+import br.edu.safeplace.backend.domain.capacitacao.PrazoVencimento;
 import br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao;
+import br.edu.safeplace.backend.domain.capacitacao.StatusTreinamento;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.exception.UsuarioNaoEncontradoException;
@@ -85,6 +89,7 @@ public class AcompanharCapacitacoesService implements AcompanharCapacitacoesUseC
 
     @Override
     public AlertasCapacitacaoOutputDTO consultarAlertas() {
+        LocalDate hoje = LocalDate.now();
         List<Colaborador> colaboradores = usuarioRepository.listarTodos();
         Map<Integer, String> nomes = new HashMap<>();
         colaboradores.forEach(c -> nomes.put(c.getId(), c.getNome()));
@@ -114,8 +119,28 @@ public class AcompanharCapacitacoesService implements AcompanharCapacitacoesUseC
                         p.obterMensagensAvisos()))
                 .toList();
 
-        return new AlertasCapacitacaoOutputDTO(LocalDate.now(), Certificacao.DIAS_ANTECEDENCIA_ALERTA,
-                proximas, vencidas, pendencias);
+        Map<StatusTreinamento, List<AlertaTreinamentoOutputDTO>> alertasTreinamento = alertarTreinamentos(hoje, nomes);
+
+        return new AlertasCapacitacaoOutputDTO(hoje, PrazoVencimento.DIAS_ANTECEDENCIA_ALERTA,
+                proximas, vencidas, pendencias,
+                alertasTreinamento.getOrDefault(StatusTreinamento.PROXIMO_DO_VENCIMENTO, List.of()),
+                alertasTreinamento.getOrDefault(StatusTreinamento.VENCIDO, List.of()));
+    }
+
+    private Map<StatusTreinamento, List<AlertaTreinamentoOutputDTO>> alertarTreinamentos(LocalDate hoje, Map<Integer, String> nomes) {
+        return consultarCapacitacao.listarTodosTreinamentos().stream()
+                .flatMap(treinamento -> {
+                    StatusTreinamento status = treinamento.calcularStatus(hoje);
+                    if (status != StatusTreinamento.VENCIDO && status != StatusTreinamento.PROXIMO_DO_VENCIMENTO) {
+                        return Stream.empty();
+                    }
+                    return treinamento.getColaboradoresIds().stream()
+                            .map(colaboradorId -> AlertaTreinamentoOutputDTO.deDominio(
+                                    treinamento, status, colaboradorId, nomes.get(colaboradorId)));
+                })
+                .sorted(Comparator.comparing(AlertaTreinamentoOutputDTO::dataVencimento)
+                        .thenComparing(a -> a.colaboradorNome() == null ? "" : a.colaboradorNome(), String.CASE_INSENSITIVE_ORDER))
+                .collect(Collectors.groupingBy(AlertaTreinamentoOutputDTO::status));
     }
 
     private ColaboradorCapacitacaoResumoOutputDTO resumir(Colaborador colaborador, List<Certificacao> certificacoes,

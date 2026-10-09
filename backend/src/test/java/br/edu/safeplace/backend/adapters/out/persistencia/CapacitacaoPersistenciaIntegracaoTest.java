@@ -16,6 +16,12 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 import br.edu.safeplace.backend.application.dto.capacitacao.PendenciasColaboradorDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.CertificacaoOutputDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.ExigenciaCapacitacaoOutputDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.TreinamentoOutputDTO;
+import br.edu.safeplace.backend.application.dto.input.CadastrarCertificacaoInputDTO;
+import br.edu.safeplace.backend.application.dto.input.CadastrarTreinamentoInputDTO;
+import br.edu.safeplace.backend.application.dto.input.DefinirExigenciaInputDTO;
 import br.edu.safeplace.backend.application.port.in.capacitacao.CadastrarCapacitacaoUseCase;
 import br.edu.safeplace.backend.application.port.in.capacitacao.ConsultarCapacitacaoUseCase;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
@@ -94,12 +100,13 @@ class CapacitacaoPersistenciaIntegracaoTest {
         LocalDate vencimento = hoje.plusMonths(12);
         LocalDate emissao = hoje.minusMonths(1);
 
-        Certificacao salva = cadastroService.cadastrarCertificacao("NR-35 Trabalho em Altura", vencimento, emissao, colab1Id);
+        CertificacaoOutputDTO salva = cadastroService.cadastrarCertificacao(
+                new CadastrarCertificacaoInputDTO("NR-35 Trabalho em Altura", vencimento, emissao, colab1Id));
 
-        assertThat(salva.getId()).isNotNull();
+        assertThat(salva.id()).isNotNull();
 
         // 1. Reconstrução completa dos atributos
-        Certificacao recuperada = repositoryPort.buscarCertificacaoPorId(salva.getId()).orElseThrow();
+        Certificacao recuperada = repositoryPort.buscarCertificacaoPorId(salva.id()).orElseThrow();
         assertThat(recuperada.getNome()).isEqualTo("NR-35 Trabalho em Altura");
         assertThat(recuperada.getDataVencimento()).isEqualTo(vencimento);
         assertThat(recuperada.getDataEmissao()).isEqualTo(emissao);
@@ -112,7 +119,7 @@ class CapacitacaoPersistenciaIntegracaoTest {
         // 3. Auditoria integrada (#121)
         int logs = jdbc.queryForObject(
                 "SELECT COUNT(*) FROM logs_auditoria WHERE entidade = 'Certificacao' AND entidade_id = ? AND tipo_operacao = 'CADASTRO'",
-                Integer.class, salva.getId());
+                Integer.class, salva.id());
         assertThat(logs).isEqualTo(1);
     }
 
@@ -122,36 +129,39 @@ class CapacitacaoPersistenciaIntegracaoTest {
         LocalDate hoje = LocalDate.now();
         LocalDate realizacao = hoje.minusDays(10);
 
-        Treinamento salvo = cadastroService.cadastrarTreinamento(
+        TreinamentoOutputDTO salvo = cadastroService.cadastrarTreinamento(new CadastrarTreinamentoInputDTO(
                 "Treinamento de Espaço Confinado",
                 "Conteúdo completo sobre ventilação, detecção de gases e resgate",
                 "Eng. Carlos Silva",
                 realizacao,
                 16,
+                12,
                 List.of(colab1Id, colab2Id)
-        );
+        ));
 
-        assertThat(salvo.getId()).isNotNull();
+        assertThat(salvo.id()).isNotNull();
 
         // Reconstrução integral
-        Treinamento recuperado = repositoryPort.buscarTreinamentoPorId(salvo.getId()).orElseThrow();
+        Treinamento recuperado = repositoryPort.buscarTreinamentoPorId(salvo.id()).orElseThrow();
         assertThat(recuperado.getNome()).isEqualTo("Treinamento de Espaço Confinado");
         assertThat(recuperado.getConteudo()).isEqualTo("Conteúdo completo sobre ventilação, detecção de gases e resgate");
         assertThat(recuperado.getInstrutor()).isEqualTo("Eng. Carlos Silva");
         assertThat(recuperado.getDataRealizacao()).isEqualTo(realizacao);
         assertThat(recuperado.getCargaHoraria()).isEqualTo(16);
+        assertThat(recuperado.getValidadeMeses()).isEqualTo(12);
+        assertThat(recuperado.getDataVencimento()).contains(realizacao.plusMonths(12));
         assertThat(recuperado.getColaboradoresIds()).containsExactlyInAnyOrder(colab1Id, colab2Id);
 
         // Tabela associativa treinamentos_colaboradores no PostgreSQL
         int associacoes = jdbc.queryForObject(
                 "SELECT COUNT(*) FROM treinamentos_colaboradores WHERE treinamento_id = ?",
-                Integer.class, salvo.getId());
+                Integer.class, salvo.id());
         assertThat(associacoes).isEqualTo(2);
 
         // Auditoria integrada (#121)
         int logs = jdbc.queryForObject(
                 "SELECT COUNT(*) FROM logs_auditoria WHERE entidade = 'Treinamento' AND entidade_id = ? AND tipo_operacao = 'CADASTRO'",
-                Integer.class, salvo.getId());
+                Integer.class, salvo.id());
         assertThat(logs).isEqualTo(1);
     }
 
@@ -179,7 +189,7 @@ class CapacitacaoPersistenciaIntegracaoTest {
                 .anyMatch(msg -> msg.contains("vencida(s) necessitando de renovação imediata"));
 
         // 3. Regra 1: Próxima do vencimento em 30 dias (ex.: vence em 15 dias)
-        cadastroService.cadastrarCertificacao("NR-35 Alerta", hoje.plusDays(15), hoje.minusMonths(11), colab2Id);
+        cadastroService.cadastrarCertificacao(new CadastrarCertificacaoInputDTO("NR-35 Alerta", hoje.plusDays(15), hoje.minusMonths(11), colab2Id));
         PendenciasColaboradorDTO pendenciaProxima = consultaService.consultarPendenciasColaborador(colab2Id);
         assertThat(pendenciaProxima.certificacoesProximasVencimento()).isEqualTo(1);
         assertThat(pendenciaProxima.possuiPendenciasImpeditivas()).isFalse();
@@ -187,7 +197,7 @@ class CapacitacaoPersistenciaIntegracaoTest {
                 .anyMatch(msg -> msg.contains("próxima(s) do vencimento (30 dias)"));
 
         // 4. Em dia (vence em 180 dias)
-        cadastroService.cadastrarCertificacao("NR-33 Espaço Confinado", hoje.plusDays(180), hoje.minusMonths(1), colab3Id);
+        cadastroService.cadastrarCertificacao(new CadastrarCertificacaoInputDTO("NR-33 Espaço Confinado", hoje.plusDays(180), hoje.minusMonths(1), colab3Id));
         PendenciasColaboradorDTO pendenciaEmDia = consultaService.consultarPendenciasColaborador(colab3Id);
         assertThat(pendenciaEmDia.certificacoesEmDia()).isEqualTo(1);
         assertThat(pendenciaEmDia.certificacoesVencidas()).isZero();
@@ -206,11 +216,13 @@ class CapacitacaoPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Critério 5: Gravação de Exigências de Capacitação para Tarefa e EPI gera logs de auditoria (#121)")
     void definicaoDeExigenciasGeraPersistenciaEAuditoria() {
-        ExigenciaCapacitacao exTarefa = cadastroService.definirExigenciaTarefa("NR-35", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, 10);
-        ExigenciaCapacitacao exEpi = cadastroService.definirExigenciaEpi("Treinamento de Cinto", ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO, 20);
+        ExigenciaCapacitacaoOutputDTO exTarefa = cadastroService.definirExigencia(new DefinirExigenciaInputDTO(
+                "NR-35", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, ExigenciaCapacitacao.TipoAlvo.TAREFA, 10));
+        ExigenciaCapacitacaoOutputDTO exEpi = cadastroService.definirExigencia(new DefinirExigenciaInputDTO(
+                "Treinamento de Cinto", ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO, ExigenciaCapacitacao.TipoAlvo.EPI, 20));
 
-        assertThat(exTarefa.getId()).isNotNull();
-        assertThat(exEpi.getId()).isNotNull();
+        assertThat(exTarefa.id()).isNotNull();
+        assertThat(exEpi.id()).isNotNull();
 
         List<ExigenciaCapacitacao> exigenciasTarefa = repositoryPort.buscarExigenciasPorAlvo(ExigenciaCapacitacao.TipoAlvo.TAREFA, 10);
         assertThat(exigenciasTarefa).hasSize(1);
@@ -223,7 +235,7 @@ class CapacitacaoPersistenciaIntegracaoTest {
         // RNF05 (#193): logs_auditoria não aceita DELETE; conta só os registros destas exigências.
         int logs = jdbc.queryForObject(
                 "SELECT COUNT(*) FROM logs_auditoria WHERE entidade = 'ExigenciaCapacitacao' AND entidade_id IN (?, ?)",
-                Integer.class, exTarefa.getId(), exEpi.getId());
+                Integer.class, exTarefa.id(), exEpi.id());
         assertThat(logs).isEqualTo(2);
     }
 }

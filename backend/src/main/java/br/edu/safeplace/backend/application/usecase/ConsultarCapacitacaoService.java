@@ -121,7 +121,7 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
             } else if (exigencia.getTipoCapacitacao() == ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO) {
                 boolean realizou = treinamentos.stream()
                         .anyMatch(t -> t.getNome().equalsIgnoreCase(nomeExigido)
-                                && "REALIZADO".equals(t.verificarStatus()));
+                                && t.calcularStatus(hoje).atendeExigencia());
                 if (!realizou) {
                     impedimentos.add("treinamento " + nomeExigido + " não registrado");
                 }

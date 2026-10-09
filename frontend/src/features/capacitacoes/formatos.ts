@@ -2,7 +2,7 @@
 // da ausência de certificações e da antecedência do alerta.
 
 import type { FeedbackTone } from '../../shared/components'
-import type { ResumoColaborador, SituacaoCertificacao } from './api'
+import type { ResumoColaborador, SituacaoCertificacao, SituacaoTreinamento } from './api'
 
 export const rotuloDaSituacao: Record<SituacaoCertificacao, string> = {
   EM_DIA: 'Em dia',
@@ -14,6 +14,20 @@ export const tomDaSituacao: Record<SituacaoCertificacao, FeedbackTone> = {
   EM_DIA: 'success',
   PROXIMA_DO_VENCIMENTO: 'warning',
   VENCIDA: 'danger',
+}
+
+export const rotuloDaSituacaoTreinamento: Record<SituacaoTreinamento, string> = {
+  PENDENTE: 'Pendente',
+  REALIZADO: 'Realizado',
+  PROXIMO_DO_VENCIMENTO: 'Próximo do vencimento',
+  VENCIDO: 'Vencido',
+}
+
+export const tomDaSituacaoTreinamento: Record<SituacaoTreinamento, FeedbackTone> = {
+  PENDENTE: 'warning',
+  REALIZADO: 'success',
+  PROXIMO_DO_VENCIMENTO: 'warning',
+  VENCIDO: 'danger',
 }
 
 /** Rótulo das opções do filtro (UC02, cenário alternativo IV), com o prazo do alerta. */

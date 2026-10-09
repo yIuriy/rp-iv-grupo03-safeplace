@@ -12,10 +12,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import br.edu.safeplace.backend.domain.capacitacao.exception.AlocacaoBloqueadaException;
+import br.edu.safeplace.backend.domain.capacitacao.exception.ColaboradorNaoAlocavelException;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.tarefa.Tarefa;
 import br.edu.safeplace.backend.domain.tarefa.exception.TarefaSemClassificacaoException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
+import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
+import br.edu.safeplace.backend.domain.usuario.Supervisor;
 
 @DisplayName("ValidadorAptidaoColaboradorService - Regras de Domínio de Aptidão e Bloqueio")
 class ValidadorAptidaoColaboradorServiceTest {
@@ -160,5 +163,56 @@ class ValidadorAptidaoColaboradorServiceTest {
         assertThat(impedimentos).hasSize(2);
         assertThat(impedimentos).anyMatch(msg -> msg.contains("sem grau de periculosidade classificado"));
         assertThat(impedimentos).anyMatch(msg -> msg.contains("NR-10"));
+    }
+
+    @Test
+    @DisplayName("Bloqueia alocação com treinamento obrigatório vencido e informa a data de vencimento")
+    void deveBloquearComTreinamentoVencido() {
+        Tarefa tarefa = new Tarefa(10, "Espaço Confinado", NivelPerigo.ALTO, hoje.atStartOfDay());
+        ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(1, "NR-33 Vigia",
+                ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO, 10, ExigenciaCapacitacao.TipoAlvo.TAREFA);
+        Treinamento vencido = new Treinamento(1, "NR-33 Vigia", "Prática", "Instrutor A",
+                hoje.minusMonths(13), 16, 12, List.of(colaborador.getId()));
+
+        assertThatThrownBy(() -> validador.validarAptidaoParaTarefa(colaborador, tarefa,
+                List.of(), List.of(vencido), List.of(exigencia), hoje))
+                .isInstanceOf(AlocacaoBloqueadaException.class)
+                .hasMessageContaining("NR-33 Vigia")
+                .hasMessageContaining("vencido em " + hoje.minusMonths(1).format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+    }
+
+    @Test
+    @DisplayName("Treinamento próximo do vencimento ainda permite alocação")
+    void devePermitirAlocacaoComTreinamentoProximoDoVencimento() {
+        Tarefa tarefa = new Tarefa(10, "Espaço Confinado", NivelPerigo.ALTO, hoje.atStartOfDay());
+        ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(1, "NR-33 Vigia",
+                ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO, 10, ExigenciaCapacitacao.TipoAlvo.TAREFA);
+        Treinamento proximo = new Treinamento(1, "NR-33 Vigia", "Prática", "Instrutor A",
+                hoje.minusMonths(12).plusDays(10), 16, 12, List.of(colaborador.getId()));
+
+        assertThatCode(() -> validador.validarAptidaoParaTarefa(colaborador, tarefa,
+                List.of(), List.of(proximo), List.of(exigencia), hoje))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Rejeita a alocação de supervisor, antes de avaliar as exigências")
+    void deveRejeitarAlocacaoDeSupervisor() {
+        Supervisor supervisor = Supervisor.novo("Maria Souza", "98765432100", LocalDate.of(1985, 5, 5), "maria@safeplace.com", "senha");
+        Tarefa tarefa = new Tarefa(10, "Espaço Confinado", NivelPerigo.ALTO, hoje.atStartOfDay());
+
+        assertThatThrownBy(() -> validador.validarAptidaoParaTarefa(supervisor, tarefa, List.of(), List.of(), List.of(), hoje))
+                .isInstanceOf(ColaboradorNaoAlocavelException.class)
+                .hasMessageContaining("Maria Souza");
+    }
+
+    @Test
+    @DisplayName("Consulta de aptidão informa que gestor não pode ser alocado")
+    void deveInformarImpedimentoParaGestorNaConsulta() {
+        GestorDeSeguranca gestor = GestorDeSeguranca.novo("Carlos Lima", "11122233344", LocalDate.of(1980, 3, 3), "carlos@safeplace.com", "senha");
+        Tarefa tarefa = new Tarefa(10, "Espaço Confinado", NivelPerigo.ALTO, hoje.atStartOfDay());
+
+        assertThat(validador.obterImpedimentos(gestor, tarefa, List.of(), List.of(), List.of(), hoje))
+                .singleElement().asString().contains("Somente colaboradores");
     }
 }

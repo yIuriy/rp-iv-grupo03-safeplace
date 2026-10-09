@@ -28,6 +28,7 @@ import br.edu.safeplace.backend.suporte.PostgresDeTeste;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
@@ -91,7 +92,7 @@ class CapacitacaoApiIntegracaoTest {
         semHistoricoId = usuarioRepositorio.salvar(Colaborador.novo("Colaborador Sem Historico 119", CPF_SEM_HISTORICO, LocalDate.of(1992, 1, 1), null)).getId();
         soTreinamentoId = usuarioRepositorio.salvar(Colaborador.novo("Colaborador So Treinamento 119", CPF_SO_TREINAMENTO, LocalDate.of(1993, 1, 1), null)).getId();
 
-        // Dados de teste explicitamente identificados (#116): a escrita não é exposta pela API.
+        // Dados de teste explicitamente identificados; o cadastro pela API é coberto nos testes de #192.
         // A NR-35 vence hoje: na data de vencimento ela já está vencida para alertas e para aptidão.
         capacitacaoRepositorio.salvarCertificacao(new Certificacao(null, "NR-35 Trabalho em Altura", hoje, hoje.minusYears(2), vencidoId));
         capacitacaoRepositorio.salvarCertificacao(new Certificacao(null, "NR-10 Eletricidade", hoje.plusDays(30), hoje.minusYears(1), proximoId));
@@ -219,27 +220,145 @@ class CapacitacaoApiIntegracaoTest {
     }
 
     @Test
-    @DisplayName("Escrita de capacitações não é exposta a nenhum perfil")
-    void deveNegarEscrita() throws Exception {
+    @DisplayName("#192: Gestor cadastra certificação e treinamento com validade, e a consulta os reflete")
+    void gestorDeveCadastrarCertificacaoETreinamentoPelaApi() throws Exception {
+        LocalDate hoje = LocalDate.now();
         mockMvc.perform(post("/api/capacitacoes/certificacoes").with(gestor())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"nome\": \"NR-35\", \"colaboradorId\": %d}".formatted(semHistoricoId)))
-                .andExpect(status().isForbidden());
+                        .content("{\"nome\": \"NR-18 Obras\", \"dataVencimento\": \"%s\", \"dataEmissao\": \"%s\", \"colaboradorId\": %d}"
+                                .formatted(hoje.plusDays(10), hoje.minusYears(1), semHistoricoId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("PROXIMA_DO_VENCIMENTO"));
+        mockMvc.perform(post("/api/capacitacoes/treinamentos").with(gestor())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\": \"Primeiros Socorros\", \"dataRealizacao\": \"%s\", \"cargaHoraria\": 8, \"validadeMeses\": 12, \"colaboradoresIds\": [%d]}"
+                                .formatted(hoje.minusMonths(13), semHistoricoId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("VENCIDO"))
+                .andExpect(jsonPath("$.dataVencimento").value(hoje.minusMonths(1).toString()));
 
-        Integer certificacoes = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM certificacoes WHERE colaborador_id = ?", Integer.class, semHistoricoId);
-        assertThat(certificacoes).isZero();
+        mockMvc.perform(get("/api/capacitacoes/colaboradores/{id}", semHistoricoId).with(supervisor()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.certificacoes[0].nome").value("NR-18 Obras"))
+                .andExpect(jsonPath("$.treinamentos[0].validadeMeses").value(12))
+                .andExpect(jsonPath("$.treinamentos[0].status").value("VENCIDO"));
+
+        Integer logs = jdbc.queryForObject("SELECT COUNT(*) FROM logs_auditoria WHERE entidade IN ('Certificacao', 'Treinamento') "
+                + "AND justificativa IN ('Cadastro de certificação: NR-18 Obras', 'Cadastro de treinamento: Primeiros Socorros')", Integer.class);
+        assertThat(logs).isGreaterThanOrEqualTo(2);
     }
 
     @Test
-    @DisplayName("O contrato OpenAPI publica as consultas de capacitação e nenhuma operação de escrita")
-    void contratoOpenApiPublicaSomenteConsultas() throws Exception {
+    @DisplayName("#192: vencimento de treinamento cadastrado pela API aparece nos alertas")
+    void deveAlertarVencimentoDeTreinamentoCadastrado() throws Exception {
+        LocalDate hoje = LocalDate.now();
+        String corpo = "{\"nome\": \"%s\", \"dataRealizacao\": \"%s\", \"validadeMeses\": 12, \"colaboradoresIds\": [%d]}";
+        mockMvc.perform(post("/api/capacitacoes/treinamentos").with(gestor()).contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo.formatted("Brigada Próxima", hoje.minusMonths(12).plusDays(30), proximoId)))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/api/capacitacoes/treinamentos").with(gestor()).contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo.formatted("Brigada Vencida", hoje.minusMonths(12), vencidoId)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/capacitacoes/alertas").with(supervisor()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.treinamentosProximosDoVencimento[?(@.colaboradorId == %d)].nome".formatted(proximoId),
+                        contains("Brigada Próxima")))
+                .andExpect(jsonPath("$.treinamentosVencidos[?(@.colaboradorId == %d)].nome".formatted(vencidoId),
+                        contains("Brigada Vencida")))
+                .andExpect(jsonPath("$.treinamentosVencidos[?(@.colaboradorId == %d)].dataVencimento".formatted(vencidoId),
+                        contains(hoje.toString())));
+    }
+
+    @Test
+    @DisplayName("#192: cadastro com dados inválidos é recusado com 400 e nada é gravado")
+    void deveRecusarCadastroInvalido() throws Exception {
+        mockMvc.perform(post("/api/capacitacoes/certificacoes").with(gestor())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\": \"NR-35\", \"dataVencimento\": \"%s\", \"dataEmissao\": \"%s\", \"colaboradorId\": %d}"
+                                .formatted(LocalDate.now().minusDays(1), LocalDate.now().minusYears(1), semHistoricoId)))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/capacitacoes/treinamentos").with(gestor())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\": \"NR-35\", \"dataRealizacao\": \"%s\", \"colaboradoresIds\": [%d]}"
+                                .formatted(LocalDate.now().plusDays(1), semHistoricoId)))
+                .andExpect(status().isBadRequest());
+
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM certificacoes WHERE colaborador_id = ?", Integer.class, semHistoricoId)).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM treinamentos_colaboradores WHERE colaborador_id = ?", Integer.class, semHistoricoId)).isZero();
+    }
+
+    @Test
+    @DisplayName("#192: Supervisor não cadastra capacitações")
+    void supervisorNaoDeveCadastrar() throws Exception {
+        mockMvc.perform(post("/api/capacitacoes/certificacoes").with(supervisor())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\": \"NR-35\", \"dataVencimento\": \"%s\", \"dataEmissao\": \"%s\", \"colaboradorId\": %d}"
+                                .formatted(LocalDate.now().plusYears(1), LocalDate.now().minusYears(1), semHistoricoId)))
+                .andExpect(status().isForbidden());
+
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM certificacoes WHERE colaborador_id = ?", Integer.class, semHistoricoId)).isZero();
+    }
+
+    @Test
+    @DisplayName("#192: exigência cadastrada pela API com treinamento vencido bloqueia a alocação com a data de vencimento")
+    void deveBloquearAlocacaoPorTreinamentoVencido() throws Exception {
+        mockMvc.perform(post("/api/capacitacoes/exigencias").with(gestor())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nomeCapacitacao\": \"Primeiros Socorros\", \"tipoCapacitacao\": \"TREINAMENTO\", \"alvo\": \"TAREFA\", \"alvoId\": %d}"
+                                .formatted(tarefaId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.alvo").value("TAREFA"));
+        mockMvc.perform(post("/api/capacitacoes/treinamentos").with(gestor())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\": \"Primeiros Socorros\", \"dataRealizacao\": \"%s\", \"validadeMeses\": 12, \"colaboradoresIds\": [%d]}"
+                                .formatted(LocalDate.now().minusMonths(13), semHistoricoId)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/capacitacoes/colaboradores/{id}/aptidao", semHistoricoId)
+                        .param("tarefaId", tarefaId.toString()).with(supervisor()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.apto").value(false))
+                .andExpect(jsonPath("$.impedimentos[*]", hasItem(containsString("treinamento obrigatório 'Primeiros Socorros' vencido em"))));
+        mockMvc.perform(post("/api/tarefas/{id}/alocacoes", tarefaId).with(gestor())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"colaboradorId\": %d}".formatted(semHistoricoId)))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error").value("Alocação Bloqueada"))
+                .andExpect(jsonPath("$.impedimentos[*]", hasItem(containsString("vencido em"))));
+    }
+
+    @Test
+    @DisplayName("#192: a alocação aceita só colaboradores; gestor e supervisor são recusados")
+    void deveRecusarAlocacaoDeGestor() throws Exception {
+        Integer gestorId = jdbc.queryForObject("SELECT id FROM usuarios WHERE cpf = ?", Integer.class, CPF_GESTOR);
+
+        mockMvc.perform(post("/api/tarefas/{id}/alocacoes", tarefaId).with(gestor())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"colaboradorId\": %d}".formatted(gestorId)))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error").value("Colaborador Não Alocável"));
+        mockMvc.perform(get("/api/capacitacoes/colaboradores/{id}/aptidao", gestorId)
+                        .param("tarefaId", tarefaId.toString()).with(supervisor()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.apto").value(false))
+                .andExpect(jsonPath("$.impedimentos[0]", containsString("Somente colaboradores")));
+
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM tarefas_alocacoes WHERE tarefa_id = ?", Integer.class, tarefaId)).isZero();
+    }
+
+    @Test
+    @DisplayName("O contrato OpenAPI publica as consultas e o cadastro de capacitações")
+    void contratoOpenApiPublicaConsultasECadastro() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paths['/api/capacitacoes/colaboradores'].get").exists())
                 .andExpect(jsonPath("$.paths['/api/capacitacoes/colaboradores/{colaboradorId}'].get").exists())
                 .andExpect(jsonPath("$.paths['/api/capacitacoes/alertas'].get").exists())
                 .andExpect(jsonPath("$.paths['/api/capacitacoes/colaboradores/{colaboradorId}/aptidao'].get").exists())
+                .andExpect(jsonPath("$.paths['/api/capacitacoes/certificacoes'].post").exists())
+                .andExpect(jsonPath("$.paths['/api/capacitacoes/treinamentos'].post").exists())
+                .andExpect(jsonPath("$.paths['/api/capacitacoes/exigencias'].post").exists())
                 .andExpect(jsonPath("$.paths['/api/capacitacoes/colaboradores'].post").doesNotExist())
                 .andExpect(jsonPath("$.components.schemas.TreinamentoOutputDTO.properties.cargaHoraria.type").value("integer"))
                 .andExpect(jsonPath("$.components.schemas.CertificacaoOutputDTO.properties.dataVencimento.format").value("date"));

@@ -11,7 +11,15 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
+import br.edu.safeplace.backend.application.dto.capacitacao.CertificacaoOutputDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.ExigenciaCapacitacaoOutputDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.TreinamentoOutputDTO;
+import br.edu.safeplace.backend.application.dto.input.CadastrarCertificacaoInputDTO;
+import br.edu.safeplace.backend.application.dto.input.CadastrarTreinamentoInputDTO;
+import br.edu.safeplace.backend.application.dto.input.DefinirExigenciaInputDTO;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepositoryPort;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
@@ -36,11 +44,11 @@ class CadastrarCapacitacaoServiceTest {
     @DisplayName("Deve cadastrar certificação válida e registrar log de auditoria (#121)")
     void deveCadastrarCertificacaoEAuditar() {
         LocalDate hoje = LocalDate.now();
-        Certificacao cert = service.cadastrarCertificacao("NR-35 Trabalho em Altura", hoje.plusYears(1), hoje.minusDays(5), 10);
+        CertificacaoOutputDTO cert = service.cadastrarCertificacao(new CadastrarCertificacaoInputDTO("NR-35 Trabalho em Altura", hoje.plusYears(1), hoje.minusDays(5), 10));
 
         assertThat(cert).isNotNull();
-        assertThat(cert.getId()).isEqualTo(1);
-        assertThat(cert.getNome()).isEqualTo("NR-35 Trabalho em Altura");
+        assertThat(cert.id()).isEqualTo(1);
+        assertThat(cert.nome()).isEqualTo("NR-35 Trabalho em Altura");
         assertThat(repositorio.buscarCertificacoesPorColaborador(10)).hasSize(1);
 
         assertThat(auditoria.logs).hasSize(1);
@@ -54,7 +62,7 @@ class CadastrarCapacitacaoServiceTest {
     @DisplayName("Deve recusar certificação com data de vencimento inválida (no passado) sem gerar auditoria")
     void deveRecusarCertificacaoVencidaNoCadastro() {
         LocalDate hoje = LocalDate.now();
-        assertThatThrownBy(() -> service.cadastrarCertificacao("NR-35", hoje.minusDays(1), hoje.minusMonths(1), 10))
+        assertThatThrownBy(() -> service.cadastrarCertificacao(new CadastrarCertificacaoInputDTO("NR-35", hoje.minusDays(1), hoje.minusMonths(1), 10)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Data de vencimento não pode ser no passado ou presente");
 
@@ -66,11 +74,12 @@ class CadastrarCapacitacaoServiceTest {
     @DisplayName("Deve cadastrar treinamento com colaboradores e registrar log de auditoria (#121)")
     void deveCadastrarTreinamentoEAuditar() {
         LocalDate hoje = LocalDate.now();
-        Treinamento treino = service.cadastrarTreinamento("Prevenção e Combate a Incêndio", "Módulo prático", "Instrutor Bombeiro", hoje.minusDays(2), 16, List.of(10, 20));
+        TreinamentoOutputDTO treino = service.cadastrarTreinamento(new CadastrarTreinamentoInputDTO("Prevenção e Combate a Incêndio", "Módulo prático", "Instrutor Bombeiro", hoje.minusDays(2), 16, 12, List.of(10, 20)));
 
         assertThat(treino).isNotNull();
-        assertThat(treino.getId()).isEqualTo(1);
-        assertThat(treino.getColaboradoresIds()).containsExactlyInAnyOrder(10, 20);
+        assertThat(treino.id()).isEqualTo(1);
+        assertThat(treino.validadeMeses()).isEqualTo(12);
+        assertThat(repositorio.treinamentos.get(0).getColaboradoresIds()).containsExactlyInAnyOrder(10, 20);
 
         assertThat(auditoria.logs).hasSize(1);
         LogAuditoria log = auditoria.logs.get(0);
@@ -79,29 +88,16 @@ class CadastrarCapacitacaoServiceTest {
         assertThat(log.getEntidadeId()).isEqualTo(1);
     }
 
-    @Test
-    @DisplayName("Deve definir exigência para tarefa e registrar auditoria (#121)")
-    void deveDefinirExigenciaTarefaEAuditar() {
-        ExigenciaCapacitacao ex = service.definirExigenciaTarefa("NR-10", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, 5);
+    @ParameterizedTest
+    @CsvSource({"TAREFA,5", "EPI,8"})
+    @DisplayName("Deve definir exigência para tarefa ou EPI e registrar auditoria (#121)")
+    void deveDefinirExigenciaEAuditar(ExigenciaCapacitacao.TipoAlvo alvo, int alvoId) {
+        ExigenciaCapacitacaoOutputDTO ex = service.definirExigencia(
+                new DefinirExigenciaInputDTO("NR-10", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, alvo, alvoId));
 
-        assertThat(ex).isNotNull();
-        assertThat(ex.getId()).isEqualTo(1);
-        assertThat(ex.getAlvo()).isEqualTo(ExigenciaCapacitacao.TipoAlvo.TAREFA);
-
-        assertThat(auditoria.logs).hasSize(1);
-        LogAuditoria log = auditoria.logs.get(0);
-        assertThat(log.getEntidade()).isEqualTo("ExigenciaCapacitacao");
-        assertThat(log.getEntidadeId()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Deve definir exigência para EPI e registrar auditoria (#121)")
-    void deveDefinirExigenciaEpiEAuditar() {
-        ExigenciaCapacitacao ex = service.definirExigenciaEpi("Treinamento de Respirador", ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO, 8);
-
-        assertThat(ex).isNotNull();
-        assertThat(ex.getId()).isEqualTo(1);
-        assertThat(ex.getAlvo()).isEqualTo(ExigenciaCapacitacao.TipoAlvo.EPI);
+        assertThat(ex.id()).isEqualTo(1);
+        assertThat(ex.alvo()).isEqualTo(alvo);
+        assertThat(ex.alvoId()).isEqualTo(alvoId);
 
         assertThat(auditoria.logs).hasSize(1);
         LogAuditoria log = auditoria.logs.get(0);
@@ -124,7 +120,7 @@ class CadastrarCapacitacaoServiceTest {
 
         @Override
         public Treinamento salvarTreinamento(Treinamento treinamento) {
-            Treinamento t = new Treinamento(idSequence++, treinamento.getNome(), treinamento.getConteudo(), treinamento.getInstrutor(), treinamento.getDataRealizacao(), treinamento.getCargaHoraria(), treinamento.getColaboradoresIds());
+            Treinamento t = new Treinamento(idSequence++, treinamento.getNome(), treinamento.getConteudo(), treinamento.getInstrutor(), treinamento.getDataRealizacao(), treinamento.getCargaHoraria(), treinamento.getValidadeMeses(), treinamento.getColaboradoresIds());
             treinamentos.add(t);
             return t;
         }

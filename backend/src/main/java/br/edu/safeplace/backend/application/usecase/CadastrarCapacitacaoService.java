@@ -1,13 +1,16 @@
 package br.edu.safeplace.backend.application.usecase;
 
-import java.time.LocalDate;
-import java.util.List;
-
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.edu.safeplace.backend.application.dto.capacitacao.CertificacaoOutputDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.ExigenciaCapacitacaoOutputDTO;
+import br.edu.safeplace.backend.application.dto.capacitacao.TreinamentoOutputDTO;
+import br.edu.safeplace.backend.application.dto.input.CadastrarCertificacaoInputDTO;
+import br.edu.safeplace.backend.application.dto.input.CadastrarTreinamentoInputDTO;
+import br.edu.safeplace.backend.application.dto.input.DefinirExigenciaInputDTO;
 import br.edu.safeplace.backend.application.port.in.capacitacao.CadastrarCapacitacaoUseCase;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepositoryPort;
@@ -33,39 +36,33 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
     }
 
     @Override
-    public Certificacao cadastrarCertificacao(String nome, LocalDate dataVencimento, LocalDate dataEmissao, Integer colaboradorId) {
-        Certificacao novaCertificacao = Certificacao.cadastrar(nome, dataVencimento, dataEmissao, colaboradorId);
-        Certificacao salva = capacitacaoRepository.salvarCertificacao(novaCertificacao);
+    public CertificacaoOutputDTO cadastrarCertificacao(CadastrarCertificacaoInputDTO entrada) {
+        Certificacao nova = Certificacao.cadastrar(entrada.nome(), entrada.dataVencimento(), entrada.dataEmissao(), entrada.colaboradorId());
+        Certificacao salva = capacitacaoRepository.salvarCertificacao(nova);
 
         registrarAuditoria("Certificacao", salva.getId(), "Cadastro de certificação: " + salva.getNome());
-        return salva;
+        return CertificacaoOutputDTO.deDominio(salva);
     }
 
     @Override
-    public Treinamento cadastrarTreinamento(String nome, String conteudo, String instrutor, LocalDate dataRealizacao, Integer cargaHoraria, List<Integer> colaboradoresIds) {
-        Treinamento novoTreinamento = Treinamento.cadastrar(nome, conteudo, instrutor, dataRealizacao, cargaHoraria, colaboradoresIds);
-        Treinamento salvo = capacitacaoRepository.salvarTreinamento(novoTreinamento);
+    public TreinamentoOutputDTO cadastrarTreinamento(CadastrarTreinamentoInputDTO entrada) {
+        Treinamento novo = Treinamento.cadastrar(entrada.nome(), entrada.conteudo(), entrada.instrutor(),
+                entrada.dataRealizacao(), entrada.cargaHoraria(), entrada.validadeMeses(), entrada.colaboradoresIds());
+        Treinamento salvo = capacitacaoRepository.salvarTreinamento(novo);
 
         registrarAuditoria("Treinamento", salvo.getId(), "Cadastro de treinamento: " + salvo.getNome());
-        return salvo;
+        return TreinamentoOutputDTO.deDominio(salvo);
     }
 
     @Override
-    public ExigenciaCapacitacao definirExigenciaTarefa(String nomeCapacitacao, ExigenciaCapacitacao.TipoCapacitacao tipo, Integer tarefaId) {
-        ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(null, nomeCapacitacao, tipo, tarefaId, ExigenciaCapacitacao.TipoAlvo.TAREFA);
+    public ExigenciaCapacitacaoOutputDTO definirExigencia(DefinirExigenciaInputDTO entrada) {
+        ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(null, entrada.nomeCapacitacao(),
+                entrada.tipoCapacitacao(), entrada.alvoId(), entrada.alvo());
         ExigenciaCapacitacao salva = capacitacaoRepository.salvarExigencia(exigencia);
 
-        registrarAuditoria("ExigenciaCapacitacao", salva.getId(), "Definição de exigência para tarefa " + tarefaId + ": " + salva.getNomeCapacitacao());
-        return salva;
-    }
-
-    @Override
-    public ExigenciaCapacitacao definirExigenciaEpi(String nomeCapacitacao, ExigenciaCapacitacao.TipoCapacitacao tipo, Integer epiId) {
-        ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(null, nomeCapacitacao, tipo, epiId, ExigenciaCapacitacao.TipoAlvo.EPI);
-        ExigenciaCapacitacao salva = capacitacaoRepository.salvarExigencia(exigencia);
-
-        registrarAuditoria("ExigenciaCapacitacao", salva.getId(), "Definição de exigência para EPI " + epiId + ": " + salva.getNomeCapacitacao());
-        return salva;
+        registrarAuditoria("ExigenciaCapacitacao", salva.getId(),
+                "Definição de exigência para " + salva.getAlvo() + " " + salva.getAlvoId() + ": " + salva.getNomeCapacitacao());
+        return ExigenciaCapacitacaoOutputDTO.deDominio(salva);
     }
 
     private void registrarAuditoria(String entidade, Integer entidadeId, String justificativa) {

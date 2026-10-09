@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
+import br.edu.safeplace.backend.domain.capacitacao.PrazoVencimento;
 import br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
 
@@ -72,7 +73,7 @@ public record PendenciasColaboradorDTO(
         }
         if (certificacoesProximasVencimento > 0) {
             avisos.add("Colaborador possui " + certificacoesProximasVencimento + " certificação(ões) próxima(s) do vencimento ("
-                    + Certificacao.DIAS_ANTECEDENCIA_ALERTA + " dias)");
+                    + PrazoVencimento.DIAS_ANTECEDENCIA_ALERTA + " dias)");
         }
         return avisos;
     }
