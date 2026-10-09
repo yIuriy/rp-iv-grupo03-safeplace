@@ -61,20 +61,22 @@ O único atributo novo persistido é `Treinamento.validadeMeses` (seção 8.2). 
 
 ## 7. Interface web (issue #120)
 
-Tela `/capacitacoes` em `frontend/src/features/capacitacoes/`, para Gestor de Segurança e Supervisor.
+Tela `/capacitacoes` em `frontend/src/features/capacitacoes/`, para Gestor de Segurança e Supervisor. A aba "Cadastro" e as ações de escrita seguem a seção 8 e são exclusivas do Gestor.
 
 | UC02 / US10 | Na tela | Endpoint |
 | --- | --- | --- |
 | Passos 1 e 2: acessar o menu e carregar a listagem | Menu "Capacitações", aba "Colaboradores" com a situação das certificações de cada pessoa | `GET /colaboradores` |
 | Cenário IV: filtrar por situação | Campo "Situação das certificações" (em dia, próximas do vencimento em até 30 dias, vencidas) | `GET /colaboradores?situacao=` |
-| Passos 3 a 7: selecionar e visualizar | Diálogo com certificações (nome, emissão, vencimento, situação) e treinamentos (nome, conteúdo, instrutor, realização, carga horária, situação), sem validade de treinamento | `GET /colaboradores/{id}` |
-| Regra 1 e cenário I: alertar vencimentos | Aviso-resumo ao abrir a tela e aba "Alertas de vencimento" | `GET /alertas` |
+| Passos 3 a 7: selecionar e visualizar | Diálogo com certificações (nome, emissão, vencimento, situação) e treinamentos (nome, conteúdo, instrutor, realização, carga horária, vencimento e situação; o vencimento só existe para treinamento com validade) | `GET /colaboradores/{id}` |
+| Regra 1 e cenário I: alertar vencimentos | Aviso-resumo ao abrir a tela e aba "Alertas de vencimento", com certificações e treinamentos com validade | `GET /alertas` |
 | Cenário III e US10, critério 5: ausência de histórico | "Sem certificações cadastradas" na listagem, no detalhe e nos alertas, com a pendência de integração | `GET /colaboradores`, `GET /alertas` |
 | Exceção I, cenário II e US10, critérios 3 e 4: impedimento | "Aptidão para tarefa": motivos do bloqueio informados pelo servidor | `GET /colaboradores/{id}/aptidao?tarefaId=` |
+| Exceção I (#192): tentar a alocação | Botão "Alocar" após a consulta; a recusa do servidor é exibida com os motivos, e a de gestor ou supervisor com motivo próprio | `POST /api/tarefas/{id}/alocacoes` |
+| Cadastro (#192) | Aba "Cadastro" (só Gestor): formulários de certificação, treinamento (com validade opcional) e exigência para tarefa ou EPI | `POST /certificacoes`, `/treinamentos`, `/exigencias` |
 
-- A tela só consulta. Não há cadastro (#116, #126) nem ação de alocação; a confirmação continua validada pelo servidor.
+- A consulta não grava nada. A alocação só é confirmada pelo servidor, que valida de novo as exigências, e o cadastro tem validação local igual à da API.
 - Não há cópia offline: a #105 não aprova cache de capacitações, e a #127 depende dela.
-- Aba, filtro e colaborador aberto ficam na URL e sobrevivem à recarga.
+- Aba, filtro e colaborador aberto ficam na URL e sobrevivem à recarga. A URL `?aba=cadastro` é ignorada para o Supervisor.
 
 ## 8. Fluxo de cadastro (issue #192)
 

@@ -9,7 +9,10 @@ import { useConsulta } from '../../shared/api/useConsulta'
 import { formatarData } from '../usuarios/formatos'
 import { consultarColaborador, descreverFalha, type CapacitacoesColaborador, type Certificacao, type Treinamento } from './api'
 import { AptidaoTarefa } from './AptidaoTarefa'
-import { plural, rotuloDaSituacao, situacaoDoResumo, textoSemCertificacoes, tomDaSituacao } from './formatos'
+import {
+  plural, rotuloDaSituacao, rotuloDaSituacaoTreinamento, situacaoDoResumo, textoSemCertificacoes, tomDaSituacao,
+  tomDaSituacaoTreinamento,
+} from './formatos'
 
 export function CapacitacoesColaboradorDialog({ colaboradorId, aoFechar }: {
   colaboradorId: number | null
@@ -102,7 +105,7 @@ function Treinamentos({ treinamentos }: { treinamentos: Treinamento[] }) {
       : <Table caption="Treinamentos do colaborador">
         <thead><tr>
           <th scope="col">Treinamento</th><th scope="col">Instrutor</th><th scope="col">Realização</th>
-          <th scope="col">Carga horária</th><th scope="col">Situação</th>
+          <th scope="col">Carga horária</th><th scope="col">Vencimento</th><th scope="col">Situação</th>
         </tr></thead>
         <tbody>{treinamentos.map(treinamento => <TableRow key={treinamento.id}>
           <td><strong>{treinamento.nome}</strong>
@@ -110,12 +113,15 @@ function Treinamentos({ treinamentos }: { treinamentos: Treinamento[] }) {
           <td>{treinamento.instrutor ?? 'Não informado'}</td>
           <td>{formatarData(treinamento.dataRealizacao)}</td>
           <td>{treinamento.cargaHoraria === null ? 'Não informada' : `${treinamento.cargaHoraria} h`}</td>
-          <td><Badge tone={treinamento.status === 'REALIZADO' ? 'success' : 'warning'}>
-            {treinamento.status === 'REALIZADO' ? 'Realizado' : 'Pendente'}</Badge></td>
+          <td>{treinamento.dataVencimento ? formatarData(treinamento.dataVencimento) : 'Não vence'}</td>
+          <td>
+            <Badge tone={tomDaSituacaoTreinamento[treinamento.status]}>{rotuloDaSituacaoTreinamento[treinamento.status]}</Badge>
+            {treinamento.status === 'VENCIDO' && <><br /><span className="sp-texto-secundario">Não atende a exigência da tarefa</span></>}
+          </td>
         </TableRow>)}</tbody>
       </Table>}
     <p className="sp-texto-secundario">
-      Treinamentos não têm data de validade. Os obrigatórios dependem da tarefa e aparecem na consulta de aptidão abaixo.
+      Só vencem os treinamentos cadastrados com validade. Os obrigatórios dependem da tarefa e aparecem na consulta de aptidão abaixo.
     </p>
   </section>
 }

@@ -6,7 +6,7 @@ const tabela = (page: Page) => page.getByRole('table', { name: 'Situação das c
 const dialogo = (page: Page) => page.getByRole('dialog', { name: 'Capacitações do colaborador' })
 const linha = (page: Page, nome: string) => tabela(page).getByRole('row').filter({ hasText: nome })
 
-test.describe('Capacitações: consulta, alertas e impedimentos (RF10, UC02, US10, RNF11)', () => {
+test.describe('Capacitações: consulta, alertas, cadastro e alocação (RF10, UC02, US10, RNF11)', () => {
   test('Gestor vê os colaboradores com a situação das certificações e a ausência de histórico', async ({ page }) => {
     await iniciarSessao(page, gestora)
     await simularApi(page)
@@ -20,7 +20,8 @@ test.describe('Capacitações: consulta, alertas e impedimentos (RF10, UC02, US1
     await expect(linha(page, 'Carla Dias').getByText('Pendência de integração e treinamentos admissionais')).toBeVisible()
     await expect(linha(page, 'Carla Dias').getByText('1 treinamento')).toBeVisible()
     await expect(linha(page, 'Ana Souza').getByText('2 certificações')).toBeVisible()
-    // Cadastro aguarda #116: não há ação de escrita na tela.
+    // O cadastro fica na aba própria; a lista não tem ação de escrita.
+    await expect(page.getByRole('tab', { name: 'Cadastro' })).toBeVisible()
     await expect(page.getByRole('button', { name: /Nova|Cadastrar|Registrar/ })).toHaveCount(0)
   })
 
@@ -120,14 +121,19 @@ test.describe('Capacitações: consulta, alertas e impedimentos (RF10, UC02, US1
     await expect(certificacoes.getByRole('row').filter({ hasText: 'NR-33' })).toContainText('Em dia')
 
     const treinamentos = dialog.getByRole('table', { name: 'Treinamentos do colaborador' })
-    // Treinamento não tem validade uniforme: nenhuma coluna de vencimento.
-    await expect(treinamentos.getByRole('columnheader')).toHaveText(['Treinamento', 'Instrutor', 'Realização', 'Carga horária', 'Situação'])
+    await expect(treinamentos.getByRole('columnheader')).toHaveText(['Treinamento', 'Instrutor', 'Realização', 'Carga horária', 'Vencimento', 'Situação'])
     const treino = treinamentos.getByRole('row').filter({ hasText: 'Integração de Segurança' })
     await expect(treino).toContainText('Normas internas e rotas de fuga')
     await expect(treino).toContainText('Eng. Paula')
     await expect(treino).toContainText('20/09/2026')
     await expect(treino).toContainText('8 h')
+    await expect(treino).toContainText('Não vence')
     await expect(treino).toContainText('Realizado')
+    // Só vence o treinamento cadastrado com validade (#192).
+    const comValidade = treinamentos.getByRole('row').filter({ hasText: 'Primeiros Socorros' })
+    await expect(comValidade).toContainText('01/09/2026')
+    await expect(comValidade).toContainText('Vencido')
+    await expect(comValidade).toContainText('Não atende a exigência da tarefa')
     await expect(page).toHaveURL(/colaborador=4/)
   })
 
@@ -143,7 +149,7 @@ test.describe('Capacitações: consulta, alertas e impedimentos (RF10, UC02, US1
     await expect(dialog.getByRole('table', { name: 'Treinamentos do colaborador' })).toContainText('Integração de Segurança')
   })
 
-  test('aptidão mostra o bloqueio com os motivos do servidor e não oferece alocação', async ({ page }) => {
+  test('aptidão mostra o bloqueio com os motivos do servidor, e a tentativa de alocação segue para o servidor', async ({ page }) => {
     await iniciarSessao(page, supervisor)
     const requisicoes = await simularApi(page)
     await page.goto('/capacitacoes?colaborador=4')
@@ -179,8 +185,52 @@ test.describe('Capacitações: consulta, alertas e impedimentos (RF10, UC02, US1
     await expect(dialog.getByText('Alocação impedida em "Limpeza de silo"')).toBeVisible()
     await expect(dialog.getByText("tarefa 'Limpeza de silo' sem grau de periculosidade classificado")).toBeVisible()
 
-    await expect(dialog.getByRole('button', { name: /Alocar|Confirmar/ })).toHaveCount(0)
+    // A tentativa de alocação só existe depois da consulta e nada é gravado sem o clique.
     expect(requisicoes.filter(r => r.metodo !== 'GET')).toHaveLength(0)
+  })
+
+  test('tentar a alocação com capacitação vencida mostra o bloqueio do servidor com os motivos', async ({ page }) => {
+    await iniciarSessao(page, supervisor)
+    const requisicoes = await simularApi(page, { alocacao: 'bloqueada' })
+    await page.goto('/capacitacoes?colaborador=4')
+
+    const dialog = dialogo(page)
+    await expect(dialog.getByRole('button', { name: /^Alocar/ })).toHaveCount(0)
+    await dialog.getByLabel('Tarefa pretendida').selectOption('30')
+    await dialog.getByRole('button', { name: 'Verificar aptidão' }).click()
+    await dialog.getByRole('button', { name: 'Alocar Ana Souza em Montagem de andaime' }).click()
+
+    await expect(dialog.getByText('Alocação impedida por capacitação')).toBeVisible()
+    await expect(dialog.getByText('Alocação bloqueada por pendências normativas de capacitação.')).toBeVisible()
+    await expect(dialog.getByText("certificação obrigatória 'NR-35 Trabalho em Altura' ausente ou vencida").last()).toBeVisible()
+    const tentativa = requisicoes.find(r => r.metodo === 'POST')
+    expect(tentativa?.caminho).toBe('/api/tarefas/30/alocacoes')
+    expect(tentativa?.corpo).toEqual({ colaboradorId: 4 })
+  })
+
+  test('alocação de colaborador apto é confirmada', async ({ page }) => {
+    await iniciarSessao(page, gestora)
+    await simularApi(page)
+    await page.goto('/capacitacoes?colaborador=5')
+
+    const dialog = dialogo(page)
+    await dialog.getByLabel('Tarefa pretendida').selectOption('31')
+    await dialog.getByRole('button', { name: 'Verificar aptidão' }).click()
+    await dialog.getByRole('button', { name: 'Alocar Bruno Lima em Inventário do almoxarifado' }).click()
+    await expect(dialog.getByText('Alocação confirmada')).toBeVisible()
+  })
+
+  test('alocação de gestor ou supervisor é recusada com motivo próprio', async ({ page }) => {
+    await iniciarSessao(page, gestora)
+    await simularApi(page, { alocacao: 'nao-alocavel' })
+    await page.goto('/capacitacoes?colaborador=5')
+
+    const dialog = dialogo(page)
+    await dialog.getByLabel('Tarefa pretendida').selectOption('31')
+    await dialog.getByRole('button', { name: 'Verificar aptidão' }).click()
+    await dialog.getByRole('button', { name: /^Alocar Bruno Lima/ }).click()
+    await expect(dialog.getByText('Esta pessoa não pode ser alocada')).toBeVisible()
+    await expect(dialog.getByText('Somente colaboradores podem ser alocados em tarefas.')).toBeVisible()
   })
 
   test('falha da aptidão é explicada sem apagar a escolha da tarefa', async ({ page }) => {
@@ -275,6 +325,132 @@ test.describe('Capacitações: consulta, alertas e impedimentos (RF10, UC02, US1
     await page.keyboard.press('ArrowRight')
     await expect(page.getByRole('tab', { name: 'Alertas de vencimento' })).toBeFocused()
     await expect(page.getByRole('table', { name: 'Certificações vencidas' })).toBeVisible()
+  })
+
+  test('alertas incluem treinamentos vencidos e próximos do vencimento, e o aviso os resume', async ({ page }) => {
+    await iniciarSessao(page, gestora)
+    await simularApi(page, { comAlertasTreinamento: true })
+    await page.goto('/capacitacoes')
+
+    const aviso = page.getByRole('status').filter({ hasText: 'Alertas de capacitação' })
+    await expect(aviso.getByRole('listitem')).toHaveText([
+      '1 certificação vencida', '1 certificação vence em até 30 dias', '2 colaboradores sem certificações',
+      '1 treinamento vencido', '1 treinamento vence em até 30 dias'])
+
+    await aviso.getByRole('button', { name: 'Ver alertas' }).click()
+    const vencidos = page.getByRole('table', { name: 'Treinamentos vencidos' })
+    await expect(vencidos.getByRole('row').filter({ hasText: 'Ana Souza' })).toContainText('Primeiros Socorros')
+    await expect(vencidos.getByRole('row').filter({ hasText: 'Ana Souza' })).toContainText('01/09/2026')
+    const proximos = page.getByRole('table', { name: 'Treinamentos que vencem em até 30 dias' })
+    await expect(proximos.getByRole('row').filter({ hasText: 'Bruno Lima' })).toContainText('Brigada de Incêndio')
+  })
+
+  test('Supervisor não tem a aba de cadastro, nem pela URL', async ({ page }) => {
+    await iniciarSessao(page, supervisor)
+    await simularApi(page)
+    await page.goto('/capacitacoes?aba=cadastro')
+
+    await expect(page.getByRole('tab', { name: 'Cadastro' })).toHaveCount(0)
+    await expect(page.getByRole('tab', { name: 'Colaboradores' })).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByRole('heading', { name: 'Cadastrar certificação' })).toHaveCount(0)
+  })
+
+  test('Gestor cadastra certificação, treinamento com validade e exigência', async ({ page }) => {
+    await iniciarSessao(page, gestora)
+    const requisicoes = await simularApi(page)
+    await page.goto('/capacitacoes')
+    await page.getByRole('tab', { name: 'Cadastro' }).click()
+    await expect(page).toHaveURL(/aba=cadastro/)
+
+    const certificacao = page.getByRole('region', { name: 'Cadastrar certificação' })
+    await certificacao.getByLabel('Colaborador').selectOption('5')
+    await certificacao.getByLabel('Certificação', { exact: true }).fill('NR-18 Obras')
+    await certificacao.getByLabel('Data de emissão').fill('2026-01-10')
+    await certificacao.getByLabel('Data de vencimento').fill('2028-01-10')
+    await certificacao.getByRole('button', { name: 'Cadastrar certificação' }).click()
+    await expect(certificacao.getByText('Certificação "NR-18 Obras" cadastrada.')).toBeVisible()
+    await expect(certificacao.getByLabel('Certificação', { exact: true })).toHaveValue('')
+
+    const treinamento = page.getByRole('region', { name: 'Cadastrar treinamento' })
+    await treinamento.getByLabel('Treinamento', { exact: true }).fill('Primeiros Socorros')
+    await treinamento.getByLabel('Data de realização').fill('2026-09-01')
+    await treinamento.getByLabel('Validade em meses (opcional)').fill('12')
+    await treinamento.getByRole('checkbox', { name: 'Ana Souza' }).check()
+    await treinamento.getByRole('checkbox', { name: 'Bruno Lima' }).check()
+    await treinamento.getByRole('button', { name: 'Cadastrar treinamento' }).click()
+    await expect(treinamento.getByText('Treinamento "Primeiros Socorros" cadastrado.')).toBeVisible()
+
+    const exigencia = page.getByRole('region', { name: 'Definir exigência' })
+    await exigencia.getByLabel('Certificação ou treinamento exigido').fill('NR-35 Trabalho em Altura')
+    await exigencia.getByLabel('Tipo').selectOption('CERTIFICACAO')
+    await exigencia.getByLabel('Exigida para').selectOption('TAREFA')
+    await exigencia.getByLabel('Tarefa', { exact: true }).selectOption('30')
+    await exigencia.getByRole('button', { name: 'Definir exigência' }).click()
+    await expect(exigencia.getByText('Exigência "NR-35 Trabalho em Altura" definida.')).toBeVisible()
+
+    const posts = requisicoes.filter(r => r.metodo === 'POST')
+    expect(posts.map(r => r.caminho)).toEqual(['/api/capacitacoes/certificacoes', '/api/capacitacoes/treinamentos', '/api/capacitacoes/exigencias'])
+    expect(posts[0].corpo).toEqual({ nome: 'NR-18 Obras', dataEmissao: '2026-01-10', dataVencimento: '2028-01-10', colaboradorId: 5 })
+    expect(posts[1].corpo).toEqual({ nome: 'Primeiros Socorros', dataRealizacao: '2026-09-01', validadeMeses: 12, colaboradoresIds: [4, 5] })
+    expect(posts[2].corpo).toEqual({ nomeCapacitacao: 'NR-35 Trabalho em Altura', tipoCapacitacao: 'CERTIFICACAO', alvo: 'TAREFA', alvoId: 30 })
+  })
+
+  test('exigência para EPI lista os EPIs cadastrados', async ({ page }) => {
+    await iniciarSessao(page, gestora)
+    const requisicoes = await simularApi(page)
+    await page.goto('/capacitacoes?aba=cadastro')
+
+    const exigencia = page.getByRole('region', { name: 'Definir exigência' })
+    await exigencia.getByLabel('Certificação ou treinamento exigido').fill('Treinamento de Cinto')
+    await exigencia.getByLabel('Tipo').selectOption('TREINAMENTO')
+    await exigencia.getByLabel('Exigida para').selectOption('EPI')
+    await exigencia.getByLabel('EPI', { exact: true }).selectOption('40')
+    await exigencia.getByRole('button', { name: 'Definir exigência' }).click()
+    await expect(exigencia.getByText('Exigência "Treinamento de Cinto" definida.')).toBeVisible()
+    expect(requisicoes.find(r => r.metodo === 'POST')?.corpo)
+      .toEqual({ nomeCapacitacao: 'Treinamento de Cinto', tipoCapacitacao: 'TREINAMENTO', alvo: 'EPI', alvoId: 40 })
+  })
+
+  test('cadastro com campos inválidos é barrado no navegador, com foco no primeiro erro', async ({ page }) => {
+    await iniciarSessao(page, gestora)
+    const requisicoes = await simularApi(page)
+    await page.goto('/capacitacoes?aba=cadastro')
+
+    const certificacao = page.getByRole('region', { name: 'Cadastrar certificação' })
+    await certificacao.getByLabel('Data de vencimento').fill('2020-01-01')
+    await certificacao.getByRole('button', { name: 'Cadastrar certificação' }).click()
+    await expect(certificacao.getByText('Selecione o colaborador titular.')).toBeVisible()
+    await expect(certificacao.getByText('Informe o nome da certificação.')).toBeVisible()
+    await expect(certificacao.getByText('A data de vencimento deve ser posterior a hoje.')).toBeVisible()
+    await expect(certificacao.getByLabel('Colaborador')).toBeFocused()
+
+    const treinamento = page.getByRole('region', { name: 'Cadastrar treinamento' })
+    await treinamento.getByLabel('Validade em meses (opcional)').fill('0')
+    await treinamento.getByRole('button', { name: 'Cadastrar treinamento' }).click()
+    await expect(treinamento.getByText('A validade deve ser de ao menos 1 mês.')).toBeVisible()
+    await expect(treinamento.getByText('Selecione ao menos um colaborador.')).toBeVisible()
+
+    const exigencia = page.getByRole('region', { name: 'Definir exigência' })
+    await exigencia.getByRole('button', { name: 'Definir exigência' }).click()
+    await expect(exigencia.getByText('Informe a certificação ou o treinamento exigido.')).toBeVisible()
+
+    expect(requisicoes.filter(r => r.metodo === 'POST')).toHaveLength(0)
+  })
+
+  test('recusa do servidor no cadastro mantém os dados e mostra a mensagem da API', async ({ page }) => {
+    await iniciarSessao(page, gestora)
+    await simularApi(page, { falhaCadastro: 400 })
+    await page.goto('/capacitacoes?aba=cadastro')
+
+    const certificacao = page.getByRole('region', { name: 'Cadastrar certificação' })
+    await certificacao.getByLabel('Colaborador').selectOption('5')
+    await certificacao.getByLabel('Certificação', { exact: true }).fill('NR-18 Obras')
+    await certificacao.getByLabel('Data de emissão').fill('2026-01-10')
+    await certificacao.getByLabel('Data de vencimento').fill('2028-01-10')
+    await certificacao.getByRole('button', { name: 'Cadastrar certificação' }).click()
+    await expect(certificacao.getByText('Não foi possível cadastrar a certificação')).toBeVisible()
+    await expect(certificacao.getByText('Data de vencimento não pode ser no passado ou presente no momento do cadastro.')).toBeVisible()
+    await expect(certificacao.getByLabel('Certificação', { exact: true })).toHaveValue('NR-18 Obras')
   })
 
   for (const width of [320, 360, 768, 1344]) {
