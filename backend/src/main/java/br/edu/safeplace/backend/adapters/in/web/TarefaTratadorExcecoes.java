@@ -60,6 +60,17 @@ public class TarefaTratadorExcecoes {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
     }
 
+    @ExceptionHandler(br.edu.safeplace.backend.domain.capacitacao.exception.ColaboradorNaoAlocavelException.class)
+    public ResponseEntity<Map<String, Object>> handleColaboradorNaoAlocavel(
+            br.edu.safeplace.backend.domain.capacitacao.exception.ColaboradorNaoAlocavelException ex) {
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.UNPROCESSABLE_ENTITY.value());
+        body.put("error", "Colaborador Não Alocável");
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(

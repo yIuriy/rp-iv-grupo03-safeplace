@@ -60,6 +60,11 @@ public class Colaborador {
         return Perfil.COLABORADOR;
     }
 
+    /** Apenas o perfil de colaborador é alocado em tarefas (UC02, UC11). */
+    public boolean podeSerAlocado() {
+        return getPerfil() == Perfil.COLABORADOR;
+    }
+
     public Integer getId() {
         return id;
     }
