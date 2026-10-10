@@ -4,7 +4,7 @@
 
 Este documento registra o contrato do plano de ação do SafePlace. Ele concilia a classe `PlanoDeAcao` do **Diagrama de Classes** com as ações individuais descritas no **UC07 (Definir Plano de Ação por Acidente / Incidente)**, atendendo à [issue #97](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/97) (RF07; UC07; US07).
 
-- **Situação**: proposta de contrato submetida à aprovação do grupo na issue #97. A persistência ([#98](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/98)) e a API ([#99](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/99)) devem seguir as decisões aprovadas. As pendências da seção 6 não foram decididas e não devem ser supridas por suposição.
+- **Situação**: contrato aprovado e implementado (RF07, UC07, US07). A persistência foi entregue na issue #98 e a API na issue #99. As pendências da seção 6 não foram decididas e não devem ser supridas por suposição.
 - **Fontes**: [Diagrama de classes](../diagramas/classes/Diagrama%20de%20Classes%20-%20SafePlace.png), [UC07](../casos-de-uso/casos-de-uso.md#uc07--definir-plano-de-ação-por-acidente--incidente), [US07](../historias-de-usuario.md#us07--definir-e-acompanhar-planos-de-ação), [RF07](../requisitos/requisitos-funcionais.md#rf07-o-sistema-deve-permitir-informar-o-plano-de-ação-para-cada-tipo-de-acidente-ocorrido), [RNF05](../requisitos/requisitos-nao-funcionais.md) e a [correspondência Classes vs DS09](correspondencia-classes-ds09.md).
 - **Implementação de referência**: núcleo de domínio em `backend/src/main/java/br/edu/safeplace/backend/domain/ocorrencia/` (`PlanoDeAcao`, `StatusPlanoDeAcao`, `ProrrogacaoPrazo`, `AvisoAcao`, `MotivoAvisoAcao` e exceções), coberto por `PlanoDeAcaoTest`. O domínio não depende de JPA nem de Spring.
 
@@ -96,12 +96,12 @@ O atributo `status : String` do PNG é preservado como texto. O vocabulário ace
 
 ## 3. Matriz de Correspondência: Operações do Diagrama vs. Arquitetura Hexagonal
 
-Os elementos da camada de persistência foram implementados na issue #98 (`PlanoDeAcaoRepositoryPort`, `PlanoDeAcaoJpaAdapter`, `prorrogacoes_prazo`). A porta de entrada e API ficam para #99.
+Os elementos da camada de persistência foram implementados na issue #98 (`PlanoDeAcaoRepositoryPort`, `PlanoDeAcaoJpaAdapter`, `prorrogacoes_prazo`). A porta de entrada e a API foram entregues na issue #99 (`GerenciarPlanoDeAcaoUseCase`, `PlanoDeAcaoUseCase` e `PlanoDeAcaoController`).
 
 | Operação no Diagrama | Destino / Camada Hexagonal | Papel arquitetural e semântica |
 | :--- | :--- | :--- |
 | `validarPlano(dadosPlano, ocorrencia, dataAtual)` | Domínio: `PlanoDeAcao.definir(...)` valida cada ação; `PlanoDeAcao.validarPlano(ocorrencia, acoes)` valida o conjunto | Vínculo com ocorrência registrada, medida, responsável único, prazo não retroativo e regra da ocorrência grave. Lança exceções de domínio em vez de devolver `boolean`. |
-| `salvarVinculado(idOcorrencia, dadosPlano)` | Porta de entrada `GerenciarPlanoDeAcaoUseCase.definirAcoes` (*a criar em #99*) e porta de saída `PlanoDeAcaoRepositoryPort.salvar` (implementada em `PlanoDeAcaoJpaAdapter`, #98) | Grava as ações vinculadas à ocorrência numa transação, com auditoria. |
+| `salvarVinculado(idOcorrencia, dadosPlano)` | Porta de entrada `GerenciarPlanoDeAcaoUseCase.cadastrarAcao` (implementada em `PlanoDeAcaoUseCase`, #99) e porta de saída `PlanoDeAcaoRepositoryPort.salvar` (implementada em `PlanoDeAcaoJpaAdapter`, #98) | Grava as ações vinculadas à ocorrência numa transação, com auditoria. |
 | `buscarPlano(idPlano)` / `buscarAcao(idAcao)` | `PlanoDeAcaoRepositoryPort.buscarPorId` (implementada em `PlanoDeAcaoJpaAdapter`, #98) | Mesmo identificador (seção 2.1). |
 | `buscarPorFiltros(criterios)` | `PlanoDeAcaoRepositoryPort.listarPorOcorrencia` (implementada em `PlanoDeAcaoJpaAdapter`, #98) | Consulta do andamento (US07, critério 1; UC05, alternativo I, passo 9). |
 | `validarAtualizacaoStatus(idAcao, novoStatus)` | Domínio: `PlanoDeAcao.validarAtualizacaoStatus(StatusPlanoDeAcao)` | Apenas `ABERTA` → `CONCLUIDA`. |
