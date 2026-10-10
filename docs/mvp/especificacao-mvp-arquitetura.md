@@ -31,7 +31,7 @@ O SafePlace é uma plataforma corporativa fechada de uso estritamente interno. *
 
 O primeiro acesso administrativo (Gestor de Segurança) é provisionado por meio de carga inicial (*seed*) no banco de dados. A partir desse usuário, o provisionamento é realizado de forma estritamente interna e hierárquica respeitando o modelo RBAC:
 
-- **Gestor de Segurança**: perfil com acesso ao sistema, autentica-se com e-mail e senha. Gerencia as contas de Supervisores e outros gestores. No cadastro de um Supervisor, o sistema gera automaticamente sua credencial inicial.
+- **Gestor de Segurança**: perfil com acesso ao sistema, autentica-se com e-mail e senha. Gerencia as contas de Supervisores e outros gestores. No cadastro de um Supervisor, o sistema gera automaticamente sua credencial inicial; no cadastro de outros gestores, a senha inicial é informada na requisição de cadastro.
 - **Supervisor**: perfil com acesso ao sistema, autentica-se com e-mail e senha gerada. Gerencia os cadastros de colaboradores e os registros operacionais sob sua responsabilidade (ocorrências, empréstimos de EPIs). Não possui permissão para cadastrar outros supervisores ou gestores.
 - **Colaborador**: não recebe conta de acesso, credencial ou senha, não possuindo permissão de autenticação. Seu registro existe para vinculação aos registros operacionais (ocorrências, treinamentos e empréstimos de EPIs). Seus relatos são registrados no sistema pelo Supervisor responsável.
 
@@ -124,7 +124,7 @@ A priorização considera três fatores: a contribuição direta do requisito pa
 | RF13 | Criar registros de acidente | Deve ter | Permitir que o Supervisor registre acidentes. |
 | RF16 | Registrar incidentes | Deve ter | Permitir registro pelo Supervisor ou Gestor. Relatos comunicados pelo Colaborador são registrados pelo Supervisor. |
 | RF21 | Gerenciar ciclo de vida e substituição inteligente de EPIs | Deve ter | Calcular a previsão de substituição dos EPIs e gerar alertas preventivos. |
-| RF23 | Gerenciar supervisores e colaboradores | Deve ter | Gestor gerencia supervisores com conta e senha inicial automática; Supervisor e Gestor de Segurança gerenciam colaboradores sem conta ou senha, preservando seus vínculos. |
+| RF23 | Gerenciar supervisores e colaboradores | Deve ter | Gestor gerencia supervisores com conta e senha inicial automática e outros gestores com senha definida na requisição; Supervisor e Gestor de Segurança gerenciam colaboradores sem conta ou senha, preservando seus vínculos. |
 
 ### 5.2. Requisitos não funcionais incluídos
 

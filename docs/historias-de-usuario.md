@@ -817,42 +817,43 @@ Referências: [RF22](requisitos/requisitos-funcionais.md#rf22-o-sistema-deve-per
 > 3. Ao registrar a devolução de um equipamento, ele deve deixar de constar como empréstimo ativo do visitante, preservando o histórico.
 > 4. Ao tentar entregar equipamento indisponível ou com CA vencido, o sistema deve bloquear a entrega e informar o motivo.
 
-# US23 – Gerenciar supervisores
+# US23 – Gerenciar supervisores e gestores
 
 Referência: [RF23](requisitos/requisitos-funcionais.md#rf23-o-sistema-deve-permitir-a-gestão-de-supervisores-e-colaboradores). Escopo: MVP. O UC13 citado na especificação do MVP ainda não possui detalhamento no documento de casos de uso.
 
 ## Descrição da História:
 
 > **Como** Gestor de Segurança,
-> **quero** cadastrar, consultar e atualizar supervisores,
-> **para** manter os responsáveis pelos registros operacionais e permitir seu acesso conforme o perfil.
+> **quero** cadastrar, consultar e atualizar supervisores e outros gestores de segurança,
+> **para** manter os responsáveis pelos registros operacionais e administrativos e permitir seu acesso conforme o perfil.
 
 ## Dicionário de Dados:
 
 > | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Supervisor | Identificador numérico. | Identificador de supervisor | Automático; único | Identificação do cadastro. |
-> | Nome | Tamanho máximo a confirmar. | Texto | Obrigatório | Nome do Supervisor. |
+> | Usuário | Identificador numérico. | Identificador de usuário | Automático; único | Identificação do cadastro. |
+> | Nome | Tamanho máximo a confirmar. | Texto | Obrigatório | Nome do Supervisor ou Gestor. |
 > | Identificação de acesso | Formato de e-mail institucional. | E-mail | Obrigatório; único | E-mail corporativo utilizado como credencial de login no sistema. |
-> | Perfil | Não se aplica. | Supervisor | Automático | Perfil que delimita as permissões. |
-> | Senha inicial | Sequência aleatória de 12 caracteres, com letras maiúsculas, minúsculas, dígitos e caracteres especiais. | Texto | Automático | Senha inicial temporária gerada pelo sistema no momento do cadastro (RF23). |
-> | Responsável pelo cadastro | Gestor autenticado. | Identificador de usuário | Automático | Pessoa que cadastrou o Supervisor. |
+> | Perfil | Perfil do sistema. | Supervisor ou Gestor de Segurança | Obrigatório | Perfil que delimita as permissões. |
+> | Senha inicial | Senha definida pelo sistema ou cliente. | Texto | Obrigatório | Para Supervisor, sequência aleatória de 12 caracteres gerada automaticamente pelo sistema; para novos gestores, senha fornecida na requisição de cadastro (RF23). |
+> | Responsável pelo cadastro | Gestor autenticado. | Identificador de usuário | Automático | Pessoa que cadastrou o usuário. |
 
 ## Regra(s) de Negócio:
 
-> 1. O Gestor de Segurança gerencia os supervisores.
-> 2. No cadastro de um Supervisor, o sistema deve gerar automaticamente a senha inicial (12 caracteres, com ao menos uma letra minúscula, uma maiúscula, um dígito e um caractere especial) e salvar seu hash criptográfico (BCrypt), retornando a senha temporária na resposta do cadastro, conforme RF23.
-> 3. A conta criada deve receber as permissões de Supervisor, sem atribuir permissões de Gestor.
+> 1. O Gestor de Segurança gerencia as contas de supervisores e de outros gestores de segurança.
+> 2. No cadastro de um Supervisor, o sistema deve gerar automaticamente a senha inicial (12 caracteres, com ao menos uma letra minúscula, uma maiúscula, um dígito e um caractere especial) e salvar seu hash criptográfico (BCrypt), retornando a senha temporária na resposta do cadastro. No cadastro de um novo Gestor de Segurança, a senha inicial é informada na requisição e salva como hash BCrypt, conforme RF23.
+> 3. A conta criada deve receber as permissões condizentes ao seu perfil (Supervisor ou Gestor de Segurança).
 > 4. Cadastro e atualizações devem registrar auditoria conforme RNF05.
 > 5. O login do usuário é realizado exclusivamente com e-mail e senha via `POST /api/auth/login` (não aceitando CPF). A autenticação emite token JWT com perfil e validade de 7 dias no MVP (RNF03).
 
 ## Critério(s) de Aceite:
 
 > 1. Ao cadastrar um Supervisor com dados válidos (nome, CPF, data de nascimento e e-mail), o sistema deve salvar o cadastro com perfil de Supervisor, gerar automaticamente a senha inicial de 12 caracteres e exibi-la para comunicação ao usuário.
-> 2. Ao consultar o Supervisor cadastrado, o Gestor deve visualizar seus dados e conseguir atualizar os campos permitidos.
-> 3. Ao salvar uma atualização, os novos dados devem aparecer na consulta seguinte e a operação deve constar na auditoria.
-> 4. Ao tentar gerenciar supervisores com perfil de Supervisor, o sistema deve negar a operação.
-> 5. A conta criada deve acessar apenas as funcionalidades autorizadas ao perfil de Supervisor.
+> 2. Ao cadastrar um novo Gestor de Segurança, o sistema deve receber e salvar a senha criptografada informada na requisição, atribuindo o perfil de Gestor de Segurança.
+> 3. Ao consultar os usuários cadastrados, o Gestor deve visualizar seus dados e conseguir atualizar os campos permitidos.
+> 4. Ao salvar uma atualização, os novos dados devem aparecer na consulta seguinte e a operação deve constar na auditoria.
+> 5. Ao tentar gerenciar supervisores ou gestores com perfil de Supervisor, o sistema deve negar a operação.
+> 6. A conta criada deve acessar apenas as funcionalidades autorizadas ao seu respectivo perfil.
 
 # US24 – Gerenciar colaboradores
 
