@@ -1,6 +1,7 @@
 package br.edu.safeplace.backend.adapters.in.web;
 
-import br.edu.safeplace.backend.application.dto.input.CadastrarUsuarioEntradaDTO;
+import br.edu.safeplace.backend.application.dto.input.CadastrarColaboradorInputDTO;
+import br.edu.safeplace.backend.application.dto.input.CadastrarSupervisorInputDTO;
 import br.edu.safeplace.backend.application.dto.output.UsuarioSaidaDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarUsuarioCasoDeUso;
 import br.edu.safeplace.backend.config.SecurityConfig;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -27,8 +29,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Issue #91: a senha inicial do Supervisor aparece apenas na resposta 201 do cadastro.
  */
-import org.springframework.security.test.context.support.WithMockUser;
-
 @WebMvcTest({UsuarioControlador.class, UsuarioTratadorExcecoes.class})
 @Import(SecurityConfig.class)
 @WithMockUser(roles = "GESTOR_SEGURANCA")
@@ -49,17 +49,16 @@ class UsuarioControladorSenhaInicialTest {
 
     @Test
     void cadastroDeSupervisorSemSenhaDeveRetornar201ComSenhaInicial() throws Exception {
-        when(casoDeUso.cadastrarUsuario(any(CadastrarUsuarioEntradaDTO.class))).thenReturn(supervisor("Xk7!pQ2#mA9z"));
+        when(casoDeUso.cadastrarSupervisor(any(CadastrarSupervisorInputDTO.class))).thenReturn(supervisor("Xk7!pQ2#mA9z"));
 
-        mockMvc.perform(post("/api/usuarios")
+        mockMvc.perform(post("/api/usuarios/supervisores")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
                                     "nome": "Ana Lima",
                                     "cpf": "52998224725",
                                     "dataNascimento": "1985-07-20",
-                                    "email": "ana@empresa.com",
-                                    "perfil": "SUPERVISOR"
+                                    "email": "ana@empresa.com"
                                 }
                                 """))
                 .andExpect(status().isCreated())
@@ -70,21 +69,21 @@ class UsuarioControladorSenhaInicialTest {
     @Test
     void cadastroDeColaboradorNaoDeveTrazerSenhaInicial() throws Exception {
         UsuarioSaidaDTO colaborador = new UsuarioSaidaDTO(2, "Carlos Souza", CPF, LocalDate.of(1995, 3, 10),
-                null, Perfil.COLABORADOR, true, LocalDateTime.now(), null);
-        when(casoDeUso.cadastrarUsuario(any(CadastrarUsuarioEntradaDTO.class))).thenReturn(colaborador);
+                null, null, true, LocalDateTime.now(), null);
+        when(casoDeUso.cadastrarColaborador(any(CadastrarColaboradorInputDTO.class))).thenReturn(colaborador);
 
-        mockMvc.perform(post("/api/usuarios")
+        mockMvc.perform(post("/api/usuarios/colaboradores")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
                                     "nome": "Carlos Souza",
                                     "cpf": "52998224725",
-                                    "dataNascimento": "1995-03-10",
-                                    "perfil": "COLABORADOR"
+                                    "dataNascimento": "1995-03-10"
                                 }
                                 """))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.senhaInicial").doesNotExist());
+                .andExpect(jsonPath("$.senhaInicial").doesNotExist())
+                .andExpect(jsonPath("$.perfil").doesNotExist());
     }
 
     @Test
