@@ -68,7 +68,7 @@ Registro que comprova a aprovação de um EPI para uso conforme normas aplicáve
 
 ### Colaborador
 
-Pessoa que atua nas atividades operacionais da organização e é cadastrada pelo Supervisor. Pode estar envolvida em acidentes, incidentes, treinamentos, certificações e empréstimos de EPIs. Esse cadastro não possui conta, senha ou perfil de acesso. Seus relatos são registrados pelo Supervisor.
+Pessoa que atua nas atividades operacionais da organização e é cadastrada pelo Supervisor ou pelo Gestor de Segurança em RF23. Pode estar envolvida em acidentes, incidentes, treinamentos, certificações e empréstimos de EPIs. Esse cadastro não possui conta, senha ou perfil de acesso. Seus relatos são registrados pelo Supervisor.
 
 ### Condição insegura
 
@@ -116,7 +116,7 @@ Problema em um EPI ou equipamento de segurança que reduz sua capacidade de prot
 
 ### Gestor de Segurança
 
-Perfil responsável por controlar EPIs, áreas de risco, acidentes, incidentes, planos de ação, supervisores e regras de segurança no sistema. O Gestor consulta dados de colaboradores nos fluxos sob sua responsabilidade; o cadastro e a atualização dos colaboradores são atribuições do Supervisor em RF23.
+Perfil responsável por controlar EPIs, áreas de risco, acidentes, incidentes, planos de ação, supervisores e regras de segurança no sistema. O Gestor consulta dados de colaboradores nos fluxos sob sua responsabilidade; o cadastro e a atualização dos colaboradores podem ser realizados tanto pelo Supervisor quanto pelo Gestor de Segurança em RF23.
 
 ### Grau de risco
 
