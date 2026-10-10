@@ -48,7 +48,7 @@ public class AutenticacaoCasoDeUso implements AutenticarUsuarioCasoDeUso {
 
         Colaborador usuario = usuarioOpt.get();
 
-        if (usuario.getPerfil() == Perfil.COLABORADOR) {
+        if (usuario.getPerfil() == null) {
             throw new CredenciaisInvalidasException("Colaborador não possui permissão de login no sistema.");
         }
 
