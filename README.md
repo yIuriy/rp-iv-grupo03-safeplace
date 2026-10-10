@@ -69,9 +69,9 @@ A documentação dos casos de uso também inclui funcionalidades previstas para 
 
 ## Base implementada
 
-O [backend](backend/) usa Java 21, Spring Boot 4.1.1, persistência JPA, migrações Flyway e PostgreSQL. A base atual oferece cadastro e listagem de acidentes e incidentes em `/api/ocorrencias`, incluindo os dados de plano de ação recebidos no cadastro. Também oferece cadastro e consulta de EPIs e registro de entradas e saídas de estoque em `/api/epis`, provisionamento e atualização cadastral de supervisores e colaboradores em `/api/usuarios`, mapeamento das áreas de risco em `/api/areas-risco` e classificação do nível de periculosidade das tarefas em `/api/tarefas`, além da verificação de disponibilidade em `/api/health`. Isso ainda não cobre todos os fluxos do MVP. A configuração de segurança permite as requisições sem aplicar os perfis definidos em RNF03.
+O [backend](backend/) usa Java 21, Spring Boot 4.1.1, persistência JPA, migrações Flyway e PostgreSQL. A base atual oferece operações completas de ocorrências e planos de ação em `/api/ocorrencias` e `/api/planos-acao`, cadastro, movimentações e manutenção de EPIs em `/api/epis`, empréstimos e projeções em `/api/emprestimos` e `/api/projecoes`, capacitações em `/api/capacitacoes`, gestão de usuários em `/api/usuarios`, mapeamento de áreas de risco em `/api/areas-risco` e classificação de tarefas em `/api/tarefas`, além de autenticação JWT e controle de acesso RBAC (RNF03).
 
-O [frontend](frontend/README.md) usa React 19, TypeScript e Vite 8. A interface integra o login e a gestão de supervisores e colaboradores (cadastro, consulta e edição) com a API (`/api/auth/login` e `/api/usuarios`), aplicando os perfis de RF23. As telas de ocorrências, EPIs, áreas de risco e tarefas ainda são iniciais. O catálogo de componentes em `/design-system` continua disponível com dados fictícios.
+O [frontend](frontend/README.md) usa React 19, TypeScript e Vite 8. A interface integra com a API o login, a gestão de usuários (supervisores e colaboradores), o controle de EPIs e estoque, empréstimos com painel de projeções do gestor, ocorrências e acompanhamento de planos de ação, áreas de risco, tarefas e capacitações, respeitando os perfis de acesso. O catálogo de componentes em `/design-system` continua disponível para referência.
 
 ## Executar com Docker Compose
 
@@ -102,7 +102,7 @@ docker compose up -d backend
 | --- | --- | --- |
 | Interface | [Tela de login](http://localhost:5173/login) | Deve apresentar o formulário de e-mail e senha. O [catálogo de componentes](http://localhost:5173/design-system) continua acessível sem login. |
 | Backend | [Estado da aplicação](http://localhost:8080/actuator/health) | A resposta deve conter `"status":"UP"`. |
-| API | [Documentação interativa](http://localhost:8080/docs) | Deve listar as operações de ocorrências, EPIs e disponibilidade. |
+| API | [Documentação interativa](http://localhost:8080/docs) | Deve listar as operações completas de todos os módulos (13 controladores documentados com OpenAPI). |
 | Contrato da API | [OpenAPI](http://localhost:8080/v3/api-docs) | Deve retornar a descrição da API em JSON. |
 | Banco | `localhost:5432` | Banco `safeplace`, usuário `safeplace` e senha de desenvolvimento `safeplace`, conforme o Compose. |
 
