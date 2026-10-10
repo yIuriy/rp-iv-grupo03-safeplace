@@ -73,7 +73,7 @@ class UsuarioControladorAtualizacaoTest {
 
     private static UsuarioSaidaDTO colaboradorAtualizado() {
         return new UsuarioSaidaDTO(11, "João Pedro da Silva", "12345678909", LocalDate.of(1992, 6, 18),
-                null, Perfil.COLABORADOR, true, LocalDateTime.now(), null);
+                null, null, true, LocalDateTime.now(), null);
     }
 
     @Test
@@ -112,7 +112,7 @@ class UsuarioControladorAtualizacaoTest {
 
         mockMvc.perform(put("/api/usuarios/colaboradores/11").contentType(MediaType.APPLICATION_JSON).content(JSON_COLABORADOR))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.perfil").value("COLABORADOR"))
+                .andExpect(jsonPath("$.perfil").doesNotExist())
                 .andExpect(jsonPath("$.senhaInicial").doesNotExist());
 
         verify(casoDeUso).atualizarColaborador(eq(11), eq(new AtualizarPessoaInputDTO(
