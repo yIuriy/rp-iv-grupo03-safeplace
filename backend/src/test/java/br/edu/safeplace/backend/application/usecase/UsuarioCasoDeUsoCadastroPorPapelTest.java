@@ -109,7 +109,7 @@ class UsuarioCasoDeUsoCadastroPorPapelTest {
         UsuarioSaidaDTO salvo = casoDeUso.cadastrarColaborador(
                 colaborador("João da Silva", CPF_VALIDO, "joao@safeplace.com"));
 
-        assertThat(salvo.perfil()).isEqualTo(Perfil.COLABORADOR);
+        assertThat(salvo.perfil()).isNull();
         assertThat(salvo.senhaInicial()).isNull();
 
         Colaborador persistido = repositorio.buscarPorCpf(CPF_VALIDO).orElseThrow();
@@ -123,7 +123,7 @@ class UsuarioCasoDeUsoCadastroPorPapelTest {
         UsuarioSaidaDTO salvo = casoDeUso.cadastrarColaborador(colaborador("Sem Email", CPF_VALIDO, null));
 
         assertThat(salvo.email()).isNull();
-        assertThat(salvo.perfil()).isEqualTo(Perfil.COLABORADOR);
+        assertThat(salvo.perfil()).isNull();
     }
 
     @Test
@@ -167,7 +167,7 @@ class UsuarioCasoDeUsoCadastroPorPapelTest {
 
         List<UsuarioSaidaDTO> colaboradores = casoDeUso.listarColaboradores(FiltroColaboradorDTO.SEM_FILTRO);
 
-        assertThat(colaboradores).extracting(UsuarioSaidaDTO::perfil).containsOnly(Perfil.COLABORADOR);
+        assertThat(colaboradores).extracting(UsuarioSaidaDTO::perfil).containsOnlyNulls();
         assertThat(colaboradores).extracting(UsuarioSaidaDTO::nome).containsExactly("João da Silva");
     }
 
@@ -231,7 +231,7 @@ class UsuarioCasoDeUsoCadastroPorPapelTest {
         @Override
         public List<Colaborador> listarColaboradores(String nome, String cpf) {
             return armazenados.stream()
-                    .filter(c -> c.getPerfil() == Perfil.COLABORADOR)
+                    .filter(c -> c.getPerfil() == null)
                     .filter(c -> nome == null || c.getNome().toLowerCase(Locale.ROOT)
                             .contains(nome.toLowerCase(Locale.ROOT)))
                     .filter(c -> cpf == null || c.getCpf().equals(cpf))
