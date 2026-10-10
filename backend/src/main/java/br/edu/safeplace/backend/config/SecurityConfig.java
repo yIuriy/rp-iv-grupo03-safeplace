@@ -68,7 +68,7 @@ public class SecurityConfig {
                         // RF23: Consulta de colaboradores e perfil próprio permitida a Gestor e Supervisor
                         .requestMatchers(HttpMethod.GET, "/api/usuarios/colaboradores")
                                 .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
-                        .requestMatchers(HttpMethod.GET, "/api/usuarios/me")
+                        .requestMatchers(HttpMethod.GET, "/api/usuarios/me", "/api/usuarios/me/**")
                                 .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         // RF23: Listagem geral de usuários (supervisores e gestores) exclusiva do Gestor de Segurança
                         .requestMatchers(HttpMethod.GET, "/api/usuarios")
