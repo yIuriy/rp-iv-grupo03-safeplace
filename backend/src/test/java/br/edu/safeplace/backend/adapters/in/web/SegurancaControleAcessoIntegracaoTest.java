@@ -249,6 +249,38 @@ class SegurancaControleAcessoIntegracaoTest {
 
         @Test
         @WithMockUser(roles = "SUPERVISOR")
+        @DisplayName("Supervisor não pode listar todos os usuários (RF23 - restrito ao Gestor)")
+        void supervisorNaoPodeListarUsuarios() throws Exception {
+            mockMvc.perform(get("/api/usuarios"))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.error").value("Acesso Proibido"));
+        }
+
+        @Test
+        @WithMockUser(roles = "SUPERVISOR")
+        @DisplayName("Supervisor não pode atualizar Supervisor (RF23 - restrito ao Gestor)")
+        void supervisorNaoPodeAtualizarSupervisor() throws Exception {
+            mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/usuarios/supervisores/1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(JSON_SUPERVISOR))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.error").value("Acesso Proibido"));
+        }
+
+        @Test
+        @WithMockUser(roles = "SUPERVISOR")
+        @DisplayName("Supervisor não pode consultar dados de outro Supervisor por ID (RF23)")
+        void supervisorNaoPodeConsultarSupervisorPorId() throws Exception {
+            when(gerenciarUsuarioCasoDeUso.buscarPorId(1))
+                    .thenThrow(new br.edu.safeplace.backend.domain.usuario.exception.AcessoNegadoException("Supervisor não tem permissão para consultar dados de Supervisor."));
+
+            mockMvc.perform(get("/api/usuarios/1"))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.error").value("Acesso Proibido"));
+        }
+
+        @Test
+        @WithMockUser(roles = "SUPERVISOR")
         @DisplayName("Supervisor não pode cadastrar área de risco (UC03 - restrito ao Gestor)")
         void supervisorNaoPodeCadastrarAreaRisco() throws Exception {
             mockMvc.perform(post("/api/areas-risco")
@@ -345,7 +377,7 @@ class SegurancaControleAcessoIntegracaoTest {
         @DisplayName("Supervisor pode cadastrar Colaborador (RF23)")
         void supervisorPodeCadastrarColaborador() throws Exception {
             UsuarioSaidaDTO colaborador = new UsuarioSaidaDTO(2, "João Operador", "52998224725",
-                    LocalDate.of(1990, 10, 15), "joao.operador@safeplace.com", Perfil.COLABORADOR,
+                    LocalDate.of(1990, 10, 15), "joao.operador@safeplace.com", null,
                     true, LocalDateTime.now(), null);
             when(gerenciarUsuarioCasoDeUso.cadastrarColaborador(any(CadastrarColaboradorInputDTO.class))).thenReturn(colaborador);
 
@@ -354,7 +386,7 @@ class SegurancaControleAcessoIntegracaoTest {
                             .content(JSON_COLABORADOR))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.id").value(2))
-                    .andExpect(jsonPath("$.perfil").value("COLABORADOR"));
+                    .andExpect(jsonPath("$.perfil").doesNotExist());
         }
 
         @Test
@@ -362,7 +394,7 @@ class SegurancaControleAcessoIntegracaoTest {
         @DisplayName("Gestor de Segurança também pode cadastrar Colaborador (RF23)")
         void gestorTambemPodeCadastrarColaborador() throws Exception {
             UsuarioSaidaDTO colaborador = new UsuarioSaidaDTO(2, "João Operador", "52998224725",
-                    LocalDate.of(1990, 10, 15), "joao.operador@safeplace.com", Perfil.COLABORADOR,
+                    LocalDate.of(1990, 10, 15), "joao.operador@safeplace.com", null,
                     true, LocalDateTime.now(), null);
             when(gerenciarUsuarioCasoDeUso.cadastrarColaborador(any(CadastrarColaboradorInputDTO.class))).thenReturn(colaborador);
 
@@ -371,7 +403,7 @@ class SegurancaControleAcessoIntegracaoTest {
                             .content(JSON_COLABORADOR))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.id").value(2))
-                    .andExpect(jsonPath("$.perfil").value("COLABORADOR"));
+                    .andExpect(jsonPath("$.perfil").doesNotExist());
         }
 
         @Test
@@ -382,6 +414,70 @@ class SegurancaControleAcessoIntegracaoTest {
 
             mockMvc.perform(get("/api/areas-risco"))
                     .andExpect(status().isOk());
+        }
+
+        @Test
+        @WithMockUser(roles = "GESTOR_SEGURANCA")
+        @DisplayName("Gestor de Segurança pode listar todos os usuários (RF23)")
+        void gestorPodeListarUsuarios() throws Exception {
+            when(gerenciarUsuarioCasoDeUso.listarUsuarios()).thenReturn(List.of());
+
+            mockMvc.perform(get("/api/usuarios"))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @WithMockUser(roles = "SUPERVISOR")
+        @DisplayName("Supervisor pode listar colaboradores (RF23)")
+        void supervisorPodeListarColaboradores() throws Exception {
+            when(gerenciarUsuarioCasoDeUso.listarColaboradores(any())).thenReturn(List.of());
+
+            mockMvc.perform(get("/api/usuarios/colaboradores"))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @WithMockUser(roles = "SUPERVISOR", username = "supervisor@safeplace.com")
+        @DisplayName("Supervisor pode consultar o próprio perfil (GET /api/usuarios/me)")
+        void supervisorPodeConsultarProprioPerfil() throws Exception {
+            UsuarioSaidaDTO supervisor = new UsuarioSaidaDTO(1, "Carlos Supervisor", "52998224725",
+                    LocalDate.of(1985, 5, 20), "supervisor@safeplace.com", Perfil.SUPERVISOR,
+                    true, LocalDateTime.now(), null);
+            when(gerenciarUsuarioCasoDeUso.buscarPorEmail("supervisor@safeplace.com")).thenReturn(supervisor);
+
+            mockMvc.perform(get("/api/usuarios/me"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.email").value("supervisor@safeplace.com"));
+        }
+
+        @Test
+        @WithMockUser(roles = "SUPERVISOR")
+        @DisplayName("Supervisor pode consultar dados de Colaborador por ID (RF23)")
+        void supervisorPodeConsultarColaboradorPorId() throws Exception {
+            UsuarioSaidaDTO colaborador = new UsuarioSaidaDTO(2, "João Operador", "52998224725",
+                    LocalDate.of(1990, 10, 15), "joao.operador@safeplace.com", null,
+                    true, LocalDateTime.now(), null);
+            when(gerenciarUsuarioCasoDeUso.buscarPorId(2)).thenReturn(colaborador);
+
+            mockMvc.perform(get("/api/usuarios/2"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(2))
+                    .andExpect(jsonPath("$.perfil").doesNotExist());
+        }
+
+        @Test
+        @WithMockUser(roles = "GESTOR_SEGURANCA")
+        @DisplayName("Gestor de Segurança pode consultar qualquer usuário por ID (RF23)")
+        void gestorPodeConsultarUsuarioPorId() throws Exception {
+            UsuarioSaidaDTO supervisor = new UsuarioSaidaDTO(1, "Carlos Supervisor", "52998224725",
+                    LocalDate.of(1985, 5, 20), "supervisor@safeplace.com", Perfil.SUPERVISOR,
+                    true, LocalDateTime.now(), null);
+            when(gerenciarUsuarioCasoDeUso.buscarPorId(1)).thenReturn(supervisor);
+
+            mockMvc.perform(get("/api/usuarios/1"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(1))
+                    .andExpect(jsonPath("$.perfil").value("SUPERVISOR"));
         }
     }
 

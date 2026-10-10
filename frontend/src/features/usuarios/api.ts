@@ -5,7 +5,7 @@
 import { http } from '../../shared/api/https'
 import { mensagemDaApi, statusDoErro } from '../../shared/api/erros'
 
-export type PerfilUsuario = 'COLABORADOR' | 'SUPERVISOR' | 'GESTOR_SEGURANCA'
+export type PerfilUsuario = 'SUPERVISOR' | 'GESTOR_SEGURANCA'
 
 export type Usuario = {
   id: number
@@ -13,7 +13,7 @@ export type Usuario = {
   cpf: string
   dataNascimento: string
   email: string | null
-  perfil: PerfilUsuario
+  perfil: PerfilUsuario | null
   ativo: boolean
 }
 
@@ -24,17 +24,17 @@ export type DadosPessoa = { nome: string; cpf: string; dataNascimento: string; e
 
 export type FiltroColaboradores = { nome?: string; cpf?: string }
 
-const perfis: readonly PerfilUsuario[] = ['COLABORADOR', 'SUPERVISOR', 'GESTOR_SEGURANCA']
+const perfis: readonly PerfilUsuario[] = ['SUPERVISOR', 'GESTOR_SEGURANCA']
 
 function ehPerfil(valor: unknown): valor is PerfilUsuario {
-  return perfis.includes(valor as PerfilUsuario)
+  return typeof valor === 'string' && perfis.includes(valor as PerfilUsuario)
 }
 
 function lerUsuario(dado: unknown): UsuarioCriado {
   if (dado === null || typeof dado !== 'object') throw new Error('Registro de usuário inválido')
   const bruto = dado as Record<string, unknown>
   if (typeof bruto.id !== 'number' || typeof bruto.nome !== 'string' || typeof bruto.cpf !== 'string'
-    || typeof bruto.dataNascimento !== 'string' || !ehPerfil(bruto.perfil)) {
+    || typeof bruto.dataNascimento !== 'string' || (bruto.perfil != null && !ehPerfil(bruto.perfil))) {
     throw new Error('Registro de usuário incompatível com o contrato da API')
   }
   return {
@@ -43,7 +43,7 @@ function lerUsuario(dado: unknown): UsuarioCriado {
     cpf: bruto.cpf,
     dataNascimento: bruto.dataNascimento,
     email: typeof bruto.email === 'string' ? bruto.email : null,
-    perfil: bruto.perfil,
+    perfil: ehPerfil(bruto.perfil) ? bruto.perfil : null,
     ativo: bruto.ativo !== false,
     senhaInicial: typeof bruto.senhaInicial === 'string' ? bruto.senhaInicial : undefined,
   }

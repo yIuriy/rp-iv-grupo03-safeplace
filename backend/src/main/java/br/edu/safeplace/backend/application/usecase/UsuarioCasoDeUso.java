@@ -22,13 +22,13 @@ import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.CpfValidador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
+import br.edu.safeplace.backend.application.port.out.OperadorAutenticadoPorta;
 import br.edu.safeplace.backend.domain.usuario.Perfil;
 import br.edu.safeplace.backend.domain.usuario.Supervisor;
+import br.edu.safeplace.backend.domain.usuario.exception.AcessoNegadoException;
 import br.edu.safeplace.backend.domain.usuario.exception.CpfJaCadastradoException;
 import br.edu.safeplace.backend.domain.usuario.exception.EmailJaCadastradoException;
 import br.edu.safeplace.backend.domain.usuario.exception.UsuarioNaoEncontradoException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,18 +40,39 @@ public class UsuarioCasoDeUso implements GerenciarUsuarioCasoDeUso {
     private final CodificadorSenhaPorta codificadorSenhaPorta;
     private final GeradorSenhaPorta geradorSenhaPorta;
     private final LogAuditoriaRepositoryPort logAuditoriaRepositoryPort;
+    private final OperadorAutenticadoPorta operadorAutenticadoPorta;
+
+    public UsuarioCasoDeUso(UsuarioRepositorioPorta repositorioPorta,
+                            CodificadorSenhaPorta codificadorSenhaPorta,
+                            GeradorSenhaPorta geradorSenhaPorta,
+                            LogAuditoriaRepositoryPort logAuditoriaRepositoryPort) {
+        this(repositorioPorta, codificadorSenhaPorta, geradorSenhaPorta, logAuditoriaRepositoryPort, null);
+    }
 
     @org.springframework.beans.factory.annotation.Autowired
     public UsuarioCasoDeUso(UsuarioRepositorioPorta repositorioPorta,
                             CodificadorSenhaPorta codificadorSenhaPorta,
                             GeradorSenhaPorta geradorSenhaPorta,
-                            LogAuditoriaRepositoryPort logAuditoriaRepositoryPort) {
+                            LogAuditoriaRepositoryPort logAuditoriaRepositoryPort,
+                            OperadorAutenticadoPorta operadorAutenticadoPorta) {
         this.repositorioPorta = repositorioPorta;
         this.codificadorSenhaPorta = codificadorSenhaPorta;
         this.geradorSenhaPorta = geradorSenhaPorta;
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.logAuditoriaRepositoryPort = java.util.Objects.requireNonNull(
                 logAuditoriaRepositoryPort, "Porta de auditoria é obrigatória (RNF05).");
+        this.operadorAutenticadoPorta = operadorAutenticadoPorta != null
+                ? operadorAutenticadoPorta
+                : new OperadorAutenticadoPorta() {
+                    @Override
+                    public java.util.Optional<String> obterIdentificadorOperador() {
+                        return java.util.Optional.empty();
+                    }
+                    @Override
+                    public boolean possuiPapel(String papel) {
+                        return false;
+                    }
+                };
     }
 
     @Override
@@ -63,10 +84,6 @@ public class UsuarioCasoDeUso implements GerenciarUsuarioCasoDeUso {
     @Override
     @Transactional
     public UsuarioSaidaDTO cadastrarUsuario(CadastrarUsuarioEntradaDTO entrada, String operador) {
-        if (entrada.perfil() == null) {
-            throw new IllegalArgumentException("Perfil de usuário é obrigatório.");
-        }
-
         String cpfSanitizado = validarIdentificacaoDisponivel(entrada.cpf(), entrada.email());
 
         Colaborador novoUsuario;
@@ -176,7 +193,7 @@ public class UsuarioCasoDeUso implements GerenciarUsuarioCasoDeUso {
     @Override
     @Transactional
     public UsuarioSaidaDTO atualizarColaborador(Integer id, AtualizarPessoaInputDTO entrada, String operador) {
-        return atualizarCadastro(id, Perfil.COLABORADOR, entrada, operador);
+        return atualizarCadastro(id, null, entrada, operador);
     }
 
     /**
@@ -229,15 +246,18 @@ public class UsuarioCasoDeUso implements GerenciarUsuarioCasoDeUso {
         if (operador != null && !operador.isBlank()) {
             return operador.trim();
         }
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
-            return auth.getName().trim();
-        }
-        return "SISTEMA";
+        return operadorAutenticadoPorta.obterIdentificadorOperador()
+                .orElse("SISTEMA");
     }
 
     private static String nomeDoPerfil(Perfil perfil) {
-        return perfil == Perfil.SUPERVISOR ? "Supervisor" : "Colaborador";
+        if (perfil == Perfil.GESTOR_SEGURANCA) {
+            return "Gestor de Segurança";
+        }
+        if (perfil == Perfil.SUPERVISOR) {
+            return "Supervisor";
+        }
+        return "Colaborador";
     }
 
     /** O e-mail continua único, mas a própria pessoa pode manter o que já tem. */
@@ -275,9 +295,17 @@ public class UsuarioCasoDeUso implements GerenciarUsuarioCasoDeUso {
     @Override
     @Transactional(readOnly = true)
     public UsuarioSaidaDTO buscarPorId(Integer id) {
-        return repositorioPorta.buscarPorId(id)
-                .map(UsuarioSaidaDTO::deDominio)
+        Colaborador usuario = repositorioPorta.buscarPorId(id)
                 .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com ID: " + id));
+
+        // RF23: Supervisor só pode consultar colaboradores; tentar consultar supervisor ou gestor lança AcessoNegadoException (403)
+        if (!operadorAutenticadoPorta.possuiPapel("ROLE_GESTOR_SEGURANCA")
+                && operadorAutenticadoPorta.possuiPapel("ROLE_SUPERVISOR")
+                && usuario.getPerfil() != null) {
+            throw new AcessoNegadoException("Supervisor não possui permissão para consultar dados de " + nomeDoPerfil(usuario.getPerfil()) + ".");
+        }
+
+        return UsuarioSaidaDTO.deDominio(usuario);
     }
 
     @Override

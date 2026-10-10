@@ -7,9 +7,11 @@ import br.edu.safeplace.backend.application.dto.output.UsuarioSaidaDTO;
 import br.edu.safeplace.backend.application.port.out.CodificadorSenhaPorta;
 import br.edu.safeplace.backend.application.port.out.GeradorSenhaPorta;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.application.port.out.OperadorAutenticadoPorta;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.Perfil;
 import br.edu.safeplace.backend.domain.usuario.Supervisor;
+import br.edu.safeplace.backend.domain.usuario.exception.AcessoNegadoException;
 import br.edu.safeplace.backend.domain.usuario.exception.CpfJaCadastradoException;
 import br.edu.safeplace.backend.domain.usuario.exception.EmailJaCadastradoException;
 import br.edu.safeplace.backend.domain.usuario.exception.UsuarioNaoEncontradoException;
@@ -56,7 +58,7 @@ class UsuarioCasoDeUsoTest {
     void deveCadastrarColaboradorComSucesso() {
         CadastrarUsuarioEntradaDTO entrada = new CadastrarUsuarioEntradaDTO(
                 "Carlos Souza", cpfValido, LocalDate.of(1995, 3, 10),
-                "carlos@empresa.com", null, Perfil.COLABORADOR
+                "carlos@empresa.com", null, null
         );
 
         when(repositorioPorta.buscarPorCpf(cpfValido)).thenReturn(Optional.empty());
@@ -72,7 +74,7 @@ class UsuarioCasoDeUsoTest {
         assertEquals(1, saida.id());
         assertEquals("Carlos Souza", saida.nome());
         assertEquals(cpfValido, saida.cpf());
-        assertEquals(Perfil.COLABORADOR, saida.perfil());
+        assertNull(saida.perfil());
         verify(codificadorSenhaPorta, never()).codificar(any());
         verify(repositorioPorta).salvar(any(Colaborador.class));
     }
@@ -104,7 +106,7 @@ class UsuarioCasoDeUsoTest {
     @Test
     void deveLancarExcecaoQuandoCpfJaCadastrado() {
         CadastrarUsuarioEntradaDTO entrada = new CadastrarUsuarioEntradaDTO(
-                "Carlos", cpfValido, LocalDate.of(1995, 3, 10), "carlos@empresa.com", null, Perfil.COLABORADOR
+                "Carlos", cpfValido, LocalDate.of(1995, 3, 10), "carlos@empresa.com", null, null
         );
 
         when(repositorioPorta.buscarPorCpf(cpfValido)).thenReturn(Optional.of(mock(Colaborador.class)));
@@ -116,7 +118,7 @@ class UsuarioCasoDeUsoTest {
     @Test
     void deveLancarExcecaoQuandoEmailJaCadastrado() {
         CadastrarUsuarioEntradaDTO entrada = new CadastrarUsuarioEntradaDTO(
-                "Carlos", cpfValido, LocalDate.of(1995, 3, 10), "carlos@empresa.com", null, Perfil.COLABORADOR
+                "Carlos", cpfValido, LocalDate.of(1995, 3, 10), "carlos@empresa.com", null, null
         );
 
         when(repositorioPorta.buscarPorCpf(cpfValido)).thenReturn(Optional.empty());
@@ -145,5 +147,55 @@ class UsuarioCasoDeUsoTest {
 
         assertNotNull(casoDeUso.buscarPorId(1));
         assertThrows(UsuarioNaoEncontradoException.class, () -> casoDeUso.buscarPorId(99));
+    }
+
+    @Test
+    void supervisorBuscandoSupervisorPorIdDeveLancarAcessoNegado() {
+        Supervisor s = new Supervisor(2, cpfValido, "Ana Lima", LocalDate.of(1985, 7, 20), "ana@empresa.com", "hash", true, LocalDateTime.now(), LocalDateTime.now());
+        when(repositorioPorta.buscarPorId(2)).thenReturn(Optional.of(s));
+
+        OperadorAutenticadoPorta operadorPorta = mock(OperadorAutenticadoPorta.class);
+        when(operadorPorta.possuiPapel("ROLE_GESTOR_SEGURANCA")).thenReturn(false);
+        when(operadorPorta.possuiPapel("ROLE_SUPERVISOR")).thenReturn(true);
+
+        UsuarioCasoDeUso casoDeUsoComOperador = new UsuarioCasoDeUso(
+                repositorioPorta, codificadorSenhaPorta, geradorSenhaPorta, auditoria, operadorPorta);
+
+        assertThrows(AcessoNegadoException.class, () -> casoDeUsoComOperador.buscarPorId(2));
+    }
+
+    @Test
+    void supervisorBuscandoColaboradorPorIdDeveTerSucesso() {
+        Colaborador c = new Colaborador(3, cpfValido, "Carlos", LocalDate.of(1990, 1, 1), "carlos@empresa.com", true, LocalDateTime.now(), LocalDateTime.now());
+        when(repositorioPorta.buscarPorId(3)).thenReturn(Optional.of(c));
+
+        OperadorAutenticadoPorta operadorPorta = mock(OperadorAutenticadoPorta.class);
+        when(operadorPorta.possuiPapel("ROLE_GESTOR_SEGURANCA")).thenReturn(false);
+        when(operadorPorta.possuiPapel("ROLE_SUPERVISOR")).thenReturn(true);
+
+        UsuarioCasoDeUso casoDeUsoComOperador = new UsuarioCasoDeUso(
+                repositorioPorta, codificadorSenhaPorta, geradorSenhaPorta, auditoria, operadorPorta);
+
+        UsuarioSaidaDTO saida = casoDeUsoComOperador.buscarPorId(3);
+        assertNotNull(saida);
+        assertEquals(3, saida.id());
+        assertNull(saida.perfil());
+    }
+
+    @Test
+    void gestorBuscandoSupervisorPorIdDeveTerSucesso() {
+        Supervisor s = new Supervisor(2, cpfValido, "Ana Lima", LocalDate.of(1985, 7, 20), "ana@empresa.com", "hash", true, LocalDateTime.now(), LocalDateTime.now());
+        when(repositorioPorta.buscarPorId(2)).thenReturn(Optional.of(s));
+
+        OperadorAutenticadoPorta operadorPorta = mock(OperadorAutenticadoPorta.class);
+        when(operadorPorta.possuiPapel("ROLE_GESTOR_SEGURANCA")).thenReturn(true);
+
+        UsuarioCasoDeUso casoDeUsoComOperador = new UsuarioCasoDeUso(
+                repositorioPorta, codificadorSenhaPorta, geradorSenhaPorta, auditoria, operadorPorta);
+
+        UsuarioSaidaDTO saida = casoDeUsoComOperador.buscarPorId(2);
+        assertNotNull(saida);
+        assertEquals(2, saida.id());
+        assertEquals(Perfil.SUPERVISOR, saida.perfil());
     }
 }

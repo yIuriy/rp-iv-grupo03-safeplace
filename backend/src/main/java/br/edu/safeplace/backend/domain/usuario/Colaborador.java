@@ -57,12 +57,12 @@ public class Colaborador {
     }
 
     public Perfil getPerfil() {
-        return Perfil.COLABORADOR;
+        return null;
     }
 
-    /** Apenas o perfil de colaborador é alocado em tarefas (UC02, UC11). */
+    /** Apenas o colaborador sem conta de acesso é alocado em tarefas operacionais (UC02, UC11). */
     public boolean podeSerAlocado() {
-        return getPerfil() == Perfil.COLABORADOR;
+        return getPerfil() == null;
     }
 
     public Integer getId() {

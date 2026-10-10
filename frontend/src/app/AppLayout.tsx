@@ -14,7 +14,7 @@ import { useNovosRelatos } from '../features/ocorrencias/useNovosRelatos'
 import './app.css'
 import { PerfilAtalho } from './PerfilAtalho'
 
-const navigation: { path: string; label: string; icon: IconName }[] = [
+const baseNavigation: { path: string; label: string; icon: IconName }[] = [
   { path: '/usuarios', label: 'Usuários', icon: 'users' },
   { path: '/capacitacoes', label: 'Capacitações', icon: 'check' },
   { path: '/ocorrencias', label: 'Ocorrências', icon: 'clipboard' },
@@ -31,6 +31,13 @@ export function AppLayout() {
   const sessao = useSessaoAtiva()
   const novosRelatosData = useNovosRelatos(sessao.perfil === 'GESTOR_SEGURANCA')
   const novosRelatos = novosRelatosData.relatos.length
+
+  const navigation = baseNavigation.map(item => {
+    if (item.path === '/usuarios' && sessao.perfil === 'SUPERVISOR') {
+      return { ...item, label: 'Colaboradores' }
+    }
+    return item
+  })
 
   useEffect(() => {
     const previousTitle = document.title

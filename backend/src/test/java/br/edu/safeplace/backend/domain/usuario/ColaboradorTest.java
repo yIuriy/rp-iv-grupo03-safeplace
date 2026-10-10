@@ -20,7 +20,7 @@ class ColaboradorTest {
         assertEquals(cpfValido, colaborador.getCpf());
         assertEquals(LocalDate.of(1995, 3, 10), colaborador.getDataNascimento());
         assertEquals("carlos@empresa.com", colaborador.getEmail());
-        assertEquals(Perfil.COLABORADOR, colaborador.getPerfil());
+        assertNull(colaborador.getPerfil());
         assertTrue(colaborador.isAtivo());
     }
 

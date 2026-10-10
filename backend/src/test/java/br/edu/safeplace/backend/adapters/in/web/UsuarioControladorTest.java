@@ -1,10 +1,11 @@
 package br.edu.safeplace.backend.adapters.in.web;
 
-import br.edu.safeplace.backend.application.dto.input.CadastrarUsuarioEntradaDTO;
+import br.edu.safeplace.backend.application.dto.input.CadastrarSupervisorInputDTO;
 import br.edu.safeplace.backend.application.dto.output.UsuarioSaidaDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarUsuarioCasoDeUso;
 import br.edu.safeplace.backend.config.SecurityConfig;
 import br.edu.safeplace.backend.domain.usuario.Perfil;
+import br.edu.safeplace.backend.domain.usuario.exception.AcessoNegadoException;
 import br.edu.safeplace.backend.domain.usuario.exception.CpfInvalidoException;
 import br.edu.safeplace.backend.domain.usuario.exception.CpfJaCadastradoException;
 import br.edu.safeplace.backend.domain.usuario.exception.UsuarioNaoEncontradoException;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -26,8 +28,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import org.springframework.security.test.context.support.WithMockUser;
 
 @WebMvcTest({UsuarioControlador.class, UsuarioTratadorExcecoes.class})
 @Import(SecurityConfig.class)
@@ -43,26 +43,24 @@ class UsuarioControladorTest {
     private final String cpfValido = "52998224725";
 
     @Test
-    void deveCriarUsuarioComSucessoESemExporSenha() throws Exception {
+    void deveCriarSupervisorComSucessoESemExporSenha() throws Exception {
         UsuarioSaidaDTO saida = new UsuarioSaidaDTO(
                 1, "Ana Lima", cpfValido, LocalDate.of(1985, 7, 20),
-                "ana@empresa.com", Perfil.SUPERVISOR, true, LocalDateTime.now(), null
+                "ana@empresa.com", Perfil.SUPERVISOR, true, LocalDateTime.now(), "senhaInicial123"
         );
 
-        when(casoDeUso.cadastrarUsuario(any(CadastrarUsuarioEntradaDTO.class))).thenReturn(saida);
+        when(casoDeUso.cadastrarSupervisor(any(CadastrarSupervisorInputDTO.class))).thenReturn(saida);
 
         String jsonRequest = """
                 {
                     "nome": "Ana Lima",
                     "cpf": "52998224725",
                     "dataNascimento": "1985-07-20",
-                    "email": "ana@empresa.com",
-                    "senha": "password123",
-                    "perfil": "SUPERVISOR"
+                    "email": "ana@empresa.com"
                 }
                 """;
 
-        mockMvc.perform(post("/api/usuarios")
+        mockMvc.perform(post("/api/usuarios/supervisores")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest))
                 .andExpect(status().isCreated())
@@ -70,6 +68,7 @@ class UsuarioControladorTest {
                 .andExpect(jsonPath("$.nome").value("Ana Lima"))
                 .andExpect(jsonPath("$.cpf").value(cpfValido))
                 .andExpect(jsonPath("$.perfil").value("SUPERVISOR"))
+                .andExpect(jsonPath("$.senhaInicial").value("senhaInicial123"))
                 .andExpect(jsonPath("$.senha").doesNotExist());
     }
 
@@ -77,7 +76,7 @@ class UsuarioControladorTest {
     void deveListarUsuarios() throws Exception {
         UsuarioSaidaDTO u1 = new UsuarioSaidaDTO(
                 1, "Carlos Souza", cpfValido, LocalDate.of(1995, 3, 10),
-                "carlos@empresa.com", Perfil.COLABORADOR, true, LocalDateTime.now(), null
+                "carlos@empresa.com", null, true, LocalDateTime.now(), null
         );
         when(casoDeUso.listarUsuarios()).thenReturn(List.of(u1));
 
@@ -90,7 +89,7 @@ class UsuarioControladorTest {
 
     @Test
     void deveRetornar409QuandoCpfJaCadastrado() throws Exception {
-        when(casoDeUso.cadastrarUsuario(any()))
+        when(casoDeUso.cadastrarSupervisor(any()))
                 .thenThrow(new CpfJaCadastradoException("CPF já cadastrado no sistema."));
 
         String jsonRequest = """
@@ -98,11 +97,11 @@ class UsuarioControladorTest {
                     "nome": "Carlos",
                     "cpf": "52998224725",
                     "dataNascimento": "1995-03-10",
-                    "perfil": "COLABORADOR"
+                    "email": "carlos@empresa.com"
                 }
                 """;
 
-        mockMvc.perform(post("/api/usuarios")
+        mockMvc.perform(post("/api/usuarios/supervisores")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest))
                 .andExpect(status().isConflict())
@@ -111,19 +110,19 @@ class UsuarioControladorTest {
 
     @Test
     void deveRetornar400QuandoCpfInvalido() throws Exception {
-        when(casoDeUso.cadastrarUsuario(any()))
+        when(casoDeUso.cadastrarSupervisor(any()))
                 .thenThrow(new CpfInvalidoException("CPF deve conter exatamente 11 dígitos numéricos."));
 
         String jsonRequest = """
                 {
                     "nome": "Carlos",
-                    "cpf": "123",
+                    "cpf": "52998224725",
                     "dataNascimento": "1995-03-10",
-                    "perfil": "COLABORADOR"
+                    "email": "carlos@empresa.com"
                 }
                 """;
 
-        mockMvc.perform(post("/api/usuarios")
+        mockMvc.perform(post("/api/usuarios/supervisores")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest))
                 .andExpect(status().isBadRequest())
@@ -138,5 +137,16 @@ class UsuarioControladorTest {
         mockMvc.perform(get("/api/usuarios/99"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Não Encontrado"));
+    }
+
+    @Test
+    void deveRetornar403QuandoAcessoNegado() throws Exception {
+        when(casoDeUso.buscarPorId(1))
+                .thenThrow(new AcessoNegadoException("Supervisor não possui permissão para consultar dados de Supervisor."));
+
+        mockMvc.perform(get("/api/usuarios/1"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").value("Acesso Proibido"))
+                .andExpect(jsonPath("$.message").value("Supervisor não possui permissão para consultar dados de Supervisor."));
     }
 }

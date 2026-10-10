@@ -138,9 +138,10 @@ class TratamentoDeErroHttpTest {
                 }
                 """;
 
-        // RF23: apenas o Gestor de Segurança provisiona perfis com acesso.
-        assertThat(status("POST", "/api/usuarios", novoSupervisor, Perfil.SUPERVISOR)).isEqualTo(403);
-        assertThat(status("GET", "/api/usuarios", null, Perfil.SUPERVISOR)).isEqualTo(200);
+        // RF23: apenas o Gestor de Segurança provisiona perfis com acesso e consulta lista completa.
+        assertThat(status("POST", "/api/usuarios/supervisores", novoSupervisor, Perfil.SUPERVISOR)).isEqualTo(403);
+        assertThat(status("GET", "/api/usuarios", null, Perfil.SUPERVISOR)).isEqualTo(403);
+        assertThat(status("GET", "/api/usuarios", null, Perfil.GESTOR_SEGURANCA)).isEqualTo(200);
     }
 
     @Test

@@ -12,8 +12,9 @@ import { formatarData } from './formatos'
 import { HistoricoAcoes } from './HistoricoAcoes'
 import './perfil.css'
 
-function rotuloDoPerfilUsuario(perfil: PerfilUsuario): string {
-  return perfil === 'COLABORADOR' ? 'Colaborador' : rotuloDoPerfil[perfil]
+function rotuloDoPerfilUsuario(perfil: PerfilUsuario | null): string {
+  if (!perfil) return 'Colaborador'
+  return rotuloDoPerfil[perfil] ?? perfil
 }
 
 function Dados({ perfil }: { perfil: MeuPerfil }) {

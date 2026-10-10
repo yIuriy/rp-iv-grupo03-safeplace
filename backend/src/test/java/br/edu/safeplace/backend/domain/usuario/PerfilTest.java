@@ -13,7 +13,7 @@ class PerfilTest {
     }
 
     @Test
-    void colaboradorNaoDeveExigirCredenciais() {
-        assertFalse(Perfil.COLABORADOR.exigeCredenciais());
+    void enumNaoDeveConterColaboradorPoisNaoTemAcesso() {
+        assertThrows(IllegalArgumentException.class, () -> Perfil.valueOf("COLABORADOR"));
     }
 }

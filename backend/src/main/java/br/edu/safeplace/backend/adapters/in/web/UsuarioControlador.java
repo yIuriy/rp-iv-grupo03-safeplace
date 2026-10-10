@@ -9,12 +9,10 @@ package br.edu.safeplace.backend.adapters.in.web;
 import br.edu.safeplace.backend.application.dto.input.FiltroColaboradorDTO;
 import br.edu.safeplace.backend.application.dto.output.UsuarioSaidaDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarUsuarioCasoDeUso;
-import br.edu.safeplace.backend.domain.usuario.Perfil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -86,23 +84,6 @@ public class UsuarioControlador {
         return UsuarioResposta.aPartirDe(casoDeUso.atualizarColaborador(id, requisicao.paraDTOEntrada()));
     }
 
-    /**
-     * Cadastro genérico por perfil, anterior aos endpoints por papel.
-     *
-     * @deprecated use {@code POST /api/usuarios/supervisores} ou
-     *             {@code POST /api/usuarios/colaboradores}, que aplicam o RBAC de RF23 por rota.
-     */
-    @Deprecated
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Cadastra um novo usuário ou colaborador",
-            description = "Descontinuado: prefira POST /api/usuarios/supervisores ou POST /api/usuarios/colaboradores.")
-    public UsuarioResposta criar(@Valid @RequestBody CriarUsuarioRequisicao requisicao) {
-        exigirGestorParaPerfilComAcesso(requisicao.perfil());
-        UsuarioSaidaDTO salvo = casoDeUso.cadastrarUsuario(requisicao.paraDTOEntrada());
-        return UsuarioResposta.aPartirDe(salvo);
-    }
-
     @GetMapping
     @Operation(summary = "Lista todos os usuários e colaboradores cadastrados")
     public List<UsuarioResposta> listar() {
@@ -126,27 +107,5 @@ public class UsuarioControlador {
     @Operation(summary = "Busca detalhes de um usuário por ID")
     public UsuarioResposta buscarPorId(@PathVariable Integer id) {
         return UsuarioResposta.aPartirDe(casoDeUso.buscarPorId(id));
-    }
-
-    /**
-     * Perfis com acesso ao sistema só podem ser criados pelo Gestor de Segurança (RF23). A rota
-     * genérica aceita qualquer perfil no corpo, então a verificação precisa acontecer aqui; as
-     * rotas por papel resolvem isso pela própria URL.
-     */
-    private void exigirGestorParaPerfilComAcesso(Perfil perfil) {
-        if (perfil == null || !perfil.exigeCredenciais()) {
-            return;
-        }
-
-        Authentication autenticacao = SecurityContextHolder.getContext().getAuthentication();
-        boolean gestor = autenticacao != null
-                && autenticacao.isAuthenticated()
-                && autenticacao.getAuthorities().stream()
-                        .anyMatch(papel -> "ROLE_GESTOR_SEGURANCA".equals(papel.getAuthority()));
-
-        if (!gestor) {
-            throw new AccessDeniedException(
-                    "Apenas Gestor de Segurança pode cadastrar supervisores ou gestores.");
-        }
     }
 }

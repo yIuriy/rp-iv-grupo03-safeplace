@@ -65,7 +65,18 @@ public class SecurityConfig {
                                 .hasRole("GESTOR_SEGURANCA")
                         .requestMatchers(HttpMethod.PUT, "/api/usuarios/colaboradores/*")
                                 .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
-                        .requestMatchers("/api/usuarios/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        // RF23: Consulta de colaboradores e perfil próprio permitida a Gestor e Supervisor
+                        .requestMatchers(HttpMethod.GET, "/api/usuarios/colaboradores")
+                                .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        .requestMatchers(HttpMethod.GET, "/api/usuarios/me", "/api/usuarios/me/**")
+                                .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        // RF23: Listagem geral de usuários (supervisores e gestores) exclusiva do Gestor de Segurança
+                        .requestMatchers(HttpMethod.GET, "/api/usuarios")
+                                .hasRole("GESTOR_SEGURANCA")
+                        // Consulta individual por ID: validada granularmente no caso de uso para Supervisor
+                        .requestMatchers(HttpMethod.GET, "/api/usuarios/*")
+                                .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        .requestMatchers("/api/usuarios/**").denyAll()
                         // UC01, Gestão de Estoque e Manutenção (#132, #103): mutações exclusivas do Gestor de Segurança
                         .requestMatchers(HttpMethod.POST, "/api/epis", "/api/epis/*/movimentacoes", "/api/epis/*/manutencoes")
                                 .hasRole("GESTOR_SEGURANCA")

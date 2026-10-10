@@ -43,7 +43,7 @@ class AtualizacaoCadastralTest {
 
         assertThat(atualizado.getId()).isEqualTo(7);
         assertThat(atualizado.getCpf()).isEqualTo("52998224725");
-        assertThat(atualizado.getPerfil()).isEqualTo(Perfil.COLABORADOR);
+        assertThat(atualizado.getPerfil()).isNull();
         assertThat(atualizado.isAtivo()).isTrue();
         assertThat(atualizado.getCriadoEm()).isEqualTo(CRIACAO);
         assertThat(atualizado.getAtualizadoEm()).isAfter(CRIACAO);

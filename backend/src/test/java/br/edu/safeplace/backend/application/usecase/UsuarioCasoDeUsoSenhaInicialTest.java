@@ -88,7 +88,7 @@ class UsuarioCasoDeUsoSenhaInicialTest {
     @Test
     void naoDeveGerarNemCodificarSenhaParaColaborador() {
         UsuarioSaidaDTO saida = casoDeUso.cadastrarUsuario(
-                new CadastrarUsuarioEntradaDTO("Carlos Souza", CPF, NASCIMENTO, null, null, Perfil.COLABORADOR));
+                new CadastrarUsuarioEntradaDTO("Carlos Souza", CPF, NASCIMENTO, null, null, null));
 
         verify(geradorSenhaPorta, never()).gerar();
         verify(codificadorSenhaPorta, never()).codificar(any());

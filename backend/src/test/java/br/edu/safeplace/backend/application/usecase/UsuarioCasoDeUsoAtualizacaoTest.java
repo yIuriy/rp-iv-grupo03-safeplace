@@ -91,7 +91,7 @@ class UsuarioCasoDeUsoAtualizacaoTest {
         UsuarioSaidaDTO saida = casoDeUso.atualizarColaborador(idColaborador,
                 dados("João Pedro da Silva", "joao@safeplace.com"));
 
-        assertThat(saida.perfil()).isEqualTo(Perfil.COLABORADOR);
+        assertThat(saida.perfil()).isNull();
         assertThat(saida.senhaInicial()).isNull();
         Colaborador persistido = repositorio.buscarPorId(idColaborador).orElseThrow();
         assertThat(persistido).isExactlyInstanceOf(Colaborador.class);
@@ -205,7 +205,7 @@ class UsuarioCasoDeUsoAtualizacaoTest {
         @Override
         public List<Colaborador> listarColaboradores(String nome, String cpf) {
             return porId.values().stream()
-                    .filter(c -> c.getPerfil() == Perfil.COLABORADOR)
+                    .filter(c -> c.getPerfil() == null)
                     .filter(c -> nome == null || c.getNome().toLowerCase(Locale.ROOT).contains(nome.toLowerCase(Locale.ROOT)))
                     .filter(c -> cpf == null || c.getCpf().equals(cpf))
                     .toList();
