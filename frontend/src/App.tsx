@@ -36,8 +36,12 @@ function App() {
         <Route path="*" element={<><h1 className="sp-type-heading-md">Página não encontrada</h1><Link to="/usuarios">Voltar ao início</Link></>} />
       </Route>
     </Route>
-    <Route path="/design-system" element={<Catalog />} />
-    <Route path="/design-system/examples/risk-areas" element={<RiskAreasExample />} />
+    {import.meta.env.DEV && (
+      <>
+        <Route path="/design-system" element={<Catalog />} />
+        <Route path="/design-system/examples/risk-areas" element={<RiskAreasExample />} />
+      </>
+    )}
   </Routes></AutenticacaoProvider></BrowserRouter>
 }
 
