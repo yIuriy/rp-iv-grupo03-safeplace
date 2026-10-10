@@ -4,7 +4,7 @@
 
 Este documento registra o contrato da classificação de periculosidade das tarefas do SafePlace. Ele concilia a classe `Tarefa` e a enumeração `NivelPerigo` do **Diagrama de Classes** com o **UC11 (Classificar Nível de Periculosidade)** e a **US06**, atendendo à [issue #112](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/112) (RF06; UC11; US06).
 
-- **Situação**: proposta de contrato submetida à aprovação do grupo na issue #112. A persistência de relações ([#113](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/113)), a API complementar ([#114](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/114)) e o bloqueio de alocação ([#117](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/117) e [#126](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/126)) devem seguir as decisões aprovadas. As pendências da seção 6 não foram decididas e não devem ser supridas por suposição.
+- **Situação**: contrato aprovado (RF06; UC11; US06; issue #112). A reconciliação do vocabulário único de `NivelPerigo` foi formalizada no modelo, casos de uso, histórias e código.
 - **Fontes**: [Diagrama de classes](../diagramas/classes/Diagrama%20de%20Classes%20-%20SafePlace.png), [UC03](../casos-de-uso/casos-de-uso.md#uc03--mapear-áreas-de-risco), [UC11](../casos-de-uso/casos-de-uso.md#uc11--classificar-nível-de-periculosidade), [US06](../historias-de-usuario.md#us06--classificar-a-periculosidade-das-tarefas), [RF06](../requisitos/requisitos-funcionais.md#rf06-o-sistema-deve-permitir-classificar-o-nível-de-periculosidade-da-tarefa-a-ser-realizada), [RNF03 e RNF05](../requisitos/requisitos-nao-funcionais.md) e o [glossário](../glossario.md#grau-de-risco).
 - **Implementação de referência**: domínio em `backend/src/main/java/br/edu/safeplace/backend/domain/tarefa/` (`Tarefa`, `RegistroClassificacaoTarefa`) e `domain/comum/NivelPerigo`; caso de uso `TarefaUseCase`; persistência `TarefaJpaAdapter` com a migração `V23__registrar_responsavel_classificacao_tarefa.sql`; API `/api/tarefas`; tela `frontend/src/features/tarefas/`.
 
@@ -37,8 +37,8 @@ A revisão de escopo da issue #112 consultou o PNG no commit `34d6b6d` (14/09/20
 | Grave | `ALTO` | Alto |
 | Crítico | `CRITICO` | Crítico |
 
-- **Alcance da correspondência**: serve para ler os textos de UC11 e US06. Leve, moderado e grave **não** são valores aceitos pela API nem pela interface; um valor fora de `NivelPerigo` é recusado com HTTP 400 (`TarefaControllerTest`). A correspondência não traz critério normativo para escolher cada nível (seção 2.5).
-- **Após a aprovação**: UC11 e US06 devem passar a citar os níveis de `NivelPerigo`. Esta proposta não reescreve os textos dos casos de uso e das histórias; apenas aponta para este contrato.
+- **Alcance da correspondência**: serve para leitura do histórico de UC11 e US06. Leve, moderado e grave **não** são valores aceitos pela API nem pela interface; um valor fora de `NivelPerigo` é recusado com HTTP 400 (`TarefaControllerTest`). A correspondência não traz critério normativo para escolher cada nível (seção 2.5).
+- **Alinhamento realizado**: UC11 e US06 foram atualizados para citar os níveis de `NivelPerigo` (Baixo, Médio, Alto e Crítico) conforme este contrato.
 
 ### 2.2. Relações de `Tarefa` com `Setor`, `AreaRisco` e `EPI`
 

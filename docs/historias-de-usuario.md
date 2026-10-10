@@ -200,7 +200,7 @@ Referências: [RF06](requisitos/requisitos-funcionais.md#rf06-o-sistema-deve-per
 > | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
 > | Tarefa | Tarefa cadastrada. | Identificador de tarefa | Obrigatório | Atividade que recebe a classificação. |
-> | Grau de risco | Dos níveis definidos em UC11. | Leve, moderado, grave ou crítico | Obrigatório | Nível de periculosidade da tarefa. |
+> | Grau de risco | Conforme enumeração `NivelPerigo` do diagrama de classes. | Baixo, Médio, Alto ou Crítico | Obrigatório | Nível de periculosidade da tarefa. |
 > | Exigências normativas | Conteúdo e critérios de classificação a confirmar. | Texto ou lista de referências | A confirmar | Exigências consideradas na classificação da atividade. |
 > | Responsável técnico | O responsável técnico pela classificação. | Identificador de usuário | Obrigatório | Gestor responsável pela classificação. |
 > | Data e hora da alteração | Formato a confirmar. | Data e hora | Automático | Momento da classificação ou revisão. |

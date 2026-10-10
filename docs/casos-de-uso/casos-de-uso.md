@@ -573,7 +573,7 @@ O alternativo III, de exportação de relatório, pertence ao backlog de RF18. A
 
 ## UC11 – Classificar Nível de Periculosidade
 
-Este caso de uso integra o MVP por RF06. Os níveis leve, moderado, grave e crítico usados abaixo divergem de baixo, médio, alto e crítico usados em UC03 e na enumeração `NivelPerigo` do diagrama de classes. A [correspondência Classes vs UC11](../arquitetura/correspondencia-classes-tarefa-uc11.md) propõe o vocabulário único `NivelPerigo`, com correspondência explícita (leve para baixo, moderado para médio, grave para alto, crítico para crítico), aguardando aprovação do grupo; os valores originais são preservados até essa definição. O recálculo de vínculos com EPIs no alternativo I depende de RF12, no backlog.
+Este caso de uso integra o MVP por RF06. Os níveis seguem o vocabulário único `NivelPerigo` (Baixo, Médio, Alto e Crítico) do diagrama de classes, aprovado no [contrato Classes vs UC11](../arquitetura/correspondencia-classes-tarefa-uc11.md). O recálculo de vínculos com EPIs no alternativo I depende de RF12, no backlog.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
@@ -589,7 +589,7 @@ Este caso de uso integra o MVP por RF06. Os níveis leve, moderado, grave e crí
 | 1. Acessar o módulo "Classificação de Periculosidade" | |
 | | 2. Listar funções, cargos e atividades cadastradas |
 | 3. Selecionar uma atividade | |
-| 4. Definir o grau de risco (Leve, Moderado, Grave ou Crítico) e exigências normativas | |
+| 4. Definir o grau de risco (Baixo, Médio, Alto ou Crítico) e exigências normativas | |
 | 5. Confirmar a parametrização | |
 | | 6. Validar dados, atualizar a matriz de periculosidade da organização e disponibilizar para consulta do Supervisor |
 | **Regras de Negócio, Restrições e Validações** | |
