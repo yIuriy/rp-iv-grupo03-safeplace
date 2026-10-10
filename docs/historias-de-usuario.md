@@ -761,14 +761,14 @@ Referências: [RF21](requisitos/requisitos-funcionais.md#rf21-o-sistema-deve-ger
 > | Saldo atual | Valor mínimo: zero. | Número inteiro não negativo | Automático | Quantidade disponível para reposição. |
 > | Estoque mínimo | Valor mínimo: zero. | Número inteiro não negativo | Automático | Referência de disponibilidade mínima. |
 > | Data projetada de substituição | Não pode ultrapassar a validade do CA, conforme UC10. | Data | Calculado | Previsão de troca ou descarte do equipamento. |
-> | Prioridade de reposição | Critérios de ordenação a confirmar. | Classificação ou ordenação | Calculado | Posição do equipamento na lista de reposição. |
+> | Prioridade de reposição | Regras do alerta: CRITICA (saldo zero), ALTA (saldo <= mínimo; descarte <= 7 dias; CA <= 10 dias), MEDIA (descarte <= 15 dias; CA > 10 dias) e BAIXA (descarte > 15 dias). | Classificação (`CRITICA`, `ALTA`, `MEDIA`, `BAIXA`) | Calculado | Nível de urgência da reposição ou substituição do equipamento. |
 
 ## Regra(s) de Negócio:
 
 > 1. A projeção deve considerar frequência de uso, durabilidade nominal, condições do setor e multiplicadores da matriz de risco.
 > 2. Conforme a regra registrada em UC10, a data de validade do CA tem prioridade e não pode ser ultrapassada por uma prorrogação de uso.
 > 3. O sistema deve considerar estoque atual e mínimo para gerar alertas preventivos de reposição.
-> 4. A fórmula, as unidades, os multiplicadores, o horizonte de previsão e a antecedência dos alertas precisam ser definidos para validar os resultados numéricos.
+> 4. A prioridade e antecedência dos alertas são calculadas por: descarte próximo (ALTA para $\le 7$ dias, MEDIA para $\le 15$ dias, BAIXA para $> 15$ dias); vencimento de CA (ALTA para $\le 10$ dias, MEDIA para $> 10$ dias); e estoque crítico (CRITICA para saldo zero, ALTA para saldo $\le$ estoque mínimo).
 > 5. UC10 descreve requisição automática de compra, prorrogação por laudo e exportação de custos. A inclusão desses desdobramentos no MVP está a confirmar, pois RF21 e o resultado esperado da primeira entrega explicitam projeções e alertas.
 
 ## Critério(s) de Aceite:

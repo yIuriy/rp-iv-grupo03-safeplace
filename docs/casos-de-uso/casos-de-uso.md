@@ -521,7 +521,7 @@ O passo 7 do cenário principal e o alternativo I (anexos) pertencem ao backlog.
 
 RF21 integra o MVP com previsão de substituição e alertas preventivos. A geração de requisições de compra (passo 13 e alternativo II) e a prorrogação por laudo (alternativo I) permanecem pendentes de decisão, conforme US21. As pós-condições abaixo preservam o cenário completo proposto; o registro de requisições ainda não é um resultado confirmado do MVP.
 
-O alternativo III, de exportação de relatório, pertence ao backlog de RF18. A origem e as unidades dos dados, a fórmula, os multiplicadores de risco e a antecedência dos alertas precisam ser definidos antes de validar os resultados da projeção.
+O alternativo III, de exportação de relatório, pertence ao backlog de RF18. Os parâmetros de cálculo, multiplicadores de risco e a escala de prioridade dos alertas preventivos (descarte próximo com limiares de 7 e 15 dias; CA com limiar de 10 dias; estoque crítico com saldo zerado ou abaixo do mínimo) estão formalizados no contrato de projeções e nas regras de negócio.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
@@ -548,7 +548,7 @@ O alternativo III, de exportação de relatório, pertence ao backlog de RF18. A
 | | 12. Consultar estoque atual e mínimo |
 | | 13. Gerar requisição automática de compra |
 | **Regras de Negócio, Restrições e Validações** | |
-| 1. A data de expiração do CA é prioritária: nenhum EPI pode ter uso prorrogado se o CA estiver vencido. | 2. O cálculo de projeção aplica multiplicadores baseados na matriz de risco do setor. |
+| 1. A data de expiração do CA é prioritária: nenhum EPI pode ter uso prorrogado se o CA estiver vencido. | 2. O cálculo de projeção aplica multiplicadores baseados na matriz de risco do setor. As prioridades de reposição e alertas preventivos seguem: descarte próximo (ALTA para $\le 7$ dias, MEDIA para $\le 15$ dias, BAIXA para $> 15$ dias); vencimento de CA (ALTA para $\le 10$ dias, MEDIA para $> 10$ dias); e estoque crítico (CRITICA para saldo zero, ALTA para saldo $\le$ estoque mínimo). |
 | **Cenário Alternativo I - Prorrogação por inspeção técnica** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Realizar inspeção técnica presencial e atestar bom estado | |
