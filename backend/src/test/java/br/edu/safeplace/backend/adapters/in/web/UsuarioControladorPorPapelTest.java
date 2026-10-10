@@ -23,6 +23,7 @@ import br.edu.safeplace.backend.config.SecurityConfig;
 import br.edu.safeplace.backend.domain.usuario.Perfil;
 import br.edu.safeplace.backend.domain.usuario.exception.CpfJaCadastradoException;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -72,7 +73,7 @@ class UsuarioControladorPorPapelTest {
 
     private static UsuarioSaidaDTO colaboradorSalvo() {
         return new UsuarioSaidaDTO(11, "João da Silva", "52998224725", LocalDate.of(1992, 6, 18),
-                "joao.silva@safeplace.com", Perfil.COLABORADOR, true, LocalDateTime.now(), null);
+                "joao.silva@safeplace.com", null, true, LocalDateTime.now(), null);
     }
 
     @Test
@@ -115,7 +116,7 @@ class UsuarioControladorPorPapelTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JSON_COLABORADOR))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.perfil").value("COLABORADOR"))
+                .andExpect(jsonPath("$.perfil").value(nullValue()))
                 .andExpect(jsonPath("$.senhaInicial").doesNotExist())
                 .andExpect(jsonPath("$.senha").doesNotExist());
     }
