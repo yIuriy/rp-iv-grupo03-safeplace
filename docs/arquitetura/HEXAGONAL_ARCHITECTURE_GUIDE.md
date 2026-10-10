@@ -1,411 +1,335 @@
-# Guia Canônico de Arquitetura Hexagonal (Ports & Adapters)
+# Guia Canônico de Arquitetura Hexagonal (Ports & Adapters) — SafePlace
 
-Este documento estabelece o padrão canônico de **Arquitetura Hexagonal (Portas e Adaptadores)** adotado no sistema CultiPampa. Ele serve como especificação formal e guia de referência para que desenvolvedores e agentes de Inteligência Artificial compreendam os limites arquiteturais, a inversão de dependência e consigam replicar ou adaptar essa estrutura com precisão para qualquer outro projeto e linguagem.
+Este documento estabelece o padrão canônico de **Arquitetura Hexagonal (Portas e Adaptadores)** adotado no sistema **SafePlace**. Ele serve como especificação formal e guia de referência para que desenvolvedores e agentes compreendam os limites arquiteturais, a inversão de dependência e as convenções de implementação do backend (Java 21 e Spring Boot) e sua integração com a interface (React e TypeScript).
 
 ---
 
 ## 1. Princípios Fundamentais e Regra das Dependências
 
-O propósito primário da Arquitetura Hexagonal é isolar a lógica essencial de negócio do software (Domínio e Casos de Uso) de detalhes técnicos externos, tais como frameworks web, bibliotecas de terceiros, drivers de banco de dados, interfaces com o usuário e protocolos de transporte (HTTP, gRPC, CLI, Message Brokers).
+O propósito primordial da Arquitetura Hexagonal é isolar as regras de negócio e os processos operacionais de segurança do trabalho (Domínio e Casos de Uso) de detalhes técnicos e de infraestrutura externa (HTTP REST, bibliotecas de persistência, drivers de banco de dados PostgreSQL, tokens JWT e navegadores web).
 
 ### A Regra de Dependência
-> **As dependências do código-fonte devem apontar unicamente para dentro, em direção aos Casos de Uso e ao Domínio.**
+> **As dependências do código-fonte apontam unicamente para o núcleo, em direção aos Casos de Uso e ao Domínio.**
 
 ```
-+-----------------------------------------------------------------------+
-|  INFRAESTRUTURA EXTERNA (HTTP, Frameworks, Jinja2, Tailwind, JS, CLI) |
-|  +-----------------------------------------------------------------+  |
-|  |  ADAPTADORES DE ENTRADA / INBOUND (Controllers, API Routes)     |  |
-|  |  +-----------------------------------------------------------+  |  |
-|  |  |  APLICAÇÃO: PORTAS DE ENTRADA & SAÍDA, DTOs, CASOS DE USO |  |  |
-|  |  |  +-----------------------------------------------------+  |  |  |
-|  |  |  |  NÚCLEO DE DOMÍNIO: Entidades, VOs, Enums, Regras  |  |  |  |
-|  |  |  +-----------------------------------------------------+  |  |  |
-|  |  +-----------------------------------------------------------+  |  |
-|  |  ADAPTADORES DE SAÍDA / OUTBOUND (Repositories ORM, PDF, Email)|  |
-|  +-----------------------------------------------------------------+  |
-|  INFRAESTRUTURA EXTERNA (SQLite, PostgreSQL, ReportLab, S3, APIs)     |
-+-----------------------------------------------------------------------+
++---------------------------------------------------------------------------------+
+|  INFRAESTRUTURA EXTERNA (HTTP, Spring Web MVC, Spring Security, Swagger/OpenAPI)|
+|  +---------------------------------------------------------------------------+  |
+|  |  ADAPTADORES DE ENTRADA / INBOUND (`adapters/in/web`)                     |  |
+|  |  +---------------------------------------------------------------------+  |  |
+|  |  |  APLICAÇÃO: PORTAS (`application/port/in`, `/out`), DTOs, CASOS DE USO|  |  |
+|  |  |  +---------------------------------------------------------------+  |  |  |
+|  |  |  |  NÚCLEO DE DOMÍNIO (`domain/*`): Entidades, VOs, Regras Puras |  |  |  |
+|  |  |  +---------------------------------------------------------------+  |  |  |
+|  |  |  ADAPTADORES DE SAÍDA / OUTBOUND (`adapters/out/persistencia`)       |  |  |
+|  |  +---------------------------------------------------------------------+  |  |
+|  +---------------------------------------------------------------------------+  |
+|  INFRAESTRUTURA EXTERNA (PostgreSQL 16, Spring Data JPA, JdbcTemplate, Flyway) |
++---------------------------------------------------------------------------------+
 ```
 
-1. **Domínio (`domain`)**: Não depende de **nada** externo. É composto por código nativo puro da linguagem escolhida. Não importa Flask, FastAPI, Django, Spring, SQLAlchemy, ORMs ou utilitários web.
-2. **Aplicação (`usecase`, `port`, `dto`)**: Depende apenas do Domínio. Define contratos abstratos (Portas) para entrada e saída de dados.
-3. **Adaptadores (`controllers`, `infrastructure/outbound`)**: Dependem das abstrações da Aplicação e dos detalhes do framework/banco. Implementam as Portas ou consomem-nas através de injeção de dependência.
+1. **Domínio (`domain/`)**: É o núcleo do sistema. Composto por classes Java puras (`POJOs`, `Records`, `Enums`). **Não possui dependência** do Spring Framework, de anotações JPA (`@Entity`, `@Table`), nem de bibliotecas de transporte HTTP.
+2. **Aplicação (`application/`)**: Orquestra a execução das regras de negócio. Define as **Portas de Entrada** (`port/in/`), as **Portas de Saída** (`port/out/`), os contratos de transporte de dados (`dto/`) e as implementações dos **Casos de Uso** (`usecase/`). Depende apenas do Domínio.
+3. **Adaptadores de Entrada (`adapters/in/`)**: Recebem requisições externas (controladores REST anotados com `@RestController`), validam a camada HTTP e invocam as portas de entrada.
+4. **Adaptadores de Saída (`adapters/out/`)**: Implementam as portas de saída (`port/out/`), interagindo com o PostgreSQL via Spring Data JPA, `JdbcTemplate` ou serviços de infraestrutura, convertendo dados entre o formato relacional e as entidades puras de domínio.
 
 ---
 
-## 2. Topologia Estrutural de Diretórios
+## 2. Topologia Estrutural de Pacotes (SafePlace Backend)
 
-A distribuição de responsabilidades físicas do projeto segue esta árvore:
+O backend do SafePlace (`backend/src/main/java/br/edu/safeplace/backend/`) organiza-se na seguinte estrutura canônica de pacotes:
 
 ```
-sigac-web/
-├── document/                                         # Especificações de requisitos e guias arquiteturais
-├── test/                                             # Testes automatizados
-│   ├── unit/                                         # Testes puros de Domínio e Casos de Uso (sem banco real)
-│   ├── integration/                                  # Testes de Adaptadores (Repositórios e Serviços)
-│   └── e2e/                                          # Testes ponta a ponta de fluxos completos
-└── source/sigac-web/
-    ├── app.py                                        # Ponto de entrada da aplicação
-    ├── bootstrap/                                    # Raiz de Composição (App Factory, Injeção e Extensões)
-    │   ├── app_factory.py                            # Inicialização do app e registro de rotas
-    │   └── database.py                               # Conexão e contexto com o banco de dados
-    ├── application/                                  # NÚCLEO DA APLICAÇÃO (Agnóstico de Web e DB)
-    │   ├── domain/                                   # Modelos e regras de negócio puras
-    │   │   ├── entity/                               # Entidades de domínio ricas
-    │   │   ├── vo/                                   # Objetos de Valor (Value Objects imutáveis)
-    │   │   ├── enum/                                 # Enumerações de negócio
-    │   │   ├── exception/                            # Exceções personalizadas de domínio
-    │   │   └── service/                              # Serviços de domínio entre entidades
-    │   ├── dto/                                      # Contratos de Transferência de Dados
-    │   │   ├── input/                                # DTOs de Entrada (validação sintática de payload)
-    │   │   └── output/                               # DTOs de Saída (projeções seguras para a borda)
-    │   ├── port/                                     # Interfaces e Abstrações Formais
-    │   │   ├── input/                                # Portas Primárias / Driving (Casos de Uso)
-    │   │   └── output/                               # Portas Secundárias / Driven (Persistência e Serviços)
-    │   └── usecase/                                  # Implementações dos Casos de Uso da aplicação
-    ├── controllers/                                  # Adaptadores de Entrada (Tratamento HTTP / Web)
-    └── infrastructure/                               # Adaptadores e Recursos de Infraestrutura
-        ├── inbound/                                  # Adaptadores de Entrada e Interface com Usuário
-        │   └── web/
-        │       ├── http/                             # Definição de Rotas, Middlewares e Decorators
-        │       ├── templates/                        # Templates HTML (Apenas Jinja2, sem CSS/JS inline)
-        │       └── static/                           # Ativos estáticos compilados (css/, javascript/)
-        └── outbound/                                 # Adaptadores de Saída
-            ├── persistence/                          # Implementações de Banco de Dados
-            │   ├── model/                            # Modelos do ORM (Mapeamento de tabelas/colunas)
-            │   ├── repository/                       # Repositórios concretos que implementam Output Ports
-            │   └── migration/                        # Scripts de controle de versão do esquema (Alembic)
-            └── pdf/                                  # Serviços externos concretos (ex.: gerador PDF)
+br.edu.safeplace.backend/
+├── domain/                                  # NÚCLEO DE NEGÓCIO PURO (Sem dependências externas)
+│   ├── comum/                               # Tipos e enumeradores transversais (NivelPerigo, LogAuditoria)
+│   ├── ocorrencia/                          # Ocorrencia, Acidente, Incidente, NumeroProtocoloCAT, StatusOcorrencia
+│   ├── epi/                                 # Epi, ModeloEpi, MovimentacaoEstoque, ManutencaoEpi, StatusEpi
+│   ├── emprestimo/                          # Emprestimo, ClassificacaoEmprestimo, EstadoDevolucao
+│   ├── projecao/                            # ProjecaoSubstituicao, AlertaProjecao, ParametrosSubstituicao
+│   ├── area_risco/                          # AreaRisco, Setor
+│   ├── tarefa/                              # Tarefa, HistoricoClassificacaoTarefa
+│   ├── capacitacao/                         # Certificacao, Treinamento, ExigenciaTreinamento
+│   └── usuario/                             # Usuario, Perfil, Credenciais
+├── application/                             # CAMADA DE APLICAÇÃO E ORQUESTRAÇÃO
+│   ├── port/
+│   │   ├── in/                              # Portas Primárias / Driving (Casos de Uso expostos)
+│   │   └── out/                             # Portas Secundárias / Driven (Repositórios e Serviços de infraestrutura)
+│   ├── dto/
+│   │   ├── input/                           # DTOs de Entrada (Records imutáveis de payload)
+│   │   └── output/                          # DTOs de Saída (Records imutáveis de resposta)
+│   └── usecase/                             # Implementações dos Casos de Uso (ex.: OcorrenciaUseCase, EpiUseCase)
+├── adapters/                                # ADAPTADORES (Bordas de comunicação com o mundo externo)
+│   ├── in/
+│   │   └── web/                             # Controladores REST Spring (@RestController) e Handlers de Erro
+│   └── out/
+│       └── persistencia/                    # Adaptadores de Persistência (@Repository / JpaAdapter) e Mappers
+└── config/                                  # CONFIGURAÇÕES TÉCNICAS DE INFRAESTRUTURA
+    ├── SecurityConfig.java                  # Autenticação JWT e autorização RBAC
+    ├── OpenApiConfig.java                   # Documentação Swagger/OpenAPI v3
+    └── JacksonConfig.java                   # Serialização JSON e fusos horários
 ```
 
 ---
 
 ## 3. Anatomia das Camadas e Seus Contratos
 
-### 3.1 Camada de Domínio (`application/domain/`)
-* **Entidades (`entity/`)**: Classes com identidade única (`id`), contendo atributos de estado e regras intrínsecas de negócio.
-* **Objetos de Valor (`vo/`)**: Estruturas imutáveis cuja igualdade é baseada em valor (ex.: `EmailVO`, `CPF`, `CoordenadasGeograficas`), responsáveis por autovalidação no momento da instanciação.
-* **Exceções de Domínio (`exception/`)**: Erros semânticos do negócio (ex.: `EventoJaEncerradoException`).
-* **Regra**: Esta camada **jamais** importa módulos de `infrastructure/`, `controllers/` ou bibliotecas como SQLAlchemy, Flask, Django, etc.
+### 3.1 Camada de Domínio (`domain/`)
+* **Entidades**: Classes ricas que encapsulam dados e comportamento (ex.: `Acidente`, `Epi`, `Emprestimo`). Não usam anotações JPA.
+* **Objetos de Valor (Value Objects)**: Tipos imutáveis com validação própria (ex.: `NumeroProtocoloCAT`).
+* **Enumerações**: Vocabulário formal do negócio (ex.: `NivelPerigo`: `BAIXO`, `MEDIO`, `ALTO`, `CRITICO`; `StatusOcorrencia`: `ABERTA`, `EM_TRIAGEM`, `ARQUIVADA`).
+* **Regra**: Esta camada **jamais** importa classes de `org.springframework.*`, `jakarta.persistence.*` ou `adapters.*`.
 
 ### 3.2 Portas da Aplicação (`application/port/`)
-As portas são interfaces abstratas (definidas via `abc.ABC` no Python ou `interface` em TypeScript/Java/Go):
-1. **Portas de Entrada (Driving / Primary Ports - `port/input/`)**:
-   - Definem as ações que os atores externos (usuário via Web, sistema externo via API, agendador via cron) podem solicitar ao sistema.
-   - O Caso de Uso é a implementação concreta da Porta de Entrada.
-2. **Portas de Saída (Driven / Secondary Ports - `port/output/`)**:
-   - Definem as operações que a aplicação exige do mundo externo (persistir entidades, enviar e-mails, gerar PDFs, consultar APIs de pagamento).
-   - Os Adaptadores em `infrastructure/outbound/` são as implementações concretas dessas portas.
+As portas são interfaces Java puras:
+1. **Portas de Entrada (Driving / Inbound Ports - `port/in/`)**:
+   - Definem as operações de negócio acessíveis pela borda (ex.: `RegistrarOcorrenciaUseCase`, `GerenciarEpiUseCase`, `ControlarEmprestimoUseCase`).
+   - Os controladores web chamam exclusivamente essas interfaces.
+2. **Portas de Saída (Driven / Outbound Ports - `port/out/`)**:
+   - Definem contratos que a aplicação necessita do mundo externo (ex.: `OcorrenciaRepositoryPort`, `EpiRepositoryPort`, `AuditoriaPort`).
+   - Os adaptadores de persistência e serviços externos implementam essas interfaces.
 
 ### 3.3 Data Transfer Objects (`application/dto/`)
-Protegem o núcleo do sistema contra formatos brutos de requisição (JSON, FormData, Parâmetros de Query):
-* **Input DTO (`dto/input/`)**:
-  - Recebe dados brutos da borda (adaptador de entrada).
-  - Executa sanitização, tipagem defensiva e validação de formato.
-  - Provê métodos de fábrica (ex.: `de_requisicao(dados: dict)`).
-* **Output DTO (`dto/output/`)**:
-  - Encapsula exclusivamente os dados que o chamador externo precisa visualizar.
-  - Impede o vazamento acidental de entidades de domínio completas ou de modelos do banco de dados.
+Modelados como Java `record` imutáveis para garantir concisão e segurança de memória:
+* **Input DTO (`dto/input/`)**: Encapsula parâmetros de entrada vindos de payloads JSON ou formulários, realizando validação sintática.
+* **Output DTO (`dto/output/`)**: Projeta dados para apresentação externa sem vazar referências diretas de instâncias mutáveis de domínio.
 
 ### 3.4 Casos de Uso (`application/usecase/`)
-* Representam os fluxos de trabalho do sistema (User Stories ou regras de negócio aplicadas).
-* Implementam uma Porta de Entrada (`port/input/`).
-* Recebem suas dependências (Portas de Saída) via construtor (Injeção de Dependência).
-* Orquestram o fluxo:
-  1. Carregam entidades através de portas de repositório (`port/output/`).
-  2. Acionam métodos de negócio nas entidades de domínio.
-  3. Verificam regras condicionais e integridade transacional.
-  4. Salvam alterações através de portas de persistência.
-  5. Mapeiam o resultado em um DTO de Saída e o retornam.
+* Implementam uma ou mais portas de entrada (`port/in/`).
+* Recebem suas portas de saída via injeção por construtor (gerenciada pelo Spring com `@Service`).
+* Coordenam transações `@Transactional` quando necessário.
+* Carregam dados através de `port/out/`, aplicam lógica de domínio e persistem resultados via `port/out/`.
 
-### 3.5 Adaptadores de Entrada (`controllers/`, `infrastructure/inbound/`)
-* Recebem eventos externos (HTTP Request, CLI args, WebSockets).
-* Extraem dados da sessão, parâmetros e arquivos (ex.: tratamento de uploads, parsing de JSON).
-* Instanciam o DTO de entrada.
-* Executam o Caso de Uso através da sua Porta de Entrada.
-* Capturam exceções de negócio e convertem-nas na resposta HTTP adequada (códigos de status, renderização de template com mensagens de erro flash ou payloads JSON).
+### 3.5 Adaptadores de Entrada (`adapters/in/web/`)
+* Classes anotadas com `@RestController` mapeadas sob `/api/*`.
+* Extraem informações de cabeçalhos, tokens de segurança (via `SecurityContextHolder`) e corpo JSON.
+* Documentam endpoints através de `@Tag` e `@Operation` (OpenAPI).
+* Traduzem exceções de negócio em respostas HTTP semânticas (201 Created, 400 Bad Request, 403 Forbidden, 404 Not Found, 409 Conflict).
 
-### 3.6 Adaptadores de Saída (`infrastructure/outbound/`)
-* Implementam as Portas de Saída (`port/output/`).
-* Encapsulam bibliotecas externas (SQLAlchemy, Boto3, ReportLab, SendGrid, Redis).
-* Realizam a tradução bidirecional (Mapping):
-  - **Do Domínio para a Infraestrutura**: Converte a Entidade de Domínio no Modelo ORM correspondente para escrita.
-  - **Da Infraestrutura para o Domínio**: Método de fábrica (ex.: `_para_dominio()`), que lê registros do ORM e instancia Entidades de Domínio puras.
+### 3.6 Adaptadores de Saída (`adapters/out/persistencia/`)
+* Implementam as interfaces de `port/out/`.
+* Utilizam Spring Data JPA, `JdbcTemplate` ou repositórios específicos.
+* Realizam o mapeamento bidirecional:
+  - **Domínio para Banco**: Converte atributos da entidade de domínio para parâmetros SQL ou entidades JPA.
+  - **Banco para Domínio**: Reconstrói as entidades puras a partir de `ResultSet` ou modelos JPA, preservando datas, identificadores e vínculos.
 
 ---
 
-## 4. Estudo de Caso Ponta a Ponta: Criação e Moderação de Eventos (US05)
-
-O fluxo a seguir ilustra a travessia completa de uma operação de criação de evento cultural:
+## 4. Estudo de Caso Ponta a Ponta: Registro de Acidente (RF01 / RF13)
 
 ### 4.1 Diagrama de Sequência Arquitetural
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Organizador (Browser)
-    participant Route as Rota Web (Flask Route)
-    participant Controller as EventoController (Inbound Adapter)
-    participant DTO_In as EventoInputDTO
-    participant UseCase as EventoUseCase (Application Service)
-    participant Domain as Evento (Domain Entity)
-    participant Port_Out as EventoRepositoryPort (Output Port)
-    participant Repo as DatabaseEventoRepository (Outbound Adapter)
-    participant DB as SQLite/PostgreSQL (Database Engine)
-    participant DTO_Out as EventoOutputDTO
+    actor User as Supervisor / Gestor (Navegador)
+    participant Ctrl as OcorrenciaController (Inbound Adapter)
+    participant PortIn as RegistrarOcorrenciaUseCase (Input Port)
+    participant UC as OcorrenciaUseCase (Application Service)
+    participant Domain as Acidente (Domain Entity)
+    participant PortOut as OcorrenciaRepositoryPort (Output Port)
+    participant Adapter as OcorrenciaJpaAdapter (Outbound Adapter)
+    participant DB as PostgreSQL 16 (Database)
 
-    User->>Route: POST /cadastrar-evento (FormData + Imagem)
-    Route->>Controller: cadastrar_evento()
-    Note over Controller: Trata upload, comprime imagem localmente
-    Controller->>DTO_In: EventoInputDTO.de_requisicao(form_data, foto_path)
-    DTO_In-->>Controller: instancia validada de DTO
-    Controller->>UseCase: cadastrar_evento(input_dto, user_email, perfil)
-    
-    Note over UseCase: Valida organizador, regras de edital e segmento
-    UseCase->>Port_Out: obter_segmento_por_id(id)
-    Port_Out->>Repo: obter_segmento_por_id(id)
-    Repo->>DB: SELECT * FROM segmentos WHERE id = ...
-    DB-->>Repo: registro ORM
-    Repo-->>Port_Out: Domain SegmentoCultural
-    Port_Out-->>UseCase: Domain SegmentoCultural
+    User->>Ctrl: POST /api/ocorrencias (JSON payload)
+    Note over Ctrl: Valida payload e autenticação JWT
+    Ctrl->>PortIn: registrarAcidente(inputDto)
+    PortIn->>UC: registrarAcidente(inputDto)
 
-    Note over UseCase: Determina status (Aprovado se PROEC/Admin, senão Pendente)
-    UseCase->>Domain: Evento(titulo, organizacao, status, ...)
-    Domain-->>UseCase: instancia da entidade Evento
+    Note over UC: Valida colaborador, área e regras de relato
+    UC->>Domain: new Acidente(dataOcorrencia, causa, gravidade, CAT...)
+    Domain-->>UC: instancia de Acidente com protocolo emitido
 
-    UseCase->>Port_Out: salvar(evento)
-    Port_Out->>Repo: salvar(evento)
-    Note over Repo: Mapeia Domain Evento -> ModelEvento ORM
-    Repo->>DB: INSERT INTO eventos VALUES (...) + db.session.commit()
-    DB-->>Repo: confirmação com ID gerado
-    Repo-->>Port_Out: Domain Evento atualizado
-    Port_Out-->>UseCase: Domain Evento atualizado
+    UC->>PortOut: salvar(acidente)
+    PortOut->>Adapter: salvar(acidente)
+    Note over Adapter: Mapeia Acidente para SQL relacional
+    Adapter->>DB: INSERT INTO ocorrencias / acidentes
+    DB-->>Adapter: Linhas persistidas
+    Adapter-->>PortOut: Acidente salvo
+    PortOut-->>UC: Acidente salvo
 
-    UseCase->>DTO_Out: EventoOutputDTO.de_dominio(evento_salvo)
-    DTO_Out-->>UseCase: instancia do DTO de Saída
-    UseCase-->>Controller: EventoOutputDTO
-    Controller-->>Route: Redirect HTTP + Flash message de sucesso
-    Route-->>User: Redirecionamento 302 para /gestao-eventos
+    Note over UC: Mapeia entidade para DTO de saída
+    UC-->>PortIn: OcorrenciaOutputDTO
+    PortIn-->>Ctrl: OcorrenciaOutputDTO
+    Ctrl-->>User: 201 Created + JSON (OcorrenciaOutputDTO)
 ```
 
 ---
 
-### 4.2 Dissecando o Código Camada por Camada
+### 4.2 Exemplo de Código Camada por Camada no SafePlace
 
-Abaixo estão os contratos reais extraídos da implementação do CultiPampa:
+#### 1. Adaptador de Entrada (Inbound): `adapters/in/web/OcorrenciaController.java`
+```java
+@RestController
+@RequestMapping("/api/ocorrencias")
+@Tag(name = "Ocorrências", description = "Registro e triagem de acidentes e incidentes")
+public class OcorrenciaController {
 
-#### 1. Adaptador de Entrada (Inbound): `controllers/evento_controller.py`
-Responsável pelo protocolo HTTP, tratamento físico de arquivos e conversão para o DTO:
-```python
-class EventoController:
-    def __init__(
-        self,
-        evento_repository: EventoRepositoryPort = None,
-        user_repository: UserRepositoryPort = None,
-        edital_repository: EditalRepositoryPort = None,
-        usecase: EventoUseCasePort = None
-    ):
-        # Injeção de dependências com fallback para adaptadores concretos
-        self.evento_repo = evento_repository or DatabaseEventoRepository()
-        self.user_repo = user_repository or DatabaseUserRepository()
-        self.edital_repo = edital_repository or DatabaseEditalRepository()
-        self.usecase = usecase or EventoUseCase(self.evento_repo, self.user_repo, self.edital_repo)
+    private final RegistrarOcorrenciaUseCase registrarUseCase;
 
-    def cadastrar_evento(self):
-        user = session.get('user')
-        if not user:
-            return redirect(url_for('auth.index'))
+    public OcorrenciaController(RegistrarOcorrenciaUseCase registrarUseCase) {
+        this.registrarUseCase = registrarUseCase;
+    }
 
-        if request.method == 'POST':
-            try:
-                # 1. Trata infraestrutura de arquivos físicos
-                foto_path = salvar_e_comprimir_imagem(request.files.get('foto_evento'), UPLOADS_DIR)
-                
-                # 2. Constrói DTO a partir de dados da borda
-                input_dto = EventoInputDTO.de_requisicao(request.form.to_dict(), foto_path)
-                
-                # 3. Executa caso de uso através da porta
-                output_dto = self.usecase.cadastrar_evento(input_dto, user['email'], user.get('perfil'))
-                
-                flash("Evento cadastrado com sucesso!", "success")
-                return redirect(url_for('auth.gestao_eventos'))
-            except ValueError as err:
-                return render_template('organizador_cadastrar_evento.html', error=str(err))
+    @PostMapping
+    @Operation(summary = "Registrar novo acidente de trabalho")
+    public ResponseEntity<OcorrenciaOutputDTO> registrarAcidente(@Valid @RequestBody RegistrarAcidenteInputDTO dto) {
+        OcorrenciaOutputDTO resposta = registrarUseCase.registrarAcidente(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
+    }
+}
 ```
 
-#### 2. DTO de Entrada: `application/dto/input/evento_input_dto.py`
-Encapsula os campos e faz validação sintática antes de alcançar as regras de negócio:
-```python
-class EventoInputDTO:
-    def __init__(self, titulo_evento: str, segmento_cultural_id: int, data_inicio: str, ...):
-        self.titulo_evento = titulo_evento.strip() if titulo_evento else ""
-        self.segmento_cultural_id = int(segmento_cultural_id)
-        self.data_inicio = data_inicio
-        # Validações de formato (datas, campos obrigatórios)
-
-    @classmethod
-    def de_requisicao(cls, form: dict, foto_path: str | None) -> "EventoInputDTO":
-        return cls(
-            titulo_evento=form.get("titulo_evento"),
-            segmento_cultural_id=form.get("segmento_cultural_id"),
-            imagem_divulgacao=foto_path,
-            ...
-        )
+#### 2. DTO de Entrada: `application/dto/input/RegistrarAcidenteInputDTO.java`
+```java
+public record RegistrarAcidenteInputDTO(
+        @NotNull LocalDateTime dataOcorrencia,
+        String local,
+        @NotBlank String descricao,
+        String acaoImediata,
+        @NotBlank String causaRaiz,
+        String tipoLesao,
+        String parteCorpoAtingida,
+        Integer afastamentoDias,
+        String destino,
+        @NotNull NivelPerigo gravidade,
+        Integer areaRiscoId,
+        @NotNull Integer colaboradorId,
+        Integer gestorId
+) {}
 ```
 
-#### 3. Porta de Entrada (Primary Port): `application/port/input/evento_usecase_port.py`
-Contrato que desacopla o controlador da implementação concreta do caso de uso:
-```python
-from abc import ABC, abstractmethod
-
-class EventoUseCasePort(ABC):
-    @abstractmethod
-    def cadastrar_evento(self, input_dto: EventoInputDTO, user_email: str, user_perfil: str | None = None) -> EventoOutputDTO:
-        """Cadastra um novo evento associando-o ao organizador correspondente."""
-        pass
+#### 3. Porta de Entrada (Primary Port): `application/port/in/RegistrarOcorrenciaUseCase.java`
+```java
+public interface RegistrarOcorrenciaUseCase {
+    OcorrenciaOutputDTO registrarAcidente(RegistrarAcidenteInputDTO input);
+    OcorrenciaOutputDTO registrarIncidente(RegistrarIncidenteInputDTO input);
+    List<OcorrenciaOutputDTO> listar();
+}
 ```
 
-#### 4. Caso de Uso (Application Service): `application/usecase/evento_usecase.py`
-Orquestrador de negócio. Contém a lógica de aplicação pura e interage apenas com portas:
-```python
-class EventoUseCase(EventoUseCasePort):
-    def __init__(self, evento_repository: EventoRepositoryPort, user_repository: UserRepositoryPort, edital_repository: EditalRepositoryPort):
-        self.evento_repository = evento_repository
-        self.user_repository = user_repository
-        self.edital_repository = edital_repository
+#### 4. Caso de Uso (Application Service): `application/usecase/OcorrenciaUseCase.java`
+```java
+@Service
+@Transactional
+public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarOcorrenciaUseCase {
 
-    def cadastrar_evento(self, input_dto: EventoInputDTO, user_email: str, user_perfil: str | None = None) -> EventoOutputDTO:
-        # Regra 1: Validação de existência do organizador
-        organizador = self.user_repository.obter_por_email(user_email)
-        if not organizador:
-            raise ValueError("Organizador não localizado.")
+    private final OcorrenciaRepositoryPort repositoryPort;
+    private final GeradorProtocoloCatPort geradorCatPort;
 
-        # Regra 2: Validação de dependência do segmento cultural
-        segmento = self.evento_repository.obter_segmento_por_id(input_dto.segmento_cultural_id)
-        if not segmento:
-            raise ValueError("Segmento cultural inválido.")
+    public OcorrenciaUseCase(OcorrenciaRepositoryPort repositoryPort, GeradorProtocoloCatPort geradorCatPort) {
+        this.repositoryPort = repositoryPort;
+        this.geradorCatPort = geradorCatPort;
+    }
 
-        # Regra 3: Determinação do ciclo de vida/status
-        # Eventos submetidos por PROEC ou Administradores são aprovados automaticamente
-        perfil = (user_perfil or "").strip().upper()
-        status_inicial = "Aprovado" if perfil in ["PROEC", "ADMINISTRADOR", "ADMIN"] else "Pendente"
-
-        # 4. Instancia a Entidade Pura de Domínio
-        evento_dominio = Evento(
-            id=None,
-            titulo_evento=input_dto.titulo_evento,
-            organizador_id=organizador.id,
-            status=status_inicial,
-            ...
-        )
-
-        # 5. Persiste através da Porta de Saída
-        evento_salvo = self.evento_repository.salvar(evento_dominio)
-
-        # 6. Retorna DTO de Saída
-        return EventoOutputDTO.de_dominio(evento_salvo)
-```
-
-#### 5. Entidade Pura de Domínio: `application/domain/entity/evento.py`
-Zero dependência de bibliotecas externas:
-```python
-class Evento:
-    """Entidade de Domínio Pura que representa um Evento Cultural."""
-    def __init__(
-        self,
-        id: int | None,
-        titulo_evento: str,
-        organizador_id: int,
-        status: str = "Pendente",
-        ...
-    ):
-        self.id = id
-        self.titulo_evento = titulo_evento
-        self.organizador_id = organizador_id
-        self.status = status
-
-    def aprovar(self, parecer: str):
-        """Regra intrínseca de alteração de estado."""
-        self.status = "Aprovado"
-        self.parecer_proec = parecer
-```
-
-#### 6. Porta de Saída (Secondary Port): `application/port/output/evento_repository_port.py`
-Contrato que a infraestrutura de persistência é obrigada a cumprir:
-```python
-from abc import ABC, abstractmethod
-
-class EventoRepositoryPort(ABC):
-    @abstractmethod
-    def salvar(self, evento: Evento) -> Evento:
-        """Persiste um evento (inserção ou atualização) no mecanismo de armazenamento."""
-        pass
-
-    @abstractmethod
-    def obter_por_id(self, id: int) -> Evento | None:
-        """Recupera um evento por ID, retornando a entidade de domínio pura."""
-        pass
-```
-
-#### 7. Adaptador de Saída (Outbound): `infrastructure/outbound/persistence/repository/database_evento_repository.py`
-Implementa a porta de saída, manuseia o ORM (SQLAlchemy) e realiza o mapeamento:
-```python
-class DatabaseEventoRepository(EventoRepositoryPort):
-    def _para_dominio(self, model: ModelEvento) -> DomainEvento:
-        """Traduz modelo relacional do SQLAlchemy para Entidade Pura de Domínio."""
-        return DomainEvento(
-            id=model.id,
-            titulo_evento=model.titulo_evento,
-            organizador_id=model.organizador_id,
-            status=model.status,
-            ...
-        )
-
-    def salvar(self, evento: DomainEvento) -> DomainEvento:
-        if evento.id:
-            model = db.session.get(ModelEvento, evento.id)
-        else:
-            model = ModelEvento()
-            db.session.add(model)
-
-        # Atualiza campos da tabela a partir da entidade de domínio
-        model.titulo_evento = evento.titulo_evento
-        model.organizador_id = evento.organizador_id
-        model.status = evento.status
-
-        db.session.commit()
+    @Override
+    public OcorrenciaOutputDTO registrarAcidente(RegistrarAcidenteInputDTO dto) {
+        NumeroProtocoloCAT protocolo = geradorCatPort.proximoProtocolo(dto.dataOcorrencia());
         
-        # Reconverte para domínio refletindo o ID gerado pelo banco
-        return self._para_dominio(model)
+        Acidente acidente = new Acidente(
+                null,
+                dto.dataOcorrencia(),
+                dto.descricao(),
+                StatusOcorrencia.ABERTA,
+                protocolo,
+                dto.gravidade(),
+                dto.colaboradorId(),
+                dto.areaRiscoId()
+        );
+
+        Acidente salvo = (Acidente) repositoryPort.salvar(acidente);
+        return OcorrenciaOutputDTO.deDominio(salvo);
+    }
+}
+```
+
+#### 5. Entidade Pura de Domínio: `domain/ocorrencia/Acidente.java`
+```java
+public class Acidente extends Ocorrencia {
+
+    private final NumeroProtocoloCAT numeroProtocoloCAT;
+    private final NivelPerigo gravidade;
+
+    public Acidente(Integer id, LocalDateTime dataOcorrencia, String descricao,
+                     StatusOcorrencia status, NumeroProtocoloCAT protocolo,
+                     NivelPerigo gravidade, Integer colaboradorId, Integer areaRiscoId) {
+        super(id, dataOcorrencia, descricao, status, colaboradorId, areaRiscoId);
+        this.numeroProtocoloCAT = protocolo;
+        this.gravidade = gravidade;
+    }
+
+    public NumeroProtocoloCAT getNumeroProtocoloCAT() {
+        return numeroProtocoloCAT;
+    }
+
+    public NivelPerigo getGravidade() {
+        return gravidade;
+    }
+}
+```
+
+#### 6. Porta de Saída (Secondary Port): `application/port/out/OcorrenciaRepositoryPort.java`
+```java
+public interface OcorrenciaRepositoryPort {
+    Ocorrencia salvar(Ocorrencia ocorrencia);
+    Optional<Ocorrencia> buscarPorId(Integer id);
+    Optional<Acidente> buscarAcidentePorProtocolo(NumeroProtocoloCAT protocolo);
+    List<Ocorrencia> listarTodas();
+}
+```
+
+#### 7. Adaptador de Saída: `adapters/out/persistencia/OcorrenciaJpaAdapter.java`
+```java
+@Repository
+public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
+
+    private final JdbcTemplate jdbcTemplate;
+
+    public OcorrenciaJpaAdapter(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    @Override
+    public Ocorrencia salvar(Ocorrencia ocorrencia) {
+        if (ocorrencia instanceof Acidente acidente) {
+            return salvarAcidente(acidente);
+        }
+        return salvarIncidente((Incidente) ocorrencia);
+    }
+
+    private Acidente salvarAcidente(Acidente acidente) {
+        Integer id = jdbcTemplate.queryForObject("""
+                INSERT INTO ocorrencias (data_ocorrencia, descricao, status, colaborador_id, area_risco_id, tipo)
+                VALUES (?, ?, ?, ?, ?, 'ACIDENTE')
+                RETURNING id_ocorrencia
+                """, Integer.class,
+                acidente.getDataOcorrencia(), acidente.getDescricao(),
+                acidente.getStatus().name(), acidente.getColaboradorId(), acidente.getAreaRiscoId());
+
+        jdbcTemplate.update("""
+                INSERT INTO acidentes (id_ocorrencia, numero_protocolo, gravidade)
+                VALUES (?, ?, ?)
+                """, id, acidente.getNumeroProtocoloCAT().valor(), acidente.getGravidade().name());
+
+        return reconstruirAcidente(id);
+    }
+
+    private Acidente reconstruirAcidente(Integer id) {
+        // Leitura relacional e reconstrução da entidade de domínio pura
+        ...
+    }
+}
 ```
 
 ---
 
-## 5. Matriz de Adaptação para Novos Projetos e Tecnologias
+## 5. Checklist de Conformidade Arquitetural do SafePlace
 
-Qualquer agente de IA ou arquiteto pode transpor este padrão para outras linguagens e pilhas tecnológicas seguindo a correlação de componentes abaixo:
+Antes de concluir qualquer adição ou refatoração no sistema, verifique cada uma das seguintes regras invioláveis:
 
-| Conceito Hexagonal | Python (Flask / SQLAlchemy) | TypeScript (NestJS / Prisma) | Go (StdLib / GORM / SQLX) | Java / Kotlin (Spring Boot / JPA) | C# (.NET Core / EF Core) |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Inbound Adapter** | `controllers/*_controller.py` | `@Controller()` em `*.controller.ts` | `handler.go` (HTTP router / Gin) | `@RestController` / `@Controller` | `[ApiController]` / Controller |
-| **Input Port** | `application/port/input/*_port.py` (`ABC`) | `I*UseCase.ts` (`interface`) | `type *UseCase interface` | `public interface *UseCase` | `public interface I*UseCase` |
-| **Input DTO** | `application/dto/input/*_dto.py` | `*.dto.ts` (class-validator) | `type *InputDTO struct` | `record *InputDTO(...)` | `public record *InputDTO(...)` |
-| **Use Case** | `application/usecase/*_usecase.py` | `@Injectable() class *UseCase` | `type *Service struct` | `@Service public class *UseCase` | `public class *UseCase : I*UseCase` |
-| **Domain Entity** | `application/domain/entity/*.py` | `domain/*.entity.ts` (POJO) | `type * struct` (pure struct) | `public class *` (sem anotações JPA) | `public class *` (POCO puro) |
-| **Output Port** | `application/port/output/*_port.py` (`ABC`)| `I*Repository.ts` (`interface`) | `type *Repository interface`| `public interface *Repository` | `public interface I*Repository` |
-| **Outbound Adapter**| `infrastructure/outbound/repository/*` | `*.repository.ts` (PrismaService) | `repository.go` (SQL/GORM) | `@Repository class Jpa*Adapter` | `public class *Repository : I*Repository` |
-| **DB Model / ORM** | `infrastructure/outbound/model/*.py` | `schema.prisma` / TypeORM Entity | DB Table Schemas | `@Entity public class *JpaEntity`| `public class *DbModel` (DbSet) |
-
----
-
-## 6. Checklist de Conformidade Arquitetural (Regras Invioláveis)
-
-Ao criar ou refatorar funcionalidades em um projeto que utiliza esta arquitetura, verifique cada uma das restrições:
-
-- [ ] **Pureza do Domínio**: Nenhuma entidade em `application/domain/` importa bibliotecas de infraestrutura (frameworks web, ORMs, bibliotecas de serialização de terceiros).
-- [ ] **Independência dos Casos de Uso**: Casos de uso dependem exclusivamente de **Portas de Saída** (interfaces abstratas) e nunca de classes concretas de repositórios ou serviços.
-- [ ] **Controle de Vazamento (Leaky Abstraction)**: Modelos de ORM (ex.: `ModelEvento`) ou conexões de banco de dados (`db.session`) **nunca** atravessam a barreira do repositório para o Caso de Uso ou Controller.
-- [ ] **Fronteira com DTOs**: O Controller nunca envia dados brutos da requisição HTTP diretamente para a entidade de domínio. A transformação deve ocorrer através de um `InputDTO`.
-- [ ] **Separação Estrita de Código Front-end**: Templates de visualização (HTML/Jinja2) não contêm lógica CSS inline ou scripts JavaScript embutidos. Todo CSS reside em arquivos compilados dedicados e todo JavaScript em módulos externos.
-- [ ] **Testabilidade Unitária sem Mock de Banco**: Deve ser possível instanciar qualquer `UseCase` em testes unitários passando implementações falsas em memória (In-Memory Mocks/Fakes) das suas portas de saída, sem precisar de banco de dados ativo.
+- [ ] **Pureza do Domínio**: Nenhuma classe no pacote `br.edu.safeplace.backend.domain` importa Spring, Jakarta Persistence (`@Entity`, `@Table`, `@Id`), Hibernate ou Jackson.
+- [ ] **Desacoplamento dos Casos de Uso**: Os serviços em `application/usecase` dependem exclusivamente de interfaces `port/out` e nunca de classes adaptadoras concretas (`*JpaAdapter`, `*Repository`).
+- [ ] **Controle de Vazamento de Persistência**: Nenhuma conexão com banco (`JdbcTemplate`, `EntityManager`), `ResultSet` ou entidade relacional transpassa o limite do adaptador para os casos de uso.
+- [ ] **Uso Obrigatório de DTOs**: Os controladores nunca recebem ou expõem diretamente entidades de domínio. A comunicação ocorre exclusivamente através de Records de `application/dto/input` e `application/dto/output`.
+- [ ] **Testabilidade Unitária**: Qualquer caso de uso pode ser testado de forma unitária instanciando-se a classe diretamente com mocks ou fakes em memória das portas de saída, sem necessidade de carregar o Spring Context ou conectar a um banco de dados real.
+- [ ] **Isolamento de Testes de Integração**: Testes de persistência em PostgreSQL real (`*PersistenciaIntegracaoTest`) devem gerenciar adequadamente a limpeza de dados (inclusive desfazendo chaves estrangeiras circulares) para não interferir na execução de outros testes da suíte.
