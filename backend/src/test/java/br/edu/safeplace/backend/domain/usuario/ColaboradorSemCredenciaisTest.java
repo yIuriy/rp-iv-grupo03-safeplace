@@ -40,10 +40,10 @@ class ColaboradorSemCredenciaisTest {
     }
 
     @Test
-    void perfilDoColaboradorNaoDeveExigirCredenciais() {
+    void colaboradorNaoDevePossuirPerfilDeAcesso() {
         Colaborador colaborador = Colaborador.novo("Carlos Souza", "52998224725", LocalDate.of(1995, 3, 10), null);
 
-        assertFalse(colaborador.getPerfil().exigeCredenciais());
+        assertNull(colaborador.getPerfil());
     }
 
     @Test
