@@ -103,6 +103,8 @@ class OcorrenciaPersistenciaIntegracaoTest {
     }
 
     private void limparDados() {
+        jdbcTemplate.execute("UPDATE ocorrencias SET plano_de_acao_id = NULL");
+        jdbcTemplate.execute("UPDATE planos_de_acao SET ocorrencia_id = NULL");
         jdbcTemplate.execute("DELETE FROM acidentes");
         jdbcTemplate.execute("DELETE FROM incidentes");
         jdbcTemplate.execute("DELETE FROM ocorrencias");
@@ -241,24 +243,21 @@ class OcorrenciaPersistenciaIntegracaoTest {
     @DisplayName("Deve emitir protocolos CAT distintos sob concorrência, sem depender de contagem")
     void deveEmitirProtocolosDistintosSobConcorrencia() throws Exception {
         int quantidade = 8;
-        List<Integer> acidentes = new ArrayList<>();
-        for (int i = 0; i < quantidade; i++) {
-            acidentes.add(registrarUseCase.registrarAcidente(new RegistrarAcidenteInputDTO(
-                    LocalDateTime.of(2026, 9, 7, 9, 0), null, "Acidente concorrente " + i, null,
-                    "FATOR_HUMANO", "Impacto", "Escoriação", null, "Ambulatório",
-                    NivelPerigo.MEDIO, areaId, colaboradorId, gestorId)).idOcorrencia());
-        }
-
         CyclicBarrier largada = new CyclicBarrier(quantidade);
         ExecutorService executor = Executors.newFixedThreadPool(quantidade);
         List<String> protocolos = new ArrayList<>();
         try {
-            List<Callable<String>> emissoes = acidentes.stream()
-                    .map(id -> (Callable<String>) () -> {
-                        largada.await(20, TimeUnit.SECONDS);
-                        return gerenciarUseCase.consolidarCAT(id).numeroProtocoloCAT();
-                    })
-                    .toList();
+            List<Callable<String>> emissoes = new ArrayList<>();
+            for (int i = 0; i < quantidade; i++) {
+                final int index = i;
+                emissoes.add(() -> {
+                    largada.await(20, TimeUnit.SECONDS);
+                    return registrarUseCase.registrarAcidente(new RegistrarAcidenteInputDTO(
+                            LocalDateTime.of(2026, 9, 7, 9, 0), null, "Acidente concorrente " + index, null,
+                            "FATOR_HUMANO", "Impacto", "Escoriação", null, "Ambulatório",
+                            NivelPerigo.MEDIO, areaId, colaboradorId, gestorId)).numeroProtocoloCAT();
+                });
+            }
 
             for (Future<String> emissao : executor.invokeAll(emissoes, 60, TimeUnit.SECONDS)) {
                 protocolos.add(emissao.get());
@@ -276,14 +275,14 @@ class OcorrenciaPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Banco rejeita protocolo CAT duplicado")
     void bancoRejeitaProtocoloDuplicado() {
-        Integer primeiro = registrarUseCase.registrarAcidente(acidenteSimples("Primeiro acidente")).idOcorrencia();
-        Integer segundo = registrarUseCase.registrarAcidente(acidenteSimples("Segundo acidente")).idOcorrencia();
+        OcorrenciaOutputDTO primeiro = registrarUseCase.registrarAcidente(acidenteSimples("Primeiro acidente"));
+        Integer segundoId = registrarUseCase.registrarAcidente(acidenteSimples("Segundo acidente")).idOcorrencia();
 
-        String protocolo = gerenciarUseCase.consolidarCAT(primeiro).numeroProtocoloCAT();
+        String protocolo = primeiro.numeroProtocoloCAT();
         assertThat(protocolo).isNotNull();
 
         assertThatThrownBy(() -> jdbcTemplate.update(
-                "UPDATE acidentes SET numero_protocolo = ? WHERE id_ocorrencia = ?", protocolo, segundo))
+                "UPDATE acidentes SET numero_protocolo = ? WHERE id_ocorrencia = ?", protocolo, segundoId))
                 .isInstanceOf(DuplicateKeyException.class);
     }
 

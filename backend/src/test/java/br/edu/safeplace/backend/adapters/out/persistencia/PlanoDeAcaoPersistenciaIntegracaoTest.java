@@ -106,9 +106,13 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
     }
 
     private void limparDados() {
+        jdbcTemplate.execute("UPDATE ocorrencias SET plano_de_acao_id = NULL");
+        jdbcTemplate.execute("UPDATE planos_de_acao SET ocorrencia_id = NULL");
+        jdbcTemplate.execute("DELETE FROM acidentes");
+        jdbcTemplate.execute("DELETE FROM incidentes");
         jdbcTemplate.execute("DELETE FROM prorrogacoes_prazo");
-        jdbcTemplate.execute("DELETE FROM ocorrencias");
         jdbcTemplate.execute("DELETE FROM planos_de_acao");
+        jdbcTemplate.execute("DELETE FROM ocorrencias");
         jdbcTemplate.execute("DELETE FROM setores");
         jdbcTemplate.update("DELETE FROM usuarios WHERE email LIKE ? OR cpf IN (?, ?)",
                 "%" + DOMINIO_DE_TESTE, CPF_COLABORADOR, CPF_GESTOR);

@@ -246,7 +246,7 @@ As situações abaixo descrevem a cobertura documental, não o atendimento pela 
 | RNF05 | Rastreabilidade de ações (auditoria) | UCs com alteração | Auditoria | Decisão obrigatória no MVP. |
 | RNF08 | Funcionamento offline parcial | Consulta prevista em RNF08; relação com UC09 pendente | Cache local e Sincronização | Dados, dispositivos e alcance do offline ainda precisam ser definidos antes da demonstração. |
 | RNF11 | Interface responsiva e acessível | UCs do MVP | Interface Web | Exige verificação responsiva e de acessibilidade. |
-| RNF15 | Documentação técnica | Todos | Documentação versionada | Parcial; há instruções de execução, migrações e OpenAPI para ocorrências e estoque de EPIs. Cobertura dos demais fluxos ainda pendente. |
+| RNF15 | Documentação técnica | Todos | Documentação versionada | Coberto; há instruções de execução, migrações Flyway e documentação OpenAPI interativa cobrindo todos os 13 controladores REST do sistema com anotações `@Tag` e `@Operation`. |
 
 ## 10. Critérios de aceite da documentação
 
@@ -299,7 +299,7 @@ O [PNG de classes](../diagramas/classes/Diagrama%20de%20Classes%20-%20SafePlace.
 | --- | --- |
 | [#74: usuários e perfis](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/74) | O texto consultado ainda inclui `COLABORADOR` como perfil. A implementação deve seguir RF23 e RNF03 revisados, separando conta de acesso de cadastro de pessoa. |
 | [#75: ocorrências](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/75) | Distinguir o usuário que registra dos colaboradores envolvidos; preservar a data do fato e identificar o momento do cadastro. Conferir protocolo e acompanhamento com UC05/UC09. |
-| [#76: EPIs](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/76) | A base já registra EPIs e movimentações com data/hora e motivo, mas não identifica o operador da movimentação. Conferir unidade rastreável, responsáveis e dados de projeção após as definições acima. |
+| [#76: EPIs](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/76) | A base registra EPIs e movimentações com data/hora, motivo e identificação do operador responsável (responsavel_id criado nas migrações V9 e V10 e exibido na interface). Conferir unidade rastreável e dados de projeção após as definições acima. |
 | [#77: áreas de risco e tarefas](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/77) | Vocabulário de `NivelPerigo` aprovado conforme o diagrama de classes e a issue #112 ([Correspondência Classes vs UC11](../arquitetura/correspondencia-classes-tarefa-uc11.md)). Distinguir proteção para acesso à área do vínculo entre tarefa e EPI. |
 
 Essas dependências são registradas aqui para continuidade do trabalho. O ajuste documental não altera o código nem encerra as issues. Os limites técnicos atuais, incluindo autorização, auditoria e configuração da URL da API, estão na [especificação arquitetural](../arquitetura/especificacao-arquitetural.md#7-base-técnica-existente-e-limites).
