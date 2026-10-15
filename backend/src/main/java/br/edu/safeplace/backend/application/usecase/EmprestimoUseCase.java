@@ -28,6 +28,7 @@ import br.edu.safeplace.backend.application.port.out.EmprestimoRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.ImpedimentoCapacitacaoPorta;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.emprestimo.Emprestimo;
@@ -38,8 +39,12 @@ import br.edu.safeplace.backend.domain.emprestimo.exception.EmprestimoNaoEncontr
 import br.edu.safeplace.backend.domain.emprestimo.exception.EntregaImpedidaException;
 import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
 import br.edu.safeplace.backend.domain.epi.Epi;
+import br.edu.safeplace.backend.domain.epi.ManutencaoEpi;
 import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
+import br.edu.safeplace.backend.domain.epi.ResultadoManutencao;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
+import br.edu.safeplace.backend.domain.epi.TipoManutencao;
+import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
 import br.edu.safeplace.backend.domain.epi.exception.CertificadoAprovacaoVencidoException;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
@@ -53,10 +58,11 @@ public class EmprestimoUseCase implements ControlarEmprestimoUseCase {
     private final UsuarioRepositorioPorta usuarios;
     private final ImpedimentoCapacitacaoPorta capacitacoes;
     private final LogAuditoriaRepositoryPort auditoria;
+    private final ManutencaoEpiRepositoryPort manutencoes;
 
     public EmprestimoUseCase(EmprestimoRepositoryPort emprestimos, EpiRepositoryPort epis,
                              UsuarioRepositorioPorta usuarios, ImpedimentoCapacitacaoPorta capacitacoes,
-                             LogAuditoriaRepositoryPort auditoria) {
+                             LogAuditoriaRepositoryPort auditoria, ManutencaoEpiRepositoryPort manutencoes) {
         this.emprestimos = emprestimos;
         this.epis = epis;
         this.usuarios = usuarios;
@@ -64,6 +70,13 @@ public class EmprestimoUseCase implements ControlarEmprestimoUseCase {
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.auditoria = java.util.Objects.requireNonNull(
                 auditoria, "Porta de auditoria é obrigatória (RNF05).");
+        this.manutencoes = manutencoes;
+    }
+
+    public EmprestimoUseCase(EmprestimoRepositoryPort emprestimos, EpiRepositoryPort epis,
+                             UsuarioRepositorioPorta usuarios, ImpedimentoCapacitacaoPorta capacitacoes,
+                             LogAuditoriaRepositoryPort auditoria) {
+        this(emprestimos, epis, usuarios, capacitacoes, auditoria, null);
     }
 
     @Override
@@ -115,6 +128,35 @@ public class EmprestimoUseCase implements ControlarEmprestimoUseCase {
                     "Devolução do empréstimo " + emprestimoId + " (item apto)", operador.getId());
             epis.atualizarSaldo(epi);
             epis.salvarMovimentacao(retorno);
+        } else if (estado == EstadoDevolucao.MANUTENCAO) {
+            ManutencaoEpi manutencao = ManutencaoEpi.novo(
+                    epi.getId(),
+                    LocalDateTime.now(),
+                    TipoManutencao.CORRETIVA,
+                    "Devolução do empréstimo " + emprestimoId + " encaminhada para manutenção",
+                    ResultadoManutencao.REPROVADO,
+                    operador.getNome(),
+                    operador.getId()
+            );
+            if (manutencoes != null) {
+                manutencoes.salvar(manutencao);
+            }
+            epi.registrarDevolucaoManutencao(manutencao);
+            epis.salvar(epi);
+        } else if (estado == EstadoDevolucao.DESCARTE) {
+            MovimentacaoEstoque baixaDescarte = new MovimentacaoEstoque(
+                    null,
+                    epi.getId(),
+                    epi.getLote() != null ? epi.getLote().getId() : null,
+                    operador.getId(),
+                    TipoMovimentacao.SAIDA,
+                    Emprestimo.QUANTIDADE_POR_EMPRESTIMO,
+                    LocalDateTime.now(),
+                    "Baixa por descarte na devolução do empréstimo " + emprestimoId
+            );
+            epis.salvarMovimentacao(baixaDescarte);
+            epi.registrarDevolucaoDescarte();
+            epis.salvar(epi);
         }
 
         Emprestimo salvo = emprestimos.salvar(emprestimo);
@@ -190,15 +232,17 @@ public class EmprestimoUseCase implements ControlarEmprestimoUseCase {
         }
     }
 
-    /** UC12, exceção III: mesmo tipo é a classificação da EspecificacaoEPI, conforme o diagrama de classes. */
+    /** UC12, exceção III: mesmo tipo é a classificação da EspecificacaoEPI, com fallback para o mesmo EPI quando ausente. */
     private void verificarDuplicidadeDeTipo(Epi epi, Colaborador beneficiario, RegistrarEntregaInputDTO entrada) {
-        ClassificacaoEPI tipo = epi.getEspecificacao().getClassificacao();
-        if (tipo == null) {
-            return;
-        }
+        ClassificacaoEPI tipo = epi.getEspecificacao() != null ? epi.getEspecificacao().getClassificacao() : null;
         Optional<Emprestimo> duplicado = emprestimos.listarAtivosPorColaborador(beneficiario.getId()).stream()
                 .filter(ativo -> epis.buscarPorId(ativo.getEpiId())
-                        .map(outro -> tipo == outro.getEspecificacao().getClassificacao())
+                        .map(outro -> {
+                            if (tipo != null && outro.getEspecificacao() != null && outro.getEspecificacao().getClassificacao() != null) {
+                                return tipo == outro.getEspecificacao().getClassificacao();
+                            }
+                            return outro.getId().equals(epi.getId());
+                        })
                         .orElse(false))
                 .findFirst();
         if (duplicado.isEmpty()) {
@@ -207,7 +251,8 @@ public class EmprestimoUseCase implements ControlarEmprestimoUseCase {
         boolean justificado = entrada.justificativaSubstituicao() != null
                 && !entrada.justificativaSubstituicao().isBlank();
         if (!entrada.confirmarSubstituicao() || !justificado) {
-            throw new DuplicidadeDePosseException(duplicado.get().getId(), tipo.name());
+            String descricaoDoTipo = tipo != null ? tipo.name() : epi.getNome();
+            throw new DuplicidadeDePosseException(duplicado.get().getId(), descricaoDoTipo);
         }
     }
 
@@ -227,6 +272,9 @@ public class EmprestimoUseCase implements ControlarEmprestimoUseCase {
                 .orElseThrow(() -> new EntregaImpedidaException("Colaborador " + colaboradorId + " não está cadastrado."));
         if (!pessoa.isAtivo()) {
             throw new EntregaImpedidaException("Colaborador " + pessoa.getNome() + " está inativo.");
+        }
+        if (!pessoa.podeSerAlocado() || pessoa.getPerfil() != null) {
+            throw new EntregaImpedidaException("Apenas colaboradores sem conta de acesso podem receber empréstimo de EPIs.");
         }
         return pessoa;
     }
