@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,6 +61,7 @@ public class EmprestimoUseCase implements ControlarEmprestimoUseCase {
     private final LogAuditoriaRepositoryPort auditoria;
     private final ManutencaoEpiRepositoryPort manutencoes;
 
+    @Autowired
     public EmprestimoUseCase(EmprestimoRepositoryPort emprestimos, EpiRepositoryPort epis,
                              UsuarioRepositorioPorta usuarios, ImpedimentoCapacitacaoPorta capacitacoes,
                              LogAuditoriaRepositoryPort auditoria, ManutencaoEpiRepositoryPort manutencoes) {
