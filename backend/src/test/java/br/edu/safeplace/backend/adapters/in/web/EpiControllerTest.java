@@ -62,7 +62,8 @@ class EpiControllerTest {
                     "quantidade": 20,
                     "estoqueMinimo": 5,
                     "dataValidadeCa": "2028-06-30",
-                    "vidaUtilDias": 365
+                    "vidaUtilDias": 365,
+                    "classificacao": "PROTECAO_DE_CABECA"
                 }
                 """;
 
