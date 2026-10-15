@@ -25,6 +25,7 @@ public record CriarEpiRequest(
 
         @Schema(description = "Descrição da especificação do EPI.") String descricao,
 
+        @NotNull(message = "Classificação do EPI é obrigatória")
         @Schema(description = "Classificação da especificação do EPI.", example = "PROTECAO_DE_OLHOS") ClassificacaoEPI classificacao,
 
         @Schema(description = "Localização atual do EPI", example = "Almoxarifado A") String localizacao,
