@@ -6,6 +6,7 @@ package br.edu.safeplace.backend.adapters.in.web;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +20,7 @@ import br.edu.safeplace.backend.application.port.in.AlocarColaboradorTarefaUseCa
 import br.edu.safeplace.backend.application.port.in.ClassificarTarefaUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarEpiTarefaUseCase;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.application.port.in.capacitacao.ConsultarCapacitacaoUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -33,13 +35,23 @@ public class TarefaController {
     private final ClassificarTarefaUseCase useCase;
     private final AlocarColaboradorTarefaUseCase alocarUseCase;
     private final GerenciarEpiTarefaUseCase gerenciarEpiUseCase;
+    private final ConsultarCapacitacaoUseCase consultarCapacitacaoUseCase;
+
+    @Autowired
+    public TarefaController(ClassificarTarefaUseCase useCase,
+                            AlocarColaboradorTarefaUseCase alocarUseCase,
+                            GerenciarEpiTarefaUseCase gerenciarEpiUseCase,
+                            ConsultarCapacitacaoUseCase consultarCapacitacaoUseCase) {
+        this.useCase = useCase;
+        this.alocarUseCase = alocarUseCase;
+        this.gerenciarEpiUseCase = gerenciarEpiUseCase;
+        this.consultarCapacitacaoUseCase = consultarCapacitacaoUseCase;
+    }
 
     public TarefaController(ClassificarTarefaUseCase useCase,
                             AlocarColaboradorTarefaUseCase alocarUseCase,
                             GerenciarEpiTarefaUseCase gerenciarEpiUseCase) {
-        this.useCase = useCase;
-        this.alocarUseCase = alocarUseCase;
-        this.gerenciarEpiUseCase = gerenciarEpiUseCase;
+        this(useCase, alocarUseCase, gerenciarEpiUseCase, null);
     }
 
     @PostMapping
@@ -172,5 +184,49 @@ public class TarefaController {
         return gerenciarEpiUseCase.listarEpisObrigatorios(id).stream()
                 .map(EpiResponse::fromOutputDTO)
                 .toList();
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Atualiza a descrição, área de risco e setores vinculados à tarefa (RF06, UC11)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tarefa atualizada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+            @ApiResponse(responseCode = "403", description = "Perfil sem permissão"),
+            @ApiResponse(responseCode = "404", description = "Tarefa, área ou setor não encontrado")
+    })
+    public TarefaResponse atualizar(@PathVariable Integer id,
+                                   @Valid @RequestBody AtualizarTarefaRequest request,
+                                   Authentication authentication) {
+        String operador = authentication != null ? authentication.getName() : "SISTEMA";
+        TarefaOutputDTO salva = useCase.atualizarTarefa(id, request.toInputDTO(), operador);
+        return TarefaResponse.fromOutputDTO(salva);
+    }
+
+    @GetMapping("/{id}/exigencias")
+    @Operation(summary = "Consulta as exigências registradas para a tarefa (US06, critério 4)",
+            description = "Acessível ao Supervisor e Gestor de Segurança: exibe o grau de perigo, EPIs obrigatórios e capacitações normativas.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Exigências da tarefa"),
+            @ApiResponse(responseCode = "404", description = "Tarefa não existe")
+    })
+    public ExigenciasTarefaResponse consultarExigencias(@PathVariable Integer id) {
+        TarefaOutputDTO tarefa = useCase.buscarPorId(id);
+        List<EpiResponse> epis = gerenciarEpiUseCase.listarEpisObrigatorios(id).stream()
+                .map(EpiResponse::fromOutputDTO)
+                .toList();
+        List<ExigenciasTarefaResponse.ItemExigenciaCapacitacaoResponse> capacitacoes = consultarCapacitacaoUseCase != null
+                ? consultarCapacitacaoUseCase.listarExigenciasPorTarefa(id).stream()
+                        .map(ExigenciasTarefaResponse.ItemExigenciaCapacitacaoResponse::deDominio)
+                        .toList()
+                : List.of();
+
+        return new ExigenciasTarefaResponse(
+                tarefa.id(),
+                tarefa.descricao(),
+                tarefa.nivelPerigo(),
+                tarefa.classificada(),
+                capacitacoes,
+                epis
+        );
     }
 }
