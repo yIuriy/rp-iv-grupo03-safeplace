@@ -21,6 +21,6 @@ public record CadastrarAreaRiscoInputDTO(
             String descricao,
             NivelPerigo nivelPerigo,
             List<Integer> episObrigatoriosIds) {
-        this(codigo, nome, descricao, nivelPerigo, null, Collections.emptyList(), null, episObrigatoriosIds);
+        this(codigo, nome, descricao, nivelPerigo, null, List.of("Risco geral"), "Área demarcada", episObrigatoriosIds);
     }
 }
