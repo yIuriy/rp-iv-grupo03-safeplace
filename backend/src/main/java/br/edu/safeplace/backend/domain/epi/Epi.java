@@ -354,6 +354,19 @@ public class Epi {
         }
     }
 
+    public void registrarDevolucaoManutencao(ManutencaoEpi manutencao) {
+        adicionarManutencao(manutencao);
+        if (this.quantidade == 0) {
+            this.status = StatusEpi.EM_MANUTENCAO;
+        }
+    }
+
+    public void registrarDevolucaoDescarte() {
+        if (this.quantidade == 0) {
+            this.status = StatusEpi.DESCARTADO;
+        }
+    }
+
     public boolean validarVinculoEPIsObrigatorios() {
         return status != StatusEpi.DESCARTADO && lote.getModelo().verificarCA(LocalDate.now());
     }

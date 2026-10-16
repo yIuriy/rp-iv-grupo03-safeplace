@@ -30,6 +30,7 @@ import br.edu.safeplace.backend.application.port.in.ControlarEmprestimoUseCase.S
 import br.edu.safeplace.backend.application.port.out.EmprestimoRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.ImpedimentoCapacitacaoPorta;
+import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.emprestimo.ClassificacaoEmprestimo;
 import br.edu.safeplace.backend.domain.emprestimo.Emprestimo;
@@ -40,6 +41,7 @@ import br.edu.safeplace.backend.domain.emprestimo.exception.EmprestimoNaoEncontr
 import br.edu.safeplace.backend.domain.emprestimo.exception.EntregaImpedidaException;
 import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
 import br.edu.safeplace.backend.domain.epi.Epi;
+import br.edu.safeplace.backend.domain.epi.ManutencaoEpi;
 import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
@@ -55,6 +57,7 @@ class EmprestimoUseCaseTest {
     private EpisEmMemoria epis;
     private UsuariosEmMemoria usuarios;
     private CapacitacoesEmMemoria capacitacoes;
+    private ManutencoesEmMemoria manutencoes;
     private EmprestimoUseCase useCase;
 
     private Integer supervisorId;
@@ -67,7 +70,8 @@ class EmprestimoUseCaseTest {
         epis = new EpisEmMemoria();
         usuarios = new UsuariosEmMemoria();
         capacitacoes = new CapacitacoesEmMemoria();
-        useCase = new EmprestimoUseCase(emprestimos, epis, usuarios, capacitacoes, new TrilhaAuditoriaEmMemoria());
+        manutencoes = new ManutencoesEmMemoria();
+        useCase = new EmprestimoUseCase(emprestimos, epis, usuarios, capacitacoes, new TrilhaAuditoriaEmMemoria(), manutencoes);
 
         supervisorId = usuarios.salvar(Supervisor.novo("Bruno Souza", "52998224725",
                 LocalDate.of(1985, 3, 10), EMAIL_SUPERVISOR, "hash")).getId();
@@ -178,6 +182,15 @@ class EmprestimoUseCaseTest {
     }
 
     @Test
+    @DisplayName("Empréstimo bloqueado para destinatário com conta de acesso (Supervisor ou Gestor)")
+    void destinatarioComContaDeAcessoImpedeEmprestimo() {
+        assertThatThrownBy(() -> useCase.registrarEntrega(
+                new RegistrarEntregaInputDTO(capaceteId, supervisorId, PREVISTA, false, null), EMAIL_SUPERVISOR))
+                .isInstanceOf(EntregaImpedidaException.class)
+                .hasMessageContaining("Apenas colaboradores sem conta de acesso podem receber empréstimo de EPIs.");
+    }
+
+    @Test
     @DisplayName("Segundo EPI do mesmo tipo em posse ativa gera alerta; com confirmação e justificativa é entregue")
     void duplicidadeExigeConfirmacaoEJustificativa() {
         useCase.registrarEntrega(entregaDe(capaceteId), EMAIL_SUPERVISOR);
@@ -232,7 +245,22 @@ class EmprestimoUseCaseTest {
     }
 
     @Test
-    @DisplayName("Devolução para MANUTENCAO ou DESCARTE encerra o empréstimo sem creditar o saldo disponível")
+    @DisplayName("Duplicidade de posse é verificada por fallback de ID quando EPI não possui classificação")
+    void duplicidadeMesmoSemClassificacaoVerificaPorId() {
+        Integer epiSemClassificacaoId = epis.salvar(new Epi(0, "Óculos Simples", "12345", 5, 1,
+                StatusEpi.DISPONIVEL, LocalDate.now().plusYears(1), 365, "Sem spec", null, null)).getId();
+
+        useCase.registrarEntrega(
+                new RegistrarEntregaInputDTO(epiSemClassificacaoId, colaboradorId, PREVISTA, false, null), EMAIL_SUPERVISOR);
+
+        assertThatThrownBy(() -> useCase.registrarEntrega(
+                new RegistrarEntregaInputDTO(epiSemClassificacaoId, colaboradorId, PREVISTA, false, null), EMAIL_SUPERVISOR))
+                .isInstanceOf(DuplicidadeDePosseException.class)
+                .hasMessageContaining("Óculos Simples");
+    }
+
+    @Test
+    @DisplayName("Devolução para MANUTENCAO ou DESCARTE encerra o empréstimo sem creditar saldo, registrando manutenção e movimentação")
     void devolucaoParaManutencaoNaoCredita() {
         EmprestimoOutputDTO primeira = useCase.registrarEntrega(entregaDe(capaceteId), EMAIL_SUPERVISOR);
         EmprestimoOutputDTO segunda = useCase.registrarEntrega(
@@ -245,7 +273,8 @@ class EmprestimoUseCaseTest {
         assertThat(epis.buscarPorId(capaceteId).orElseThrow().getQuantidade()).isEqualTo(3);
         assertThat(epis.buscarPorId(capaceteId).orElseThrow().getStatus()).isEqualTo(StatusEpi.DISPONIVEL);
         assertThat(epis.listarMovimentacoesPorEpi(capaceteId)).extracting(MovimentacaoEstoque::getTipo)
-                .containsExactly(TipoMovimentacao.SAIDA, TipoMovimentacao.SAIDA);
+                .containsExactly(TipoMovimentacao.SAIDA, TipoMovimentacao.SAIDA, TipoMovimentacao.SAIDA);
+        assertThat(manutencoes.listarPorEpiId(capaceteId)).hasSize(1);
         assertThat(useCase.buscarPorId(primeira.id()).estadoDevolucao()).isEqualTo(EstadoDevolucao.MANUTENCAO);
         assertThat(useCase.buscarPorId(segunda.id()).estadoDevolucao()).isEqualTo(EstadoDevolucao.DESCARTE);
     }
@@ -454,6 +483,37 @@ class EmprestimoUseCaseTest {
         @Override
         public List<String> impedimentosParaEntrega(Integer colaboradorId, Integer epiId) {
             return impedimentos.getOrDefault(colaboradorId + ":" + epiId, List.of());
+        }
+    }
+
+    private static class ManutencoesEmMemoria implements ManutencaoEpiRepositoryPort {
+        private final List<ManutencaoEpi> registros = new ArrayList<>();
+        private int proximoId = 1;
+
+        @Override
+        public ManutencaoEpi salvar(ManutencaoEpi manutencao) {
+            ManutencaoEpi salva = new ManutencaoEpi(
+                    proximoId++,
+                    manutencao.getEpiId(),
+                    manutencao.getDataManutencao(),
+                    manutencao.getTipoManutencao(),
+                    manutencao.getDescricao(),
+                    manutencao.getResultado(),
+                    manutencao.getResponsavelManutencao(),
+                    manutencao.getResponsavelId()
+            );
+            registros.add(salva);
+            return salva;
+        }
+
+        @Override
+        public Optional<ManutencaoEpi> buscarPorId(Integer id) {
+            return registros.stream().filter(m -> m.getId().equals(id)).findFirst();
+        }
+
+        @Override
+        public List<ManutencaoEpi> listarPorEpiId(Integer epiId) {
+            return registros.stream().filter(m -> m.getEpiId().equals(epiId)).toList();
         }
     }
 }

@@ -114,10 +114,35 @@ export async function registrarEntrega(dados: DadosEntrega): Promise<Emprestimo>
   return lerEmprestimo(data)
 }
 
+function lerDevolucao(dado: unknown): Emprestimo {
+  if (dado === null || typeof dado !== 'object') throw new Error('Registro de devolução inválido')
+  const bruto = dado as Record<string, unknown>
+  const id = typeof bruto.emprestimoId === 'number'
+    ? bruto.emprestimoId
+    : typeof bruto.id === 'number' ? bruto.id : 0
+  return {
+    id,
+    epiId: typeof bruto.epiId === 'number' ? bruto.epiId : 0,
+    epiNome: textoOuNulo(bruto.epiNome) ?? `EPI ${bruto.epiId}`,
+    colaboradorId: typeof bruto.colaboradorId === 'number' ? bruto.colaboradorId : 0,
+    colaboradorNome: textoOuNulo(bruto.colaboradorNome) ?? `Colaborador ${bruto.colaboradorId}`,
+    responsavelEntregaId: numeroOuNulo(bruto.responsavelEntregaId),
+    dataRetirada: typeof bruto.dataRetirada === 'string' ? bruto.dataRetirada : '',
+    dataDevolucaoPrevista: typeof bruto.dataDevolucaoPrevista === 'string' ? bruto.dataDevolucaoPrevista : '',
+    dataDevolucaoReal: textoOuNulo(bruto.dataDevolucaoReal),
+    responsavelDevolucaoId: numeroOuNulo(bruto.responsavelDevolucaoId),
+    estadoDevolucao: estadoOuNulo(bruto.estadoDevolucao),
+    status: 'DISPONIVEL',
+    atrasado: false,
+    termoCautela: typeof bruto.termoCautela === 'string' ? bruto.termoCautela : '',
+    justificativaSubstituicao: textoOuNulo(bruto.justificativaSubstituicao),
+  }
+}
+
 /** Só `APTO` volta ao saldo; `MANUTENCAO` e `DESCARTE` encerram o empréstimo sem creditar o estoque. */
 export async function registrarDevolucao(id: number, estado: EstadoDevolucao): Promise<Emprestimo> {
   const { data } = await http.post<unknown>(`/emprestimos/${id}/devolucao`, { estado })
-  return lerEmprestimo(data)
+  return lerDevolucao(data)
 }
 
 // Sem AbortSignal de propósito: `nomeDoOperador` guarda a promessa por id, e uma consulta cancelada
