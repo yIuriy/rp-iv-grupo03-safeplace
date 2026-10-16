@@ -20,6 +20,7 @@ import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
 import br.edu.safeplace.backend.application.port.in.AlocarColaboradorTarefaUseCase;
 import br.edu.safeplace.backend.application.port.in.ClassificarTarefaUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarEpiTarefaUseCase;
+import br.edu.safeplace.backend.application.port.in.capacitacao.ConsultarCapacitacaoUseCase;
 import br.edu.safeplace.backend.config.SecurityConfig;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
@@ -54,6 +55,9 @@ class TarefaControllerTest {
 
     @MockitoBean
     private GerenciarEpiTarefaUseCase gerenciarEpiUseCase;
+
+    @MockitoBean
+    private ConsultarCapacitacaoUseCase consultarCapacitacaoUseCase;
 
     private static TarefaOutputDTO tarefaClassificada() {
         return new TarefaOutputDTO(1, "Solda em altura", NivelPerigo.ALTO, true,
@@ -391,5 +395,71 @@ class TarefaControllerTest {
         mockMvc.perform(get("/api/tarefas/1/epis"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Gestor de Segurança deve atualizar tarefa com sucesso")
+    void gestorDeveAtualizarTarefa() throws Exception {
+        TarefaOutputDTO atualizada = new TarefaOutputDTO(1, "Solda MIG em altura", NivelPerigo.ALTO, true,
+                LocalDateTime.of(2026, 9, 13, 10, 15, 30));
+        when(useCase.atualizarTarefa(eq(1), any(br.edu.safeplace.backend.application.dto.input.AtualizarTarefaInputDTO.class), any()))
+                .thenReturn(atualizada);
+
+        String json = """
+                {
+                    "descricao": "Solda MIG em altura",
+                    "areaRiscoId": 2,
+                    "setoresIds": [1, 2]
+                }
+                """;
+
+        mockMvc.perform(put("/api/tarefas/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.descricao").value("Solda MIG em altura"));
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("Supervisor não deve atualizar tarefa (proibido)")
+    void supervisorNaoDeveAtualizarTarefa() throws Exception {
+        String json = """
+                {
+                    "descricao": "Tentativa de alteração",
+                    "areaRiscoId": null,
+                    "setoresIds": []
+                }
+                """;
+
+        mockMvc.perform(put("/api/tarefas/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("Supervisor deve consultar exigências normativas e EPIs da tarefa (US06 critério 4)")
+    void supervisorDeveConsultarExigenciasTarefa() throws Exception {
+        when(useCase.buscarPorId(1)).thenReturn(tarefaClassificada());
+        when(gerenciarEpiUseCase.listarEpisObrigatorios(1)).thenReturn(List.of());
+        when(consultarCapacitacaoUseCase.listarExigenciasPorTarefa(1)).thenReturn(List.of(
+                new br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao(
+                        10, "NR-35 Trabalho em Altura",
+                        br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO,
+                        1, br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao.TipoAlvo.TAREFA
+                )
+        ));
+
+        mockMvc.perform(get("/api/tarefas/1/exigencias"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tarefaId").value(1))
+                .andExpect(jsonPath("$.nivelPerigo").value("ALTO"))
+                .andExpect(jsonPath("$.capacitacoes.length()").value(1))
+                .andExpect(jsonPath("$.capacitacoes[0].nomeCapacitacao").value("NR-35 Trabalho em Altura"))
+                .andExpect(jsonPath("$.capacitacoes[0].tipoCapacitacao").value("TREINAMENTO"));
     }
 }
