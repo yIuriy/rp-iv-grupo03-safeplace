@@ -289,6 +289,27 @@ class TarefaUseCaseTest {
                         "EPIs obrigatórios da tarefa: de [Luva (id 5)] para [Cinto (id 6)]");
     }
 
+    @Test
+    @DisplayName("Deve atualizar descrição, área de risco e setores da tarefa gravando LogAuditoria de ALTERACAO")
+    void deveAtualizarTarefa() {
+        TarefaOutputDTO cadastrada = useCase.cadastrarTarefa(
+                new CadastrarTarefaInputDTO("Solda simples", null));
+
+        TarefaOutputDTO atualizada = useCase.atualizarTarefa(cadastrada.id(),
+                new br.edu.safeplace.backend.application.dto.input.AtualizarTarefaInputDTO(
+                        "Solda complexa em altura", null, List.of()), EMAIL_GESTOR);
+
+        assertThat(atualizada.descricao()).isEqualTo("Solda complexa em altura");
+
+        assertThat(auditoria.listarPorEntidade("Tarefa", cadastrada.id()))
+                .filteredOn(log -> "ALTERACAO".equals(log.getTipoOperacao()))
+                .singleElement()
+                .satisfies(log -> {
+                    assertThat(log.getResponsavel()).isEqualTo(EMAIL_GESTOR);
+                    assertThat(log.getJustificativa()).contains("Solda complexa em altura");
+                });
+    }
+
     private static class TarefaRepositoryFake implements TarefaRepositoryPort {
         private final Map<Integer, Tarefa> storage = new HashMap<>();
         private int nextId = 1;
