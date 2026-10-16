@@ -2,7 +2,7 @@
 // exibe grau de periculosidade, EPIs obrigatórios e capacitações normativas registradas.
 
 import { useEffect, useState } from 'react'
-import { Alert, Badge, Button, Dialog, Spinner, Table, TableRow } from '../../shared/components'
+import { Alert, Badge, Button, Dialog, Icon, Table, TableRow } from '../../shared/components'
 import { mensagemDaApi } from '../../shared/api/erros'
 import { tomDoNivelPerigo } from '../areas-risco/api'
 import {
@@ -66,8 +66,8 @@ export function ExigenciasTarefaDialog({
       <div className="sp-dialog-body">
         {carregando && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem 0' }}>
-            <Spinner />
-            <span>Consultando exigências registradas...</span>
+            <Icon name="loader" />
+            <span role="status">Consultando exigências registradas...</span>
           </div>
         )}
 
