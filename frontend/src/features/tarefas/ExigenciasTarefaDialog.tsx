@@ -62,6 +62,7 @@ export function ExigenciasTarefaDialog({
           : undefined
       }
       onClose={aoFechar}
+      className="sp-dialog--largo sp-dialog--exigencias"
     >
       <div className="sp-dialog-body">
         {carregando && (
