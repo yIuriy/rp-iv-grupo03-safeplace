@@ -19,9 +19,11 @@ import br.edu.safeplace.backend.config.SecurityConfig;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -94,5 +96,31 @@ class SetorControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.localizacao").value("Bloco A"));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Gestor de Segurança deve atualizar setor físico com sucesso")
+    void gestorDeveAtualizarSetor() throws Exception {
+        when(useCase.atualizarSetor(eq(1), any(br.edu.safeplace.backend.application.dto.input.AtualizarSetorInputDTO.class), any()))
+                .thenReturn(new SetorOutputDTO(1, "Galpão Principal Modificado", "Nova descrição", "Bloco B", NivelPerigo.CRITICO));
+
+        mockMvc.perform(put("/api/setores/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JSON_VALIDO))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.nome").value("Galpão Principal Modificado"))
+                .andExpect(jsonPath("$.status").value("CRITICO"));
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("Supervisor não deve atualizar setor físico (proibido)")
+    void supervisorNaoDeveAtualizarSetor() throws Exception {
+        mockMvc.perform(put("/api/setores/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JSON_VALIDO))
+                .andExpect(status().isForbidden());
     }
 }
