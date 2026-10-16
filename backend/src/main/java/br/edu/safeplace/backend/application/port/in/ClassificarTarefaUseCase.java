@@ -6,6 +6,7 @@ package br.edu.safeplace.backend.application.port.in;
 
 import java.util.List;
 
+import br.edu.safeplace.backend.application.dto.input.AtualizarTarefaInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarTarefaInputDTO;
 import br.edu.safeplace.backend.application.dto.output.RegistroHistoricoOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.TarefaOutputDTO;
@@ -17,6 +18,12 @@ import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 public interface ClassificarTarefaUseCase {
 
     TarefaOutputDTO cadastrarTarefa(CadastrarTarefaInputDTO inputDTO);
+
+    default TarefaOutputDTO atualizarTarefa(Integer id, AtualizarTarefaInputDTO inputDTO) {
+        return atualizarTarefa(id, inputDTO, null);
+    }
+
+    TarefaOutputDTO atualizarTarefa(Integer id, AtualizarTarefaInputDTO inputDTO, String operador);
 
     List<TarefaOutputDTO> listar();
 

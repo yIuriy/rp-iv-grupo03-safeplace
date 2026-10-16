@@ -25,9 +25,11 @@ public record AtualizarAreaRiscoRequest(
         @Schema(description = "ID do setor físico ao qual a área pertence", example = "1")
         Integer setorId,
 
+        @NotEmpty(message = "Ao menos um agente de risco deve ser informado")
         @Schema(description = "Lista de agentes de risco identificados", example = "[\"Ruído\", \"Calor\", \"Partículas\"]")
         List<String> agentesRisco,
 
+        @NotBlank(message = "Limites físicos ou operacionais são obrigatórios")
         @Schema(description = "Limites físicos ou operacionais mapeados", example = "Delimitação entre linhas A e B")
         String limites,
 

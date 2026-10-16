@@ -24,6 +24,7 @@ import {
   type Tarefa,
 } from './api'
 import { ClassificarTarefaDialog } from './ClassificarTarefaDialog'
+import { ExigenciasTarefaDialog } from './ExigenciasTarefaDialog'
 import { HistoricoTarefaDialog } from './HistoricoTarefaDialog'
 import { TarefaFormDialog } from './TarefaFormDialog'
 import { VincularEpisTarefaDialog } from './VincularEpisTarefaDialog'
@@ -53,6 +54,8 @@ export function TasksPage() {
   const [, startTransition] = useTransition()
 
   const [formularioAberto, setFormularioAberto] = useState(false)
+  const [tarefaEmEdicao, setTarefaEmEdicao] = useState<Tarefa | null>(null)
+  const [tarefaExigencias, setTarefaExigencias] = useState<Tarefa | null>(null)
   const [tarefaClassificando, setTarefaClassificando] = useState<Tarefa | null>(null)
   const [tarefaEpis, setTarefaEpis] = useState<Tarefa | null>(null)
   const [tarefaHistorico, setTarefaHistorico] = useState<Tarefa | null>(null)
@@ -194,7 +197,7 @@ export function TasksPage() {
                       <th scope="col">Grau de perigo</th>
                       <th scope="col">Situação</th>
                       <th scope="col">Última avaliação</th>
-                      {gestor && <th scope="col">Ações</th>}
+                      <th scope="col">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -242,35 +245,51 @@ export function TasksPage() {
                             </span>
                           )}
                         </td>
-                        {gestor && (
-                          <td>
-                            <div className="sp-acoes-tarefa">
-                              <Button
-                                variant="secondary"
-                                onClick={() => setTarefaClassificando(tarefa)}
-                                aria-label={`${
-                                  tarefa.classificada ? 'Reavaliar' : 'Classificar'
-                                } risco da tarefa: ${tarefa.descricao}`}
-                              >
-                                {tarefa.classificada ? 'Reavaliar risco' : 'Classificar'}
-                              </Button>
-                              <Button
-                                variant="secondary"
-                                onClick={() => setTarefaEpis(tarefa)}
-                                aria-label={`Vincular EPIs à tarefa: ${tarefa.descricao}`}
-                              >
-                                EPIs{tarefa.episIds && tarefa.episIds.length > 0 ? ` (${tarefa.episIds.length})` : ''}
-                              </Button>
-                              <Button
-                                variant="quiet"
-                                onClick={() => setTarefaHistorico(tarefa)}
-                                aria-label={`Ver histórico da tarefa: ${tarefa.descricao}`}
-                              >
-                                Histórico
-                              </Button>
-                            </div>
-                          </td>
-                        )}
+                        <td>
+                          <div className="sp-acoes-tarefa">
+                            <Button
+                              variant="secondary"
+                              onClick={() => setTarefaExigencias(tarefa)}
+                              aria-label={`Ver exigências da tarefa: ${tarefa.descricao}`}
+                            >
+                              Exigências
+                            </Button>
+                            {gestor && (
+                              <>
+                                <Button
+                                  variant="secondary"
+                                  onClick={() => setTarefaEmEdicao(tarefa)}
+                                  aria-label={`Editar tarefa: ${tarefa.descricao}`}
+                                >
+                                  Editar
+                                </Button>
+                                <Button
+                                  variant="secondary"
+                                  onClick={() => setTarefaClassificando(tarefa)}
+                                  aria-label={`${
+                                    tarefa.classificada ? 'Reavaliar' : 'Classificar'
+                                  } risco da tarefa: ${tarefa.descricao}`}
+                                >
+                                  {tarefa.classificada ? 'Reavaliar risco' : 'Classificar'}
+                                </Button>
+                                <Button
+                                  variant="secondary"
+                                  onClick={() => setTarefaEpis(tarefa)}
+                                  aria-label={`Vincular EPIs à tarefa: ${tarefa.descricao}`}
+                                >
+                                  EPIs{tarefa.episIds && tarefa.episIds.length > 0 ? ` (${tarefa.episIds.length})` : ''}
+                                </Button>
+                                <Button
+                                  variant="secondary"
+                                  onClick={() => setTarefaHistorico(tarefa)}
+                                  aria-label={`Ver histórico da tarefa: ${tarefa.descricao}`}
+                                >
+                                  Histórico
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </td>
                       </TableRow>
                     ))}
                   </tbody>
@@ -284,6 +303,21 @@ export function TasksPage() {
           open={formularioAberto}
           aoFechar={() => setFormularioAberto(false)}
           aoSalvar={aoSalvarNovaTarefa}
+        />
+
+        <TarefaFormDialog
+          open={!!tarefaEmEdicao}
+          tarefa={tarefaEmEdicao}
+          aoFechar={() => setTarefaEmEdicao(null)}
+          aoSalvar={tarefa => {
+            setMensagemSucesso(`Tarefa atualizada com sucesso: "${tarefa.descricao}".`)
+            consultaTarefas.recarregar()
+          }}
+        />
+
+        <ExigenciasTarefaDialog
+          tarefa={tarefaExigencias}
+          aoFechar={() => setTarefaExigencias(null)}
         />
 
         <ClassificarTarefaDialog

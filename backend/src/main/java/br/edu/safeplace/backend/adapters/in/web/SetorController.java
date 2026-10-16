@@ -7,6 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -50,5 +51,15 @@ public class SetorController {
     @Operation(summary = "Busca um setor físico por ID")
     public SetorResponse buscarPorId(@PathVariable Integer id) {
         return SetorResponse.fromOutputDTO(useCase.buscarPorId(id));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Atualiza os dados de um setor físico da planta (RF05)")
+    public SetorResponse atualizar(@PathVariable Integer id,
+                                   @Valid @RequestBody AtualizarSetorRequest request,
+                                   Authentication authentication) {
+        String responsavel = authentication != null ? authentication.getName() : "SISTEMA";
+        SetorOutputDTO salvo = useCase.atualizarSetor(id, request.toInputDTO(), responsavel);
+        return SetorResponse.fromOutputDTO(salvo);
     }
 }

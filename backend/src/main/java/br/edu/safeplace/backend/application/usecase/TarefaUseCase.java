@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.edu.safeplace.backend.application.dto.input.AtualizarTarefaInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarTarefaInputDTO;
 import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.RegistroHistoricoOutputDTO;
@@ -98,6 +99,26 @@ public class TarefaUseCase implements ClassificarTarefaUseCase, GerenciarEpiTare
             registrarClassificacao(new RegistroClassificacaoTarefa(
                     salva.getId(), null, salva.getNivelPerigo(), responsavel, salva.getDataClassificacao()));
         }
+
+        return TarefaOutputDTO.deDominio(salva);
+    }
+
+    @Override
+    @Transactional
+    public TarefaOutputDTO atualizarTarefa(Integer id, AtualizarTarefaInputDTO inputDTO, String operador) {
+        Tarefa existente = buscarTarefa(id);
+        validarRelacoes(inputDTO.areaRiscoId(), inputDTO.setoresIds());
+
+        Tarefa atualizada = existente.atualizar(
+                inputDTO.descricao(),
+                inputDTO.areaRiscoId(),
+                inputDTO.setoresIds()
+        );
+
+        Tarefa salva = repositoryPort.salvar(atualizada);
+        String op = operador != null ? operador : resolverOperador();
+        registrarLog(LogAuditoria.registrarAlteracao(
+                op, ENTIDADE, salva.getId(), "Atualização de Tarefa: " + salva.getDescricao()));
 
         return TarefaOutputDTO.deDominio(salva);
     }

@@ -82,9 +82,9 @@ class AreaRiscoComparacaoTest {
     @DisplayName("Mesmos EPIs em outra ordem não contam como alteração")
     void mesmosEpisEmOutraOrdemNaoMudam() {
         AreaRisco area = new AreaRisco(7, "AR-01", "Solda", null, NivelPerigo.MEDIO, null,
-                List.of(), null, List.of(epi(1, "Capacete"), epi(2, "Luva térmica")));
+                List.of("Ruído"), "Entre as linhas A e B", List.of(epi(1, "Capacete"), epi(2, "Luva térmica")));
         AreaRisco atualizada = area.atualizar("Solda", null, NivelPerigo.MEDIO, null,
-                List.of(), null, List.of(epi(2, "Luva térmica"), epi(1, "Capacete")));
+                List.of("Ruído"), "Entre as linhas A e B", List.of(epi(2, "Luva térmica"), epi(1, "Capacete")));
 
         assertThat(area.compararCom(atualizada, NOME_DO_SETOR)).isEmpty();
     }
@@ -93,9 +93,9 @@ class AreaRiscoComparacaoTest {
     @DisplayName("Campo que passa a ter valor registra o anterior como ausente")
     void campoQuePassaATerValorRegistraAnteriorNulo() {
         AreaRisco area = new AreaRisco(7, "AR-01", "Solda", null, NivelPerigo.MEDIO, null,
-                List.of(), null, List.of(epi(1, "Capacete")));
+                List.of("Ruído"), null, List.of(epi(1, "Capacete")));
         AreaRisco atualizada = area.atualizar("Solda", "Solda MIG", NivelPerigo.MEDIO, 1,
-                List.of(), "Linha amarela", List.of(epi(1, "Capacete")));
+                List.of("Ruído"), "Linha amarela", List.of(epi(1, "Capacete")));
 
         assertThat(area.compararCom(atualizada, NOME_DO_SETOR)).containsExactly(
                 new AlteracaoAreaRisco("descrição", null, "Solda MIG"),

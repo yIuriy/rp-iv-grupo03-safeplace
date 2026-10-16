@@ -41,6 +41,8 @@ class AreaRiscoControllerTest {
                 "nome": "Linha de Produção",
                 "descricao": "Setor de solda e montagem",
                 "nivelPerigo": "ALTO",
+                "agentesRisco": ["Ruído", "Calor"],
+                "limites": "Galpão A - Demarcação 1",
                 "episObrigatoriosIds": [1, 2]
             }
             """;
@@ -204,6 +206,8 @@ class AreaRiscoControllerTest {
                     "nome": "Linha Atualizada",
                     "descricao": "Nova descrição",
                     "nivelPerigo": "ALTO",
+                    "agentesRisco": ["Ruído", "Calor"],
+                    "limites": "Galpão A - Demarcação 1",
                     "episObrigatoriosIds": [1, 2],
                     "justificativa": "Ajuste semestral de riscos"
                 }
@@ -229,6 +233,8 @@ class AreaRiscoControllerTest {
                     "nome": "Linha Atualizada",
                     "descricao": "Nova descrição",
                     "nivelPerigo": "ALTO",
+                    "agentesRisco": ["Ruído", "Calor"],
+                    "limites": "Galpão A - Demarcação 1",
                     "episObrigatoriosIds": [1, 2]
                 }
                 """;
@@ -237,5 +243,45 @@ class AreaRiscoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonAtualizacao))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Deve recusar cadastro sem agentes de risco")
+    void deveRecusarCadastroSemAgentesDeRisco() throws Exception {
+        String jsonSemAgentes = """
+                {
+                    "codigo": "SET-01",
+                    "nome": "Linha de Produção",
+                    "nivelPerigo": "ALTO",
+                    "limites": "Galpão A",
+                    "episObrigatoriosIds": [1, 2]
+                }
+                """;
+
+        mockMvc.perform(post("/api/areas-risco")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonSemAgentes))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Deve recusar cadastro sem limites físicos")
+    void deveRecusarCadastroSemLimitesFisicos() throws Exception {
+        String jsonSemLimites = """
+                {
+                    "codigo": "SET-01",
+                    "nome": "Linha de Produção",
+                    "nivelPerigo": "ALTO",
+                    "agentesRisco": ["Calor"],
+                    "episObrigatoriosIds": [1, 2]
+                }
+                """;
+
+        mockMvc.perform(post("/api/areas-risco")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonSemLimites))
+                .andExpect(status().isBadRequest());
     }
 }

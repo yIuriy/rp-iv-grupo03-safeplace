@@ -61,3 +61,16 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+
+.sp-dialog.sp-dialog--largo {
+  width: 880px;
+}
+
+.sp-dialog--exigencias .sp-table {
+  min-width: 100%;
+}
+
+.sp-dialog--exigencias .sp-table td {
+  height: auto;
+  min-height: 44px;
+}

@@ -21,9 +21,9 @@ public record CriarAreaRiscoRequest(
 
         @Schema(description = "ID do setor físico ao qual a área pertence", example = "1") Integer setorId,
 
-        @Schema(description = "Lista de agentes de risco identificados", example = "[\"Ruído\", \"Calor\"]") List<String> agentesRisco,
+        @NotEmpty(message = "Ao menos um agente de risco deve ser informado") @Schema(description = "Lista de agentes de risco identificados", example = "[\"Ruído\", \"Calor\"]") List<String> agentesRisco,
 
-        @Schema(description = "Limites físicos ou operacionais mapeados", example = "Piso 1 - Área demarcada") String limites,
+        @NotBlank(message = "Limites físicos ou operacionais são obrigatórios") @Schema(description = "Limites físicos ou operacionais mapeados", example = "Piso 1 - Área demarcada") String limites,
 
         @NotEmpty(message = "A área de risco exige ao menos um EPI obrigatório para acesso") @Schema(description = "IDs dos EPIs obrigatórios para acesso ao setor", example = "[1, 2]") List<Integer> episObrigatoriosIds) {
 

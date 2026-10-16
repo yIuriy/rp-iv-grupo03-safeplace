@@ -112,6 +112,17 @@ function FormularioArea({
       .split(',')
       .map(a => a.trim())
       .filter(Boolean)
+
+    if (agentesRisco.length === 0) {
+      setErro('Ao menos um agente de risco deve ser informado.')
+      return
+    }
+
+    if (!limites.trim()) {
+      setErro('Os limites físicos ou operacionais são obrigatórios.')
+      return
+    }
+
     const parsedSetorId = setorId ? Number(setorId) : undefined
 
     setEnviando(true)
@@ -123,7 +134,7 @@ function FormularioArea({
           nivelPerigo,
           setorId: parsedSetorId,
           agentesRisco,
-          limites: limites.trim() || undefined,
+          limites: limites.trim(),
           episObrigatoriosIds: episSelecionados,
           justificativa: justificativa.trim() || undefined,
         })
@@ -136,7 +147,7 @@ function FormularioArea({
           nivelPerigo,
           setorId: parsedSetorId,
           agentesRisco,
-          limites: limites.trim() || undefined,
+          limites: limites.trim(),
           episObrigatoriosIds: episSelecionados,
         })
         aoSalvar(criada, 'criado')
@@ -205,19 +216,21 @@ function FormularioArea({
         </div>
 
         <TextField
-          label="Limites físicos ou operacionais (opcional)"
+          label="Limites físicos ou operacionais *"
           value={limites}
           onChange={e => setLimites(e.target.value)}
           placeholder="Ex: Entre os pilares A e B, piso térreo"
-          helper="Demarcação dos limites para orientar o acesso seguro."
+          helper="Demarcação dos limites para orientar o acesso seguro (obrigatório)."
+          required
         />
 
         <TextField
-          label="Agentes de risco identificados (opcional)"
+          label="Agentes de risco identificados *"
           value={agentesTexto}
           onChange={e => setAgentesTexto(e.target.value)}
           placeholder="Ex: Ruído, Poeira, Alta tensão"
-          helper="Separe múltiplos agentes por vírgula."
+          helper="Separe múltiplos agentes por vírgula (ao menos um obrigatório)."
+          required
         />
 
         <TextArea

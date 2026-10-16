@@ -26,6 +26,7 @@ export function SetoresPainel({ consulta, areas, gestor, aoCadastrar }: {
   aoCadastrar: (setor: Setor) => void
 }) {
   const [cadastroAberto, setCadastroAberto] = useState(false)
+  const [setorEmEdicao, setSetorEmEdicao] = useState<Setor | null>(null)
   const [aviso, setAviso] = useState('')
 
   return <div className="sp-painel">
@@ -44,6 +45,7 @@ export function SetoresPainel({ consulta, areas, gestor, aoCadastrar }: {
         <thead><tr>
           <th scope="col">Setor</th><th scope="col">Localização</th><th scope="col">Grau de perigo</th>
           <th scope="col">Áreas de risco</th><th scope="col">Descrição</th>
+          {gestor && <th scope="col">Ações</th>}
         </tr></thead>
         <tbody>{setores.map(setor => <TableRow key={setor.id}>
           <td><strong>{setor.nome}</strong></td>
@@ -51,14 +53,27 @@ export function SetoresPainel({ consulta, areas, gestor, aoCadastrar }: {
           <td><Badge tone={tomDoNivelPerigo[setor.status]}>{rotuloNivelPerigo[setor.status]}</Badge></td>
           <td>{areasVinculadas(setor, areas)}</td>
           <td>{setor.descricao ?? 'Sem descrição'}</td>
+          {gestor && <td>
+            <Button variant="secondary" onClick={() => setSetorEmEdicao(setor)} disabled={consulta.isOffline}
+              title={consulta.isOffline ? 'Edição indisponível em modo offline' : undefined}>
+              Editar
+            </Button>
+          </td>}
         </TableRow>)}</tbody>
       </Table>}
     </ResultadoConsulta>
-    {gestor && <SetorFormDialog open={cadastroAberto} aoFechar={() => setCadastroAberto(false)}
-      aoSalvar={setor => {
-        setAviso(`Setor ${setor.nome} cadastrado. Ele já pode ser escolhido no cadastro de áreas de risco.`)
-        aoCadastrar(setor)
-      }} />}
+    {gestor && <>
+      <SetorFormDialog open={cadastroAberto} aoFechar={() => setCadastroAberto(false)}
+        aoSalvar={setor => {
+          setAviso(`Setor ${setor.nome} cadastrado. Ele já pode ser escolhido no cadastro de áreas de risco.`)
+          aoCadastrar(setor)
+        }} />
+      <SetorFormDialog open={!!setorEmEdicao} setor={setorEmEdicao} aoFechar={() => setSetorEmEdicao(null)}
+        aoSalvar={setor => {
+          setAviso(`Setor ${setor.nome} atualizado com sucesso.`)
+          consulta.recarregar()
+        }} />
+    </>}
     <Toast message={aviso} onDismiss={() => setAviso('')} />
   </div>
 }

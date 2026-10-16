@@ -40,6 +40,10 @@ public class Setor {
         return new Setor(id, nome, descricao, localizacao, status);
     }
 
+    public Setor atualizar(String novoNome, String novaDescricao, String novaLocalizacao, NivelPerigo novoStatus) {
+        return new Setor(this.id, novoNome, novaDescricao, novaLocalizacao, novoStatus);
+    }
+
     /**
      * Operação {@code obterDadosPlanta()} do diagrama de classes.
      */
