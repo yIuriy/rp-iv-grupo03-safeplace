@@ -217,9 +217,11 @@ Deve mostrar os elementos que podem ser executados ou implantados: navegador, ap
 
 O fluxo recomendado é o registro de acidente ou incidente. O diagrama deve incluir ator, interface, Controller, porta de entrada, caso de uso, domínio, repositório e auditoria. O fluxo termina com a devolução do protocolo ao usuário.
 
-### 8.5. Diagrama de classes reduzido ao MVP
+### 8.5. Diagrama de classes com destaque do MVP
 
-Deve conter apenas as classes necessárias aos requisitos `Deve ter`: usuário e perfil de acesso, colaborador cadastrado sem acesso, ocorrência, plano de ação, EPI, estoque, movimentação, manutenção, empréstimo, projeção de substituição, área de risco, tarefa, classificação de periculosidade, certificação, treinamento e auditoria.
+Deve conter as classes necessárias aos requisitos `Deve ter`: usuário e perfil de acesso, colaborador cadastrado sem acesso, ocorrência, plano de ação, EPI, estoque, movimentação, manutenção, empréstimo, projeção de substituição, área de risco, tarefa, classificação de periculosidade, certificação, treinamento e auditoria.
+
+Decisão de 16/10/2026: em vez de um diagrama reduzido, o grupo mantém o modelo completo, alinhado ao domínio implementado (`backend/.../domain`), com as classes fora do MVP em cinza: `AlertaComportamento`, `AtestadoSaude`, `StatusFuncionario`, `Visitante`, `Fornecedor`, `MidiaAnexo`, `Testemunha`, `Inspecao` e `ItemVerificado`. As operações de classes do MVP que pertencem ao backlog (evidências, laudo e investigação em `Ocorrencia`; CAT em `Acidente`; descarte em `EPI` e `MovimentacaoEstoque`; vínculo tarefa–EPI em `Tarefa`) permanecem no diagrama sem destaque visual e estão listadas na documentação da entrega. As correspondências de cada classe com o código estão nos documentos `docs/arquitetura/correspondencia-classes-*.md`.
 
 Como proposta de modelagem, o grupo pode separar `EPI`, representando o tipo de equipamento nessa proposta, de `ItemEPI`, representando uma unidade física rastreável. Essa separação não está aprovada e não define o significado de `EPI` no modelo vigente, que ainda precisa ser esclarecido. A proposta não cria um requisito novo.
 

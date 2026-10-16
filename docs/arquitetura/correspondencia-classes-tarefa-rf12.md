@@ -12,7 +12,7 @@ Este documento registra o contrato de vinculação de Equipamentos de Proteção
 
 O PNG define:
 
-- **`Tarefa`**: atributos `descricao : String` e `status : NivelPerigo`; operações `consultarTarefas() : List<Tarefa>`, `associarEPIs(listaIds : List<int>) : boolean` e `verificarEPIsObrigatoriosTarefa() : List<EPI>`.
+- **`Tarefa`** (revisão de 16/10/2026): atributos `descricao : String`, `nivelPerigo : NivelPerigo` e `dataClassificacao : DateTime`; operações `classificar(nivel : NivelPerigo, responsavel : GestorDeSeguranca)`, `estaClassificada() : boolean`, `associarEPIs(listaIds : List<int>) : boolean` e `verificarEPIsObrigatoriosTarefa() : List<EPI>` (as duas últimas de RF12, fora do MVP). A operação `consultarTarefas()` foi retirada do PNG, pois a consulta pertence à porta de entrada `ClassificarTarefaUseCase.listar`. Na versão anterior, o atributo de nível se chamava `status : NivelPerigo`.
 - **`EPI`**: catálogo de equipamentos de proteção individual.
 - **Associação entre `Tarefa` e `EPI`**: relação de muitos para muitos (`Tarefa` 0..* para `EPI` 0..*).
 
