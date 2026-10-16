@@ -93,6 +93,12 @@ public class AreaRisco {
         if (nivelPerigo == null) {
             throw new IllegalArgumentException("Nível de perigo da área de risco é obrigatório.");
         }
+        if (agentesRisco == null || agentesRisco.isEmpty()) {
+            throw new IllegalArgumentException("Agentes de risco são obrigatórios para a área de risco.");
+        }
+        if (limites == null || limites.isBlank()) {
+            throw new IllegalArgumentException("Limites físicos ou operacionais são obrigatórios para a área de risco.");
+        }
         if (episObrigatorios == null || episObrigatorios.isEmpty()) {
             throw new AreaRiscoSemEpiObrigatorioException(codigo);
         }
@@ -106,7 +112,7 @@ public class AreaRisco {
             String descricao,
             NivelPerigo nivelPerigo,
             List<Epi> episObrigatorios) {
-        return cadastrar(codigo, nome, descricao, nivelPerigo, null, Collections.emptyList(), null, episObrigatorios);
+        return cadastrar(codigo, nome, descricao, nivelPerigo, null, List.of("Risco geral"), "Área demarcada", episObrigatorios);
     }
 
     /**
@@ -116,6 +122,8 @@ public class AreaRisco {
         if (codigo == null || codigo.isBlank()) return false;
         if (nome == null || nome.isBlank()) return false;
         if (nivelPerigo == null) return false;
+        if (agentesRisco == null || agentesRisco.isEmpty()) return false;
+        if (limites == null || limites.isBlank()) return false;
         return episObrigatorios != null && !episObrigatorios.isEmpty();
     }
 
@@ -136,9 +144,20 @@ public class AreaRisco {
             String novoNome,
             NivelPerigo novoNivel,
             List<Epi> novosEpis) {
+        return validarAlteracoes(novoNome, novoNivel, novosEpis, this.agentesRisco, this.limites);
+    }
+
+    public boolean validarAlteracoes(
+            String novoNome,
+            NivelPerigo novoNivel,
+            List<Epi> novosEpis,
+            List<String> novosAgentes,
+            String novosLimites) {
         if (novoNome == null || novoNome.isBlank()) return false;
         if (novoNivel == null) return false;
-        return novosEpis != null && !novosEpis.isEmpty();
+        if (novosEpis == null || novosEpis.isEmpty()) return false;
+        if (novosAgentes == null || novosAgentes.isEmpty()) return false;
+        return novosLimites != null && !novosLimites.isBlank();
     }
 
     /**
@@ -153,9 +172,15 @@ public class AreaRisco {
             String novosLimites,
             List<Epi> novosEpis) {
 
-        if (!validarAlteracoes(novoNome, novoNivel, novosEpis)) {
+        if (!validarAlteracoes(novoNome, novoNivel, novosEpis, novosAgentes, novosLimites)) {
             if (novosEpis == null || novosEpis.isEmpty()) {
                 throw new AreaRiscoSemEpiObrigatorioException(this.codigo);
+            }
+            if (novosAgentes == null || novosAgentes.isEmpty()) {
+                throw new IllegalArgumentException("Agentes de risco são obrigatórios na atualização da área de risco.");
+            }
+            if (novosLimites == null || novosLimites.isBlank()) {
+                throw new IllegalArgumentException("Limites físicos ou operacionais são obrigatórios na atualização da área de risco.");
             }
             throw new IllegalArgumentException("Dados de alteração da área de risco são inválidos.");
         }
@@ -167,8 +192,8 @@ public class AreaRisco {
                 novaDescricao,
                 novoNivel,
                 novoSetorId != null ? novoSetorId : this.setorId,
-                novosAgentes != null ? novosAgentes : this.agentesRisco,
-                novosLimites != null ? novosLimites : this.limites,
+                novosAgentes,
+                novosLimites.trim(),
                 novosEpis);
     }
 
