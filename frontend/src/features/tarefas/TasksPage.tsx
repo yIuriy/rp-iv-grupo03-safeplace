@@ -280,7 +280,7 @@ export function TasksPage() {
                                   EPIs{tarefa.episIds && tarefa.episIds.length > 0 ? ` (${tarefa.episIds.length})` : ''}
                                 </Button>
                                 <Button
-                                  variant="quiet"
+                                  variant="secondary"
                                   onClick={() => setTarefaHistorico(tarefa)}
                                   aria-label={`Ver histórico da tarefa: ${tarefa.descricao}`}
                                 >
