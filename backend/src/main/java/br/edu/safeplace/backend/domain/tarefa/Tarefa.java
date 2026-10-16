@@ -86,6 +86,21 @@ public class Tarefa {
         return new Tarefa(null, descricao, null, null, null, areaRiscoId, setoresIds);
     }
 
+    public Tarefa atualizar(String novaDescricao, Integer novaAreaRiscoId, List<Integer> novosSetoresIds) {
+        if (novaDescricao == null || novaDescricao.isBlank()) {
+            throw new IllegalArgumentException("Descrição da tarefa é obrigatória.");
+        }
+        return new Tarefa(
+                this.id,
+                novaDescricao.trim(),
+                this.nivelPerigo,
+                this.dataClassificacao,
+                this.responsavelClassificacao,
+                novaAreaRiscoId,
+                novosSetoresIds,
+                this.episObrigatorios);
+    }
+
     /**
      * Cadastro com classificação imediata. O nível é opcional; quando informado, exige o
      * responsável técnico, como qualquer outra classificação.
