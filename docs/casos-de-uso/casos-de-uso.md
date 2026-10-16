@@ -6,7 +6,7 @@ Este documento especifica os casos de uso do SafePlace. Os fluxos incluem funcio
 
 ## 2. Recorte do MVP
 
-O MVP contempla os fluxos essenciais de UC01, UC02, UC03, UC05, UC06, UC07, UC09, UC10, UC11 e UC12, conforme os requisitos classificados como `Deve ter` e a [especificação do MVP](../mvp/especificacao-mvp-arquitetura.md#53-casos-de-uso-incluídos). RF23 também pertence ao MVP, mas o UC13 proposto para sua cobertura ainda precisa ser especificado.
+O MVP contempla os fluxos essenciais de UC01, UC02, UC03, UC05, UC06, UC07, UC09, UC10, UC11, UC12 e UC13, conforme os requisitos classificados como `Deve ter` e a [especificação do MVP](../mvp/especificacao-mvp-arquitetura.md#53-casos-de-uso-incluídos). UC13 cobre RF23, a gestão de supervisores e colaboradores.
 
 UC04 (anexos e testemunhas) e UC08 (vínculo entre tarefas e EPIs) permanecem no backlog. Nos UCs do MVP, os cenários futuros continuam descritos e são identificados no próprio texto. A previsão de substituição e os alertas de RF21 pertencem ao MVP; o alcance das requisições de compra de UC10 e do envio offline de UC09 continua pendente de decisão.
 
@@ -656,3 +656,71 @@ O Colaborador que recebe o EPI é identificado separadamente do Supervisor ou Ge
 | 1. Tentar emprestar segundo EPI do mesmo tipo a um colaborador que já possui um ativo | |
 | | 2. Detectar duplicidade de cautela sem registro de devolução anterior |
 | | 3. Exibir alerta de duplicidade e exigir confirmação/justificativa de substituição |
+
+---
+
+## UC13 – Gerenciar Supervisores e Colaboradores
+
+Este caso de uso integra o MVP por RF23 e detalha as histórias US23 e US24. O Gestor de Segurança gerencia as contas de supervisores; Supervisor e Gestor de Segurança gerenciam os cadastros de colaboradores, que não possuem conta, senha ou perfil de acesso. No MVP, o Gestor de Segurança é provisionado apenas por carga inicial (*seed*) e não é cadastrado por este caso de uso. A desativação de cadastros e a alteração de CPF permanecem fora do MVP, aguardando decisão do grupo.
+
+| Elemento / Ações do Ator | Detalhes / Ações do Sistema |
+| :--- | :--- |
+| **Identificador** | **UC13** |
+| **Nome** | Gerenciar Supervisores e Colaboradores |
+| **Ator Principal** | Gestor de Segurança |
+| **Atores Secundários** | Supervisor |
+| **Resumo** | Permite ao Gestor de Segurança cadastrar, consultar e atualizar supervisores, com geração automática da senha inicial, e permite ao Supervisor e ao Gestor de Segurança cadastrar, consultar e atualizar colaboradores sem conta de acesso, para vinculação a ocorrências, capacitações e empréstimos de EPIs. |
+| **Pré-condições** | O Gestor de Segurança ou o Supervisor deve estar logado no sistema. |
+| **Pós-condições** | Cadastro incluído ou atualizado, com a operação registrada na auditoria. |
+| **Cenário Principal - Cadastrar Supervisor** | |
+| **Ações do Ator** | **Ações do Sistema** |
+| 1. Acessar o módulo "Usuários" e selecionar a aba "Supervisores" | |
+| | 2. Listar os supervisores cadastrados |
+| 3. Selecionar a opção "Novo Supervisor" | |
+| 4. Informar nome, CPF, data de nascimento e e-mail corporativo | |
+| 5. Confirmar o cadastro | |
+| | 6. Validar os dados, a unicidade do CPF e do e-mail |
+| | 7. Gerar a senha inicial, salvar seu hash e atribuir o perfil de Supervisor |
+| | 8. Registrar a operação na auditoria e exibir a senha inicial uma única vez para comunicação ao Supervisor |
+| **Regras de Negócio, Restrições e Validações** | |
+| 1. Somente o Gestor de Segurança cadastra, consulta e atualiza supervisores. | 2. A senha inicial do Supervisor tem 12 caracteres, com ao menos uma letra minúscula, uma maiúscula, um dígito e um caractere especial, e é armazenada apenas como hash BCrypt. |
+| 3. CPF e e-mail são únicos entre todos os cadastros; o CPF deve ser válido. O e-mail é obrigatório para o Supervisor, por ser sua credencial de login, e opcional para o Colaborador. | 4. O Colaborador não recebe conta, senha ou perfil de acesso e não pode se autenticar. |
+| 5. A atualização cadastral altera somente nome, data de nascimento e e-mail, preservando identificador, CPF, perfil, senha e vínculos existentes. | 6. Toda inclusão e atualização registra na auditoria o operador autenticado, a data, a hora e os dados alterados (RNF05). |
+| **Cenário Alternativo I - Cadastrar Colaborador** | |
+| **Ações do Ator** | **Ações do Sistema** |
+| 1. Acessar o módulo "Usuários" e selecionar a aba "Colaboradores" | |
+| 2. Selecionar a opção "Novo Colaborador" | |
+| 3. Informar nome, CPF, data de nascimento e, opcionalmente, e-mail de contato | |
+| 4. Confirmar o cadastro | |
+| | 5. Validar os dados, a unicidade do CPF e do e-mail |
+| | 6. Salvar o cadastro sem gerar senha, credencial ou perfil de acesso |
+| | 7. Registrar a operação na auditoria e disponibilizar o Colaborador para vinculação aos registros |
+| **Cenário Alternativo II - Consultar cadastros** | |
+| **Ações do Ator** | **Ações do Sistema** |
+| 1. Acessar a aba de supervisores ou de colaboradores | |
+| 2. Na aba de colaboradores, informar opcionalmente nome ou CPF como filtro | |
+| | 3. Exibir os cadastros que atendem aos critérios, conforme o perfil do usuário autenticado |
+| **Cenário Alternativo III - Atualizar cadastro** | |
+| **Ações do Ator** | **Ações do Sistema** |
+| 1. Selecionar um supervisor ou colaborador na lista | |
+| 2. Alterar nome, data de nascimento ou e-mail | |
+| 3. Confirmar a atualização | |
+| | 4. Validar os dados e a unicidade do e-mail |
+| | 5. Salvar as alterações, preservando os vínculos com ocorrências, capacitações e empréstimos |
+| | 6. Registrar na auditoria os valores anteriores e os novos |
+| **Cenário de Exceção I - CPF ou e-mail já cadastrado** | |
+| **Ações do Ator** | **Ações do Sistema** |
+| 1. Confirmar cadastro ou atualização com CPF ou e-mail já existente | |
+| | 2. Recusar a operação e informar o campo em conflito |
+| **Cenário de Exceção II - CPF inválido** | |
+| **Ações do Ator** | **Ações do Sistema** |
+| 1. Confirmar cadastro com CPF inválido | |
+| | 2. Recusar a operação e solicitar a correção do CPF |
+| **Cenário de Exceção III - Supervisor tenta gerenciar supervisores** | |
+| **Ações do Ator** | **Ações do Sistema** |
+| 1. Supervisor tenta cadastrar, consultar ou atualizar um supervisor ou gestor | |
+| | 2. Negar o acesso, sem alterar dados nem expor informações de outros perfis |
+| **Cenário de Exceção IV - Alteração de campo protegido** | |
+| **Ações do Ator** | **Ações do Sistema** |
+| 1. Tentar alterar CPF, perfil, senha ou situação do cadastro na atualização | |
+| | 2. Recusar a operação e informar que o campo não pode ser alterado |

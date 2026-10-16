@@ -817,14 +817,14 @@ Referências: [RF22](requisitos/requisitos-funcionais.md#rf22-o-sistema-deve-per
 > 3. Ao registrar a devolução de um equipamento, ele deve deixar de constar como empréstimo ativo do visitante, preservando o histórico.
 > 4. Ao tentar entregar equipamento indisponível ou com CA vencido, o sistema deve bloquear a entrega e informar o motivo.
 
-# US23 – Gerenciar supervisores e gestores
+# US23 – Gerenciar supervisores
 
-Referência: [RF23](requisitos/requisitos-funcionais.md#rf23-o-sistema-deve-permitir-a-gestão-de-supervisores-e-colaboradores). Escopo: MVP. O UC13 citado na especificação do MVP ainda não possui detalhamento no documento de casos de uso.
+Referência: [RF23](requisitos/requisitos-funcionais.md#rf23-o-sistema-deve-permitir-a-gestão-de-supervisores-e-colaboradores). Escopo: MVP. Fluxo detalhado em [UC13](casos-de-uso/casos-de-uso.md#uc13--gerenciar-supervisores-e-colaboradores).
 
 ## Descrição da História:
 
 > **Como** Gestor de Segurança,
-> **quero** cadastrar, consultar e atualizar supervisores e outros gestores de segurança,
+> **quero** cadastrar, consultar e atualizar supervisores,
 > **para** manter os responsáveis pelos registros operacionais e administrativos e permitir seu acesso conforme o perfil.
 
 ## Dicionário de Dados:
@@ -832,32 +832,33 @@ Referência: [RF23](requisitos/requisitos-funcionais.md#rf23-o-sistema-deve-perm
 > | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
 > | Usuário | Identificador numérico. | Identificador de usuário | Automático; único | Identificação do cadastro. |
-> | Nome | Tamanho máximo a confirmar. | Texto | Obrigatório | Nome do Supervisor ou Gestor. |
+> | Nome | Tamanho máximo a confirmar. | Texto | Obrigatório | Nome do Supervisor. |
+> | CPF | CPF válido. | Texto numérico | Obrigatório; único; não alterável | Identificação da pessoa. |
+> | Data de nascimento | Data no passado. | Data | Obrigatório | Data de nascimento do Supervisor. |
 > | Identificação de acesso | Formato de e-mail institucional. | E-mail | Obrigatório; único | E-mail corporativo utilizado como credencial de login no sistema. |
-> | Perfil | Perfil do sistema. | Supervisor ou Gestor de Segurança | Obrigatório | Perfil que delimita as permissões. |
-> | Senha inicial | Senha definida pelo sistema ou cliente. | Texto | Obrigatório | Para Supervisor, sequência aleatória de 12 caracteres gerada automaticamente pelo sistema; para novos gestores, senha fornecida na requisição de cadastro (RF23). |
+> | Perfil | Perfil do sistema. | Supervisor | Automático | Perfil atribuído pelo sistema, que delimita as permissões. |
+> | Senha inicial | Senha gerada pelo sistema. | Texto | Automático | Sequência aleatória de 12 caracteres gerada automaticamente e exibida uma única vez (RF23). |
 > | Responsável pelo cadastro | Gestor autenticado. | Identificador de usuário | Automático | Pessoa que cadastrou o usuário. |
 
 ## Regra(s) de Negócio:
 
-> 1. O Gestor de Segurança gerencia as contas de supervisores e de outros gestores de segurança.
-> 2. No cadastro de um Supervisor, o sistema deve gerar automaticamente a senha inicial (12 caracteres, com ao menos uma letra minúscula, uma maiúscula, um dígito e um caractere especial) e salvar seu hash criptográfico (BCrypt), retornando a senha temporária na resposta do cadastro. No cadastro de um novo Gestor de Segurança, a senha inicial é informada na requisição e salva como hash BCrypt, conforme RF23.
-> 3. A conta criada deve receber as permissões condizentes ao seu perfil (Supervisor ou Gestor de Segurança).
+> 1. O Gestor de Segurança gerencia as contas de supervisores. No MVP, o Gestor de Segurança é provisionado por carga inicial, sem cadastro de novos gestores pela aplicação.
+> 2. No cadastro de um Supervisor, o sistema deve gerar automaticamente a senha inicial (12 caracteres, com ao menos uma letra minúscula, uma maiúscula, um dígito e um caractere especial) e salvar seu hash criptográfico (BCrypt), retornando a senha temporária na resposta do cadastro.
+> 3. A conta criada deve receber as permissões do perfil de Supervisor.
 > 4. Cadastro e atualizações devem registrar auditoria conforme RNF05.
 > 5. O login do usuário é realizado exclusivamente com e-mail e senha via `POST /api/auth/login` (não aceitando CPF). A autenticação emite token JWT com perfil e validade de 7 dias no MVP (RNF03).
 
 ## Critério(s) de Aceite:
 
 > 1. Ao cadastrar um Supervisor com dados válidos (nome, CPF, data de nascimento e e-mail), o sistema deve salvar o cadastro com perfil de Supervisor, gerar automaticamente a senha inicial de 12 caracteres e exibi-la para comunicação ao usuário.
-> 2. Ao cadastrar um novo Gestor de Segurança, o sistema deve receber e salvar a senha criptografada informada na requisição, atribuindo o perfil de Gestor de Segurança.
-> 3. Ao consultar os usuários cadastrados, o Gestor deve visualizar seus dados e conseguir atualizar os campos permitidos.
-> 4. Ao salvar uma atualização, os novos dados devem aparecer na consulta seguinte e a operação deve constar na auditoria.
-> 5. Ao tentar gerenciar supervisores ou gestores com perfil de Supervisor, o sistema deve negar a operação.
-> 6. A conta criada deve acessar apenas as funcionalidades autorizadas ao seu respectivo perfil.
+> 2. Ao consultar os supervisores cadastrados, o Gestor deve visualizar seus dados e conseguir atualizar nome, data de nascimento e e-mail.
+> 3. Ao salvar uma atualização, os novos dados devem aparecer na consulta seguinte e a operação deve constar na auditoria.
+> 4. Ao tentar gerenciar supervisores ou gestores com perfil de Supervisor, o sistema deve negar a operação.
+> 5. A conta criada deve acessar apenas as funcionalidades autorizadas ao seu respectivo perfil.
 
 # US24 – Gerenciar colaboradores
 
-Referência: [RF23](requisitos/requisitos-funcionais.md#rf23-o-sistema-deve-permitir-a-gestão-de-supervisores-e-colaboradores). Escopo: MVP, com cadastro de Colaborador sem acesso ao sistema.
+Referência: [RF23](requisitos/requisitos-funcionais.md#rf23-o-sistema-deve-permitir-a-gestão-de-supervisores-e-colaboradores). Escopo: MVP, com cadastro de Colaborador sem acesso ao sistema. Fluxo detalhado em [UC13](casos-de-uso/casos-de-uso.md#uc13--gerenciar-supervisores-e-colaboradores).
 
 ## Descrição da História:
 
@@ -869,10 +870,11 @@ Referência: [RF23](requisitos/requisitos-funcionais.md#rf23-o-sistema-deve-perm
 
 > | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
-> | Colaborador | Formato a confirmar. | Identificador de colaborador | Automático; único | Identificação usada nos vínculos do sistema. |
+> | Colaborador | Identificador numérico. | Identificador de colaborador | Automático; único | Identificação usada nos vínculos do sistema. |
 > | Nome | Tamanho máximo a confirmar. | Texto | Obrigatório | Nome do Colaborador. |
-> | Matrícula | Formato a confirmar. | Texto identificador | A confirmar | Identificação funcional do Colaborador. |
-> | Setor | Setor cadastrado. | Identificador de setor | A confirmar | Setor relacionado ao Colaborador. |
+> | CPF | CPF válido. | Texto numérico | Obrigatório; único; não alterável | Identificação do Colaborador. |
+> | Data de nascimento | Data no passado. | Data | Obrigatório | Data de nascimento do Colaborador. |
+> | E-mail | Formato de e-mail. | E-mail | Opcional; único | Contato do Colaborador; não é credencial de acesso. |
 > | Responsável pelo cadastro | Supervisor ou Gestor autenticado. | Identificador de usuário | Automático | Pessoa que incluiu o cadastro. |
 > | Data e hora do cadastro | Formato a confirmar. | Data e hora | Automático | Momento de criação do registro. |
 
@@ -882,7 +884,7 @@ Referência: [RF23](requisitos/requisitos-funcionais.md#rf23-o-sistema-deve-perm
 > 2. O Colaborador é uma pessoa cadastrada para vinculação aos registros do sistema, sem conta de acesso, perfil de autenticação ou senha.
 > 3. Os relatos comunicados pelo Colaborador são registrados pelo Supervisor com a identificação do Supervisor autenticado.
 > 4. A atualização cadastral deve preservar os vínculos já existentes com ocorrências, capacitações e empréstimos, registrando a alteração na auditoria.
-> 5. Dados cadastrais adicionais, restrições de edição e eventual desativação estão a confirmar no detalhamento de UC13.
+> 5. A atualização altera somente nome, data de nascimento e e-mail; CPF e situação do cadastro não são alterados. Matrícula, setor e desativação de cadastros permanecem fora do MVP.
 
 ## Critério(s) de Aceite:
 
