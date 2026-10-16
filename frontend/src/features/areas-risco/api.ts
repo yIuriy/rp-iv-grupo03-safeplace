@@ -66,7 +66,7 @@ export type DadosCadastroAreaRisco = {
   nivelPerigo: NivelPerigo
   setorId?: number
   agentesRisco: string[]
-  limites?: string
+  limites: string
   episObrigatoriosIds: number[]
 }
 
@@ -76,7 +76,7 @@ export type DadosAtualizacaoAreaRisco = {
   nivelPerigo: NivelPerigo
   setorId?: number
   agentesRisco: string[]
-  limites?: string
+  limites: string
   episObrigatoriosIds: number[]
   justificativa?: string
 }
@@ -219,6 +219,12 @@ export async function listarSetores(signal?: AbortSignal): Promise<Setor[]> {
 /** Somente o Gestor de Segurança cadastra setores; o `SecurityConfig` recusa os demais perfis. */
 export async function cadastrarSetor(dados: DadosCadastroSetor): Promise<Setor> {
   const { data } = await http.post<unknown>('/setores', dados)
+  return lerSetor(data)
+}
+
+/** Atualização cadastral de setor físico pelo Gestor de Segurança com auditoria (RF05). */
+export async function atualizarSetor(id: number, dados: DadosCadastroSetor): Promise<Setor> {
+  const { data } = await http.put<unknown>(`/setores/${id}`, dados)
   return lerSetor(data)
 }
 
