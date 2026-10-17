@@ -87,9 +87,9 @@ As decisões acima descrevem a solução esperada. O atendimento de cada RNF dev
 
 ## 6. Artefatos arquiteturais
 
-Os diagramas não são alterados nesta revisão. O grupo fará a atualização em uma etapa posterior. O conteúdo esperado de cada artefato está definido na [Especificação do MVP e Arquitetura](../mvp/especificacao-mvp-arquitetura.md#8-artefatos-arquiteturais-pendentes).
+Com exceção do diagrama de classes, atualizado em 16/10/2026, os diagramas ainda serão atualizados pelo grupo. O conteúdo esperado de cada artefato está definido na [Especificação do MVP e Arquitetura](../mvp/especificacao-mvp-arquitetura.md#8-artefatos-arquiteturais-pendentes).
 
-O [diagrama de classes](../diagramas/classes/Diagrama%20de%20Classes%20-%20SafePlace.png) é uma referência do domínio, com pendências acompanhadas na [issue #39](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/39). A operação `Supervisor.criarContaColaborador()` ainda precisa ser alinhada ao cadastro sem acesso. Heranças de dados pessoais não definem permissões de autenticação.
+O [diagrama de classes](../diagramas/classes/Diagrama%20de%20Classes%20-%20SafePlace.png) é uma referência do domínio, com pendências acompanhadas na [issue #39](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/39). A operação `Supervisor.criarContaColaborador()` foi retirada do diagrama, pois o cadastro de Colaborador não cria conta de acesso (UC13). Heranças de dados pessoais não definem permissões de autenticação.
 
 O [PlantUML da proposta hexagonal](../diagramas/arquitetura/safeplace-arquitetura-hexagonal-proposta.puml) e seu [PNG](../diagramas/arquitetura/safeplace-arquitetura-hexagonal-proposta.png) descrevem uma proposta anterior, elaborada antes da definição da linguagem. O texto do PlantUML foi atualizado para Java, que é a tecnologia adotada na base atual; o PNG ainda precisa ser regerado a partir dele. Devem ser lidos como referência da separação de responsabilidades. Componentes e implantação também precisam ser reconciliados na etapa de diagramas da [issue #81](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/81).
 
@@ -99,7 +99,7 @@ O [PlantUML da proposta hexagonal](../diagramas/arquitetura/safeplace-arquitetur
 | Diagrama de componentes lógico | Pendente de atualização |
 | Diagrama de componentes executável | Pendente de atualização |
 | Diagrama de sequência | Pendente de atualização |
-| Diagrama de classes reduzido ao MVP | Pendente de atualização |
+| Diagrama de classes (completo, com o que está fora do MVP em cinza) | Atualizado em 16/10/2026 conforme o domínio implementado |
 
 ## 7. Base técnica existente e limites
 
@@ -156,7 +156,7 @@ O estoque segue a mesma organização: `EpiController` recebe as requisições, 
 | Consultar EPIs obrigatórios vinculados a uma tarefa (RF12, backlog) | `GET /api/tarefas/{id}/epis` |
 | Verificar disponibilidade da API | `GET /api/health` |
 
-O módulo de usuários expõe o provisionamento de RF23 em rotas por papel: `POST /api/usuarios/supervisores` é exclusivo do Gestor de Segurança e devolve a senha inicial gerada pelo sistema uma única vez, enquanto `POST /api/usuarios/colaboradores` atende Supervisor e Gestor e não aceita credenciais — uma requisição que envie `senha` ou `perfil` recebe 400. A restrição de papel é declarada no `SecurityConfig`, e não no corpo do controlador. A rota genérica `POST /api/usuarios` continua disponível para compatibilidade, marcada como descontinuada.
+O módulo de usuários expõe o provisionamento de RF23 em rotas por papel: `POST /api/usuarios/supervisores` é exclusivo do Gestor de Segurança e devolve a senha inicial gerada pelo sistema uma única vez, enquanto `POST /api/usuarios/colaboradores` atende Supervisor e Gestor e não aceita credenciais — uma requisição que envie `senha` ou `perfil` recebe 400. A restrição de papel é declarada no `SecurityConfig`, e não no corpo do controlador. A rota genérica `POST /api/usuarios`, descontinuada, é removida na issue #194; no MVP, o Gestor de Segurança é provisionado apenas por carga inicial, conforme UC13.
 
 A atualização cadastral (issue #122) segue a mesma matriz: `PUT /api/usuarios/supervisores/{id}` é exclusivo do Gestor e `PUT /api/usuarios/colaboradores/{id}` atende Supervisor e Gestor. A operação altera nome, data de nascimento e e-mail no mesmo registro, preservando id, CPF, perfil e hash da senha; como a rota fixa o papel, um id de outro perfil responde 404 e a atualização nunca converte um Colaborador em conta de acesso. CPF, senha, perfil e situação (`ativo`) são recusados com 400, porque a alteração de CPF e a desativação aguardam decisão do grupo (especificação do MVP, seção 11.1). A autoria da alteração exigida por RNF05 está implementada em `UsuarioCasoDeUso` (issue #121), gravando `LogAuditoria` com o operador autenticado e o detalhamento das alterações cadastrais.
 

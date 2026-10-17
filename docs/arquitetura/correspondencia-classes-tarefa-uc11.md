@@ -12,9 +12,9 @@ Este documento registra o contrato da classificação de periculosidade das tare
 
 O PNG define:
 
-- **`Tarefa`**: atributos `descricao : String` e `status : NivelPerigo`; operações `consultarTarefas() : List<Tarefa>`, `associarEPIs(listaIds : List<int>) : boolean` e `verificarEPIsObrigatoriosTarefa() : List<EPI>`.
-- **Associações de `Tarefa`**: com `Setor` (`Setor` 0..* para `Tarefa` 1..*), com `AreaRisco` (`AreaRisco` 0..1 para `Tarefa` 0..*) e com `EPI` (0..* nos dois lados).
-- **`NivelPerigo`**: enumeração usada por `Tarefa.status`, `AreaRisco.status`, `Setor.status` e `AlertaComportamento.nivelGravidade`.
+- **`Tarefa`** (revisão de 16/10/2026): atributos `descricao : String`, `nivelPerigo : NivelPerigo` e `dataClassificacao : DateTime`; operações `classificar(nivel : NivelPerigo, responsavel : GestorDeSeguranca)`, `estaClassificada() : boolean`, `associarEPIs(listaIds : List<int>) : boolean` e `verificarEPIsObrigatoriosTarefa() : List<EPI>` (as duas últimas de RF12, fora do MVP). A operação `consultarTarefas()` foi retirada do PNG, pois a consulta pertence à porta de entrada `ClassificarTarefaUseCase.listar`. Na versão anterior, o atributo de nível se chamava `status : NivelPerigo`.
+- **Associações de `Tarefa`**: com `Setor` (`Setor` 0..* para `Tarefa` 1..*), com `AreaRisco` (`AreaRisco` 0..1 para `Tarefa` 0..*), com `GestorDeSeguranca` como responsável pela classificação (1 para 0..*) e com `EPI` (0..* nos dois lados; RF12, fora do MVP).
+- **`NivelPerigo`**: enumeração usada por `Tarefa.nivelPerigo`, `AreaRisco.nivelPerigo`, `Setor.status`, `Acidente.gravidade` e `AlertaComportamento.nivelGravidade`.
 
 ### 1.2. Histórico da enumeração `NivelPerigo` no PNG
 
@@ -26,7 +26,7 @@ A revisão de escopo da issue #112 consultou o PNG no commit `34d6b6d` (14/09/20
 
 ### 2.1. Vocabulário único: `NivelPerigo` para áreas, setores e tarefas
 
-- **Decisão**: há **um único vocabulário** de grau de risco, o de `NivelPerigo`: `BAIXO`, `MEDIO`, `ALTO` e `CRITICO`, exibidos como Baixo, Médio, Alto e Crítico. `Tarefa.status` usa esse vocabulário, como `AreaRisco.status` e `Setor.status`. Não se cria enumeração própria para tarefas.
+- **Decisão**: há **um único vocabulário** de grau de risco, o de `NivelPerigo`: `BAIXO`, `MEDIO`, `ALTO` e `CRITICO`, exibidos como Baixo, Médio, Alto e Crítico. `Tarefa.nivelPerigo` usa esse vocabulário, como `AreaRisco.nivelPerigo` e `Setor.status`. Não se cria enumeração própria para tarefas.
 - **Fundamento estrutural**: desde a versão `34d6b6d`, o PNG tipa `Tarefa.status` como `NivelPerigo`, o mesmo tipo de `AreaRisco.status`. A escolha de um tipo comum não depende dos literais da enumeração: uma lista separada para tarefas contrariaria a associação de tipos do modelo.
 - **Correspondência explícita com UC11 e US06**: os termos leve, moderado, grave e crítico, usados em UC11 (cenário principal, passo 4) e US06 (dicionário), correspondem, pela posição na escala crescente de quatro níveis, a:
 
@@ -81,9 +81,10 @@ A revisão de escopo da issue #112 consultou o PNG no commit `34d6b6d` (14/09/20
 | Elemento | Destino / Camada Hexagonal | Papel arquitetural e semântica |
 | :--- | :--- | :--- |
 | `Tarefa.descricao` | Domínio `Tarefa.descricao`; coluna `tarefas.descricao` | Obrigatória. |
-| `Tarefa.status : NivelPerigo` | Domínio `Tarefa.nivelPerigo`; coluna `tarefas.nivel_perigo`; API `nivelPerigo` | Mesmo atributo com nome técnico diferente; nulo enquanto não classificada. |
-| `consultarTarefas()` | Porta de entrada `ClassificarTarefaUseCase.listar` e `listarPorNivelPerigo`; `GET /api/tarefas?nivelPerigo=` | Matriz de periculosidade para Gestor e Supervisor. |
-| Classificar e reavaliar (UC11, passos 3 a 6 e alternativo I) | `ClassificarTarefaUseCase.classificar`; domínio `Tarefa.classificar(nivel, responsavel)`; `PATCH /api/tarefas/{id}/classificacao` | Grava nível, data, hora e responsável técnico e devolve `RegistroClassificacaoTarefa`. |
+| `Tarefa.nivelPerigo : NivelPerigo` | Domínio `Tarefa.nivelPerigo`; coluna `tarefas.nivel_perigo`; API `nivelPerigo` | Nulo enquanto não classificada (`estaClassificada()`). |
+| `Tarefa.dataClassificacao : DateTime` | Domínio `Tarefa.dataClassificacao`; coluna `tarefas.data_classificacao` (V7) | Data e hora da última classificação. |
+| `consultarTarefas()` (retirada do PNG em 16/10/2026) | Porta de entrada `ClassificarTarefaUseCase.listar` e `listarPorNivelPerigo`; `GET /api/tarefas?nivelPerigo=` | Matriz de periculosidade para Gestor e Supervisor. |
+| `classificar(nivel, responsavel)` (UC11, passos 3 a 6 e alternativo I) | `ClassificarTarefaUseCase.classificar`; domínio `Tarefa.classificar(nivel, responsavel)`; `PATCH /api/tarefas/{id}/classificacao` | Grava nível, data, hora e responsável técnico e devolve `RegistroClassificacaoTarefa`. |
 | Registro com data, hora e responsável técnico (UC11, regra 1) | `LogAuditoriaRepositoryPort.salvar` e `tarefas.responsavel_classificacao_id` | Histórico com valor anterior e novo (RNF05). |
 | Bloqueio de alocação (UC11, exceção I) | `AlocarColaboradorTarefaUseCase.alocar` → `ValidadorAptidaoColaboradorService` → `Tarefa.validarClassificacaoParaAlocacao()` | Bloqueio ocorre na confirmação, antes de persistir `AlocacaoTarefa`. |
 | `associarEPIs(...)` / `verificarEPIsObrigatoriosTarefa()` | Sem correspondência no MVP | RF12, backlog. |

@@ -15,7 +15,7 @@ Este documento registra a correspondência entre as classes `Certificacao`, `Tre
 | Classe no PNG | Atributo e tipo no PNG | Campo na API | Observação |
 | --- | --- | --- | --- |
 | `Certificacao` | `nome : String` | `nome` | |
-| `Certificacao` | `status : String` | `status` | Calculado na data da consulta com os valores de UC02 (cenário IV): `EM_DIA`, `PROXIMA_DO_VENCIMENTO` e `VENCIDA`. Trafega como texto. |
+| `Certificacao` | `statusCertificacao : StatusCertificacao` | `status` | Calculado na data da consulta com os valores do enum `StatusCertificacao` (UC02, cenário IV): `EM_DIA`, `PROXIMA_DO_VENCIMENTO` e `VENCIDA`. Trafega como texto. |
 | `Certificacao` | `dataVencimento : Date` | `dataVencimento` | Data ISO (`aaaa-mm-dd`). |
 | `Certificacao` | `dataEmissao : Date` | `dataEmissao` | Data ISO. |
 | `Treinamento` | `nome : String` | `nome` | |
@@ -23,8 +23,9 @@ Este documento registra a correspondência entre as classes `Certificacao`, `Tre
 | `Treinamento` | `instrutor : String` | `instrutor` | |
 | `Treinamento` | `dataRealizacao : Date` | `dataRealizacao` | Data ISO. |
 | `Treinamento` | `cargaHoraria : int` | `cargaHoraria` | Inteiro. |
-| `Treinamento` | (sem atributo) | `status` | Calculado na data da consulta: `PENDENTE`, `REALIZADO`, `PROXIMO_DO_VENCIMENTO` ou `VENCIDO`; não é persistido. Os dois últimos só existem para treinamento com validade (seção 8.2). |
-| `Treinamento` | (acréscimo) | `validadeMeses` e `dataVencimento` | Opcionais; ver seção 8.2. Sem `validadeMeses`, o treinamento não vence. |
+| `Treinamento` | (sem atributo; enum `StatusTreinamento`) | `status` | Calculado na data da consulta por `calcularStatus(data)`: `PENDENTE`, `REALIZADO`, `PROXIMO_DO_VENCIMENTO` ou `VENCIDO`; não é persistido. Os dois últimos só existem para treinamento com validade (seção 8.2). |
+| `Treinamento` | `validadeMeses : int` | `validadeMeses` e `dataVencimento` | Opcionais; ver seção 8.2. Sem `validadeMeses`, o treinamento não vence. `dataVencimento` é derivada. |
+| `ExigenciaCapacitacao` | `tipoAlvo : TipoAlvo` | — | Indica se a exigência se aplica a uma `TAREFA` ou a um `EPI`. |
 | `Colaborador` | `nome : String` | `colaboradorNome` | A pessoa é identificada por `id` e `nome`. CPF, e-mail e senha não são expostos nem exigidos (RNF03). |
 
 O único atributo novo persistido é `Treinamento.validadeMeses` (seção 8.2). `id` é identificador técnico. Os campos de agregação (`situacaoCertificacoes`, `semCertificacoes`, `pendenteIntegracaoAdmissional`, `pendencias`) são derivados na consulta.
@@ -33,14 +34,22 @@ O único atributo novo persistido é `Treinamento.validadeMeses` (seção 8.2). 
 
 | Operação no PNG | Correspondência na API |
 | --- | --- |
+| `Certificacao.calcularStatus(data)` e `Treinamento.calcularStatus(data)` | Domínio; situação usada em `GET /api/capacitacoes/colaboradores` e nos alertas. |
+| `Certificacao.estaValidaEm(data)` | Domínio; usada na verificação de aptidão (`ValidadorAptidaoColaboradorService`, #117). |
+| `Treinamento.verificarStatusTreinamentos(lista)` | Domínio; consolida a situação dos treinamentos de um colaborador. |
+| `Certificacao.validarInconsistenciaCronologica(...)` | Aplicada no domínio ao cadastrar uma certificação (seção 8). |
+| Regra 1 do UC02 (alerta de 30 dias) e cenários I e III | `GET /api/capacitacoes/alertas`. |
+
+Na revisão do diagrama de 16/10/2026, as operações de consulta foram retiradas das entidades, porque na arquitetura hexagonal elas pertencem aos casos de uso e às portas de saída. A correspondência anterior fica registrada para rastreabilidade:
+
+| Operação retirada do PNG | Onde está implementada |
+| --- | --- |
 | `Colaborador.buscarColaboradores()` | `GET /api/capacitacoes/colaboradores` (UC02, passo 2). |
 | `Colaborador.buscarColaboradoresPorStatus(status)` e `Certificacao.verificarStatusCertificacoes(lista)` | `GET /api/capacitacoes/colaboradores?situacao=` (UC02, cenário IV). A situação do colaborador é a mais crítica entre suas certificações. |
 | `Certificacao.buscarCertificacoes(cpf)` e `Treinamento.buscarTreinamentos()` | `GET /api/capacitacoes/colaboradores/{colaboradorId}` (UC02, passos 4 e 5). |
 | `Certificacao.verificarCertificacaoObrigatoria(cpf, tarefa)` | `GET /api/capacitacoes/colaboradores/{colaboradorId}/aptidao?tarefaId=`, que reutiliza a regra de #117 (`ValidadorAptidaoColaboradorService`). |
-| Regra 1 do UC02 (alerta de 30 dias) e cenários I e III | `GET /api/capacitacoes/alertas`. |
-| `Certificacao.validarInconsistenciaCronologica(...)` | Aplicada no domínio ao cadastrar uma certificação (seção 8). |
 
-- **CPF e identificador**: o PNG recebe `cpf` em `buscarCertificacoes` e `verificarCertificacaoObrigatoria`. A API usa o identificador do colaborador, como as demais rotas do sistema; a busca por CPF continua em `/api/usuarios`. A divergência de assinaturas CPF ou lista no PNG está registrada como pendente em #116 e não é resolvida aqui.
+- **CPF e identificador**: as operações antigas recebiam `cpf`. A API usa o identificador do colaborador, como as demais rotas do sistema; a busca por CPF continua em `/api/usuarios/colaboradores`.
 
 ## 4. Acesso (RNF03)
 
@@ -95,7 +104,7 @@ Tela `/capacitacoes` em `frontend/src/features/capacitacoes/`, para Gestor de Se
 
 ### 8.2 Validade de treinamento
 
-- `Treinamento.validadeMeses` é opcional e é o único campo acrescentado ao modelo do PNG. A exigência de vencimento de treinamentos vem de RF10.
+- `Treinamento.validadeMeses` é opcional e foi incorporado ao diagrama de classes na revisão de 16/10/2026. A exigência de vencimento de treinamentos vem de RF10.
 - Sem `validadeMeses`, o treinamento não vence; não se inventou validade para todos os treinamentos (#116).
 - A data de vencimento é derivada (`dataRealizacao` + `validadeMeses`) e não é persistida.
 - A situação segue a regra das certificações: `PROXIMO_DO_VENCIMENTO` em até 30 dias do vencimento e `VENCIDO` a partir da data de vencimento. Treinamento vencido não atende a exigência e bloqueia a alocação; treinamento próximo do vencimento aparece nos alertas, mas não bloqueia.

@@ -31,7 +31,7 @@ O SafePlace é uma plataforma corporativa fechada de uso estritamente interno. *
 
 O primeiro acesso administrativo (Gestor de Segurança) é provisionado por meio de carga inicial (*seed*) no banco de dados. Para fins de homologação e demonstração acadêmica do MVP, a migração de sementes (V17) disponibiliza também contas demonstrativas de Supervisor e registro de Colaborador (este último sem senha). Em ambiente de produção, apenas a conta administrativa inicial é provisionada por seed. A partir desse usuário, o provisionamento é realizado de forma estritamente interna e hierárquica respeitando o modelo RBAC:
 
-- **Gestor de Segurança**: perfil com acesso ao sistema, autentica-se com e-mail e senha. Gerencia as contas de Supervisores e outros gestores. No cadastro de um Supervisor, o sistema gera automaticamente sua credencial inicial; no cadastro de outros gestores, a senha inicial é informada na requisição de cadastro.
+- **Gestor de Segurança**: perfil com acesso ao sistema, autentica-se com e-mail e senha. Gerencia as contas de Supervisores. No cadastro de um Supervisor, o sistema gera automaticamente sua credencial inicial. No MVP, não há cadastro de novos gestores pela aplicação: o Gestor é provisionado por carga inicial.
 - **Supervisor**: perfil com acesso ao sistema, autentica-se com e-mail e senha gerada. Gerencia os cadastros de colaboradores e os registros operacionais sob sua responsabilidade (ocorrências, empréstimos de EPIs). Não possui permissão para cadastrar outros supervisores ou gestores.
 - **Colaborador**: não recebe conta de acesso, credencial ou senha, não possuindo permissão de autenticação. Seu registro existe para vinculação aos registros operacionais (ocorrências, treinamentos e empréstimos de EPIs). Seus relatos são registrados no sistema pelo Supervisor responsável.
 
@@ -124,7 +124,7 @@ A priorização considera três fatores: a contribuição direta do requisito pa
 | RF13 | Criar registros de acidente | Deve ter | Permitir que o Supervisor registre acidentes. |
 | RF16 | Registrar incidentes | Deve ter | Permitir registro pelo Supervisor ou Gestor. Relatos comunicados pelo Colaborador são registrados pelo Supervisor. |
 | RF21 | Gerenciar ciclo de vida e substituição inteligente de EPIs | Deve ter | Calcular a previsão de substituição dos EPIs e gerar alertas preventivos. |
-| RF23 | Gerenciar supervisores e colaboradores | Deve ter | Gestor gerencia supervisores com conta e senha inicial automática e outros gestores com senha definida na requisição; Supervisor e Gestor de Segurança gerenciam colaboradores sem conta ou senha, preservando seus vínculos. |
+| RF23 | Gerenciar supervisores e colaboradores | Deve ter | Gestor gerencia supervisores com conta e senha inicial automática; Supervisor e Gestor de Segurança gerenciam colaboradores sem conta ou senha, preservando seus vínculos. |
 
 ### 5.2. Requisitos não funcionais incluídos
 
@@ -150,9 +150,9 @@ A priorização considera três fatores: a contribuição direta do requisito pa
 | UC10 | Previsão de substituição e alertas preventivos. Requisições de compra e parâmetros de cálculo pendentes de definição. |
 | UC11 | Classificação e consulta do nível de periculosidade das tarefas. |
 | UC12 | Empréstimo e devolução de EPIs para colaboradores. |
-| UC13 (proposto) | Gestão de supervisores e colaboradores prevista em RF23. O fluxo ainda não está especificado no catálogo textual. |
+| UC13 | Cadastro, consulta e atualização de supervisores pelo Gestor e de colaboradores pelo Supervisor ou Gestor, sem conta para o Colaborador. Desativação e alteração de CPF fora do MVP. |
 
-A inclusão de um UC nesta tabela indica escopo previsto, não implementação concluída. UC13 ainda não conta como cobertura textual completa de RF23. As pendências que impedem fechar a revisão estão na seção 11.
+A inclusão de um UC nesta tabela indica escopo previsto, não implementação concluída. As pendências que impedem fechar a revisão estão na seção 11.
 
 ## 6. Fora do escopo
 
@@ -217,9 +217,11 @@ Deve mostrar os elementos que podem ser executados ou implantados: navegador, ap
 
 O fluxo recomendado é o registro de acidente ou incidente. O diagrama deve incluir ator, interface, Controller, porta de entrada, caso de uso, domínio, repositório e auditoria. O fluxo termina com a devolução do protocolo ao usuário.
 
-### 8.5. Diagrama de classes reduzido ao MVP
+### 8.5. Diagrama de classes com destaque do MVP
 
-Deve conter apenas as classes necessárias aos requisitos `Deve ter`: usuário e perfil de acesso, colaborador cadastrado sem acesso, ocorrência, plano de ação, EPI, estoque, movimentação, manutenção, empréstimo, projeção de substituição, área de risco, tarefa, classificação de periculosidade, certificação, treinamento e auditoria.
+Deve conter as classes necessárias aos requisitos `Deve ter`: usuário e perfil de acesso, colaborador cadastrado sem acesso, ocorrência, plano de ação, EPI, estoque, movimentação, manutenção, empréstimo, projeção de substituição, área de risco, tarefa, classificação de periculosidade, certificação, treinamento e auditoria.
+
+Decisão de 16/10/2026: em vez de um diagrama reduzido, o grupo mantém o modelo completo, alinhado ao domínio implementado (`backend/.../domain`), com as classes fora do MVP em cinza: `AlertaComportamento`, `AtestadoSaude`, `StatusFuncionario`, `Visitante`, `Fornecedor`, `MidiaAnexo`, `Testemunha`, `Inspecao` e `ItemVerificado`. As operações de classes do MVP que pertencem ao backlog (evidências, laudo e investigação em `Ocorrencia`; CAT em `Acidente`; descarte em `EPI` e `MovimentacaoEstoque`; vínculo tarefa–EPI em `Tarefa`) permanecem no diagrama sem destaque visual e estão listadas na documentação da entrega. As correspondências de cada classe com o código estão nos documentos `docs/arquitetura/correspondencia-classes-*.md`.
 
 Como proposta de modelagem, o grupo pode separar `EPI`, representando o tipo de equipamento nessa proposta, de `ItemEPI`, representando uma unidade física rastreável. Essa separação não está aprovada e não define o significado de `EPI` no modelo vigente, que ainda precisa ser esclarecido. A proposta não cria um requisito novo.
 
@@ -241,7 +243,7 @@ As situações abaixo descrevem a cobertura documental, não o atendimento pela 
 | RF13 | Criar registros de acidente | UC09 e UC05 | Gestão de Ocorrências | Coberto. |
 | RF16 | Registrar incidentes | UC09 e UC05 | Gestão de Ocorrências | Supervisor registra em UC09, inclusive relatos de colaboradores; Gestor registra em UC05. |
 | RF21 | Gerenciar ciclo de vida e substituição inteligente de EPIs | UC10 | Gestão de EPIs | Previsão e alertas no MVP; requisições, origem dos dados e parâmetros de cálculo ainda pendentes. |
-| RF23 | Gerenciar supervisores e colaboradores | UC13 proposto; US23 e US24 | Gestão de Usuários e Autorização | Responsabilidades descritas nas histórias e no RF; fluxo de UC13 ainda não especificado. |
+| RF23 | Gerenciar supervisores e colaboradores | UC13; US23 e US24 | Gestão de Usuários e Autorização | Coberto pelo fluxo de UC13, alinhado às histórias e ao RF. |
 | RNF03 | Controle de acesso por perfil | UCs do MVP | Autenticação e Autorização | Exige testes para Gestor e Supervisor e cadastro de Colaborador sem credenciais. |
 | RNF05 | Rastreabilidade de ações (auditoria) | UCs com alteração | Auditoria | Decisão obrigatória no MVP. |
 | RNF08 | Funcionamento offline parcial | Consulta prevista em RNF08; relação com UC09 pendente | Cache local e Sincronização | Dados, dispositivos e alcance do offline ainda precisam ser definidos antes da demonstração. |
@@ -269,7 +271,7 @@ Esta revisão cobre parte da [issue #81](https://github.com/yIuriy/rp-iv-grupo03
 
 | Ponto | Evidência e definição ainda necessária | Destino |
 | --- | --- | --- |
-| Gestão de pessoas | RF23 e US23/US24 definem os responsáveis, mas UC13 ainda não possui fluxo. Definir também identificação de acesso, dados cadastrais, entrega da senha inicial e eventual desativação, sem criar conta para Colaborador. | UC13, histórias e issue #74. |
+| Gestão de pessoas | Decisão registrada no UC13: login por e-mail; dados cadastrais nome, CPF, data de nascimento e e-mail (opcional para o Colaborador); senha inicial do Supervisor gerada pelo sistema e exibida uma única vez; Gestor provisionado apenas por carga inicial, sem cadastro de novos gestores no MVP; CPF não alterável; Colaborador sem conta. A desativação de cadastros permanece fora do MVP, aguardando decisão. | UC13, US23, US24 e issues #74, #190 e #194. |
 | Offline | RNF08 prevê consulta de estatísticas, indicadores e relatórios pelo Gestor; RF17 e RF18 estão no backlog. UC09 prevê criação e envio posterior de relatos. Definir dados consultáveis, perfis, dispositivos e se haverá criação offline. | RNF08, UC09, US13/US16/US17/US18 e arquitetura. |
 | Substituição de EPIs | Decisão registrada em [Correspondência Classes vs DS10/DS10.1](../arquitetura/correspondencia-classes-ds10.md): Durabilidade nominal em dias (`Epi.vidaUtilDias`), taxa diária de uso ($U$) derivada de `Emprestimo`, multiplicadores ambientais de `Setor.status: NivelPerigo` (1.0, 1.25, 1.5, 2.0), teto intransponível de CA (`ModeloEPI.validadeCA`), alertas preventivos com escala de prioridade formalizada (descarte próximo em 7 e 15 dias; vencimento de CA em 10 dias; estoque crítico), e tratamento de dados ausentes como falha/nova tentativa (sem dados fictícios). Requisições de compra, prorrogação por laudo e exportação ficam no backlog. | UC10, US21 e issue #108. |
 | Cadastro de capacitações | UC02 consulta dados já cadastrados; os modelos também contêm cadastro e validação de datas. Identificar o fluxo responsável por essas operações. | UC02, US10 e revisão dos diagramas na issue #81. |
