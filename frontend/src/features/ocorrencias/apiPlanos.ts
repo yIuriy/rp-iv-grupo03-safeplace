@@ -1,7 +1,7 @@
 // Contratos e chamadas do plano de ação de uma ocorrência (UC07, contrato da issue #97): cada
 // PlanoDeAcao é uma ação com medida corretiva e/ou preventiva, prazo, um responsável (colaborador ou
 // setor), situação ABERTA → CONCLUIDA e alerta com antecedência configurável. Atraso e alerta devido
-// não são estados gravados: derivam do prazo e da data de hoje.
+// não são estados gravados: o servidor os calcula a partir do prazo e da data de hoje (issue #196).
 
 import { http } from '../../shared/api/https'
 
@@ -28,6 +28,10 @@ export type AcaoPlano = {
   alertaAtivo: boolean
   antecedenciaAlertaDias: number | null
   dataAlerta: string | null
+  /** Calculado pelo servidor: ação aberta que já chegou à antecedência configurada, inclusive após o prazo. */
+  alertaDevido: boolean
+  /** Calculado pelo servidor: ação aberta com prazo anterior a hoje. */
+  emAtraso: boolean
   gestorNome: string | null
 }
 
@@ -62,6 +66,8 @@ function lerAcao(dado: unknown): AcaoPlano {
     alertaAtivo: b.alertaAtivo === true,
     antecedenciaAlertaDias: typeof b.antecedenciaAlertaDias === 'number' ? b.antecedenciaAlertaDias : null,
     dataAlerta: textoOuNulo(b.dataAlerta),
+    alertaDevido: b.alertaDevido === true,
+    emAtraso: b.emAtraso === true,
     gestorNome: textoOuNulo(b.gestorNome),
   }
 }
@@ -75,16 +81,6 @@ function lerProrrogacao(dado: unknown): Prorrogacao {
     novoPrazo: String(b.novoPrazo ?? ''),
     justificativa: String(b.justificativa ?? ''),
   }
-}
-
-/** Ação em atraso: aberta e com prazo anterior a hoje (AAAA-MM-DD comparáveis como texto). */
-export function estaEmAtraso(acao: AcaoPlano, hoje: string): boolean {
-  return acao.situacao === 'ABERTA' && acao.prazo < hoje
-}
-
-/** Alerta devido a partir de `dataAlerta` enquanto a ação estiver aberta, inclusive após o prazo. */
-export function alertaDevido(acao: AcaoPlano, hoje: string): boolean {
-  return acao.situacao === 'ABERTA' && acao.alertaAtivo && acao.dataAlerta !== null && acao.dataAlerta <= hoje
 }
 
 export async function listarAcoes(idOcorrencia: number, signal?: AbortSignal): Promise<AcaoPlano[]> {
