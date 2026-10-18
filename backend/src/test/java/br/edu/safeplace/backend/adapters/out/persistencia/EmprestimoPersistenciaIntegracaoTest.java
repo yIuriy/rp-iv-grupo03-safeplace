@@ -55,8 +55,8 @@ import br.edu.safeplace.backend.suporte.PostgresDeTeste;
 @DisplayName("Empréstimo persistido: transacionalidade, concorrência e constraints (issue #107)")
 class EmprestimoPersistenciaIntegracaoTest {
 
-    private static final String CPF_SUPERVISOR = "52998224725";
-    private static final String CPF_COLABORADOR = "12345678909";
+    private static final String CPF_SUPERVISOR = "41827396555";
+    private static final String CPF_COLABORADOR = "52739184646";
     private static final String CPF_COLABORADOR_2 = "98765432100";
     private static final String EMAIL_SUPERVISOR = "supervisor.emprestimo@safeplace.test";
 
@@ -109,6 +109,8 @@ class EmprestimoPersistenciaIntegracaoTest {
         jdbc.execute("DELETE FROM certificacoes");
         jdbc.execute("DELETE FROM treinamentos_colaboradores");
         jdbc.execute("DELETE FROM treinamentos");
+        // Devolução para manutenção grava em manutencoes_epi, que referencia o EPI.
+        jdbc.execute("DELETE FROM manutencoes_epi WHERE epi_id IN (SELECT e.id FROM epis e JOIN lotes_epi l ON l.id = e.lote_id JOIN modelos_epi m ON m.id = l.modelo_id WHERE m.ca IN (12345, 54321, 99999, 88888))");
         jdbc.execute("DELETE FROM movimentacoes_estoque WHERE epi_id IN (SELECT e.id FROM epis e JOIN lotes_epi l ON l.id = e.lote_id JOIN modelos_epi m ON m.id = l.modelo_id WHERE m.ca IN (12345, 54321, 99999, 88888))");
         jdbc.execute("DELETE FROM areas_risco_epis WHERE epi_id IN (SELECT e.id FROM epis e JOIN lotes_epi l ON l.id = e.lote_id JOIN modelos_epi m ON m.id = l.modelo_id WHERE m.ca IN (12345, 54321, 99999, 88888))");
         jdbc.execute("DELETE FROM epis WHERE id IN (SELECT e.id FROM epis e JOIN lotes_epi l ON l.id = e.lote_id JOIN modelos_epi m ON m.id = l.modelo_id WHERE m.ca IN (12345, 54321, 99999, 88888))");

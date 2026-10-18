@@ -40,8 +40,8 @@ const luva = {
   classificacao: 'PROTECAO_DE_MEMBROS_SUPERIORES', localizacao: null,
 }
 const joao = pessoas.colaborador
-const maria = { id: 4, nome: 'Maria Souza', cpf: '98765432100', dataNascimento: '1990-03-02', email: null, perfil: 'COLABORADOR', ativo: true }
-const pedro = { id: 5, nome: 'Pedro Inativo', cpf: '11122233396', dataNascimento: '1985-07-07', email: null, perfil: 'COLABORADOR', ativo: false }
+const maria = { id: 4, nome: 'Maria Souza', cpf: '98765432100', dataNascimento: '1990-03-02', email: null, perfil: null, ativo: true }
+const pedro = { id: 5, nome: 'Pedro Inativo', cpf: '11122233396', dataNascimento: '1985-07-07', email: null, perfil: null, ativo: false }
 
 function termo(pessoa: { nome: string; cpf: string }, epi: { id: number; nome: string; numeroCa: string }, prazo: string) {
   return `Termo de cautela: o colaborador ${pessoa.nome} (CPF ${pessoa.cpf}) recebeu 1 unidade do EPI ${epi.nome} `
