@@ -115,7 +115,7 @@ Este caso de uso integra o MVP por RF10. O fluxo descreve consulta, alertas e bl
 
 ## UC03 – Mapear Áreas de Risco 
 
-Este caso de uso integra o MVP por RF05. Os EPIs exigidos para acesso à área são definidos aqui; os EPIs exigidos para executar uma tarefa pertencem ao vínculo de UC08 (RF12, backlog).
+Este caso de uso integra o MVP por RF05. Os EPIs exigidos para acesso à área são definidos aqui; os EPIs exigidos para executar uma tarefa pertencem ao vínculo de UC08 (RF12).
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |
@@ -414,7 +414,7 @@ Este caso de uso integra o MVP por RF07. Prazos, responsáveis, situação e ale
 
 ## UC08 – Interligar Tarefa ao EPI
 
-Este caso de uso está no backlog, pois RF12 está classificado como `Deveria ter`. A sugestão automática de EPIs no empréstimo também pertence a esse recorte futuro.
+Este caso de uso integra o MVP por RF12 desde 17/10/2026, embora RF12 continue classificado como `Deveria ter`. A sugestão automática de EPIs no empréstimo permanece no backlog.
 
 | Elemento / Ações do Ator | Detalhes / Ações do Sistema |
 | :--- | :--- |

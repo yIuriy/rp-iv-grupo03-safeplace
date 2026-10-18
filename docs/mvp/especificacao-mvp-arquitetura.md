@@ -43,6 +43,8 @@ O MVP contém os requisitos classificados como `Deve ter`. Itens `Deveria ter` e
 
 A prioridade indica quando o requisito será entregue, não se ele é válido. Por isso, requisitos fora do MVP continuam documentados.
 
+Decisão de 17/10/2026: RF09 e RF12, classificados como `Deveria ter`, entram no MVP porque já estão implementados e testados (seções 5.1, 9 e 11.1). A classificação MoSCoW desses requisitos não muda.
+
 ### 4.1. Critérios da Técnica MoSCoW
 
 | Classificação | Significado em inglês | Critério de uso |
@@ -119,8 +121,10 @@ A priorização considera três fatores: a contribuição direta do requisito pa
 | RF05 | Mapear as áreas de risco do ambiente de trabalho | Deve ter | Cadastrar, consultar e atualizar áreas de risco. |
 | RF06 | Classificar o nível de periculosidade da tarefa | Deve ter | Classificar o nível de periculosidade das tarefas. |
 | RF07 | Informar o plano de ação para cada tipo de acidente | Deve ter | Definir e acompanhar planos de ação vinculados a acidentes e incidentes. |
+| RF09 | Registrar histórico de inspeções periódicas das áreas de risco | Deveria ter | Gestor registra e consulta inspeções de uma área de risco, com os itens verificados. Incluído em 17/10/2026. |
 | RF10 | Controlar vencimento de certificações e treinamentos obrigatórios | Deve ter | Controlar vencimentos de certificações e treinamentos obrigatórios. |
 | RF11 | Controlar a rastreabilidade dos EPIs | Deve ter | Registrar empréstimos, devoluções e itens pendentes. |
+| RF12 | Conectar tarefas e EPIs | Deveria ter | Gestor associa e consulta os EPIs obrigatórios de cada tarefa. Incluído em 17/10/2026. |
 | RF13 | Criar registros de acidente | Deve ter | Permitir que o Supervisor registre acidentes. |
 | RF16 | Registrar incidentes | Deve ter | Permitir registro pelo Supervisor ou Gestor. Relatos comunicados pelo Colaborador são registrados pelo Supervisor. |
 | RF21 | Gerenciar ciclo de vida e substituição inteligente de EPIs | Deve ter | Calcular a previsão de substituição dos EPIs e gerar alertas preventivos. |
@@ -146,6 +150,7 @@ A priorização considera três fatores: a contribuição direta do requisito pa
 | UC05 | Registro, consulta, atualização e arquivamento de ocorrências. |
 | UC06 | Entrada, saída, saldo e histórico de estoque. |
 | UC07 | Definição e acompanhamento de planos de ação. |
+| UC08 | Associação e consulta dos EPIs obrigatórios de cada tarefa pelo Gestor. A sugestão automática de EPIs no empréstimo fica fora do MVP. |
 | UC09 | Relato de acidente ou incidente pelo Supervisor, sem anexos. Envio offline pendente de decisão. |
 | UC10 | Previsão de substituição e alertas preventivos. Requisições de compra e parâmetros de cálculo pendentes de definição. |
 | UC11 | Classificação e consulta do nível de periculosidade das tarefas. |
@@ -158,7 +163,6 @@ A inclusão de um UC nesta tabela indica escopo previsto, não implementação c
 
 Os seguintes grupos permanecem fora do MVP:
 
-- inspeções e vínculo entre tarefas e EPIs: RF09 e RF12;
 - alertas de comportamento, investigação, dashboards, relatórios, CAT e visitantes: RF08, RF15, RF17, RF18, RF19 e RF22;
 - descarte, fornecedores e Certificado de Aprovação: RF14 e RF20;
 - tempo de resposta, capacidade de usuários, criptografia, disponibilidade, backup, conformidade normativa, integridade de documentos, facilidade de aprendizado, suporte multilíngue, modularidade, compatibilidade ampla e integração externa: RNF01, RNF02, RNF04, RNF06, RNF07, RNF09, RNF10, RNF12, RNF13, RNF14, RNF16 e RNF17.
@@ -223,6 +227,8 @@ Deve conter as classes necessárias aos requisitos `Deve ter`: usuário e perfil
 
 Decisão de 16/10/2026: em vez de um diagrama reduzido, o grupo mantém o modelo completo, alinhado ao domínio implementado (`backend/.../domain`), com as classes fora do MVP em cinza: `AlertaComportamento`, `AtestadoSaude`, `StatusFuncionario`, `Visitante`, `Fornecedor`, `MidiaAnexo`, `Testemunha`, `Inspecao` e `ItemVerificado`. As operações de classes do MVP que pertencem ao backlog (evidências, laudo e investigação em `Ocorrencia`; CAT em `Acidente`; descarte em `EPI` e `MovimentacaoEstoque`; vínculo tarefa–EPI em `Tarefa`) permanecem no diagrama sem destaque visual e estão listadas na documentação da entrega. As correspondências de cada classe com o código estão nos documentos `docs/arquitetura/correspondencia-classes-*.md`.
 
+Com a decisão de 17/10/2026 (seção 4), `Inspecao`, `ItemVerificado` e o vínculo tarefa-EPI em `Tarefa` passam a integrar o MVP. O diagrama ainda precisa deixar de mostrar `Inspecao` e `ItemVerificado` em cinza.
+
 Como proposta de modelagem, o grupo pode separar `EPI`, representando o tipo de equipamento nessa proposta, de `ItemEPI`, representando uma unidade física rastreável. Essa separação não está aprovada e não define o significado de `EPI` no modelo vigente, que ainda precisa ser esclarecido. A proposta não cria um requisito novo.
 
 ## 9. Matriz de rastreabilidade
@@ -238,8 +244,10 @@ As situações abaixo descrevem a cobertura documental, não o atendimento pela 
 | RF05 | Mapear as áreas de risco do ambiente de trabalho | UC03 | Gestão de Áreas de Risco e Persistência | Coberto. |
 | RF06 | Classificar o nível de periculosidade da tarefa | UC11 | Gestão de Tarefas | Fluxo descrito; vocabulário único `NivelPerigo`, autoria da classificação e relações com setor/área aprovadas e persistidas conforme [Correspondência Classes vs UC11](../arquitetura/correspondencia-classes-tarefa-uc11.md). Exigências normativas seguem fora desta relação. |
 | RF07 | Informar o plano de ação para cada tipo de acidente | UC07 | Gestão de Ocorrências | Fluxo descrito; contrato de ações, responsáveis, situação e alertas aprovado em [Correspondência Classes vs UC07](../arquitetura/correspondencia-classes-plano-de-acao.md). Persistência entregue na issue #98 e API na issue #99 (`cadastrarAcao`). |
+| RF09 | Registrar histórico de inspeções periódicas das áreas de risco | US09 (sem UC) | Gestão de Áreas de Risco e Persistência | Coberto conforme [Correspondência Classes vs RF09](../arquitetura/correspondencia-classes-inspecao-rf09.md). Consulta pelo Supervisor, periodicidade e critérios continuam pendentes. |
 | RF10 | Controlar vencimento de certificações e treinamentos obrigatórios | UC02 | Gestão de Capacitações | Consulta, alertas e bloqueio descritos; fluxo de cadastro das capacitações ainda não identificado. |
 | RF11 | Controlar a rastreabilidade dos EPIs | UC12 | Gestão de EPIs, Empréstimo e Estoque | Recorte limitado a colaboradores. |
+| RF12 | Conectar tarefas e EPIs | UC08; US12 | Gestão de Tarefas e Gestão de EPIs | Coberto conforme [Correspondência Classes vs RF12](../arquitetura/correspondencia-classes-tarefa-rf12.md). Sugestão automática no empréstimo e compatibilidade entre modelos ficam fora do MVP. |
 | RF13 | Criar registros de acidente | UC09 e UC05 | Gestão de Ocorrências | Coberto. |
 | RF16 | Registrar incidentes | UC09 e UC05 | Gestão de Ocorrências | Supervisor registra em UC09, inclusive relatos de colaboradores; Gestor registra em UC05. |
 | RF21 | Gerenciar ciclo de vida e substituição inteligente de EPIs | UC10 | Gestão de EPIs | Previsão e alertas no MVP; requisições, origem dos dados e parâmetros de cálculo ainda pendentes. |
@@ -276,8 +284,8 @@ Esta revisão cobre parte da [issue #81](https://github.com/yIuriy/rp-iv-grupo03
 | Substituição de EPIs | Decisão registrada em [Correspondência Classes vs DS10/DS10.1](../arquitetura/correspondencia-classes-ds10.md): Durabilidade nominal em dias (`Epi.vidaUtilDias`), taxa diária de uso ($U$) derivada de `Emprestimo`, multiplicadores ambientais de `Setor.status: NivelPerigo` (1.0, 1.25, 1.5, 2.0), teto intransponível de CA (`ModeloEPI.validadeCA`), alertas preventivos com escala de prioridade formalizada (descarte próximo em 7 e 15 dias; vencimento de CA em 10 dias; estoque crítico), e tratamento de dados ausentes como falha/nova tentativa (sem dados fictícios). Requisições de compra, prorrogação por laudo e exportação ficam no backlog. | UC10, US21 e issue #108. |
 | Cadastro de capacitações | UC02 consulta dados já cadastrados; os modelos também contêm cadastro e validação de datas. Identificar o fluxo responsável por essas operações. | UC02, US10 e revisão dos diagramas na issue #81. |
 | Plano de ação | Contrato aprovado e implementado em [Correspondência Classes vs UC07](../arquitetura/correspondencia-classes-plano-de-acao.md): cada `PlanoDeAcao` é uma ação (`idAcao`), 0..* por ocorrência; responsável único entre `Colaborador` e `Setor`; `status` com `ABERTA` → `CONCLUIDA` e atraso derivado do prazo; prorrogação com justificativa e histórico; antecedência de alerta por ação, sem valor fixo; aviso interno ao Gestor para responsável sem conta. Persistência entregue na issue #98 e API na issue #99 com `cadastrarAcao`. Gravidade de incidente, cancelamento de ação e canal externo continuam pendentes. | UC07, US07 e issues #97, #98 e #99. |
-| Inspeções (RF09, backlog) | Contrato aprovado e implementado em [Correspondência Classes vs RF09](../arquitetura/correspondencia-classes-inspecao-rf09.md): o Gestor registra e consulta; cada `ItemVerificado` é a norma avaliada com conformidade e observações; ao menos um item por inspeção e cada item em uma única inspeção; inspeções não são alteradas. Consulta pelo Supervisor, periodicidade e critérios continuam pendentes. | US09, RF09 e issues #134 e #136. |
-| Vínculo Tarefa–EPI (RF12, backlog) | Contrato aprovado e implementado em [Correspondência Classes vs RF12](../arquitetura/correspondencia-classes-tarefa-rf12.md): o Gestor associa e consulta EPIs diretamente por seus identificadores no catálogo; sem criação de `TipoEpi` nem regras inventadas de altura ou perigo; restrito a `GESTOR_SEGURANCA`; compatibilidade técnica entre modelos e sugestão automática no empréstimo permanecem no backlog. | RF12, UC08, US12 e issue #135. |
+| Inspeções (RF09, MVP desde 17/10/2026) | Contrato aprovado e implementado em [Correspondência Classes vs RF09](../arquitetura/correspondencia-classes-inspecao-rf09.md): o Gestor registra e consulta; cada `ItemVerificado` é a norma avaliada com conformidade e observações; ao menos um item por inspeção e cada item em uma única inspeção; inspeções não são alteradas. Consulta pelo Supervisor, periodicidade e critérios continuam pendentes. | US09, RF09 e issues #134 e #136. |
+| Vínculo Tarefa–EPI (RF12, MVP desde 17/10/2026) | Contrato aprovado e implementado em [Correspondência Classes vs RF12](../arquitetura/correspondencia-classes-tarefa-rf12.md): o Gestor associa e consulta EPIs diretamente por seus identificadores no catálogo; sem criação de `TipoEpi` nem regras inventadas de altura ou perigo; restrito a `GESTOR_SEGURANCA`; compatibilidade técnica entre modelos e sugestão automática no empréstimo permanecem no backlog. | RF12, UC08, US12 e issue #135. |
 | CA no MVP | Decisão registrada: no MVP, os dados essenciais de CA (número e data de validade) são informados e mantidos diretamente no cadastro de cada modelo de EPI (`ModeloEPI`), sem exigir a gestão formal de fornecedores e certificações externas (RF20, que permanece no backlog). Atende UC01, UC06, UC10 e UC12. | UCs de EPIs, US03/US04/US11/US20/US21 e issue #76. |
 
 ### 11.2. Correspondência com o diagrama de classes
