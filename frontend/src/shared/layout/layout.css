@@ -31,6 +31,11 @@
 @media (max-width: 767px) {
   .sp-main { padding: var(--sp-layout-mobile-padding); }
 }
+@media (max-width: 359px) {
+  .sp-app-header { gap: var(--sp-space-8); padding-left: var(--sp-space-12); padding-right: var(--sp-space-12); }
+  .sp-logo { width: 112px; }
+  .sp-header-end { gap: var(--sp-space-8); }
+}
 .sp-nav-contador { margin-left: auto; min-width: 24px; padding: 0 var(--sp-space-8); border-radius: 999px; background: var(--sp-feedback-danger); color: var(--sp-text-inverse); font-size: 12px; line-height: 24px; text-align: center; }
 .sp-sidebar-rodape { position: sticky; bottom: 0; margin: auto calc(-1 * var(--sp-space-16)) calc(-1 * var(--sp-space-16)); padding: var(--sp-space-12) var(--sp-space-16) var(--sp-space-16); border-top: 1px solid var(--sp-border-default); background: var(--sp-surface-white); }
 .sp-navigation-dialog .sp-nav-perfil { margin-top: var(--sp-space-16); border-top: 1px solid var(--sp-border-default); border-radius: 0; padding-top: var(--sp-space-16); }
