@@ -74,13 +74,13 @@ function FormularioTarefa({
 
   const [areas, setAreas] = useState<AreaRisco[]>([])
   const [setores, setSetores] = useState<Setor[]>([])
-  const [carregandoRelacoes, setCarregandoRelacoes] = useState(false)
+  // O formulário é recriado a cada abertura (key), então já nasce carregando as relações.
+  const [carregandoRelacoes, setCarregandoRelacoes] = useState(true)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
   useEffect(() => {
     let ativo = true
-    setCarregandoRelacoes(true)
     Promise.all([listarAreasRisco(), listarSetores()])
       .then(([listaAreas, listaSetores]) => {
         if (ativo) {
