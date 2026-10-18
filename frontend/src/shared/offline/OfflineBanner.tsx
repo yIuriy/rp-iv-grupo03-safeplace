@@ -1,4 +1,4 @@
-import { Alert, Badge } from '../components'
+import { Alert } from '../components'
 
 function formatarDataHora(data: Date): string {
   return new Intl.DateTimeFormat('pt-BR', {
@@ -29,21 +29,5 @@ export function OfflineBanner({
         </span>
       </Alert>
     </div>
-  )
-}
-
-export function OfflineBadge({
-  isOffline,
-  sincronizadoEm,
-}: {
-  isOffline: boolean
-  sincronizadoEm?: Date | null
-}) {
-  if (!isOffline) return null
-
-  return (
-    <Badge tone="warning">
-      Offline {sincronizadoEm ? `(${formatarDataHora(sincronizadoEm)})` : ''}
-    </Badge>
   )
 }

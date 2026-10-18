@@ -189,11 +189,6 @@ export async function listarAreasRisco(signal?: AbortSignal): Promise<AreaRisco[
   return data.map(lerAreaRisco)
 }
 
-export async function buscarAreaRiscoPorId(id: number, signal?: AbortSignal): Promise<AreaRisco> {
-  const { data } = await http.get<unknown>(`/areas-risco/${id}`, { signal })
-  return lerAreaRisco(data)
-}
-
 export async function cadastrarAreaRisco(dados: DadosCadastroAreaRisco): Promise<AreaRisco> {
   const { data } = await http.post<unknown>('/areas-risco', dados)
   return lerAreaRisco(data)
