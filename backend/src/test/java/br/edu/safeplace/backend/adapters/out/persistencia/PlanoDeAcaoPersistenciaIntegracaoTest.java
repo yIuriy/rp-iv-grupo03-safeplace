@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,14 +21,22 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
+import br.edu.safeplace.backend.application.dto.input.AtualizarResponsavelInputDTO;
+import br.edu.safeplace.backend.application.port.in.ConsultarNotificacoesAcaoUseCase;
+import br.edu.safeplace.backend.application.port.in.EmitirAlertasPrazoUseCase;
+import br.edu.safeplace.backend.application.port.in.GerenciarPlanoDeAcaoUseCase;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.NotificacaoAcaoPort;
 import br.edu.safeplace.backend.application.port.out.PlanoDeAcaoRepositoryPort;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.ocorrencia.MotivoAvisoAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.ProrrogacaoPrazo;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusPlanoDeAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.exception.AcaoPlanoNaoEncontradaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PrazoAcaoInvalidoException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
@@ -37,7 +46,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Cobre a persistência de planos de ação contra PostgreSQL (Issue #98; RF07, RNF05, UC07, US07).
+ * Cobre a persistência de planos de ação contra PostgreSQL (Issues #98 e #196; RF07, RNF05, UC07, US07):
+ * responsável e situação garantidos pelo banco, alerta de prazo emitido uma vez por ação e prazo e aviso
+ * de reatribuição gravado.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @EnabledIf("bancoDisponivel")
@@ -63,6 +74,18 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
 
     @Autowired
     private LogAuditoriaRepositoryPort auditoriaRepository;
+
+    @Autowired
+    private NotificacaoAcaoPort notificacaoAcaoPort;
+
+    @Autowired
+    private EmitirAlertasPrazoUseCase emitirAlertasPrazo;
+
+    @Autowired
+    private ConsultarNotificacoesAcaoUseCase consultarNotificacoesAcao;
+
+    @Autowired
+    private GerenciarPlanoDeAcaoUseCase gerenciarPlanoDeAcao;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -119,6 +142,7 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
         jdbcTemplate.execute("DELETE FROM acidentes");
         jdbcTemplate.execute("DELETE FROM incidentes");
         jdbcTemplate.execute("DELETE FROM prorrogacoes_prazo");
+        jdbcTemplate.execute("DELETE FROM notificacoes_acao");
         jdbcTemplate.execute("DELETE FROM planos_de_acao");
         jdbcTemplate.execute("DELETE FROM notificacoes_ocorrencia");
         jdbcTemplate.execute("DELETE FROM ocorrencias");
@@ -297,6 +321,117 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
                 "justificativa",
                 "criado_em"
         );
+    }
+
+    @Test
+    @DisplayName("Banco exige exatamente um responsável e situação do vocabulário aprovado (V33, issue #196)")
+    void bancoGaranteResponsavelUnicoESituacao() {
+        String insercao = """
+                INSERT INTO planos_de_acao (ocorrencia_id, medidas_corretivas, prazo, status, colaborador_id, setor_id)
+                VALUES (?, 'Medida', ?, ?, ?, ?)
+                """;
+
+        assertThatThrownBy(() -> jdbcTemplate.update(insercao, ocorrenciaId, hoje, "ABERTA", null, null))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("chk_planos_responsavel");
+        assertThatThrownBy(() -> jdbcTemplate.update(insercao, ocorrenciaId, hoje, "ABERTA", colaboradorId, setorId))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("chk_planos_responsavel");
+        assertThatThrownBy(() -> jdbcTemplate.update(insercao, ocorrenciaId, hoje, "PENDENTE", colaboradorId, null))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("chk_planos_status");
+        assertThatThrownBy(() -> jdbcTemplate.update(insercao, ocorrenciaId, hoje, null, null, setorId))
+                .isInstanceOf(DataIntegrityViolationException.class);
+
+        assertThat(jdbcTemplate.update(insercao, ocorrenciaId, hoje, "ABERTA", null, setorId)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Alerta de prazo é emitido uma vez por ação e prazo, e a prorrogação o rearma (issue #196)")
+    void alertaDePrazoEmitidoUmaVezPorPrazo() {
+        PlanoDeAcao acao = planoRepository.salvar(new PlanoDeAcao(
+                null, ocorrenciaId, "Trocar mangueira da prensa", null, hoje.plusDays(2),
+                "ABERTA", colaborador(), null, true, 3, gestor()
+        ));
+        PlanoDeAcao semAlerta = planoRepository.salvar(new PlanoDeAcao(
+                null, ocorrenciaId, "Ação sem alerta", null, hoje.plusDays(1),
+                "ABERTA", null, setor(), false, null, gestor()
+        ));
+
+        assertThat(planoRepository.listarAbertasComAlertaAtivo()).extracting(PlanoDeAcao::getId)
+                .contains(acao.getId())
+                .doesNotContain(semAlerta.getId());
+
+        assertThat(emitirAlertasPrazo.emitirAlertasDePrazo(hoje.minusDays(2))).isZero();
+        assertThat(emitirAlertasPrazo.emitirAlertasDePrazo(hoje)).isEqualTo(1);
+        // Repetir a verificação, no mesmo dia ou depois, não duplica o alerta do mesmo prazo.
+        assertThat(emitirAlertasPrazo.emitirAlertasDePrazo(hoje)).isZero();
+        assertThat(emitirAlertasPrazo.emitirAlertasDePrazo(hoje.plusDays(1))).isZero();
+
+        // A prorrogação cria um novo prazo e rearma o alerta.
+        ProrrogacaoPrazo prorrogacao = acao.prorrogarPrazo(hoje.plusDays(10), "Peça em falta no fornecedor", hoje);
+        planoRepository.salvar(acao);
+        planoRepository.salvarProrrogacao(prorrogacao);
+        assertThat(emitirAlertasPrazo.emitirAlertasDePrazo(hoje.plusDays(1))).isZero();
+        assertThat(emitirAlertasPrazo.emitirAlertasDePrazo(hoje.plusDays(7))).isEqualTo(1);
+
+        List<NotificacaoAcao> avisos = consultarNotificacoesAcao.listar().stream()
+                .filter(aviso -> acao.getId().equals(aviso.idAcao()))
+                .toList();
+        assertThat(avisos).extracting(NotificacaoAcao::motivo).containsOnly(MotivoAvisoAcao.PRAZO);
+        assertThat(avisos).extracting(NotificacaoAcao::prazo).containsExactly(hoje.plusDays(10), hoje.plusDays(2));
+        assertThat(avisos.get(1).responsavelTipo()).isEqualTo("COLABORADOR");
+        assertThat(avisos.get(1).responsavelId()).isEqualTo(colaboradorId);
+        assertThat(avisos.get(1).responsavelNome()).isEqualTo("Operador Teste");
+        assertThat(avisos.get(1).idOcorrencia()).isEqualTo(ocorrenciaId);
+        assertThat(avisos.get(1).mensagem()).contains("Ação #" + acao.getId(), "Operador Teste");
+    }
+
+    @Test
+    @DisplayName("Ação concluída sai da verificação e não recebe alerta (issue #196)")
+    void acaoConcluidaNaoRecebeAlerta() {
+        PlanoDeAcao acao = planoRepository.salvar(new PlanoDeAcao(
+                null, ocorrenciaId, "Ação concluída", null, hoje,
+                "ABERTA", colaborador(), null, true, 0, gestor()
+        ));
+        acao.atualizarStatus(StatusPlanoDeAcao.CONCLUIDA);
+        planoRepository.salvar(acao);
+
+        assertThat(planoRepository.listarAbertasComAlertaAtivo()).extracting(PlanoDeAcao::getId)
+                .doesNotContain(acao.getId());
+        assertThat(emitirAlertasPrazo.emitirAlertasDePrazo(hoje.plusDays(5))).isZero();
+    }
+
+    @Test
+    @DisplayName("Reatribuição grava o aviso ao novo encarregado a cada troca (UC07, alternativo II; issue #196)")
+    void reatribuicaoGravaAvisoAoNovoResponsavel() {
+        PlanoDeAcao acao = planoRepository.salvar(new PlanoDeAcao(
+                null, ocorrenciaId, "Instalar guarda-corpo", null, LocalDate.now().plusDays(6),
+                "ABERTA", colaborador(), null, false, null, gestor()
+        ));
+
+        gerenciarPlanoDeAcao.atualizarResponsavel(acao.getId(), new AtualizarResponsavelInputDTO(null, setorId));
+        gerenciarPlanoDeAcao.atualizarResponsavel(acao.getId(), new AtualizarResponsavelInputDTO(colaboradorId, null));
+
+        List<NotificacaoAcao> avisos = consultarNotificacoesAcao.listar().stream()
+                .filter(aviso -> acao.getId().equals(aviso.idAcao()))
+                .toList();
+        assertThat(avisos).hasSize(2);
+        assertThat(avisos).extracting(NotificacaoAcao::motivo).containsOnly(MotivoAvisoAcao.REATRIBUICAO);
+        // Mais recente primeiro: voltou ao colaborador depois de passar pelo setor.
+        assertThat(avisos.get(0).responsavelTipo()).isEqualTo("COLABORADOR");
+        assertThat(avisos.get(1).responsavelTipo()).isEqualTo("SETOR");
+        assertThat(avisos.get(1).responsavelId()).isEqualTo(setorId);
+        assertThat(avisos.get(1).responsavelNome()).isEqualTo("Usinagem e Prensas");
+        assertThat(avisos.get(1).dataAviso()).isEqualTo(LocalDate.now());
+        assertThat(avisos.get(1).mensagem()).contains("reatribuída a setor Usinagem e Prensas");
+    }
+
+    @Test
+    @DisplayName("Ação inexistente responde não encontrada (issue #196)")
+    void acaoInexistenteNaoEncontrada() {
+        assertThatThrownBy(() -> gerenciarPlanoDeAcao.buscarPorId(Integer.MAX_VALUE))
+                .isInstanceOf(AcaoPlanoNaoEncontradaException.class);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.adapters.in.web;
 
+import br.edu.safeplace.backend.domain.ocorrencia.exception.AcaoPlanoNaoEncontradaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.AcaoPreventivaObrigatoriaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PlanoDeAcaoInvalidoException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PrazoAcaoInvalidoException;
@@ -13,6 +14,16 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class PlanoDeAcaoExceptionHandler {
+
+    @ExceptionHandler(AcaoPlanoNaoEncontradaException.class)
+    public ResponseEntity<Map<String, Object>> handleAcaoNaoEncontrada(AcaoPlanoNaoEncontradaException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.NOT_FOUND.value(),
+                "error", "Não Encontrado",
+                "message", ex.getMessage()
+        ));
+    }
 
     @ExceptionHandler(AcaoPreventivaObrigatoriaException.class)
     public ResponseEntity<Map<String, Object>> handleAcaoPreventivaObrigatoria(AcaoPreventivaObrigatoriaException ex) {

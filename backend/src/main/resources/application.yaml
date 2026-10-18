@@ -17,6 +17,15 @@ springdoc:
   swagger-ui:
     path: /docs
 
+# Rotinas agendadas (issue #196). O cron do Spring tem seis campos: segundo, minuto, hora, dia, mês e
+# dia da semana. Por padrão, os alertas de prazo das ações do plano são verificados de hora em hora.
+safeplace:
+  agendamento:
+    ativo: ${SAFEPLACE_AGENDAMENTO_ATIVO:true}
+  plano-acao:
+    alertas:
+      cron: "${SAFEPLACE_ALERTAS_PLANO_CRON:0 0 * * * *}"
+
 jwt:
   secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
   expiration-ms: ${JWT_EXPIRATION_MS:604800000}

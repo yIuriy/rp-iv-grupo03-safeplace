@@ -188,6 +188,10 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+                    <systemPropertyVariables>
+                        <!-- Issue #196: nenhuma rotina agendada altera o banco no meio de um teste. -->
+                        <safeplace.agendamento.ativo>false</safeplace.agendamento.ativo>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
             <plugin>

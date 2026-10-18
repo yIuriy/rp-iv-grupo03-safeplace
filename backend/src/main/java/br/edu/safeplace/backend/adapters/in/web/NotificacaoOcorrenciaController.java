@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/notificacoes")
-@Tag(name = "Notificações", description = "Notificações internas de novos relatos ao Gestor de Segurança")
+@Tag(name = "Notificações", description = "Notificações internas ao Gestor de Segurança: novos relatos e avisos das ações do plano")
 public class NotificacaoOcorrenciaController {
     private final ConsultarNotificacoesOcorrenciaUseCase consultarUseCase;
 

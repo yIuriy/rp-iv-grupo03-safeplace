@@ -16,6 +16,7 @@ import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.ProrrogacaoPrazo;
+import br.edu.safeplace.backend.domain.ocorrencia.StatusPlanoDeAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PrazoAcaoInvalidoException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
@@ -208,6 +209,14 @@ public class PlanoDeAcaoJpaAdapter implements PlanoDeAcaoRepositoryPort {
                         e.getNovoPrazo(),
                         e.getJustificativa()
                 ))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PlanoDeAcao> listarAbertasComAlertaAtivo() {
+        return planoRepository.findByAlertaAtivoTrueAndStatusOrderByIdAsc(StatusPlanoDeAcao.ABERTA.name()).stream()
+                .map(this::toDomain)
                 .toList();
     }
 

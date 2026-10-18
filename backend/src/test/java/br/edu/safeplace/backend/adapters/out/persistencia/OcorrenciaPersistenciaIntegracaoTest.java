@@ -121,6 +121,7 @@ class OcorrenciaPersistenciaIntegracaoTest {
         jdbcTemplate.execute("DELETE FROM incidentes");
         jdbcTemplate.execute("DELETE FROM ocorrencias");
         jdbcTemplate.execute("DELETE FROM prorrogacoes_prazo");
+        jdbcTemplate.execute("DELETE FROM notificacoes_acao");
         jdbcTemplate.execute("DELETE FROM planos_de_acao");
         jdbcTemplate.execute("DELETE FROM sequencias_protocolo_cat");
         jdbcTemplate.update("DELETE FROM usuarios WHERE email LIKE ? OR cpf IN (?, ?, ?)",
@@ -390,6 +391,35 @@ class OcorrenciaPersistenciaIntegracaoTest {
         assertThat(doAcidente.numeroProtocoloCAT()).isEqualTo(acidente.numeroProtocoloCAT());
         assertThat(doAcidente.areaNome()).isEqualTo("Linha de Prensas");
         assertThat(doAcidente.mensagem()).contains(acidente.numeroProtocoloCAT(), "Linha de Prensas");
+    }
+
+    @Test
+    @DisplayName("Gravar a ocorrência não regrava o plano embutido legado (issue #196)")
+    void naoRegravaPlanoEmbutidoLegado() {
+        Integer ocorrenciaId = registrarUseCase.registrarIncidente(new RegistrarIncidenteInputDTO(
+                LocalDateTime.of(2026, 9, 2, 9, 0), "Relato com plano antigo.", "Piso", "Queda",
+                areaId, colaboradorId)).idOcorrencia();
+        Integer planoId = jdbcTemplate.queryForObject("""
+                INSERT INTO planos_de_acao (ocorrencia_id, medidas_corretivas, prazo, status, colaborador_id,
+                                            alerta_ativo, antecedencia_alerta_dias)
+                VALUES (?, 'Plano do relato antigo', ?, 'ABERTA', ?, TRUE, 2)
+                RETURNING id
+                """, Integer.class, ocorrenciaId, LocalDate.of(2026, 9, 30), colaboradorId);
+        jdbcTemplate.update("UPDATE ocorrencias SET plano_de_acao_id = ? WHERE id_ocorrencia = ?", planoId, ocorrenciaId);
+
+        // Antes, a cascata regravava o plano com ocorrência, responsável e alerta nulos.
+        gerenciarUseCase.enviarParaTriagem(ocorrenciaId);
+
+        assertThat(gerenciarUseCase.buscarPorId(ocorrenciaId).statusOcorrencia()).isEqualTo("EM_TRIAGEM");
+        assertThat(jdbcTemplate.queryForMap(
+                "SELECT ocorrencia_id, colaborador_id, alerta_ativo, antecedencia_alerta_dias FROM planos_de_acao WHERE id = ?",
+                planoId))
+                .containsEntry("ocorrencia_id", ocorrenciaId)
+                .containsEntry("colaborador_id", colaboradorId)
+                .containsEntry("alerta_ativo", true)
+                .containsEntry("antecedencia_alerta_dias", 2);
+        assertThat(contar("SELECT COUNT(*) FROM ocorrencias WHERE id_ocorrencia = ? AND plano_de_acao_id = ?",
+                ocorrenciaId, planoId)).isEqualTo(1);
     }
 
     @Test

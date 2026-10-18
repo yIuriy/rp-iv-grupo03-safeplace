@@ -49,7 +49,7 @@ public class PlanoDeAcaoController {
     }
 
     @PatchMapping("/api/planos-acao/{id}/status")
-    @Operation(summary = "Atualiza o status de uma ação (ABERTA, EM_ANDAMENTO, CONCLUIDA, CANCELADA)")
+    @Operation(summary = "Conclui uma ação aberta (única transição aceita: ABERTA para CONCLUIDA)")
     public PlanoDeAcaoResponse atualizarStatus(
             @PathVariable Integer id,
             @Valid @RequestBody AtualizarStatusPlanoRequest request) {
