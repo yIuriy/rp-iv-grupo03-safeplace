@@ -9,6 +9,7 @@ import br.edu.safeplace.backend.application.dto.output.PlanoDeAcaoOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.ProrrogacaoPrazoOutputDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarPlanoDeAcaoUseCase;
 import br.edu.safeplace.backend.config.SecurityConfig;
+import br.edu.safeplace.backend.domain.ocorrencia.exception.AcaoPlanoNaoEncontradaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.AcaoPreventivaObrigatoriaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PrazoAcaoInvalidoException;
 import org.junit.jupiter.api.DisplayName;
@@ -58,6 +59,8 @@ class PlanoDeAcaoControllerTest {
                 true,
                 3,
                 LocalDate.of(2026, 10, 12),
+                true,
+                false,
                 1,
                 "Gestor Seguranca"
         );
@@ -144,7 +147,33 @@ class PlanoDeAcaoControllerTest {
         mockMvc.perform(get("/api/ocorrencias/1/planos-acao"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(100))
-                .andExpect(jsonPath("$[0].idOcorrencia").value(1));
+                .andExpect(jsonPath("$[0].idOcorrencia").value(1))
+                .andExpect(jsonPath("$[0].alertaDevido").value(true))
+                .andExpect(jsonPath("$[0].emAtraso").value(false));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Ação inexistente responde 404 na consulta e nas alterações (issue #196)")
+    void acaoInexistenteResponde404() throws Exception {
+        when(useCase.buscarPorId(999)).thenThrow(new AcaoPlanoNaoEncontradaException(999));
+        when(useCase.atualizarStatus(eq(999), any(AtualizarStatusPlanoInputDTO.class)))
+                .thenThrow(new AcaoPlanoNaoEncontradaException(999));
+        when(useCase.configurarAlerta(eq(999), any(ConfigurarAlertaInputDTO.class)))
+                .thenThrow(new AcaoPlanoNaoEncontradaException(999));
+
+        mockMvc.perform(get("/api/planos-acao/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Não Encontrado"))
+                .andExpect(jsonPath("$.message").value("Ação do plano não encontrada para o ID: 999"));
+        mockMvc.perform(patch("/api/planos-acao/999/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\": \"CONCLUIDA\"}"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(patch("/api/planos-acao/999/alerta")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ativo\": true, \"antecedenciaDias\": 2}"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

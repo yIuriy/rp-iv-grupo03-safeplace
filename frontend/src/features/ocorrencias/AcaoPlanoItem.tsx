@@ -1,5 +1,5 @@
-// Uma ação do plano (UC07): medidas, prazo, responsável, situação, atraso e alerta derivados da data
-// de hoje, e o histórico de prorrogações. Ao Gestor, em ação aberta, oferece concluir, prorrogar com
+// Uma ação do plano (UC07): medidas, prazo, responsável, situação, atraso e alerta calculados pelo
+// servidor (issue #196), e o histórico de prorrogações. Ao Gestor, em ação aberta, oferece concluir, prorrogar com
 // justificativa, reatribuir o responsável e configurar o alerta, em formulários dentro do próprio item
 // (sem diálogo sobre diálogo). Supervisor só acompanha.
 
@@ -11,10 +11,8 @@ import { formatarData } from '../estoque/formatos'
 import type { Usuario } from '../usuarios/api'
 import { descreverFalhaDeOcorrencia } from './api'
 import {
-  alertaDevido,
   concluirAcao,
   configurarAlerta,
-  estaEmAtraso,
   listarProrrogacoes,
   prorrogarPrazo,
   reatribuirResponsavel,
@@ -35,8 +33,8 @@ export function AcaoPlanoItem({ acao, hoje, gestor, colaboradores, setores, aoAl
 }) {
   const [operacao, setOperacao] = useState<Operacao>(null)
   const [historicoAberto, setHistoricoAberto] = useState(false)
-  const atraso = estaEmAtraso(acao, hoje)
-  const alerta = alertaDevido(acao, hoje)
+  const atraso = acao.emAtraso
+  const alerta = acao.alertaDevido
   const aberta = acao.situacao === 'ABERTA'
   const titulo = `Ação #${acao.id}`
 

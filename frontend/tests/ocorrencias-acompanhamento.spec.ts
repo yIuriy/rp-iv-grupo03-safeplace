@@ -55,12 +55,17 @@ function corpo(request: Request): unknown {
   try { return request.postDataJSON() } catch { return null }
 }
 
+/** Como o servidor (issue #196): data do alerta, alerta devido e atraso a partir do prazo e de hoje. */
 function comAlerta(acao: Acao): Acao {
+  const hoje = diaIso(0)
+  const aberta = acao.situacao === 'ABERTA'
+  const emAtraso = aberta && String(acao.prazo) < hoje
   const dias = acao.alertaAtivo ? Number(acao.antecedenciaAlertaDias ?? 0) : null
-  if (dias === null) return { ...acao, dataAlerta: null }
+  if (dias === null) return { ...acao, dataAlerta: null, alertaDevido: false, emAtraso }
   const data = new Date(`${acao.prazo}T12:00:00`)
   data.setDate(data.getDate() - dias)
-  return { ...acao, dataAlerta: data.toISOString().slice(0, 10) }
+  const dataAlerta = data.toISOString().slice(0, 10)
+  return { ...acao, dataAlerta, alertaDevido: aberta && dataAlerta <= hoje, emAtraso }
 }
 
 /** API em memória que aplica as regras essenciais do backend e guarda o estado entre recargas. */
@@ -151,7 +156,7 @@ async function simularApi(page: Page, inicial: Partial<Pick<Estado, 'ocorrencias
     const acaoMatch = caminho.match(/^\/planos-acao\/(\d+)\/([a-z]+)$/)
     if (acaoMatch) {
       const acao = estado.acoes.find(a => a.id === Number(acaoMatch[1]))
-      if (!acao) return json({ message: 'Ação não encontrada' }, 400)
+      if (!acao) return json({ message: 'Ação do plano não encontrada' }, 404)
       const operacao = acaoMatch[2]
       if (operacao === 'status') { acao.status = 'CONCLUIDA'; acao.situacao = 'CONCLUIDA'; return json(comAlerta(acao)) }
       if (operacao === 'responsavel') {

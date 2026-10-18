@@ -9,7 +9,7 @@ import { descreverSetor, listarSetores, type Setor } from '../areas-risco/api'
 import { hojeIso } from '../usuarios/formatos'
 import { listarColaboradores, listarSupervisores, type Usuario } from '../usuarios/api'
 import { avisarOcorrenciasAlteradas, descreverFalhaDeOcorrencia, type OcorrenciaResumo } from './api'
-import { alertaDevido, cadastrarAcao, estaEmAtraso, listarAcoes } from './apiPlanos'
+import { cadastrarAcao, listarAcoes } from './apiPlanos'
 import { AcaoPlanoItem } from './AcaoPlanoItem'
 import { lerNovaAcao, ordemDosCamposDaAcao, validarNovaAcao, type ErrosAcao } from './validacaoPlano'
 
@@ -58,8 +58,8 @@ export function PlanoAcaoPainel({ ocorrencia, gestor, offline, ativo }: {
 
   const lista = acoes.dados ?? []
   const abertas = lista.filter(acao => acao.situacao === 'ABERTA').length
-  const atrasadas = lista.filter(acao => estaEmAtraso(acao, hoje)).length
-  const comAlerta = lista.filter(acao => alertaDevido(acao, hoje)).length
+  const atrasadas = lista.filter(acao => acao.emAtraso).length
+  const comAlerta = lista.filter(acao => acao.alertaDevido).length
   const podeEditar = gestor && !offline
 
   return <section className="sp-plano" aria-labelledby={`plano-${id}-titulo`}>

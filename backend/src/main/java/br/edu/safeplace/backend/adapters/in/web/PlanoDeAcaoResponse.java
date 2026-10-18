@@ -19,6 +19,8 @@ public record PlanoDeAcaoResponse(
         boolean alertaAtivo,
         Integer antecedenciaAlertaDias,
         LocalDate dataAlerta,
+        boolean alertaDevido,
+        boolean emAtraso,
         Integer gestorId,
         String gestorNome
 ) {
@@ -47,6 +49,8 @@ public record PlanoDeAcaoResponse(
                 dto.alertaAtivo(),
                 dto.antecedenciaAlertaDias(),
                 dto.dataAlerta(),
+                dto.alertaDevido(),
+                dto.emAtraso(),
                 dto.gestorId(),
                 dto.gestorNome()
         );

@@ -37,4 +37,9 @@ public interface PlanoDeAcaoRepositoryPort {
      * Lista o histórico de prorrogações de prazo de uma ação.
      */
     List<ProrrogacaoPrazo> listarProrrogacoes(Integer idAcao);
+
+    /**
+     * Ações abertas com alerta ativo, candidatas à verificação periódica de prazo (issue #196).
+     */
+    List<PlanoDeAcao> listarAbertasComAlertaAtivo();
 }

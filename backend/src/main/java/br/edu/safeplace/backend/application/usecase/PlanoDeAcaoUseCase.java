@@ -9,15 +9,18 @@ import br.edu.safeplace.backend.application.dto.output.PlanoDeAcaoOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.ProrrogacaoPrazoOutputDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarPlanoDeAcaoUseCase;
+import br.edu.safeplace.backend.application.port.out.NotificacaoAcaoPort;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.PlanoDeAcaoRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.SetorRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
+import br.edu.safeplace.backend.domain.ocorrencia.AvisoAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.ProrrogacaoPrazo;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusPlanoDeAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.exception.AcaoPlanoNaoEncontradaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
@@ -30,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class PlanoDeAcaoUseCase implements GerenciarPlanoDeAcaoUseCase {
@@ -38,6 +42,7 @@ public class PlanoDeAcaoUseCase implements GerenciarPlanoDeAcaoUseCase {
     private final OcorrenciaRepositoryPort ocorrenciaRepository;
     private final UsuarioRepositorioPorta usuarioRepository;
     private final SetorRepositoryPort setorRepository;
+    private final NotificacaoAcaoPort notificacaoAcaoPort;
     private final GerenciarOcorrenciaUseCase consultaOcorrencia;
 
     @Autowired
@@ -46,11 +51,15 @@ public class PlanoDeAcaoUseCase implements GerenciarPlanoDeAcaoUseCase {
             OcorrenciaRepositoryPort ocorrenciaRepository,
             UsuarioRepositorioPorta usuarioRepository,
             SetorRepositoryPort setorRepository,
+            NotificacaoAcaoPort notificacaoAcaoPort,
             @Autowired(required = false) GerenciarOcorrenciaUseCase consultaOcorrencia) {
         this.planoDeAcaoRepository = planoDeAcaoRepository;
         this.ocorrenciaRepository = ocorrenciaRepository;
         this.usuarioRepository = usuarioRepository;
         this.setorRepository = setorRepository;
+        // UC07, alternativo II: a reatribuição sempre avisa o novo encarregado (issue #196).
+        this.notificacaoAcaoPort = Objects.requireNonNull(
+                notificacaoAcaoPort, "Porta de notificação das ações é obrigatória (UC07).");
         this.consultaOcorrencia = consultaOcorrencia;
     }
 
@@ -58,8 +67,15 @@ public class PlanoDeAcaoUseCase implements GerenciarPlanoDeAcaoUseCase {
             PlanoDeAcaoRepositoryPort planoDeAcaoRepository,
             OcorrenciaRepositoryPort ocorrenciaRepository,
             UsuarioRepositorioPorta usuarioRepository,
-            SetorRepositoryPort setorRepository) {
-        this(planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository, null);
+            SetorRepositoryPort setorRepository,
+            NotificacaoAcaoPort notificacaoAcaoPort) {
+        this(planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository, notificacaoAcaoPort, null);
+    }
+
+    /** Ação inexistente responde como não encontrada (404), não como dado inválido (issue #196). */
+    private PlanoDeAcao buscarAcao(Integer idAcao) {
+        return planoDeAcaoRepository.buscarPorId(idAcao)
+                .orElseThrow(() -> new AcaoPlanoNaoEncontradaException(idAcao));
     }
 
     /**
@@ -131,8 +147,7 @@ public class PlanoDeAcaoUseCase implements GerenciarPlanoDeAcaoUseCase {
     @Override
     @Transactional(readOnly = true)
     public PlanoDeAcaoOutputDTO buscarPorId(Integer idAcao) {
-        PlanoDeAcao acao = planoDeAcaoRepository.buscarPorId(idAcao)
-                .orElseThrow(() -> new IllegalArgumentException("Ação não encontrada para o ID: " + idAcao));
+        PlanoDeAcao acao = buscarAcao(idAcao);
         if (acao.getIdOcorrencia() != null) {
             garantirOcorrenciaVisivel(acao.getIdOcorrencia());
         }
@@ -142,8 +157,7 @@ public class PlanoDeAcaoUseCase implements GerenciarPlanoDeAcaoUseCase {
     @Override
     @Transactional
     public PlanoDeAcaoOutputDTO atualizarStatus(Integer idAcao, AtualizarStatusPlanoInputDTO inputDTO) {
-        PlanoDeAcao acao = planoDeAcaoRepository.buscarPorId(idAcao)
-                .orElseThrow(() -> new IllegalArgumentException("Ação não encontrada para o ID: " + idAcao));
+        PlanoDeAcao acao = buscarAcao(idAcao);
 
         if (inputDTO == null || inputDTO.status() == null || inputDTO.status().isBlank()) {
             throw new IllegalArgumentException("Status não pode ser nulo ou vazio.");
@@ -164,8 +178,7 @@ public class PlanoDeAcaoUseCase implements GerenciarPlanoDeAcaoUseCase {
     @Override
     @Transactional
     public ProrrogacaoPrazoOutputDTO prorrogarPrazo(Integer idAcao, ProrrogarPrazoInputDTO inputDTO) {
-        PlanoDeAcao acao = planoDeAcaoRepository.buscarPorId(idAcao)
-                .orElseThrow(() -> new IllegalArgumentException("Ação não encontrada para o ID: " + idAcao));
+        PlanoDeAcao acao = buscarAcao(idAcao);
 
         if (inputDTO == null) {
             throw new IllegalArgumentException("Dados de prorrogação não podem ser nulos.");
@@ -181,8 +194,7 @@ public class PlanoDeAcaoUseCase implements GerenciarPlanoDeAcaoUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<ProrrogacaoPrazoOutputDTO> listarProrrogacoes(Integer idAcao) {
-        PlanoDeAcao acao = planoDeAcaoRepository.buscarPorId(idAcao)
-                .orElseThrow(() -> new IllegalArgumentException("Ação não encontrada para o ID: " + idAcao));
+        PlanoDeAcao acao = buscarAcao(idAcao);
         if (acao.getIdOcorrencia() != null) {
             garantirOcorrenciaVisivel(acao.getIdOcorrencia());
         }
@@ -195,38 +207,39 @@ public class PlanoDeAcaoUseCase implements GerenciarPlanoDeAcaoUseCase {
     @Override
     @Transactional
     public PlanoDeAcaoOutputDTO atualizarResponsavel(Integer idAcao, AtualizarResponsavelInputDTO inputDTO) {
-        PlanoDeAcao acao = planoDeAcaoRepository.buscarPorId(idAcao)
-                .orElseThrow(() -> new IllegalArgumentException("Ação não encontrada para o ID: " + idAcao));
+        PlanoDeAcao acao = buscarAcao(idAcao);
 
         if (inputDTO == null) {
             throw new IllegalArgumentException("Dados do novo responsável não podem ser nulos.");
         }
 
+        AvisoAcao aviso;
         if (inputDTO.colaboradorId() != null) {
             Colaborador colaborador = usuarioRepository != null
                     ? usuarioRepository.buscarPorId(inputDTO.colaboradorId())
                     .orElseThrow(() -> new IllegalArgumentException("Colaborador não encontrado para o ID: " + inputDTO.colaboradorId()))
                     : null;
-            acao.atualizarResponsavel(colaborador, LocalDate.now());
+            aviso = acao.atualizarResponsavel(colaborador, LocalDate.now());
         } else if (inputDTO.setorId() != null) {
             Setor setor = setorRepository != null
                     ? setorRepository.buscarPorId(inputDTO.setorId())
                     .orElseThrow(() -> new IllegalArgumentException("Setor não encontrado para o ID: " + inputDTO.setorId()))
                     : null;
-            acao.atualizarResponsavel(setor, LocalDate.now());
+            aviso = acao.atualizarResponsavel(setor, LocalDate.now());
         } else {
             throw new IllegalArgumentException("Informe o novo responsável: colaboradorId ou setorId.");
         }
 
         PlanoDeAcao salvo = planoDeAcaoRepository.salvar(acao);
+        // UC07, alternativo II: o aviso ao novo encarregado era descartado; agora é entregue (issue #196).
+        notificacaoAcaoPort.notificar(aviso);
         return PlanoDeAcaoOutputDTO.deDominio(salvo);
     }
 
     @Override
     @Transactional
     public PlanoDeAcaoOutputDTO configurarAlerta(Integer idAcao, ConfigurarAlertaInputDTO inputDTO) {
-        PlanoDeAcao acao = planoDeAcaoRepository.buscarPorId(idAcao)
-                .orElseThrow(() -> new IllegalArgumentException("Ação não encontrada para o ID: " + idAcao));
+        PlanoDeAcao acao = buscarAcao(idAcao);
 
         if (inputDTO == null) {
             throw new IllegalArgumentException("Configuração de alerta não pode ser nula.");

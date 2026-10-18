@@ -4,7 +4,7 @@
 
 Este documento registra o contrato do plano de ação do SafePlace. Ele concilia a classe `PlanoDeAcao` do **Diagrama de Classes** com as ações individuais descritas no **UC07 (Definir Plano de Ação por Acidente / Incidente)**, atendendo à [issue #97](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/97) (RF07; UC07; US07).
 
-- **Situação**: contrato aprovado e implementado (RF07, UC07, US07). A persistência foi entregue na issue #98 e a API na issue #99. As pendências da seção 6 não foram decididas e não devem ser supridas por suposição.
+- **Situação**: contrato aprovado e implementado (RF07, UC07, US07). A persistência foi entregue na issue #98, a API na issue #99 e os alertas de prazo, o aviso de reatribuição, o responsável único no banco e a normalização dos status legados na issue #196. As pendências da seção 6 não foram decididas e não devem ser supridas por suposição.
 - **Fontes**: [Diagrama de classes](../diagramas/classes/Diagrama%20de%20Classes%20-%20SafePlace.png), [UC07](../casos-de-uso/casos-de-uso.md#uc07--definir-plano-de-ação-por-acidente--incidente), [US07](../historias-de-usuario.md#us07--definir-e-acompanhar-planos-de-ação), [RF07](../requisitos/requisitos-funcionais.md#rf07-o-sistema-deve-permitir-informar-o-plano-de-ação-para-cada-tipo-de-acidente-ocorrido), [RNF05](../requisitos/requisitos-nao-funcionais.md) e a [correspondência Classes vs DS09](correspondencia-classes-ds09.md).
 - **Implementação de referência**: núcleo de domínio em `backend/src/main/java/br/edu/safeplace/backend/domain/ocorrencia/` (`PlanoDeAcao`, `StatusPlanoDeAcao`, `ProrrogacaoPrazo`, `AvisoAcao`, `MotivoAvisoAcao` e exceções), coberto por `PlanoDeAcaoTest`. O domínio não depende de JPA nem de Spring.
 
@@ -36,7 +36,7 @@ A versão anterior do PNG tinha as operações de gravação e consulta `salvarV
 | Ocorrência | Cada ação pertence a exatamente 1 ocorrência; uma ocorrência tem 0..* ações. | A ocorrência deve estar registrada (possuir identificador). A ação guarda `idOcorrencia`. O vínculo é por referência: a ação não é excluída junto com a ocorrência, que apenas é arquivada (UC05). |
 | Responsável: `Colaborador` | 0..1 por ação | O PNG tipa `atualizarResponsavel` com `Colaborador`. `Supervisor` e `GestorDeSeguranca` são subclasses de `Colaborador` e também podem ser designados. |
 | Responsável: `Setor` | 0..1 por ação | UC07 e US07 admitem setor como responsável. Usa a classe `Setor` existente ([#111](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/111)); não há texto livre. |
-| Invariante de responsável | Exatamente 1 responsável por ação | Um, e somente um, entre `Colaborador` e `Setor`, previamente cadastrado. Ser responsável não cria conta, senha ou permissão (RF23, RNF03). |
+| Invariante de responsável | Exatamente 1 responsável por ação | Um, e somente um, entre `Colaborador` e `Setor`, previamente cadastrado. Ser responsável não cria conta, senha ou permissão (RF23, RNF03). Desde a V33, o banco garante a regra (`chk_planos_responsavel`); a restrição da V22 também aceitava os dois nulos. |
 | `GestorDeSeguranca` | Associação do PNG | Identifica quem definiu a ação. A autoria de cada alteração fica em `LogAuditoria.responsavel` (RNF05); o campo de domínio `gestor` é opcional para permitir registros anteriores ao contrato. |
 
 ### 2.3. Estados e transições
@@ -50,7 +50,8 @@ No PNG, o atributo é `statusPlanoDeAcao : StatusPlanoDeAcao`. No código, o val
 
 - **Não adotados**: `PENDENTE`, `EM_ANDAMENTO` e `CANCELADO` não têm fonte no PNG nem em UC07/US07. Uma ação concluída não pode ser prorrogada, reatribuída nem ter o alerta reconfigurado.
 - **Sem `dataConclusao`**: a data e o autor da conclusão são os do registro `LogAuditoria` da transição, sem criar atributo obrigatório novo.
-- **Atraso e prazo próximo não são estados gravados**: UC07 fala em ação "com prazo a expirar ou em atraso". Essas situações são derivadas do `prazo` e da data consultada (`isEmAtraso(data)`, `deveEmitirAlerta(data)`), sem job que altere o `status`. Uma ação `ABERTA` com prazo vencido continua `ABERTA` e aparece como em atraso.
+- **Atraso e prazo próximo não são estados gravados**: UC07 fala em ação "com prazo a expirar ou em atraso". Essas situações são derivadas do `prazo` e da data consultada (`isEmAtraso(data)`, `deveEmitirAlerta(data)`), sem job que altere o `status`. Uma ação `ABERTA` com prazo vencido continua `ABERTA` e aparece como em atraso. A API devolve os dois valores já calculados pelo servidor (`emAtraso` e `alertaDevido`), e o navegador não refaz o cálculo (#196).
+- **Garantia no banco**: desde a V33, `status` é obrigatório e restrito a `ABERTA` e `CONCLUIDA` (`chk_planos_status`).
 - **Correspondência**: `validarAtualizacaoStatus` → `PlanoDeAcao.validarAtualizacaoStatus(StatusPlanoDeAcao)`; a mudança é feita por `atualizarStatus(...)` e gravada pela porta de saída `PlanoDeAcaoRepositoryPort.salvar` (#98), correspondente à operação `salvarStatusMedida` retirada do PNG.
 
 ### 2.4. Ocorrência grave e ação preventiva obrigatória
@@ -74,13 +75,14 @@ No PNG, o atributo é `statusPlanoDeAcao : StatusPlanoDeAcao`. No código, o val
 - Cada ação tem `alertaAtivo` (sim ou não) e `antecedenciaAlertaDias` (inteiro ≥ 0, obrigatório quando o alerta está ativo). Não há valor padrão nem constante no código; os três dias de UC07 são apenas exemplo. Com o alerta inativo, a antecedência é descartada.
 - `dataAlerta = prazo − antecedenciaAlertaDias` (`getDataAlerta()`). O alerta é devido a partir dessa data enquanto a ação estiver `ABERTA` (`deveEmitirAlerta(data)`), inclusive depois do prazo. A conclusão encerra o alerta.
 - `configurarAlerta(ativo, antecedencia)` permite ao Gestor ativar, desativar ou alterar a antecedência de uma ação aberta.
-- **Emissão única**: a verificação periódica e a deduplicação são de #98/#99. A chave recomendada é `(idAcao, prazo)`: uma prorrogação cria novo prazo e rearma o alerta.
+- **Verificação periódica e emissão única** (#196): a rotina `AlertaPrazoAcaoAgendador` chama `EmitirAlertasPrazoUseCase.emitirAlertasDePrazo(hoje)`, que percorre as ações abertas com alerta ativo e entrega pela porta `NotificacaoAcaoPort` o `AvisoAcao` de motivo `PRAZO` de cada ação cujo alerta já é devido. A chave de deduplicação é `(idAcao, prazo)`, garantida pelo índice único parcial `ux_notificacoes_acao_prazo`: repetir a verificação não duplica o aviso, e uma prorrogação cria novo prazo e rearma o alerta. Por isso a rotina pode rodar com frequência: o padrão é de hora em hora (`safeplace.plano-acao.alertas.cron`, variável `SAFEPLACE_ALERTAS_PLANO_CRON`), e um servidor desligado no horário recupera os alertas na execução seguinte. A propriedade `safeplace.agendamento.ativo` desliga as rotinas, o que a suíte de testes faz.
 
 **Canal para o responsável sem conta** (UC07, alternativo II; US07, regra 5):
 
 - O Colaborador não acessa o sistema e o `Setor` não tem atributo de contato. O aviso (`AvisoAcao`, com motivo `PRAZO` ou `REATRIBUICAO`, a ação, a ocorrência, o responsável, o prazo e a data do aviso) é entregue como **aviso interno** aos usuários com acesso responsáveis pelo acompanhamento. No MVP, esse usuário é o Gestor de Segurança, ator do UC07. O aviso identifica o encarregado, e a comunicação a ele ocorre fora do sistema, sem criar conta nem credencial.
 - Na Arquitetura Hexagonal, o aviso sai por uma porta de saída de notificação (seção 3). E-mail, SMS ou outro meio externo **não são presumidos**: o atributo `email` de `Colaborador` é opcional e o `Setor` não tem contato. Outro canal pode ser acrescentado depois como novo adaptador da mesma porta, com aprovação do grupo.
-- **Reatribuição**: `atualizarResponsavel(Colaborador | Setor, dataAtual)` exige ação aberta e responsável cadastrado diferente do atual, e devolve o `AvisoAcao` para o novo encarregado. O responsável anterior fica registrado na auditoria da alteração.
+- **Reatribuição**: `atualizarResponsavel(Colaborador | Setor, dataAtual)` exige ação aberta e responsável cadastrado diferente do atual, e devolve o `AvisoAcao` para o novo encarregado, que o caso de uso entrega pela `NotificacaoAcaoPort` depois de gravar a ação (#196). Cada troca gera um aviso, sem deduplicação. O responsável anterior fica registrado na auditoria da alteração.
+- **Registro e consulta** (#196): o adaptador `NotificacaoAcaoInternaAdapter` grava cada aviso em `notificacoes_acao` (ação, ocorrência, motivo, tipo, identificador e nome do responsável, prazo, data do aviso e mensagem) e o Gestor de Segurança os consulta em `GET /api/notificacoes/acoes`, do mais recente para o mais antigo. A mensagem identifica o encarregado para que o Gestor o comunique; o Supervisor recebe 403.
 
 ### 2.7. Auditoria, autoria e preservação
 
@@ -90,7 +92,9 @@ No PNG, o atributo é `statusPlanoDeAcao : StatusPlanoDeAcao`. No código, o val
 ### 2.8. Estado existente anterior ao contrato
 
 - **Plano embutido no cadastro**: hoje `ocorrencias.plano_de_acao_id` aponta para um único registro de `planos_de_acao`, recebido em `POST /api/ocorrencias`, e `Ocorrencia.getPlanoDeAcao()` expõe esse registro. Ele é mantido sem alteração de comportamento até #98/#99. O domínio o reconstitui pelo construtor de cinco argumentos, sem ocorrência, responsável nem alerta.
-- **Texto de `status` legado**: a API anterior aceitava qualquer texto (por exemplo, `PENDENTE` e `EM_ANDAMENTO` nos testes). Esses valores são preservados como gravados e **não são convertidos por suposição**: `getSituacao()` devolve vazio e as operações de acompanhamento os rejeitam com mensagem explícita. A migração de #98 deve evoluir `planos_de_acao` sem recriá-la, preencher `ocorrencia_id` a partir de `ocorrencias.plano_de_acao_id` e tratar os textos legados por decisão registrada, sem inventar responsável, autoria ou datas ausentes.
+- **Texto de `status` legado**: a API anterior aceitava qualquer texto (por exemplo, `PENDENTE` e `EM_ANDAMENTO` nos testes). A V22 (#98) evoluiu `planos_de_acao` sem recriá-la e preencheu `ocorrencia_id` a partir de `ocorrencias.plano_de_acao_id`.
+- **Decisão sobre os textos legados (V33, #196)**: só se convertem textos com o mesmo sentido do vocabulário aprovado. Execução ainda não confirmada (`ABERTA`, `ABERTO`, `PENDENTE`, `EM_ANDAMENTO`, `EM ANDAMENTO`) vira `ABERTA`; execução confirmada (`CONCLUIDA`, `CONCLUIDO`, `FINALIZADA`, `FINALIZADO`, com ou sem acento) vira `CONCLUIDA`. Maiúsculas e espaços nas pontas são ignorados. Texto sem correspondência (por exemplo, `CANCELADO`), situação vazia e ação sem exatamente um responsável não são resolvidos por suposição: a migração para antes de alterar o esquema e lista os ids, para que o Gestor decida a situação ou o responsável de cada um. Responsável, autoria e datas ausentes não são inventados.
+- **Vínculo embutido somente leitura (#196)**: `ocorrencias.plano_de_acao_id` continua lido, mas gravar a ocorrência não regrava mais o registro vinculado. Antes, a cascata da ocorrência regravava a ação com ocorrência, responsável e alerta nulos na edição, na triagem ou no arquivamento.
 
 ---
 
@@ -109,12 +113,14 @@ Os elementos da camada de persistência foram implementados na issue #98 (`Plano
 | `validarProrrogacao(idAcao, novoPrazo, justificativa)` | Domínio: `PlanoDeAcao.validarProrrogacao(...)` | Justificativa obrigatória; novo prazo posterior ao atual e não retroativo. |
 | `prorrogarPrazo(novoPrazo, justificativa)`; antes `atualizarPrazo(idAcao, novoPrazo)` | Domínio: `PlanoDeAcao.prorrogarPrazo(...)` → `ProrrogacaoPrazo`, gravado por `PlanoDeAcaoRepositoryPort.salvarProrrogacao` (#98) | Altera o prazo e devolve o registro para o histórico e a auditoria. |
 | `atualizarResponsavel(idAcao, novoResponsavel : Colaborador)` | Domínio: `PlanoDeAcao.atualizarResponsavel(Colaborador \| Setor, dataAtual)` → `AvisoAcao`, persistido por `PlanoDeAcaoRepositoryPort.salvar` (#98) | Reatribui e produz o aviso ao novo encarregado. A sobrecarga com `Setor` atende UC07/US07. |
-| `configurarAlerta(ativo, antecedenciaDias)` e `isEmAtraso(data)` (UC07, regra 2) | Domínio: `configurarAlerta`, `isEmAtraso`, `getDataAlerta`, `deveEmitirAlerta`, `emitirAvisoPrazo`; persistido por `PlanoDeAcaoRepositoryPort.salvar` (#98); porta de saída `NotificacaoAcaoPort.notificar(AvisoAcao)` (*a criar*) | Antecedência por ação, sem constante. Canal da seção 2.6. |
+| `configurarAlerta(ativo, antecedenciaDias)` e `isEmAtraso(data)` (UC07, regra 2) | Domínio: `configurarAlerta`, `isEmAtraso`, `getDataAlerta`, `deveEmitirAlerta`, `emitirAvisoPrazo`; persistido por `PlanoDeAcaoRepositoryPort.salvar` (#98); porta de saída `NotificacaoAcaoPort.notificar(AvisoAcao)`, implementada em `NotificacaoAcaoInternaAdapter` (#196) | Antecedência por ação, sem constante. Canal da seção 2.6. |
+| Verificação periódica dos alertas (UC07, regra 2; US07, critério 5) | Adaptador de entrada `AlertaPrazoAcaoAgendador`, porta de entrada `EmitirAlertasPrazoUseCase` (`NotificacaoAcaoUseCase`) e `PlanoDeAcaoRepositoryPort.listarAbertasComAlertaAtivo` (#196) | Emissão única por `(idAcao, prazo)`; seção 2.6. |
+| Consulta dos avisos | Porta de entrada `ConsultarNotificacoesAcaoUseCase` e `NotificacaoAcaoController` (`GET /api/notificacoes/acoes`) (#196) | Aviso interno ao Gestor; seção 2.6. |
 | Ocorrência grave | Domínio: `Ocorrencia.isGrave()` / `Acidente.isGrave()` | `gravidade` `ALTO` ou `CRITICO`; incidente sem escala aprovada. |
 
 ---
 
-## 4. Situação de Implementação (#98 e #99)
+## 4. Situação de Implementação (#98, #99 e #196)
 
 - **#98 (Entregue)**: migração Flyway `V22__evoluir_persistencia_planos_de_acao.sql` evoluindo `planos_de_acao` com `ocorrencia_id` (sem `ON DELETE CASCADE`), responsável `colaborador_id` ou `setor_id` com restrição `CHECK`, `alerta_ativo`, `antecedencia_alerta_dias` (≥ 0) e `gestor_id`. Criada tabela `prorrogacoes_prazo` para histórico estruturado de prazos com justificativas. Entidades JPA `PlanoDeAcaoEntity` e `ProrrogacaoPrazoEntity`, porta `PlanoDeAcaoRepositoryPort` e adaptador `PlanoDeAcaoJpaAdapter` com auditoria integrada (`LogAuditoriaRepositoryPort`). Coberto por testes unitários e de integração PostgreSQL.
 - **#99 (Entregue - API REST e Casos de Uso)**:
@@ -125,11 +131,17 @@ Os elementos da camada de persistência foram implementados na issue #98 (`Plano
     - `GET /api/planos-acao/{id}`: consulta de ação por identificador.
     - `PATCH /api/planos-acao/{id}/status`: transição de status (`ABERTA` → `CONCLUIDA`).
     - `POST /api/planos-acao/{id}/prorrogacoes`: prorrogação com justificativa obrigatória e persistência em `prorrogacoes_prazo`.
-    - `PATCH /api/planos-acao/{id}/responsavel`: reatribuição de responsável (colaborador ou setor).
-    - `PUT /api/planos-acao/{id}/alerta`: configuração de alerta e antecedência em dias.
-  - Tratamento de exceções via `PlanoDeAcaoExceptionHandler` (erros 400 mapeados para `AcaoPreventivaObrigatoriaException`, `PrazoAcaoInvalidoException` e `PlanoDeAcaoInvalidoException`).
+    - `GET /api/planos-acao/{id}/prorrogacoes`: histórico de prorrogações da ação, na ordem em que foram feitas.
+    - `PATCH /api/planos-acao/{id}/responsavel`: reatribuição de responsável (colaborador ou setor), com aviso ao novo encarregado (#196).
+    - `PATCH /api/planos-acao/{id}/alerta`: configuração de alerta e antecedência em dias. A documentação anterior citava `PUT`; a #196 alinhou o documento ao código, que usa `PATCH` como as demais alterações parciais da ação (situação e responsável).
+  - Tratamento de exceções via `PlanoDeAcaoExceptionHandler`: 404 para ação inexistente (`AcaoPlanoNaoEncontradaException`, #196) e 400 para `AcaoPreventivaObrigatoriaException`, `PrazoAcaoInvalidoException` e `PlanoDeAcaoInvalidoException`.
   - Segurança e RBAC configurados em `SecurityConfig`: mutações restritas a `GESTOR_SEGURANCA`; consultas de acompanhamento permitidas para `GESTOR_SEGURANCA` e `SUPERVISOR` (UC09).
   - Coberto por testes unitários (`PlanoDeAcaoUseCaseTest`), testes web (`PlanoDeAcaoControllerTest`) e testes de segurança RBAC (`SegurancaOcorrenciaPlanoRbacTest`).
+- **#196 (Entregue - alertas, avisos e integridade)**:
+  - Migração `V33__alertas_e_responsavel_planos_de_acao.sql`: normalização dos status legados (seção 2.8), `status` obrigatório com `chk_planos_status`, `chk_planos_responsavel` exigindo exatamente um responsável e tabela `notificacoes_acao` com o índice único parcial `ux_notificacoes_acao_prazo`.
+  - Alertas de prazo emitidos no backend pela rotina agendada e aviso de reatribuição entregue (seção 2.6). As respostas da ação trazem `alertaDevido` e `emAtraso` calculados pelo servidor.
+  - `GET /api/notificacoes/acoes`: avisos de prazo e de reatribuição, exclusivo do Gestor de Segurança.
+  - Coberto por `NotificacaoAcaoTest`, `NotificacaoAcaoUseCaseTest`, `AlertaPrazoAcaoAgendadorTest`, `PlanoDeAcaoUseCaseTest`, `PlanoDeAcaoControllerTest`, `SegurancaOcorrenciaPlanoRbacTest` e pelos testes de integração `PlanoDeAcaoPersistenciaIntegracaoTest` e `OcorrenciaPersistenciaIntegracaoTest`.
 
 ---
 
@@ -158,4 +170,3 @@ Os elementos da camada de persistência foram implementados na issue #98 (`Plano
 | Novas ações em ocorrência arquivada | UC05 e UC07 não definem. Não há bloqueio no domínio. |
 | Canal externo (e-mail, SMS) | Fora do MVP até decisão e infraestrutura. Entraria como novo adaptador da porta de notificação. |
 | Destinatários do aviso interno além do Gestor | Depende das permissões do Supervisor definidas em #99/RNF03. |
-| Normalização do `status` legado | A cargo da migração de #98, por decisão registrada (2.8). |

@@ -41,8 +41,12 @@ public abstract class OcorrenciaEntity {
     @JoinColumn(name = "relator_id")
     private ColaboradorEntidade relator;
 
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "plano_de_acao_id")
+    /**
+     * Plano embutido no relato antigo (decisão 2.8 da correspondência do plano de ação), só para leitura.
+     * Sem cascata: gravar a ocorrência não regrava a ação, que é mantida pelo plano de ação (issue #196).
+     */
+    @ManyToOne
+    @JoinColumn(name = "plano_de_acao_id", insertable = false, updatable = false)
     private PlanoDeAcaoEntity planoDeAcao;
 
     protected OcorrenciaEntity() {

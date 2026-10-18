@@ -7,6 +7,7 @@ import br.edu.safeplace.backend.application.dto.input.CriarAcaoPlanoInputDTO;
 import br.edu.safeplace.backend.application.dto.input.ProrrogarPrazoInputDTO;
 import br.edu.safeplace.backend.application.dto.output.PlanoDeAcaoOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.ProrrogacaoPrazoOutputDTO;
+import br.edu.safeplace.backend.application.port.out.NotificacaoAcaoPort;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.PlanoDeAcaoRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.SetorRepositoryPort;
@@ -14,11 +15,14 @@ import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
+import br.edu.safeplace.backend.domain.ocorrencia.AvisoAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
+import br.edu.safeplace.backend.domain.ocorrencia.MotivoAvisoAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.ProrrogacaoPrazo;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusPlanoDeAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.exception.AcaoPlanoNaoEncontradaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.AcaoPreventivaObrigatoriaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PlanoDeAcaoInvalidoException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PrazoAcaoInvalidoException;
@@ -27,6 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -39,7 +44,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,6 +65,9 @@ class PlanoDeAcaoUseCaseTest {
     @Mock
     private SetorRepositoryPort setorRepository;
 
+    @Mock
+    private NotificacaoAcaoPort notificacaoAcaoPort;
+
     private PlanoDeAcaoUseCase useCase;
 
     private Colaborador colaborador;
@@ -67,7 +77,8 @@ class PlanoDeAcaoUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        useCase = new PlanoDeAcaoUseCase(planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository);
+        useCase = new PlanoDeAcaoUseCase(planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository,
+                notificacaoAcaoPort);
 
         colaborador = new Colaborador(10, "11122233344", "Carlos", LocalDate.of(1990, 1, 1), "carlos@safeplace.com", true, LocalDateTime.now(), LocalDateTime.now());
         setor = new Setor(20, "Manutenção", "Setor de Manutenção", "Bloco M", NivelPerigo.MEDIO);
@@ -216,6 +227,98 @@ class PlanoDeAcaoUseCaseTest {
         assertThat(output.responsavelTipo()).isEqualTo("SETOR");
         assertThat(output.responsavelId()).isEqualTo(20);
         assertThat(output.responsavelNome()).isEqualTo("Manutenção");
+
+        // UC07, alternativo II: o aviso ao novo encarregado é entregue, não descartado (issue #196).
+        ArgumentCaptor<AvisoAcao> aviso = ArgumentCaptor.forClass(AvisoAcao.class);
+        verify(notificacaoAcaoPort).notificar(aviso.capture());
+        assertThat(aviso.getValue().motivo()).isEqualTo(MotivoAvisoAcao.REATRIBUICAO);
+        assertThat(aviso.getValue().idAcao()).isEqualTo(60);
+        assertThat(aviso.getValue().idOcorrencia()).isEqualTo(2);
+        assertThat(aviso.getValue().responsavelSetor()).isSameAs(setor);
+        assertThat(aviso.getValue().responsavelColaborador()).isNull();
+        assertThat(aviso.getValue().dataAviso()).isEqualTo(LocalDate.now());
+    }
+
+    @Test
+    @DisplayName("Reatribuição a colaborador avisa o novo colaborador responsável (issue #196)")
+    void deveAvisarNovoColaboradorNaReatribuicao() {
+        Colaborador novo = new Colaborador(11, "55566677788", "Beatriz", LocalDate.of(1992, 2, 2), null, true,
+                LocalDateTime.now(), LocalDateTime.now());
+        PlanoDeAcao acao = new PlanoDeAcao(
+                61, 2, "Troca de guarda-corpo", null, LocalDate.now().plusDays(8), "ABERTA", null, setor, false, null, null
+        );
+        when(planoDeAcaoRepository.buscarPorId(61)).thenReturn(Optional.of(acao));
+        when(usuarioRepository.buscarPorId(11)).thenReturn(Optional.of(novo));
+        when(planoDeAcaoRepository.salvar(any(PlanoDeAcao.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        useCase.atualizarResponsavel(61, new AtualizarResponsavelInputDTO(11, null));
+
+        ArgumentCaptor<AvisoAcao> aviso = ArgumentCaptor.forClass(AvisoAcao.class);
+        verify(notificacaoAcaoPort).notificar(aviso.capture());
+        assertThat(aviso.getValue().motivo()).isEqualTo(MotivoAvisoAcao.REATRIBUICAO);
+        assertThat(aviso.getValue().responsavelColaborador()).isSameAs(novo);
+        assertThat(aviso.getValue().responsavelSetor()).isNull();
+        assertThat(aviso.getValue().prazo()).isEqualTo(LocalDate.now().plusDays(8));
+    }
+
+    @Test
+    @DisplayName("Reatribuição recusada não grava nem avisa")
+    void reatribuicaoRecusadaNaoAvisa() {
+        PlanoDeAcao acao = new PlanoDeAcao(
+                62, 2, "Manutenção geral", null, LocalDate.now().plusDays(5), "ABERTA", null, setor, false, null, null
+        );
+        when(planoDeAcaoRepository.buscarPorId(62)).thenReturn(Optional.of(acao));
+        when(setorRepository.buscarPorId(20)).thenReturn(Optional.of(setor));
+
+        assertThatThrownBy(() -> useCase.atualizarResponsavel(62, new AtualizarResponsavelInputDTO(null, 20)))
+                .isInstanceOf(PlanoDeAcaoInvalidoException.class);
+
+        verify(planoDeAcaoRepository, never()).salvar(any(PlanoDeAcao.class));
+        verifyNoInteractions(notificacaoAcaoPort);
+    }
+
+    @Test
+    @DisplayName("Ação inexistente responde não encontrada em todas as operações (404, issue #196)")
+    void acaoInexistenteRespondeNaoEncontrada() {
+        when(planoDeAcaoRepository.buscarPorId(999)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> useCase.buscarPorId(999))
+                .isInstanceOf(AcaoPlanoNaoEncontradaException.class)
+                .hasMessageContaining("999");
+        assertThatThrownBy(() -> useCase.atualizarStatus(999, new AtualizarStatusPlanoInputDTO("CONCLUIDA")))
+                .isInstanceOf(AcaoPlanoNaoEncontradaException.class);
+        assertThatThrownBy(() -> useCase.prorrogarPrazo(999, new ProrrogarPrazoInputDTO(LocalDate.now().plusDays(3), "Peças")))
+                .isInstanceOf(AcaoPlanoNaoEncontradaException.class);
+        assertThatThrownBy(() -> useCase.listarProrrogacoes(999))
+                .isInstanceOf(AcaoPlanoNaoEncontradaException.class);
+        assertThatThrownBy(() -> useCase.atualizarResponsavel(999, new AtualizarResponsavelInputDTO(10, null)))
+                .isInstanceOf(AcaoPlanoNaoEncontradaException.class);
+        assertThatThrownBy(() -> useCase.configurarAlerta(999, new ConfigurarAlertaInputDTO(true, 2)))
+                .isInstanceOf(AcaoPlanoNaoEncontradaException.class);
+        verifyNoInteractions(notificacaoAcaoPort);
+    }
+
+    @Test
+    @DisplayName("Alerta devido e atraso são calculados no servidor (issue #196)")
+    void alertaEAtrasoCalculadosNoServidor() {
+        PlanoDeAcao vencida = new PlanoDeAcao(
+                80, 2, "Sinalizar rampa", null, LocalDate.now().minusDays(1), "ABERTA", colaborador, null, true, 2, null
+        );
+        PlanoDeAcao futura = new PlanoDeAcao(
+                81, 2, "Revisar extintores", null, LocalDate.now().plusDays(10), "ABERTA", colaborador, null, true, 2, null
+        );
+        when(planoDeAcaoRepository.buscarPorId(80)).thenReturn(Optional.of(vencida));
+        when(planoDeAcaoRepository.buscarPorId(81)).thenReturn(Optional.of(futura));
+        when(ocorrenciaRepository.buscarPorId(2)).thenReturn(Optional.of(ocorrenciaLeve));
+
+        PlanoDeAcaoOutputDTO atrasada = useCase.buscarPorId(80);
+        PlanoDeAcaoOutputDTO noPrazo = useCase.buscarPorId(81);
+
+        assertThat(atrasada.alertaDevido()).isTrue();
+        assertThat(atrasada.emAtraso()).isTrue();
+        assertThat(noPrazo.alertaDevido()).isFalse();
+        assertThat(noPrazo.emAtraso()).isFalse();
+        assertThat(noPrazo.dataAlerta()).isEqualTo(LocalDate.now().plusDays(8));
     }
 
     @Test
@@ -241,7 +344,7 @@ class PlanoDeAcaoUseCaseTest {
         when(consulta.buscarPorId(9)).thenThrow(
                 new br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException(9));
         PlanoDeAcaoUseCase comVisibilidade = new PlanoDeAcaoUseCase(
-                planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository, consulta);
+                planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository, notificacaoAcaoPort, consulta);
 
         assertThatThrownBy(() -> comVisibilidade.listarPorOcorrencia(9))
                 .isInstanceOf(br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException.class);

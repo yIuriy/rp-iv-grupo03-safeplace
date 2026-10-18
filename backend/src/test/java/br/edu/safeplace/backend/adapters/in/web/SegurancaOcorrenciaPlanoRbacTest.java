@@ -10,6 +10,7 @@ import br.edu.safeplace.backend.application.dto.input.CriarAcaoPlanoInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.PlanoDeAcaoOutputDTO;
+import br.edu.safeplace.backend.application.port.in.ConsultarNotificacoesAcaoUseCase;
 import br.edu.safeplace.backend.application.port.in.ConsultarNotificacoesOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarPlanoDeAcaoUseCase;
@@ -17,6 +18,8 @@ import br.edu.safeplace.backend.application.port.in.RegistrarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.out.TokenPorta;
 import br.edu.safeplace.backend.config.RestSegurancaTratadorExcecoes;
 import br.edu.safeplace.backend.config.SecurityConfig;
+import br.edu.safeplace.backend.domain.ocorrencia.MotivoAvisoAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.TipoOcorrencia;
 import org.junit.jupiter.api.DisplayName;
@@ -44,7 +47,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest({
         OcorrenciaController.class,
         PlanoDeAcaoController.class,
-        NotificacaoOcorrenciaController.class
+        NotificacaoOcorrenciaController.class,
+        NotificacaoAcaoController.class
 })
 @Import({SecurityConfig.class, RestSegurancaTratadorExcecoes.class})
 @DisplayName("Testes de Integração de Segurança e RBAC para Ocorrências e Planos de Ação (Issue #99)")
@@ -64,6 +68,9 @@ class SegurancaOcorrenciaPlanoRbacTest {
 
     @MockitoBean
     private ConsultarNotificacoesOcorrenciaUseCase consultarNotificacoesUseCase;
+
+    @MockitoBean
+    private ConsultarNotificacoesAcaoUseCase consultarNotificacoesAcaoUseCase;
 
     @MockitoBean
     private TokenPorta tokenPorta;
@@ -129,7 +136,7 @@ class SegurancaOcorrenciaPlanoRbacTest {
     private PlanoDeAcaoOutputDTO mockPlano() {
         return new PlanoDeAcaoOutputDTO(
                 10, 1, "Isolar área", null, LocalDate.now().plusDays(10), "ABERTA", "ABERTA",
-                "COLABORADOR", 1, "João", false, null, null, 2, "Gestor"
+                "COLABORADOR", 1, "João", false, null, null, false, false, 2, "Gestor"
         );
     }
 
@@ -153,6 +160,13 @@ class SegurancaOcorrenciaPlanoRbacTest {
                             .content(JSON_CRIAR_OCORRENCIA))
                     .andExpect(status().isUnauthorized())
                     .andExpect(jsonPath("$.error").value("Não Autorizado"));
+        }
+
+        @Test
+        @DisplayName("GET /api/notificacoes/acoes sem token deve retornar 401")
+        void getAvisosDeAcaoSemTokenRetorna401() throws Exception {
+            mockMvc.perform(get("/api/notificacoes/acoes"))
+                    .andExpect(status().isUnauthorized());
         }
 
         @Test
@@ -190,6 +204,14 @@ class SegurancaOcorrenciaPlanoRbacTest {
             mockMvc.perform(patch("/api/ocorrencias/1/triagem"))
                     .andExpect(status().isForbidden())
                     .andExpect(jsonPath("$.error").value("Acesso Proibido"));
+        }
+
+        @Test
+        @WithMockUser(roles = "SUPERVISOR")
+        @DisplayName("Supervisor não consulta os avisos das ações do plano (UC07, issue #196)")
+        void supervisorNaoPodeConsultarAvisosDeAcao() throws Exception {
+            mockMvc.perform(get("/api/notificacoes/acoes"))
+                    .andExpect(status().isForbidden());
         }
 
         @Test
@@ -368,6 +390,25 @@ class SegurancaOcorrenciaPlanoRbacTest {
                     .andExpect(jsonPath("$[0].ocorrenciaId").value(1))
                     .andExpect(jsonPath("$[0].tipoOcorrencia").value("ACIDENTE"))
                     .andExpect(jsonPath("$[0].numeroProtocoloCAT").value("CAT-2026-09-0001"));
+        }
+
+        @Test
+        @WithMockUser(roles = "GESTOR_SEGURANCA")
+        @DisplayName("Gestor de Segurança consulta os avisos de prazo e de reatribuição das ações (UC07, issue #196)")
+        void gestorPodeConsultarAvisosDeAcao() throws Exception {
+            when(consultarNotificacoesAcaoUseCase.listar()).thenReturn(List.of(new NotificacaoAcao(
+                    8, 10, 1, MotivoAvisoAcao.REATRIBUICAO, "SETOR", 4, "Manutenção",
+                    LocalDate.of(2026, 10, 25), LocalDate.of(2026, 10, 18),
+                    "Ação #10 da ocorrência #1 reatribuída a setor Manutenção. Prazo: 25/10/2026. Comunique o novo responsável.",
+                    LocalDateTime.of(2026, 10, 18, 9, 30))));
+
+            mockMvc.perform(get("/api/notificacoes/acoes"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].id").value(8))
+                    .andExpect(jsonPath("$[0].idAcao").value(10))
+                    .andExpect(jsonPath("$[0].motivo").value("REATRIBUICAO"))
+                    .andExpect(jsonPath("$[0].responsavelTipo").value("SETOR"))
+                    .andExpect(jsonPath("$[0].prazo").value("2026-10-25"));
         }
     }
 }
