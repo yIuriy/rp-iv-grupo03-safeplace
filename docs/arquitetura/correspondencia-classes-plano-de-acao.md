@@ -10,13 +10,13 @@ Este documento registra o contrato do plano de ação do SafePlace. Ele concilia
 
 ### 1.1. Modelo de referência
 
-O PNG define `PlanoDeAcao` com:
+Desde a revisão de 16/10/2026, o PNG define `PlanoDeAcao` com:
 
-- **Atributos**: `medidasCorretivas : String`, `prazo : Date`, `status : String`, `medidasPreventivas : String`.
-- **Operações**: `validarPlano(dadosPlano, ocorrencia, dataAtual)`, `salvarVinculado(idOcorrencia, dadosPlano)`, `buscarPlano(idPlano)`, `validarAtualizacaoStatus(idAcao, novoStatus)`, `salvarStatusMedida(idAcao, novoStatus)`, `buscarPorFiltros(criterios)`, `buscarAcao(idAcao) : PlanoDeAcao`, `validarProrrogacao(idAcao, novoPrazo, justificativa)`, `atualizarPrazo(idAcao, novoPrazo)` e `atualizarResponsavel(idAcao, novoResponsavel : Colaborador)`.
-- **Associações**: `Ocorrencia` (1) para `PlanoDeAcao` (0..*); `GestorDeSeguranca` (0..*) para `PlanoDeAcao` (1..*).
+- **Atributos**: `medidasCorretivas : String`, `prazo : Date`, `statusPlanoDeAcao : StatusPlanoDeAcao`, `medidasPreventivas : String`, `alertaAtivo : boolean` e `antecedenciaAlertaDias : int`.
+- **Operações**: `validarPlano(dadosPlano, ocorrencia, dataAtual)`, `validarAtualizacaoStatus(idAcao, novoStatus)`, `validarProrrogacao(idAcao, novoPrazo, justificativa)`, `atualizarResponsavel(idAcao, novoResponsavel : Colaborador)`, `atualizarStatus(novo : StatusPlanoDeAcao)`, `prorrogarPrazo(novoPrazo, justificativa) : ProrrogacaoPrazo`, `configurarAlerta(ativo, antecedenciaDias)` e `isEmAtraso(data) : boolean`.
+- **Associações**: `Ocorrencia` (1) para `PlanoDeAcao` (0..*); `GestorDeSeguranca` (0..*) para `PlanoDeAcao` (1..*); `Setor` (0..1) como responsável; `ProrrogacaoPrazo` (0..*) e `AvisoAcao` (0..*).
 
-A diferença a resolver: o PNG tem um único `prazo` e um único `status` por `PlanoDeAcao`, enquanto UC07 acompanha prazo, responsável, situação e alerta **por ação**.
+A versão anterior do PNG tinha as operações de gravação e consulta `salvarVinculado`, `buscarPlano`, `salvarStatusMedida`, `buscarPorFiltros`, `buscarAcao` e `atualizarPrazo`. Elas foram retiradas porque pertencem aos casos de uso e às portas de saída; a correspondência com o código permanece na seção 3. A diferença que motivou este contrato era que o PNG tinha um único `prazo` e um único `status` por `PlanoDeAcao`, enquanto UC07 acompanha prazo, responsável, situação e alerta **por ação**.
 
 ---
 
@@ -41,7 +41,7 @@ A diferença a resolver: o PNG tem um único `prazo` e um único `status` por `P
 
 ### 2.3. Estados e transições
 
-O atributo `status : String` do PNG é preservado como texto. O vocabulário aceito é dado por `StatusPlanoDeAcao`:
+No PNG, o atributo é `statusPlanoDeAcao : StatusPlanoDeAcao`. No código, o valor é gravado como texto e interpretado por `StatusPlanoDeAcao`, que define o vocabulário aceito:
 
 | Valor | Significado | Transições permitidas |
 | --- | --- | --- |
@@ -51,7 +51,7 @@ O atributo `status : String` do PNG é preservado como texto. O vocabulário ace
 - **Não adotados**: `PENDENTE`, `EM_ANDAMENTO` e `CANCELADO` não têm fonte no PNG nem em UC07/US07. Uma ação concluída não pode ser prorrogada, reatribuída nem ter o alerta reconfigurado.
 - **Sem `dataConclusao`**: a data e o autor da conclusão são os do registro `LogAuditoria` da transição, sem criar atributo obrigatório novo.
 - **Atraso e prazo próximo não são estados gravados**: UC07 fala em ação "com prazo a expirar ou em atraso". Essas situações são derivadas do `prazo` e da data consultada (`isEmAtraso(data)`, `deveEmitirAlerta(data)`), sem job que altere o `status`. Uma ação `ABERTA` com prazo vencido continua `ABERTA` e aparece como em atraso.
-- **Correspondência**: `validarAtualizacaoStatus` → `PlanoDeAcao.validarAtualizacaoStatus(StatusPlanoDeAcao)`; a mudança é feita por `atualizarStatus(...)` e gravada por `salvarStatusMedida`, que é responsabilidade da porta de saída (#98).
+- **Correspondência**: `validarAtualizacaoStatus` → `PlanoDeAcao.validarAtualizacaoStatus(StatusPlanoDeAcao)`; a mudança é feita por `atualizarStatus(...)` e gravada pela porta de saída `PlanoDeAcaoRepositoryPort.salvar` (#98), correspondente à operação `salvarStatusMedida` retirada do PNG.
 
 ### 2.4. Ocorrência grave e ação preventiva obrigatória
 
@@ -65,7 +65,7 @@ O atributo `status : String` do PNG é preservado como texto. O vocabulário ace
 - **Prorrogação** (UC07, alternativo I): só em ação `ABERTA`. Exige justificativa técnica não vazia, e o novo prazo deve ser posterior ao prazo atual e não anterior à data atual. Por ser posterior ao prazo vigente, também não antecede a ocorrência.
 - **Histórico**: `prorrogarPrazo(...)` devolve `ProrrogacaoPrazo(idAcao, prazoAnterior, novoPrazo, justificativa)`. É o dado a registrar no histórico, e o `LogAuditoria` já possui `justificativa`. O valor anterior nunca é sobrescrito sem registro. A forma de gravação, na tabela de auditoria ou em histórico próprio, é decidida em #98, desde que a consulta preserve cada prorrogação.
 - **Alerta reajustado**: a data do alerta é calculada a partir do prazo (seção 2.6), portanto se reajusta sozinha após a prorrogação.
-- **Correspondência**: `validarProrrogacao` → `PlanoDeAcao.validarProrrogacao(...)`; `atualizarPrazo` → `PlanoDeAcao.prorrogarPrazo(...)`.
+- **Correspondência**: `validarProrrogacao` → `PlanoDeAcao.validarProrrogacao(...)`; `prorrogarPrazo` → `PlanoDeAcao.prorrogarPrazo(...)` (substitui `atualizarPrazo` no PNG).
 
 ### 2.6. Alertas e canal de notificação do responsável sem conta
 
@@ -101,15 +101,15 @@ Os elementos da camada de persistência foram implementados na issue #98 (`Plano
 | Operação no Diagrama | Destino / Camada Hexagonal | Papel arquitetural e semântica |
 | :--- | :--- | :--- |
 | `validarPlano(dadosPlano, ocorrencia, dataAtual)` | Domínio: `PlanoDeAcao.definir(...)` valida cada ação; `PlanoDeAcao.validarPlano(ocorrencia, acoes)` valida o conjunto | Vínculo com ocorrência registrada, medida, responsável único, prazo não retroativo e regra da ocorrência grave. Lança exceções de domínio em vez de devolver `boolean`. |
-| `salvarVinculado(idOcorrencia, dadosPlano)` | Porta de entrada `GerenciarPlanoDeAcaoUseCase.cadastrarAcao` (implementada em `PlanoDeAcaoUseCase`, #99) e porta de saída `PlanoDeAcaoRepositoryPort.salvar` (implementada em `PlanoDeAcaoJpaAdapter`, #98) | Grava as ações vinculadas à ocorrência numa transação, com auditoria. |
-| `buscarPlano(idPlano)` / `buscarAcao(idAcao)` | `PlanoDeAcaoRepositoryPort.buscarPorId` (implementada em `PlanoDeAcaoJpaAdapter`, #98) | Mesmo identificador (seção 2.1). |
-| `buscarPorFiltros(criterios)` | `PlanoDeAcaoRepositoryPort.listarPorOcorrencia` (implementada em `PlanoDeAcaoJpaAdapter`, #98) | Consulta do andamento (US07, critério 1; UC05, alternativo I, passo 9). |
+| `salvarVinculado(idOcorrencia, dadosPlano)` (retirada do diagrama em 16/10/2026) | Porta de entrada `GerenciarPlanoDeAcaoUseCase.cadastrarAcao` (implementada em `PlanoDeAcaoUseCase`, #99) e porta de saída `PlanoDeAcaoRepositoryPort.salvar` (implementada em `PlanoDeAcaoJpaAdapter`, #98) | Grava as ações vinculadas à ocorrência numa transação, com auditoria. |
+| `buscarPlano(idPlano)` / `buscarAcao(idAcao)` (retirada do diagrama em 16/10/2026) | `PlanoDeAcaoRepositoryPort.buscarPorId` (implementada em `PlanoDeAcaoJpaAdapter`, #98) | Mesmo identificador (seção 2.1). |
+| `buscarPorFiltros(criterios)` (retirada do diagrama em 16/10/2026) | `PlanoDeAcaoRepositoryPort.listarPorOcorrencia` (implementada em `PlanoDeAcaoJpaAdapter`, #98) | Consulta do andamento (US07, critério 1; UC05, alternativo I, passo 9). |
 | `validarAtualizacaoStatus(idAcao, novoStatus)` | Domínio: `PlanoDeAcao.validarAtualizacaoStatus(StatusPlanoDeAcao)` | Apenas `ABERTA` → `CONCLUIDA`. |
-| `salvarStatusMedida(idAcao, novoStatus)` | Domínio: `PlanoDeAcao.atualizarStatus(...)`, gravado por `PlanoDeAcaoRepositoryPort.salvar` (`PlanoDeAcaoJpaAdapter`, #98) | Grava a nova situação e registra a auditoria. |
+| `atualizarStatus(novo)`; antes `salvarStatusMedida(idAcao, novoStatus)` | Domínio: `PlanoDeAcao.atualizarStatus(...)`, gravado por `PlanoDeAcaoRepositoryPort.salvar` (`PlanoDeAcaoJpaAdapter`, #98) | Grava a nova situação e registra a auditoria. |
 | `validarProrrogacao(idAcao, novoPrazo, justificativa)` | Domínio: `PlanoDeAcao.validarProrrogacao(...)` | Justificativa obrigatória; novo prazo posterior ao atual e não retroativo. |
-| `atualizarPrazo(idAcao, novoPrazo)` | Domínio: `PlanoDeAcao.prorrogarPrazo(...)` → `ProrrogacaoPrazo`, gravado por `PlanoDeAcaoRepositoryPort.salvarProrrogacao` (#98) | Altera o prazo e devolve o registro para o histórico e a auditoria. |
+| `prorrogarPrazo(novoPrazo, justificativa)`; antes `atualizarPrazo(idAcao, novoPrazo)` | Domínio: `PlanoDeAcao.prorrogarPrazo(...)` → `ProrrogacaoPrazo`, gravado por `PlanoDeAcaoRepositoryPort.salvarProrrogacao` (#98) | Altera o prazo e devolve o registro para o histórico e a auditoria. |
 | `atualizarResponsavel(idAcao, novoResponsavel : Colaborador)` | Domínio: `PlanoDeAcao.atualizarResponsavel(Colaborador \| Setor, dataAtual)` → `AvisoAcao`, persistido por `PlanoDeAcaoRepositoryPort.salvar` (#98) | Reatribui e produz o aviso ao novo encarregado. A sobrecarga com `Setor` atende UC07/US07. |
-| Gatilho de alerta (UC07, regra 2) | Domínio: `configurarAlerta`, `getDataAlerta`, `deveEmitirAlerta`, `emitirAvisoPrazo`; persistido por `PlanoDeAcaoRepositoryPort.salvar` (#98); porta de saída `NotificacaoAcaoPort.notificar(AvisoAcao)` (*a criar*) | Antecedência por ação, sem constante. Canal da seção 2.6. |
+| `configurarAlerta(ativo, antecedenciaDias)` e `isEmAtraso(data)` (UC07, regra 2) | Domínio: `configurarAlerta`, `isEmAtraso`, `getDataAlerta`, `deveEmitirAlerta`, `emitirAvisoPrazo`; persistido por `PlanoDeAcaoRepositoryPort.salvar` (#98); porta de saída `NotificacaoAcaoPort.notificar(AvisoAcao)` (*a criar*) | Antecedência por ação, sem constante. Canal da seção 2.6. |
 | Ocorrência grave | Domínio: `Ocorrencia.isGrave()` / `Acidente.isGrave()` | `gravidade` `ALTO` ou `CRITICO`; incidente sem escala aprovada. |
 
 ---
