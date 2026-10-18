@@ -1,5 +1,5 @@
 -- Dados de demonstração do SafePlace para a apresentação (ambiente local).
--- NÃO é migração Flyway: rode manualmente sobre um banco já migrado (V1 a V32), por exemplo:
+-- NÃO é migração Flyway: rode manualmente sobre um banco já migrado (V1 a V33), por exemplo:
 --   docker exec -i safeplace-postgres-dev psql -U safeplace -d safeplace < scripts/dados-demonstracao.sql
 -- Requer as contas de demonstração da V17 (gestor.demo e supervisor.demo, senha "Senha@123").
 -- Todas as datas são relativas ao dia da execução, para que alertas e atrasos apareçam.
