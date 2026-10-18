@@ -3,6 +3,7 @@
 // relato, edição, triagem e arquivamento (issue #100).
 
 import { mensagemDaApi, statusDoErro } from '../../shared/api/erros'
+import type { NivelPerigo } from '../areas-risco/api'
 import { http } from '../../shared/api/https'
 
 export type TipoOcorrencia = 'ACIDENTE' | 'INCIDENTE'
@@ -34,8 +35,9 @@ export type OcorrenciaResumo = {
   areaNome?: string | null
   colaboradorId?: number | null
   colaboradorNome?: string | null
-  gestorId?: number | null
-  gestorNome?: string | null
+  relatorId?: number | null
+  relatorNome?: string | null
+  relatorPerfil?: string | null
 }
 
 function normalizarStatus(status: unknown): StatusOcorrencia {
@@ -73,20 +75,24 @@ function lerOcorrenciaResumo(dado: unknown): OcorrenciaResumo {
     areaNome: typeof b.areaNome === 'string' ? b.areaNome : null,
     colaboradorId: typeof b.colaboradorId === 'number' ? b.colaboradorId : null,
     colaboradorNome: typeof b.colaboradorNome === 'string' ? b.colaboradorNome : null,
-    gestorId: typeof b.gestorId === 'number' ? b.gestorId : null,
-    gestorNome: typeof b.gestorNome === 'string' ? b.gestorNome : null,
+    relatorId: typeof b.relatorId === 'number' ? b.relatorId : null,
+    relatorNome: typeof b.relatorNome === 'string' ? b.relatorNome : null,
+    relatorPerfil: typeof b.relatorPerfil === 'string' ? b.relatorPerfil : null,
   }
 }
 
 /**
- * Critérios enviados ao servidor em `GET /api/ocorrencias` (issue #128). Datas no formato AAAA-MM-DD,
- * referentes à data do fato; o setor é o da área de risco; o colaborador é o envolvido.
+ * Critérios enviados ao servidor em `GET /api/ocorrencias` (issues #128 e #195). Datas no formato
+ * AAAA-MM-DD, referentes à data do fato; o setor é o da área de risco; o colaborador é o envolvido. A
+ * gravidade só existe em acidentes, então esse critério deixa os incidentes de fora.
  */
 export type FiltroOcorrencias = {
   dataInicio?: string
   dataFim?: string
   setorId?: number
   colaboradorId?: number
+  tipoOcorrencia?: TipoOcorrencia
+  gravidade?: NivelPerigo
 }
 
 export function temCriterios(filtro: FiltroOcorrencias): boolean {
@@ -113,7 +119,7 @@ export async function buscarOcorrenciaPorId(id: number, signal?: AbortSignal): P
 
 /**
  * Dados do relato (UC05/UC09) no formato de `CriarOcorrenciaRequest`. A data do fato vai como
- * `AAAA-MM-DDTHH:MM:SS`; a data do registro é gerada pelo servidor. O setor não tem campo próprio:
+ * `AAAA-MM-DDTHH:MM:SS`; a data do registro, o protocolo CAT e o relator são definidos pelo servidor. O setor não tem campo próprio:
  * é o da área de risco (decisão DS09, seção 2.3). Campos de acidente e de incidente são exclusivos.
  */
 export type DadosOcorrencia = {

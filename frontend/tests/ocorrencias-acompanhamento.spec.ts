@@ -37,8 +37,8 @@ function ocorrenciaBase(campos: Partial<Registro> & { idOcorrencia: number }): R
     tipoOcorrencia: 'INCIDENTE', dataOcorrencia: `${diaIso(-3)}T09:00:00`, dataRegistro: `${diaIso(-2)}T08:00:00`,
     statusOcorrencia: 'ABERTA', descricao: 'Óleo no corredor da doca.', local: null, numeroProtocoloCAT: null, gravidade: null,
     causaRaiz: null, tipo: null, dano: null, destino: null, situacaoRisco: 'Piso escorregadio', potencialDano: 'Queda',
-    areaId: 11, areaNome: 'Rampa da Doca', colaboradorId: 8, colaboradorNome: 'Maria Souza', gestorId: null, gestorNome: null,
-    ...campos,
+    areaId: 11, areaNome: 'Rampa da Doca', colaboradorId: 8, colaboradorNome: 'Maria Souza', relatorId: null, relatorNome: null,
+    relatorPerfil: null, ...campos,
   }
 }
 

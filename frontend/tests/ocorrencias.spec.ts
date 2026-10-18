@@ -1,6 +1,7 @@
-// Testes da consulta de ocorrências (UC05/UC09, issue #128): critérios enviados ao servidor,
-// refinamento local, período invertido, detalhe com data do fato e do registro, protocolo CAT,
-// detalhe fora do perfil, teclado e larguras. Só as respostas HTTP são simuladas.
+// Testes da consulta de ocorrências (UC05/UC09, issues #128 e #195): critérios enviados ao servidor,
+// inclusive tipo e gravidade, refinamento local, período invertido, detalhe com data do fato e do
+// registro, relator, protocolo CAT, detalhe fora do perfil, teclado e larguras. Só as respostas HTTP
+// são simuladas.
 
 import { test, expect, type Page } from '@playwright/test'
 import { gestora, iniciarSessao, supervisor } from './helpers/sessao'
@@ -11,13 +12,14 @@ const acidente = {
   statusOcorrencia: 'ABERTA', descricao: 'Prensa atingiu a mão do operador.', local: null, numeroProtocoloCAT: 'CAT-2026-09-0001',
   gravidade: 'CRITICO', causaRaiz: 'FALHA_EPI', tipo: 'Esmagamento', dano: 'Lesão na mão direita', destino: 'Hospital Municipal',
   situacaoRisco: null, potencialDano: null, areaId: 10, areaNome: 'Linha de Prensas', colaboradorId: 7,
-  colaboradorNome: 'João da Linha', gestorId: 1, gestorNome: 'Gestora Ana',
+  colaboradorNome: 'João da Linha', relatorId: 1, relatorNome: 'Gestora Ana', relatorPerfil: 'GESTOR_SEGURANCA',
 }
 const incidente = {
   idOcorrencia: 2, tipoOcorrencia: 'INCIDENTE', dataOcorrencia: '2026-08-20T09:00:00', dataRegistro: '2026-08-21T08:00:00',
   statusOcorrencia: 'EM_TRIAGEM', descricao: 'Óleo no corredor da doca.', local: null, numeroProtocoloCAT: null, gravidade: null,
   causaRaiz: null, tipo: null, dano: null, destino: null, situacaoRisco: 'Piso escorregadio', potencialDano: 'Queda',
-  areaId: 11, areaNome: 'Doca de Carga', colaboradorId: 8, colaboradorNome: 'Maria Souza', gestorId: null, gestorNome: null,
+  areaId: 11, areaNome: 'Doca de Carga', colaboradorId: 8, colaboradorNome: 'Maria Souza', relatorId: 9, relatorNome: 'Joana Ribeiro',
+  relatorPerfil: 'SUPERVISOR',
 }
 const setores = [{ id: 1, nome: 'Galpão Principal', descricao: null, localizacao: 'Bloco 1', status: 'ALTO' }]
 const colaboradores = [
@@ -57,7 +59,9 @@ async function simular(page: Page, opcoes: Opcoes = {}) {
       (!p.get('dataInicio') || dataFato(r) >= p.get('dataInicio')!)
       && (!p.get('dataFim') || dataFato(r) <= p.get('dataFim')!)
       && (!p.get('setorId') || setorDaArea[r.areaId] === Number(p.get('setorId')))
-      && (!p.get('colaboradorId') || r.colaboradorId === Number(p.get('colaboradorId')))) })
+      && (!p.get('colaboradorId') || r.colaboradorId === Number(p.get('colaboradorId')))
+      && (!p.get('tipoOcorrencia') || r.tipoOcorrencia === p.get('tipoOcorrencia'))
+      && (!p.get('gravidade') || r.gravidade === p.get('gravidade'))) })
   })
   return consultas
 }
@@ -122,14 +126,13 @@ test.describe('Consulta de ocorrências (UC05/UC09, issue #128)', () => {
     expect(consultas.length).toBe(total)
   })
 
-  test('texto, tipo e situação refinam a lista recebida sem nova consulta ao servidor', async ({ page }) => {
+  test('texto e situação refinam a lista recebida sem critério novo no servidor', async ({ page }) => {
     await iniciarSessao(page, gestora)
     const consultas = await simular(page)
     await page.goto('/ocorrencias')
     await expect(linha(page, 1)).toBeVisible()
 
     const form = consulta(page)
-    await form.getByLabel('Tipo').selectOption('INCIDENTE')
     await form.getByLabel('Situação').selectOption('EM_TRIAGEM')
     await form.getByLabel('Buscar na lista').fill('doca')
     await form.getByRole('button', { name: 'Consultar' }).click()
@@ -138,6 +141,27 @@ test.describe('Consulta de ocorrências (UC05/UC09, issue #128)', () => {
     await expect(linha(page, 2)).toBeVisible()
     await expect(page.getByRole('status').filter({ hasText: 'ocorrência encontrada' })).toHaveText('1 ocorrência encontrada')
     expect(consultas.at(-1)!.toString()).toBe('')
+  })
+
+  test('tipo e gravidade vão ao servidor (issue #195)', async ({ page }) => {
+    await iniciarSessao(page, gestora)
+    const consultas = await simular(page)
+    await page.goto('/ocorrencias')
+    await expect(linha(page, 2)).toBeVisible()
+
+    const form = consulta(page)
+    await form.getByLabel('Tipo').selectOption('INCIDENTE')
+    await form.getByRole('button', { name: 'Consultar' }).click()
+    await expect(linha(page, 1)).toHaveCount(0)
+    await expect(linha(page, 2)).toBeVisible()
+    expect(Object.fromEntries(consultas.at(-1)!)).toEqual({ tipoOcorrencia: 'INCIDENTE' })
+
+    await form.getByLabel('Tipo').selectOption('')
+    await form.getByLabel('Gravidade').selectOption('CRITICO')
+    await form.getByRole('button', { name: 'Consultar' }).click()
+    await expect(linha(page, 2)).toHaveCount(0)
+    await expect(linha(page, 1)).toBeVisible()
+    expect(Object.fromEntries(consultas.at(-1)!)).toEqual({ gravidade: 'CRITICO' })
   })
 
   test('detalhe do acidente separa data do fato e data do registro e devolve o foco ao fechar', async ({ page }) => {
@@ -157,6 +181,7 @@ test.describe('Consulta de ocorrências (UC05/UC09, issue #128)', () => {
     await expect(valor('Causa raiz')).toHaveText('Falha de EPI')
     await expect(valor('Área de risco')).toHaveText('Linha de Prensas')
     await expect(valor('Colaborador envolvido')).toHaveText('João da Linha')
+    await expect(valor('Registrado por')).toHaveText('Gestora Ana (Gestor de Segurança)')
 
     await page.keyboard.press('Escape')
     await expect(dialogo).not.toBeVisible()
@@ -173,6 +198,7 @@ test.describe('Consulta de ocorrências (UC05/UC09, issue #128)', () => {
     await expect(dialogo.getByText('Piso escorregadio')).toBeVisible()
     await expect(dialogo.getByText('Queda')).toBeVisible()
     await expect(dialogo.getByText('Protocolo CAT')).toHaveCount(0)
+    await expect(dialogo.getByText('Joana Ribeiro (Supervisor)')).toBeVisible()
     await expect(linha(page, 2)).toContainText('Sem protocolo')
   })
 
