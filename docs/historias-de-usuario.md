@@ -296,7 +296,7 @@ Referência: [RF08](requisitos/requisitos-funcionais.md#rf08-o-sistema-deve-gera
 
 # US09 – Registrar inspeções de áreas de risco
 
-Referência: [RF09](requisitos/requisitos-funcionais.md#rf09-o-sistema-deve-registrar-o-histórico-de-inspeções-periódicas-das-áreas-de-risco). Escopo: backlog, Deveria ter.
+Referência: [RF09](requisitos/requisitos-funcionais.md#rf09-o-sistema-deve-registrar-o-histórico-de-inspeções-periódicas-das-áreas-de-risco). Escopo: MVP desde 17/10/2026, Deveria ter.
 
 ## Descrição da História:
 
@@ -410,7 +410,7 @@ Referências: [RF11](requisitos/requisitos-funcionais.md#rf11-o-sistema-deve-con
 
 # US12 – Associar EPIs obrigatórios às tarefas
 
-Referências: [RF12](requisitos/requisitos-funcionais.md#rf12-o-sistema-deve-permitir-a-conexão-entre-as-tarefas-e-os-epis) e [UC08](casos-de-uso/casos-de-uso.md#uc08--interligar-tarefa-ao-epi). Escopo: backlog, Deveria ter.
+Referências: [RF12](requisitos/requisitos-funcionais.md#rf12-o-sistema-deve-permitir-a-conexão-entre-as-tarefas-e-os-epis) e [UC08](casos-de-uso/casos-de-uso.md#uc08--interligar-tarefa-ao-epi). Escopo: MVP desde 17/10/2026, Deveria ter.
 
 ## Descrição da História:
 

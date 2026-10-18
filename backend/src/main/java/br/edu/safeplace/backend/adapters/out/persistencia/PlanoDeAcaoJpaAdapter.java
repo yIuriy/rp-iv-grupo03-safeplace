@@ -136,15 +136,6 @@ public class PlanoDeAcaoJpaAdapter implements PlanoDeAcaoRepositoryPort {
     }
 
     @Override
-    @Transactional
-    public List<PlanoDeAcao> salvarTodos(List<PlanoDeAcao> planos) {
-        if (planos == null || planos.isEmpty()) {
-            return List.of();
-        }
-        return planos.stream().map(this::salvar).toList();
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public Optional<PlanoDeAcao> buscarPorId(Integer id) {
         if (id == null) {

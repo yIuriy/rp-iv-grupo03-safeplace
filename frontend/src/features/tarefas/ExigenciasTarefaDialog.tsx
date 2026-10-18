@@ -19,20 +19,24 @@ export function ExigenciasTarefaDialog({
   tarefa: Tarefa | null
   aoFechar: () => void
 }) {
-  const [carregando, setCarregando] = useState(false)
+  if (!tarefa) return null
+  // Recriado a cada tarefa (key): o estado já nasce limpo e carregando, sem ser zerado no efeito.
+  return <DialogoExigencias key={tarefa.id} tarefa={tarefa} aoFechar={aoFechar} />
+}
+
+function DialogoExigencias({
+  tarefa,
+  aoFechar,
+}: {
+  tarefa: Tarefa
+  aoFechar: () => void
+}) {
+  const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
   const [exigencias, setExigencias] = useState<ExigenciasTarefa | null>(null)
 
   useEffect(() => {
-    if (!tarefa) {
-      setExigencias(null)
-      setErro(null)
-      return
-    }
-
     const controller = new AbortController()
-    setCarregando(true)
-    setErro(null)
 
     obterExigenciasTarefa(tarefa.id, controller.signal)
       .then(dados => {
@@ -50,17 +54,13 @@ export function ExigenciasTarefaDialog({
       })
 
     return () => controller.abort()
-  }, [tarefa])
+  }, [tarefa.id])
 
   return (
     <Dialog
-      open={!!tarefa}
+      open
       title="Exigências da Atividade"
-      description={
-        tarefa
-          ? `Consulte as diretrizes de periculosidade, EPIs e capacitações obrigatórias para: "${tarefa.descricao}".`
-          : undefined
-      }
+      description={`Consulte as diretrizes de periculosidade, EPIs e capacitações obrigatórias para: "${tarefa.descricao}".`}
       onClose={aoFechar}
       className="sp-dialog--largo sp-dialog--exigencias"
     >

@@ -111,13 +111,13 @@ class SetorAreaRiscoPersistenciaIntegracaoTest {
     @DisplayName("Deve rejeitar cadastro de área de risco com código duplicado")
     void deveRejeitarCodigoDuplicado() {
         CadastrarAreaRiscoInputDTO area1 = new CadastrarAreaRiscoInputDTO(
-                "AR-DUP-01", "Área 1", "Desc", NivelPerigo.MEDIO, null, List.of(), null, List.of(epiId1));
-        areaRiscoUseCase.cadastrarAreaRisco(area1);
+                "AR-DUP-01", "Área 1", "Desc", NivelPerigo.MEDIO, null, List.of("Ruído"), "Galpão 1", List.of(epiId1));
+        areaRiscoUseCase.cadastrarAreaRisco(area1, "gestor@safeplace.com");
 
         CadastrarAreaRiscoInputDTO area2 = new CadastrarAreaRiscoInputDTO(
-                "ar-dup-01", "Área 2", "Outra Desc", NivelPerigo.ALTO, null, List.of(), null, List.of(epiId2));
+                "ar-dup-01", "Área 2", "Outra Desc", NivelPerigo.ALTO, null, List.of("Calor"), "Galpão 2", List.of(epiId2));
 
-        assertThatThrownBy(() -> areaRiscoUseCase.cadastrarAreaRisco(area2))
+        assertThatThrownBy(() -> areaRiscoUseCase.cadastrarAreaRisco(area2, "gestor@safeplace.com"))
                 .isInstanceOf(CodigoAreaRiscoDuplicadoException.class);
     }
 
@@ -125,7 +125,7 @@ class SetorAreaRiscoPersistenciaIntegracaoTest {
     @DisplayName("Deve rejeitar cadastro de área de risco sem EPIs obrigatórios")
     void deveRejeitarAreaSemEpisObrigatorios() {
         CadastrarAreaRiscoInputDTO areaSemEpis = new CadastrarAreaRiscoInputDTO(
-                "AR-NO-EPI", "Área sem EPI", "Desc", NivelPerigo.BAIXO, null, List.of(), null, List.of());
+                "AR-NO-EPI", "Área sem EPI", "Desc", NivelPerigo.BAIXO, null, List.of("Poeira"), "Pátio", List.of());
 
         assertThatThrownBy(() -> areaRiscoUseCase.cadastrarAreaRisco(areaSemEpis))
                 .isInstanceOf(AreaRiscoSemEpiObrigatorioException.class);

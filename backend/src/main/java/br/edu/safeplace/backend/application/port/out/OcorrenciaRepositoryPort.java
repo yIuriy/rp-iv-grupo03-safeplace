@@ -38,10 +38,4 @@ public interface OcorrenciaRepositoryPort {
                 .filter(Acidente.class::isInstance)
                 .map(Acidente.class::cast);
     }
-
-    default Optional<Incidente> buscarIncidentePorId(Integer id) {
-        return buscarPorId(id)
-                .filter(Incidente.class::isInstance)
-                .map(Incidente.class::cast);
-    }
 }

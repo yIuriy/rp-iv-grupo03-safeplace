@@ -84,6 +84,7 @@ class InspecaoPersistenciaIntegracaoTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"codigo": "%s", "nome": "Caldeiraria 134", "nivelPerigo": "ALTO",
+                                 "agentesRisco": ["Calor"], "limites": "Galpão 2 - área demarcada",
                                  "episObrigatoriosIds": [%d]}
                                 """.formatted(CODIGO_AREA, epiId)))
                 .andExpect(status().isCreated());

@@ -46,7 +46,7 @@ A revisão de escopo da issue #112 consultou o PNG no commit `34d6b6d` (14/09/20
 | --- | --- | --- |
 | `Setor` 0..* para `Tarefa` 1..* | Cada setor se relaciona com uma ou mais tarefas; cada tarefa, com zero ou mais setores. | Implementada em `tarefas_setores` (V26), com chaves estrangeiras para `tarefas` e `setores`. O cadastro recebe ids de setores e os valida antes de gravar; ids repetidos não criam vínculos duplicados. |
 | `AreaRisco` 0..1 para `Tarefa` 0..* | Cada tarefa pertence a no máximo uma área de risco; uma área tem zero ou mais tarefas. | Implementada em `tarefas.area_risco_id` (V26), chave estrangeira opcional. O cadastro recebe o id e valida a área existente; exclusão da área desvincula a tarefa sem apagar seu histórico. |
-| `Tarefa` 0..* para `EPI` 0..* (`associarEPIs`, `verificarEPIsObrigatoriosTarefa`) | EPIs exigidos para executar a tarefa. | **Fora do MVP** (RF12, UC08, backlog). Não é exigido e não é confundido com os EPIs de acesso à área (UC03). |
+| `Tarefa` 0..* para `EPI` 0..* (`associarEPIs`, `verificarEPIsObrigatoriosTarefa`) | EPIs exigidos para executar a tarefa. | Fora desta relação: tratado em [Correspondência Classes vs RF12](correspondencia-classes-tarefa-rf12.md) (RF12, UC08, MVP desde 17/10/2026). Não é exigido e não é confundido com os EPIs de acesso à área (UC03). |
 
 ### 2.3. Classificação, reavaliação e autoria
 
@@ -87,7 +87,7 @@ A revisão de escopo da issue #112 consultou o PNG no commit `34d6b6d` (14/09/20
 | `classificar(nivel, responsavel)` (UC11, passos 3 a 6 e alternativo I) | `ClassificarTarefaUseCase.classificar`; domínio `Tarefa.classificar(nivel, responsavel)`; `PATCH /api/tarefas/{id}/classificacao` | Grava nível, data, hora e responsável técnico e devolve `RegistroClassificacaoTarefa`. |
 | Registro com data, hora e responsável técnico (UC11, regra 1) | `LogAuditoriaRepositoryPort.salvar` e `tarefas.responsavel_classificacao_id` | Histórico com valor anterior e novo (RNF05). |
 | Bloqueio de alocação (UC11, exceção I) | `AlocarColaboradorTarefaUseCase.alocar` → `ValidadorAptidaoColaboradorService` → `Tarefa.validarClassificacaoParaAlocacao()` | Bloqueio ocorre na confirmação, antes de persistir `AlocacaoTarefa`. |
-| `associarEPIs(...)` / `verificarEPIsObrigatoriosTarefa()` | Sem correspondência no MVP | RF12, backlog. |
+| `associarEPIs(...)` / `verificarEPIsObrigatoriosTarefa()` | Ver [Correspondência Classes vs RF12](correspondencia-classes-tarefa-rf12.md) | RF12, UC08 (MVP desde 17/10/2026). |
 | Associações com `Setor` e `AreaRisco` | `Tarefa.areaRiscoId` e `Tarefa.setoresIds`; `TarefaJpaAdapter` | V26, preservadas na leitura e expostas pela API. |
 
 ---

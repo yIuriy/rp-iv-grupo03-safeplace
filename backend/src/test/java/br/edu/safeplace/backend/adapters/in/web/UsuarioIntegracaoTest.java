@@ -47,8 +47,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EnabledIf("bancoDisponivel")
 class UsuarioIntegracaoTest {
 
-    private static final String CPF_SUPERVISOR = "52998224725";
-    private static final String CPF_COLABORADOR = "11144477735";
+    private static final String CPF_SUPERVISOR = "63918425746";
+    private static final String CPF_COLABORADOR = "85296374100";
 
     static boolean bancoDisponivel() {
         return PostgresDeTeste.disponivel();
@@ -173,7 +173,8 @@ class UsuarioIntegracaoTest {
         assertThat(resposta.statusCode()).isEqualTo(201);
 
         JsonNode corpo = corpoDe(resposta);
-        assertThat(corpo.get("perfil").asText()).isEqualTo("COLABORADOR");
+        // Colaborador não tem perfil de acesso: a API devolve perfil nulo; o banco mantém o discriminador.
+        assertThat(corpo.get("perfil").isNull()).isTrue();
         assertThat(corpo.has("senhaInicial")).isFalse();
 
         String senhaPersistida = jdbcTemplate.queryForObject(
@@ -189,7 +190,7 @@ class UsuarioIntegracaoTest {
                 .isEqualTo(201);
 
         HttpResponse<String> repetido = chamar("POST", "/api/usuarios/colaboradores",
-                jsonColaborador("111.444.777-35", "Outro Nome"), Perfil.SUPERVISOR);
+                jsonColaborador("852.963.741-00", "Outro Nome"), Perfil.SUPERVISOR);
 
         assertThat(repetido.statusCode()).isEqualTo(409);
 
@@ -223,10 +224,10 @@ class UsuarioIntegracaoTest {
                 "/api/usuarios/colaboradores?nome=" + codificar("silva"), null, Perfil.SUPERVISOR));
         assertThat(porNome).hasSize(1);
         assertThat(porNome.get(0).get("nome").asText()).isEqualTo("João da Silva");
-        assertThat(porNome.get(0).get("perfil").asText()).isEqualTo("COLABORADOR");
+        assertThat(porNome.get(0).get("perfil").isNull()).isTrue();
 
         JsonNode porCpfComMascara = corpoDe(chamar("GET",
-                "/api/usuarios/colaboradores?cpf=" + codificar("111.444.777-35"), null, Perfil.SUPERVISOR));
+                "/api/usuarios/colaboradores?cpf=" + codificar("852.963.741-00"), null, Perfil.SUPERVISOR));
         assertThat(porCpfComMascara).hasSize(1);
 
         JsonNode buscandoSupervisor = corpoDe(chamar("GET",
@@ -285,7 +286,7 @@ class UsuarioIntegracaoTest {
         HttpResponse<String> atualizado = chamar("PUT", "/api/usuarios/colaboradores/" + id,
                 jsonAtualizacao("João Pedro da Silva", null), Perfil.SUPERVISOR);
         assertThat(atualizado.statusCode()).isEqualTo(200);
-        assertThat(corpoDe(atualizado).get("perfil").asText()).isEqualTo("COLABORADOR");
+        assertThat(corpoDe(atualizado).get("perfil").isNull()).isTrue();
         assertThat(jdbcTemplate.queryForObject("SELECT senha FROM usuarios WHERE id = ?", String.class, id)).isNull();
 
         HttpResponse<String> pelaRotaErrada = chamar("PUT", "/api/usuarios/supervisores/" + id,

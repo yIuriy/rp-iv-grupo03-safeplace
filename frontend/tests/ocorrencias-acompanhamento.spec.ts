@@ -23,8 +23,8 @@ const areas = [
   { id: 11, codigo: 'AR-11', nome: 'Rampa da Doca', descricao: null, nivelPerigo: 'MEDIO', setorId: 2, agentesRisco: [], limites: null, episObrigatorios: [] },
 ]
 const colaboradores = [
-  { id: 7, nome: 'João da Linha', cpf: '12345678909', dataNascimento: '1992-06-18', email: null, perfil: 'COLABORADOR', ativo: true },
-  { id: 8, nome: 'Maria Souza', cpf: '52998224725', dataNascimento: '1990-01-01', email: null, perfil: 'COLABORADOR', ativo: true },
+  { id: 7, nome: 'João da Linha', cpf: '12345678909', dataNascimento: '1992-06-18', email: null, perfil: null, ativo: true },
+  { id: 8, nome: 'Maria Souza', cpf: '52998224725', dataNascimento: '1990-01-01', email: null, perfil: null, ativo: true },
 ]
 
 const supervisora = { id: 9, nome: 'Joana Ribeiro', cpf: '11144477735', dataNascimento: '1988-04-20', email: 'joana@safeplace.test', perfil: 'SUPERVISOR', ativo: true }

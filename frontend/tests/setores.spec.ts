@@ -105,7 +105,7 @@ test.describe('Setores físicos (UC03, issue #174)', () => {
     await expect(dialogo.getByText('Selecione o grau de perigo do setor.')).toBeVisible()
     await expect(dialogo.getByLabel('Nome do setor')).toBeFocused()
     await expect(dialogo.getByLabel('Nome do setor')).toHaveAttribute('aria-invalid', 'true')
-    await expect(dialogo.getByRole('alert')).toContainText('Confira os campos destacados')
+    await expect(dialogo.getByRole('alert').filter({ hasText: 'Confira os campos destacados' })).toBeVisible()
 
     await dialogo.getByLabel('Nome do setor').fill('Pintura')
     await dialogo.getByRole('button', { name: 'Cadastrar setor' }).click()

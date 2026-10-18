@@ -67,13 +67,14 @@ class LogAuditoriaImutabilidadeIntegracaoTest {
         assertThatThrownBy(() -> jdbc.update(
                 "UPDATE logs_auditoria SET justificativa = 'adulterado' WHERE id = ?", id))
                 .isInstanceOf(DataAccessException.class)
-                .hasMessageContaining("somente inclusão");
+                // A mensagem do gatilho fica na causa interna (PSQLException), não no texto do Spring.
+                .rootCause().hasMessageContaining("somente inclusão");
         assertThatThrownBy(() -> jdbc.update("DELETE FROM logs_auditoria WHERE id = ?", id))
                 .isInstanceOf(DataAccessException.class)
-                .hasMessageContaining("somente inclusão");
+                .rootCause().hasMessageContaining("somente inclusão");
         assertThatThrownBy(() -> jdbc.execute("TRUNCATE logs_auditoria"))
                 .isInstanceOf(DataAccessException.class)
-                .hasMessageContaining("somente inclusão");
+                .rootCause().hasMessageContaining("somente inclusão");
 
         assertThat(jdbc.queryForObject("SELECT justificativa FROM logs_auditoria WHERE id = ?", String.class, id))
                 .isEqualTo("Registro original");

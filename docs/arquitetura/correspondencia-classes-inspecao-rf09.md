@@ -4,7 +4,7 @@
 
 Este documento registra o contrato do histórico de inspeções periódicas das áreas de risco. Ele concilia as classes `Inspecao` e `ItemVerificado` do **Diagrama de Classes** com o **RF09** e a **US09**, atendendo à [issue #134](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/134).
 
-- **Situação**: contrato aprovado e implementado (RF09, US09, issues #134 e #136). RF09 é classificado como "Deveria ter" na MoSCoW. As pendências da seção 4 não foram decididas e não devem ser supridas por suposição.
+- **Situação**: contrato aprovado e implementado (RF09, US09, issues #134 e #136). RF09 é classificado como "Deveria ter" na MoSCoW e integra o MVP desde 17/10/2026. As pendências da seção 4 não foram decididas e não devem ser supridas por suposição.
 - **Fontes**: [Diagrama de classes](../diagramas/classes/Diagrama%20de%20Classes%20-%20SafePlace.png), [RF09](../requisitos/requisitos-funcionais.md#rf09-o-sistema-deve-registrar-o-histórico-de-inspeções-periódicas-das-áreas-de-risco), [US09](../historias-de-usuario.md#us09--registrar-inspeções-de-áreas-de-risco), [MoSCoW](../requisitos/priorizacao-moscow.md) e [RNF03](../requisitos/requisitos-nao-funcionais.md).
 - **Sem caso de uso nem diagrama de sequência**: RF09 não tem UC nem DS próprios. Atores, operações e mensagens abaixo vêm da US09 e das associações do PNG.
 - **Implementação de referência**: domínio em `backend/src/main/java/br/edu/safeplace/backend/domain/inspecao/` (`Inspecao`, `ItemVerificado`); caso de uso `InspecaoUseCase`; persistência `InspecaoJpaAdapter` com a migração `V24__criar_inspecoes.sql`; API `/api/areas-risco/{id}/inspecoes`; tela na aba "Inspeções" de `/areas-risco` (`frontend/src/features/areas-risco/InspecoesPainel.tsx`, issue #136).

@@ -8,7 +8,7 @@ Complementa a [matriz documental da seção 9](especificacao-mvp-arquitetura.md#
 - **Pendência** aparece sempre que falta tela, API, decisão ou evidência. Pendência não é marcada como atendida.
 - **Teste isolado** exercita domínio ou controlador com dependências simuladas (`*Test`, `*ControllerTest`, `*UseCaseTest`).
 - **Teste de integração** conecta componentes reais, como PostgreSQL real (`*IntegracaoTest`, `*PersistenciaTest`). Testes Playwright (`frontend/tests`) exercitam a interface no navegador, mas grande parte deles (`ocorrencias*.spec.ts`, `capacitacoes.spec.ts`, `tarefas.spec.ts`, `setores.spec.ts`, `areas-risco.spec.ts`, `historico.spec.ts`) simula a API via `page.route` — funcionando como testes de interface isolados, e não integração ponta a ponta com o backend real.
-- Nenhuma linha depende de RF09, RF12, RF18 ou RF19, que estão fora do MVP. RF09 (`InspecaoController`) e RF12 (`PUT /api/tarefas/{id}/epis`) existem no código como trabalho adiantado e não sustentam nenhum requisito abaixo.
+- RF09 e RF12 entraram no MVP em 17/10/2026 e têm linhas próprias na matriz. Nenhuma linha depende de RF18 ou RF19, que estão fora do MVP.
 
 ## 2. Matriz
 
@@ -20,11 +20,13 @@ Complementa a [matriz documental da seção 9](especificacao-mvp-arquitetura.md#
 | RF02 | UC05 | DS09 | Mesma API; causa de falha de equipamento em `Acidente.causaRaiz` | `CausaRaizAcidenteTest` (isolado) | Não há teste de integração específico para a causa por equipamento. Sem relação direta com `EPI` no modelo. |
 | RF03 | UC06; US03 | Decisão #124 | `GET /api/epis`, `POST /api/epis/{id}/movimentacoes`; tela `/epis` (`/estoque` redireciona) | `EpiTest`, `MovimentacaoEstoqueTest`, `EpiUseCaseTest`, `EpiControllerTest` (isolados); `EpiEstoqueConcorrenciaIntegracaoTest`, `EstoqueCriticoPersistenciaIntegracaoTest`; `estoque.spec.ts` | Nenhuma (responsavel_id criado nas migrações V9/V10 e operador exibido na tela de movimentações). |
 | RF04 | UC01; US04 | Decisão #124 | `POST/GET /api/epis/{id}/manutencoes`; tela de EPIs | `ManutencaoEpiTest`, `ControlarManutencaoEpiServiceTest` (isolados); `epis.spec.ts` | Sem teste de integração específico em PostgreSQL para manutenção. |
-| RF05 | UC03; US05 | `AreaRisco` e `Setor` | `/api/areas-risco`, `/api/setores`; tela `/areas-risco` | `AreaRiscoUseCaseTest`, `AreaRiscoControllerTest` (isolados); `SetorAreaRiscoPersistenciaIntegracaoTest`, `AreaRiscoTarefaApiIntegracaoTest`; `areas-risco.spec.ts`, `setores.spec.ts` (Playwright simulado) | `setores.spec.ts:96` falha (ver 3.1). |
+| RF05 | UC03; US05 | `AreaRisco` e `Setor` | `/api/areas-risco`, `/api/setores`; tela `/areas-risco` | `AreaRiscoUseCaseTest`, `AreaRiscoControllerTest` (isolados); `SetorAreaRiscoPersistenciaIntegracaoTest`, `AreaRiscoTarefaApiIntegracaoTest`; `areas-risco.spec.ts`, `setores.spec.ts` (Playwright simulado) | Nenhuma (`setores.spec.ts:96` corrigido em 17/10/2026; ver 3.3). |
 | RF06 | UC11; US06 | [UC11](../arquitetura/correspondencia-classes-tarefa-uc11.md) | `PATCH /api/tarefas/{id}/classificacao`, `/historico`; tela `/tarefas` | `NivelPerigoTest`, `TarefaTest`, `TarefaUseCaseTest` (isolados); `AreaRiscoTarefaPersistenciaTest`; `tarefas.spec.ts`, `historico.spec.ts` (Playwright simulado) | Exigências normativas fora da relação. |
 | RF07 | UC07; US07 | [UC07](../arquitetura/correspondencia-classes-plano-de-acao.md) | `/api/ocorrencias/{id}/planos-acao`, `/api/planos-acao/{id}/*`; painel de plano em `/ocorrencias` | `PlanoDeAcaoTest`, `PlanoDeAcaoUseCaseTest`, `PlanoDeAcaoControllerTest` (isolados); `PlanoDeAcaoPersistenciaIntegracaoTest`; `ocorrencias-acompanhamento.spec.ts` (Playwright simulado) | Nenhuma (testes de persistência corrigidos em 3.2; modelo UC07 aprovado). |
+| RF09 | US09 | [RF09](../arquitetura/correspondencia-classes-inspecao-rf09.md) | `GET` e `POST /api/areas-risco/{id}/inspecoes`; aba "Inspeções" em `/areas-risco` (Gestor) | `InspecaoTest`, `InspecaoUseCaseTest`, `InspecaoControllerTest` (isolados); `InspecaoPersistenciaIntegracaoTest`; `inspecoes.spec.ts` (Playwright simulado) | Consulta pelo Supervisor, periodicidade e critérios pendentes. |
 | RF10 | UC02; US10 | [UC02](../arquitetura/correspondencia-classes-capacitacao-uc02.md) | `GET` e `POST /api/capacitacoes/*`; tela `/capacitacoes` | `CertificacaoTest`, `TreinamentoTest`, `ValidadorAptidaoColaboradorServiceTest`, `AcompanharCapacitacoesServiceTest`, `CadastrarCapacitacaoServiceTest`, `CapacitacaoControllerTest` (isolados); `CapacitacaoApiIntegracaoTest`, `CapacitacaoPersistenciaIntegracaoTest`; `capacitacoes.spec.ts` (Playwright simulado) | Cadastro de novas capacitações no catálogo não existe na API nem na interface (restringe-se a vincular certificações/treinamentos existentes a colaboradores). |
 | RF11 | UC12; US11 | Empréstimo | `/api/emprestimos`, `/{id}/devolucao`, `/epis-disponiveis`; tela `/emprestimos` | `EmprestimoTest`, `EmprestimoUseCaseTest` (isolados); `EmprestimoApiIntegracaoTest`, `EmprestimoPersistenciaIntegracaoTest`; `emprestimos.spec.ts` | Recorte limitado a colaboradores. |
+| RF12 | UC08; US12 | [RF12](../arquitetura/correspondencia-classes-tarefa-rf12.md) | `PUT` e `GET /api/tarefas/{id}/epis`, `GET /api/tarefas/{id}/exigencias`; botão "EPIs" em `/tarefas` (Gestor) | `TarefaTest`, `TarefaUseCaseTest`, `TarefaControllerTest` (isolados); `TarefaEpiApiIntegracaoTest` | Sem teste Playwright do vínculo na tela. Sugestão automática no empréstimo fora do MVP. |
 | RF13 | UC09, UC05 | DS09 | `POST /api/ocorrencias`; formulário de relato em `/ocorrencias` | `AcidenteTest`, `NumeroProtocoloCATTest` (isolados); `OcorrenciaPersistenciaIntegracaoTest`; `ocorrencias.spec.ts` (Playwright simulado) | Envio offline não implementado (protocolo CAT gerado e testado sob concorrência). |
 | RF16 | UC09, UC05 | DS09 | `POST /api/ocorrencias` | `IncidenteTest`, `OcorrenciaTest` (isolados); `ocorrencias.spec.ts` (Playwright simulado) | Gravidade de incidente pendente (seção 11.1 do MVP). |
 | RF21 | UC10; US21 | [DS10/DS10.1](../arquitetura/correspondencia-classes-ds10.md) | `POST /api/projecoes/analise`, `/epi/{id}`, `/alertas`; tela `/emprestimos` (aba `ProjecoesPainel.tsx`) | `ProjecaoSubstituicaoTest`, `PlanejarSubstituicaoUseCaseTest`, `SubstituicaoInteligenteServiceTest` (isolados); `ProjecaoApiIntegracaoTest`, `ProjecaoSubstituicaoPersistenciaIntegracaoTest`; `emprestimos.spec.ts` | Requisições de compra e parâmetros pendentes fora do MVP. Tela de projeções implementada em `ProjecoesPainel`. |
@@ -68,10 +70,21 @@ Compilação exige JDK 25 (`JAVA_HOME=/usr/lib/jvm/java-25-openjdk`); o JDK 27 p
 
 Com essas correções, todos os fluxos de persistência possuem **evidência de integração verde**.
 
+### 3.3. Execução de 17 de outubro de 2026
+
+Medições na branch `amanda-201`, a partir da `dev` em `64599af`, depois de atualizar os testes desatualizados por mudanças de 10/10 e 15/10 (perfil nulo para Colaborador, agentes de risco e limites obrigatórios na área, devolução que grava manutenção).
+
+| Verificação | Resultado |
+| --- | --- |
+| Backend, `TESTCONTAINERS_RYUK_DISABLED=true ./mvnw test -Dapi.version=1.44` (PostgreSQL 16 novo por execução) | 987 testes, 0 falhas, 0 erros, 0 ignorados. |
+| `npm run lint` | 0 erros, 0 avisos. |
+| `npm run build` | Sem erros. |
+| Playwright (`--workers=2`) | 162 testes, 162 passam. Inclui a largura de 320 px em `/capacitacoes`, corrigida no cabeçalho comum (`layout.css`). |
+
 ## 4. Resumo das lacunas
 
 1. Testes de persistência de ocorrências e planos de ação corrigidos (3.2).
-2. A integração PostgreSQL não roda no ambiente padrão com Docker 29 (Testcontainers 1.20.4); requer contorno via `-Dsafeplace.test.datasource.url` ou daemon compatível.
+2. A integração PostgreSQL não roda no ambiente padrão com Docker 29 (Testcontainers 1.20.4); requer contorno via `-Dsafeplace.test.datasource.url`, daemon compatível ou `-Dapi.version=1.44` com `TESTCONTAINERS_RYUK_DISABLED=true` (3.3).
 3. RNF05: imutabilidade no banco e retenção de 5 anos sem evidência física de infraestrutura. RNF11: sem evidência de WCAG automatizada. RNF08: escopo offline somente leitura.
 4. RF21 possui tela no painel do gestor (`ProjecoesPainel.tsx` em `/emprestimos`). RF07 possui modelo UC07 aprovado (#97). RF23 grava autoria via `LogAuditoria` em `UsuarioCasoDeUso` (#121); primeiro Gestor (seed) permanece fora do escopo MVP.
-5. Lint, build e um teste Playwright do frontend falham por problemas preexistentes.
+5. Lint, build e Playwright do frontend passam desde 17/10/2026 (3.3).

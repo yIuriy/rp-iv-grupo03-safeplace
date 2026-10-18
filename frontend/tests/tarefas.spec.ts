@@ -101,10 +101,10 @@ test.describe('Módulo Classificação de Tarefas (RF06, UC11, RNF11)', () => {
     // Botão de cadastro não existe para supervisor
     await expect(page.getByRole('button', { name: 'Nova tarefa' })).toHaveCount(0)
 
-    // Coluna e botões de ações não devem existir na tabela
+    // Supervisor só consulta as exigências (US06, critério 4): sem edição, classificação ou histórico
     const tabela = page.getByRole('table', { name: 'Matriz de tarefas e classificação de periculosidade' })
-    await expect(tabela.getByRole('columnheader', { name: 'Ações' })).toHaveCount(0)
-    await expect(tabela.getByRole('button', { name: /Classificar/ })).toHaveCount(0)
+    await expect(tabela.getByRole('button', { name: /^Ver exigências da tarefa/ })).toHaveCount(2)
+    await expect(tabela.getByRole('button', { name: /Classificar|Reavaliar|Editar|Histórico/ })).toHaveCount(0)
   })
 
   test('Gestor cadastra nova tarefa com validação client-side e persistência', async ({ page }) => {
@@ -129,6 +129,7 @@ test.describe('Módulo Classificação de Tarefas (RF06, UC11, RNF11)', () => {
     expect(chamadas[0].method).toBe('POST')
     expect(chamadas[0].body).toEqual({
       descricao: 'Trabalho em altura com andaime fachadeiro',
+      setoresIds: [],
     })
 
     await expect(page.getByText('Tarefa cadastrada com sucesso: "Trabalho em altura com andaime fachadeiro".')).toBeVisible()

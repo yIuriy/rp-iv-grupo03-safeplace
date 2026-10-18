@@ -64,7 +64,7 @@ Essa é a organização lógica prevista, não uma lista de módulos já impleme
 | `ocorrencias` | Registrar e acompanhar acidentes e incidentes, com envolvidos, protocolo, triagem, atualização, arquivamento e planos de ação. | RF01, RF02, RF07, RF13 e RF16; UC05, UC07 e UC09 |
 | `epis` | Estoque, movimentações, manutenção, empréstimos, devoluções e previsão de substituição com alertas. | RF03, RF04, RF11 e RF21; UC01, UC06, UC10 e UC12 |
 | `areas-de-risco` | Gestão de setores físicos e áreas de risco vinculadas (1:N), com cadastro, consulta, atualização de limites, agentes de risco e EPIs exigidos para acesso. | RF05; UC03 |
-| `tarefas` | Classificar e consultar a periculosidade das tarefas, além de confirmar alocações somente após revalidar classificação e capacitações. O vínculo entre tarefa e EPI permanece no backlog de RF12. | RF06, RF10; UC02 e UC11 |
+| `tarefas` | Classificar e consultar a periculosidade das tarefas, além de confirmar alocações somente após revalidar classificação e capacitações. Também associa e consulta os EPIs obrigatórios de cada tarefa (RF12). | RF06, RF10, RF12; UC02, UC08 e UC11 |
 | `capacitacoes` | Consultar certificações e treinamentos, controlar vencimentos e aplicar os impedimentos previstos para alocação e empréstimo. O fluxo de cadastro ainda precisa ser identificado. | RF10; UC02 e UC12 |
 
 A auditoria acompanha as operações que alteram dados em todas essas funcionalidades, conforme RNF05. O registro deve identificar usuário, data, hora e dado alterado, com imutabilidade e retenção mínima de 5 anos. A classe `LogAuditoria` no diagrama não comprova, por si só, a cobertura de todas as operações na implementação.
@@ -143,7 +143,7 @@ O estoque segue a mesma organização: `EpiController` recebe as requisições, 
 | Consultar uma área de risco | `GET /api/areas-risco/{id}` |
 | Atualizar área de risco (Gestor de Segurança) | `PUT /api/areas-risco/{id}` |
 | Consultar o histórico de alterações de uma área de risco (Gestor de Segurança) | `GET /api/areas-risco/{id}/historico` |
-| Registrar inspeção de uma área de risco (Gestor de Segurança; RF09, backlog) | `POST /api/areas-risco/{id}/inspecoes` |
+| Registrar inspeção de uma área de risco (Gestor de Segurança; RF09) | `POST /api/areas-risco/{id}/inspecoes` |
 | Consultar o histórico de inspeções de uma área de risco (Gestor de Segurança) | `GET /api/areas-risco/{id}/inspecoes` |
 | Cadastrar setor físico (Gestor de Segurança) | `POST /api/setores` |
 | Listar e consultar setores físicos | `GET /api/setores` e `GET /api/setores/{id}` |
@@ -152,8 +152,8 @@ O estoque segue a mesma organização: `EpiController` recebe as requisições, 
 | Consultar uma tarefa | `GET /api/tarefas/{id}` |
 | Classificar ou reavaliar a periculosidade de uma tarefa | `PATCH /api/tarefas/{id}/classificacao` |
 | Consultar o histórico de cadastro e classificações de uma tarefa (Gestor de Segurança) | `GET /api/tarefas/{id}/historico` |
-| Associar EPIs obrigatórios a uma tarefa (Gestor de Segurança; RF12, backlog) | `PUT /api/tarefas/{id}/epis` |
-| Consultar EPIs obrigatórios vinculados a uma tarefa (RF12, backlog) | `GET /api/tarefas/{id}/epis` |
+| Associar EPIs obrigatórios a uma tarefa (Gestor de Segurança; RF12) | `PUT /api/tarefas/{id}/epis` |
+| Consultar EPIs obrigatórios vinculados a uma tarefa (RF12) | `GET /api/tarefas/{id}/epis` |
 | Verificar disponibilidade da API | `GET /api/health` |
 
 O módulo de usuários expõe o provisionamento de RF23 em rotas por papel: `POST /api/usuarios/supervisores` é exclusivo do Gestor de Segurança e devolve a senha inicial gerada pelo sistema uma única vez, enquanto `POST /api/usuarios/colaboradores` atende Supervisor e Gestor e não aceita credenciais — uma requisição que envie `senha` ou `perfil` recebe 400. A restrição de papel é declarada no `SecurityConfig`, e não no corpo do controlador. A rota genérica `POST /api/usuarios`, descontinuada, é removida na issue #194; no MVP, o Gestor de Segurança é provisionado apenas por carga inicial, conforme UC13.

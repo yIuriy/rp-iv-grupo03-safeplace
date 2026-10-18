@@ -22,7 +22,7 @@ export const supervisor: SessaoTeste = {
 export const pessoas = {
   gestora: { id: 1, nome: 'Gestora Ana', cpf: '52998224725', dataNascimento: '1980-01-15', email: 'gestora@safeplace.test', perfil: 'GESTOR_SEGURANCA', ativo: true },
   supervisora: { id: 2, nome: 'Joana Ribeiro', cpf: '11144477735', dataNascimento: '1988-04-20', email: 'joana.ribeiro@safeplace.test', perfil: 'SUPERVISOR', ativo: true },
-  colaborador: { id: 3, nome: 'João da Silva', cpf: '12345678909', dataNascimento: '1992-06-18', email: null, perfil: 'COLABORADOR', ativo: true },
+  colaborador: { id: 3, nome: 'João da Silva', cpf: '12345678909', dataNascimento: '1992-06-18', email: null, perfil: null, ativo: true },
 }
 
 /**

@@ -18,11 +18,6 @@ public interface PlanoDeAcaoRepositoryPort {
     PlanoDeAcao salvar(PlanoDeAcao plano);
 
     /**
-     * Salva uma coleção de ações vinculadas a uma ocorrência.
-     */
-    List<PlanoDeAcao> salvarTodos(List<PlanoDeAcao> planos);
-
-    /**
      * Busca uma ação pelo seu identificador (idAcao / idPlano).
      */
     Optional<PlanoDeAcao> buscarPorId(Integer id);

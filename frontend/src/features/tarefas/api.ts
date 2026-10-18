@@ -102,11 +102,6 @@ export async function listarTarefas(signal?: AbortSignal): Promise<Tarefa[]> {
   return data.map(lerTarefa)
 }
 
-export async function buscarTarefaPorId(id: number, signal?: AbortSignal): Promise<Tarefa> {
-  const { data } = await http.get<unknown>(`/tarefas/${id}`, { signal })
-  return lerTarefa(data)
-}
-
 export async function cadastrarTarefa(dados: DadosCadastroTarefa): Promise<Tarefa> {
   const { data } = await http.post<unknown>('/tarefas', dados)
   return lerTarefa(data)

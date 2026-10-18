@@ -23,8 +23,8 @@ const incidente = {
 }
 const setores = [{ id: 1, nome: 'Galpão Principal', descricao: null, localizacao: 'Bloco 1', status: 'ALTO' }]
 const colaboradores = [
-  { id: 7, nome: 'João da Linha', cpf: '12345678909', dataNascimento: '1992-06-18', email: null, perfil: 'COLABORADOR', ativo: true },
-  { id: 8, nome: 'Maria Souza', cpf: '52998224725', dataNascimento: '1990-01-01', email: null, perfil: 'COLABORADOR', ativo: true },
+  { id: 7, nome: 'João da Linha', cpf: '12345678909', dataNascimento: '1992-06-18', email: null, perfil: null, ativo: true },
+  { id: 8, nome: 'Maria Souza', cpf: '52998224725', dataNascimento: '1990-01-01', email: null, perfil: null, ativo: true },
 ]
 
 type Opcoes = { detalheIndisponivel?: number }

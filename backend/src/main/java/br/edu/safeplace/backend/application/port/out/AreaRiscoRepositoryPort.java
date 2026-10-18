@@ -21,8 +21,4 @@ public interface AreaRiscoRepositoryPort {
     List<AreaRisco> listarTodas();
 
     List<AreaRisco> listarPorNivelPerigo(NivelPerigo nivelPerigo);
-
-    default List<AreaRisco> listarPorSetor(Integer setorId) {
-        return List.of();
-    }
 }

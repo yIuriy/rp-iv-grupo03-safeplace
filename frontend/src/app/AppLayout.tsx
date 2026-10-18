@@ -3,7 +3,7 @@
 // e, para o Gestor de Segurança, o contador de novos relatos aguardando triagem no item Ocorrências
 // (UC09, passo 12).
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { matchPath, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { AppShell } from '../shared/layout'
 import { Button, Icon, type IconName } from '../shared/components'
@@ -32,12 +32,13 @@ export function AppLayout() {
   const novosRelatosData = useNovosRelatos(sessao.perfil === 'GESTOR_SEGURANCA')
   const novosRelatos = novosRelatosData.relatos.length
 
-  const navigation = baseNavigation.map(item => {
+  // Memorizada pelo perfil para poder entrar nas dependências do efeito do título sem refazê-lo a cada render.
+  const navigation = useMemo(() => baseNavigation.map(item => {
     if (item.path === '/usuarios' && sessao.perfil === 'SUPERVISOR') {
       return { ...item, label: 'Colaboradores' }
     }
     return item
-  })
+  }), [sessao.perfil])
 
   useEffect(() => {
     const previousTitle = document.title
@@ -51,7 +52,7 @@ export function AppLayout() {
       previousPath.current = pathname
     }
     return () => { document.title = previousTitle }
-  }, [pathname, search])
+  }, [navigation, pathname, search])
 
   return <AppShell roleLabel={`${sessao.nome} · ${rotuloDoPerfil[sessao.perfil]}`}
     sidebarFooter={<PerfilAtalho />}

@@ -54,13 +54,6 @@ public class AreaRiscoJpaAdapter implements AreaRiscoRepositoryPort {
                 .toList();
     }
 
-    @Override
-    public List<AreaRisco> listarPorSetor(Integer setorId) {
-        return areaRiscoRepository.findBySetorId(setorId).stream()
-                .map(this::toDomain)
-                .toList();
-    }
-
     private AreaRiscoEntity toEntity(AreaRisco domain) {
         return new AreaRiscoEntity(
                 domain.getId(),

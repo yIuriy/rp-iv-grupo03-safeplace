@@ -177,6 +177,8 @@ test.describe('Módulo Áreas de Risco (RF05, UC03, RNF11)', () => {
     await dialog.getByLabel(/Código da área/).fill('SET-03')
     await dialog.getByLabel(/Nome da área/).fill('Almoxarifado Químico')
     await dialog.getByLabel(/Grau de perigo/).selectOption('CRITICO')
+    await dialog.getByLabel('Limites físicos ou operacionais *').fill('Galpão 3 - porta corta-fogo')
+    await dialog.getByLabel('Agentes de risco identificados *').fill('Vapores orgânicos, Ruído')
     await dialog.getByLabel('Óculos de proteção (CA 67890)').check()
 
     await dialog.getByRole('button', { name: 'Cadastrar área' }).click()
@@ -189,7 +191,8 @@ test.describe('Módulo Áreas de Risco (RF05, UC03, RNF11)', () => {
       codigo: 'SET-03',
       nome: 'Almoxarifado Químico',
       nivelPerigo: 'CRITICO',
-      agentesRisco: [],
+      agentesRisco: ['Vapores orgânicos', 'Ruído'],
+      limites: 'Galpão 3 - porta corta-fogo',
       episObrigatoriosIds: [2],
     })
 
