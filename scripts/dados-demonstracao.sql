@@ -1,5 +1,5 @@
 -- Dados de demonstração do SafePlace para a apresentação (ambiente local).
--- NÃO é migração Flyway: rode manualmente sobre um banco já migrado (V1 a V31), por exemplo:
+-- NÃO é migração Flyway: rode manualmente sobre um banco já migrado (V1 a V32), por exemplo:
 --   docker exec -i safeplace-postgres-dev psql -U safeplace -d safeplace < scripts/dados-demonstracao.sql
 -- Requer as contas de demonstração da V17 (gestor.demo e supervisor.demo, senha "Senha@123").
 -- Todas as datas são relativas ao dia da execução, para que alertas e atrasos apareçam.
@@ -299,16 +299,16 @@ BEGIN
     ON CONFLICT (ano, mes) DO NOTHING;
 
     -- Acidente 1: fator humano, gravidade ALTA, registrado pelo Supervisor, em triagem
-    INSERT INTO ocorrencias (data_ocorrencia, descricao, data_registro, status_ocorrencia, area_risco_id, colaborador_id, gestor_id)
+    INSERT INTO ocorrencias (data_ocorrencia, descricao, data_registro, status_ocorrencia, area_risco_id, colaborador_id, relator_id)
         VALUES (agora - INTERVAL '6 days', 'Colaborador operou a prensa sem a proteção auricular e sofreu corte no antebraço ao retirar chapa sem luva.',
-                agora - INTERVAL '6 days' + INTERVAL '2 hours', 'EM_TRIAGEM', a_prensa, c_daniela, NULL) RETURNING id_ocorrencia INTO o_ac1;
+                agora - INTERVAL '6 days' + INTERVAL '2 hours', 'EM_TRIAGEM', a_prensa, c_daniela, v_sup) RETURNING id_ocorrencia INTO o_ac1;
     UPDATE sequencias_protocolo_cat SET ultimo_sequencial = ultimo_sequencial + 1
         WHERE ano = EXTRACT(YEAR FROM hoje) AND mes = EXTRACT(MONTH FROM hoje) RETURNING ultimo_sequencial INTO seq_mes;
     INSERT INTO acidentes (id_ocorrencia, causa_raiz, tipo, dano, numero_protocolo, destino, gravidade)
         VALUES (o_ac1, 'FATOR_HUMANO', 'Típico', 'Corte no antebraço esquerdo', format('CAT-%s-%s-%s', to_char(hoje,'YYYY'), to_char(hoje,'MM'), lpad(seq_mes::text, 4, '0')), NULL, 'ALTO');
 
     -- Acidente 2: falha de EPI, gravidade CRÍTICA, registrado pelo Gestor, aberto
-    INSERT INTO ocorrencias (data_ocorrencia, descricao, data_registro, status_ocorrencia, area_risco_id, colaborador_id, gestor_id)
+    INSERT INTO ocorrencias (data_ocorrencia, descricao, data_registro, status_ocorrencia, area_risco_id, colaborador_id, relator_id)
         VALUES (agora - INTERVAL '8 days', 'Talabarte do cinto paraquedista rompeu durante deslocamento na passarela; queda contida pela linha de vida.',
                 agora - INTERVAL '8 days' + INTERVAL '1 hour', 'ABERTA', a_altura, c_ana, v_gestor) RETURNING id_ocorrencia INTO o_ac2;
     UPDATE sequencias_protocolo_cat SET ultimo_sequencial = ultimo_sequencial + 1
@@ -321,26 +321,26 @@ BEGIN
     VALUES (EXTRACT(YEAR FROM hoje - 40)::SMALLINT, EXTRACT(MONTH FROM hoje - 40)::SMALLINT, 1)
     ON CONFLICT (ano, mes) DO UPDATE SET ultimo_sequencial = sequencias_protocolo_cat.ultimo_sequencial + 1
     RETURNING ultimo_sequencial INTO seq_mes;
-    INSERT INTO ocorrencias (data_ocorrencia, descricao, data_registro, status_ocorrencia, area_risco_id, colaborador_id, gestor_id)
+    INSERT INTO ocorrencias (data_ocorrencia, descricao, data_registro, status_ocorrencia, area_risco_id, colaborador_id, relator_id)
         VALUES (agora - INTERVAL '40 days', 'Escorregão no piso molhado da cabine de pintura, com torção no tornozelo.',
-                agora - INTERVAL '40 days' + INTERVAL '3 hours', 'ARQUIVADA', a_cabine, c_gabriel, NULL) RETURNING id_ocorrencia INTO o_ac3;
+                agora - INTERVAL '40 days' + INTERVAL '3 hours', 'ARQUIVADA', a_cabine, c_gabriel, v_sup) RETURNING id_ocorrencia INTO o_ac3;
     INSERT INTO acidentes (id_ocorrencia, causa_raiz, tipo, dano, numero_protocolo, destino, gravidade)
         VALUES (o_ac3, 'OUTRO', 'Típico', 'Torção no tornozelo direito', format('CAT-%s-%s-%s', to_char(hoje - 40,'YYYY'), to_char(hoje - 40,'MM'), lpad(seq_mes::text, 4, '0')), NULL, 'MEDIO');
 
     -- Incidentes (sem protocolo)
-    INSERT INTO ocorrencias (data_ocorrencia, descricao, data_registro, status_ocorrencia, area_risco_id, colaborador_id, gestor_id)
+    INSERT INTO ocorrencias (data_ocorrencia, descricao, data_registro, status_ocorrencia, area_risco_id, colaborador_id, relator_id)
         VALUES (agora - INTERVAL '1 day', 'Painel elétrico encontrado com a porta aberta e sem sinalização durante a ronda.',
-                agora - INTERVAL '1 day' + INTERVAL '30 minutes', 'ABERTA', a_eletr, c_carlos, NULL) RETURNING id_ocorrencia INTO o_in1;
+                agora - INTERVAL '1 day' + INTERVAL '30 minutes', 'ABERTA', a_eletr, c_carlos, v_sup) RETURNING id_ocorrencia INTO o_in1;
     INSERT INTO incidentes (id_ocorrencia, situacao_risco, potencial_dano)
         VALUES (o_in1, 'Exposição a partes energizadas', 'Choque elétrico grave');
-    INSERT INTO ocorrencias (data_ocorrencia, descricao, data_registro, status_ocorrencia, area_risco_id, colaborador_id, gestor_id)
+    INSERT INTO ocorrencias (data_ocorrencia, descricao, data_registro, status_ocorrencia, area_risco_id, colaborador_id, relator_id)
         VALUES (agora - INTERVAL '10 days', 'Chave inglesa caiu da passarela e atingiu o piso a 1 m de um colaborador.',
                 agora - INTERVAL '10 days' + INTERVAL '1 hour', 'EM_TRIAGEM', a_altura, c_bruno, v_gestor) RETURNING id_ocorrencia INTO o_in2;
     INSERT INTO incidentes (id_ocorrencia, situacao_risco, potencial_dano)
         VALUES (o_in2, 'Queda de ferramenta sem amarração', 'Traumatismo craniano');
-    INSERT INTO ocorrencias (data_ocorrencia, descricao, data_registro, status_ocorrencia, area_risco_id, colaborador_id, gestor_id)
+    INSERT INTO ocorrencias (data_ocorrencia, descricao, data_registro, status_ocorrencia, area_risco_id, colaborador_id, relator_id)
         VALUES (agora - INTERVAL '25 days', 'Vazamento de solvente próximo à área de secagem, contido com material absorvente.',
-                agora - INTERVAL '25 days' + INTERVAL '2 hours', 'ARQUIVADA', a_cabine, c_fernanda, NULL) RETURNING id_ocorrencia INTO o_in3;
+                agora - INTERVAL '25 days' + INTERVAL '2 hours', 'ARQUIVADA', a_cabine, c_fernanda, v_sup) RETURNING id_ocorrencia INTO o_in3;
     INSERT INTO incidentes (id_ocorrencia, situacao_risco, potencial_dano)
         VALUES (o_in3, 'Acúmulo de vapores inflamáveis', 'Incêndio na cabine');
 
@@ -358,6 +358,23 @@ BEGIN
         ('CADASTRO', agora - INTERVAL '25 days' + INTERVAL '2 hours', sup_email, 'Registro de Incidente', 'Incidente', o_in3),
         ('ALTERACAO', agora - INTERVAL '24 days', gestor_email, 'Envio de ocorrência para triagem', 'Incidente', o_in3),
         ('ALTERACAO', agora - INTERVAL '15 days', gestor_email, 'Arquivamento de ocorrência', 'Incidente', o_in3);
+
+    -- Notificação ao Gestor de cada relato (UC09, passo 12), como o sistema grava no registro (issue #195).
+    INSERT INTO notificacoes_ocorrencia (ocorrencia_id, tipo_ocorrencia, numero_protocolo_cat, area_nome, mensagem, criada_em)
+    SELECT o.id_ocorrencia,
+           CASE WHEN ac.id_ocorrencia IS NULL THEN 'INCIDENTE' ELSE 'ACIDENTE' END,
+           ac.numero_protocolo,
+           ar.nome,
+           CASE WHEN ac.id_ocorrencia IS NULL
+                THEN format('Novo incidente registrado na área %s. Aguarda triagem.', ar.nome)
+                ELSE format('Novo acidente registrado (protocolo %s) na área %s. Aguarda triagem.', ac.numero_protocolo, ar.nome)
+           END,
+           o.data_registro
+    FROM ocorrencias o
+    JOIN areas_risco ar ON ar.id = o.area_risco_id
+    LEFT JOIN acidentes ac ON ac.id_ocorrencia = o.id_ocorrencia
+    WHERE o.id_ocorrencia IN (o_ac1, o_ac2, o_ac3, o_in1, o_in2, o_in3)
+    ORDER BY o.data_registro;
 
     -- ===================== Planos de ação (RF07, UC07) =====================
     -- Acidente 1 (grave): preventiva com setor responsável e alerta, corretiva concluída

@@ -1,6 +1,6 @@
 /*
- * API REST de ocorrências (UC05/UC09): relato de acidente e incidente, consulta por critérios (issue
- * #128), detalhe, busca por protocolo CAT, edição, triagem, arquivamento e consolidação da CAT.
+ * API REST de ocorrências (UC05/UC09): relato de acidente e incidente, consulta por critérios (issues
+ * #128 e #195), detalhe, busca por protocolo CAT, edição, triagem, arquivamento e consolidação da CAT.
  */
 package br.edu.safeplace.backend.adapters.in.web;
 
@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.RegistrarOcorrenciaUseCase;
+import br.edu.safeplace.backend.domain.ocorrencia.TipoOcorrencia;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -44,21 +45,22 @@ public class OcorrenciaController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Registra uma nova ocorrência (ACIDENTE ou INCIDENTE)")
+    @Operation(summary = "Registra uma nova ocorrência (ACIDENTE ou INCIDENTE)",
+            description = "Área de risco e colaborador envolvido são obrigatórios; no acidente, também gravidade "
+                    + "e causa raiz. Protocolo CAT e relator são definidos pelo servidor, e o plano de ação é "
+                    + "cadastrado à parte pelo Gestor (issue #195).")
     public OcorrenciaResponse criar(@Valid @RequestBody CriarOcorrenciaRequest request) {
-        if ("ACIDENTE".equalsIgnoreCase(request.tipoOcorrencia())) {
-            return OcorrenciaResponse.fromOutputDTO(registrarUseCase.registrarAcidente(request.toAcidenteInputDTO()));
-        }
-        if ("INCIDENTE".equalsIgnoreCase(request.tipoOcorrencia())) {
-            return OcorrenciaResponse.fromOutputDTO(registrarUseCase.registrarIncidente(request.toIncidenteInputDTO()));
-        }
-        throw new IllegalArgumentException("tipoOcorrencia deve ser ACIDENTE ou INCIDENTE.");
+        return switch (TipoOcorrencia.de(request.tipoOcorrencia())) {
+            case ACIDENTE -> OcorrenciaResponse.fromOutputDTO(registrarUseCase.registrarAcidente(request.toAcidenteInputDTO()));
+            case INCIDENTE -> OcorrenciaResponse.fromOutputDTO(registrarUseCase.registrarIncidente(request.toIncidenteInputDTO()));
+        };
     }
 
     @GetMapping
     @Operation(summary = "Lista ocorrências por critérios opcionais (filtradas por relator para Supervisor, visão global para Gestor)",
-            description = "Critérios combináveis (UC05/UC09, issue #128). O período usa a data do fato e inclui os dois dias; "
-                    + "o setor é o da área de risco da ocorrência. Resultado na ordem de registro.")
+            description = "Critérios combináveis (UC05/UC09, issues #128 e #195). O período usa a data do fato e inclui os dois dias; "
+                    + "o setor é o da área de risco da ocorrência. A gravidade só existe em acidentes, então esse critério "
+                    + "deixa os incidentes de fora. Resultado na ordem de registro.")
     public List<OcorrenciaResponse> listar(
             @Parameter(description = "Primeiro dia do período da data do fato (AAAA-MM-DD)", example = "2026-09-01")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
@@ -67,9 +69,13 @@ public class OcorrenciaController {
             @Parameter(description = "Setor físico da área de risco onde o fato ocorreu")
             @RequestParam(required = false) Integer setorId,
             @Parameter(description = "Colaborador envolvido na ocorrência")
-            @RequestParam(required = false) Integer colaboradorId) {
+            @RequestParam(required = false) Integer colaboradorId,
+            @Parameter(description = "Tipo da ocorrência: ACIDENTE ou INCIDENTE", example = "ACIDENTE")
+            @RequestParam(required = false) String tipoOcorrencia,
+            @Parameter(description = "Gravidade do acidente: BAIXO, MEDIO, ALTO ou CRITICO", example = "ALTO")
+            @RequestParam(required = false) String gravidade) {
         return registrarUseCase
-                .listar(new FiltroOcorrenciasDTO(dataInicio, dataFim, setorId, colaboradorId))
+                .listar(FiltroOcorrenciasDTO.deParametros(dataInicio, dataFim, setorId, colaboradorId, tipoOcorrencia, gravidade))
                 .stream()
                 .map(OcorrenciaResponse::fromOutputDTO)
                 .toList();

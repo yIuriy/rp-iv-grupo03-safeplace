@@ -33,7 +33,7 @@ class PlanoDeAcaoTest {
 
     private static Acidente acidente(NivelPerigo gravidade, LocalDateTime dataFato) {
         return new Acidente(10, "Corte na mão", dataFato, dataFato, StatusOcorrencia.ABERTA,
-                null, null, null, null, null, null, null,
+                null, null, null, null, null,
                 CausaRaizAcidente.FATOR_HUMANO, "Corte", "Lesão leve", null, null, gravidade);
     }
 
@@ -44,7 +44,7 @@ class PlanoDeAcaoTest {
     private static Incidente incidente() {
         LocalDateTime fato = LocalDateTime.of(2026, 9, 18, 10, 0);
         return new Incidente(11, "Caixas acima do limite", fato, fato, StatusOcorrencia.ABERTA,
-                null, null, null, null, null, null, null, "Empilhamento irregular", "Queda de material");
+                null, null, null, null, null, "Empilhamento irregular", "Queda de material");
     }
 
     private static PlanoDeAcao acaoCorretiva(Ocorrencia ocorrencia, LocalDate prazo) {
@@ -106,7 +106,7 @@ class PlanoDeAcaoTest {
         @DisplayName("Deve exigir ocorrência registrada e ao menos uma medida")
         void deveExigirOcorrenciaEMedida() {
             Acidente naoRegistrado = new Acidente(null, "Corte", LocalDateTime.of(2026, 9, 18, 10, 0), null,
-                    StatusOcorrencia.ABERTA, null, null, null, null, null, null, null,
+                    StatusOcorrencia.ABERTA, null, null, null, null, null,
                     CausaRaizAcidente.OUTRO, null, null, null, null, NivelPerigo.BAIXO);
 
             assertThatThrownBy(() -> acaoCorretiva(naoRegistrado, HOJE))

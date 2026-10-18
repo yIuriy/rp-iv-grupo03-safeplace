@@ -74,13 +74,13 @@ class PlanoDeAcaoUseCaseTest {
 
         ocorrenciaGrave = new Acidente(
                 1, "Amputacao de dedo", LocalDateTime.now().minusDays(1), LocalDateTime.now(),
-                StatusOcorrencia.ABERTA, List.of(), colaborador, List.of(), null, null, "Prensa",
+                StatusOcorrencia.ABERTA, colaborador, null, null, "Prensa",
                 null, CausaRaizAcidente.FALHA_EPI, "Amputação", "Grave", "CAT-2026-09-0001", "Hospital", NivelPerigo.CRITICO
         );
 
         ocorrenciaLeve = new Acidente(
                 2, "Escoriacao no braco", LocalDateTime.now().minusDays(1), LocalDateTime.now(),
-                StatusOcorrencia.ABERTA, List.of(), colaborador, List.of(), null, null, "Pátio",
+                StatusOcorrencia.ABERTA, colaborador, null, null, "Pátio",
                 null, CausaRaizAcidente.OUTRO, "Escoriação", "Leve", "CAT-2026-09-0002", "Ambulatório", NivelPerigo.BAIXO
         );
     }

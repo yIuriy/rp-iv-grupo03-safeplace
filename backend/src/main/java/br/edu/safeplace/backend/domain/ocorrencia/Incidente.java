@@ -1,11 +1,9 @@
 package br.edu.safeplace.backend.domain.ocorrencia;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
-import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
 public class Incidente extends Ocorrencia {
     private final String situacaoRisco;
@@ -17,17 +15,15 @@ public class Incidente extends Ocorrencia {
             LocalDateTime dataOcorrencia,
             LocalDateTime dataRegistro,
             StatusOcorrencia statusOcorrencia,
-            List<String> testemunhas,
             Colaborador colaborador,
-            List<String> midias,
             AreaRisco area,
-            GestorDeSeguranca gestor,
+            Colaborador relator,
             String local,
             PlanoDeAcao planoDeAcao,
             String situacaoRisco,
             String potencialDano) {
         super(idOcorrencia, descricao, dataOcorrencia, dataRegistro, statusOcorrencia,
-                testemunhas, colaborador, midias, area, gestor, local, planoDeAcao);
+                colaborador, area, relator, local, planoDeAcao);
 
         if (situacaoRisco == null || situacaoRisco.isBlank()) {
             throw new IllegalArgumentException("Situação de risco é obrigatória para incidentes.");
@@ -40,43 +36,12 @@ public class Incidente extends Ocorrencia {
         this.potencialDano = potencialDano.trim();
     }
 
-    /**
-     * Construtor de compatibilidade.
-     */
-    public Incidente(
-            Integer idOcorrencia,
-            LocalDateTime dataOcorrencia,
-            String local,
-            String descricao,
-            PlanoDeAcao planoDeAcao,
-            String situacaoRisco,
-            String potencialDano) {
-        this(
-                idOcorrencia,
-                descricao,
-                dataOcorrencia,
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                null,
-                null,
-                null,
-                null,
-                null,
-                local,
-                planoDeAcao,
-                situacaoRisco,
-                potencialDano
-        );
-    }
-
     public static Incidente novo(
             String descricao,
             LocalDateTime dataOcorrencia,
             AreaRisco area,
             Colaborador colaborador,
-            GestorDeSeguranca gestor,
-            List<String> testemunhas,
-            List<String> midias,
+            Colaborador relator,
             String situacaoRisco,
             String potencialDano) {
         return new Incidente(
@@ -85,31 +50,11 @@ public class Incidente extends Ocorrencia {
                 dataOcorrencia,
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                testemunhas,
                 colaborador,
-                midias,
                 area,
-                gestor,
-                area != null ? area.getNome() : null,
+                relator,
                 null,
-                situacaoRisco,
-                potencialDano
-        );
-    }
-
-    public static Incidente novo(
-            LocalDateTime dataOcorrencia,
-            String local,
-            String descricao,
-            PlanoDeAcao planoDeAcao,
-            String situacaoRisco,
-            String potencialDano) {
-        return new Incidente(
                 null,
-                dataOcorrencia,
-                local,
-                descricao,
-                planoDeAcao,
                 situacaoRisco,
                 potencialDano
         );

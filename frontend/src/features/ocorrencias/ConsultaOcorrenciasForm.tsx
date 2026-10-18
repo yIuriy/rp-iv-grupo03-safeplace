@@ -1,11 +1,11 @@
-// Formulário de consulta de ocorrências (UC05/UC09, issue #128). Período da data do fato, setor e
-// colaborador envolvido vão ao servidor; texto, tipo e situação refinam a lista já recebida. Período
-// invertido é barrado antes do envio, com foco no campo a corrigir.
+// Formulário de consulta de ocorrências (UC05/UC09, issues #128 e #195). Período da data do fato, setor,
+// colaborador envolvido, tipo e gravidade vão ao servidor; texto e situação refinam a lista já recebida.
+// Período invertido é barrado antes do envio, com foco no campo a corrigir.
 
 import { useState, type FormEvent } from 'react'
 import { Button, SearchInput, Select, TextField } from '../../shared/components'
 import type { Consulta } from '../../shared/api/useConsulta'
-import { descreverSetor, type Setor } from '../areas-risco/api'
+import { descreverSetor, niveisPerigo, rotuloNivelPerigo, type Setor } from '../areas-risco/api'
 import type { Usuario } from '../usuarios/api'
 import { hojeIso } from '../usuarios/formatos'
 import { rotuloStatusOcorrencia, type StatusOcorrencia } from './api'
@@ -45,6 +45,10 @@ export function ConsultaOcorrenciasForm({ setores, colaboradores, aoConsultar, a
     <Select label="Tipo" name="tipoOcorrencia" defaultValue="">
       <option value="">Todos os tipos</option>
       {(['ACIDENTE', 'INCIDENTE'] as const).map(tipo => <option key={tipo} value={tipo}>{rotuloTipoOcorrencia[tipo]}</option>)}
+    </Select>
+    <Select label="Gravidade" name="gravidade" defaultValue="" helper="Só acidentes têm gravidade.">
+      <option value="">Todas as gravidades</option>
+      {niveisPerigo.map(nivel => <option key={nivel} value={nivel}>{rotuloNivelPerigo[nivel]}</option>)}
     </Select>
     <Select label="Situação" name="statusOcorrencia" defaultValue="">
       <option value="">Todas as situações</option>

@@ -1,6 +1,7 @@
 /*
  * Testes unitários dos critérios de consulta de ocorrências (issue #128): período inclusivo pela data
- * do fato, setor alcançado pela área de risco, colaborador envolvido, combinação e período invertido.
+ * do fato, setor alcançado pela área de risco, colaborador envolvido, combinação e período invertido;
+ * tipo e gravidade (issue #195).
  */
 package br.edu.safeplace.backend.application.dto.input;
 
@@ -16,9 +17,13 @@ import org.junit.jupiter.api.Test;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
+import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
+import br.edu.safeplace.backend.domain.ocorrencia.TipoOcorrencia;
+import br.edu.safeplace.backend.domain.ocorrencia.exception.DadosOcorrenciaInvalidosException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.DataOcorrenciaInvalidaException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 
@@ -34,7 +39,7 @@ class FiltroOcorrenciasDTOTest {
 
     private static Ocorrencia incidente(LocalDateTime dataFato, AreaRisco area, Colaborador colaborador) {
         return new Incidente(1, "Piso escorregadio", dataFato, LocalDateTime.of(2026, 10, 1, 8, 0),
-                StatusOcorrencia.ABERTA, List.of(), colaborador, List.of(), area, null, null, null,
+                StatusOcorrencia.ABERTA, colaborador, area, null, null, null,
                 "Óleo no corredor", "Queda");
     }
 
@@ -92,5 +97,51 @@ class FiltroOcorrenciasDTOTest {
                 .hasMessage("A data inicial do período não pode ser posterior à data final.");
         assertThat(new FiltroOcorrenciasDTO(SETEMBRO_1, SETEMBRO_1, null, null).fimExclusivo())
                 .isEqualTo(LocalDateTime.of(2026, 9, 2, 0, 0));
+    }
+
+    private static Ocorrencia acidente(NivelPerigo gravidade) {
+        LocalDateTime fato = LocalDateTime.of(2026, 9, 10, 9, 0);
+        return new Acidente(2, "Corte na mão", fato, fato, StatusOcorrencia.ABERTA, JOAO, AREA_DO_SETOR_3, null,
+                null, null, CausaRaizAcidente.FATOR_HUMANO, null, null, null, null, gravidade);
+    }
+
+    @Test
+    @DisplayName("Tipo separa acidentes de incidentes (issue #195)")
+    void tipoDaOcorrencia() {
+        Ocorrencia incidente = incidente(LocalDateTime.of(2026, 9, 10, 9, 0), AREA_DO_SETOR_3, JOAO);
+        FiltroOcorrenciasDTO soAcidentes = new FiltroOcorrenciasDTO(null, null, null, null, TipoOcorrencia.ACIDENTE, null);
+        FiltroOcorrenciasDTO soIncidentes = new FiltroOcorrenciasDTO(null, null, null, null, TipoOcorrencia.INCIDENTE, null);
+
+        assertThat(soAcidentes.aceita(acidente(NivelPerigo.BAIXO))).isTrue();
+        assertThat(soAcidentes.aceita(incidente)).isFalse();
+        assertThat(soIncidentes.aceita(incidente)).isTrue();
+        assertThat(soIncidentes.aceita(acidente(NivelPerigo.BAIXO))).isFalse();
+    }
+
+    @Test
+    @DisplayName("Gravidade compara a do acidente e deixa os incidentes de fora (issue #195)")
+    void gravidadeDoAcidente() {
+        FiltroOcorrenciasDTO graves = new FiltroOcorrenciasDTO(null, null, null, null, null, NivelPerigo.ALTO);
+
+        assertThat(graves.aceita(acidente(NivelPerigo.ALTO))).isTrue();
+        assertThat(graves.aceita(acidente(NivelPerigo.CRITICO))).isFalse();
+        assertThat(graves.aceita(incidente(LocalDateTime.of(2026, 9, 10, 9, 0), AREA_DO_SETOR_3, JOAO))).isFalse();
+    }
+
+    @Test
+    @DisplayName("Parâmetros textuais da API viram critérios; vazios são ignorados e inválidos recusados")
+    void parametrosDaApi() {
+        FiltroOcorrenciasDTO filtro = FiltroOcorrenciasDTO.deParametros(null, null, null, null, "acidente", "alto");
+        assertThat(filtro.tipoOcorrencia()).isEqualTo(TipoOcorrencia.ACIDENTE);
+        assertThat(filtro.gravidade()).isEqualTo(NivelPerigo.ALTO);
+
+        FiltroOcorrenciasDTO vazio = FiltroOcorrenciasDTO.deParametros(null, null, null, null, " ", "");
+        assertThat(vazio.tipoOcorrencia()).isNull();
+        assertThat(vazio.gravidade()).isNull();
+
+        assertThatThrownBy(() -> FiltroOcorrenciasDTO.deParametros(null, null, null, null, "OUTRO", null))
+                .isInstanceOf(DadosOcorrenciaInvalidosException.class);
+        assertThatThrownBy(() -> FiltroOcorrenciasDTO.deParametros(null, null, null, null, null, "GRAVE"))
+                .isInstanceOf(DadosOcorrenciaInvalidosException.class);
     }
 }

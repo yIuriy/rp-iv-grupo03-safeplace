@@ -17,7 +17,7 @@ import {
   rotuloStatusOcorrencia,
   type OcorrenciaResumo,
 } from './api'
-import { descreverCausaRaiz, descreverGravidade, rotuloTipoOcorrencia, textoOuPadrao, tomDoStatus } from './formatos'
+import { descreverCausaRaiz, descreverGravidade, descreverRelator, rotuloTipoOcorrencia, textoOuPadrao, tomDoStatus } from './formatos'
 import { PlanoAcaoPainel } from './PlanoAcaoPainel'
 
 export type AbaDetalhe = 'dados' | 'plano'
@@ -148,7 +148,7 @@ function Dados({ ocorrencia }: { ocorrencia: OcorrenciaResumo }) {
     <div><dt>Data do registro</dt><dd>{ocorrencia.dataRegistro ? formatarDataHora(ocorrencia.dataRegistro) : 'Não informada'}</dd></div>
     <div><dt>Área de risco</dt><dd>{textoOuPadrao(ocorrencia.areaNome, 'Não vinculada')}</dd></div>
     <div><dt>Colaborador envolvido</dt><dd>{textoOuPadrao(ocorrencia.colaboradorNome)}</dd></div>
-    {ocorrencia.gestorNome && <div><dt>Gestor de Segurança</dt><dd>{ocorrencia.gestorNome}</dd></div>}
+    {ocorrencia.relatorNome && <div><dt>Registrado por</dt><dd>{descreverRelator(ocorrencia)}</dd></div>}
     {acidente && <>
       <div><dt>Protocolo CAT</dt><dd>{textoOuPadrao(ocorrencia.numeroProtocoloCAT, 'Ainda não consolidado')}</dd></div>
       <div><dt>Gravidade</dt><dd>{descreverGravidade(ocorrencia.gravidade)}</dd></div>

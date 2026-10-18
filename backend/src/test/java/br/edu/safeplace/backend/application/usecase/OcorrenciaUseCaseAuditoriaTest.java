@@ -16,7 +16,6 @@ import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
-import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -56,6 +55,16 @@ class OcorrenciaUseCaseAuditoriaTest {
 
     private OcorrenciaUseCase useCase;
 
+    private final AreaRisco area = new AreaRisco(10, "AR-10", "Galpão 1", null, NivelPerigo.ALTO, 1,
+            List.of(), null, List.of());
+    private final Colaborador colaborador = new Colaborador(20, "11122233344", "Carlos",
+            LocalDate.of(1995, 2, 2), null, true, null, null);
+
+    private void stubAreaEColaborador() {
+        when(areaRiscoRepository.buscarPorId(10)).thenReturn(Optional.of(area));
+        when(usuarioRepository.buscarPorId(20)).thenReturn(Optional.of(colaborador));
+    }
+
     @BeforeEach
     void setUp() {
         useCase = new OcorrenciaUseCase(repository, areaRiscoRepository, usuarioRepository, logAuditoriaRepositoryPort);
@@ -72,16 +81,17 @@ class OcorrenciaUseCaseAuditoriaTest {
     @Test
     @DisplayName("Deve registrar log de auditoria ao registrar Acidente")
     void deveRegistrarAuditoriaAoRegistrarAcidente() {
+        stubAreaEColaborador();
         RegistrarAcidenteInputDTO input = new RegistrarAcidenteInputDTO(
                 LocalDateTime.of(2026, 9, 20, 10, 0),
-                "Galpão 1",
                 "Queda de nível",
-                null,
                 "FALHA_EPI",
+                "ALTO",
                 "Fratura",
                 "Fratura no braço",
-                null,
-                "Hospital"
+                "Hospital",
+                10,
+                20
         );
 
         Acidente salvo = new Acidente(
@@ -90,12 +100,10 @@ class OcorrenciaUseCaseAuditoriaTest {
                 LocalDateTime.of(2026, 9, 20, 10, 0),
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                List.of(),
+                colaborador,
+                area,
                 null,
-                List.of(),
                 null,
-                null,
-                "Galpão 1",
                 null,
                 CausaRaizAcidente.FALHA_EPI,
                 "Fratura",
@@ -124,13 +132,14 @@ class OcorrenciaUseCaseAuditoriaTest {
     @Test
     @DisplayName("Deve registrar log de auditoria ao registrar Incidente")
     void deveRegistrarAuditoriaAoRegistrarIncidente() {
+        stubAreaEColaborador();
         RegistrarIncidenteInputDTO input = new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 20, 11, 0),
-                "Setor Solda",
                 "Quase acidente por fagulha",
-                null,
                 "Vazamento de faíscas próximo a inflamáveis",
-                "Incêndio"
+                "Incêndio",
+                10,
+                20
         );
 
         Incidente salvo = new Incidente(
@@ -139,12 +148,10 @@ class OcorrenciaUseCaseAuditoriaTest {
                 LocalDateTime.of(2026, 9, 20, 11, 0),
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                List.of(),
+                colaborador,
+                area,
                 null,
-                List.of(),
                 null,
-                null,
-                "Setor Solda",
                 null,
                 "Vazamento de faíscas",
                 "Incêndio"
@@ -170,8 +177,8 @@ class OcorrenciaUseCaseAuditoriaTest {
     void deveRegistrarAuditoriaAoEnviarParaTriagem() {
         Acidente acidente = new Acidente(
                 3, "Descricao", LocalDateTime.now(), LocalDateTime.now(),
-                StatusOcorrencia.ABERTA, List.of(), null, List.of(), null, null,
-                "Local", null, CausaRaizAcidente.OUTRO, null, null, null, null, null
+                StatusOcorrencia.ABERTA, colaborador, area, null,
+                null, null, CausaRaizAcidente.OUTRO, null, null, null, null, NivelPerigo.BAIXO
         );
         when(repository.buscarPorId(3)).thenReturn(Optional.of(acidente));
         when(repository.salvarAcidente(any(Acidente.class))).thenReturn(acidente);
@@ -194,8 +201,8 @@ class OcorrenciaUseCaseAuditoriaTest {
     void deveRegistrarAuditoriaAoArquivar() {
         Acidente acidente = new Acidente(
                 4, "Descricao", LocalDateTime.now(), LocalDateTime.now(),
-                StatusOcorrencia.EM_TRIAGEM, List.of(), null, List.of(), null, null,
-                "Local", null, CausaRaizAcidente.OUTRO, null, null, null, null, null
+                StatusOcorrencia.EM_TRIAGEM, colaborador, area, null,
+                null, null, CausaRaizAcidente.OUTRO, null, null, null, null, NivelPerigo.BAIXO
         );
         when(repository.buscarPorId(4)).thenReturn(Optional.of(acidente));
         when(repository.salvarAcidente(any(Acidente.class))).thenReturn(acidente);
@@ -218,8 +225,8 @@ class OcorrenciaUseCaseAuditoriaTest {
     void deveRegistrarAuditoriaAoConsolidarCAT() {
         Acidente acidente = new Acidente(
                 5, "Descricao", LocalDateTime.now(), LocalDateTime.now(),
-                StatusOcorrencia.ABERTA, List.of(), null, List.of(), null, null,
-                "Local", null, CausaRaizAcidente.OUTRO, null, null, null, null, null
+                StatusOcorrencia.ABERTA, colaborador, area, null,
+                null, null, CausaRaizAcidente.OUTRO, null, null, null, null, NivelPerigo.BAIXO
         );
         when(repository.buscarAcidentePorId(5)).thenReturn(Optional.of(acidente));
         when(repository.proximoSequencialCAT(anyInt(), anyInt())).thenReturn(1L);

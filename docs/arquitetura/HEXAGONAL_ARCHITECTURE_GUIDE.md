@@ -184,7 +184,6 @@ public class OcorrenciaController {
 ```java
 public record RegistrarAcidenteInputDTO(
         @NotNull LocalDateTime dataOcorrencia,
-        String local,
         @NotBlank String descricao,
         String acaoImediata,
         @NotBlank String causaRaiz,
@@ -193,9 +192,9 @@ public record RegistrarAcidenteInputDTO(
         Integer afastamentoDias,
         String destino,
         @NotNull NivelPerigo gravidade,
-        Integer areaRiscoId,
-        @NotNull Integer colaboradorId,
-        Integer gestorId
+        @NotNull Integer areaRiscoId,
+        @NotNull Integer colaboradorId
+        // Protocolo CAT e relator são definidos pelo servidor (issue #195).
 ) {}
 ```
 

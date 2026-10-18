@@ -1,6 +1,7 @@
 /*
  * Testes do OcorrenciaController com MockMvc: relato, consulta por critérios, detalhe, protocolo,
- * triagem e erros, com os casos de uso simulados.
+ * triagem e erros, com os casos de uso simulados. Inclui as regras do relato da issue #195: área e
+ * colaborador obrigatórios, protocolo, relator e plano fora do request, filtros de tipo e gravidade.
  */
 package br.edu.safeplace.backend.adapters.in.web;
 
@@ -12,7 +13,10 @@ import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.RegistrarOcorrenciaUseCase;
 import br.edu.safeplace.backend.config.SecurityConfig;
+import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
+import br.edu.safeplace.backend.domain.ocorrencia.TipoOcorrencia;
+import br.edu.safeplace.backend.domain.ocorrencia.exception.DadosOcorrenciaInvalidosException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.TransicaoStatusInvalidaException;
 import org.junit.jupiter.api.DisplayName;
@@ -28,7 +32,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -75,7 +82,8 @@ class OcorrenciaControllerTest {
                 2,
                 "Joao",
                 3,
-                "Gestor Seguranca"
+                "Gestor Seguranca",
+                "GESTOR_SEGURANCA"
         );
     }
 
@@ -91,9 +99,12 @@ class OcorrenciaControllerTest {
                     "tipoOcorrencia": "ACIDENTE",
                     "dataOcorrencia": "2026-09-10T10:00:00",
                     "descricao": "Queimadura por fagulha",
+                    "areaId": 1,
+                    "colaboradorId": 2,
                     "tipo": "Queimadura",
                     "dano": "Leve",
                     "causaRaiz": "FALHA_EPI",
+                    "gravidade": "MEDIO",
                     "destino": "Ambulatorio"
                 }
                 """;
@@ -105,7 +116,103 @@ class OcorrenciaControllerTest {
                 .andExpect(jsonPath("$.idOcorrencia").value(1))
                 .andExpect(jsonPath("$.tipoOcorrencia").value("ACIDENTE"))
                 .andExpect(jsonPath("$.statusOcorrencia").value("ABERTA"))
-                .andExpect(jsonPath("$.numeroProtocoloCAT").value("CAT-2026-09-0001"));
+                .andExpect(jsonPath("$.numeroProtocoloCAT").value("CAT-2026-09-0001"))
+                .andExpect(jsonPath("$.relatorId").value(3))
+                .andExpect(jsonPath("$.relatorNome").value("Gestor Seguranca"))
+                .andExpect(jsonPath("$.relatorPerfil").value("GESTOR_SEGURANCA"));
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("Protocolo, gestor, plano e local enviados pelo cliente não chegam ao caso de uso (issue #195)")
+    void camposDefinidosPeloServidorNaoChegamAoCasoDeUso() throws Exception {
+        when(registrarUseCase.registrarAcidente(any(RegistrarAcidenteInputDTO.class)))
+                .thenReturn(acidenteDTO(1, "ABERTA", "CAT-2026-09-0001"));
+
+        mockMvc.perform(post("/api/ocorrencias")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"tipoOcorrencia":"ACIDENTE","dataOcorrencia":"2026-09-10T10:00:00",
+                                 "descricao":"Queimadura por fagulha","areaId":1,"colaboradorId":2,
+                                 "causaRaiz":"FALHA_EPI","gravidade":"MEDIO",
+                                 "numeroProtocolo":"CAT-2026-09-9999","gestorId":99,"local":"Texto livre",
+                                 "planoDeAcao":{"medidasCorretivas":"Isolar","prazo":"2026-10-01"}}
+                                """))
+                .andExpect(status().isCreated());
+
+        org.mockito.ArgumentCaptor<RegistrarAcidenteInputDTO> captor =
+                org.mockito.ArgumentCaptor.forClass(RegistrarAcidenteInputDTO.class);
+        verify(registrarUseCase).registrarAcidente(captor.capture());
+        assertThat(captor.getValue()).isEqualTo(new RegistrarAcidenteInputDTO(
+                LocalDateTime.of(2026, 9, 10, 10, 0), "Queimadura por fagulha", "FALHA_EPI", "MEDIO",
+                null, null, null, 1, 2));
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("Relato sem área de risco responde 400 sem chamar o caso de uso (issue #195)")
+    void relatoSemAreaDeveResponder400() throws Exception {
+        mockMvc.perform(post("/api/ocorrencias")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"tipoOcorrencia":"INCIDENTE","dataOcorrencia":"2026-09-10T10:00:00",
+                                 "descricao":"Oleo no piso","colaboradorId":2,
+                                 "situacaoRisco":"Piso escorregadio","potencialDano":"Queda"}
+                                """))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(registrarUseCase);
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("Relato sem colaborador envolvido responde 400 sem chamar o caso de uso (issue #195)")
+    void relatoSemColaboradorDeveResponder400() throws Exception {
+        mockMvc.perform(post("/api/ocorrencias")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"tipoOcorrencia":"INCIDENTE","dataOcorrencia":"2026-09-10T10:00:00",
+                                 "descricao":"Oleo no piso","areaId":1,
+                                 "situacaoRisco":"Piso escorregadio","potencialDano":"Queda"}
+                                """))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(registrarUseCase);
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("Tipo de ocorrência desconhecido responde 400")
+    void tipoDesconhecidoDeveResponder400() throws Exception {
+        mockMvc.perform(post("/api/ocorrencias")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"tipoOcorrencia":"QUASE_ACIDENTE","dataOcorrencia":"2026-09-10T10:00:00",
+                                 "descricao":"Oleo no piso","areaId":1,"colaboradorId":2}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Tipo de ocorrência inválido: QUASE_ACIDENTE. Use ACIDENTE ou INCIDENTE."));
+
+        verifyNoInteractions(registrarUseCase);
+    }
+
+    @Test
+    @WithMockUser(roles = "SUPERVISOR")
+    @DisplayName("Gravidade ou causa raiz inválidas recusadas no caso de uso respondem 400 (issue #195)")
+    void gravidadeInvalidaDeveResponder400() throws Exception {
+        when(registrarUseCase.registrarAcidente(any(RegistrarAcidenteInputDTO.class)))
+                .thenThrow(new DadosOcorrenciaInvalidosException(
+                        "Gravidade inválida: GRAVE. Use BAIXO, MEDIO, ALTO ou CRITICO."));
+
+        mockMvc.perform(post("/api/ocorrencias")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"tipoOcorrencia":"ACIDENTE","dataOcorrencia":"2026-09-10T10:00:00",
+                                 "descricao":"Corte","areaId":1,"colaboradorId":2,
+                                 "causaRaiz":"FALHA_EPI","gravidade":"GRAVE"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Gravidade inválida: GRAVE. Use BAIXO, MEDIO, ALTO ou CRITICO."));
     }
 
     @Test
@@ -118,6 +225,33 @@ class OcorrenciaControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].idOcorrencia").value(1))
                 .andExpect(jsonPath("$[0].tipoOcorrencia").value("ACIDENTE"));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Filtros de tipo e gravidade chegam ao caso de uso (issue #195)")
+    void deveRepassarFiltrosDeTipoEGravidade() throws Exception {
+        when(registrarUseCase.listar(any(FiltroOcorrenciasDTO.class))).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/ocorrencias")
+                        .param("tipoOcorrencia", "acidente")
+                        .param("gravidade", "ALTO")
+                        .param("setorId", "3"))
+                .andExpect(status().isOk());
+
+        verify(registrarUseCase).listar(new FiltroOcorrenciasDTO(null, null, 3, null, TipoOcorrencia.ACIDENTE, NivelPerigo.ALTO));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Filtro de gravidade ou tipo inválido responde 400")
+    void filtroInvalidoDeveResponder400() throws Exception {
+        mockMvc.perform(get("/api/ocorrencias").param("gravidade", "GRAVE"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/ocorrencias").param("tipoOcorrencia", "OUTRO"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(registrarUseCase);
     }
 
     @Test
@@ -236,6 +370,22 @@ class OcorrenciaControllerTest {
 
     @Test
     @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Edição sem área ou colaborador responde 400 (issue #195)")
+    void edicaoSemAreaOuColaboradorDeveResponder400() throws Exception {
+        mockMvc.perform(put("/api/ocorrencias/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"dataOcorrencia\":\"2026-09-10T10:00:00\",\"descricao\":\"Texto\",\"colaboradorId\":2}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(put("/api/ocorrencias/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"dataOcorrencia\":\"2026-09-10T10:00:00\",\"descricao\":\"Texto\",\"areaId\":1}"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(gerenciarUseCase);
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("Edição de ocorrência arquivada responde 400 com a mensagem do domínio")
     void edicaoDeArquivadaDeveResponder400() throws Exception {
         when(gerenciarUseCase.atualizar(org.mockito.ArgumentMatchers.eq(1), any(AtualizarOcorrenciaInputDTO.class)))
@@ -243,7 +393,7 @@ class OcorrenciaControllerTest {
 
         mockMvc.perform(put("/api/ocorrencias/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"dataOcorrencia\":\"2026-09-10T10:00:00\",\"descricao\":\"Texto\"}"))
+                        .content("{\"dataOcorrencia\":\"2026-09-10T10:00:00\",\"descricao\":\"Texto\",\"areaId\":1,\"colaboradorId\":2}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Ocorrência arquivada não pode ser editada."));
     }

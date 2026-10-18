@@ -21,7 +21,7 @@ public class AcidenteEntity extends OcorrenciaEntity {
     private String destino;
 
     @Column(name = "gravidade", nullable = false, length = 20)
-    private String gravidade = "BAIXO";
+    private String gravidade;
 
     protected AcidenteEntity() {
     }
@@ -33,7 +33,7 @@ public class AcidenteEntity extends OcorrenciaEntity {
             String statusOcorrencia,
             AreaRiscoEntity area,
             ColaboradorEntidade colaborador,
-            GestorDeSegurancaEntidade gestor,
+            ColaboradorEntidade relator,
             String local,
             String descricao,
             PlanoDeAcaoEntity planoDeAcao,
@@ -43,21 +43,15 @@ public class AcidenteEntity extends OcorrenciaEntity {
             String numeroProtocolo,
             String destino,
             String gravidade) {
-        super(idOcorrencia, dataOcorrencia, dataRegistro, statusOcorrencia, area, colaborador, gestor, local, descricao, planoDeAcao);
+        super(idOcorrencia, dataOcorrencia, dataRegistro, statusOcorrencia, area, colaborador, relator, local, descricao, planoDeAcao);
         this.causaRaiz = causaRaiz;
         this.tipo = tipo;
         this.dano = dano;
         this.numeroProtocolo = numeroProtocolo;
         this.destino = destino;
-        this.gravidade = gravidade != null ? gravidade : "BAIXO";
+        this.gravidade = gravidade;
     }
 
-    public AcidenteEntity(Integer idOcorrencia, LocalDateTime dataOcorrencia, String local, String descricao,
-            PlanoDeAcaoEntity planoDeAcao, String causaRaiz, String tipo, String dano,
-            String numeroProtocolo, String destino) {
-        this(idOcorrencia, dataOcorrencia, LocalDateTime.now(), "ABERTA", null, null, null, local, descricao,
-                planoDeAcao, causaRaiz, tipo, dano, numeroProtocolo, destino, "BAIXO");
-    }
 
     public String getCausaRaiz() {
         return causaRaiz;

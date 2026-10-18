@@ -94,6 +94,9 @@ public class SecurityConfig {
                                 .hasRole("GESTOR_SEGURANCA")
                         .requestMatchers("/api/ocorrencias/**")
                                 .hasRole("GESTOR_SEGURANCA")
+                        // UC09, passo 12 (#195): notificações de novos relatos são do Gestor de Segurança
+                        .requestMatchers("/api/notificacoes", "/api/notificacoes/**")
+                                .hasRole("GESTOR_SEGURANCA")
                         // UC12 (#106): Supervisor é o ator principal e o Gestor o secundário do empréstimo
                         .requestMatchers("/api/emprestimos/**").hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         // Issue #114: o historico de alteracoes de areas e tarefas e consulta do Gestor de

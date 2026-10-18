@@ -28,6 +28,7 @@ import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
+import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
@@ -115,13 +116,13 @@ class OcorrenciaConsultaUseCaseTest {
     }
 
     private static Acidente acidente(int id, LocalDateTime fato, String protocolo) {
-        return new Acidente(id, "Corte na mão", fato, fato.plusHours(1), StatusOcorrencia.ABERTA, List.of(), null,
-                List.of(), null, null, "Linha 1", null, CausaRaizAcidente.OUTRO, null, null, protocolo, null, null);
+        return new Acidente(id, "Corte na mão", fato, fato.plusHours(1), StatusOcorrencia.ABERTA, null, null,
+                null, "Linha 1", null, CausaRaizAcidente.OUTRO, null, null, protocolo, null, NivelPerigo.BAIXO);
     }
 
     private static Incidente incidente(int id, LocalDateTime fato) {
-        return new Incidente(id, "Piso escorregadio", fato, fato.plusHours(1), StatusOcorrencia.ABERTA, List.of(), null,
-                List.of(), null, null, null, null, "Óleo no corredor", "Queda");
+        return new Incidente(id, "Piso escorregadio", fato, fato.plusHours(1), StatusOcorrencia.ABERTA, null, null,
+                null, null, null, "Óleo no corredor", "Queda");
     }
 
     /** Repositório somente leitura: a consulta filtrada usa a implementação padrão da porta. */

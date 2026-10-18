@@ -42,10 +42,9 @@ function normalizar(texto: string): string {
     .toLocaleLowerCase('pt-BR')
 }
 
-function refinar(itens: OcorrenciaResumo[], { texto, tipo, status }: CriteriosLocais): OcorrenciaResumo[] {
+function refinar(itens: OcorrenciaResumo[], { texto, status }: CriteriosLocais): OcorrenciaResumo[] {
   const termo = normalizar(texto)
   return itens.filter(item => {
-    if (tipo && item.tipoOcorrencia !== tipo) return false
     if (status && item.statusOcorrencia !== status) return false
     if (!termo) return true
     return normalizar(`${item.idOcorrencia} ${item.descricao} ${item.numeroProtocoloCAT ?? ''} ${item.colaboradorNome ?? ''} ${item.areaNome ?? ''}`)

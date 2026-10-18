@@ -37,12 +37,10 @@ class IncidenteTest {
                 dataFato,
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                List.of("Beatriz"),
                 colaborador,
-                List.of("palete_torto.jpg"),
                 area,
                 gestor,
-                "Corredor 4",
+                null,
                 null,
                 "Paletes empilhados além da altura máxima permitida",
                 "Esmagamento e fraturas múltiplas"
@@ -53,6 +51,7 @@ class IncidenteTest {
         assertThat(incidente.getSituacaoRisco()).isEqualTo("Paletes empilhados além da altura máxima permitida");
         assertThat(incidente.getPotencialDano()).isEqualTo("Esmagamento e fraturas múltiplas");
         assertThat(incidente.getStatusOcorrencia()).isEqualTo(StatusOcorrencia.ABERTA);
+        assertThat(incidente.getRelator()).isEqualTo(gestor);
     }
 
     @ParameterizedTest
@@ -66,7 +65,7 @@ class IncidenteTest {
                 LocalDateTime.now().minusHours(1),
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                null, null, null, null, null, null, null,
+                null, null, null, null, null,
                 situacaoInvalida,
                 "Potencial de corte"
         )).isInstanceOf(IllegalArgumentException.class)
@@ -84,7 +83,7 @@ class IncidenteTest {
                 LocalDateTime.now().minusHours(1),
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                null, null, null, null, null, null, null,
+                null, null, null, null, null,
                 "Piso escorregadio",
                 potencialInvalido
         )).isInstanceOf(IllegalArgumentException.class)
@@ -92,18 +91,24 @@ class IncidenteTest {
     }
 
     @Test
-    @DisplayName("Deve aceitar criação via construtor e método de fábrica compatíveis")
-    void deveAceitarCriacaoViaFabricaCompativel() {
+    @DisplayName("Fábrica cria incidente aberto sem texto livre de local")
+    void deveCriarIncidentePelaFabrica() {
+        AreaRisco area = AreaRisco.cadastrar("EST-01", "Estacionamento", "Circulação de veículos", NivelPerigo.MEDIO,
+                List.of(new Epi(3, "Colete", "CA-789", 5, 1, StatusEpi.DISPONIVEL, LocalDate.now().plusYears(1), 180, "Colete", null)));
+
         Incidente incidente = Incidente.novo(
-                LocalDateTime.of(2026, 9, 8, 11, 0),
-                "Estacionamento",
                 "Quase atropelamento por empilhadeira",
+                LocalDateTime.of(2026, 9, 8, 11, 0),
+                area,
+                null,
                 null,
                 "Falta de sinalização no cruzamento",
                 "Atropelamento com trauma severo"
         );
 
         assertThat(incidente.getId()).isNull();
+        assertThat(incidente.getStatusOcorrencia()).isEqualTo(StatusOcorrencia.ABERTA);
+        assertThat(incidente.getLocalInformado()).isNull();
         assertThat(incidente.getLocal()).isEqualTo("Estacionamento");
         assertThat(incidente.getSituacaoRisco()).isEqualTo("Falta de sinalização no cruzamento");
         assertThat(incidente.getPotencialDano()).isEqualTo("Atropelamento com trauma severo");

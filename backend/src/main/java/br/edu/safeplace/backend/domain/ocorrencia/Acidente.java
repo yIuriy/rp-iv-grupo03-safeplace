@@ -1,13 +1,18 @@
 package br.edu.safeplace.backend.domain.ocorrencia;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Arrays;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.ocorrencia.exception.DadosOcorrenciaInvalidosException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
-import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
+/**
+ * Acidente de trabalho (RF01, RF02, RF13). Causa raiz e gravidade são obrigatórias e nunca assumem
+ * valor padrão (issue #195). {@code tipo}, {@code dano} e {@code destino} são complementos textuais
+ * opcionais herdados da modelagem anterior, fora do recorte mínimo do relato (DS09, seção 2.9).
+ */
 public class Acidente extends Ocorrencia {
     private final CausaRaizAcidente causaRaiz;
     private final String tipo;
@@ -22,11 +27,9 @@ public class Acidente extends Ocorrencia {
             LocalDateTime dataOcorrencia,
             LocalDateTime dataRegistro,
             StatusOcorrencia statusOcorrencia,
-            List<String> testemunhas,
             Colaborador colaborador,
-            List<String> midias,
             AreaRisco area,
-            GestorDeSeguranca gestor,
+            Colaborador relator,
             String local,
             PlanoDeAcao planoDeAcao,
             CausaRaizAcidente causaRaiz,
@@ -36,10 +39,13 @@ public class Acidente extends Ocorrencia {
             String destino,
             NivelPerigo gravidade) {
         super(idOcorrencia, descricao, dataOcorrencia, dataRegistro, statusOcorrencia,
-                testemunhas, colaborador, midias, area, gestor, local, planoDeAcao);
+                colaborador, area, relator, local, planoDeAcao);
 
         if (causaRaiz == null) {
             throw new IllegalArgumentException("Causa raiz é obrigatória para acidentes.");
+        }
+        if (gravidade == null) {
+            throw new IllegalArgumentException("Gravidade é obrigatória para acidentes.");
         }
 
         if (numeroProtocoloCAT != null && !numeroProtocoloCAT.isBlank()) {
@@ -52,110 +58,7 @@ public class Acidente extends Ocorrencia {
         this.tipo = tipo != null ? tipo.trim() : null;
         this.dano = dano != null ? dano.trim() : null;
         this.destino = destino != null ? destino.trim() : null;
-        this.gravidade = gravidade != null ? gravidade : NivelPerigo.BAIXO;
-    }
-
-    public Acidente(
-            Integer idOcorrencia,
-            String descricao,
-            LocalDateTime dataOcorrencia,
-            LocalDateTime dataRegistro,
-            StatusOcorrencia statusOcorrencia,
-            List<String> testemunhas,
-            Colaborador colaborador,
-            List<String> midias,
-            AreaRisco area,
-            GestorDeSeguranca gestor,
-            String local,
-            PlanoDeAcao planoDeAcao,
-            CausaRaizAcidente causaRaiz,
-            String tipo,
-            String dano,
-            String numeroProtocoloCAT,
-            String destino) {
-        this(
-                idOcorrencia,
-                descricao,
-                dataOcorrencia,
-                dataRegistro,
-                statusOcorrencia,
-                testemunhas,
-                colaborador,
-                midias,
-                area,
-                gestor,
-                local,
-                planoDeAcao,
-                causaRaiz,
-                tipo,
-                dano,
-                numeroProtocoloCAT,
-                destino,
-                NivelPerigo.BAIXO
-        );
-    }
-
-    /**
-     * Construtor de compatibilidade.
-     */
-    public Acidente(
-            Integer idOcorrencia,
-            LocalDateTime dataOcorrencia,
-            String local,
-            String descricao,
-            PlanoDeAcao planoDeAcao,
-            CausaRaizAcidente causaRaiz,
-            String tipo,
-            String dano,
-            String numeroProtocolo,
-            String destino) {
-        this(
-                idOcorrencia,
-                descricao,
-                dataOcorrencia,
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                null,
-                null,
-                null,
-                null,
-                null,
-                local,
-                planoDeAcao,
-                causaRaiz,
-                tipo,
-                dano,
-                numeroProtocolo,
-                destino
-        );
-    }
-
-    /**
-     * Construtor de compatibilidade aceitando causaRaiz como String.
-     */
-    public Acidente(
-            Integer idOcorrencia,
-            LocalDateTime dataOcorrencia,
-            String local,
-            String descricao,
-            PlanoDeAcao planoDeAcao,
-            String causaRaiz,
-            String tipo,
-            String dano,
-            String numeroProtocolo,
-            String destino) {
-        this(
-                idOcorrencia,
-                dataOcorrencia,
-                local,
-                descricao,
-                planoDeAcao,
-                converterCausaRaiz(causaRaiz),
-                tipo,
-                dano,
-                numeroProtocolo,
-                destino
-        );
+        this.gravidade = gravidade;
     }
 
     public static Acidente novo(
@@ -163,37 +66,7 @@ public class Acidente extends Ocorrencia {
             LocalDateTime dataOcorrencia,
             AreaRisco area,
             Colaborador colaborador,
-            GestorDeSeguranca gestor,
-            List<String> testemunhas,
-            List<String> midias,
-            CausaRaizAcidente causaRaiz,
-            String tipo,
-            String dano,
-            String destino) {
-        return novo(
-                descricao,
-                dataOcorrencia,
-                area,
-                colaborador,
-                gestor,
-                testemunhas,
-                midias,
-                causaRaiz,
-                tipo,
-                dano,
-                destino,
-                NivelPerigo.BAIXO
-        );
-    }
-
-    public static Acidente novo(
-            String descricao,
-            LocalDateTime dataOcorrencia,
-            AreaRisco area,
-            Colaborador colaborador,
-            GestorDeSeguranca gestor,
-            List<String> testemunhas,
-            List<String> midias,
+            Colaborador relator,
             CausaRaizAcidente causaRaiz,
             String tipo,
             String dano,
@@ -205,12 +78,10 @@ public class Acidente extends Ocorrencia {
                 dataOcorrencia,
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                testemunhas,
                 colaborador,
-                midias,
                 area,
-                gestor,
-                area != null ? area.getNome() : null,
+                relator,
+                null,
                 null,
                 causaRaiz,
                 tipo,
@@ -221,61 +92,20 @@ public class Acidente extends Ocorrencia {
         );
     }
 
-    public static Acidente novo(
-            LocalDateTime dataOcorrencia,
-            String local,
-            String descricao,
-            PlanoDeAcao planoDeAcao,
-            String causaRaiz,
-            String tipo,
-            String dano,
-            String numeroProtocolo,
-            String destino) {
-        return novo(
-                dataOcorrencia,
-                local,
-                descricao,
-                planoDeAcao,
-                causaRaiz,
-                tipo,
-                dano,
-                numeroProtocolo,
-                destino,
-                NivelPerigo.BAIXO
-        );
-    }
-
-    public static Acidente novo(
-            LocalDateTime dataOcorrencia,
-            String local,
-            String descricao,
-            PlanoDeAcao planoDeAcao,
-            String causaRaiz,
-            String tipo,
-            String dano,
-            String numeroProtocolo,
-            String destino,
-            NivelPerigo gravidade) {
-        return new Acidente(
-                null,
-                descricao,
-                dataOcorrencia,
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                null,
-                null,
-                null,
-                null,
-                null,
-                local,
-                planoDeAcao,
-                converterCausaRaiz(causaRaiz),
-                tipo,
-                dano,
-                numeroProtocolo,
-                destino,
-                gravidade
-        );
+    /**
+     * Lê a gravidade informada pelo cliente na escala {@link NivelPerigo}. Valor ausente ou
+     * desconhecido é recusado, nunca vira {@code BAIXO} (issue #195).
+     */
+    public static NivelPerigo lerGravidade(String valor) {
+        if (valor == null || valor.isBlank()) {
+            throw new DadosOcorrenciaInvalidosException(
+                    "Gravidade é obrigatória para acidentes: BAIXO, MEDIO, ALTO ou CRITICO.");
+        }
+        return Arrays.stream(NivelPerigo.values())
+                .filter(nivel -> nivel.name().equalsIgnoreCase(valor.trim()))
+                .findFirst()
+                .orElseThrow(() -> new DadosOcorrenciaInvalidosException(
+                        "Gravidade inválida: " + valor.trim() + ". Use BAIXO, MEDIO, ALTO ou CRITICO."));
     }
 
     public Acidente consolidarCAT(long sequencial) {
@@ -289,11 +119,9 @@ public class Acidente extends Ocorrencia {
                 this.getDataOcorrencia(),
                 this.getDataRegistro(),
                 this.getStatusOcorrencia(),
-                this.getTestemunhas(),
                 this.getColaborador(),
-                this.getMidias(),
                 this.getArea(),
-                this.getGestor(),
+                this.getRelator(),
                 this.getLocalInformado(),
                 this.getPlanoDeAcao(),
                 this.causaRaiz,
@@ -311,7 +139,7 @@ public class Acidente extends Ocorrencia {
 
     @Override
     public boolean isGrave() {
-        return gravidade != null && gravidade.isPeloMenos(NivelPerigo.ALTO);
+        return gravidade.isPeloMenos(NivelPerigo.ALTO);
     }
 
     public CausaRaizAcidente getCausaRaiz() {
@@ -336,16 +164,5 @@ public class Acidente extends Ocorrencia {
 
     public String getDestino() {
         return destino;
-    }
-
-    private static CausaRaizAcidente converterCausaRaiz(String causa) {
-        if (causa == null || causa.isBlank()) {
-            return CausaRaizAcidente.OUTRO;
-        }
-        try {
-            return CausaRaizAcidente.valueOf(causa.trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return CausaRaizAcidente.OUTRO;
-        }
     }
 }

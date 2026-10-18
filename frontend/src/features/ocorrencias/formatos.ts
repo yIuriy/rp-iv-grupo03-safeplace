@@ -2,8 +2,9 @@
 // usados na lista e no detalhe. Valor desconhecido aparece como veio, sem ser descartado.
 
 import { ehNivelPerigo, rotuloNivelPerigo } from '../areas-risco/api'
+import { ehPerfilComAcesso, rotuloDoPerfil } from '../autenticacao/sessao'
 import type { FeedbackTone } from '../../shared/components'
-import type { StatusOcorrencia, TipoOcorrencia } from './api'
+import type { OcorrenciaResumo, StatusOcorrencia, TipoOcorrencia } from './api'
 
 export const rotuloTipoOcorrencia: Record<TipoOcorrencia, string> = {
   ACIDENTE: 'Acidente',
@@ -25,6 +26,12 @@ export function descreverCausaRaiz(valor: string | null | undefined): string {
 export function descreverGravidade(valor: string | null | undefined): string {
   if (!valor) return 'Não informada'
   return ehNivelPerigo(valor) ? rotuloNivelPerigo[valor] : valor
+}
+
+/** Quem registrou o relato, Gestor de Segurança ou Supervisor, definido pelo servidor (issue #195). */
+export function descreverRelator({ relatorNome, relatorPerfil }: Pick<OcorrenciaResumo, 'relatorNome' | 'relatorPerfil'>): string {
+  const nome = textoOuPadrao(relatorNome)
+  return ehPerfilComAcesso(relatorPerfil) ? `${nome} (${rotuloDoPerfil[relatorPerfil]})` : nome
 }
 
 export function textoOuPadrao(valor: string | null | undefined, padrao = 'Não informado'): string {

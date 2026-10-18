@@ -2,7 +2,6 @@ package br.edu.safeplace.backend.domain.ocorrencia;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
@@ -19,6 +18,7 @@ import br.edu.safeplace.backend.domain.ocorrencia.exception.DataOcorrenciaInvali
 import br.edu.safeplace.backend.domain.ocorrencia.exception.TransicaoStatusInvalidaException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
+import br.edu.safeplace.backend.domain.usuario.Supervisor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -32,15 +32,13 @@ class OcorrenciaTest {
                 LocalDateTime dataOcorrencia,
                 LocalDateTime dataRegistro,
                 StatusOcorrencia statusOcorrencia,
-                List<String> testemunhas,
                 Colaborador colaborador,
-                List<String> midias,
                 AreaRisco area,
-                GestorDeSeguranca gestor,
+                Colaborador relator,
                 String local,
                 PlanoDeAcao planoDeAcao) {
             super(idOcorrencia, descricao, dataOcorrencia, dataRegistro, statusOcorrencia,
-                    testemunhas, colaborador, midias, area, gestor, local, planoDeAcao);
+                    colaborador, area, relator, local, planoDeAcao);
         }
     }
 
@@ -60,9 +58,7 @@ class OcorrenciaTest {
                 dataFato,
                 dataRegistro,
                 StatusOcorrencia.ABERTA,
-                List.of("Joao", "Pedro"),
                 colaborador,
-                List.of("foto1.png", "video1.mp4"),
                 area,
                 gestor,
                 "Setor B",
@@ -74,10 +70,8 @@ class OcorrenciaTest {
         assertThat(ocorrencia.getDataOcorrencia()).isEqualTo(dataFato);
         assertThat(ocorrencia.getDataRegistro()).isEqualTo(dataRegistro);
         assertThat(ocorrencia.getStatusOcorrencia()).isEqualTo(StatusOcorrencia.ABERTA);
-        assertThat(ocorrencia.getTestemunhas()).containsExactly("Joao", "Pedro");
-        assertThat(ocorrencia.getMidias()).containsExactly("foto1.png", "video1.mp4");
         assertThat(ocorrencia.getColaborador()).isEqualTo(colaborador);
-        assertThat(ocorrencia.getGestor()).isEqualTo(gestor);
+        assertThat(ocorrencia.getRelator()).isEqualTo(gestor);
         assertThat(ocorrencia.getArea()).isEqualTo(area);
         assertThat(ocorrencia.getLocal()).isEqualTo("Caldeiras");
     }
@@ -93,7 +87,7 @@ class OcorrenciaTest {
                 dataFutura,
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                null, null, null, null, null, null, null
+                null, null, null, null, null
         )).isInstanceOf(DataOcorrenciaInvalidaException.class)
                 .hasMessage("Data da ocorrência não pode ser futura.");
     }
@@ -107,7 +101,7 @@ class OcorrenciaTest {
                 null,
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                null, null, null, null, null, null, null
+                null, null, null, null, null
         )).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Data da ocorrência é obrigatória.");
     }
@@ -125,7 +119,7 @@ class OcorrenciaTest {
                 dataPassada,
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                null, null, null, null, null, null, null
+                null, null, null, null, null
         )).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Descrição é obrigatória.");
     }
@@ -139,7 +133,7 @@ class OcorrenciaTest {
                 LocalDateTime.now().minusDays(1),
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                null, null, null, null, null, null, null
+                null, null, null, null, null
         );
 
         assertThat(ocorrencia.getStatusOcorrencia()).isEqualTo(StatusOcorrencia.ABERTA);
@@ -160,7 +154,7 @@ class OcorrenciaTest {
                 LocalDateTime.now().minusDays(1),
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                null, null, null, null, null, null, null
+                null, null, null, null, null
         );
 
         assertThatThrownBy(ocorrencia::arquivar)
@@ -168,13 +162,10 @@ class OcorrenciaTest {
     }
 
     @Test
-    @DisplayName("Deve garantir imutabilidade de listas de testemunhas e mídias")
-    void deveGarantirImutabilidadeDeListas() {
-        List<String> testemunhas = new ArrayList<>();
-        testemunhas.add("Lucas");
-
-        List<String> midias = new ArrayList<>();
-        midias.add("doc.pdf");
+    @DisplayName("Supervisor que registra o relato fica como relator (issue #195)")
+    void supervisorDeveFicarComoRelator() {
+        Supervisor supervisor = Supervisor.novo("Bruno", "52998224725", LocalDate.of(1988, 3, 3),
+                "bruno@empresa.com", "senha123");
 
         Ocorrencia ocorrencia = new OcorrenciaConcreta(
                 1,
@@ -182,17 +173,10 @@ class OcorrenciaTest {
                 LocalDateTime.now().minusDays(1),
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                testemunhas, null, midias, null, null, null, null
+                null, null, supervisor, null, null
         );
 
-        testemunhas.add("Novo elemento");
-        midias.add("nova_foto.png");
-
-        assertThat(ocorrencia.getTestemunhas()).containsExactly("Lucas");
-        assertThat(ocorrencia.getMidias()).containsExactly("doc.pdf");
-
-        assertThatThrownBy(() -> ocorrencia.getTestemunhas().add("Outro"))
-                .isInstanceOf(UnsupportedOperationException.class);
+        assertThat(ocorrencia.getRelator()).isSameAs(supervisor);
     }
 
     @Test
@@ -204,9 +188,7 @@ class OcorrenciaTest {
                 LocalDateTime.now().minusHours(2),
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                List.of(),
                 null,
-                List.of(),
                 null,
                 null,
                 "Pátio externo",
@@ -231,9 +213,7 @@ class OcorrenciaTest {
                 LocalDateTime.now().minusHours(3),
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                List.of(),
                 null,
-                List.of(),
                 area,
                 null,
                 "Anotação antiga do relato",

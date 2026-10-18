@@ -1,7 +1,8 @@
 /*
  * Consulta de ocorrências por critérios no banco (issue #128): monta, com a Criteria API, só as
- * condições informadas no FiltroOcorrenciasDTO. Período pela data do fato, setor pela área de risco
- * e colaborador envolvido pela chave estrangeira da ocorrência.
+ * condições informadas no FiltroOcorrenciasDTO. Período pela data do fato, setor pela área de risco,
+ * colaborador envolvido pela chave estrangeira da ocorrência, tipo pela subclasse e gravidade pela
+ * tabela de acidentes (issue #195).
  */
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
@@ -12,8 +13,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
+import br.edu.safeplace.backend.domain.ocorrencia.TipoOcorrencia;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 
 final class OcorrenciaEspecificacoes {
 
@@ -38,6 +42,19 @@ final class OcorrenciaEspecificacoes {
             }
             if (filtro.colaboradorId() != null) {
                 condicoes.add(builder.equal(root.get("colaborador").get("id"), filtro.colaboradorId()));
+            }
+            if (filtro.tipoOcorrencia() != null) {
+                condicoes.add(builder.equal(root.type(), filtro.tipoOcorrencia() == TipoOcorrencia.ACIDENTE
+                        ? AcidenteEntity.class
+                        : IncidenteEntity.class));
+            }
+            if (filtro.gravidade() != null) {
+                // Só acidentes têm gravidade: a subconsulta deixa os incidentes de fora.
+                Subquery<Integer> acidentesComGravidade = query.subquery(Integer.class);
+                Root<AcidenteEntity> acidente = acidentesComGravidade.from(AcidenteEntity.class);
+                acidentesComGravidade.select(acidente.get("idOcorrencia"))
+                        .where(builder.equal(acidente.get("gravidade"), filtro.gravidade().name()));
+                condicoes.add(root.get("idOcorrencia").in(acidentesComGravidade));
             }
             return builder.and(condicoes.toArray(Predicate[]::new));
         };

@@ -1,7 +1,8 @@
 /*
  * Integração com PostgreSQL da consulta de ocorrências por critérios (issue #128): período pela data
- * do fato, setor pela área de risco, colaborador envolvido, combinação e visibilidade do Supervisor,
- * incluindo o caso em que o id de outro cadastro dele coincide com o de uma ocorrência alheia.
+ * do fato, setor pela área de risco, colaborador envolvido, tipo e gravidade (issue #195), combinação e
+ * visibilidade do Supervisor, incluindo o caso em que o id de outro cadastro dele coincide com o de uma
+ * ocorrência alheia.
  */
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
@@ -28,10 +29,13 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
+import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.RegistrarOcorrenciaUseCase;
+import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.ocorrencia.TipoOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException;
 import br.edu.safeplace.backend.suporte.PostgresDeTeste;
 
@@ -76,11 +80,12 @@ class OcorrenciaConsultaPersistenciaIntegracaoTest {
     private Integer setorB;
     private Integer joao;
     private Integer maria;
-    // o1 e o2 foram relatados pelo Supervisor; o3 e o4, pela Gestora.
+    // o1 e o2 foram relatados pelo Supervisor; o3, o4 e o5, pela Gestora. Só o5 é acidente.
     private Integer o1;
     private Integer o2;
     private Integer o3;
     private Integer o4;
+    private Integer o5;
 
     @BeforeEach
     void preparar() {
@@ -89,6 +94,7 @@ class OcorrenciaConsultaPersistenciaIntegracaoTest {
         setorB = inserirSetor(PREFIXO_SETOR + "B", "BAIXO");
         Integer areaA = inserirArea(PREFIXO_AREA + "A", setorA);
         Integer areaB = inserirArea(PREFIXO_AREA + "B", setorB);
+        Integer areaSemSetor = inserirArea(PREFIXO_AREA + "S", null);
         joao = inserirUsuario("12800000155", "João C128", "joao" + DOMINIO, null, "COLABORADOR");
         maria = inserirUsuario("12800000236", "Maria C128", "maria" + DOMINIO, null, "COLABORADOR");
         inserirUsuario("12800000317", "Gestora C128", GESTOR, "$2a$10$hashDeTeste", "GESTOR_SEGURANCA");
@@ -99,7 +105,9 @@ class OcorrenciaConsultaPersistenciaIntegracaoTest {
         o2 = relatar(LocalDateTime.of(2025, 9, 30, 23, 59), areaB, maria);
         autenticar(GESTOR, "ROLE_GESTOR_SEGURANCA");
         o3 = relatar(LocalDateTime.of(2025, 10, 1, 0, 0), areaA, maria);
-        o4 = relatar(LocalDateTime.of(2025, 8, 31, 23, 59), null, joao);
+        o4 = relatar(LocalDateTime.of(2025, 8, 31, 23, 59), areaSemSetor, joao);
+        o5 = registrarUseCase.registrarAcidente(new RegistrarAcidenteInputDTO(LocalDateTime.of(2025, 7, 15, 9, 0),
+                "Acidente C128", "FATOR_HUMANO", "ALTO", null, null, null, areaB, maria)).idOcorrencia();
     }
 
     @AfterEach
@@ -115,10 +123,30 @@ class OcorrenciaConsultaPersistenciaIntegracaoTest {
     }
 
     @Test
-    @DisplayName("Setor é resolvido pela área de risco; ocorrência sem área fica de fora")
+    @DisplayName("Setor é resolvido pela área de risco; área sem setor fica de fora")
     void setorPelaArea() {
         assertThat(ids(new FiltroOcorrenciasDTO(null, null, setorA, null))).containsExactly(o1, o3);
-        assertThat(ids(new FiltroOcorrenciasDTO(null, null, setorB, null))).containsExactly(o2);
+        assertThat(ids(new FiltroOcorrenciasDTO(null, null, setorB, null))).containsExactly(o2, o5);
+    }
+
+    @Test
+    @DisplayName("Tipo da ocorrência é filtrado no banco (issue #195)")
+    void tipoDaOcorrencia() {
+        assertThat(ids(new FiltroOcorrenciasDTO(null, null, null, null, TipoOcorrencia.ACIDENTE, null)))
+                .containsExactly(o5);
+        assertThat(ids(new FiltroOcorrenciasDTO(null, null, null, null, TipoOcorrencia.INCIDENTE, null)))
+                .containsExactly(o1, o2, o3, o4);
+    }
+
+    @Test
+    @DisplayName("Gravidade é filtrada no banco e deixa os incidentes de fora (issue #195)")
+    void gravidadeDoAcidente() {
+        assertThat(ids(new FiltroOcorrenciasDTO(null, null, null, null, null, NivelPerigo.ALTO))).containsExactly(o5);
+        assertThat(ids(new FiltroOcorrenciasDTO(null, null, null, null, null, NivelPerigo.BAIXO))).isEmpty();
+        assertThat(ids(new FiltroOcorrenciasDTO(null, null, setorB, maria, TipoOcorrencia.ACIDENTE, NivelPerigo.ALTO)))
+                .containsExactly(o5);
+        assertThat(ids(new FiltroOcorrenciasDTO(null, null, null, null, TipoOcorrencia.INCIDENTE, NivelPerigo.ALTO)))
+                .isEmpty();
     }
 
     @Test
@@ -154,13 +182,13 @@ class OcorrenciaConsultaPersistenciaIntegracaoTest {
         }
         return registrarUseCase.listar(filtro).stream()
                 .map(OcorrenciaOutputDTO::idOcorrencia)
-                .filter(List.of(o1, o2, o3, o4)::contains)
+                .filter(List.of(o1, o2, o3, o4, o5)::contains)
                 .toList();
     }
 
     private Integer relatar(LocalDateTime fato, Integer areaId, Integer colaboradorId) {
         return registrarUseCase.registrarIncidente(new RegistrarIncidenteInputDTO(
-                fato, null, "Relato C128", null, "Piso escorregadio", "Queda", areaId, colaboradorId, null))
+                fato, "Relato C128", "Piso escorregadio", "Queda", areaId, colaboradorId))
                 .idOcorrencia();
     }
 
@@ -193,7 +221,9 @@ class OcorrenciaConsultaPersistenciaIntegracaoTest {
     private void limpar() {
         String minhasOcorrencias = "SELECT o.id_ocorrencia FROM ocorrencias o JOIN usuarios u ON u.id = o.colaborador_id"
                 + " WHERE u.email LIKE '%" + DOMINIO + "'";
+        jdbc.update("DELETE FROM notificacoes_ocorrencia WHERE ocorrencia_id IN (" + minhasOcorrencias + ")");
         jdbc.update("DELETE FROM incidentes WHERE id_ocorrencia IN (" + minhasOcorrencias + ")");
+        jdbc.update("DELETE FROM acidentes WHERE id_ocorrencia IN (" + minhasOcorrencias + ")");
         jdbc.update("DELETE FROM ocorrencias WHERE id_ocorrencia IN (" + minhasOcorrencias + ")");
         jdbc.update("DELETE FROM usuarios WHERE email LIKE ?", "%" + DOMINIO);
         jdbc.update("DELETE FROM areas_risco WHERE codigo LIKE ?", PREFIXO_AREA + "%");

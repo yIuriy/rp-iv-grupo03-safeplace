@@ -9,6 +9,7 @@ import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
+import br.edu.safeplace.backend.domain.usuario.Supervisor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,7 +52,7 @@ class OcorrenciaJpaAdapterTest {
     }
 
     @Test
-    @DisplayName("Deve salvar acidente mapeando gravidade, area, colaborador e gestor")
+    @DisplayName("Deve salvar acidente mapeando gravidade, area, colaborador e relator")
     void deveSalvarAcidenteComRelacionamentos() {
         AreaRisco area = new AreaRisco(1, "AR-01", "Prensa", "Setor Prensa", NivelPerigo.ALTO, 10, List.of(), "Galpão", List.of());
         Colaborador colaborador = new Colaborador(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
@@ -71,8 +72,6 @@ class OcorrenciaJpaAdapterTest {
                 area,
                 colaborador,
                 gestor,
-                List.of(),
-                List.of(),
                 CausaRaizAcidente.FALHA_EPI,
                 "Esmagamento",
                 "Lesão na mão",
@@ -89,7 +88,7 @@ class OcorrenciaJpaAdapterTest {
                     entity.getStatusOcorrencia(),
                     entity.getArea(),
                     entity.getColaborador(),
-                    entity.getGestor(),
+                    entity.getRelator(),
                     entity.getLocal(),
                     entity.getDescricao(),
                     entity.getPlanoDeAcao(),
@@ -111,8 +110,8 @@ class OcorrenciaJpaAdapterTest {
         assertThat(salvo.getArea().getNome()).isEqualTo("Prensa");
         assertThat(salvo.getColaborador()).isNotNull();
         assertThat(salvo.getColaborador().getNome()).isEqualTo("João Silva");
-        assertThat(salvo.getGestor()).isNotNull();
-        assertThat(salvo.getGestor().getNome()).isEqualTo("Maria Gestora");
+        assertThat(salvo.getRelator()).isInstanceOf(GestorDeSeguranca.class);
+        assertThat(salvo.getRelator().getNome()).isEqualTo("Maria Gestora");
 
         ArgumentCaptor<AcidenteEntity> captor = ArgumentCaptor.forClass(AcidenteEntity.class);
         verify(ocorrenciaRepository).save(captor.capture());
@@ -120,7 +119,29 @@ class OcorrenciaJpaAdapterTest {
         assertThat(entitySalva.getGravidade()).isEqualTo("CRITICO");
         assertThat(entitySalva.getArea().getId()).isEqualTo(1);
         assertThat(entitySalva.getColaborador().getId()).isEqualTo(2);
-        assertThat(entitySalva.getGestor().getId()).isEqualTo(3);
+        assertThat(entitySalva.getRelator().getId()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Supervisor que registrou o relato é gravado como relator (issue #195)")
+    void deveSalvarSupervisorComoRelator() {
+        AreaRisco area = new AreaRisco(1, "AR-01", "Prensa", "Setor Prensa", NivelPerigo.MEDIO, 10, List.of(), "Galpão", List.of());
+        Colaborador colaborador = new Colaborador(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
+        Supervisor supervisor = new Supervisor(4, "11144477735", "Sérgio Supervisor", LocalDate.of(1987, 6, 6), "sergio@email.com", "hash", true, LocalDateTime.now(), LocalDateTime.now());
+
+        when(areaRiscoRepository.findById(1)).thenReturn(Optional.of(
+                new AreaRiscoEntity(1, "AR-01", "Prensa", "Setor Prensa", "MEDIO", 10, null, "Galpão", List.of())));
+        when(usuarioRepository.findById(2)).thenReturn(Optional.of(
+                new ColaboradorEntidade(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now())));
+        when(usuarioRepository.findById(4)).thenReturn(Optional.of(
+                new SupervisorEntidade(4, "11144477735", "Sérgio Supervisor", LocalDate.of(1987, 6, 6), "sergio@email.com", "hash", true, LocalDateTime.now(), LocalDateTime.now())));
+        when(ocorrenciaRepository.save(any(IncidenteEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Incidente salvo = adapter.salvarIncidente(Incidente.novo("Quase queda", LocalDateTime.of(2026, 9, 10, 10, 0),
+                area, colaborador, supervisor, "Piso oleoso", "Queda de mesmo nível"));
+
+        assertThat(salvo.getRelator()).isInstanceOf(Supervisor.class);
+        assertThat(salvo.getRelator().getId()).isEqualTo(4);
     }
 
     @Test
@@ -141,8 +162,6 @@ class OcorrenciaJpaAdapterTest {
                 area,
                 colaborador,
                 null,
-                List.of(),
-                List.of(),
                 "Piso oleoso",
                 "Queda de mesmo nível"
         );
@@ -156,7 +175,7 @@ class OcorrenciaJpaAdapterTest {
                     entity.getStatusOcorrencia(),
                     entity.getArea(),
                     entity.getColaborador(),
-                    entity.getGestor(),
+                    entity.getRelator(),
                     entity.getLocal(),
                     entity.getDescricao(),
                     entity.getPlanoDeAcao(),

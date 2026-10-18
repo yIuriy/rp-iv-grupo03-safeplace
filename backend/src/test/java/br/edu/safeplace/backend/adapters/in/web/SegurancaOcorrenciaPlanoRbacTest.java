@@ -1,6 +1,6 @@
 /*
- * Testes da matriz de perfis (RNF03) nas rotas de ocorrências e planos de ação: 401 sem token, 403 para
- * o perfil sem permissão e acesso liberado conforme o SecurityConfig.
+ * Testes da matriz de perfis (RNF03) nas rotas de ocorrências, planos de ação e notificações de novos
+ * relatos: 401 sem token, 403 para o perfil sem permissão e acesso liberado conforme o SecurityConfig.
  */
 package br.edu.safeplace.backend.adapters.in.web;
 
@@ -10,12 +10,15 @@ import br.edu.safeplace.backend.application.dto.input.CriarAcaoPlanoInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.PlanoDeAcaoOutputDTO;
+import br.edu.safeplace.backend.application.port.in.ConsultarNotificacoesOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarPlanoDeAcaoUseCase;
 import br.edu.safeplace.backend.application.port.in.RegistrarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.out.TokenPorta;
 import br.edu.safeplace.backend.config.RestSegurancaTratadorExcecoes;
 import br.edu.safeplace.backend.config.SecurityConfig;
+import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoOcorrencia;
+import br.edu.safeplace.backend.domain.ocorrencia.TipoOcorrencia;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -40,7 +43,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest({
         OcorrenciaController.class,
-        PlanoDeAcaoController.class
+        PlanoDeAcaoController.class,
+        NotificacaoOcorrenciaController.class
 })
 @Import({SecurityConfig.class, RestSegurancaTratadorExcecoes.class})
 @DisplayName("Testes de Integração de Segurança e RBAC para Ocorrências e Planos de Ação (Issue #99)")
@@ -59,19 +63,22 @@ class SegurancaOcorrenciaPlanoRbacTest {
     private GerenciarPlanoDeAcaoUseCase gerenciarPlanoDeAcaoUseCase;
 
     @MockitoBean
+    private ConsultarNotificacoesOcorrenciaUseCase consultarNotificacoesUseCase;
+
+    @MockitoBean
     private TokenPorta tokenPorta;
 
     private static final String JSON_CRIAR_OCORRENCIA = """
             {
                 "tipoOcorrencia": "ACIDENTE",
                 "dataOcorrencia": "2026-09-20T10:00:00",
-                "local": "Setor A",
                 "descricao": "Queda de material",
-                "causaRaiz": "FALHA_OPERACIONAL",
+                "causaRaiz": "FALHA_EPI",
                 "tipo": "Típico",
                 "dano": "Leve",
                 "destino": "Ambulatório",
-                "gravidade": "BAIXA",
+                "gravidade": "BAIXO",
+                "areaId": 1,
                 "colaboradorId": 1
             }
             """;
@@ -112,9 +119,10 @@ class SegurancaOcorrenciaPlanoRbacTest {
 
     private OcorrenciaOutputDTO mockOcorrencia() {
         return new OcorrenciaOutputDTO(
-                1, "ACIDENTE", LocalDateTime.now(), LocalDateTime.now(), "REGISTRADA",
-                "Setor A", "Queda de material", null, "FALHA_OPERACIONAL", "Típico", "Leve",
-                "CAT-2026-000001", "CAT-2026-000001", "Ambulatório", null, null, "BAIXA"
+                1, "ACIDENTE", LocalDateTime.now(), LocalDateTime.now(), "ABERTA",
+                "Setor A", "Queda de material", null, "FALHA_EPI", "Típico", "Leve",
+                "CAT-2026-09-0001", "CAT-2026-09-0001", "Ambulatório", null, null, "BAIXO",
+                1, "Setor A", 1, "João", 3, "Sérgio", "SUPERVISOR"
         );
     }
 
@@ -148,6 +156,13 @@ class SegurancaOcorrenciaPlanoRbacTest {
         }
 
         @Test
+        @DisplayName("GET /api/notificacoes sem token deve retornar 401")
+        void getNotificacoesSemTokenRetorna401() throws Exception {
+            mockMvc.perform(get("/api/notificacoes"))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
         @DisplayName("GET /api/planos-acao/1 sem token deve retornar 401")
         void getPlanosAcaoSemTokenRetorna401() throws Exception {
             mockMvc.perform(get("/api/planos-acao/1"))
@@ -175,6 +190,14 @@ class SegurancaOcorrenciaPlanoRbacTest {
             mockMvc.perform(patch("/api/ocorrencias/1/triagem"))
                     .andExpect(status().isForbidden())
                     .andExpect(jsonPath("$.error").value("Acesso Proibido"));
+        }
+
+        @Test
+        @WithMockUser(roles = "SUPERVISOR")
+        @DisplayName("Supervisor não consulta notificações de novos relatos (UC09, passo 12)")
+        void supervisorNaoPodeConsultarNotificacoes() throws Exception {
+            mockMvc.perform(get("/api/notificacoes"))
+                    .andExpect(status().isForbidden());
         }
 
         @Test
@@ -328,6 +351,23 @@ class SegurancaOcorrenciaPlanoRbacTest {
                             .content(JSON_STATUS_PLANO))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(10));
+        }
+
+        @Test
+        @WithMockUser(roles = "GESTOR_SEGURANCA")
+        @DisplayName("Gestor de Segurança consulta notificações de novos relatos (UC09, passo 12)")
+        void gestorPodeConsultarNotificacoes() throws Exception {
+            when(consultarNotificacoesUseCase.listar()).thenReturn(List.of(new NotificacaoOcorrencia(
+                    5, 1, TipoOcorrencia.ACIDENTE, "CAT-2026-09-0001", "Setor A",
+                    "Novo acidente registrado (protocolo CAT-2026-09-0001) na área Setor A. Aguarda triagem.",
+                    LocalDateTime.of(2026, 9, 20, 10, 5))));
+
+            mockMvc.perform(get("/api/notificacoes"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].id").value(5))
+                    .andExpect(jsonPath("$[0].ocorrenciaId").value(1))
+                    .andExpect(jsonPath("$[0].tipoOcorrencia").value("ACIDENTE"))
+                    .andExpect(jsonPath("$[0].numeroProtocoloCAT").value("CAT-2026-09-0001"));
         }
     }
 }
