@@ -47,6 +47,7 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
     private static final String DOMINIO_DE_TESTE = "@safeplace-plano98.local";
     private static final String CPF_COLABORADOR = "90000009801";
     private static final String CPF_GESTOR = "90000009802";
+    private static final String CODIGO_AREA = "AR-PLANO-98";
 
     static boolean bancoDisponivel() {
         return PostgresDeTeste.disponivel();
@@ -88,11 +89,18 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
                 RETURNING id
                 """, Integer.class);
 
+        Integer areaId = jdbcTemplate.queryForObject("""
+                INSERT INTO areas_risco (codigo, nome, nivel_perigo, setor_id)
+                VALUES (?, 'Prensas hidráulicas', 'ALTO', ?)
+                RETURNING id
+                """, Integer.class, CODIGO_AREA, setorId);
+
+        // Issue #195: toda ocorrência tem área de risco e colaborador envolvido.
         ocorrenciaId = jdbcTemplate.queryForObject("""
-                INSERT INTO ocorrencias (data_ocorrencia, descricao, status_ocorrencia)
-                VALUES (?, 'Vazamento de fluido hidráulico', 'ABERTA')
+                INSERT INTO ocorrencias (data_ocorrencia, descricao, status_ocorrencia, area_risco_id, colaborador_id)
+                VALUES (?, 'Vazamento de fluido hidráulico', 'ABERTA', ?, ?)
                 RETURNING id_ocorrencia
-                """, Integer.class, LocalDateTime.now().minusDays(1));
+                """, Integer.class, LocalDateTime.now().minusDays(1), areaId, colaboradorId);
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("gestor" + DOMINIO_DE_TESTE, "senha",
@@ -112,7 +120,9 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
         jdbcTemplate.execute("DELETE FROM incidentes");
         jdbcTemplate.execute("DELETE FROM prorrogacoes_prazo");
         jdbcTemplate.execute("DELETE FROM planos_de_acao");
+        jdbcTemplate.execute("DELETE FROM notificacoes_ocorrencia");
         jdbcTemplate.execute("DELETE FROM ocorrencias");
+        jdbcTemplate.update("DELETE FROM areas_risco WHERE codigo = ?", CODIGO_AREA);
         jdbcTemplate.execute("DELETE FROM setores");
         jdbcTemplate.update("DELETE FROM usuarios WHERE email LIKE ? OR cpf IN (?, ?)",
                 "%" + DOMINIO_DE_TESTE, CPF_COLABORADOR, CPF_GESTOR);

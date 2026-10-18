@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
 public record AtualizarOcorrenciaRequest(
         @NotNull(message = "Data do fato é obrigatória.") LocalDateTime dataOcorrencia,
         @NotBlank(message = "Descrição é obrigatória.") String descricao,
-        Integer areaId,
-        Integer colaboradorId,
+        @NotNull(message = "Área de risco é obrigatória.") Integer areaId,
+        @NotNull(message = "Colaborador envolvido é obrigatório.") Integer colaboradorId,
 
         String causaRaiz,
         String gravidade,

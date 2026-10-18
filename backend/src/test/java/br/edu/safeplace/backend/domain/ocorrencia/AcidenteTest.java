@@ -7,12 +7,14 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
+import br.edu.safeplace.backend.domain.ocorrencia.exception.DadosOcorrenciaInvalidosException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.ProtocoloCATInvalidoException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
@@ -37,18 +39,17 @@ class AcidenteTest {
                 dataFato,
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                List.of("Marcos"),
                 colaborador,
-                List.of("foto_pe.png"),
                 area,
                 gestor,
-                "Setor de Usinagem",
+                null,
                 null,
                 CausaRaizAcidente.FALHA_EPI,
                 "Fratura",
                 "Contusão no pé",
                 "CAT-2026-09-0001",
-                "Hospital Santa Casa"
+                "Hospital Santa Casa",
+                NivelPerigo.ALTO
         );
 
         assertThat(acidente.getId()).isEqualTo(1);
@@ -59,6 +60,8 @@ class AcidenteTest {
         assertThat(acidente.getNumeroProtocoloCAT()).isEqualTo("CAT-2026-09-0001");
         assertThat(acidente.getNumeroProtocolo()).isEqualTo("CAT-2026-09-0001");
         assertThat(acidente.getDestino()).isEqualTo("Hospital Santa Casa");
+        assertThat(acidente.getGravidade()).isEqualTo(NivelPerigo.ALTO);
+        assertThat(acidente.getRelator()).isEqualTo(gestor);
     }
 
     @Test
@@ -70,14 +73,52 @@ class AcidenteTest {
                 LocalDateTime.now().minusHours(1),
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                null, null, null, null, null, null, null,
+                null, null, null, null, null,
                 null,
                 "Tipo",
                 "Dano",
                 null,
-                "Destino"
+                "Destino",
+                NivelPerigo.BAIXO
         )).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Causa raiz é obrigatória para acidentes.");
+    }
+
+    @Test
+    @DisplayName("Deve rejeitar acidente sem gravidade, sem assumir BAIXO (issue #195)")
+    void deveRejeitarAcidenteSemGravidade() {
+        assertThatThrownBy(() -> new Acidente(
+                null,
+                "Descricao",
+                LocalDateTime.now().minusHours(1),
+                LocalDateTime.now(),
+                StatusOcorrencia.ABERTA,
+                null, null, null, null, null,
+                CausaRaizAcidente.FATOR_HUMANO,
+                "Tipo",
+                "Dano",
+                null,
+                "Destino",
+                null
+        )).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Gravidade é obrigatória para acidentes.");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"BAIXO", "medio", " Alto ", "CRITICO"})
+    @DisplayName("Lê gravidade válida sem diferenciar maiúsculas")
+    void deveLerGravidadeValida(String valor) {
+        assertThat(Acidente.lerGravidade(valor)).isEqualTo(NivelPerigo.valueOf(valor.trim().toUpperCase()));
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"GRAVE", "LEVE", "xyz"})
+    @DisplayName("Recusa gravidade ausente ou inválida, sem converter para BAIXO (issue #195)")
+    void deveRecusarGravidadeInvalida(String valor) {
+        assertThatThrownBy(() -> Acidente.lerGravidade(valor))
+                .isInstanceOf(DadosOcorrenciaInvalidosException.class)
+                .hasMessageContaining("Gravidade");
     }
 
     @ParameterizedTest
@@ -90,12 +131,13 @@ class AcidenteTest {
                 LocalDateTime.now().minusHours(1),
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                null, null, null, null, null, null, null,
+                null, null, null, null, null,
                 CausaRaizAcidente.FATOR_HUMANO,
                 "Tipo",
                 "Dano",
                 protocoloInvalido,
-                "Destino"
+                "Destino",
+                NivelPerigo.BAIXO
         )).isInstanceOf(ProtocoloCATInvalidoException.class);
     }
 
@@ -108,11 +150,12 @@ class AcidenteTest {
                 "Corte com estilete",
                 dataFato,
                 AreaRisco.cadastrar("EXP-01", "Expedição", "Embalagem", NivelPerigo.MEDIO, List.of(new Epi(2, "Luva", "CA-456", 5, 1, StatusEpi.DISPONIVEL, LocalDate.now().plusYears(1), 180, "Luva", null))),
-                null, null, null, null,
+                null, null,
                 CausaRaizAcidente.FATOR_HUMANO,
                 "Corte",
                 "Lesão superficial na mão",
-                "Ambulatório interno"
+                "Ambulatório interno",
+                NivelPerigo.MEDIO
         );
 
         assertThat(novoAcidente.getNumeroProtocoloCAT()).isNull();
@@ -130,33 +173,11 @@ class AcidenteTest {
     }
 
     @Test
-    @DisplayName("Deve aceitar construtor de compatibilidade preexistente")
-    void deveAceitarConstrutorDeCompatibilidade() {
-        Acidente acidente = new Acidente(
-                10,
-                LocalDateTime.of(2026, 9, 5, 8, 30),
-                "Oficina",
-                "Ferimento leve",
-                null,
-                "FALHA_EPI",
-                "Batida",
-                "Esmagamento",
-                "CAT-2026-09-0005",
-                "Pronto Socorro"
-        );
-
-        assertThat(acidente.getId()).isEqualTo(10);
-        assertThat(acidente.getCausaRaiz()).isEqualTo(CausaRaizAcidente.FALHA_EPI);
-        assertThat(acidente.getLocal()).isEqualTo("Oficina");
-        assertThat(acidente.getNumeroProtocoloCAT()).isEqualTo("CAT-2026-09-0005");
-    }
-
-    @Test
     @DisplayName("Deve identificar corretamente se o acidente é grave para regras de plano de ação")
     void deveIdentificarAcidenteGrave() {
         Acidente acidenteLeve = new Acidente(
                 1, "Queda sem lesão", LocalDateTime.now().minusHours(1), LocalDateTime.now(),
-                StatusOcorrencia.ABERTA, null, null, null, null, null, null, null,
+                StatusOcorrencia.ABERTA, null, null, null, null, null,
                 CausaRaizAcidente.OUTRO, "Queda", "Leve", null, null, NivelPerigo.BAIXO
         );
         assertThat(acidenteLeve.getGravidade()).isEqualTo(NivelPerigo.BAIXO);
@@ -164,7 +185,7 @@ class AcidenteTest {
 
         Acidente acidenteGrave = new Acidente(
                 2, "Queda de altura", LocalDateTime.now().minusHours(1), LocalDateTime.now(),
-                StatusOcorrencia.ABERTA, null, null, null, null, null, null, null,
+                StatusOcorrencia.ABERTA, null, null, null, null, null,
                 CausaRaizAcidente.FALHA_EPI, "Queda", "Grave", null, null, NivelPerigo.CRITICO
         );
         assertThat(acidenteGrave.getGravidade()).isEqualTo(NivelPerigo.CRITICO);

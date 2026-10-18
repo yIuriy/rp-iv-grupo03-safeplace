@@ -1,7 +1,8 @@
 /*
  * Caso de uso de ocorrências (UC05/UC09): registra acidentes e incidentes com auditoria e notificação,
  * consulta por critérios, id e protocolo CAT respeitando o perfil (issue #128) e conduz triagem,
- * arquivamento e consolidação da CAT.
+ * arquivamento e consolidação da CAT. O relato é validado aqui, sem depender do frontend: área,
+ * colaborador, gravidade e causa raiz obrigatórias, protocolo e relator definidos pelo servidor (#195).
  */
 package br.edu.safeplace.backend.application.usecase;
 
@@ -26,9 +27,9 @@ import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
 import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
+import br.edu.safeplace.backend.domain.ocorrencia.exception.DadosOcorrenciaInvalidosException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
-import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -78,17 +79,18 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
     @Override
     @Transactional
     public OcorrenciaOutputDTO registrarAcidente(RegistrarAcidenteInputDTO inputDTO) {
-        AreaRisco area = resolverArea(inputDTO.areaId());
-        Colaborador colaborador = resolverColaborador(inputDTO.colaboradorId());
-        GestorDeSeguranca gestor = resolverRelator(inputDTO.gestorId());
-        CausaRaizAcidente causaRaiz = converterCausaRaiz(inputDTO.causaRaiz());
-
-        String numeroProtocolo = inputDTO.numeroProtocolo();
-        if (numeroProtocolo == null || numeroProtocolo.isBlank()) {
-            LocalDateTime dataRef = inputDTO.dataOcorrencia() != null ? inputDTO.dataOcorrencia() : LocalDateTime.now();
-            long sequencial = repository.proximoSequencialCAT(dataRef.getYear(), dataRef.getMonthValue());
-            numeroProtocolo = NumeroProtocoloCAT.gerar(dataRef, sequencial).getValor();
+        if (inputDTO == null) {
+            throw new DadosOcorrenciaInvalidosException("Dados do relato não podem ser nulos.");
         }
+        AreaRisco area = resolverAreaObrigatoria(inputDTO.areaId());
+        Colaborador colaborador = resolverColaboradorObrigatorio(inputDTO.colaboradorId());
+        CausaRaizAcidente causaRaiz = CausaRaizAcidente.de(inputDTO.causaRaiz());
+        NivelPerigo gravidade = Acidente.lerGravidade(inputDTO.gravidade());
+
+        // US13: o protocolo do acidente é sempre gerado pelo servidor, nunca informado pelo cliente.
+        LocalDateTime dataRef = inputDTO.dataOcorrencia() != null ? inputDTO.dataOcorrencia() : LocalDateTime.now();
+        long sequencial = repository.proximoSequencialCAT(dataRef.getYear(), dataRef.getMonthValue());
+        String numeroProtocolo = NumeroProtocoloCAT.gerar(dataRef, sequencial).getValor();
 
         Acidente acidente = new Acidente(
                 null,
@@ -96,19 +98,17 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
                 inputDTO.dataOcorrencia(),
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                List.of(),
                 colaborador,
-                List.of(),
                 area,
-                gestor,
-                inputDTO.local(),
-                inputDTO.planoDeAcao(),
+                relatorAutenticado(),
+                null,
+                null,
                 causaRaiz,
                 inputDTO.tipo(),
                 inputDTO.dano(),
                 numeroProtocolo,
                 inputDTO.destino(),
-                inputDTO.gravidade()
+                gravidade
         );
         Acidente salvo = repository.salvarAcidente(acidente);
 
@@ -130,9 +130,11 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
     @Override
     @Transactional
     public OcorrenciaOutputDTO registrarIncidente(RegistrarIncidenteInputDTO inputDTO) {
-        AreaRisco area = resolverArea(inputDTO.areaId());
-        Colaborador colaborador = resolverColaborador(inputDTO.colaboradorId());
-        GestorDeSeguranca gestor = resolverRelator(inputDTO.gestorId());
+        if (inputDTO == null) {
+            throw new DadosOcorrenciaInvalidosException("Dados do relato não podem ser nulos.");
+        }
+        AreaRisco area = resolverAreaObrigatoria(inputDTO.areaId());
+        Colaborador colaborador = resolverColaboradorObrigatorio(inputDTO.colaboradorId());
 
         Incidente incidente = new Incidente(
                 null,
@@ -140,13 +142,11 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
                 inputDTO.dataOcorrencia(),
                 LocalDateTime.now(),
                 StatusOcorrencia.ABERTA,
-                List.of(),
                 colaborador,
-                List.of(),
                 area,
-                gestor,
-                inputDTO.local(),
-                inputDTO.planoDeAcao(),
+                relatorAutenticado(),
+                null,
+                null,
                 inputDTO.situacaoRisco(),
                 inputDTO.potencialDano()
         );
@@ -168,73 +168,37 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
     }
 
     /**
-     * Resolve a área de risco do fato. A localização estrutural vem apenas desta associação: o
-     * texto livre {@code local} é preservado como rótulo legado e nunca gera uma área fictícia.
+     * Resolve a área de risco do fato, obrigatória no relato e na edição (issue #195). A localização
+     * estrutural vem apenas desta associação (DS09, seção 2.3).
      */
-    private AreaRisco resolverArea(Integer areaId) {
-        if (areaId != null && areaRiscoRepository != null) {
-            return areaRiscoRepository.buscarPorId(areaId)
-                    .orElseThrow(() -> new IllegalArgumentException("Área de risco não encontrada para o ID: " + areaId));
+    private AreaRisco resolverAreaObrigatoria(Integer areaId) {
+        if (areaId == null) {
+            throw new DadosOcorrenciaInvalidosException("Área de risco é obrigatória.");
         }
-        return null;
+        return areaRiscoRepository.buscarPorId(areaId)
+                .orElseThrow(() -> new DadosOcorrenciaInvalidosException("Área de risco não encontrada para o ID: " + areaId));
     }
 
-    private Colaborador resolverColaborador(Integer colaboradorId) {
-        if (colaboradorId != null && usuarioRepository != null) {
-            return usuarioRepository.buscarPorId(colaboradorId)
-                    .orElseThrow(() -> new IllegalArgumentException("Colaborador não encontrado para o ID: " + colaboradorId));
+    /** Resolve o colaborador envolvido, obrigatório no relato e na edição (DS09, seção 2.2; issue #195). */
+    private Colaborador resolverColaboradorObrigatorio(Integer colaboradorId) {
+        if (colaboradorId == null) {
+            throw new DadosOcorrenciaInvalidosException("Colaborador envolvido é obrigatório.");
         }
-        return null;
+        return usuarioRepository.buscarPorId(colaboradorId)
+                .orElseThrow(() -> new DadosOcorrenciaInvalidosException("Colaborador não encontrado para o ID: " + colaboradorId));
     }
 
     /**
-     * Resolve o responsável pelo registro da ocorrência. O usuário autenticado prevalece sobre o
-     * identificador enviado na requisição, de modo que o relato fique vinculado a quem de fato o
-     * registrou; o identificador explícito só é usado quando não há gestor autenticado. Quem
-     * registra sem ser gestor de segurança (por exemplo, um supervisor no relato rápido) continua
-     * identificado pela trilha de auditoria.
+     * Relator do relato: o usuário autenticado, Gestor de Segurança ou Supervisor (RF13, UC09). Só o
+     * servidor o define (issue #195); sem sessão, o relato fica sem relator e a auditoria registra
+     * {@code SISTEMA}.
      */
-    private GestorDeSeguranca resolverRelator(Integer gestorId) {
-        GestorDeSeguranca autenticado = gestorAutenticado();
-        if (autenticado != null) {
-            return autenticado;
-        }
-        return resolverGestor(gestorId);
-    }
-
-    private GestorDeSeguranca gestorAutenticado() {
-        if (usuarioRepository == null) {
-            return null;
-        }
+    private Colaborador relatorAutenticado() {
         String email = emailAutenticado();
         if (email == null) {
             return null;
         }
-        return usuarioRepository.buscarPorEmail(email)
-                .filter(GestorDeSeguranca.class::isInstance)
-                .map(GestorDeSeguranca.class::cast)
-                .orElse(null);
-    }
-
-    private GestorDeSeguranca resolverGestor(Integer gestorId) {
-        if (gestorId != null && usuarioRepository != null) {
-            return usuarioRepository.buscarPorId(gestorId)
-                    .filter(GestorDeSeguranca.class::isInstance)
-                    .map(GestorDeSeguranca.class::cast)
-                    .orElseThrow(() -> new IllegalArgumentException("Gestor de segurança não encontrado para o ID: " + gestorId));
-        }
-        return null;
-    }
-
-    private CausaRaizAcidente converterCausaRaiz(String causaRaiz) {
-        if (causaRaiz == null || causaRaiz.isBlank()) {
-            return CausaRaizAcidente.OUTRO;
-        }
-        try {
-            return CausaRaizAcidente.valueOf(causaRaiz.trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return CausaRaizAcidente.OUTRO;
-        }
+        return usuarioRepository.buscarPorEmail(email).orElse(null);
     }
 
     /**
@@ -314,28 +278,30 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
             throw new IllegalStateException("Ocorrência arquivada não pode ser editada.");
         }
 
-        AreaRisco area = resolverArea(inputDTO.areaId());
-        Colaborador colaborador = resolverColaborador(inputDTO.colaboradorId());
+        AreaRisco area = resolverAreaObrigatoria(inputDTO.areaId());
+        Colaborador colaborador = resolverColaboradorObrigatorio(inputDTO.colaboradorId());
 
         Ocorrencia salva;
         if (atual instanceof Acidente acidente) {
+            // Campo em branco mantém o valor atual; valor desconhecido é recusado (issue #195).
             NivelPerigo gravidade = inputDTO.gravidade() == null || inputDTO.gravidade().isBlank()
                     ? acidente.getGravidade()
-                    : converterGravidade(inputDTO.gravidade());
+                    : Acidente.lerGravidade(inputDTO.gravidade());
+            CausaRaizAcidente causaRaiz = inputDTO.causaRaiz() == null || inputDTO.causaRaiz().isBlank()
+                    ? acidente.getCausaRaiz()
+                    : CausaRaizAcidente.de(inputDTO.causaRaiz());
             salva = repository.salvarAcidente(new Acidente(
                     acidente.getIdOcorrencia(),
                     inputDTO.descricao(),
                     inputDTO.dataOcorrencia(),
                     acidente.getDataRegistro(),
                     acidente.getStatusOcorrencia(),
-                    acidente.getTestemunhas(),
                     colaborador,
-                    acidente.getMidias(),
                     area,
-                    acidente.getGestor(),
+                    acidente.getRelator(),
                     acidente.getLocalInformado(),
                     acidente.getPlanoDeAcao(),
-                    converterCausaRaiz(inputDTO.causaRaiz()),
+                    causaRaiz,
                     inputDTO.tipo(),
                     inputDTO.dano(),
                     acidente.getNumeroProtocoloCAT(),
@@ -348,11 +314,9 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
                     inputDTO.dataOcorrencia(),
                     incidente.getDataRegistro(),
                     incidente.getStatusOcorrencia(),
-                    incidente.getTestemunhas(),
                     colaborador,
-                    incidente.getMidias(),
                     area,
-                    incidente.getGestor(),
+                    incidente.getRelator(),
                     incidente.getLocalInformado(),
                     incidente.getPlanoDeAcao(),
                     inputDTO.situacaoRisco(),
@@ -396,14 +360,6 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
 
     private static Integer idDoColaborador(Ocorrencia ocorrencia) {
         return ocorrencia.getColaborador() != null ? ocorrencia.getColaborador().getId() : null;
-    }
-
-    private static NivelPerigo converterGravidade(String gravidade) {
-        try {
-            return NivelPerigo.valueOf(gravidade.trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Gravidade inválida: " + gravidade);
-        }
     }
 
     @Override

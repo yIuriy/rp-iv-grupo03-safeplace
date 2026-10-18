@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,10 +33,13 @@ import org.springframework.test.context.DynamicPropertySource;
 import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
+import br.edu.safeplace.backend.application.port.in.ConsultarNotificacoesOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.RegistrarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
-import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoOcorrencia;
+import br.edu.safeplace.backend.domain.ocorrencia.TipoOcorrencia;
+import br.edu.safeplace.backend.domain.ocorrencia.exception.DadosOcorrenciaInvalidosException;
 import br.edu.safeplace.backend.suporte.PostgresDeTeste;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,7 +47,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 /**
- * Cobre, contra um PostgreSQL real, a persistência de ocorrências exigida pela issue #96: cada
+ * Cobre, contra um PostgreSQL real, a persistência de ocorrências exigida pelas issues #96 e #195: cada
  * operação roda em sua própria transação de caso de uso, de modo que a leitura seguinte reconstrói
  * a ocorrência a partir do banco, e não de um contexto de persistência ainda aberto.
  */
@@ -57,6 +61,7 @@ class OcorrenciaPersistenciaIntegracaoTest {
     // CPFs exclusivos desta classe: a suíte compartilha o banco e usuarios.cpf é único.
     private static final String CPF_COLABORADOR = "90000009601";
     private static final String CPF_GESTOR = "90000009602";
+    private static final String CPF_SUPERVISOR = "90000009603";
 
     static boolean bancoDisponivel() {
         return PostgresDeTeste.disponivel();
@@ -74,11 +79,15 @@ class OcorrenciaPersistenciaIntegracaoTest {
     private GerenciarOcorrenciaUseCase gerenciarUseCase;
 
     @Autowired
+    private ConsultarNotificacoesOcorrenciaUseCase consultarNotificacoesUseCase;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     private Integer areaId;
     private Integer colaboradorId;
     private Integer gestorId;
+    private Integer supervisorId;
 
     @BeforeEach
     void preparar() {
@@ -94,6 +103,8 @@ class OcorrenciaPersistenciaIntegracaoTest {
                 "joao" + DOMINIO_DE_TESTE, null, "COLABORADOR");
         gestorId = inserirUsuario(CPF_GESTOR, "Maria Gestora",
                 "maria" + DOMINIO_DE_TESTE, "$2a$10$hashDeTeste", "GESTOR_SEGURANCA");
+        supervisorId = inserirUsuario(CPF_SUPERVISOR, "Sérgio Supervisor",
+                "sergio" + DOMINIO_DE_TESTE, "$2a$10$hashDeTeste", "SUPERVISOR");
     }
 
     @AfterEach
@@ -103,6 +114,7 @@ class OcorrenciaPersistenciaIntegracaoTest {
     }
 
     private void limparDados() {
+        jdbcTemplate.execute("DELETE FROM notificacoes_ocorrencia");
         jdbcTemplate.execute("UPDATE ocorrencias SET plano_de_acao_id = NULL");
         jdbcTemplate.execute("UPDATE planos_de_acao SET ocorrencia_id = NULL");
         jdbcTemplate.execute("DELETE FROM acidentes");
@@ -111,8 +123,8 @@ class OcorrenciaPersistenciaIntegracaoTest {
         jdbcTemplate.execute("DELETE FROM prorrogacoes_prazo");
         jdbcTemplate.execute("DELETE FROM planos_de_acao");
         jdbcTemplate.execute("DELETE FROM sequencias_protocolo_cat");
-        jdbcTemplate.update("DELETE FROM usuarios WHERE email LIKE ? OR cpf IN (?, ?)",
-                "%" + DOMINIO_DE_TESTE, CPF_COLABORADOR, CPF_GESTOR);
+        jdbcTemplate.update("DELETE FROM usuarios WHERE email LIKE ? OR cpf IN (?, ?, ?)",
+                "%" + DOMINIO_DE_TESTE, CPF_COLABORADOR, CPF_GESTOR, CPF_SUPERVISOR);
         jdbcTemplate.update("DELETE FROM areas_risco WHERE codigo = ?", CODIGO_AREA);
     }
 
@@ -128,11 +140,11 @@ class OcorrenciaPersistenciaIntegracaoTest {
     @DisplayName("Deve reconstruir acidente preservando dataRegistro, status e vínculos após encerrar o contexto de persistência")
     void devePreservarDataRegistroStatusEVinculos() {
         LocalDateTime dataFato = LocalDateTime.of(2026, 9, 10, 14, 37, 12);
+        autenticarComo("maria" + DOMINIO_DE_TESTE, "GESTOR_SEGURANCA");
 
         OcorrenciaOutputDTO criado = registrarUseCase.registrarAcidente(new RegistrarAcidenteInputDTO(
-                dataFato, null, "Prensa atingiu a mão do operador.", null, "FALHA_EPI",
-                "Esmagamento", "Lesão na mão direita", null, "Hospital Municipal",
-                NivelPerigo.CRITICO, areaId, colaboradorId, gestorId));
+                dataFato, "Prensa atingiu a mão do operador.", "FALHA_EPI", "CRITICO",
+                "Esmagamento", "Lesão na mão direita", "Hospital Municipal", areaId, colaboradorId));
 
         LocalDateTime depoisDoRegistro = LocalDateTime.now();
 
@@ -151,8 +163,9 @@ class OcorrenciaPersistenciaIntegracaoTest {
         assertThat(lido.areaNome()).isEqualTo("Linha de Prensas");
         assertThat(lido.colaboradorId()).isEqualTo(colaboradorId);
         assertThat(lido.colaboradorNome()).isEqualTo("João da Linha");
-        assertThat(lido.gestorId()).isEqualTo(gestorId);
-        assertThat(lido.gestorNome()).isEqualTo("Maria Gestora");
+        assertThat(lido.relatorId()).isEqualTo(gestorId);
+        assertThat(lido.relatorNome()).isEqualTo("Maria Gestora");
+        assertThat(lido.relatorPerfil()).isEqualTo("GESTOR_SEGURANCA");
 
         // Atributos próprios de Acidente.
         assertThat(lido.tipoOcorrencia()).isEqualTo("ACIDENTE");
@@ -180,8 +193,8 @@ class OcorrenciaPersistenciaIntegracaoTest {
     @DisplayName("Deve reconstruir incidente com área e colaborador, sem emitir protocolo")
     void deveReconstruirIncidente() {
         OcorrenciaOutputDTO criado = registrarUseCase.registrarIncidente(new RegistrarIncidenteInputDTO(
-                LocalDateTime.of(2026, 9, 9, 8, 15), null, "Piso oleoso próximo à prensa.",
-                null, "Piso escorregadio", "Queda de mesmo nível", areaId, colaboradorId, gestorId));
+                LocalDateTime.of(2026, 9, 9, 8, 15), "Piso oleoso próximo à prensa.",
+                "Piso escorregadio", "Queda de mesmo nível", areaId, colaboradorId));
 
         OcorrenciaOutputDTO lido = gerenciarUseCase.buscarPorId(criado.idOcorrencia());
 
@@ -198,9 +211,8 @@ class OcorrenciaPersistenciaIntegracaoTest {
     @DisplayName("Deve preservar dataRegistro e a própria linha ao triar e arquivar, sem exclusão física")
     void devePreservarRegistroAoTriarEArquivar() {
         OcorrenciaOutputDTO criado = registrarUseCase.registrarAcidente(new RegistrarAcidenteInputDTO(
-                LocalDateTime.of(2026, 9, 8, 11, 5), null, "Queda de ferramenta da passarela.",
-                null, "FATOR_HUMANO", "Impacto", "Contusão no ombro", null, "Ambulatório",
-                NivelPerigo.ALTO, areaId, colaboradorId, gestorId));
+                LocalDateTime.of(2026, 9, 8, 11, 5), "Queda de ferramenta da passarela.",
+                "FATOR_HUMANO", "ALTO", "Impacto", "Contusão no ombro", "Ambulatório", areaId, colaboradorId));
 
         OcorrenciaOutputDTO emTriagem = gerenciarUseCase.enviarParaTriagem(criado.idOcorrencia());
         assertThat(emTriagem.statusOcorrencia()).isEqualTo("EM_TRIAGEM");
@@ -253,9 +265,9 @@ class OcorrenciaPersistenciaIntegracaoTest {
                 emissoes.add(() -> {
                     largada.await(20, TimeUnit.SECONDS);
                     return registrarUseCase.registrarAcidente(new RegistrarAcidenteInputDTO(
-                            LocalDateTime.of(2026, 9, 7, 9, 0), null, "Acidente concorrente " + index, null,
-                            "FATOR_HUMANO", "Impacto", "Escoriação", null, "Ambulatório",
-                            NivelPerigo.MEDIO, areaId, colaboradorId, gestorId)).numeroProtocoloCAT();
+                            LocalDateTime.of(2026, 9, 7, 9, 0), "Acidente concorrente " + index,
+                            "FATOR_HUMANO", "MEDIO", "Impacto", "Escoriação", "Ambulatório",
+                            areaId, colaboradorId)).numeroProtocoloCAT();
                 });
             }
 
@@ -287,38 +299,97 @@ class OcorrenciaPersistenciaIntegracaoTest {
     }
 
     @Test
-    @DisplayName("Deve gravar como relator o gestor autenticado, mesmo sem gestorId na requisição")
-    void devePersistirRelatorAutenticado() {
+    @DisplayName("Deve gravar como relator o gestor autenticado (issue #195)")
+    void devePersistirGestorComoRelator() {
         autenticarComo("maria" + DOMINIO_DE_TESTE, "GESTOR_SEGURANCA");
 
-        OcorrenciaOutputDTO criado = registrarUseCase.registrarAcidente(new RegistrarAcidenteInputDTO(
-                LocalDateTime.of(2026, 9, 6, 16, 45), null, "Ferramenta sem trava de segurança.",
-                null, "FALHA_EPI", "Corte", "Corte superficial", null, "Ambulatório",
-                NivelPerigo.BAIXO, areaId, colaboradorId, null));
+        OcorrenciaOutputDTO criado = registrarUseCase.registrarAcidente(acidenteSimples("Ferramenta sem trava."));
 
-        OcorrenciaOutputDTO lido = gerenciarUseCase.buscarPorId(criado.idOcorrencia());
-
-        assertThat(lido.gestorId()).isEqualTo(gestorId);
-        assertThat(contar("SELECT COUNT(*) FROM ocorrencias WHERE id_ocorrencia = ? AND gestor_id = ?",
+        assertThat(gerenciarUseCase.buscarPorId(criado.idOcorrencia()).relatorId()).isEqualTo(gestorId);
+        assertThat(contar("SELECT COUNT(*) FROM ocorrencias WHERE id_ocorrencia = ? AND relator_id = ?",
                 criado.idOcorrencia(), gestorId)).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("Deve preservar o texto livre de local sem inventar uma área de risco")
-    void naoDeveDerivarAreaFicticiaDoTextoLocal() {
-        OcorrenciaOutputDTO criado = registrarUseCase.registrarAcidente(new RegistrarAcidenteInputDTO(
-                LocalDateTime.of(2026, 9, 5, 10, 20), "Pátio externo", "Tropeço em cabo solto.",
-                null, "FATOR_HUMANO", "Queda", "Torção no tornozelo", null, "Ambulatório",
-                NivelPerigo.BAIXO, null, colaboradorId, gestorId));
+    @DisplayName("Relato do Supervisor grava o Supervisor como relator, sem deixar o vínculo nulo (issue #195)")
+    void devePersistirSupervisorComoRelator() {
+        autenticarComo("sergio" + DOMINIO_DE_TESTE, "SUPERVISOR");
 
+        OcorrenciaOutputDTO criado = registrarUseCase.registrarIncidente(new RegistrarIncidenteInputDTO(
+                LocalDateTime.of(2026, 9, 6, 16, 45), "Cabo solto no corredor.", "Cabo atravessado",
+                "Tropeço", areaId, colaboradorId));
+
+        autenticarComo("maria" + DOMINIO_DE_TESTE, "GESTOR_SEGURANCA");
         OcorrenciaOutputDTO lido = gerenciarUseCase.buscarPorId(criado.idOcorrencia());
 
-        assertThat(lido.areaId()).isNull();
-        assertThat(lido.areaNome()).isNull();
-        assertThat(lido.local()).isEqualTo("Pátio externo");
-        assertThat(contar("SELECT COUNT(*) FROM ocorrencias WHERE id_ocorrencia = ? AND area_risco_id IS NULL",
-                criado.idOcorrencia())).isEqualTo(1);
-        assertThat(contar("SELECT COUNT(*) FROM areas_risco WHERE nome = ?", "Pátio externo")).isZero();
+        assertThat(lido.relatorId()).isEqualTo(supervisorId);
+        assertThat(lido.relatorNome()).isEqualTo("Sérgio Supervisor");
+        assertThat(lido.relatorPerfil()).isEqualTo("SUPERVISOR");
+    }
+
+    @Test
+    @DisplayName("Banco exige área de risco e colaborador envolvido (colunas NOT NULL, issue #195)")
+    void bancoExigeAreaEColaborador() {
+        assertThat(jdbcTemplate.queryForList("""
+                SELECT column_name FROM information_schema.columns
+                WHERE table_name = 'ocorrencias' AND is_nullable = 'NO'
+                  AND column_name IN ('area_risco_id', 'colaborador_id')
+                """, String.class)).containsExactlyInAnyOrder("area_risco_id", "colaborador_id");
+
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "INSERT INTO ocorrencias (data_ocorrencia, descricao, colaborador_id) VALUES (?, 'Sem área', ?)",
+                LocalDateTime.of(2026, 9, 5, 10, 0), colaboradorId))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "INSERT INTO ocorrencias (data_ocorrencia, descricao, area_risco_id) VALUES (?, 'Sem colaborador', ?)",
+                LocalDateTime.of(2026, 9, 5, 10, 0), areaId))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    @DisplayName("Relato sem área é recusado pelo caso de uso e nada é gravado (issue #195)")
+    void relatoSemAreaNaoGrava() {
+        assertThatThrownBy(() -> registrarUseCase.registrarIncidente(new RegistrarIncidenteInputDTO(
+                LocalDateTime.of(2026, 9, 5, 10, 20), "Tropeço em cabo solto.", "Cabo", "Queda",
+                null, colaboradorId)))
+                .isInstanceOf(DadosOcorrenciaInvalidosException.class);
+
+        assertThat(contar("SELECT COUNT(*) FROM ocorrencias")).isZero();
+    }
+
+    @Test
+    @DisplayName("Banco recusa gravidade e causa raiz fora do vocabulário aprovado (issue #195)")
+    void bancoRecusaGravidadeECausaInvalidas() {
+        Integer id = registrarUseCase.registrarAcidente(acidenteSimples("Acidente válido")).idOcorrencia();
+
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "UPDATE acidentes SET gravidade = 'GRAVE' WHERE id_ocorrencia = ?", id))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "UPDATE acidentes SET causa_raiz = 'QUEDA' WHERE id_ocorrencia = ?", id))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    @DisplayName("Notificação ao Gestor fica gravada e pode ser consultada (UC09, passo 12; issue #195)")
+    void deveGravarNotificacaoConsultavel() {
+        OcorrenciaOutputDTO acidente = registrarUseCase.registrarAcidente(acidenteSimples("Acidente notificado"));
+        OcorrenciaOutputDTO incidente = registrarUseCase.registrarIncidente(new RegistrarIncidenteInputDTO(
+                LocalDateTime.of(2026, 9, 4, 7, 30), "Incidente notificado.", "Sinalização ausente",
+                "Colisão", areaId, colaboradorId));
+
+        List<NotificacaoOcorrencia> notificacoes = consultarNotificacoesUseCase.listar();
+
+        assertThat(notificacoes).hasSize(2);
+        NotificacaoOcorrencia maisRecente = notificacoes.get(0);
+        assertThat(maisRecente.ocorrenciaId()).isEqualTo(incidente.idOcorrencia());
+        assertThat(maisRecente.tipoOcorrencia()).isEqualTo(TipoOcorrencia.INCIDENTE);
+        assertThat(maisRecente.numeroProtocoloCAT()).isNull();
+        NotificacaoOcorrencia doAcidente = notificacoes.get(1);
+        assertThat(doAcidente.ocorrenciaId()).isEqualTo(acidente.idOcorrencia());
+        assertThat(doAcidente.numeroProtocoloCAT()).isEqualTo(acidente.numeroProtocoloCAT());
+        assertThat(doAcidente.areaNome()).isEqualTo("Linha de Prensas");
+        assertThat(doAcidente.mensagem()).contains(acidente.numeroProtocoloCAT(), "Linha de Prensas");
     }
 
     @Test
@@ -326,8 +397,8 @@ class OcorrenciaPersistenciaIntegracaoTest {
     void deveListarOcorrenciasGravadas() {
         registrarUseCase.registrarAcidente(acidenteSimples("Acidente listado"));
         registrarUseCase.registrarIncidente(new RegistrarIncidenteInputDTO(
-                LocalDateTime.of(2026, 9, 4, 7, 30), null, "Incidente listado.", null,
-                "Sinalização ausente", "Colisão com empilhadeira", areaId, colaboradorId, gestorId));
+                LocalDateTime.of(2026, 9, 4, 7, 30), "Incidente listado.",
+                "Sinalização ausente", "Colisão com empilhadeira", areaId, colaboradorId));
 
         List<OcorrenciaOutputDTO> listadas = registrarUseCase.listar();
 
@@ -344,9 +415,8 @@ class OcorrenciaPersistenciaIntegracaoTest {
 
     private RegistrarAcidenteInputDTO acidenteSimples(String descricao) {
         return new RegistrarAcidenteInputDTO(
-                LocalDateTime.of(2026, 9, 3, 13, 10), null, descricao, null, "FATOR_HUMANO",
-                "Impacto", "Escoriação", null, "Ambulatório", NivelPerigo.BAIXO,
-                areaId, colaboradorId, gestorId);
+                LocalDateTime.of(2026, 9, 3, 13, 10), descricao, "FATOR_HUMANO", "BAIXO",
+                "Impacto", "Escoriação", "Ambulatório", areaId, colaboradorId);
     }
 
     private void autenticarComo(String email, String perfil) {

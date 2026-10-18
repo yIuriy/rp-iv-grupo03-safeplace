@@ -20,7 +20,6 @@ import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
-import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
 @Repository
 public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
@@ -93,7 +92,7 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
     private AcidenteEntity toEntity(Acidente acidente) {
         AreaRiscoEntity areaEntity = carregarArea(acidente.getArea());
         ColaboradorEntidade colaboradorEntity = carregarColaborador(acidente.getColaborador());
-        GestorDeSegurancaEntidade gestorEntity = carregarGestor(acidente.getGestor());
+        ColaboradorEntidade relatorEntity = carregarColaborador(acidente.getRelator());
 
         return new AcidenteEntity(
                 acidente.getIdOcorrencia(),
@@ -102,7 +101,7 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
                 acidente.getStatusOcorrencia() != null ? acidente.getStatusOcorrencia().name() : "ABERTA",
                 areaEntity,
                 colaboradorEntity,
-                gestorEntity,
+                relatorEntity,
                 acidente.getLocalInformado(),
                 acidente.getDescricao(),
                 toEntity(acidente.getPlanoDeAcao()),
@@ -111,13 +110,13 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
                 acidente.getDano(),
                 acidente.getNumeroProtocoloCAT(),
                 acidente.getDestino(),
-                acidente.getGravidade() != null ? acidente.getGravidade().name() : "BAIXO");
+                acidente.getGravidade().name());
     }
 
     private IncidenteEntity toEntity(Incidente incidente) {
         AreaRiscoEntity areaEntity = carregarArea(incidente.getArea());
         ColaboradorEntidade colaboradorEntity = carregarColaborador(incidente.getColaborador());
-        GestorDeSegurancaEntidade gestorEntity = carregarGestor(incidente.getGestor());
+        ColaboradorEntidade relatorEntity = carregarColaborador(incidente.getRelator());
 
         return new IncidenteEntity(
                 incidente.getIdOcorrencia(),
@@ -126,7 +125,7 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
                 incidente.getStatusOcorrencia() != null ? incidente.getStatusOcorrencia().name() : "ABERTA",
                 areaEntity,
                 colaboradorEntity,
-                gestorEntity,
+                relatorEntity,
                 incidente.getLocalInformado(),
                 incidente.getDescricao(),
                 toEntity(incidente.getPlanoDeAcao()),
@@ -146,16 +145,6 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
             return null;
         }
         return usuarioRepository.findById(colaborador.getId()).orElse(null);
-    }
-
-    private GestorDeSegurancaEntidade carregarGestor(GestorDeSeguranca gestor) {
-        if (gestor == null || gestor.getId() == null || usuarioRepository == null) {
-            return null;
-        }
-        return usuarioRepository.findById(gestor.getId())
-                .filter(GestorDeSegurancaEntidade.class::isInstance)
-                .map(GestorDeSegurancaEntidade.class::cast)
-                .orElse(null);
     }
 
     private PlanoDeAcaoEntity toEntity(PlanoDeAcao plano) {
@@ -182,13 +171,11 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
     private Acidente toDomain(AcidenteEntity entity) {
         AreaRisco area = toDomain(entity.getArea());
         Colaborador colaborador = entity.getColaborador() != null ? entity.getColaborador().paraDominio() : null;
-        GestorDeSeguranca gestor = entity.getGestor() != null ? entity.getGestor().paraDominio() : null;
+        Colaborador relator = entity.getRelator() != null ? entity.getRelator().paraDominio() : null;
         StatusOcorrencia status = entity.getStatusOcorrencia() != null
                 ? StatusOcorrencia.valueOf(entity.getStatusOcorrencia())
                 : StatusOcorrencia.ABERTA;
-        NivelPerigo gravidade = entity.getGravidade() != null
-                ? NivelPerigo.valueOf(entity.getGravidade())
-                : NivelPerigo.BAIXO;
+        NivelPerigo gravidade = NivelPerigo.valueOf(entity.getGravidade());
         CausaRaizAcidente causaRaiz = entity.getCausaRaiz() != null
                 ? CausaRaizAcidente.valueOf(entity.getCausaRaiz())
                 : null;
@@ -199,11 +186,9 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
                 entity.getDataOcorrencia(),
                 entity.getDataRegistro(),
                 status,
-                null,
                 colaborador,
-                null,
                 area,
-                gestor,
+                relator,
                 entity.getLocal(),
                 toDomain(entity.getPlanoDeAcao()),
                 causaRaiz,
@@ -217,7 +202,7 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
     private Incidente toDomain(IncidenteEntity entity) {
         AreaRisco area = toDomain(entity.getArea());
         Colaborador colaborador = entity.getColaborador() != null ? entity.getColaborador().paraDominio() : null;
-        GestorDeSeguranca gestor = entity.getGestor() != null ? entity.getGestor().paraDominio() : null;
+        Colaborador relator = entity.getRelator() != null ? entity.getRelator().paraDominio() : null;
         StatusOcorrencia status = entity.getStatusOcorrencia() != null
                 ? StatusOcorrencia.valueOf(entity.getStatusOcorrencia())
                 : StatusOcorrencia.ABERTA;
@@ -228,11 +213,9 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
                 entity.getDataOcorrencia(),
                 entity.getDataRegistro(),
                 status,
-                null,
                 colaborador,
-                null,
                 area,
-                gestor,
+                relator,
                 entity.getLocal(),
                 toDomain(entity.getPlanoDeAcao()),
                 entity.getSituacaoRisco(),

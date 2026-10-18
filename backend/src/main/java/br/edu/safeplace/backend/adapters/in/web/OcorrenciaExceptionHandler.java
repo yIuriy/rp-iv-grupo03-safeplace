@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.adapters.in.web;
 
+import br.edu.safeplace.backend.domain.ocorrencia.exception.DadosOcorrenciaInvalidosException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.DataOcorrenciaInvalidaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.ProtocoloCATInvalidoException;
@@ -51,6 +52,16 @@ public class OcorrenciaExceptionHandler {
                 "timestamp", LocalDateTime.now(),
                 "status", HttpStatus.BAD_REQUEST.value(),
                 "error", "Data de Ocorrência Inválida",
+                "message", ex.getMessage()
+        ));
+    }
+
+    @ExceptionHandler(DadosOcorrenciaInvalidosException.class)
+    public ResponseEntity<Map<String, Object>> handleDadosOcorrenciaInvalidos(DadosOcorrenciaInvalidosException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.BAD_REQUEST.value(),
+                "error", "Dados da Ocorrência Inválidos",
                 "message", ex.getMessage()
         ));
     }

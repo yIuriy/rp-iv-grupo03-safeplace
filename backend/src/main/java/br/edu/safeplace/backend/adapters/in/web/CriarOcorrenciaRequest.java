@@ -2,74 +2,55 @@ package br.edu.safeplace.backend.adapters.in.web;
 
 import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
-import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 
+/**
+ * Corpo de {@code POST /api/ocorrencias} (UC05, UC09). Protocolo CAT e relator são definidos pelo
+ * servidor, e o plano de ação é cadastrado à parte pelo Gestor (UC07); por isso não fazem parte do
+ * relato (issue #195). Gravidade e causa raiz chegam como texto e são validadas no caso de uso.
+ */
 public record CriarOcorrenciaRequest(
-        @NotBlank String tipoOcorrencia,
-        @NotNull LocalDateTime dataOcorrencia,
-        String local,
-        @NotBlank String descricao,
+        @NotBlank(message = "Tipo de ocorrência é obrigatório.") String tipoOcorrencia,
+        @NotNull(message = "Data do fato é obrigatória.") LocalDateTime dataOcorrencia,
+        @NotBlank(message = "Descrição é obrigatória.") String descricao,
 
-        Integer areaId,
-        Integer colaboradorId,
-        Integer gestorId,
+        @NotNull(message = "Área de risco é obrigatória.") Integer areaId,
+        @NotNull(message = "Colaborador envolvido é obrigatório.") Integer colaboradorId,
 
         String causaRaiz,
+        String gravidade,
         String tipo,
         String dano,
-        String numeroProtocolo,
         String destino,
-        String gravidade,
 
         String situacaoRisco,
-        String potencialDano,
-
-        PlanoDeAcaoRequest planoDeAcao
+        String potencialDano
 ) {
     public RegistrarAcidenteInputDTO toAcidenteInputDTO() {
         return new RegistrarAcidenteInputDTO(
                 dataOcorrencia,
-                local,
                 descricao,
-                planoDeAcao != null ? planoDeAcao.toDomain() : null,
                 causaRaiz,
+                gravidade,
                 tipo,
                 dano,
-                numeroProtocolo,
                 destino,
-                converterGravidade(gravidade),
                 areaId,
-                colaboradorId,
-                gestorId
+                colaboradorId
         );
     }
 
     public RegistrarIncidenteInputDTO toIncidenteInputDTO() {
         return new RegistrarIncidenteInputDTO(
                 dataOcorrencia,
-                local,
                 descricao,
-                planoDeAcao != null ? planoDeAcao.toDomain() : null,
                 situacaoRisco,
                 potencialDano,
                 areaId,
-                colaboradorId,
-                gestorId
+                colaboradorId
         );
-    }
-
-    private static NivelPerigo converterGravidade(String gravidade) {
-        if (gravidade == null || gravidade.isBlank()) {
-            return NivelPerigo.BAIXO;
-        }
-        try {
-            return NivelPerigo.valueOf(gravidade.trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return NivelPerigo.BAIXO;
-        }
     }
 }

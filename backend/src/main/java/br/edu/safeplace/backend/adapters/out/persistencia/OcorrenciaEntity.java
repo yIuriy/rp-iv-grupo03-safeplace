@@ -28,17 +28,18 @@ public abstract class OcorrenciaEntity {
     @Column(nullable = false)
     private String descricao;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "area_risco_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "area_risco_id", nullable = false)
     private AreaRiscoEntity area;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "colaborador_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "colaborador_id", nullable = false)
     private ColaboradorEntidade colaborador;
 
+    /** Gestor de Segurança ou Supervisor que registrou o relato (issue #195). */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "gestor_id")
-    private GestorDeSegurancaEntidade gestor;
+    @JoinColumn(name = "relator_id")
+    private ColaboradorEntidade relator;
 
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "plano_de_acao_id")
@@ -54,7 +55,7 @@ public abstract class OcorrenciaEntity {
             String statusOcorrencia,
             AreaRiscoEntity area,
             ColaboradorEntidade colaborador,
-            GestorDeSegurancaEntidade gestor,
+            ColaboradorEntidade relator,
             String local,
             String descricao,
             PlanoDeAcaoEntity planoDeAcao) {
@@ -64,16 +65,12 @@ public abstract class OcorrenciaEntity {
         this.statusOcorrencia = statusOcorrencia != null ? statusOcorrencia : "ABERTA";
         this.area = area;
         this.colaborador = colaborador;
-        this.gestor = gestor;
+        this.relator = relator;
         this.local = local;
         this.descricao = descricao;
         this.planoDeAcao = planoDeAcao;
     }
 
-    protected OcorrenciaEntity(Integer idOcorrencia, LocalDateTime dataOcorrencia, String local,
-            String descricao, PlanoDeAcaoEntity planoDeAcao) {
-        this(idOcorrencia, dataOcorrencia, LocalDateTime.now(), "ABERTA", null, null, null, local, descricao, planoDeAcao);
-    }
 
     public Integer getIdOcorrencia() {
         return idOcorrencia;
@@ -99,8 +96,8 @@ public abstract class OcorrenciaEntity {
         return colaborador;
     }
 
-    public GestorDeSegurancaEntidade getGestor() {
-        return gestor;
+    public ColaboradorEntidade getRelator() {
+        return relator;
     }
 
     public String getLocal() {
