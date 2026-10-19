@@ -1,7 +1,8 @@
 /* Layout da tela de ocorrências (issues #128 e #100): grade de critérios que vira uma coluna em telas
    estreitas, consulta pelo protocolo CAT, formulário de relato, protocolo em destaque na confirmação,
    painel de novos relatos e ações do plano. */
-.sp-consulta-ocorrencias { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: var(--sp-space-16); align-items: end; }
+.sp-consulta-ocorrencias { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: var(--sp-space-16); align-items: start; }
+.sp-consulta-ocorrencias .sp-acoes-busca { margin-top: calc(var(--sp-type-label-md-line-height) + var(--sp-space-8)); }
 .sp-consulta-ocorrencias .sp-consulta-texto { grid-column: 1 / -1; }
 .sp-consulta-cabecalho { display: flex; flex-wrap: wrap; gap: 0 var(--sp-space-16); align-items: flex-start; justify-content: space-between; }
 .sp-protocolo { display: grid; gap: var(--sp-space-12); flex: 1 1 320px; }
