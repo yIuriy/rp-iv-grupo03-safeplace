@@ -248,20 +248,21 @@ O passo 8 do cenário principal, a consulta de evidências no alternativo I e os
 | **Ator Principal** | Gestor de Segurança |
 | **Atores Secundários** | Nenhum |
 | **Resumo** | Permite registrar, consultar, atualizar e arquivar acidentes e incidentes de trabalho causados por fatores humanos, condições inseguras ou falha de equipamentos. A investigação pericial permanece como extensão futura. |
-| **Pré-condições** | O Gestor de Segurança deve estar logado no sistema;<br>O colaborador envolvido deve estar cadastrado (se aplicável). |
+| **Pré-condições** | O Gestor de Segurança deve estar logado no sistema;<br>O colaborador envolvido deve estar cadastrado. |
 | **Pós-condições** | Ocorrência registrada, consultada, atualizada ou arquivada, conforme a operação, com histórico preservado para acompanhamento e plano de ação. Investigação e documentação legal (CAT) são resultados futuros. |
 | **Cenário Principal** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar a funcionalidade de gerenciamento de acidentes e incidentes | |
 | | 2. Apresentar opções (cadastrar, consultar, editar ou arquivar ocorrência) |
 | 3. Escolher cadastrar ocorrência | |
-| | 4. Solicitar dados da ocorrência (tipo: acidente ou incidente, data, local, colaborador, tipo de lesão ou potencial de dano, EPIs) |
+| | 4. Solicitar dados da ocorrência (tipo: acidente ou incidente, data do fato, setor e área de risco, colaborador envolvido e descrição; no acidente, causa raiz e gravidade; no incidente, situação de risco e potencial de dano) |
 | 5. Preencher as informações solicitadas | |
 | | 6. Validar os dados |
 | | 7. Registrar a ocorrência no sistema|
 | | 8. Oferecer execução do caso de uso estendido **UC04 - Anexar Mídias e Testemunhas** |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. Registros de acidentes e incidentes não podem ser excluídos do sistema, apenas arquivados. | 2. O sistema registra automaticamente data, hora e usuário responsável pelo cadastro. |
+| 3. A ocorrência fica vinculada a uma área de risco e a exatamente um colaborador envolvido. O setor é o da área. Não há lista de EPIs: a falha de EPI é indicada pela causa raiz e descrita no texto. | 4. Só o acidente recebe protocolo CAT, gerado pelo sistema. O incidente é identificado pelo número do registro. |
 | **Cenário Alternativo I - Consultar ocorrência existente** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Selecionar a opção 'Consultar ocorrência' | |
@@ -297,8 +298,8 @@ O passo 8 do cenário principal, a consulta de evidências no alternativo I e os
 | | 6. Exibir os dados atualizados na consulta |
 | **Cenário Alternativo V - Arquivar ocorrência (MVP)** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Selecionar uma ocorrência e a opção de arquivar | |
-| | 2. Registrar o arquivamento, preservando os dados e o histórico da ocorrência |
+| 1. Selecionar uma ocorrência em triagem e a opção de arquivar | |
+| | 2. Registrar o arquivamento, preservando os dados e o histórico da ocorrência. Uma ocorrência aberta precisa ser enviada para triagem antes de ser arquivada |
 | | 3. Registrar usuário, data, hora e alteração na auditoria |
 | | 4. Identificar a ocorrência como arquivada na consulta |
 | **Cenário de Exceção I - Colaborador não cadastrado** | |
@@ -476,21 +477,21 @@ O passo 7 do cenário principal e o alternativo I (anexos) pertencem ao backlog.
 | **Ator Principal** | Supervisor |
 | **Atores Secundários** | Gestor de Segurança |
 | **Resumo** | Permite ao Supervisor registrar acidentes e incidentes, inclusive os comunicados pelos colaboradores, e informar o Gestor de Segurança para acompanhamento e definição de ações preventivas e corretivas. |
-| **Pré-condições** | O Supervisor deve estar logado no sistema. Os colaboradores informados devem estar cadastrados, sem necessidade de conta ou senha própria. |
-| **Pós-condições** | Acidente ou incidente registrado com protocolo de acompanhamento, identificação do Supervisor que realizou o cadastro e notificação enviada ao Gestor de Segurança. |
+| **Pré-condições** | O Supervisor deve estar logado no sistema. O colaborador envolvido deve estar cadastrado, sem necessidade de conta ou senha própria. |
+| **Pós-condições** | Acidente registrado com protocolo CAT, ou incidente registrado com número de registro, com identificação do Supervisor que realizou o cadastro e notificação enviada ao Gestor de Segurança. |
 | **Cenário Principal** | |
 | **Ações do Ator** | **Ações do Sistema** |
 | 1. Acessar a funcionalidade "Relatar Acidente/Incidente" | |
 | | 2. Exibir formulário de relato rápido de acidentes e incidentes |
 | 3. Selecionar o tipo de ocorrência (acidente ou incidente) | |
-| 4. Informar a data do fato e o setor | |
-| 5. Informar colaboradores envolvidos | |
-| 6. Informar descrição dos fatos | |
+| 4. Informar a data do fato, o setor e a área de risco do setor | |
+| 5. Informar o colaborador envolvido | |
+| 6. Informar a descrição dos fatos e, no acidente, a causa raiz e a gravidade; no incidente, a situação de risco e o potencial de dano | |
 | 7. Acionar opcionalmente o caso de uso estendido **UC04 - Anexar Mídias e Testemunhas** | |
 | 8. Confirmar o envio do relato de acidente/incidente | |
 | | 9. Validar dados |
 | | 10. Registrar o acidente/incidente, preservando a data do fato e registrando automaticamente usuário, data e hora do cadastro |
-| | 11. Gerar e apresentar o protocolo para acidente ou incidente |
+| | 11. Apresentar a confirmação do registro: no acidente, com o protocolo CAT gerado pelo sistema; no incidente, com o número do registro, sem protocolo |
 | | 12. Enviar notificação automática da ocorrência ao Gestor de Segurança |
 | **Regras de Negócio, Restrições e Validações** | |
 | 1. O formulário deve ser objetivo para preenchimento ágil. | 2. O Supervisor registra acidentes e incidentes com sua própria identificação, inclusive quando os fatos são comunicados por um Colaborador. A data e hora do cadastro não substituem a data do fato. |
@@ -511,7 +512,7 @@ O passo 7 do cenário principal e o alternativo I (anexos) pertencem ao backlog.
 | | 3. Sincronizar automaticamente ao restabelecer sinal |
 | **Cenário de Exceção II - Relato com campos obrigatórios não preenchidos** | |
 | **Ações do Ator** | **Ações do Sistema** |
-| 1. Tentar submeter relato de acidente/incidente sem informar setor ou descrição | |
+| 1. Tentar submeter relato de acidente/incidente sem informar a área de risco, o colaborador envolvido, a descrição ou os campos próprios do tipo escolhido | |
 | | 2. Detectar campos obrigatórios em branco |
 | | 3. Bloquear envio e indicar campos pendentes|
 

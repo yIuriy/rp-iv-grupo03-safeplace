@@ -39,7 +39,7 @@ Complementa a [matriz documental da seção 9](especificacao-mvp-arquitetura.md#
 | RNF03 | Testes de permissão para Gestor e Supervisor; Colaborador sem credenciais | `SegurancaRbacIntegrationTest`, `SegurancaControleAcessoIntegracaoTest`, `SegurancaOcorrenciaPlanoRbacTest`, `ColaboradorSemCredenciaisTest`, `TratamentoDeErroHttpTest` | Cobertura por perfil de todos os endpoints não conferida. |
 | RNF05 | Log imutável e retenção mínima de 5 anos | `AuditoriaEvidenciaIntegracaoTest` (alteração seguida de consulta do log para área de risco, colaborador, estoque e classificação de tarefa), `LogAuditoriaTest`, `LogAuditoriaJpaAdapterTest`, `UsuarioCasoDeUsoAuditoriaTest` | Nenhuma proteção de imutabilidade no banco nem política de retenção de 5 anos foram encontradas no código. Evidência parcial: o registro existe, a garantia não. |
 | RNF08 | Consulta sem conexão | `frontend/tests/offline.spec.ts` (5 testes): cópia local sinalizada até o servidor confirmar, nova consulta ao voltar a rede, falha de atualização, sem cópia sem sessão, isolamento por conta | Recorte provisório somente leitura nas telas existentes. Envio offline de relatos e dados de indicadores e relatórios seguem pendentes. Decisão da #105 não registrada. |
-| RNF11 | Verificação desktop, tablet, móvel e WCAG 2.1 AA | Testes Playwright que variam a largura da janela (`estoque.spec.ts`, `ocorrencias.spec.ts`, `login.spec.ts`, entre outros) | Nenhuma auditoria WCAG automatizada (sem axe) nem avaliação manual registrada. Evidência apenas de responsividade. |
+| RNF11 | Verificação desktop, tablet, móvel e WCAG 2.1 AA | `frontend/tests/acessibilidade.spec.ts` (111 testes): regras WCAG 2.1 A e AA do axe nas 8 telas do MVP e em 7 formulários com erros, reflow sem rolagem horizontal e foco visível com Tab, nos perfis Gestor e Supervisor, em 320, 768 e 1344 px; 0 violações. Teclado, contraste e árvore de acessibilidade registrados na [avaliação do RNF11](avaliacao-acessibilidade-rnf11.md) | Teste com leitor de tela real (NVDA ou Orca) não realizado. Diálogos secundários sem execução do axe. Ampliação de texto (1.4.4) e espaçamento de texto (1.4.12) não verificados. |
 | RNF15 | Arquitetura, API e modelo de dados versionados | `docs/`, 33 migrações Flyway, `OpenApiConfig` com anotações `@Tag` e `@Operation` nos 17 controladores REST | Nenhuma na documentação interativa OpenAPI (17 controladores documentados). Manter sincronismo dos demais documentos de arquitetura. |
 
 ## 3. Execuções registradas
@@ -81,10 +81,20 @@ Medições na branch `amanda-201`, a partir da `dev` em `64599af`, depois de atu
 | `npm run build` | Sem erros. |
 | Playwright (`--workers=2`) | 162 testes, 162 passam. Inclui a largura de 320 px em `/capacitacoes`, corrigida no cabeçalho comum (`layout.css`). |
 
+### 3.4. Execução de 18 de outubro de 2026
+
+Medições na branch `amanda-189-202`, a partir da `dev` em `1de52b2`, depois de incluir a verificação de acessibilidade da issue #202. O backend não foi alterado.
+
+| Verificação | Resultado |
+| --- | --- |
+| `npm run lint` | 0 erros, 0 avisos. |
+| `npm run build` | Sem erros. |
+| Playwright (`--workers=2`) | 274 testes, 274 passam: os 163 anteriores e os 111 de `acessibilidade.spec.ts`. |
+
 ## 4. Resumo das lacunas
 
 1. Testes de persistência de ocorrências e planos de ação corrigidos (3.2).
 2. A integração PostgreSQL não roda no ambiente padrão com Docker 29 (Testcontainers 1.20.4); requer contorno via `-Dsafeplace.test.datasource.url`, daemon compatível ou `-Dapi.version=1.44` com `TESTCONTAINERS_RYUK_DISABLED=true` (3.3).
-3. RNF05: imutabilidade no banco e retenção de 5 anos sem evidência física de infraestrutura. RNF11: sem evidência de WCAG automatizada. RNF08: escopo offline somente leitura.
+3. RNF05: imutabilidade no banco e retenção de 5 anos sem evidência física de infraestrutura. RNF11: verificação WCAG automatizada sem violações (3.4), com teste em leitor de tela real pendente. RNF08: escopo offline somente leitura.
 4. RF21 possui tela no painel do gestor (`ProjecoesPainel.tsx` em `/emprestimos`). RF07 possui modelo UC07 aprovado (#97). RF23 grava autoria via `LogAuditoria` em `UsuarioCasoDeUso` (#121); primeiro Gestor (seed) permanece fora do escopo MVP.
 5. Lint, build e Playwright do frontend passam desde 17/10/2026 (3.3).

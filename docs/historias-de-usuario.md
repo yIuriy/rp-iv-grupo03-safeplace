@@ -22,10 +22,10 @@ Referências: [RF01](requisitos/requisitos-funcionais.md#rf01-o-sistema-deve-ger
 > | -------- | ----------- | ------- | --------- | --------- |
 > | Acidente | Acidente cadastrado. | Identificador de ocorrência | Obrigatório | Registro acompanhado pelo Gestor. |
 > | Colaborador envolvido | Colaborador cadastrado. | Identificador de colaborador | Obrigatório | Pessoa relacionada ao fator humano registrado. |
-> | Fator humano | Tamanho máximo a confirmar. | Texto | Obrigatório | Descrição do comportamento relacionado ao acidente. |
-> | Uso do EPI | Tamanho máximo a confirmar. | Texto | Condicional | Informação sobre uso incorreto ou ausência do EPI. |
-> | Data da ocorrência | Formato a confirmar. | Data | Automático | Data em que o acidente aconteceu. |
-> | Setor | O setor da ocorrência. | Identificador de setor | Automático | Setor onde o acidente ocorreu. |
+> | Causa raiz | Fator humano. | `FATOR_HUMANO` em `CausaRaizAcidente` | Obrigatório | Indica que o acidente está relacionado à ação do colaborador. |
+> | Descrição dos fatos | Tamanho máximo a confirmar. | Texto | Obrigatório | Comportamento relacionado ao acidente e, quando houver, uso incorreto ou ausência do EPI. |
+> | Data da ocorrência | Data e hora do fato. | Data e hora | Obrigatório | Momento em que o acidente aconteceu, informado no relato. |
+> | Setor | Setor da área de risco. | Identificador de setor | Automático | Obtido da área de risco onde o acidente ocorreu. |
 
 ## Regra(s) de Negócio:
 
@@ -37,7 +37,7 @@ Referências: [RF01](requisitos/requisitos-funcionais.md#rf01-o-sistema-deve-ger
 ## Critério(s) de Aceite:
 
 > 1. Ao consultar um acidente dessa categoria, o sistema deve exibir o colaborador, os fatos registrados e as informações sobre uso de EPI, quando houver.
-> 2. Ao atualizar a descrição do fator humano e salvar, a alteração deve aparecer na consulta seguinte e no histórico de alterações.
+> 2. Ao atualizar a descrição dos fatos e salvar, a alteração deve aparecer na consulta seguinte e no histórico de alterações.
 > 3. Ao informar um colaborador inexistente, o sistema deve impedir a associação e informar a necessidade de cadastro prévio.
 > 4. Ao arquivar a ocorrência, o sistema deve preservar seus dados e seu histórico. Uma tentativa de exclusão permanente deve ser bloqueada.
 
@@ -49,31 +49,30 @@ Referências: [RF02](requisitos/requisitos-funcionais.md#rf02-o-sistema-deve-ger
 
 > **Como** Gestor de Segurança,
 > **quero** consultar e atualizar acidentes relacionados a falhas de equipamentos de proteção,
-> **para** identificar os EPIs envolvidos e acompanhar as falhas registradas.
+> **para** identificar, pela descrição registrada, os EPIs envolvidos e acompanhar as falhas.
 
 ## Dicionário de Dados:
 
 > | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
 > | Acidente | Acidente cadastrado. | Identificador de ocorrência | Obrigatório | Ocorrência relacionada à falha. |
-> | EPIs envolvidos | Os equipamentos relacionados à falha. | Lista de identificadores de EPI | Obrigatório | Equipamentos envolvidos no acidente. |
-> | Descrição da falha | Tamanho máximo a confirmar. | Texto | Obrigatório | Falha observada no equipamento de proteção. |
-> | Estado do EPI na ocorrência | Tamanho máximo a confirmar. | Texto | Condicional | Condição do equipamento quando ocorreu a falha. |
-> | Colaborador envolvido | Cadastro existente. | Identificador de colaborador | Opcional | Colaborador relacionado ao acidente. |
+> | Causa raiz | Falha de EPI. | `FALHA_EPI` em `CausaRaizAcidente` | Obrigatório | Indica que o acidente está relacionado à falha de um equipamento de proteção. |
+> | Descrição dos fatos | Tamanho máximo a confirmar. | Texto | Obrigatório | Identifica o equipamento, seu estado e a falha observada. |
+> | Colaborador envolvido | Cadastro existente. | Identificador de colaborador | Obrigatório | Colaborador relacionado ao acidente. |
 
 ## Regra(s) de Negócio:
 
 > 1. Esta classificação se aplica a acidentes relacionados a falhas de Equipamentos de Proteção Individual, conforme RF02.
-> 2. A descrição deve permitir identificar o equipamento e a falha registrada. A investigação de causa raiz é tratada na US15.
+> 2. A descrição deve permitir identificar o equipamento, seu estado e a falha registrada. No MVP, a ocorrência não tem vínculo com o cadastro de EPIs ([DS09, seção 2.4](arquitetura/correspondencia-classes-ds09.md#24-vínculo-de-epi-relacionado-à-falha)). A investigação de causa raiz é tratada na US15.
 > 3. Os registros podem ser consultados, atualizados e arquivados pelo Gestor, preservando seu histórico.
 > 4. As ocorrências não podem ser excluídas permanentemente.
 
 ## Critério(s) de Aceite:
 
-> 1. Ao abrir uma ocorrência dessa categoria, o sistema deve apresentar os EPIs envolvidos, a descrição da falha e o estado registrado do equipamento.
+> 1. Ao abrir uma ocorrência dessa categoria, o sistema deve apresentar a causa raiz "Falha de EPI" e a descrição que identifica o equipamento e a falha.
 > 2. Ao salvar uma atualização válida, a consulta seguinte deve apresentar os novos dados, mantendo o registro da alteração.
 > 3. Ao consultar ocorrências por data, setor ou colaborador, o sistema deve apresentar os acidentes que correspondam aos filtros informados.
-> 4. Ao arquivar o acidente, o sistema deve preservar os vínculos com os equipamentos e bloquear sua exclusão permanente.
+> 4. Ao arquivar o acidente, o sistema deve preservar seus dados e seu histórico e bloquear sua exclusão permanente.
 
 # US03 – Controlar o estoque de EPIs
 
@@ -460,29 +459,29 @@ Referências: [RF13](requisitos/requisitos-funcionais.md#rf13-o-sistema-deve-per
 > | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
 > | Tipo de ocorrência | Não se aplica. | Acidente | Obrigatório | Distingue o registro de um incidente. |
-> | Data da ocorrência | Formato a confirmar. | Data | Obrigatório | Data em que o acidente aconteceu. |
-> | Setor | Setor cadastrado. | Identificador de setor | Obrigatório | Setor onde ocorreu o acidente. |
-> | Local | Tamanho máximo a confirmar. | Texto | A confirmar | Local específico da ocorrência. |
-> | Colaboradores envolvidos | Colaboradores cadastrados. | Lista de identificadores de colaborador | Condicional | Colaboradores relacionados ao acidente. |
-> | Descrição dos fatos | Tamanho máximo a confirmar. | Texto | Obrigatório | Relato do que aconteceu. |
-> | Lesão ou dano | Tamanho máximo a confirmar. | Texto | Condicional | Consequências conhecidas do acidente. |
-> | EPIs envolvidos | EPIs cadastrados. | Lista de identificadores de EPI | Condicional | Equipamentos relacionados ao acidente. |
-> | Protocolo | Formato a confirmar. | Identificador de acompanhamento | Automático | Identificação usada para consultar o relato. |
+> | Data da ocorrência | Data e hora do fato. | Data e hora | Obrigatório | Momento em que o acidente aconteceu. |
+> | Área de risco | Área cadastrada; o setor é o da área. | Identificador de área de risco | Obrigatório | Área onde ocorreu o acidente. O formulário pede o setor para filtrar as áreas. |
+> | Colaborador envolvido | Colaborador cadastrado. | Identificador de colaborador | Obrigatório | Colaborador relacionado ao acidente. |
+> | Descrição dos fatos | Tamanho máximo a confirmar. | Texto | Obrigatório | Relato do que aconteceu. Uma falha de EPI é descrita aqui. |
+> | Causa raiz | Fator humano, falha de EPI ou outra. | `CausaRaizAcidente` | Obrigatório | Causa do acidente (RF01 e RF02). |
+> | Gravidade | Baixo, Médio, Alto ou Crítico. | `NivelPerigo` | Obrigatório | Gravidade usada pela regra do plano de ação (UC07). |
+> | Lesão ou dano | Tamanho máximo a confirmar. | Texto | Opcional | Consequências conhecidas do acidente. |
+> | Protocolo CAT | Gerado pelo servidor. | Identificador de acompanhamento | Automático | Identificação usada para consultar o relato. |
 > | Responsável e momento do registro | Usuário da sessão; data e hora do cadastro. | Usuário, data e hora | Automático | Identifica quem registrou o acidente e quando. |
 
 ## Regra(s) de Negócio:
 
 > 1. O Supervisor deve estar autenticado para registrar o acidente, inclusive quando os fatos forem comunicados por um Colaborador.
-> 2. Setor e descrição são obrigatórios. Colaboradores informados devem existir no cadastro.
-> 3. Após o registro, o sistema deve gerar protocolo e notificar o Gestor de Segurança.
+> 2. Área de risco, colaborador envolvido, descrição, causa raiz e gravidade são obrigatórios. O colaborador deve existir no cadastro. O relato não tem campo de local nem lista de EPIs ([DS09, seções 2.3 e 2.4](arquitetura/correspondencia-classes-ds09.md#23-localização-da-ocorrência-área-de-risco-sem-setor-e-sem-local-diretos)).
+> 3. Após o registro, o sistema deve gerar o protocolo CAT e notificar o Gestor de Segurança.
 > 4. O sistema deve registrar automaticamente usuário, data e hora do cadastro. A data do cadastro não substitui a data do acidente.
-> 5. Anexos, testemunhas, investigação e CAT estão fora desta história do MVP.
+> 5. Anexos, testemunhas, investigação e emissão do documento da CAT estão fora desta história do MVP.
 > 6. O envio offline previsto em UC09 ultrapassa a consulta offline descrita em RNF08. Sua inclusão e seu funcionamento estão a confirmar.
 
 ## Critério(s) de Aceite:
 
-> 1. Ao enviar um relato com dados válidos, o sistema deve salvar o acidente, apresentar o protocolo e notificar o Gestor.
-> 2. Ao tentar enviar sem setor ou descrição, o sistema deve bloquear o envio e indicar os campos pendentes.
+> 1. Ao enviar um relato com dados válidos, o sistema deve salvar o acidente, apresentar o protocolo CAT e notificar o Gestor.
+> 2. Ao tentar enviar sem área de risco, colaborador envolvido, descrição, causa raiz ou gravidade, o sistema deve bloquear o envio e indicar os campos pendentes.
 > 3. Ao informar um colaborador inexistente, o sistema deve impedir o vínculo e solicitar o cadastro prévio.
 > 4. Ao consultar o protocolo, o Supervisor deve visualizar o relato e seu acompanhamento pelo Gestor.
 > 5. O registro salvo deve conter a data do acidente, além do usuário, da data e da hora do cadastro.
@@ -572,12 +571,13 @@ Referências: [RF16](requisitos/requisitos-funcionais.md#rf16-o-sistema-deve-per
 > | Atributos | Propriedade | Domínio | Restrição | Descrição |
 > | -------- | ----------- | ------- | --------- | --------- |
 > | Tipo de ocorrência | Não se aplica. | Incidente | Obrigatório | Identifica uma ocorrência sem lesão. |
-> | Data da ocorrência | Formato a confirmar. | Data | Obrigatório | Data em que o incidente foi observado. |
-> | Setor | Setor cadastrado. | Identificador de setor | Obrigatório | Setor relacionado ao incidente. |
-> | Colaboradores envolvidos | Colaboradores cadastrados. | Lista de identificadores de colaborador | Condicional | Pessoas relacionadas ao incidente. |
-> | Descrição dos fatos | Tamanho máximo a confirmar. | Texto | Obrigatório | Relato da situação de risco. |
-> | Potencial de dano | Classificação e tamanho máximo a confirmar. | Texto | A confirmar | Dano que a situação poderia ter causado. |
-> | Protocolo | Formato a confirmar. | Identificador de acompanhamento | Automático | Identificação do relato para consulta. |
+> | Data da ocorrência | Data e hora do fato. | Data e hora | Obrigatório | Momento em que o incidente foi observado. |
+> | Área de risco | Área cadastrada; o setor é o da área. | Identificador de área de risco | Obrigatório | Área relacionada ao incidente. O formulário pede o setor para filtrar as áreas. |
+> | Colaborador envolvido | Colaborador cadastrado. | Identificador de colaborador | Obrigatório | Pessoa relacionada ao incidente. |
+> | Descrição dos fatos | Tamanho máximo a confirmar. | Texto | Obrigatório | Relato do que aconteceu. |
+> | Situação de risco | Tamanho máximo a confirmar. | Texto | Obrigatório | Condição insegura observada. |
+> | Potencial de dano | Tamanho máximo a confirmar; sem escala de classificação. | Texto | Obrigatório | Dano que a situação poderia ter causado. |
+> | Número do registro | Gerado pelo servidor; não é protocolo. | Identificador da ocorrência | Automático | Identificação do relato para consulta. O incidente não recebe protocolo CAT. |
 > | Responsável e momento do registro | Usuário da sessão; data e hora do cadastro. | Usuário, data e hora | Automático | Identifica quem registrou o incidente e quando. |
 
 ## Regra(s) de Negócio:
@@ -585,16 +585,16 @@ Referências: [RF16](requisitos/requisitos-funcionais.md#rf16-o-sistema-deve-per
 > 1. O incidente representa uma situação de risco que não gerou lesão, mas poderia tê-la gerado.
 > 2. O Colaborador comunica os fatos ao Supervisor, que registra o relato com sua própria identificação. O Colaborador não acessa o sistema.
 > 3. O Gestor também pode registrar incidentes conforme RF16 e UC05, além de consultar e conduzir a triagem dos relatos recebidos.
-> 4. O relato exige setor e descrição. Após o registro, o sistema deve gerar protocolo e notificar o Gestor.
+> 4. O relato exige área de risco, colaborador envolvido, descrição, situação de risco e potencial de dano. Após o registro, o sistema apresenta o número do registro, sem protocolo, e notifica o Gestor ([DS09, seção 2.1](arquitetura/correspondencia-classes-ds09.md#21-protocolo-de-acompanhamento-vs-protocolo-cat)).
 > 5. O registro deve preservar responsável, data e hora. Anexos e investigação formal ficam fora desta história do MVP.
 > 6. O funcionamento do envio offline depende da definição indicada na US13.
 
 ## Critério(s) de Aceite:
 
-> 1. Ao registrar um incidente com dados válidos, o sistema deve salvar a ocorrência com esse tipo, gerar protocolo e notificar o Gestor.
+> 1. Ao registrar um incidente com dados válidos, o sistema deve salvar a ocorrência com esse tipo, apresentar o número do registro e notificar o Gestor.
 > 2. Ao registrar fatos comunicados por um colaborador, o sistema deve identificar o Supervisor autenticado como responsável pelo cadastro.
-> 3. Ao tentar enviar sem setor ou descrição, o sistema deve bloquear o envio e indicar os campos pendentes.
-> 4. Ao consultar o protocolo, o Supervisor deve visualizar o relato e o acompanhamento da triagem pelo Gestor.
+> 3. Ao tentar enviar sem área de risco, colaborador envolvido, descrição, situação de risco ou potencial de dano, o sistema deve bloquear o envio e indicar os campos pendentes.
+> 4. Ao buscar o número do registro na lista de relatos, o Supervisor deve visualizar o incidente e o acompanhamento da triagem pelo Gestor.
 > 5. O fluxo não deve exigir conta, senha ou autenticação do Colaborador para que o Supervisor registre o incidente.
 
 # US17 – Consultar indicadores de segurança

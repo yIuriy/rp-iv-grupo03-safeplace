@@ -13,7 +13,7 @@ export function ConfirmacaoRelatoDialog({ ocorrencia, aoAcompanhar, aoFechar }: 
   aoFechar: () => void
 }) {
   return <Dialog open={ocorrencia !== null} onClose={aoFechar} title="Relato registrado"
-    description={ocorrencia ? `${rotuloTipoOcorrencia[ocorrencia.tipoOcorrencia]} registrado com sucesso. Guarde o protocolo para acompanhar o relato.` : undefined}>
+    description={ocorrencia ? `${rotuloTipoOcorrencia[ocorrencia.tipoOcorrencia]} registrado com sucesso. Guarde ${ocorrencia.numeroProtocoloCAT ? 'o protocolo' : 'o número do registro'} para acompanhar o relato.` : undefined}>
     {ocorrencia && <div className="sp-dialog-body">
       <div className="sp-protocolo-destaque" role="status" aria-live="polite">
         <span className="sp-protocolo-rotulo">
