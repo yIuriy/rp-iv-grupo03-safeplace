@@ -278,6 +278,7 @@ test.describe('Relato de ocorrências (UC09/UC05, issue #100)', () => {
     const confirmacao = page.getByRole('dialog', { name: 'Relato registrado' })
     await expect(confirmacao.locator('.sp-protocolo-numero')).toHaveText('#100')
     await expect(confirmacao.getByText('Incidentes não recebem protocolo CAT')).toBeVisible()
+    await expect(confirmacao.getByText('Guarde o número do registro para acompanhar o relato.')).toBeVisible()
     expect(ultimo(estado, 'POST', '/ocorrencias')!.corpo).toMatchObject({ tipoOcorrencia: 'INCIDENTE', situacaoRisco: 'Piso escorregadio', potencialDano: 'Queda com fratura' })
     expect(ultimo(estado, 'POST', '/ocorrencias')!.corpo).not.toHaveProperty('causaRaiz')
   })

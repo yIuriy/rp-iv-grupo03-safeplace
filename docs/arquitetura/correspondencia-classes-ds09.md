@@ -75,7 +75,7 @@ O backend aplica as regras do relato sem depender da validação do frontend:
 - **Sem escala**: `potencialDano` não usa `NivelPerigo`. Por isso a regra de gravidade de UC07 (seção 2.7) não se aplica automaticamente a incidentes.
 
 ### 2.12. Alinhamento de Casos de Uso, Histórias e Especificações (issue #189)
-A revisão de 5/10/2026 encontrou casos de uso, histórias e trechos de especificação que contrariavam este documento. O código segue este documento, e a issue #195 confirmou o modelo ao validar o relato no backend. A decisão foi manter o modelo implementado e corrigir os textos, sem alterar código.
+A revisão de 5/10/2026 encontrou casos de uso, histórias e trechos de especificação que contrariavam este documento. O código segue este documento, e a issue #195 confirmou o modelo ao validar o relato no backend. A decisão foi manter o modelo implementado e corrigir os textos. No código, só uma mensagem da tela mudou (último parágrafo desta seção).
 
 | Conflito | Decisão | Documentos ajustados |
 | :--- | :--- | :--- |
@@ -90,7 +90,7 @@ A revisão de 5/10/2026 encontrou casos de uso, histórias e trechos de especifi
 
 Nas histórias US01, US13 e US16, a data da ocorrência passou a ser data e hora do fato, informada no relato (seção 2.5).
 
-Um ajuste de código decorre destas decisões: a confirmação do relato (`ConfirmacaoRelatoDialog.tsx`) pede "Guarde o protocolo" também para o incidente, que não tem protocolo. Ele fica para uma issue própria.
+Um ajuste de código decorreu destas decisões: a confirmação do relato (`ConfirmacaoRelatoDialog.tsx`) pedia "Guarde o protocolo" também para o incidente, que não tem protocolo. Desde a issue #189, o incidente recebe "Guarde o número do registro".
 
 ---
 
