@@ -12,6 +12,7 @@ Este documento formaliza as decisões arquiteturais e a matriz de correspondênc
 - **Decisão**: Apenas a classe `Acidente` possui o atributo de protocolo (`numeroProtocoloCAT`), padronizado pelo Value Object `NumeroProtocoloCAT` (anteriormente `ProtocoloCAT`).
 - **Incidente e Ocorrência Genérica**: Não possuem protocolo de acompanhamento.
 - **Relação com o DS09**: A operação `gerarProtocolo()` do DS09 aplica-se estritamente ao fluxo de persistência de `Acidente`. Quando um `Incidente` é registrado, o fluxo é confirmado sem emissão de protocolo.
+- **Acompanhamento do incidente**: a confirmação do relato apresenta o número do registro (`idOcorrencia`), com o qual o incidente é localizado na consulta. Esse número não é um protocolo (issue #189).
 
 ### 2.2. Usuário que Registra vs. Colaborador Envolvido
 - **Usuário que Registra (relator)**: `Supervisor` (relato operacional, UC09) ou `GestorDeSeguranca` (UC05). No diagrama de classes, as duas classes têm associação "registra" com `Ocorrencia` (1 para 0..\*). Na implementação, o relator é mantido como `relator : Colaborador` (superclasse dos dois perfis), gravado em `ocorrencias.relator_id` e também na trilha de auditoria (`LogAuditoria`). É sempre o usuário autenticado, definido só pelo servidor: o cliente não informa o relator e a requisição não aceita `gestorId` (#195). A coluna se chamava `gestor_id` e ficava nula nos relatos do Supervisor; a migração V32 a renomeou e completou os relatos antigos a partir da auditoria do cadastro.
@@ -27,6 +28,7 @@ Este documento formaliza as decisões arquiteturais e a matriz de correspondênc
 ### 2.4. Vínculo de EPI Relacionado à Falha
 - **Decisão**: Não há associação estrutural direta entre `Ocorrencia` (ou `Acidente`) e a classe `EPI` no escopo do MVP.
 - **Detalhamento**: Eventual falha de equipamento relacionada ao acidente é indicada pelo valor `Falha_epi` na enumeração `causaRaiz : CausaRaizAcidente` e descrita textualmente no campo `descricao`.
+- **Valores de `CausaRaizAcidente`**: `Fator_humano` (RF01), `Falha_epi` (RF02) e `Outro`, para o acidente que não se enquadra nas duas causas anteriores. `Outro` existe no código e no formulário e foi mantido (issue #189).
 
 ### 2.5. Data do Fato e Data do Cadastro
 - **dataOcorrencia (DateTime)**: Representa a data e hora do fato (ocorrência). Deve ser obrigatoriamente informada na abertura do relato (passada explicitamente pelo contrato de entrada do DS09 e da API).
@@ -41,6 +43,7 @@ Este documento formaliza as decisões arquiteturais e a matriz de correspondênc
   - `Aberta` → `Em_triagem`
   - `Em_triagem` → `Arquivada`
   - Não é permitida exclusão física de registros de ocorrência (apenas transição para `Arquivada`).
+- **Arquivamento**: só parte de `Em_triagem`. Uma ocorrência `Aberta` é enviada para triagem antes de ser arquivada, e a arquivada não muda mais de estado. O alternativo V de UC05 segue esta regra (issue #189).
 
 ### 2.7. Gravidade em Acidente para UC07
 - **Atributo**: `gravidade : NivelPerigo` na subclasse `Acidente` (com valores `Baixo`, `Medio`, `Alto`, `Critico`). É obrigatória no relato de acidente e não recebe valor padrão; valor fora da escala é recusado com 400, e o banco tem `CHECK` com os quatro valores (issue #195).
@@ -66,6 +69,28 @@ O backend aplica as regras do relato sem depender da validação do frontend:
 - No acidente, `causaRaiz` e `gravidade` são obrigatórias e lidas sem diferenciar maiúsculas. Valor ausente ou fora do vocabulário (`CausaRaizAcidente` e `NivelPerigo`) responde 400; não há conversão para `OUTRO` ou `BAIXO`. Na edição, campo em branco mantém o valor atual e valor inválido responde 400.
 - `tipoOcorrencia` desconhecido responde 400.
 - O protocolo CAT do acidente é sempre gerado pelo servidor no registro (US13); a requisição não aceita `numeroProtocolo`.
+
+### 2.11. Campos Próprios do Incidente
+- **Atributos**: `situacaoRisco : String` (situação observada) e `potencialDano : String` (dano que a situação poderia ter causado), ambos texto livre e obrigatórios no domínio (`Incidente`) e no formulário do relato.
+- **Sem escala**: `potencialDano` não usa `NivelPerigo`. Por isso a regra de gravidade de UC07 (seção 2.7) não se aplica automaticamente a incidentes.
+
+### 2.12. Alinhamento de Casos de Uso, Histórias e Especificações (issue #189)
+A revisão de 5/10/2026 encontrou casos de uso, histórias e trechos de especificação que contrariavam este documento. O código segue este documento, e a issue #195 confirmou o modelo ao validar o relato no backend. A decisão foi manter o modelo implementado e corrigir os textos, sem alterar código.
+
+| Conflito | Decisão | Documentos ajustados |
+| :--- | :--- | :--- |
+| Protocolo de incidente | Só o acidente tem protocolo (CAT). O incidente é localizado pelo número do registro (seção 2.1). | UC05, UC09, US13, US16, glossário, especificação do MVP §8.4, especificação arquitetural |
+| Colaboradores envolvidos | Exatamente 1 colaborador envolvido, obrigatório (seção 2.2). | UC05, UC09, US02, US13, US16, glossário, especificação do MVP §11.3, especificação arquitetural |
+| EPI e local | Sem lista de EPIs e sem `local`. A falha de EPI é indicada por `causaRaiz` e descrita em `descricao`; o uso do EPI no acidente por fator humano também fica em `descricao` (seções 2.3 e 2.4). | UC05, US01, US02, US13, glossário |
+| Quem registra | O relator é o usuário autenticado, Supervisor (UC09) ou Gestor de Segurança (UC05), definido pelo servidor (seção 2.2). | Especificação do MVP §11.2 |
+| Setor ou área | O relato exige a área de risco. O formulário pede o setor para filtrar as áreas, e o setor gravado é o da área (seção 2.3). | UC05, UC09, US13, US16 |
+| Campos do incidente | `situacaoRisco` e `potencialDano` obrigatórios, em texto livre (seção 2.11). | UC05, UC09, US16 |
+| Causa raiz | `Fator_humano`, `Falha_epi` e `Outro` (seção 2.4). | Este documento, UC05, UC09, US01, US02, US13 |
+| Arquivamento | Só a partir de `Em_triagem` (seção 2.6). | UC05, especificação do MVP §11.2 |
+
+Nas histórias US01, US13 e US16, a data da ocorrência passou a ser data e hora do fato, informada no relato (seção 2.5).
+
+Um ajuste de código decorre destas decisões: a confirmação do relato (`ConfirmacaoRelatoDialog.tsx`) pede "Guarde o protocolo" também para o incidente, que não tem protocolo. Ele fica para uma issue própria.
 
 ---
 

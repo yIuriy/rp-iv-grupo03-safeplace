@@ -180,7 +180,7 @@ Normas brasileiras de segurança e saúde no trabalho usadas como referência pa
 
 ### Ocorrência
 
-Registro genérico de um acidente ou incidente. Pode conter tipo, data, local, setor, colaboradores envolvidos, descrição, evidências, status, plano de ação e histórico. A data do fato indica quando o acidente ou incidente ocorreu; a data e hora do cadastro indicam quando o usuário o registrou. São informações distintas. Evidências pertencem ao escopo futuro de UC04.
+Registro genérico de um acidente ou incidente. Contém tipo, data do fato, área de risco (da qual se obtém o setor), um colaborador envolvido, descrição, status, plano de ação e histórico; evidências são previstas para depois do MVP. A data do fato indica quando o acidente ou incidente ocorreu; a data e hora do cadastro indicam quando o usuário o registrou. São informações distintas. Evidências pertencem ao escopo futuro de UC04.
 
 ### Perfil
 
@@ -200,7 +200,7 @@ Contrato da aplicação para comunicação com recursos externos ao núcleo, com
 
 ### Protocolo
 
-Identificador gerado após o registro de uma ocorrência, permitindo acompanhar e consultar o relato posteriormente.
+Identificador gerado após o registro de um acidente (protocolo CAT), permitindo acompanhar e consultar o relato posteriormente. O incidente não recebe protocolo e é localizado pelo número do registro.
 
 ### Rastreabilidade
 
