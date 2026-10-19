@@ -1,4 +1,4 @@
-// Cadastro de treinamento realizado por um ou mais colaboradores (UC02). A validade em meses é
+// Cadastro de treinamento realizado por um ou mais colaboradores. A validade em meses é
 // opcional: sem ela o treinamento não vence (#116, #192).
 
 import { useState, type FormEvent } from 'react'

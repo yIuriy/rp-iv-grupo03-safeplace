@@ -227,7 +227,7 @@ test.describe('Consulta de ocorrências (UC05/UC09, issue #128)', () => {
     await iniciarSessao(page, supervisor)
     await simular(page, { detalheIndisponivel: 2 })
     await page.goto('/ocorrencias')
-    await expect(page.getByText('Relate acidentes e incidentes e acompanhe os relatos que você registrou (UC09).')).toBeVisible()
+    await expect(page.getByText('Relate acidentes e incidentes e acompanhe os relatos que você registrou.')).toBeVisible()
 
     await page.getByRole('button', { name: 'Ver detalhes da ocorrência 2' }).click()
     await expect(page.getByRole('dialog', { name: 'Ocorrência #2' }).getByRole('status'))

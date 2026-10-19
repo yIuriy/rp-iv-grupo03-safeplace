@@ -169,7 +169,7 @@ function Campos({ ocorrencia, edicao, aoFechar, aoSalvar, setores, areas, colabo
         {causas.map(causa => <option key={causa.valor} value={causa.valor}>{causa.rotulo}</option>)}
       </Select>
       <Select label="Gravidade *" name="gravidade" required error={erros.gravidade} defaultValue={ocorrencia?.gravidade ?? ''}
-        helper={erros.gravidade ? undefined : 'Alta ou crítica exige ação preventiva no plano de ação (UC07).'}>
+        helper={erros.gravidade ? undefined : 'Alta ou crítica exige ação preventiva no plano de ação.'}>
         <option value="">Selecione a gravidade</option>
         {niveisPerigo.map(nivel => <option key={nivel} value={nivel}>{rotuloNivelPerigo[nivel]}</option>)}
       </Select>

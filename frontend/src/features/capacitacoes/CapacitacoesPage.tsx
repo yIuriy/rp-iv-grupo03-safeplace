@@ -75,7 +75,7 @@ export function CapacitacoesPage() {
   }), [atualizar])
 
   return <FeaturePage title="Capacitações"
-    description="Consulte as certificações e os treinamentos dos colaboradores, os vencimentos e os impedimentos para tarefas (UC02).">
+    description="Consulte as certificações e os treinamentos dos colaboradores, os vencimentos e os impedimentos para tarefas.">
     {aba === 'colaboradores' && <ResumoAlertas aoVerAlertas={() => {
       focarAbaAberta.current = true
       mudarAba('alertas')

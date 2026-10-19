@@ -102,7 +102,7 @@ function DialogoVinculo({
     <Dialog
       open
       title="Vincular EPIs obrigatórios"
-      description="Selecione os equipamentos de proteção individual necessários para a realização desta atividade operacional (RF12, UC08)."
+      description="Selecione os equipamentos de proteção individual necessários para a realização desta atividade operacional."
       onClose={aoFechar}
     >
       <form onSubmit={submeter} className="sp-dialog-body" noValidate>

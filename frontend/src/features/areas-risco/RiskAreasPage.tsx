@@ -97,8 +97,8 @@ export function RiskAreasPage() {
       title="Áreas de risco"
       description={
         gestor
-          ? 'Consulte, cadastre e gerencie as áreas de risco, agentes mapeados e os EPIs obrigatórios para acesso (RF05, UC03).'
-          : 'Consulte o mapa de riscos, agentes mapeados e as diretrizes de proteção para acesso aos setores (RF05, UC03).'
+          ? 'Consulte, cadastre e gerencie as áreas de risco, agentes mapeados e os EPIs obrigatórios para acesso.'
+          : 'Consulte o mapa de riscos, agentes mapeados e as diretrizes de proteção para acesso aos setores.'
       }
     >
       <Tabs label="Conteúdo do mapa de riscos" value={aba} onValueChange={setAba} items={[

@@ -1,5 +1,5 @@
 // Consulta de uma área de risco: setor físico, agentes, limites e EPIs obrigatórios para acesso
-// (UC03). O Gestor pode seguir para a edição e abrir o histórico de alterações (#114); o
+//. O Gestor pode seguir para a edição e abrir o histórico de alterações (#114); o
 // Supervisor apenas consulta.
 
 import { Alert, Badge, Button, Dialog } from '../../shared/components'
@@ -85,9 +85,9 @@ export function AreaRiscoDetalhesDialog({
           </div>
         </dl>
 
-        <Alert tone="info" title="Requisito de proteção para ingresso na área (UC03)">
+        <Alert tone="info" title="Requisito de proteção para ingresso na área">
           Estes EPIs são exigidos para qualquer pessoa que acesse ou circule neste setor físico.
-          Não se trata do recálculo automático de vínculos de proteção por função (RF12).
+          Não se trata do recálculo automático de vínculos de proteção por função.
         </Alert>
 
         {podeEditar && <HistoricoAreaRisco key={area.id} areaId={area.id} />}

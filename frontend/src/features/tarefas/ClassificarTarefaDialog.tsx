@@ -58,7 +58,7 @@ function DialogoClassificacao({
     <Dialog
       open
       title={tarefa.classificada ? 'Reavaliar periculosidade da tarefa' : 'Classificar tarefa'}
-      description="Atribua o grau de periculosidade da atividade operacional conforme a avaliação técnica de segurança (RF06, UC11)."
+      description="Atribua o grau de periculosidade da atividade operacional conforme a avaliação técnica de segurança."
       onClose={aoFechar}
     >
       <form onSubmit={submeter} className="sp-dialog-body" noValidate>

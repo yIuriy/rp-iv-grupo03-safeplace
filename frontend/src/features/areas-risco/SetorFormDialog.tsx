@@ -64,7 +64,7 @@ function SetorFormulario({
       defaultValue={setor?.nome ?? ''} error={erros.nome} autoFocus
       helper="Use o mesmo nome informado na localização dos EPIs deste setor." />
     <Select label="Grau de perigo" name="status" required defaultValue={setor?.status ?? ''} error={erros.status}
-      helper="A projeção de substituição de EPIs (UC10) aplica este grau aos EPIs localizados neste setor.">
+      helper="A projeção de substituição de EPIs aplica este grau aos EPIs localizados neste setor.">
       <option value="" disabled>Selecione o grau</option>
       {niveisPerigo.map(nivel => <option key={nivel} value={nivel}>{rotuloNivelPerigo[nivel]}</option>)}
     </Select>
@@ -93,7 +93,7 @@ export function SetorFormDialog({ open, setor, aoFechar, aoSalvar }: {
   const editando = !!setor
   return <Dialog open={open} title={editando ? `Editar setor: ${setor?.nome}` : "Cadastrar setor físico"} onClose={aoFechar}
     description={editando
-      ? "Atualize o grau de perigo, localização e descrição do setor físico (RF05)."
+      ? "Atualize o grau de perigo, localização e descrição do setor físico."
       : "O setor reúne áreas de risco da planta. Nome e grau de perigo são obrigatórios."}>
     {open && <SetorFormulario key={setor?.id ?? 'novo'} setor={setor} aoCancelar={aoFechar} aoSalvar={s => { aoSalvar(s); aoFechar() }} />}
   </Dialog>

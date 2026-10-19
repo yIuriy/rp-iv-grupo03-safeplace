@@ -39,8 +39,8 @@ export function AreaRiscoFormDialog({
       title={editando ? `Editar área: ${area?.codigo}` : 'Cadastrar área de risco'}
       description={
         editando
-          ? 'Atualize perigos, agentes, limites e os EPIs obrigatórios para acesso (UC03).'
-          : 'Cadastre um novo setor ou área de risco com as diretrizes e EPIs de acesso (UC03).'
+          ? 'Atualize perigos, agentes, limites e os EPIs obrigatórios para acesso.'
+          : 'Cadastre um novo setor ou área de risco com as diretrizes e EPIs de acesso.'
       }
       onClose={aoFechar}
     >

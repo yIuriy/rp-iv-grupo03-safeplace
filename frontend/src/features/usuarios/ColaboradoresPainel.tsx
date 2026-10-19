@@ -1,5 +1,5 @@
 // Painel de colaboradores, para Supervisor e Gestor: busca por nome ou CPF, listagem, cadastro e
-// edição. Colaborador não tem conta de acesso (RF23).
+// edição. Colaborador não tem conta de acesso.
 
 import { useCallback, useState, type FormEvent } from 'react'
 import { Button, SearchInput, Toast } from '../../shared/components'
@@ -20,7 +20,7 @@ function mensagemDeSalvamento(usuario: Usuario, modo: ModoSalvamento): string {
   return modo === 'criado' ? `${usuario.nome} cadastrado sem conta de acesso.` : `${usuario.nome} atualizado.`
 }
 
-/** Supervisor e Gestor cadastram, consultam e atualizam colaboradores, que não têm conta de acesso (RF23). */
+/** Supervisor e Gestor cadastram, consultam e atualizam colaboradores, que não têm conta de acesso. */
 export function ColaboradoresPainel() {
   const [filtro, setFiltro] = useState<FiltroColaboradores>({})
   const [cadastroAberto, setCadastroAberto] = useState(false)

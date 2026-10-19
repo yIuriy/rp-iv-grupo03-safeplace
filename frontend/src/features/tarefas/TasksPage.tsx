@@ -101,8 +101,8 @@ export function TasksPage() {
       title="Tarefas"
       description={
         gestor
-          ? 'Consulte a matriz de periculosidade, cadastre atividades operacionais e defina o grau de risco (RF06, UC11).'
-          : 'Consulte a matriz de periculosidade e as diretrizes de risco das atividades operacionais (RF06, UC11).'
+          ? 'Consulte a matriz de periculosidade, cadastre atividades operacionais e defina o grau de risco.'
+          : 'Consulte a matriz de periculosidade e as diretrizes de risco das atividades operacionais.'
       }
     >
       <div className="sp-painel">

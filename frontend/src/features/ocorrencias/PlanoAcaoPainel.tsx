@@ -1,6 +1,6 @@
 // Plano de ação de uma ocorrência (UC07; UC05, alternativo I, passo 9): resumo das ações abertas, em
 // atraso e com alerta, a lista de ações e, para o Gestor, o cadastro de nova ação com medidas,
-// prazo, responsável (colaborador ou setor) e alerta. O Supervisor acompanha sem alterar (UC09).
+// prazo, responsável (colaborador ou setor) e alerta. O Supervisor acompanha sem alterar.
 
 import { useCallback, useState, type FormEvent } from 'react'
 import { Alert, Button, Checkbox, Radio, Select, TextArea, TextField, Toast } from '../../shared/components'

@@ -125,8 +125,8 @@ export function OccurrencesPage() {
       title="Ocorrências"
       description={
         gestor
-          ? 'Registre, consulte, acompanhe e faça a triagem dos acidentes e incidentes de trabalho (UC05).'
-          : 'Relate acidentes e incidentes e acompanhe os relatos que você registrou (UC09).'
+          ? 'Registre, consulte, acompanhe e faça a triagem dos acidentes e incidentes de trabalho.'
+          : 'Relate acidentes e incidentes e acompanhe os relatos que você registrou.'
       }
     >
       <div className="sp-painel">

@@ -36,8 +36,8 @@ export function TarefaFormDialog({
       title={editando ? `Editar tarefa: #${tarefa.id}` : 'Cadastrar nova tarefa'}
       description={
         editando
-          ? 'Atualize a descrição, área de risco e setores físicos vinculados à tarefa operacional (RF06, UC11).'
-          : 'Informe a descrição da atividade operacional, área de risco e setores físicos (RF06, UC11).'
+          ? 'Atualize a descrição, área de risco e setores físicos vinculados à tarefa operacional.'
+          : 'Informe a descrição da atividade operacional, área de risco e setores físicos.'
       }
       onClose={aoFechar}
     >
