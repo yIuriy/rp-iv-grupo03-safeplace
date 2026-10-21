@@ -1,0 +1,755 @@
+{
+  "meta": {
+    "commit": "2d4864885e668cf83a98a0dcf93fe37b4a12dec3",
+    "tag": "v1.0.0",
+    "branch": "dev",
+    "coletado_em": "2026-10-21T17:15:08+00:00",
+    "commits_ate_aqui": 856,
+    "limites": {
+      "metodo_longo_linhas": 30,
+      "classe_grande_linhas": 300,
+      "parametros": 5
+    }
+  },
+  "backend_main": {
+    "arquivos": 357,
+    "linhas": {
+      "total": 19572,
+      "codigo": 15086,
+      "comentario": 1478,
+      "branco": 3008
+    },
+    "tipos": {
+      "class": 159,
+      "record": 123,
+      "interface": 62,
+      "abstract class": 2,
+      "enum": 20
+    },
+    "metodos": 1189,
+    "construtores": 218,
+    "complexidade_metodos": {
+      "total": 2125,
+      "media": 1.79,
+      "maxima": 28,
+      "acima_de_10": 12,
+      "acima_de_5": 53
+    },
+    "metodos_longos": 16,
+    "metodos_muitos_parametros": 158,
+    "classes_grandes": 2,
+    "classes_3_ou_mais_construtores": 8,
+    "contagens": {
+      "if": 487,
+      "switch": 5,
+      "instanceof": 26,
+      "comparacao_null": 578,
+      "security_context_holder": 27,
+      "requireNonNull": 14,
+      "endpoints": 75,
+      "exception_handlers": 37,
+      "controller_advices": 8,
+      "anotacao_service": 19,
+      "anotacao_transactional": 94,
+      "throw_new": 214
+    },
+    "por_camada": {
+      "(raiz)": {
+        "arquivos": 1,
+        "linhas_codigo": 9
+      },
+      "adapters": {
+        "arquivos": 140,
+        "linhas_codigo": 6414
+      },
+      "application": {
+        "arquivos": 126,
+        "linhas_codigo": 4847
+      },
+      "config": {
+        "arquivos": 4,
+        "linhas_codigo": 188
+      },
+      "domain": {
+        "arquivos": 86,
+        "linhas_codigo": 3628
+      }
+    },
+    "por_modulo": {
+      "(raiz)": {
+        "arquivos": 1,
+        "linhas_codigo": 9,
+        "metodos": 1,
+        "complexidade_total": 1
+      },
+      "adapters/in/agendamento": {
+        "arquivos": 1,
+        "linhas_codigo": 22,
+        "metodos": 2,
+        "complexidade_total": 3
+      },
+      "adapters/in/web": {
+        "arquivos": 72,
+        "linhas_codigo": 2898,
+        "metodos": 226,
+        "complexidade_total": 264
+      },
+      "adapters/out/capacitacao": {
+        "arquivos": 2,
+        "linhas_codigo": 211,
+        "metodos": 16,
+        "complexidade_total": 29
+      },
+      "adapters/out/notificacao": {
+        "arquivos": 2,
+        "linhas_codigo": 80,
+        "metodos": 6,
+        "complexidade_total": 8
+      },
+      "adapters/out/persistencia": {
+        "arquivos": 58,
+        "linhas_codigo": 2993,
+        "metodos": 344,
+        "complexidade_total": 464
+      },
+      "adapters/out/seguranca": {
+        "arquivos": 5,
+        "linhas_codigo": 210,
+        "metodos": 17,
+        "complexidade_total": 38
+      },
+      "application/dto/capacitacao": {
+        "arquivos": 10,
+        "linhas_codigo": 265,
+        "metodos": 18,
+        "complexidade_total": 34
+      },
+      "application/dto/input": {
+        "arquivos": 31,
+        "linhas_codigo": 412,
+        "metodos": 42,
+        "complexidade_total": 103
+      },
+      "application/dto/output": {
+        "arquivos": 22,
+        "linhas_codigo": 778,
+        "metodos": 56,
+        "complexidade_total": 116
+      },
+      "application/port/in": {
+        "arquivos": 23,
+        "linhas_codigo": 297,
+        "metodos": 6,
+        "complexidade_total": 6
+      },
+      "application/port/out": {
+        "arquivos": 21,
+        "linhas_codigo": 246,
+        "metodos": 11,
+        "complexidade_total": 12
+      },
+      "application/usecase": {
+        "arquivos": 19,
+        "linhas_codigo": 2849,
+        "metodos": 191,
+        "complexidade_total": 477
+      },
+      "config": {
+        "arquivos": 4,
+        "linhas_codigo": 188,
+        "metodos": 5,
+        "complexidade_total": 7
+      },
+      "domain/area_risco": {
+        "arquivos": 6,
+        "linhas_codigo": 345,
+        "metodos": 49,
+        "complexidade_total": 115
+      },
+      "domain/capacitacao": {
+        "arquivos": 9,
+        "linhas_codigo": 393,
+        "metodos": 46,
+        "complexidade_total": 105
+      },
+      "domain/comum": {
+        "arquivos": 2,
+        "linhas_codigo": 102,
+        "metodos": 15,
+        "complexidade_total": 23
+      },
+      "domain/emprestimo": {
+        "arquivos": 7,
+        "linhas_codigo": 173,
+        "metodos": 26,
+        "complexidade_total": 33
+      },
+      "domain/epi": {
+        "arquivos": 20,
+        "linhas_codigo": 1191,
+        "metodos": 140,
+        "complexidade_total": 277
+      },
+      "domain/inspecao": {
+        "arquivos": 3,
+        "linhas_codigo": 99,
+        "metodos": 15,
+        "complexidade_total": 26
+      },
+      "domain/ocorrencia": {
+        "arquivos": 23,
+        "linhas_codigo": 901,
+        "metodos": 105,
+        "complexidade_total": 233
+      },
+      "domain/tarefa": {
+        "arquivos": 5,
+        "linhas_codigo": 211,
+        "metodos": 35,
+        "complexidade_total": 56
+      },
+      "domain/usuario": {
+        "arquivos": 11,
+        "linhas_codigo": 213,
+        "metodos": 35,
+        "complexidade_total": 55
+      }
+    },
+    "acoplamento": {
+      "(raiz)": {
+        "Ce": 0,
+        "Ca": 0,
+        "I": 0.0
+      },
+      "adapters/in/agendamento": {
+        "Ce": 1,
+        "Ca": 0,
+        "I": 1.0
+      },
+      "adapters/in/web": {
+        "Ce": 13,
+        "Ca": 0,
+        "I": 1.0
+      },
+      "adapters/out/capacitacao": {
+        "Ce": 3,
+        "Ca": 0,
+        "I": 1.0
+      },
+      "adapters/out/notificacao": {
+        "Ce": 3,
+        "Ca": 0,
+        "I": 1.0
+      },
+      "adapters/out/persistencia": {
+        "Ce": 10,
+        "Ca": 1,
+        "I": 0.91
+      },
+      "adapters/out/seguranca": {
+        "Ce": 1,
+        "Ca": 1,
+        "I": 0.5
+      },
+      "application/dto/capacitacao": {
+        "Ce": 1,
+        "Ca": 3,
+        "I": 0.25
+      },
+      "application/dto/input": {
+        "Ce": 7,
+        "Ca": 5,
+        "I": 0.58
+      },
+      "application/dto/output": {
+        "Ce": 8,
+        "Ca": 3,
+        "I": 0.73
+      },
+      "application/port/in": {
+        "Ce": 7,
+        "Ca": 4,
+        "I": 0.64
+      },
+      "application/port/out": {
+        "Ce": 10,
+        "Ca": 5,
+        "I": 0.67
+      },
+      "application/usecase": {
+        "Ce": 14,
+        "Ca": 0,
+        "I": 1.0
+      },
+      "config": {
+        "Ce": 1,
+        "Ca": 0,
+        "I": 1.0
+      },
+      "domain/area_risco": {
+        "Ce": 2,
+        "Ca": 7,
+        "I": 0.22
+      },
+      "domain/capacitacao": {
+        "Ce": 2,
+        "Ca": 7,
+        "I": 0.22
+      },
+      "domain/comum": {
+        "Ce": 0,
+        "Ca": 11,
+        "I": 0.0
+      },
+      "domain/emprestimo": {
+        "Ce": 0,
+        "Ca": 7,
+        "I": 0.0
+      },
+      "domain/epi": {
+        "Ce": 2,
+        "Ca": 9,
+        "I": 0.18
+      },
+      "domain/inspecao": {
+        "Ce": 1,
+        "Ca": 5,
+        "I": 0.17
+      },
+      "domain/ocorrencia": {
+        "Ce": 3,
+        "Ca": 8,
+        "I": 0.27
+      },
+      "domain/tarefa": {
+        "Ce": 3,
+        "Ca": 6,
+        "I": 0.33
+      },
+      "domain/usuario": {
+        "Ce": 0,
+        "Ca": 10,
+        "I": 0.0
+      }
+    },
+    "violacoes_camadas": {
+      "domain_importa_framework": {
+        "arquivos": 0,
+        "lista": []
+      },
+      "domain_importa_application_ou_adapters": {
+        "arquivos": 0,
+        "lista": []
+      },
+      "application_importa_adapters": {
+        "arquivos": 0,
+        "lista": []
+      },
+      "application_importa_spring_security": {
+        "arquivos": 7,
+        "lista": [
+          "backend/src/main/java/br/edu/safeplace/backend/application/usecase/CadastrarCapacitacaoService.java",
+          "backend/src/main/java/br/edu/safeplace/backend/application/usecase/ControlarManutencaoEpiService.java",
+          "backend/src/main/java/br/edu/safeplace/backend/application/usecase/EpiUseCase.java",
+          "backend/src/main/java/br/edu/safeplace/backend/application/usecase/InspecaoUseCase.java",
+          "backend/src/main/java/br/edu/safeplace/backend/application/usecase/OcorrenciaUseCase.java",
+          "backend/src/main/java/br/edu/safeplace/backend/application/usecase/PlanoDeAcaoUseCase.java",
+          "backend/src/main/java/br/edu/safeplace/backend/application/usecase/TarefaUseCase.java"
+        ]
+      },
+      "adapters_in_importa_adapters_out": {
+        "arquivos": 0,
+        "lista": []
+      }
+    },
+    "duplicacao": {
+      "janela_linhas": 6,
+      "linhas_normalizadas": 9188,
+      "linhas_duplicadas": 1055,
+      "percentual": 11.48,
+      "blocos_repetidos_distintos": 196
+    },
+    "nomenclatura_sufixos": {
+      "Port": 15,
+      "Porta": 6,
+      "UseCase": 31,
+      "UseCaseImpl": 2,
+      "CasoDeUso": 5,
+      "Service": 6,
+      "Controller": 14,
+      "Controlador": 3,
+      "Adapter": 16,
+      "Adaptador": 5,
+      "Request": 21,
+      "Requisicao": 5,
+      "Response": 19,
+      "Resposta": 2,
+      "ExceptionHandler": 4,
+      "TratadorExcecoes": 5,
+      "InputDTO": 27,
+      "OutputDTO": 28,
+      "EntradaDTO": 2,
+      "SaidaDTO": 2,
+      "Entity": 21,
+      "Entidade": 3
+    },
+    "top_arquivos_maiores": [
+      {
+        "arquivo": "backend/src/main/java/br/edu/safeplace/backend/domain/epi/Epi.java",
+        "linhas_codigo": 416,
+        "metodos": 45
+      },
+      {
+        "arquivo": "backend/src/main/java/br/edu/safeplace/backend/application/usecase/OcorrenciaUseCase.java",
+        "linhas_codigo": 368,
+        "metodos": 22
+      },
+      {
+        "arquivo": "backend/src/main/java/br/edu/safeplace/backend/domain/ocorrencia/PlanoDeAcao.java",
+        "linhas_codigo": 289,
+        "metodos": 39
+      },
+      {
+        "arquivo": "backend/src/main/java/br/edu/safeplace/backend/adapters/out/persistencia/PlanoDeAcaoJpaAdapter.java",
+        "linhas_codigo": 278,
+        "metodos": 17
+      },
+      {
+        "arquivo": "backend/src/main/java/br/edu/safeplace/backend/application/usecase/UsuarioCasoDeUso.java",
+        "linhas_codigo": 276,
+        "metodos": 26
+      },
+      {
+        "arquivo": "backend/src/main/java/br/edu/safeplace/backend/application/usecase/EmprestimoUseCase.java",
+        "linhas_codigo": 268,
+        "metodos": 15
+      },
+      {
+        "arquivo": "backend/src/main/java/br/edu/safeplace/backend/domain/area_risco/AreaRisco.java",
+        "linhas_codigo": 246,
+        "metodos": 30
+      },
+      {
+        "arquivo": "backend/src/main/java/br/edu/safeplace/backend/application/usecase/TarefaUseCase.java",
+        "linhas_codigo": 245,
+        "metodos": 21
+      },
+      {
+        "arquivo": "backend/src/main/java/br/edu/safeplace/backend/application/usecase/PlanoDeAcaoUseCase.java",
+        "linhas_codigo": 223,
+        "metodos": 13
+      },
+      {
+        "arquivo": "backend/src/main/java/br/edu/safeplace/backend/adapters/out/persistencia/OcorrenciaJpaAdapter.java",
+        "linhas_codigo": 219,
+        "metodos": 18
+      }
+    ],
+    "top_metodos_complexos": [
+      {
+        "metodo": "FiltroOcorrenciasDTO.FiltroOcorrenciasDTO",
+        "linha": 28,
+        "complexidade": 28,
+        "linhas": 33
+      },
+      {
+        "metodo": "SubstituicaoInteligenteService.calcularProjecao",
+        "linha": 53,
+        "complexidade": 21,
+        "linhas": 74
+      },
+      {
+        "metodo": "FiltroOcorrenciasDTO.aceita",
+        "linha": 68,
+        "complexidade": 19,
+        "linhas": 16
+      },
+      {
+        "metodo": "OcorrenciaUseCase.descreverAlteracoes",
+        "linha": 337,
+        "complexidade": 17,
+        "linhas": 15
+      },
+      {
+        "metodo": "OcorrenciaOutputDTO.OcorrenciaOutputDTO",
+        "linha": 15,
+        "complexidade": 15,
+        "linhas": 64
+      },
+      {
+        "metodo": "OcorrenciaOutputDTO.deDominio",
+        "linha": 41,
+        "complexidade": 15,
+        "linhas": 63
+      },
+      {
+        "metodo": "ValidadorAptidaoColaboradorService.verificarPendenciasNormativas",
+        "linha": 94,
+        "complexidade": 13,
+        "linhas": 23
+      },
+      {
+        "metodo": "NotificacaoAcao.NotificacaoAcao",
+        "linha": 15,
+        "complexidade": 13,
+        "linhas": 30
+      },
+      {
+        "metodo": "AutenticacaoCasoDeUso.autenticar",
+        "linha": 36,
+        "complexidade": 12,
+        "linhas": 23
+      },
+      {
+        "metodo": "ConsultarCapacitacaoService.listarColaboradoresPorStatusCertificacao",
+        "linha": 148,
+        "complexidade": 11,
+        "linhas": 20
+      }
+    ],
+    "top_metodos_longos": [
+      {
+        "metodo": "SecurityConfig.securityFilterChain",
+        "linha": 38,
+        "linhas": 74,
+        "complexidade": 3
+      },
+      {
+        "metodo": "SubstituicaoInteligenteService.calcularProjecao",
+        "linha": 53,
+        "linhas": 74,
+        "complexidade": 21
+      },
+      {
+        "metodo": "OcorrenciaOutputDTO.OcorrenciaOutputDTO",
+        "linha": 15,
+        "linhas": 64,
+        "complexidade": 15
+      },
+      {
+        "metodo": "OcorrenciaOutputDTO.deDominio",
+        "linha": 41,
+        "linhas": 63,
+        "complexidade": 15
+      },
+      {
+        "metodo": "OcorrenciaUseCase.atualizar",
+        "linha": 271,
+        "linhas": 55,
+        "complexidade": 10
+      },
+      {
+        "metodo": "EmprestimoUseCase.registrarDevolucao",
+        "linha": 113,
+        "linhas": 54,
+        "complexidade": 11
+      },
+      {
+        "metodo": "PlanoDeAcaoJpaAdapter.salvar",
+        "linha": 69,
+        "linhas": 52,
+        "complexidade": 10
+      },
+      {
+        "metodo": "EmprestimoOutputDTO.EmprestimoOutputDTO",
+        "linha": 15,
+        "linhas": 42,
+        "complexidade": 1
+      },
+      {
+        "metodo": "EpiResponse.EpiResponse",
+        "linha": 11,
+        "linhas": 41,
+        "complexidade": 1
+      },
+      {
+        "metodo": "PlanejarSubstituicaoUseCaseImpl.gerarAnalise",
+        "linha": 71,
+        "linhas": 41,
+        "complexidade": 10
+      }
+    ],
+    "top_mais_construtores": [
+      {
+        "arquivo": "Epi",
+        "construtores": 5
+      },
+      {
+        "arquivo": "TarefaEntity",
+        "construtores": 4
+      },
+      {
+        "arquivo": "Tarefa",
+        "construtores": 4
+      },
+      {
+        "arquivo": "AreaRiscoEntity",
+        "construtores": 3
+      },
+      {
+        "arquivo": "MovimentacaoEstoqueEntity",
+        "construtores": 3
+      },
+      {
+        "arquivo": "PlanoDeAcaoEntity",
+        "construtores": 3
+      },
+      {
+        "arquivo": "TarefaOutputDTO",
+        "construtores": 3
+      },
+      {
+        "arquivo": "TarefaUseCase",
+        "construtores": 3
+      },
+      {
+        "arquivo": "TarefaController",
+        "construtores": 2
+      },
+      {
+        "arquivo": "AcidenteEntity",
+        "construtores": 2
+      }
+    ]
+  },
+  "backend_testes": {
+    "linhas": {
+      "total": 23024,
+      "codigo": 18790,
+      "comentario": 448,
+      "branco": 3786
+    },
+    "arquivos": 126,
+    "classes_de_teste": 123,
+    "metodos_test": 891,
+    "metodos_parameterized": 30,
+    "classes_integracao_postgres": 22,
+    "classes_webmvctest": 23,
+    "classes_springboottest": 22,
+    "usos_mockito_mock": 138,
+    "resultado_ultima_execucao": {
+      "tests": 1071,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 131,
+      "tempo_s": 31.3,
+      "classes": 123
+    }
+  },
+  "cobertura_jacoco": {
+    "classes_medidas": 319,
+    "percentual": {
+      "instruction": 80.9,
+      "branch": 68.6,
+      "line": 80.1,
+      "complexity": 67.3,
+      "method": 79.0
+    },
+    "complexidade_ciclomatica_bytecode": 2668,
+    "por_modulo_linhas_pct": {
+      "(raiz)": 33.3,
+      "adapters/in/agendamento": 100.0,
+      "adapters/in/web": 89.1,
+      "adapters/out/capacitacao": 0.0,
+      "adapters/out/notificacao": 0.0,
+      "adapters/out/persistencia": 49.0,
+      "adapters/out/seguranca": 77.2,
+      "application/dto/capacitacao": 100.0,
+      "application/dto/input": 100.0,
+      "application/dto/output": 96.2,
+      "application/port/in": 50.0,
+      "application/port/out": 60.0,
+      "application/usecase": 90.5,
+      "config": 86.1,
+      "domain/area_risco": 80.3,
+      "domain/capacitacao": 92.8,
+      "domain/comum": 100.0,
+      "domain/emprestimo": 100.0,
+      "domain/epi": 89.3,
+      "domain/inspecao": 100.0,
+      "domain/ocorrencia": 97.8,
+      "domain/tarefa": 92.9,
+      "domain/usuario": 96.5
+    }
+  },
+  "migracoes_flyway": 33,
+  "frontend": {
+    "arquivos_ts_tsx": 119,
+    "arquivos_tsx": 80,
+    "linhas_ts_tsx": {
+      "total": 10670,
+      "codigo": 9140,
+      "comentario": 506,
+      "branco": 1024
+    },
+    "linhas_css": {
+      "total": 850,
+      "codigo": 731,
+      "comentario": 44,
+      "branco": 75
+    },
+    "features": 10,
+    "componentes": 148,
+    "hooks_customizados": 6,
+    "useState": 202,
+    "useEffect": 15,
+    "tipo_any": 0,
+    "top_arquivos_maiores": [
+      {
+        "arquivo": "frontend/src/features/tarefas/TasksPage.tsx",
+        "linhas_codigo": 321
+      },
+      {
+        "arquivo": "frontend/src/features/capacitacoes/api.ts",
+        "linhas_codigo": 301
+      },
+      {
+        "arquivo": "frontend/src/features/areas-risco/RiskAreasPage.tsx",
+        "linhas_codigo": 268
+      },
+      {
+        "arquivo": "frontend/src/features/areas-risco/AreaRiscoFormDialog.tsx",
+        "linhas_codigo": 261
+      },
+      {
+        "arquivo": "frontend/src/features/epis/EpiPage.tsx",
+        "linhas_codigo": 248
+      },
+      {
+        "arquivo": "frontend/src/features/ocorrencias/AcaoPlanoItem.tsx",
+        "linhas_codigo": 238
+      },
+      {
+        "arquivo": "frontend/src/features/ocorrencias/OccurrencesPage.tsx",
+        "linhas_codigo": 229
+      },
+      {
+        "arquivo": "frontend/src/features/tarefas/TarefaFormDialog.tsx",
+        "linhas_codigo": 219
+      },
+      {
+        "arquivo": "frontend/src/features/tarefas/VincularEpisTarefaDialog.tsx",
+        "linhas_codigo": 192
+      },
+      {
+        "arquivo": "frontend/src/features/areas-risco/api.ts",
+        "linhas_codigo": 188
+      }
+    ],
+    "testes_playwright": {
+      "arquivos_spec": 18,
+      "casos": 150
+    },
+    "eslint": {
+      "erros": 0,
+      "avisos": 0,
+      "por_regra": {}
+    },
+    "build": {
+      "erros_tsc": 0,
+      "vite_ok": true,
+      "js_kb": 527.1,
+      "css_kb": 42.3
+    }
+  }
+}
