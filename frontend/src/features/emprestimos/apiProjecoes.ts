@@ -4,7 +4,7 @@
 // calcula nem completa nenhum valor: datas, justificativas e alertas vêm do servidor.
 
 import { http } from '../../shared/api/https'
-import { mensagemDaApi, statusDoErro } from '../../shared/api/erros'
+import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
 
 /** Campos de `ProjecaoSubstituicaoOutputDTO` (decisão de DS10 em docs/arquitetura). */
 export type Projecao = {
@@ -142,10 +142,9 @@ export async function solicitarAnalise(): Promise<ResultadoAnalise> {
   return lerResultado(data)
 }
 
-export function descreverFalhaDeAnalise(erro: unknown): string {
-  if (statusDoErro(erro) === 403) return 'Somente o Gestor de Segurança pode solicitar a análise de projeção.'
-  return mensagemDaApi(erro) ?? 'Não foi possível concluir a análise de projeção agora. Tente novamente em alguns instantes.'
-}
+export const descreverFalhaDeAnalise = criarDescritorDeFalha({
+  403: 'Somente o Gestor de Segurança pode solicitar a análise de projeção.',
+}, usarMensagemDaApi('Não foi possível concluir a análise de projeção agora. Tente novamente em alguns instantes.'))
 
 /** Cada análise grava novas projeções; a tabela mostra só a mais recente de cada EPI. */
 export function maisRecentesPorEpi(projecoes: Projecao[]): Projecao[] {

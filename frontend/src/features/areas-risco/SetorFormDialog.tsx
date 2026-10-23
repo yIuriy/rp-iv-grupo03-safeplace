@@ -3,16 +3,15 @@
 
 import { useState, type FormEvent } from 'react'
 import { Alert, Button, Dialog, Select, TextArea, TextField } from '../../shared/components'
-import { mensagemDaApi, statusDoErro } from '../../shared/api/erros'
+import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
 import { atualizarSetor, cadastrarSetor, niveisPerigo, rotuloNivelPerigo, type Setor } from './api'
 import {
   lerDadosSetor, ordemDosCamposSetor, TAMANHO_MAXIMO_LOCALIZACAO, TAMANHO_MAXIMO_NOME, type ErrosSetor,
 } from './validacaoSetor'
 
-function descreverFalha(erro: unknown): string {
-  if (statusDoErro(erro) === 403) return 'Seu perfil não tem permissão para gerenciar setores.'
-  return mensagemDaApi(erro) ?? 'O servidor não confirmou a operação. Verifique a conexão e tente novamente.'
-}
+const descreverFalha = criarDescritorDeFalha({
+  403: 'Seu perfil não tem permissão para gerenciar setores.'
+}, usarMensagemDaApi('O servidor não confirmou a operação. Verifique a conexão e tente novamente.'))
 
 function focarCampo(form: HTMLFormElement, nome: string) {
   const campo = form.elements.namedItem(nome)

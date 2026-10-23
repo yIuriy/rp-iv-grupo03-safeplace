@@ -3,7 +3,7 @@
 // entrega, devolução, nomes dos responsáveis e leitura das recusas do servidor.
 
 import { http } from '../../shared/api/https'
-import { mensagemDaApi, statusDoErro } from '../../shared/api/erros'
+import { criarDescritorDeFalha, mensagemDaApi, statusDoErro, usarMensagemDaApi } from '../../shared/api/erros'
 import { lerEpi, nomeDoOperador, type Epi } from '../estoque/api'
 import { listarColaboradores, type Usuario } from '../usuarios/api'
 
@@ -168,22 +168,22 @@ export function duplicidadeDaFalha(erro: unknown): string | null {
     ?? 'O colaborador já possui um EPI do mesmo tipo em posse. Confirme a substituição e informe a justificativa.'
 }
 
-/** 422 traz o impedimento do UC12 (saldo, CA, situação do EPI, capacitação ou colaborador inativo). */
-export function descreverFalhaDeEntrega(erro: unknown): string {
-  const status = statusDoErro(erro)
-  if (status === 403) return 'Seu perfil não tem permissão para registrar entregas de EPI.'
-  if (status === 422 || status === 400 || status === 404) {
-    return mensagemDaApi(erro) ?? 'A entrega foi recusada pelo servidor. Confira o colaborador, o EPI e a data.'
-  }
-  return 'Não foi possível registrar a entrega agora. Os dados preenchidos foram mantidos; tente novamente.'
-}
+const falhaEntrega = usarMensagemDaApi('A entrega foi recusada pelo servidor. Confira o colaborador, o EPI e a data.')
 
-export function descreverFalhaDeDevolucao(erro: unknown): string {
-  const status = statusDoErro(erro)
-  if (status === 403) return 'Seu perfil não tem permissão para registrar devoluções.'
-  if (status === 409 || status === 404) {
-    return mensagemDaApi(erro) ?? 'Este empréstimo não está mais ativo. Feche o diálogo e recarregue a lista.'
-  }
-  if (status === 400) return mensagemDaApi(erro) ?? 'A devolução foi recusada pelo servidor. Confira a condição informada.'
-  return 'Não foi possível registrar a devolução agora. A condição escolhida foi mantida; tente novamente.'
-}
+/** 422 traz o impedimento do UC12 (saldo, CA, situação do EPI, capacitação ou colaborador inativo). */
+export const descreverFalhaDeEntrega = criarDescritorDeFalha({
+  400: falhaEntrega,
+  403: 'Seu perfil não tem permissão para registrar entregas de EPI.',
+  404: falhaEntrega,
+  422: falhaEntrega,
+}, 'Não foi possível registrar a entrega agora. Os dados preenchidos foram mantidos; tente novamente.')
+
+const emprestimoInativo = usarMensagemDaApi('Este empréstimo não está mais ativo. Feche o diálogo e recarregue a lista.')
+const devolucaoRecusada = usarMensagemDaApi('A devolução foi recusada pelo servidor. Confira a condição informada.')
+
+export const descreverFalhaDeDevolucao = criarDescritorDeFalha({
+  400: devolucaoRecusada,
+  403: 'Seu perfil não tem permissão para registrar devoluções.',
+  404: emprestimoInativo,
+  409: emprestimoInativo,
+}, 'Não foi possível registrar a devolução agora. A condição escolhida foi mantida; tente novamente.')
