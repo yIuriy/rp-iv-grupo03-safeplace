@@ -3,7 +3,7 @@
 // #94 e #122), além da consulta do perfil da pessoa logada.
 
 import { http } from '../../shared/api/https'
-import { mensagemDaApi, statusDoErro } from '../../shared/api/erros'
+import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
 
 export type PerfilUsuario = 'SUPERVISOR' | 'GESTOR_SEGURANCA'
 
@@ -106,12 +106,12 @@ export async function atualizarColaborador(id: number, dados: DadosAtualizacao):
   return lerUsuario(data)
 }
 
-export function descreverFalhaDeCadastro(erro: unknown): string {
-  const status = statusDoErro(erro)
-  if (status === 403) return 'Seu perfil não tem permissão para esta operação.'
-  if (status === 404) return 'Cadastro não encontrado. Ele pode ter sido alterado por outra pessoa; recarregue a lista.'
-  if (status === 409 || status === 400) {
-    return mensagemDaApi(erro) ?? 'Os dados informados conflitam com um cadastro existente ou são inválidos.'
-  }
-  return 'Não foi possível concluir a operação agora. Os dados preenchidos foram mantidos; tente novamente.'
-}
+const dadosRecusados = usarMensagemDaApi(
+  'Os dados informados conflitam com um cadastro existente ou são inválidos.')
+
+export const descreverFalhaDeCadastro = criarDescritorDeFalha({
+  400: dadosRecusados,
+  403: 'Seu perfil não tem permissão para esta operação.',
+  404: 'Cadastro não encontrado. Ele pode ter sido alterado por outra pessoa; recarregue a lista.',
+  409: dadosRecusados,
+}, 'Não foi possível concluir a operação agora. Os dados preenchidos foram mantidos; tente novamente.')

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState, type FormEvent } from 'react'
-import { mensagemDaApi, statusDoErro } from '../../shared/api/erros'
+import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
 import { useConsulta, type Consulta } from '../../shared/api/useConsulta'
 import { Alert, Badge, Button, Dialog, EmptyState, HistoryItem, Select, Table, TableRow, TextArea, TextField, Toast } from '../../shared/components'
 import { FeaturePage } from '../../shared/layout/FeaturePage'
@@ -37,11 +37,10 @@ function formatarData(data: string) {
   return Number.isNaN(valor.getTime()) ? data : valor.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 }
 
-function descreverErro(erro: unknown) {
-  if (statusDoErro(erro) === 403) return 'Seu perfil não tem permissão para registrar manutenção.'
-  if (statusDoErro(erro) === 404) return 'EPI não encontrado. Atualize a busca e escolha outro registro.'
-  return mensagemDaApi(erro) ?? 'Não foi possível registrar manutenção. Nenhuma confirmação foi exibida.'
-}
+const descreverErro = criarDescritorDeFalha({
+  403: 'Seu perfil não tem permissão para registrar manutenção.',
+  404: 'EPI não encontrado. Atualize a busca e escolha outro registro.',
+}, usarMensagemDaApi('Não foi possível registrar manutenção. Nenhuma confirmação foi exibida.'))
 
 function textoOpcional(form: FormData, nome: string): string | undefined {
   const valor = String(form.get(nome) ?? '').trim()

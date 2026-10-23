@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import logo from '../../../design-system/assets/logo-primary.svg'
 import { Alert, Button, PasswordField, TextField } from '../../shared/components'
-import { statusDoErro } from '../../shared/api/erros'
+import { criarDescritorDeFalha } from '../../shared/api/erros'
 import { useAutenticacao } from './contexto'
 
 const destinoPadrao = '/usuarios'
@@ -16,11 +16,10 @@ function destinoDe(state: unknown): string {
   return typeof de === 'string' && de.startsWith('/') && !de.startsWith('/login') ? de : destinoPadrao
 }
 
-function descreverFalha(erro: unknown): string {
-  return statusDoErro(erro) === 401
-    ? 'E-mail ou senha incorretos. Confira os dados e tente novamente.'
-    : 'Não foi possível entrar agora. Verifique sua conexão e tente novamente.'
-}
+const descreverFalha = criarDescritorDeFalha(
+  { 401: "E-mail ou senha incorretos. Confira os dados e tente novamente." },
+  "Não foi possível entrar agora. Verifique sua conexão e tente novamente.",
+);
 
 export function LoginPage() {
   const { sessao, motivoSaida, entrar } = useAutenticacao()

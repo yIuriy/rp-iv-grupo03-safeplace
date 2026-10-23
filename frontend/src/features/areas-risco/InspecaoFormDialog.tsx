@@ -4,14 +4,13 @@
 
 import { useState, type FormEvent } from 'react'
 import { Alert, Button, Dialog, Radio, TextArea, TextField } from '../../shared/components'
-import { mensagemDaApi, statusDoErro } from '../../shared/api/erros'
+import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
 import { registrarInspecao, type Inspecao } from './apiInspecoes'
 import { hojeIso, validarInspecao, type ErrosInspecao, type ErrosItem, type RascunhoItem } from './validacaoInspecao'
 
-function descreverFalha(erro: unknown): string {
-  if (statusDoErro(erro) === 403) return 'Seu perfil não tem permissão para registrar inspeções.'
-  return mensagemDaApi(erro) ?? 'O servidor não confirmou o registro. Verifique a conexão e tente novamente.'
-}
+const descreverFalha = criarDescritorDeFalha({
+  403: 'Seu perfil não tem permissão para registrar inspeções.',
+}, usarMensagemDaApi('O servidor não confirmou o registro. Verifique a conexão e tente novamente.'))
 
 function itemVazio(chave: number): RascunhoItem {
   return { chave, descricao: '', resultado: '', observacoes: '' }

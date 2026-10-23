@@ -2,7 +2,7 @@
 // por critérios no servidor, detalhe por id, busca de acidente pelo protocolo CAT (issue #128),
 // relato, edição, triagem e arquivamento (issue #100).
 
-import { mensagemDaApi, statusDoErro } from '../../shared/api/erros'
+import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
 import type { NivelPerigo } from '../areas-risco/api'
 import { http } from '../../shared/api/https'
 
@@ -158,17 +158,17 @@ export async function arquivarOcorrencia(id: number): Promise<OcorrenciaResumo> 
   return lerOcorrenciaResumo(data)
 }
 
+const falhaDadosOcorrencia = usarMensagemDaApi('Os dados informados foram recusados pelo servidor. Revise os campos e tente novamente.')
+
 /** Mensagem para recusas da API, mantendo os dados preenchidos na tela. */
-export function descreverFalhaDeOcorrencia(erro: unknown): string {
-  const status = statusDoErro(erro)
-  if (status === 401) return 'Sua sessão expirou. Entre novamente para continuar.'
-  if (status === 403) return 'Seu perfil não tem permissão para esta operação.'
-  if (status === 404) return mensagemDaApi(erro) ?? 'Ocorrência não encontrada. Recarregue a lista e tente novamente.'
-  if (status === 400 || status === 409 || status === 422) {
-    return mensagemDaApi(erro) ?? 'Os dados informados foram recusados pelo servidor. Revise os campos e tente novamente.'
-  }
-  return 'Não foi possível concluir a operação agora. Os dados preenchidos foram mantidos; verifique sua conexão e tente novamente.'
-}
+export const descreverFalhaDeOcorrencia = criarDescritorDeFalha({
+  400: falhaDadosOcorrencia,
+  401: 'Sua sessão expirou. Entre novamente para continuar.',
+  403: 'Seu perfil não tem permissão para esta operação.',
+  404: usarMensagemDaApi('Ocorrência não encontrada. Recarregue a lista e tente novamente.'),
+  409: falhaDadosOcorrencia,
+  422: falhaDadosOcorrencia,
+}, 'Não foi possível concluir a operação agora. Os dados preenchidos foram mantidos; verifique sua conexão e tente novamente.')
 
 /**
  * Aviso de que os dados de ocorrências mudaram (relato, edição, triagem, arquivamento ou plano), para

@@ -4,7 +4,7 @@
 
 import { isAxiosError } from 'axios'
 import { http } from '../../shared/api/https'
-import { mensagemDaApi, statusDoErro } from '../../shared/api/erros'
+import { criarDescritorDeFalha, mensagemDaApi, statusDoErro, usarMensagemDaApi } from '../../shared/api/erros'
 
 /** Situação de `Certificacao.status` calculada pelo backend (UC02, cenário alternativo IV). */
 export type SituacaoCertificacao = 'EM_DIA' | 'PROXIMA_DO_VENCIMENTO' | 'VENCIDA'
@@ -290,11 +290,12 @@ export async function consultarAptidao(colaboradorId: number, tarefaId: number, 
 
 /** Mensagem para falhas das consultas: perfil sem acesso, cadastro removido ou erro de rede. */
 export function descreverFalha(erro: unknown, naoEncontrado: string): string {
-  const status = statusDoErro(erro)
-  if (status === 403) return 'Seu perfil não tem permissão para consultar capacitações.'
-  if (status === 404) return mensagemDaApi(erro) ?? naoEncontrado
-  if (status === 400) return mensagemDaApi(erro) ?? 'A consulta foi recusada pelo servidor. Revise os dados e tente novamente.'
-  return 'Não foi possível consultar agora. Verifique sua conexão ou tente novamente em alguns instantes.'
+  // O texto do 404 vem de quem chama, então o descritor é montado e executado a cada chamada.
+  return criarDescritorDeFalha({
+    400: usarMensagemDaApi('A consulta foi recusada pelo servidor. Revise os dados e tente novamente.'),
+    403: 'Seu perfil não tem permissão para consultar capacitações.',
+    404: usarMensagemDaApi(naoEncontrado),
+  }, 'Não foi possível consultar agora. Verifique sua conexão ou tente novamente em alguns instantes.')(erro)
 }
 
 export type DadosCertificacao = { nome: string; dataEmissao: string; dataVencimento: string; colaboradorId: number }
@@ -352,9 +353,7 @@ export async function alocarColaborador(tarefaId: number, colaboradorId: number)
 }
 
 /** Mensagem para falhas do cadastro: perfil sem acesso, dados recusados ou erro de rede. */
-export function descreverFalhaCadastro(erro: unknown): string {
-  const status = statusDoErro(erro)
-  if (status === 403) return 'Seu perfil não tem permissão para cadastrar capacitações.'
-  if (status === 400) return mensagemDaApi(erro) ?? 'O servidor recusou os dados. Revise os campos e tente novamente.'
-  return 'O servidor não confirmou o cadastro. Verifique a conexão e tente novamente.'
-}
+export const descreverFalhaCadastro = criarDescritorDeFalha({
+  400: usarMensagemDaApi('O servidor recusou os dados. Revise os campos e tente novamente.'),
+  403: 'Seu perfil não tem permissão para cadastrar capacitações.',
+}, 'O servidor não confirmou o cadastro. Verifique a conexão e tente novamente.')

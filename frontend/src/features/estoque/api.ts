@@ -3,7 +3,7 @@
 // do operador de cada movimentação (RF03, UC06, US03, issues #123 e #133).
 
 import { http } from '../../shared/api/https'
-import { mensagemDaApi, statusDoErro } from '../../shared/api/erros'
+import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
 
 export type StatusEpi = 'DISPONIVEL' | 'EM_USO' | 'EM_MANUTENCAO' | 'ESGOTADO' | 'DESCARTADO'
 export type TipoMovimentacao = 'ENTRADA' | 'SAIDA'
@@ -136,10 +136,10 @@ export async function listarHistorico(epiId: number, signal?: AbortSignal): Prom
   })))
 }
 
-export function descreverFalhaDeMovimentacao(erro: unknown): string {
-  const status = statusDoErro(erro)
-  if (status === 403) return 'Seu perfil não tem permissão para movimentar o estoque. Apenas o Gestor de Segurança registra entradas e saídas.'
-  if (status === 404) return 'EPI não encontrado. Ele pode ter sido alterado por outra pessoa; recarregue a lista.'
-  if (status === 400) return mensagemDaApi(erro) ?? 'A movimentação foi recusada pelo servidor. Confira a quantidade e o motivo.'
-  return 'Não foi possível registrar a movimentação agora. Os dados preenchidos foram mantidos; tente novamente.'
-}
+const movimentacaoRecusada = usarMensagemDaApi('A movimentação foi recusada pelo servidor. Confira a quantidade e o motivo.')
+
+export const descreverFalhaDeMovimentacao = criarDescritorDeFalha({
+  400: movimentacaoRecusada,
+  403: 'Seu perfil não tem permissão para movimentar o estoque. Apenas o Gestor de Segurança registra entradas e saídas.',
+  404: 'EPI não encontrado. Ele pode ter sido alterado por outra pessoa; recarregue a lista.',
+},'Não foi possível registrar a movimentação agora. Os dados preenchidos foram mantidos; tente novamente.')
