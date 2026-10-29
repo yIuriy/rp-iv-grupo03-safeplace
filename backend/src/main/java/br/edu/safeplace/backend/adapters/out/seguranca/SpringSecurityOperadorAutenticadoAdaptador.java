@@ -10,11 +10,17 @@ import java.util.Optional;
 @Component
 public class SpringSecurityOperadorAutenticadoAdaptador implements OperadorAutenticadoPorta {
 
+    private static final String USUARIO_ANONIMO = "anonymousUser";
+
     @Override
     public Optional<String> obterIdentificadorOperador() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
-            return Optional.of(auth.getName().trim());
+            String identificador = auth.getName().trim();
+            if (USUARIO_ANONIMO.equalsIgnoreCase(identificador)) {
+                return Optional.empty();
+            }
+            return Optional.of(identificador);
         }
         return Optional.empty();
     }
@@ -26,6 +32,9 @@ public class SpringSecurityOperadorAutenticadoAdaptador implements OperadorAuten
         }
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
+            return false;
+        }
+        if (auth.getName() != null && USUARIO_ANONIMO.equalsIgnoreCase(auth.getName().trim())) {
             return false;
         }
         String papelNormalizado = papel.startsWith("ROLE_") ? papel : "ROLE_" + papel;

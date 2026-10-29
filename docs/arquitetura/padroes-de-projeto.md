@@ -19,6 +19,7 @@ As classes e funções técnicas criadas pelos padrões não fazem parte do diag
 | Padrão | Catálogo | Onde | Issue | Situação |
 | --- | --- | --- | --- | --- |
 | [Strategy](#strategy--mensagens-de-falha-http) | GoF, comportamental | Frontend: mensagens de falha HTTP | [#232](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/232) | Aplicado |
+| [Adapter](#adapter--porta-de-operador-autenticado) | GoF, estrutural | Backend: operador autenticado | Parte 1 (preparação para [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236)) | Aplicado |
 
 ---
 
@@ -316,3 +317,240 @@ O total de linhas quase não muda: o Context e os comentários ocupam o espaço 
 Dois exemplos mostram que a estratégia `usarMensagemDaApi` funciona dentro do Context: o conflito de CPF em `users.spec.ts` e a recusa com mensagem do servidor em `setores.spec.ts`.
 
 **Verificação estática:** `npx tsc -b` e `npx eslint .` sem erros.
+
+---
+
+## Adapter — porta de operador autenticado
+
+**Catálogo:** GoF, estrutural.
+
+**Intenção:** converter a interface de uma classe na interface esperada pelos clientes. O Adapter permite que classes com interfaces incompatíveis trabalhem juntas, desacoplando o núcleo da aplicação dos detalhes e classes estáticas do framework de segurança.
+
+**Issue:** Parte 1 de 2 (a parte 2 é [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236)).
+
+### Problema (antes)
+
+A porta `application/port/out/OperadorAutenticadoPorta.java` e o adaptador `adapters/out/seguranca/SpringSecurityOperadorAutenticadoAdaptador.java` já existiam, mas apenas `UsuarioCasoDeUso` os utilizava. Os demais casos de uso (`OcorrenciaUseCase`, `TarefaUseCase`, `EpiUseCase`, `ControlarManutencaoEpiService`, `CadastrarCapacitacaoService`, `InspecaoUseCase`, `PlanoDeAcaoUseCase` e `PlanoDeAcaoJpaAdapter`) acessavam o `SecurityContextHolder` diretamente.
+
+Medição na release v1.0.0:
+
+| Medida | Valor v1.0.0 |
+| --- | ---: |
+| `violacoes_camadas.application_importa_spring_security` | 7 |
+| `contagens.security_context_holder` | 27 |
+
+Além do acoplamento ao Spring Security, havia dois problemas de consistência:
+
+1. **Defeito no descarte de `"anonymousUser"`:** o adaptador não filtrava o usuário anônimo fornecido pelo Spring Security quando não autenticado, retornando `Optional.of("anonymousUser")`. Apenas 4 locais (`OcorrenciaUseCase`, `TarefaUseCase`, `InspecaoUseCase` e `PlanoDeAcaoJpaAdapter`) descartavam esse valor manualmente; nos demais fluxos, a auditoria podia gravar `responsavel = "anonymousUser"` em vez de `SISTEMA`.
+2. **Regra divergente para recuperação do Gestor:** a busca do Gestor de Segurança pelo e-mail autenticado possuía comportamentos diferentes no sistema. `TarefaUseCase` e `InspecaoUseCase` lançavam `AccessDeniedException` quando não havia gestor autenticado, enquanto `PlanoDeAcaoUseCase` devolvia `null`.
+
+### Por que Adapter
+
+A camada de aplicação precisa saber **quem está operando** e quais os seus papéis ou entidades de domínio associadas, e não como o Spring Security armazena o token na thread (`SecurityContextHolder`).
+
+O padrão Adapter permite:
+
+- Isolar a dependência de `org.springframework.security` no adaptador de infraestrutura (`SpringSecurityOperadorAutenticadoAdaptador`);
+- Centralizar o filtro de `"anonymousUser"` em um único local, garantindo que usuários anônimos resultem em `Optional.empty()`;
+- Fornecer uma fachada na camada de aplicação (`OperadorAtual`) que padroniza o fallback para `"SISTEMA"` e unifica a busca do Gestor de Segurança com regras explícitas (`buscarGestor()` para fluxos opcionais e `gestorObrigatorio()` para fluxos restritos);
+- Testar casos de uso com dublês de teste simples (mocks da interface `OperadorAutenticadoPorta`), sem necessidade de montar ou limpar o contexto estático do Spring Security.
+
+### Papéis do padrão
+
+| Papel (GoF) | Elemento no código | Arquivo |
+| --- | --- | --- |
+| **Target** | `OperadorAutenticadoPorta` | `backend/src/main/java/br/edu/safeplace/backend/application/port/out/OperadorAutenticadoPorta.java` |
+| **Adapter** | `SpringSecurityOperadorAutenticadoAdaptador` | `backend/src/main/java/br/edu/safeplace/backend/adapters/out/seguranca/SpringSecurityOperadorAutenticadoAdaptador.java` |
+| **Adaptee** | `SecurityContextHolder` / `Authentication` | `org.springframework.security.core` |
+| **Fachada de uso** | `OperadorAtual` | `backend/src/main/java/br/edu/safeplace/backend/application/usecase/OperadorAtual.java` |
+| **Client** | `UsuarioCasoDeUso` (e os demais use cases na Parte 2) | `backend/src/main/java/br/edu/safeplace/backend/application/usecase/*` |
+
+### Diagramas
+
+**Antes.** Casos de uso liam diretamente a classe estática do Spring Security, duplicando a regra de filtragem de `"anonymousUser"` ou omitindo o tratamento.
+
+```mermaid
+classDiagram
+  direction LR
+  class SecurityContextHolder {
+    <<Adaptee / Framework>>
+    +getContext() SecurityContext
+  }
+  class UsuarioCasoDeUso {
+    +cadastrar(...)
+  }
+  class OutrosCasosDeUso {
+    +executar(...)
+  }
+  class OperadorAutenticadoPorta {
+    <<Target / Interface>>
+    +obterIdentificadorOperador() Optional~String~
+    +possuiPapel(papel) boolean
+  }
+  class SpringSecurityOperadorAutenticadoAdaptador {
+    <<Adapter>>
+    +obterIdentificadorOperador() Optional~String~
+    +possuiPapel(papel) boolean
+  }
+
+  UsuarioCasoDeUso --> OperadorAutenticadoPorta : usa
+  OperadorAutenticadoPorta <|.. SpringSecurityOperadorAutenticadoAdaptador : implementa
+  SpringSecurityOperadorAutenticadoAdaptador --> SecurityContextHolder : lê sem filtrar anonymousUser
+  OutrosCasosDeUso --> SecurityContextHolder : lê diretamente (acoplamento e divergência)
+```
+
+**Depois.** O adaptador encapsula a leitura do Spring Security e filtra `"anonymousUser"`. Os casos de uso consomem a fachada de aplicação `OperadorAtual`, que se apoia na porta `OperadorAutenticadoPorta`.
+
+```mermaid
+classDiagram
+  direction TB
+  class SecurityContextHolder {
+    <<Adaptee / Framework>>
+    +getContext() SecurityContext
+  }
+  class OperadorAutenticadoPorta {
+    <<Target / Interface>>
+    +obterIdentificadorOperador() Optional~String~
+    +possuiPapel(papel) boolean
+  }
+  class SpringSecurityOperadorAutenticadoAdaptador {
+    <<Adapter>>
+    -USUARIO_ANONIMO = "anonymousUser"
+    +obterIdentificadorOperador() Optional~String~
+    +possuiPapel(papel) boolean
+  }
+  class OperadorAtual {
+    <<Fachada de uso>>
+    +emailOuSistema() String
+    +obterIdentificadorOperador() Optional~String~
+    +buscarGestor() Optional~GestorDeSeguranca~
+    +gestorObrigatorio() GestorDeSeguranca
+    +gestorObrigatorio(mensagemErro) GestorDeSeguranca
+    +possuiPapel(papel) boolean
+  }
+  class CasosDeUso {
+    <<Client>>
+    +executar(...)
+  }
+
+  OperadorAutenticadoPorta <|.. SpringSecurityOperadorAutenticadoAdaptador : implementa
+  SpringSecurityOperadorAutenticadoAdaptador --> SecurityContextHolder : adapta e filtra anonymousUser
+  OperadorAtual --> OperadorAutenticadoPorta : usa Target
+  CasosDeUso --> OperadorAtual : consome via fachada
+```
+
+**Execução:** resolução de operador anônimo com fallback para `"SISTEMA"`:
+
+```mermaid
+sequenceDiagram
+  participant Cliente as CasoDeUso (Client)
+  participant Facade as OperadorAtual (Fachada)
+  participant Target as OperadorAutenticadoPorta (Target)
+  participant Adapter as SpringSecurityOperadorAutenticadoAdaptador (Adapter)
+  participant Adaptee as SecurityContextHolder (Adaptee)
+
+  Cliente->>Facade: emailOuSistema()
+  Facade->>Target: obterIdentificadorOperador()
+  Target->>Adapter: obterIdentificadorOperador()
+  Adapter->>Adaptee: getContext().getAuthentication()
+  Adaptee-->>Adapter: auth (getName() = "anonymousUser")
+  Adapter->>Adapter: filtra "anonymousUser" -> Optional.empty()
+  Adapter-->>Target: Optional.empty()
+  Target-->>Facade: Optional.empty()
+  Facade-->>Cliente: "SISTEMA"
+```
+
+### Código antes × depois
+
+**Adaptador (`SpringSecurityOperadorAutenticadoAdaptador.java`):**
+
+Antes:
+```java
+@Override
+public Optional<String> obterIdentificadorOperador() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
+        return Optional.of(auth.getName().trim());
+    }
+    return Optional.empty();
+}
+```
+
+Depois (descarte centralizado de `"anonymousUser"`):
+```java
+private static final String USUARIO_ANONIMO = "anonymousUser";
+
+@Override
+public Optional<String> obterIdentificadorOperador() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
+        String identificador = auth.getName().trim();
+        if (USUARIO_ANONIMO.equalsIgnoreCase(identificador)) {
+            return Optional.empty();
+        }
+        return Optional.of(identificador);
+    }
+    return Optional.empty();
+}
+```
+
+**Fachada de uso (`OperadorAtual.java`):**
+
+Criação da fachada na camada de aplicação para abstrair o acesso e unificar a regra do Gestor:
+```java
+@Service
+public class OperadorAtual {
+
+    public static final String SISTEMA = "SISTEMA";
+    private static final String MENSAGEM_GESTOR_PADRAO = "Operação exige um Gestor de Segurança autenticado.";
+
+    private final OperadorAutenticadoPorta operadorPorta;
+    private final UsuarioRepositorioPorta usuarioRepository;
+
+    public OperadorAtual(OperadorAutenticadoPorta operadorPorta, UsuarioRepositorioPorta usuarioRepository) {
+        this.operadorPorta = Objects.requireNonNull(operadorPorta, "operadorPorta não pode ser nula.");
+        this.usuarioRepository = Objects.requireNonNull(usuarioRepository, "usuarioRepository não pode ser nulo.");
+    }
+
+    public String emailOuSistema() {
+        return operadorPorta.obterIdentificadorOperador().orElse(SISTEMA);
+    }
+
+    public Optional<GestorDeSeguranca> buscarGestor() {
+        return operadorPorta.obterIdentificadorOperador()
+                .flatMap(usuarioRepository::buscarPorEmail)
+                .filter(GestorDeSeguranca.class::isInstance)
+                .map(GestorDeSeguranca.class::cast);
+    }
+
+    public GestorDeSeguranca gestorObrigatorio() {
+        return gestorObrigatorio(MENSAGEM_GESTOR_PADRAO);
+    }
+
+    public GestorDeSeguranca gestorObrigatorio(String mensagemErro) {
+        return buscarGestor()
+                .orElseThrow(() -> new AcessoNegadoException(
+                        mensagemErro != null && !mensagemErro.isBlank() ? mensagemErro : MENSAGEM_GESTOR_PADRAO
+                ));
+    }
+
+    public boolean possuiPapel(String papel) {
+        return operadorPorta.possuiPapel(papel);
+    }
+}
+```
+
+### Benefício
+
+A identificação do operador autenticado e o descarte de `"anonymousUser"` passaram a existir **em um ponto único e testado**. A auditoria fica protegida contra a gravação de `"anonymousUser"` como responsável, e a busca por Gestor de Segurança foi padronizada: fluxos que exigem gestor usam `gestorObrigatorio()` (lançando `AcessoNegadoException`), enquanto fluxos opcionais usam `buscarGestor()`. A camada de aplicação permanece desacoplada do Spring Security, simplificando os testes unitários.
+
+### Evidências
+
+**Testes unitários novos:**
+
+1. `SpringSecurityOperadorAutenticadoAdaptadorTest`: 10 testes cobrindo contexto sem autenticação, nome em branco, descarte de `"anonymousUser"`, verificação de papéis com/sem prefixo `ROLE_` e negação de papéis para anônimos.
+2. `OperadorAtualTest`: 13 testes cobrindo fallback de `emailOuSistema()` para `"SISTEMA"`, delegação de papéis, resolução de `buscarGestor()` com usuário inexistente, colaborador comum e gestor válido, além de `gestorObrigatorio()` lançando `AcessoNegadoException` com mensagem padrão ou personalizada.
+
+**Suíte de testes existente:**
+- Execução de `./mvnw test` concluída com sucesso: **1094 testes executados, 0 falhas, 0 erros**.
+- Cobertura mantida em conformidade com as metas do projeto.
