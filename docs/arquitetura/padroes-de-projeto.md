@@ -12,13 +12,27 @@ Cada seção traz:
 
 As métricas gerais da refatoração são comparadas uma única vez, no fim, com a [linha de base](../metricas/relatorio-metricas-v1.0.0.md) ([#235](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/235)). Os números citados em cada seção medem apenas o ponto alterado.
 
-As classes e funções técnicas criadas pelos padrões não fazem parte do diagrama de classes do domínio. Elas ficam registradas aqui ([#220](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/220)).
+As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `RegistradorAuditoria`, mapeadores, builders de teste, adaptadores nulos e outras) não fazem parte do diagrama de classes do domínio. Elas ficam registradas aqui ([#220](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/220)).
 
 ## Índice
 
 | Padrão | Catálogo | Onde | Issue | Situação |
 | --- | --- | --- | --- | --- |
 | [Strategy](#strategy--mensagens-de-falha-http) | GoF, comportamental | Frontend: mensagens de falha HTTP | [#232](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/232) | Aplicado |
+| [Adapter (Backend)](#adapter--operador-autenticado) | GoF, estrutural | Backend: porta do usuário autenticado e `OperadorAtual` | [#222](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/222), [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236) | Pendente |
+| [Facade](#facade--registrador-de-auditoria) | GoF, estrutural | Backend: registro de auditoria (`RegistradorAuditoria`) | [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237), [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) | Pendente |
+| [State (Backend)](#state--transicoes-de-statusepi) | GoF, comportamental | Backend: transições de `StatusEpi` | [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) | Pendente |
+| [Factory Method](#factory-method--criacao-de-epi-e-ocorrencia) | GoF, criacional | Backend: criação de `Epi` e `Acidente`/`Incidente` (`Ocorrencia` `sealed`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225), [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Pendente |
+| [Builder (Test Data Builder)](#builder--test-data-builders-de-epi-tarefa-e-ocorrencia) | GoF, criacional | Backend (`src/test`): builders de `Epi`, `Tarefa` e `Ocorrencia` | [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) | Pendente |
+| [Null Object](#null-object--adaptador-nulo-de-notificacao-e-dependencias-opcionais) | Woolf / PLoPD 3 | Backend: `NotificacaoOcorrenciaNula` e dependências opcionais | [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227), [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) | Pendente |
+| [Notification](#notification--validador-de-aptidao) | Fowler / PoEAA | Backend: acumulador de impedimentos em `ValidadorAptidaoColaboradorService` | [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228) | Pendente |
+| [Data Mapper](#data-mapper--mapeadores-de-persistencia) | Fowler / PoEAA | Backend: `EpiEntityMapper`, `AreaRiscoEntityMapper` e `PlanoDeAcaoEntityMapper` | [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229), [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242) | Pendente |
+| [Value Object](#value-object--protocolo-cat-em-acidente) | Fowler / DDD | Backend: `NumeroProtocoloCAT` dentro de `Acidente` | [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230) | Pendente |
+| [DTO Assembler](#dto-assembler--ocorrenciaoutputdto) | Fowler / PoEAA | Backend: `OcorrenciaOutputAssembler` sem expor `PlanoDeAcao` | [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245) | Pendente |
+| [Strategy (Backend)](#strategy--fonte-de-tempo-clock) | GoF, comportamental | Backend: injeção de `java.time.Clock` nas regras de vencimento | [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247) | Pendente |
+| [Adapter (Frontend)](#adapter--leitura-da-api-e-contrato-de-epi) | GoF, estrutural | Frontend: primitivas de leitura da API e unificação de `Epi` | [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244), [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) | Pendente |
+| [Template Method (hook)](#template-method-hook--envio-de-formulario) | GoF, comportamental | Frontend: submissão de formulários (`useEnvioFormulario`) | [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233), [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243) | Pendente |
+| [State (Frontend)](#state--dialogos-de-taskspage) | GoF, comportamental | Frontend: estado único `DialogoTarefa` em `TasksPage` | [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246) | Pendente |
 
 ---
 
@@ -316,3 +330,513 @@ O total de linhas quase não muda: o Context e os comentários ocupam o espaço 
 Dois exemplos mostram que a estratégia `usarMensagemDaApi` funciona dentro do Context: o conflito de CPF em `users.spec.ts` e a recusa com mensagem do servidor em `setores.spec.ts`.
 
 **Verificação estática:** `npx tsc -b` e `npx eslint .` sem erros.
+
+---
+
+## Adapter — operador autenticado
+
+**Catálogo:** GoF, estrutural (porta de saída na Arquitetura Hexagonal).
+
+**Intenção:** isolar a obtenção do operador autenticado atrás de uma porta de saída e do serviço `OperadorAtual`, desacoplando os casos de uso do `SecurityContextHolder` do Spring Security.
+
+**Issues:** [#222](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/222) e [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236).
+
+### Problema (antes)
+
+*A preencher nas issues [#222](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/222) e [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, R1).*
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| Target (porta de saída) | `OperadorAutenticadoPorta` | Declarar o contrato para consulta do operador autenticado |
+| Adapter | `SpringSecurityOperadorAutenticadoAdaptador` | Ler o `SecurityContextHolder` e filtrar `"anonymousUser"` |
+| Adaptee | `SecurityContextHolder` / `Authentication` | API de autenticação do Spring Security |
+| Facade de uso / Client helper | `OperadorAtual` | Fornecer `emailOuSistema()`, `gestorObrigatorio()` e `possuiPapel(...)` aos casos de uso |
+
+### Diagramas
+
+*Diagramas PlantUML antes e depois a preencher nas issues [#222](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/222) e [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236).*
+
+### Métricas locais
+
+| Métrica | Antes (v1.0.0) | Depois |
+| --- | --- | --- |
+| `violacoes_camadas.application_importa_spring_security` | 7 | *A medir* |
+| `contagens.security_context_holder` | 27 | *A medir* |
+
+### Evidências
+
+*A preencher nas issues [#222](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/222) e [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236).*
+
+---
+
+## Facade — registrador de auditoria
+
+**Catálogo:** GoF, estrutural.
+
+**Intenção:** fornecer uma interface simplificada (`RegistradorAuditoria`) para a montagem e gravação de registros de auditoria (`LogAuditoria`), ocultando a resolução do operador e os detalhes do repositório.
+
+**Issues:** [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237) e [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238).
+
+### Problema (antes)
+
+*A preencher nas issues [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237) e [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, R2).*
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| Facade | `RegistradorAuditoria` | Expor `cadastro(...)`, `alteracao(...)` e `remocao(...)` para os casos de uso |
+| Subsystem | `LogAuditoria`, `LogAuditoriaRepositoryPort`, `OperadorAtual` | Entidade de domínio, porta de persistência do log e identificação do operador |
+| Client | Casos de uso da camada `application` | Registrar eventos de auditoria em uma única chamada |
+
+### Diagramas
+
+*Diagramas PlantUML antes e depois a preencher nas issues [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223)–[#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238).*
+
+### Métricas locais
+
+| Métrica | Antes (v1.0.0) | Depois |
+| --- | --- | --- |
+| Classes que montam `LogAuditoria` manualmente | 11 | *A medir* |
+| Blocos de construção manual de `LogAuditoria` | ~25 | *A medir* |
+
+### Evidências
+
+*A preencher nas issues [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223)–[#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238).*
+
+---
+
+## State — transições de `StatusEpi`
+
+**Catálogo:** GoF, comportamental (máquina de estados via enum).
+
+**Intenção:** concentrar as regras de transição do ciclo de vida do `Epi` nas constantes de `StatusEpi` (`podeTransicaoPara`), delegando a mudança de estado a `Epi.transicionarPara(StatusEpi)`.
+
+**Issue:** [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224).
+
+### Problema (antes)
+
+*A preencher na issue [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, R4).*
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| Context | `Epi` | Manter o `StatusEpi` atual e validar mudanças via `transicionarPara(StatusEpi)` |
+| State | `StatusEpi` | Declarar `podeTransicaoPara(StatusEpi)` para o ciclo de vida do EPI |
+| ConcreteState | `DISPONIVEL`, `EM_MANUTENCAO`, `ESGOTADO`, `EM_USO`, `DESCARTADO` | Definir as transições permitidas a partir de cada estado |
+
+### Diagramas
+
+*Diagramas PlantUML antes e depois a preencher na issue [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224).*
+
+### Métricas locais
+
+| Métrica | Antes (v1.0.0) | Depois |
+| --- | --- | --- |
+| Métodos com regras de transição de `StatusEpi` espalhadas | 8 | *A medir* |
+
+### Evidências
+
+*A preencher na issue [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224).*
+
+---
+
+## Factory Method — criação de `Epi` e `Ocorrencia`
+
+**Catálogo:** GoF, criacional (fábricas nomeadas + polimorfismo com hierarquia `sealed`).
+
+**Intenção:** consolidar a criação de `Epi` em fábricas nomeadas (`Epi.novo`, `Epi.reconstituir`) e a criação de `Acidente`/`Incidente` por fábrica com `Ocorrencia` `sealed` (`permits Acidente, Incidente`).
+
+**Issues:** [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) e [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239).
+
+### Problema (antes)
+
+*A preencher nas issues [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) e [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, R5 e R6, e `docs/arquitetura/correspondencia-classes-epi.md`).*
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| Creator / Factory Methods | `Epi.novo(...)`, `Epi.reconstituir(...)`, fábrica de `Ocorrencia` por `TipoOcorrencia` | Distinguir criação inicial de reconstituição e instanciar o subtipo correto de `Ocorrencia` |
+| Product | `Epi`, `Ocorrencia` (`sealed`) | Entidades de domínio com invariantes protegidas e `getTipo()` polimórfico |
+| ConcreteProduct | `Acidente`, `Incidente` | Subtipos permitidos pela hierarquia selada de `Ocorrencia` |
+| Parameter Object | `EspecificacaoEPI` | Agrupar os dados descritivos na criação do `Epi` |
+
+### Diagramas
+
+*Diagramas PlantUML antes e depois a preencher nas issues [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) e [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239).*
+
+### Métricas locais
+
+| Métrica | Antes (v1.0.0) | Depois |
+| --- | --- | --- |
+| Portas de entrada de construção em `Epi` | 10 | 2 |
+| Métodos legados sem uso em `Epi` | 8 | 0 |
+| Checagens `instanceof Acidente` em `domain/` e `application/` | 5 | *A medir* |
+
+### Evidências
+
+*A preencher nas issues [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) e [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239).*
+
+---
+
+## Builder — Test Data Builders de `Epi`, `Tarefa` e `Ocorrencia`
+
+**Catálogo:** GoF, criacional (aplicado como Test Data Builder em `src/test`).
+
+**Intenção:** separar a construção de objetos de domínio complexos nos testes por meio de builders fluentes com valores padrão válidos, eliminando chamadas a construtores posicionais longos na suíte de testes.
+
+**Issues:** [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226) e [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240).
+
+### Problema (antes)
+
+*A preencher nas issues [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226) e [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, R5).*
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| Builder | `EpiBuilder`, `TarefaBuilder`, `AcidenteBuilder`, `IncidenteBuilder` (`src/test`) | Configurar apenas os atributos relevantes para cada cenário de teste |
+| Product | `Epi`, `Tarefa`, `Acidente`, `Incidente` | Entidades de domínio construídas pelas fábricas de produção |
+| Director | Classes de teste (`*Test`) | Descrever o cenário de teste de forma fluente |
+
+### Diagramas
+
+*Diagramas PlantUML antes e depois a preencher nas issues [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226) e [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240).*
+
+### Métricas locais
+
+| Métrica | Antes (v1.0.0) | Depois |
+| --- | --- | --- |
+| `classes_3_ou_mais_construtores` | 8 | *A medir* |
+| `construtores` | 218 | *A medir* |
+
+### Evidências
+
+*A preencher nas issues [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226) e [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240).*
+
+---
+
+## Null Object — adaptador nulo de notificação e dependências opcionais
+
+**Catálogo:** Woolf (PLoPD 3), comportamental.
+
+**Intenção:** fornecer implementações neutras para portas opcionais (`NotificacaoOcorrenciaNula`, `OperadorAutenticadoNulo`), eliminando construtores secundários que repassam `null` e checagens `!= null` nos casos de uso.
+
+**Issues:** [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227) e [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241).
+
+### Problema (antes)
+
+*A preencher nas issues [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227) e [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, §4).*
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| AbstractObject | `NotificacaoOcorrenciaPort`, `OperadorAutenticadoPorta` | Contratos das portas de saída |
+| RealObject | `NotificacaoInternaAdapter`, `SpringSecurityOperadorAutenticadoAdaptador` | Implementações reais das portas |
+| NullObject | `NotificacaoOcorrenciaNula`, `OperadorAutenticadoNulo` | Implementações neutras sem efeito colateral |
+| Client | `OcorrenciaUseCase`, `EmprestimoUseCase`, `PlanoDeAcaoUseCase`, `TarefaUseCase`, `UsuarioCasoDeUso` | Invocar as portas sem testar `!= null` |
+
+### Diagramas
+
+*Diagramas PlantUML antes e depois a preencher nas issues [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227) e [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241).*
+
+### Métricas locais
+
+| Métrica | Antes (v1.0.0) | Depois |
+| --- | --- | --- |
+| `comparacao_null` no backend | 578 | *A medir* |
+
+### Evidências
+
+*A preencher nas issues [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227) e [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241).*
+
+---
+
+## Notification — validador de aptidão
+
+**Catálogo:** PoEAA (Fowler) — Notification.
+
+**Intenção:** acumular todos os impedimentos de aptidão de um colaborador em `obterImpedimentos` e reutilizar o mesmo coletor em `validarAptidaoParaTarefa`, eliminando a duplicação das regras normativas.
+
+**Issue:** [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228).
+
+### Problema (antes)
+
+*A preencher na issue [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, R7).*
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| Notification | Lista de impedimentos / `ResultadoAptidao` | Acumular as violações encontradas durante a verificação |
+| Validator | `ValidadorAptidaoColaboradorService.obterImpedimentos` | Implementar as regras de aptidão em um único fluxo |
+| Client | `validarAptidaoParaTarefa`, `AlocarColaboradorTarefaUseCaseImpl` | Lançar `AlocacaoBloqueadaException` ou devolver os impedimentos na consulta |
+
+### Diagramas
+
+*Diagramas PlantUML antes e depois a preencher na issue [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228).*
+
+### Métricas locais
+
+| Métrica | Antes (v1.0.0) | Depois |
+| --- | --- | --- |
+| Complexidade ciclomática em `ValidadorAptidaoColaboradorService` | 13 | *A medir* |
+
+### Evidências
+
+*A preencher na issue [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228).*
+
+---
+
+## Data Mapper — mapeadores de persistência
+
+**Catálogo:** PoEAA (Fowler) — Data Mapper.
+
+**Intenção:** centralizar a conversão entre entidades JPA (`*Entity`) e entidades de domínio (`domain`) em mapeadores únicos (`EpiEntityMapper`, `AreaRiscoEntityMapper`, `PlanoDeAcaoEntityMapper`), eliminando mapeamentos duplicados e divergentes entre adaptadores.
+
+**Issues:** [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229) e [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242).
+
+### Problema (antes)
+
+*A preencher nas issues [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229) e [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, §4).*
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| Domain Model | `Epi`, `AreaRisco`, `PlanoDeAcao` | Entidades do domínio |
+| Persistence Entity | `EpiEntity`, `AreaRiscoEntity`, `PlanoDeAcaoEntity` | Entidades relacionais mapeadas com JPA |
+| Data Mapper | `EpiEntityMapper`, `AreaRiscoEntityMapper`, `PlanoDeAcaoEntityMapper` | Converter entre `*Entity` e o domínio em um único ponto |
+
+### Diagramas
+
+*Diagramas PlantUML antes e depois a preencher nas issues [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229) e [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242).*
+
+### Métricas locais
+
+| Métrica | Antes (v1.0.0) | Depois |
+| --- | --- | --- |
+| Conversões duplicadas de `AreaRiscoEntity` e `PlanoDeAcaoEntity` | 4 | 2 |
+
+### Evidências
+
+*A preencher nas issues [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229) e [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242).*
+
+---
+
+## Value Object — protocolo CAT em `Acidente`
+
+**Catálogo:** Fowler (PoEAA) / Evans (DDD) — Value Object.
+
+**Intenção:** armazenar o protocolo CAT internamente como `NumeroProtocoloCAT` dentro de `Acidente`, preservando a validação e o significado do objeto de valor em todo o ciclo de vida da entidade.
+
+**Issue:** [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230).
+
+### Problema (antes)
+
+*A preencher na issue [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, §4).*
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| Value Object | `NumeroProtocoloCAT` | Encapsular o formato e a validação do protocolo CAT |
+| Entity | `Acidente` | Manter a instância de `NumeroProtocoloCAT` como atributo |
+
+### Diagramas
+
+*Diagramas PlantUML antes e depois a preencher na issue [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230).*
+
+### Métricas locais
+
+| Métrica | Antes (v1.0.0) | Depois |
+| --- | --- | --- |
+| Descarte imediato do VO `NumeroProtocoloCAT` após validação no construtor | 1 | 0 |
+
+### Evidências
+
+*A preencher na issue [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230).*
+
+---
+
+## DTO Assembler — `OcorrenciaOutputDTO`
+
+**Catálogo:** Fowler (PoEAA) — Data Transfer Object + Assembler.
+
+**Intenção:** montar `OcorrenciaOutputDTO` por meio de um Assembler dedicado (`OcorrenciaOutputAssembler`) usando `PlanoDeAcaoOutputDTO` em vez de expor a entidade de domínio `PlanoDeAcao`.
+
+**Issue:** [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245).
+
+### Problema (antes)
+
+*A preencher na issue [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, §5).*
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| DTO | `OcorrenciaOutputDTO`, `PlanoDeAcaoOutputDTO` | Transportar dados para a camada web sem expor entidades de domínio |
+| Assembler | `OcorrenciaOutputAssembler` | Concentrar a montagem dos campos comuns e específicos de `Acidente` e `Incidente` |
+| Domain | `Ocorrencia`, `Acidente`, `Incidente`, `PlanoDeAcao` | Modelo de domínio isolado da serialização HTTP |
+
+### Diagramas
+
+*Diagramas PlantUML antes e depois a preencher na issue [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245).*
+
+### Métricas locais
+
+| Métrica | Antes (v1.0.0) | Depois |
+| --- | --- | --- |
+| Complexidade ciclomática de `OcorrenciaOutputDTO.deDominio` | 15 | *A medir* |
+
+### Evidências
+
+*A preencher na issue [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245).*
+
+---
+
+## Strategy — fonte de tempo (`Clock`)
+
+**Catálogo:** GoF, comportamental.
+
+**Intenção:** injetar `java.time.Clock` como estratégia de obtenção da data/hora atual nas regras de vencimento do domínio, permitindo testes determinísticos em fronteiras de data.
+
+**Issue:** [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247).
+
+### Problema (antes)
+
+*A preencher na issue [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, §4).*
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| Strategy | `java.time.Clock` | Abstrair a fonte de tempo |
+| ConcreteStrategy | `Clock.systemDefaultZone()`, `Clock.fixed(...)` | Prover o relógio real em produção e o relógio fixo nos testes |
+| Context | Casos de uso e regras de vencimento do domínio | Receber a data de referência obtida a partir do `Clock` |
+
+### Diagramas
+
+*Diagramas PlantUML antes e depois a preencher na issue [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247).*
+
+### Métricas locais
+
+| Métrica | Antes (v1.0.0) | Depois |
+| --- | --- | --- |
+| Chamadas diretas a `now()` no domínio | 46 | *A medir* |
+
+### Evidências
+
+*A preencher na issue [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247).*
+
+---
+
+## Adapter — leitura da API e contrato de `Epi`
+
+**Catálogo:** GoF, estrutural.
+
+**Intenção:** centralizar as primitivas de leitura de JSON da API (`shared/api/leitura.ts`) e unificar o adaptador `lerEpi` e o tipo `Epi` no frontend.
+
+**Issues:** [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244) e [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231).
+
+### Problema (antes)
+
+*A preencher nas issues [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244) e [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, §6).*
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| Target | `export type Epi` e tipos de domínio das features no frontend | Contratos tipados consumidos pelas telas |
+| Adaptee | JSON bruto (`unknown`) retornado pelo axios | Dados recebidos da API HTTP |
+| Adapter | `lerEpi` e primitivas em `shared/api/leitura.ts` (`texto`, `textoOuNulo`, `numeroOuNulo`, `lista`) | Converter e normalizar o payload da API em um único lugar |
+
+### Diagramas
+
+*Diagramas PlantUML antes e depois a preencher nas issues [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244) e [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231).*
+
+### Métricas locais
+
+| Métrica | Antes (v1.0.0) | Depois |
+| --- | --- | --- |
+| Tipos e adaptadores `Epi` duplicados para `GET /api/epis` | 2 | 1 |
+| Cópias de `textoOuNulo` nas features | 4 | 1 |
+
+### Evidências
+
+*A preencher nas issues [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244) e [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231).*
+
+---
+
+## Template Method (hook) — envio de formulário
+
+**Catálogo:** GoF, comportamental (implementado como React Hook).
+
+**Intenção:** definir o esqueleto de 8 passos da submissão de formulários (`useEnvioFormulario`), delegando leitura, validação, ordem de foco, envio e descrição de falha por parâmetros.
+
+**Issues:** [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233) e [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243).
+
+### Problema (antes)
+
+*A preencher nas issues [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233) e [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, §6).*
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| Template Method (Hook) | `useEnvioFormulario` | Orquestrar o algoritmo fixo de submissão (`enviando`, `erros`, `falha`, `onSubmit`) |
+| Primitive Operations | `ler`, `validar`, `ordem`, `enviar`, `descreverFalha` | Passos variáveis fornecidos por cada formulário |
+
+### Diagramas
+
+*Diagramas PlantUML antes e depois a preencher nas issues [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233) e [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243).*
+
+### Métricas locais
+
+| Métrica | Antes (v1.0.0) | Depois |
+| --- | --- | --- |
+| Formulários que repetem o fluxo manual de submissão e foco | 19 | *A medir* |
+
+### Evidências
+
+*A preencher nas issues [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233) e [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243).*
+
+---
+
+## State — diálogos de `TasksPage`
+
+**Catálogo:** GoF, comportamental (união discriminada em TypeScript).
+
+**Intenção:** substituir múltiplos `useState<Tarefa | null>` independentes em `TasksPage` por um estado único discriminado (`DialogoTarefa`), impedindo estados simultâneos inválidos.
+
+**Issue:** [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246).
+
+### Problema (antes)
+
+*A preencher na issue [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, §6).*
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| Context | `TasksPage` | Renderizar o diálogo correspondente ao estado ativo |
+| State | `DialogoTarefa` (`nenhum`, `editar`, `classificar`, `epis`, `historico`, `novo`) | Representar de forma mutuamente exclusiva o diálogo aberto e seus dados |
+
+### Diagramas
+
+*Diagramas PlantUML antes e depois a preencher na issue [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246).*
+
+### Métricas locais
+
+| Métrica | Antes (v1.0.0) | Depois |
+| --- | --- | --- |
+| Hooks `useState` para controle de diálogos em `TasksPage` | 6 | 1 |
+
+### Evidências
+
+*A preencher na issue [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246).*
