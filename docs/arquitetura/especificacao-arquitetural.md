@@ -100,6 +100,7 @@ O [PlantUML da proposta hexagonal](../diagramas/arquitetura/safeplace-arquitetur
 | Diagrama de componentes executável | Pendente de atualização |
 | Diagrama de sequência | Pendente de atualização |
 | Diagrama de classes (completo, com o que está fora do MVP em cinza) | Atualizado em 16/10/2026 conforme o domínio implementado |
+| Catálogo de padrões de projeto e classes auxiliares | Registrado em [Padrões de Projeto](padroes-de-projeto.md) e [Correspondência de EPIs](correspondencia-classes-epi.md) |
 
 ## 7. Base técnica existente e limites
 
