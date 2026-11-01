@@ -8,17 +8,17 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import br.edu.safeplace.backend.application.port.out.InspecaoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.InspecaoRepository;
 import br.edu.safeplace.backend.domain.inspecao.Inspecao;
 import br.edu.safeplace.backend.domain.inspecao.ItemVerificado;
 
 @Repository
-public class InspecaoJpaAdapter implements InspecaoRepositoryPort {
+public class InspecaoJpaAdapter implements InspecaoRepository {
 
     private final InspecaoJpaRepository inspecaoRepository;
-    private final UsuarioJpaRepositorio usuarioRepository;
+    private final UsuarioJpaRepository usuarioRepository;
 
-    public InspecaoJpaAdapter(InspecaoJpaRepository inspecaoRepository, UsuarioJpaRepositorio usuarioRepository) {
+    public InspecaoJpaAdapter(InspecaoJpaRepository inspecaoRepository, UsuarioJpaRepository usuarioRepository) {
         this.inspecaoRepository = inspecaoRepository;
         this.usuarioRepository = usuarioRepository;
     }

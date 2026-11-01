@@ -1,7 +1,7 @@
 package br.edu.safeplace.backend.application.usecase;
 
-import br.edu.safeplace.backend.application.port.out.OperadorAutenticadoPorta;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.application.port.out.OperadorAutenticado;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import br.edu.safeplace.backend.domain.usuario.exception.AcessoNegadoException;
 import org.springframework.stereotype.Service;
@@ -19,10 +19,10 @@ public class OperadorAtual {
     public static final String SISTEMA = "SISTEMA";
     private static final String MENSAGEM_GESTOR_PADRAO = "Operação exige um Gestor de Segurança autenticado.";
 
-    private final OperadorAutenticadoPorta operadorPorta;
-    private final UsuarioRepositorioPorta usuarioRepository;
+    private final OperadorAutenticado operadorPorta;
+    private final UsuarioRepository usuarioRepository;
 
-    public OperadorAtual(OperadorAutenticadoPorta operadorPorta, UsuarioRepositorioPorta usuarioRepository) {
+    public OperadorAtual(OperadorAutenticado operadorPorta, UsuarioRepository usuarioRepository) {
         this.operadorPorta = Objects.requireNonNull(operadorPorta, "operadorPorta não pode ser nula.");
         this.usuarioRepository = Objects.requireNonNull(usuarioRepository, "usuarioRepository não pode ser nulo.");
     }

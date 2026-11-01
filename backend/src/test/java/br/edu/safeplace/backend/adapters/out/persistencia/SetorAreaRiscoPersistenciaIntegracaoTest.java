@@ -20,7 +20,7 @@ import br.edu.safeplace.backend.application.dto.output.AreaRiscoOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.SetorOutputDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarAreaRiscoUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarSetorUseCase;
-import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.EpiRepository;
 import br.edu.safeplace.backend.domain.area_risco.exception.AreaRiscoSemEpiObrigatorioException;
 import br.edu.safeplace.backend.domain.area_risco.exception.CodigoAreaRiscoDuplicadoException;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
@@ -46,13 +46,13 @@ class SetorAreaRiscoPersistenciaIntegracaoTest {
     }
 
     @Autowired
-    private GerenciarSetorUseCase setorUseCase;
+    private GerenciarSetorUseCase setorService;
 
     @Autowired
-    private GerenciarAreaRiscoUseCase areaRiscoUseCase;
+    private GerenciarAreaRiscoUseCase areaRiscoService;
 
     @Autowired
-    private EpiRepositoryPort epiRepositoryPort;
+    private EpiRepository epiRepository;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -75,14 +75,14 @@ class SetorAreaRiscoPersistenciaIntegracaoTest {
         Epi epi2 = new Epi(null, "Óculos de Proteção", "CA-54321", 15, 3,
                 StatusEpi.DISPONIVEL, LocalDate.now().plusYears(2), 180, "Óculos", null, null);
 
-        epiId1 = epiRepositoryPort.salvar(epi1).getId();
-        epiId2 = epiRepositoryPort.salvar(epi2).getId();
+        epiId1 = epiRepository.salvar(epi1).getId();
+        epiId2 = epiRepository.salvar(epi2).getId();
     }
 
     @Test
     @DisplayName("Deve persistir setor físico e associar a uma nova área de risco com agentes e limites")
     void devePersistirSetorEAssociarAreaRisco() {
-        SetorOutputDTO setor = setorUseCase.cadastrarSetor(new CadastrarSetorInputDTO(
+        SetorOutputDTO setor = setorService.cadastrarSetor(new CadastrarSetorInputDTO(
                 "Usinagem Pesada", "Setor com tornos CNC", "Galpão 3", NivelPerigo.ALTO));
         assertThat(setor.id()).isNotNull();
 
@@ -97,7 +97,7 @@ class SetorAreaRiscoPersistenciaIntegracaoTest {
                 List.of(epiId1, epiId2)
         );
 
-        AreaRiscoOutputDTO areaSalva = areaRiscoUseCase.cadastrarAreaRisco(areaInput);
+        AreaRiscoOutputDTO areaSalva = areaRiscoService.cadastrarAreaRisco(areaInput);
 
         assertThat(areaSalva.id()).isNotNull();
         assertThat(areaSalva.codigo()).isEqualTo("AR-USI-01");
@@ -112,12 +112,12 @@ class SetorAreaRiscoPersistenciaIntegracaoTest {
     void deveRejeitarCodigoDuplicado() {
         CadastrarAreaRiscoInputDTO area1 = new CadastrarAreaRiscoInputDTO(
                 "AR-DUP-01", "Área 1", "Desc", NivelPerigo.MEDIO, null, List.of("Ruído"), "Galpão 1", List.of(epiId1));
-        areaRiscoUseCase.cadastrarAreaRisco(area1, "gestor@safeplace.com");
+        areaRiscoService.cadastrarAreaRisco(area1, "gestor@safeplace.com");
 
         CadastrarAreaRiscoInputDTO area2 = new CadastrarAreaRiscoInputDTO(
                 "ar-dup-01", "Área 2", "Outra Desc", NivelPerigo.ALTO, null, List.of("Calor"), "Galpão 2", List.of(epiId2));
 
-        assertThatThrownBy(() -> areaRiscoUseCase.cadastrarAreaRisco(area2, "gestor@safeplace.com"))
+        assertThatThrownBy(() -> areaRiscoService.cadastrarAreaRisco(area2, "gestor@safeplace.com"))
                 .isInstanceOf(CodigoAreaRiscoDuplicadoException.class);
     }
 
@@ -127,7 +127,7 @@ class SetorAreaRiscoPersistenciaIntegracaoTest {
         CadastrarAreaRiscoInputDTO areaSemEpis = new CadastrarAreaRiscoInputDTO(
                 "AR-NO-EPI", "Área sem EPI", "Desc", NivelPerigo.BAIXO, null, List.of("Poeira"), "Pátio", List.of());
 
-        assertThatThrownBy(() -> areaRiscoUseCase.cadastrarAreaRisco(areaSemEpis))
+        assertThatThrownBy(() -> areaRiscoService.cadastrarAreaRisco(areaSemEpis))
                 .isInstanceOf(AreaRiscoSemEpiObrigatorioException.class);
     }
 
@@ -137,7 +137,7 @@ class SetorAreaRiscoPersistenciaIntegracaoTest {
         CadastrarAreaRiscoInputDTO areaInput = new CadastrarAreaRiscoInputDTO(
                 "AR-AUDIT-01", "Área Original", "Desc", NivelPerigo.MEDIO, null,
                 List.of("Ruído"), "Limite original", List.of(epiId1));
-        AreaRiscoOutputDTO criada = areaRiscoUseCase.cadastrarAreaRisco(areaInput);
+        AreaRiscoOutputDTO criada = areaRiscoService.cadastrarAreaRisco(areaInput);
 
         AtualizarAreaRiscoInputDTO atualizacao = new AtualizarAreaRiscoInputDTO(
                 "Área Atualizada",
@@ -150,7 +150,7 @@ class SetorAreaRiscoPersistenciaIntegracaoTest {
                 "Revisão de risco anual pelo gestor"
         );
 
-        AreaRiscoOutputDTO atualizada = areaRiscoUseCase.atualizarAreaRisco(criada.id(), atualizacao, "gestor@safeplace.com");
+        AreaRiscoOutputDTO atualizada = areaRiscoService.atualizarAreaRisco(criada.id(), atualizacao, "gestor@safeplace.com");
 
         assertThat(atualizada.nome()).isEqualTo("Área Atualizada");
         assertThat(atualizada.nivelPerigo()).isEqualTo(NivelPerigo.ALTO);

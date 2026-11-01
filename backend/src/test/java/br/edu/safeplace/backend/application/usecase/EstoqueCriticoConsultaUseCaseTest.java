@@ -32,8 +32,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
 import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.MovimentacaoEstoqueOutputDTO;
-import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.application.port.out.EpiRepository;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
@@ -49,7 +49,7 @@ class EstoqueCriticoConsultaUseCaseTest {
     private static final String EMAIL_GESTOR = "gestor@empresa.com";
 
     private EpiRepositoryEmMemoria repositorio;
-    private EpiUseCase useCase;
+    private EpiService useCase;
     private Integer epiId;
 
     @AfterEach
@@ -61,13 +61,13 @@ class EstoqueCriticoConsultaUseCaseTest {
     void cadastrarEpiComSaldoDezEMinimoCinco() {
         repositorio = new EpiRepositoryEmMemoria();
         // US03: toda movimentação identifica o usuário autenticado como responsável.
-        UsuarioRepositorioPorta usuarios = mock(UsuarioRepositorioPorta.class);
+        UsuarioRepository usuarios = mock(UsuarioRepository.class);
         when(usuarios.buscarPorEmail(EMAIL_GESTOR)).thenReturn(Optional.of(new GestorDeSeguranca(
                 7, "49216091040", "Mariana", LocalDate.of(1988, 7, 20), EMAIL_GESTOR, "hash", true,
                 LocalDateTime.now(), LocalDateTime.now())));
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(EMAIL_GESTOR, null, List.of()));
-        useCase = new EpiUseCase(repositorio, usuarios, auditoria);
+        useCase = new EpiService(repositorio, usuarios, auditoria);
         EpiOutputDTO salvo = useCase.cadastrarEpi(new CadastrarEpiInputDTO(
                 "Luva nitrílica", "12345", 10, 5, LocalDate.now().plusYears(1), 180,
                 "Luva de proteção química", ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES));
@@ -121,7 +121,7 @@ class EstoqueCriticoConsultaUseCaseTest {
     }
 
     /** Guarda o EPI pelo estado devolvido do domínio, como faria o adaptador JPA. */
-    private static class EpiRepositoryEmMemoria implements EpiRepositoryPort {
+    private static class EpiRepositoryEmMemoria implements EpiRepository {
         private final Map<Integer, Epi> epis = new HashMap<>();
         private final List<MovimentacaoEstoque> movimentacoes = new ArrayList<>();
         private int proximoEpiId = 1;

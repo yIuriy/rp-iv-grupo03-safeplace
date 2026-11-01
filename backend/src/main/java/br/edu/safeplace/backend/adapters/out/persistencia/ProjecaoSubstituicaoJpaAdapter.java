@@ -5,11 +5,11 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import br.edu.safeplace.backend.application.port.out.ProjecaoSubstituicaoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.ProjecaoSubstituicaoRepository;
 import br.edu.safeplace.backend.domain.epi.ProjecaoSubstituicao;
 
 @Repository
-public class ProjecaoSubstituicaoJpaAdapter implements ProjecaoSubstituicaoRepositoryPort {
+public class ProjecaoSubstituicaoJpaAdapter implements ProjecaoSubstituicaoRepository {
 
     private final ProjecaoSubstituicaoJpaRepository repositorio;
 

@@ -6,7 +6,7 @@ import br.edu.safeplace.backend.adapters.out.persistencia.InMemoryManutencaoEpiR
 import br.edu.safeplace.backend.application.dto.input.ConcluirManutencaoInputDTO;
 import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.ManutencaoEpiOutputDTO;
-import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.EpiRepository;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
 import br.edu.safeplace.backend.domain.epi.ResultadoManutencao;
@@ -154,7 +154,7 @@ class ControlarManutencaoEpiServiceTest {
         assertEquals("Segunda manutenção", historico.get(1).descricao());
     }
 
-    private static class EpiRepositoryFake implements EpiRepositoryPort {
+    private static class EpiRepositoryFake implements EpiRepository {
         private final Map<Integer, Epi> storage = new HashMap<>();
         private final List<MovimentacaoEstoque> movimentacoes = new ArrayList<>();
         private int nextId = 1;

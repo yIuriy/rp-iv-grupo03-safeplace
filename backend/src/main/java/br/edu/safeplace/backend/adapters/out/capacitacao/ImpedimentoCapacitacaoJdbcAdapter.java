@@ -1,5 +1,5 @@
 /*
- * Adaptador somente leitura da porta ImpedimentoCapacitacaoPorta sobre as tabelas do módulo de
+ * Adaptador somente leitura da porta VerificadorImpedimentoCapacitacao sobre as tabelas do módulo de
  * capacitações (migração V15, issue #116): exigencias_capacitacao, certificacoes, treinamentos e
  * treinamentos_colaboradores. Não altera essas tabelas nem o domínio de capacitações.
  *
@@ -17,10 +17,10 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 import br.edu.safeplace.backend.application.port.in.capacitacao.ConsultarCapacitacaoUseCase;
-import br.edu.safeplace.backend.application.port.out.ImpedimentoCapacitacaoPorta;
+import br.edu.safeplace.backend.application.port.out.VerificadorImpedimentoCapacitacao;
 
 @Component
-public class ImpedimentoCapacitacaoJdbcAdapter implements ImpedimentoCapacitacaoPorta {
+public class ImpedimentoCapacitacaoJdbcAdapter implements VerificadorImpedimentoCapacitacao {
 
     private final ConsultarCapacitacaoUseCase consultarCapacitacaoUseCase;
 

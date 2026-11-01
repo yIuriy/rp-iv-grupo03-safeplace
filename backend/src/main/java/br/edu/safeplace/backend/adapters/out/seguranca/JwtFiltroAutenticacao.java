@@ -1,6 +1,6 @@
 package br.edu.safeplace.backend.adapters.out.seguranca;
 
-import br.edu.safeplace.backend.application.port.out.TokenPorta;
+import br.edu.safeplace.backend.application.port.out.GerenciadorToken;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,10 +16,10 @@ import java.util.List;
 
 public class JwtFiltroAutenticacao extends OncePerRequestFilter {
 
-    private final TokenPorta tokenPorta;
+    private final GerenciadorToken gerenciadorToken;
 
-    public JwtFiltroAutenticacao(TokenPorta tokenPorta) {
-        this.tokenPorta = tokenPorta;
+    public JwtFiltroAutenticacao(GerenciadorToken gerenciadorToken) {
+        this.gerenciadorToken = gerenciadorToken;
     }
 
     @Override
@@ -31,9 +31,9 @@ public class JwtFiltroAutenticacao extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
 
-            if (tokenPorta.validarToken(token) && SecurityContextHolder.getContext().getAuthentication() == null) {
-                String email = tokenPorta.extrairEmail(token);
-                String perfil = tokenPorta.extrairPerfil(token);
+            if (gerenciadorToken.validarToken(token) && SecurityContextHolder.getContext().getAuthentication() == null) {
+                String email = gerenciadorToken.extrairEmail(token);
+                String perfil = gerenciadorToken.extrairPerfil(token);
 
                 if (email != null && perfil != null) {
                     SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + perfil);

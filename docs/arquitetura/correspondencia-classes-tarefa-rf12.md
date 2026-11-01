@@ -6,7 +6,7 @@ Este documento registra o contrato de vinculação de Equipamentos de Proteção
 
 - **Situação**: contrato aprovado e implementado (RF12, UC08, US12, issue #135). RF12 é classificado como "Deveria ter" na MoSCoW e integra o MVP desde 17/10/2026. As pendências da seção 6 não foram decididas e não devem ser supridas por suposição.
 - **Fontes**: [Diagrama de classes](../diagramas/classes/Diagrama%20de%20Classes%20-%20SafePlace.png), [UC08](../casos-de-uso/casos-de-uso.md#uc08--interligar-tarefa-ao-epi), [US12](../historias-de-usuario.md#us12--associar-epis-obrigatórios-às-tarefas), [RF12](../requisitos/requisitos-funcionais.md#rf12-o-sistema-deve-permitir-a-conexão-entre-as-tarefas-e-os-epis), [MoSCoW](../requisitos/priorizacao-moscow.md), [Especificação do MVP](../mvp/especificacao-mvp-arquitetura.md) e [RNF03](../requisitos/requisitos-nao-funcionais.md).
-- **Implementação de referência**: domínio em `backend/src/main/java/br/edu/safeplace/backend/domain/tarefa/` (`Tarefa`) e `domain/epi/` (`Epi`); caso de uso `TarefaUseCase`; persistência `TarefaJpaAdapter` com a migração `V27__criar_tarefas_epis.sql`; API `/api/tarefas/{id}/epis`.
+- **Implementação de referência**: domínio em `backend/src/main/java/br/edu/safeplace/backend/domain/tarefa/` (`Tarefa`) e `domain/epi/` (`Epi`); caso de uso `TarefaService`; persistência `TarefaJpaAdapter` com a migração `V27__criar_tarefas_epis.sql`; API `/api/tarefas/{id}/epis`.
 
 ### 1.1. Modelo de referência
 
@@ -51,7 +51,7 @@ O PNG define:
 
 | Elemento no Diagrama / UC08 | Camada Hexagonal e Destino | Papel Arquitetural e Semântica |
 | :--- | :--- | :--- |
-| `associarEPIs(listaIds : List<int>) : boolean` | Domínio `Tarefa.associarEpis(List<Epi>)`<br>Porta de entrada `GerenciarEpiTarefaUseCase.associarEpis`<br>Porta de saída `TarefaRepositoryPort.salvarVinculosEpis` | Associa a lista de EPIs à tarefa informada, substituindo a lista anterior pelos itens vigentes. |
+| `associarEPIs(listaIds : List<int>) : boolean` | Domínio `Tarefa.associarEpis(List<Epi>)`<br>Porta de entrada `GerenciarEpiTarefaUseCase.associarEpis`<br>Porta de saída `TarefaRepository.salvarVinculosEpis` | Associa a lista de EPIs à tarefa informada, substituindo a lista anterior pelos itens vigentes. |
 | `verificarEPIsObrigatoriosTarefa() : List<EPI>` | Domínio `Tarefa.verificarEpisObrigatoriosTarefa()` e `Tarefa.getEpisObrigatorios()`<br>Porta de entrada `GerenciarEpiTarefaUseCase.listarEpisObrigatorios` | Retorna a lista de EPIs vinculados como obrigatórios para a atividade. |
 | Associação `Tarefa` 0..* <---> 0..* `EPI` | Persistência JPA: `tarefas_epis`<br>`TarefaEntity.epis` (`@ManyToMany`) | Chaves estrangeiras `tarefa_id` e `epi_id` com deleção em cascata na associação. |
 | Endpoint de associação | Adaptador web: `PUT /api/tarefas/{id}/epis` | Exclusivo do Gestor de Segurança (`GESTOR_SEGURANCA` / `ROLE_GESTOR_SEGURANCA`). Recebe `AssociarEpisTarefaRequest` com lista de IDs de EPIs. |
@@ -70,7 +70,7 @@ Corpo da requisição de associação (`PUT /api/tarefas/{id}/epis`):
 ## 4. Verificação
 
 - **Domínio**: `TarefaTest` cobre o cadastro de tarefa com EPIs, a operação `associarEpis`, `verificarEpisObrigatoriosTarefa`, a preservação da lista imutável e a associação com lista vazia.
-- **Caso de uso**: `TarefaUseCaseTest` cobre a associação de EPIs pelo caso de uso, validação de IDs de EPI inexistentes e consulta dos EPIs vinculados.
+- **Caso de uso**: `TarefaServiceTest` cobre a associação de EPIs pelo caso de uso, validação de IDs de EPI inexistentes e consulta dos EPIs vinculados.
 - **API**: `TarefaControllerTest` cobre a rota `PUT /api/tarefas/{id}/epis` com resposta 200 OK para Gestor, recusa com 403 Forbidden para Supervisor, e rota `GET /api/tarefas/{id}/epis` acessível para ambos os perfis.
 - **Persistência PostgreSQL**: testes de integração cobrem a persistência dos vínculos em `tarefas_epis`, recarregando a tarefa e seus EPIs após limpeza de contexto de persistência.
 

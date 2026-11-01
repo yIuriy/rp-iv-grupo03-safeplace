@@ -20,8 +20,8 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
-import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.application.port.out.EpiRepository;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import br.edu.safeplace.backend.suporte.PostgresDeTeste;
@@ -62,10 +62,10 @@ class TarefaEpiApiIntegracaoTest {
     private JdbcTemplate jdbc;
 
     @Autowired
-    private EpiRepositoryPort epiRepositoryPort;
+    private EpiRepository epiRepository;
 
     @Autowired
-    private UsuarioRepositorioPorta usuarioRepositorio;
+    private UsuarioRepository usuarioRepositorio;
 
     private final List<Integer> epis = new ArrayList<>();
     private Integer tarefaId;
@@ -121,7 +121,7 @@ class TarefaEpiApiIntegracaoTest {
     }
 
     private Integer novoEpi(String nome, String numeroCa) {
-        return epiRepositoryPort.salvar(Epi.novo(nome, numeroCa, 10, 2,
+        return epiRepository.salvar(Epi.novo(nome, numeroCa, 10, 2,
                 LocalDate.now().plusYears(2), 365, null, null)).getId();
     }
 

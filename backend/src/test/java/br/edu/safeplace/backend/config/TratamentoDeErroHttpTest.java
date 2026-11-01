@@ -16,7 +16,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
-import br.edu.safeplace.backend.application.port.out.TokenPorta;
+import br.edu.safeplace.backend.application.port.out.GerenciadorToken;
 import br.edu.safeplace.backend.domain.usuario.Perfil;
 import br.edu.safeplace.backend.suporte.PostgresDeTeste;
 
@@ -50,7 +50,7 @@ class TratamentoDeErroHttpTest {
     private int porta;
 
     @Autowired
-    private TokenPorta tokenPorta;
+    private GerenciadorToken gerenciadorToken;
 
     private final HttpClient http = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
@@ -68,7 +68,7 @@ class TratamentoDeErroHttpTest {
 
         if (perfil != null) {
             builder.header("Authorization", "Bearer "
-                    + tokenPorta.gerarToken(perfil.name().toLowerCase() + "@safeplace.test", perfil.name()));
+                    + gerenciadorToken.gerarToken(perfil.name().toLowerCase() + "@safeplace.test", perfil.name()));
         }
 
         try {

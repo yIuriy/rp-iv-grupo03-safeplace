@@ -58,7 +58,7 @@ br.edu.safeplace.backend/
 │   ├── dto/
 │   │   ├── input/                           # DTOs de Entrada (Records imutáveis de payload)
 │   │   └── output/                          # DTOs de Saída (Records imutáveis de resposta)
-│   └── usecase/                             # Implementações dos Casos de Uso (ex.: OcorrenciaUseCase, EpiUseCase)
+│   └── usecase/                             # Implementações dos Casos de Uso (ex.: OcorrenciaService, EpiService)
 ├── adapters/                                # ADAPTADORES (Bordas de comunicação com o mundo externo)
 │   ├── in/
 │   │   └── web/                             # Controladores REST Spring (@RestController) e Handlers de Erro
@@ -86,8 +86,25 @@ As portas são interfaces Java puras:
    - Definem as operações de negócio acessíveis pela borda (ex.: `RegistrarOcorrenciaUseCase`, `GerenciarEpiUseCase`, `ControlarEmprestimoUseCase`).
    - Os controladores web chamam exclusivamente essas interfaces.
 2. **Portas de Saída (Driven / Outbound Ports - `port/out/`)**:
-   - Definem contratos que a aplicação necessita do mundo externo (ex.: `OcorrenciaRepositoryPort`, `EpiRepositoryPort`, `AuditoriaPort`).
+   - Definem contratos que a aplicação necessita do mundo externo (ex.: `OcorrenciaRepository`, `EpiRepository`, `OperadorAutenticado`).
    - Os adaptadores de persistência e serviços externos implementam essas interfaces.
+
+### 3.2.1 Convenção de nomes (issue #269)
+
+| Tipo | Padrão | Exemplo |
+| --- | --- | --- |
+| Porta de entrada (`port/in/`) | `XxxUseCase` | `GerenciarEpiUseCase` |
+| Implementação do caso de uso (`usecase/`) | `XxxService` | `EpiService` |
+| Porta de repositório (`port/out/`) | `XxxRepository` | `TarefaRepository` |
+| Outra porta de saída (`port/out/`) | nome do papel, sem sufixo | `CodificadorSenha`, `NotificadorAcao` |
+| Adaptador de saída (`adapters/out/`) | `<Tecnologia>XxxAdapter` | `TarefaJpaAdapter`, `JwtTokenAdapter` |
+| Controlador web (`adapters/in/web/`) | `XxxController` | `UsuarioController` |
+| Tratamento de exceções da borda | `XxxExceptionHandler` | `UsuarioExceptionHandler` |
+| Corpo HTTP de entrada e de saída | `XxxRequest`, `XxxResponse` | `LoginRequest`, `UsuarioResponse` |
+| DTO da aplicação | `XxxInputDTO`, `XxxOutputDTO` | `LoginInputDTO`, `TokenOutputDTO` |
+| Repositório Spring Data | `XxxJpaRepository` | `TarefaJpaRepository` |
+
+Os sufixos `Port`, `Porta`, `RepositoryPort`, `CasoDeUso`, `UseCaseImpl` `Adaptador`, `Controlador`, `TratadorExcecoes`, `Requisicao`, `Resposta`, `EntradaDTO` e `SaidaDTO` não são mais usados.
 
 ### 3.3 Data Transfer Objects (`application/dto/`)
 Modelados como Java `record` imutáveis para garantir concisão e segurança de memória:
@@ -125,9 +142,9 @@ sequenceDiagram
     actor User as Supervisor / Gestor (Navegador)
     participant Ctrl as OcorrenciaController (Inbound Adapter)
     participant PortIn as RegistrarOcorrenciaUseCase (Input Port)
-    participant UC as OcorrenciaUseCase (Application Service)
+    participant UC as OcorrenciaService (Application Service)
     participant Domain as Acidente (Domain Entity)
-    participant PortOut as OcorrenciaRepositoryPort (Output Port)
+    participant PortOut as OcorrenciaRepository (Output Port)
     participant Adapter as OcorrenciaJpaAdapter (Outbound Adapter)
     participant DB as PostgreSQL 16 (Database)
 
@@ -207,23 +224,23 @@ public interface RegistrarOcorrenciaUseCase {
 }
 ```
 
-#### 4. Caso de Uso (Application Service): `application/usecase/OcorrenciaUseCase.java`
+#### 4. Caso de Uso (Application Service): `application/usecase/OcorrenciaService.java`
 ```java
 @Service
 @Transactional
-public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarOcorrenciaUseCase {
+public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarOcorrenciaUseCase {
 
-    private final OcorrenciaRepositoryPort repositoryPort;
-    private final GeradorProtocoloCatPort geradorCatPort;
+    private final OcorrenciaRepository repository;
+    private final GeradorProtocoloCat geradorCat;
 
-    public OcorrenciaUseCase(OcorrenciaRepositoryPort repositoryPort, GeradorProtocoloCatPort geradorCatPort) {
-        this.repositoryPort = repositoryPort;
-        this.geradorCatPort = geradorCatPort;
+    public OcorrenciaService(OcorrenciaRepository repository, GeradorProtocoloCat geradorCat) {
+        this.repository = repository;
+        this.geradorCat = geradorCat;
     }
 
     @Override
     public OcorrenciaOutputDTO registrarAcidente(RegistrarAcidenteInputDTO dto) {
-        NumeroProtocoloCAT protocolo = geradorCatPort.proximoProtocolo(dto.dataOcorrencia());
+        NumeroProtocoloCAT protocolo = geradorCat.proximoProtocolo(dto.dataOcorrencia());
         
         Acidente acidente = new Acidente(
                 null,
@@ -236,7 +253,7 @@ public class OcorrenciaUseCase implements RegistrarOcorrenciaUseCase, GerenciarO
                 dto.areaRiscoId()
         );
 
-        Acidente salvo = (Acidente) repositoryPort.salvar(acidente);
+        Acidente salvo = (Acidente) repository.salvar(acidente);
         return OcorrenciaOutputDTO.deDominio(salvo);
     }
 }
@@ -267,9 +284,9 @@ public class Acidente extends Ocorrencia {
 }
 ```
 
-#### 6. Porta de Saída (Secondary Port): `application/port/out/OcorrenciaRepositoryPort.java`
+#### 6. Porta de Saída (Secondary Port): `application/port/out/OcorrenciaRepository.java`
 ```java
-public interface OcorrenciaRepositoryPort {
+public interface OcorrenciaRepository {
     Ocorrencia salvar(Ocorrencia ocorrencia);
     Optional<Ocorrencia> buscarPorId(Integer id);
     Optional<Acidente> buscarAcidentePorProtocolo(NumeroProtocoloCAT protocolo);
@@ -280,7 +297,7 @@ public interface OcorrenciaRepositoryPort {
 #### 7. Adaptador de Saída: `adapters/out/persistencia/OcorrenciaJpaAdapter.java`
 ```java
 @Repository
-public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
+public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
 
     private final JdbcTemplate jdbcTemplate;
 

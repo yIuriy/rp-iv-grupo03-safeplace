@@ -36,7 +36,7 @@ import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
 import br.edu.safeplace.backend.application.port.in.ConsultarNotificacoesOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.RegistrarOcorrenciaUseCase;
-import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.OcorrenciaRepository;
 import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.TipoOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.DadosOcorrenciaInvalidosException;
@@ -241,7 +241,7 @@ class OcorrenciaPersistenciaIntegracaoTest {
     @DisplayName("Porta de ocorrências não expõe nenhuma operação de exclusão física")
     void portaNaoExpoeExclusaoFisica() {
         List<String> operacoesDeExclusao = new ArrayList<>();
-        for (Method metodo : OcorrenciaRepositoryPort.class.getMethods()) {
+        for (Method metodo : OcorrenciaRepository.class.getMethods()) {
             String nome = metodo.getName().toLowerCase();
             if (nome.startsWith("excluir") || nome.startsWith("remover")
                     || nome.startsWith("delete") || nome.startsWith("apagar")) {

@@ -24,10 +24,10 @@ import br.edu.safeplace.backend.application.dto.input.GerarAnaliseProjecaoInputD
 import br.edu.safeplace.backend.application.dto.output.AlertaSubstituicaoOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.ProjecaoSubstituicaoOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.ResultadoAnaliseSubstituicaoDTO;
-import br.edu.safeplace.backend.application.port.out.EmprestimoRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.ProjecaoSubstituicaoRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.SetorRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.EmprestimoRepository;
+import br.edu.safeplace.backend.application.port.out.EpiRepository;
+import br.edu.safeplace.backend.application.port.out.ProjecaoSubstituicaoRepository;
+import br.edu.safeplace.backend.application.port.out.SetorRepository;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.emprestimo.ClassificacaoEmprestimo;
@@ -42,23 +42,23 @@ import br.edu.safeplace.backend.domain.epi.StatusEpi;
 class PlanejarSubstituicaoUseCaseTest {
 
     @Mock
-    private EpiRepositoryPort epiRepository;
+    private EpiRepository epiRepository;
 
     @Mock
-    private EmprestimoRepositoryPort emprestimoRepository;
+    private EmprestimoRepository emprestimoRepository;
 
     @Mock
-    private SetorRepositoryPort setorRepository;
+    private SetorRepository setorRepository;
 
     @Mock
-    private ProjecaoSubstituicaoRepositoryPort projecaoRepository;
+    private ProjecaoSubstituicaoRepository projecaoRepository;
 
-    private PlanejarSubstituicaoUseCaseImpl useCase;
+    private PlanejarSubstituicaoService useCase;
     private final LocalDate hoje = LocalDate.of(2026, 9, 24);
 
     @BeforeEach
     void setUp() {
-        useCase = new PlanejarSubstituicaoUseCaseImpl(
+        useCase = new PlanejarSubstituicaoService(
                 epiRepository, emprestimoRepository, setorRepository, projecaoRepository);
     }
 

@@ -28,7 +28,7 @@ import br.edu.safeplace.backend.application.dto.capacitacao.PendenciasColaborado
 import br.edu.safeplace.backend.application.dto.capacitacao.TreinamentoOutputDTO;
 import br.edu.safeplace.backend.application.port.in.capacitacao.AcompanharCapacitacoesUseCase;
 import br.edu.safeplace.backend.application.port.in.capacitacao.ConsultarCapacitacaoUseCase;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.PrazoVencimento;
 import br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao;
@@ -41,10 +41,10 @@ import br.edu.safeplace.backend.domain.usuario.exception.UsuarioNaoEncontradoExc
 @Transactional(readOnly = true)
 public class AcompanharCapacitacoesService implements AcompanharCapacitacoesUseCase {
 
-    private final UsuarioRepositorioPorta usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
     private final ConsultarCapacitacaoUseCase consultarCapacitacao;
 
-    public AcompanharCapacitacoesService(UsuarioRepositorioPorta usuarioRepository,
+    public AcompanharCapacitacoesService(UsuarioRepository usuarioRepository,
                                          ConsultarCapacitacaoUseCase consultarCapacitacao) {
         this.usuarioRepository = usuarioRepository;
         this.consultarCapacitacao = consultarCapacitacao;

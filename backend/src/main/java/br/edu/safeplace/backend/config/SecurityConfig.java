@@ -24,14 +24,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final br.edu.safeplace.backend.application.port.out.TokenPorta tokenPorta;
-    private final RestSegurancaTratadorExcecoes restSegurancaTratadorExcecoes;
+    private final br.edu.safeplace.backend.application.port.out.GerenciadorToken gerenciadorToken;
+    private final RestSegurancaExceptionHandler restSegurancaExceptionHandler;
 
     public SecurityConfig(
-            @Autowired(required = false) br.edu.safeplace.backend.application.port.out.TokenPorta tokenPorta,
-            @Autowired(required = false) RestSegurancaTratadorExcecoes restSegurancaTratadorExcecoes) {
-        this.tokenPorta = tokenPorta;
-        this.restSegurancaTratadorExcecoes = restSegurancaTratadorExcecoes;
+            @Autowired(required = false) br.edu.safeplace.backend.application.port.out.GerenciadorToken gerenciadorToken,
+            @Autowired(required = false) RestSegurancaExceptionHandler restSegurancaExceptionHandler) {
+        this.gerenciadorToken = gerenciadorToken;
+        this.restSegurancaExceptionHandler = restSegurancaExceptionHandler;
     }
 
     @Bean
@@ -127,15 +127,15 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 );
 
-        if (restSegurancaTratadorExcecoes != null) {
+        if (restSegurancaExceptionHandler != null) {
             http.exceptionHandling(ex -> ex
-                    .authenticationEntryPoint(restSegurancaTratadorExcecoes)
-                    .accessDeniedHandler(restSegurancaTratadorExcecoes)
+                    .authenticationEntryPoint(restSegurancaExceptionHandler)
+                    .accessDeniedHandler(restSegurancaExceptionHandler)
             );
         }
 
-        if (tokenPorta != null) {
-            http.addFilterBefore(new JwtFiltroAutenticacao(tokenPorta), UsernamePasswordAuthenticationFilter.class);
+        if (gerenciadorToken != null) {
+            http.addFilterBefore(new JwtFiltroAutenticacao(gerenciadorToken), UsernamePasswordAuthenticationFilter.class);
         }
 
         return http.build();

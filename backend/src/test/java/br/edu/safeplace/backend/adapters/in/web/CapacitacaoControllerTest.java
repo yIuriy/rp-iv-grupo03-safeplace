@@ -26,7 +26,7 @@ import br.edu.safeplace.backend.application.dto.output.ConsultaAptidaoOutputDTO;
 import br.edu.safeplace.backend.application.port.in.AlocarColaboradorTarefaUseCase;
 import br.edu.safeplace.backend.application.port.in.capacitacao.AcompanharCapacitacoesUseCase;
 import br.edu.safeplace.backend.application.port.in.capacitacao.CadastrarCapacitacaoUseCase;
-import br.edu.safeplace.backend.config.RestSegurancaTratadorExcecoes;
+import br.edu.safeplace.backend.config.RestSegurancaExceptionHandler;
 import br.edu.safeplace.backend.config.SecurityConfig;
 import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
 import br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao;
@@ -45,8 +45,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest({CapacitacaoController.class, CapacitacaoCadastroController.class, UsuarioTratadorExcecoes.class, TarefaTratadorExcecoes.class})
-@Import({SecurityConfig.class, RestSegurancaTratadorExcecoes.class})
+@WebMvcTest({CapacitacaoController.class, CapacitacaoCadastroController.class, UsuarioExceptionHandler.class, TarefaExceptionHandler.class})
+@Import({SecurityConfig.class, RestSegurancaExceptionHandler.class})
 class CapacitacaoControllerTest {
 
     private static final LocalDate VENCIMENTO = LocalDate.of(2026, 10, 20);

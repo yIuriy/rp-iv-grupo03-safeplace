@@ -38,7 +38,7 @@ class OcorrenciaJpaAdapterTest {
     private AreaRiscoJpaRepository areaRiscoRepository;
 
     @Mock
-    private UsuarioJpaRepositorio usuarioRepository;
+    private UsuarioJpaRepository usuarioRepository;
 
     @Mock
     private SequenciaProtocoloCatJpaRepository sequenciaProtocoloCatRepository;

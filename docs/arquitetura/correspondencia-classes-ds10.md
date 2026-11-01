@@ -62,13 +62,13 @@ Caso um EPI não possua durabilidade nominal cadastrada (`vidaUtilDias == null |
 O elemento de referência `ref DS10.1 - Calcular Projeções de Substituição(epis)` do DS10 é decomposto nos seguintes passos sequenciais:
 
 1. **Iteração sobre cada EPI** carregado para a análise (`for each epi in epis`).
-2. **Consulta de Histórico de Empréstimos** (`EmprestimoRepositoryPort.listarPorEpi(epi.id)`):
+2. **Consulta de Histórico de Empréstimos** (`EmprestimoRepository.listarPorEpi(epi.id)`):
    - Recupera os empréstimos concluídos e em andamento.
    - Calcula os dias de uso efetivo no período e a taxa diária de utilização $U$.
    - Se a lista estiver vazia e não houver taxa informada, sinaliza pendência de histórico.
 3. **Consulta de Durabilidade Nominal** (`epi.getVidaUtilDias()`):
    - Se for nulo ou menor/igual a zero, sinaliza pendência de durabilidade.
-4. **Consulta das Condições Ambientais do Setor** (`SetorRepositoryPort` ou setor vinculado ao EPI):
+4. **Consulta das Condições Ambientais do Setor** (`SetorRepository` ou setor vinculado ao EPI):
    - Obtém `setor.getStatus() : NivelPerigo`.
    - Se o setor não puder ser determinado, sinaliza pendência de ambiente.
 5. **Avaliação de Consistência (Decisão de Falha)**:
@@ -90,12 +90,12 @@ O elemento de referência `ref DS10.1 - Calcular Projeções de Substituição(e
 | Elemento no DS10 / Classes | Responsabilidade / Semântica | Componente na Arquitetura Hexagonal |
 | :--- | :--- | :--- |
 | `: VisaoSubstituicaoEPI` | Interface do usuário e adaptação HTTP dos comandos e telas de histórico/projeção. | `adapters.in.web.SubstituicaoEpiController` e DTOs de entrada/saída. |
-| `: ControleSubstituicaoEPI` | Orquestração do caso de uso de planejamento de substituição e emissão de alertas. | `application.port.in.PlanejarSubstituicaoUseCase` e sua implementação `PlanejarSubstituicaoUseCaseImpl`. |
+| `: ControleSubstituicaoEPI` | Orquestração do caso de uso de planejamento de substituição e emissão de alertas. | `application.port.in.PlanejarSubstituicaoUseCase` e sua implementação `PlanejarSubstituicaoService`. |
 | `ref DS10.1` | Cálculo matemático de taxa de desgaste, validação de regras de CA e ambiente. | `domain.epi.SubstituicaoInteligenteService` (Serviço de Domínio puro). |
 | `: ProjecaoSubstituicao` | Entidade do modelo com `dataProjecao`, `dataEstimadaDescarte` e `justificativa`. | Entidade `domain.epi.ProjecaoSubstituicao`, tabela `projecoes_substituicao`, e adaptador `ProjecaoSubstituicaoJpaAdapter`. |
-| `EPI.buscarEPIs()` | Obter relação de equipamentos cadastrados para análise. | `application.port.out.EpiRepositoryPort.listarTodos()` (conforme decisão dos métodos legados em [Correspondência de EPIs](correspondencia-classes-epi.md)). |
-| `ProjecaoSubstituicao.registrarProjecoes()` (retirada do PNG em 16/10/2026) | Persistir as projeções geradas na base de dados. | `application.port.out.ProjecaoSubstituicaoRepositoryPort.salvarTodas()`. |
-| `ProjecaoSubstituicao.emitirListaReposicao()` (retirada do PNG em 16/10/2026) | Filtrar EPIs com alertas preventivos (descarte em até 30 dias ou estoque crítico). | Método de domínio / caso de uso em `PlanejarSubstituicaoUseCaseImpl` gerando `AlertaSubstituicaoEpi`. |
+| `EPI.buscarEPIs()` | Obter relação de equipamentos cadastrados para análise. | `application.port.out.EpiRepository.listarTodos()` (conforme decisão dos métodos legados em [Correspondência de EPIs](correspondencia-classes-epi.md)). |
+| `ProjecaoSubstituicao.registrarProjecoes()` (retirada do PNG em 16/10/2026) | Persistir as projeções geradas na base de dados. | `application.port.out.ProjecaoSubstituicaoRepository.salvarTodas()`. |
+| `ProjecaoSubstituicao.emitirListaReposicao()` (retirada do PNG em 16/10/2026) | Filtrar EPIs com alertas preventivos (descarte em até 30 dias ou estoque crítico). | Método de domínio / caso de uso em `PlanejarSubstituicaoService` gerando `AlertaSubstituicaoEpi`. |
 | `EPI.consultarEstoque()` (retirada do PNG em 16/10/2026) / `EPI.compararComQuantMinima()` | Verificar saldo e estoque mínimo (`isEstoqueCritico()`). | Métodos do domínio `Epi.getQuantidade()`, `Epi.getEstoqueMinimo()`, `Epi.isEstoqueCritico()` ([Correspondência de EPIs](correspondencia-classes-epi.md)). |
 | `ProjecaoSubstituicao.calcularDiasRestantes(data)` / `isProximoDoDescarte(data, dias)` | Dias até o descarte estimado e verificação da antecedência do alerta. | Métodos do domínio `ProjecaoSubstituicao`. |
 | `AlertaSubstituicaoEPI` (`tipoAlerta : TipoAlertaSubstituicao`) | Alerta preventivo de descarte próximo, CA próximo do vencimento ou estoque crítico, com prioridade. | Entidade `domain.epi.AlertaSubstituicaoEpi`, gerada por `SubstituicaoInteligenteService.emitirAlertas`. |

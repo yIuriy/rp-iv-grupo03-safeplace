@@ -16,12 +16,12 @@ import org.mockito.ArgumentCaptor;
 
 import br.edu.safeplace.backend.application.dto.input.AtualizarAreaRiscoInputDTO;
 import br.edu.safeplace.backend.application.dto.output.RegistroHistoricoOutputDTO;
-import br.edu.safeplace.backend.application.port.out.AreaRiscoRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.SetorRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.TarefaRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.application.port.out.AreaRiscoRepository;
+import br.edu.safeplace.backend.application.port.out.EpiRepository;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
+import br.edu.safeplace.backend.application.port.out.SetorRepository;
+import br.edu.safeplace.backend.application.port.out.TarefaRepository;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.area_risco.AlteracaoAreaRisco;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
@@ -48,19 +48,19 @@ class HistoricoAreaRiscoTarefaUseCaseTest {
     private static final Integer ID_AREA = 7;
     private static final Integer ID_TAREFA = 3;
 
-    private AreaRiscoRepositoryPort areas;
-    private LogAuditoriaRepositoryPort auditoria;
-    private TarefaRepositoryPort tarefas;
-    private AreaRiscoUseCase areaUseCase;
-    private TarefaUseCase tarefaUseCase;
+    private AreaRiscoRepository areas;
+    private LogAuditoriaRepository auditoria;
+    private TarefaRepository tarefas;
+    private AreaRiscoService areaUseCase;
+    private TarefaService tarefaService;
 
     @BeforeEach
     void setUp() {
-        areas = mock(AreaRiscoRepositoryPort.class);
-        auditoria = mock(LogAuditoriaRepositoryPort.class);
-        tarefas = mock(TarefaRepositoryPort.class);
-        EpiRepositoryPort epis = mock(EpiRepositoryPort.class);
-        SetorRepositoryPort setores = mock(SetorRepositoryPort.class);
+        areas = mock(AreaRiscoRepository.class);
+        auditoria = mock(LogAuditoriaRepository.class);
+        tarefas = mock(TarefaRepository.class);
+        EpiRepository epis = mock(EpiRepository.class);
+        SetorRepository setores = mock(SetorRepository.class);
 
         when(epis.buscarPorId(1)).thenReturn(Optional.of(epi(1, "Capacete")));
         when(epis.buscarPorId(2)).thenReturn(Optional.of(epi(2, "Luva térmica")));
@@ -70,8 +70,8 @@ class HistoricoAreaRiscoTarefaUseCaseTest {
                 NivelPerigo.MEDIO, null, List.of("Ruído"), "Entre as linhas A e B", List.of(epi(1, "Capacete")))));
         when(areas.atualizar(any(AreaRisco.class))).thenAnswer(chamada -> chamada.getArgument(0));
 
-        areaUseCase = new AreaRiscoUseCase(areas, epis, setores, auditoria);
-        tarefaUseCase = new TarefaUseCase(tarefas, auditoria, mock(UsuarioRepositorioPorta.class));
+        areaUseCase = new AreaRiscoService(areas, epis, setores, auditoria);
+        tarefaService = new TarefaService(tarefas, auditoria, mock(UsuarioRepository.class));
     }
 
     private static Epi epi(Integer id, String nome) {
@@ -119,9 +119,9 @@ class HistoricoAreaRiscoTarefaUseCaseTest {
     @Test
     @DisplayName("Atualização sem mudança de dados também fica registrada")
     void atualizacaoSemMudancaFicaRegistrada() {
-        assertThat(AreaRiscoUseCase.descreverHistorico(List.of(), "Conferência periódica"))
+        assertThat(AreaRiscoService.descreverHistorico(List.of(), "Conferência periódica"))
                 .isEqualTo("Atualização da área de risco sem mudança de dados. Justificativa: Conferência periódica");
-        assertThat(AreaRiscoUseCase.descreverHistorico(
+        assertThat(AreaRiscoService.descreverHistorico(
                 List.of(new AlteracaoAreaRisco("limites", "A", null)), null))
                 .isEqualTo("Alteração da área de risco: limites: de \"A\" para não informado.");
     }
@@ -161,7 +161,7 @@ class HistoricoAreaRiscoTarefaUseCaseTest {
                 new LogAuditoria(4, "CADASTRO", null, "gestor@safeplace.com",
                         "Cadastro de Tarefa: Solda em altura", "Tarefa", ID_TAREFA)));
 
-        assertThat(tarefaUseCase.listarHistorico(ID_TAREFA))
+        assertThat(tarefaService.listarHistorico(ID_TAREFA))
                 .extracting(RegistroHistoricoOutputDTO::tipoOperacao)
                 .containsExactly("ALTERACAO", "CADASTRO");
     }
@@ -171,7 +171,7 @@ class HistoricoAreaRiscoTarefaUseCaseTest {
     void historicoDeTarefaInexistente() {
         when(tarefas.buscarPorId(99)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> tarefaUseCase.listarHistorico(99))
+        assertThatThrownBy(() -> tarefaService.listarHistorico(99))
                 .isInstanceOf(TarefaNaoEncontradaException.class);
         verify(auditoria, never()).listarPorEntidade(anyString(), anyInt());
     }

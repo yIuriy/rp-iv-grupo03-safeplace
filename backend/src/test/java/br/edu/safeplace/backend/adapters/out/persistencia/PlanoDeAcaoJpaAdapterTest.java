@@ -13,7 +13,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
@@ -41,13 +41,13 @@ class PlanoDeAcaoJpaAdapterTest {
     private ProrrogacaoPrazoJpaRepository prorrogacaoRepository;
 
     @Mock
-    private UsuarioJpaRepositorio usuarioRepository;
+    private UsuarioJpaRepository usuarioRepository;
 
     @Mock
     private SetorJpaRepository setorRepository;
 
     @Mock
-    private LogAuditoriaRepositoryPort auditoriaRepository;
+    private LogAuditoriaRepository auditoriaRepository;
 
     private PlanoDeAcaoJpaAdapter adapter;
     private final LocalDate hoje = LocalDate.of(2026, 9, 20);

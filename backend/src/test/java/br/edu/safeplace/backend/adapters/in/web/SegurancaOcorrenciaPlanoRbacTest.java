@@ -15,8 +15,8 @@ import br.edu.safeplace.backend.application.port.in.ConsultarNotificacoesOcorren
 import br.edu.safeplace.backend.application.port.in.GerenciarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarPlanoDeAcaoUseCase;
 import br.edu.safeplace.backend.application.port.in.RegistrarOcorrenciaUseCase;
-import br.edu.safeplace.backend.application.port.out.TokenPorta;
-import br.edu.safeplace.backend.config.RestSegurancaTratadorExcecoes;
+import br.edu.safeplace.backend.application.port.out.GerenciadorToken;
+import br.edu.safeplace.backend.config.RestSegurancaExceptionHandler;
 import br.edu.safeplace.backend.config.SecurityConfig;
 import br.edu.safeplace.backend.domain.ocorrencia.MotivoAvisoAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoAcao;
@@ -50,7 +50,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         NotificacaoOcorrenciaController.class,
         NotificacaoAcaoController.class
 })
-@Import({SecurityConfig.class, RestSegurancaTratadorExcecoes.class})
+@Import({SecurityConfig.class, RestSegurancaExceptionHandler.class})
 @DisplayName("Testes de Integração de Segurança e RBAC para Ocorrências e Planos de Ação (Issue #99)")
 class SegurancaOcorrenciaPlanoRbacTest {
 
@@ -73,7 +73,7 @@ class SegurancaOcorrenciaPlanoRbacTest {
     private ConsultarNotificacoesAcaoUseCase consultarNotificacoesAcaoUseCase;
 
     @MockitoBean
-    private TokenPorta tokenPorta;
+    private GerenciadorToken gerenciadorToken;
 
     private static final String JSON_CRIAR_OCORRENCIA = """
             {

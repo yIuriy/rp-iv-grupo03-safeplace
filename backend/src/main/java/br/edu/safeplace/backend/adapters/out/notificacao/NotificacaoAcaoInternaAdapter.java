@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.edu.safeplace.backend.adapters.out.persistencia.NotificacaoAcaoEntity;
 import br.edu.safeplace.backend.adapters.out.persistencia.NotificacaoAcaoJpaRepository;
-import br.edu.safeplace.backend.application.port.out.NotificacaoAcaoPort;
+import br.edu.safeplace.backend.application.port.out.NotificadorAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.AvisoAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoAcao;
 
@@ -21,7 +21,7 @@ import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoAcao;
  * é comunicado pelo Gestor; e-mail ou SMS não são presumidos.
  */
 @Component
-public class NotificacaoAcaoInternaAdapter implements NotificacaoAcaoPort {
+public class NotificacaoAcaoInternaAdapter implements NotificadorAcao {
 
     private static final Logger log = LoggerFactory.getLogger(NotificacaoAcaoInternaAdapter.class);
 

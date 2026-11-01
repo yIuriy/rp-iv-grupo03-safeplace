@@ -1,7 +1,7 @@
 package br.edu.safeplace.backend.application.usecase;
 
-import br.edu.safeplace.backend.application.port.out.OperadorAutenticadoPorta;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.application.port.out.OperadorAutenticado;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import br.edu.safeplace.backend.domain.usuario.exception.AcessoNegadoException;
@@ -22,10 +22,10 @@ import static org.mockito.Mockito.*;
 class OperadorAtualTest {
 
     @Mock
-    private OperadorAutenticadoPorta operadorPorta;
+    private OperadorAutenticado operadorPorta;
 
     @Mock
-    private UsuarioRepositorioPorta usuarioRepository;
+    private UsuarioRepository usuarioRepository;
 
     private OperadorAtual operadorAtual;
 

@@ -40,7 +40,7 @@ import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
 import br.edu.safeplace.backend.application.port.in.ControlarEmprestimoUseCase;
 import br.edu.safeplace.backend.application.port.in.ControlarEmprestimoUseCase.Situacao;
 import br.edu.safeplace.backend.application.port.in.GerenciarEpiUseCase;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.emprestimo.ClassificacaoEmprestimo;
 import br.edu.safeplace.backend.domain.emprestimo.EstadoDevolucao;
 import br.edu.safeplace.backend.domain.emprestimo.exception.EmprestimoJaEncerradoException;
@@ -76,7 +76,7 @@ class EmprestimoPersistenciaIntegracaoTest {
     private GerenciarEpiUseCase epis;
 
     @Autowired
-    private UsuarioRepositorioPorta usuarios;
+    private UsuarioRepository usuarios;
 
     @Autowired
     private JdbcTemplate jdbc;

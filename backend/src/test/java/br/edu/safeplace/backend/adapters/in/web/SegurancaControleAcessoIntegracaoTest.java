@@ -3,22 +3,22 @@ package br.edu.safeplace.backend.adapters.in.web;
 import br.edu.safeplace.backend.application.dto.input.CadastrarColaboradorInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarSupervisorInputDTO;
-import br.edu.safeplace.backend.application.dto.input.LoginEntradaDTO;
+import br.edu.safeplace.backend.application.dto.input.LoginInputDTO;
 import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.MovimentacaoEstoqueOutputDTO;
-import br.edu.safeplace.backend.application.dto.output.TokenSaidaDTO;
-import br.edu.safeplace.backend.application.dto.output.UsuarioSaidaDTO;
+import br.edu.safeplace.backend.application.dto.output.TokenOutputDTO;
+import br.edu.safeplace.backend.application.dto.output.UsuarioOutputDTO;
 import br.edu.safeplace.backend.application.dto.input.ConcluirManutencaoInputDTO;
 import br.edu.safeplace.backend.application.dto.output.ManutencaoEpiOutputDTO;
-import br.edu.safeplace.backend.application.port.in.AutenticarUsuarioCasoDeUso;
+import br.edu.safeplace.backend.application.port.in.AutenticarUsuarioUseCase;
 import br.edu.safeplace.backend.application.port.in.ControlarManutencaoEpiUseCase;
 import br.edu.safeplace.backend.domain.epi.ResultadoManutencao;
 import br.edu.safeplace.backend.domain.epi.TipoManutencao;
 import br.edu.safeplace.backend.application.port.in.GerenciarAreaRiscoUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarEpiUseCase;
-import br.edu.safeplace.backend.application.port.in.GerenciarUsuarioCasoDeUso;
-import br.edu.safeplace.backend.application.port.out.TokenPorta;
-import br.edu.safeplace.backend.config.RestSegurancaTratadorExcecoes;
+import br.edu.safeplace.backend.application.port.in.GerenciarUsuarioUseCase;
+import br.edu.safeplace.backend.application.port.out.GerenciadorToken;
+import br.edu.safeplace.backend.config.RestSegurancaExceptionHandler;
 import br.edu.safeplace.backend.config.SecurityConfig;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
@@ -46,12 +46,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest({
-        UsuarioControlador.class,
+        UsuarioController.class,
         EpiController.class,
         AreaRiscoController.class,
-        AutenticacaoControlador.class
+        AutenticacaoController.class
 })
-@Import({SecurityConfig.class, RestSegurancaTratadorExcecoes.class})
+@Import({SecurityConfig.class, RestSegurancaExceptionHandler.class})
 @DisplayName("Testes de Integração de Segurança e Controle de Acesso (RBAC)")
 class SegurancaControleAcessoIntegracaoTest {
 
@@ -59,7 +59,7 @@ class SegurancaControleAcessoIntegracaoTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private GerenciarUsuarioCasoDeUso gerenciarUsuarioCasoDeUso;
+    private GerenciarUsuarioUseCase gerenciarUsuarioUseCase;
 
     @MockitoBean
     private GerenciarEpiUseCase gerenciarEpiUseCase;
@@ -71,10 +71,10 @@ class SegurancaControleAcessoIntegracaoTest {
     private GerenciarAreaRiscoUseCase gerenciarAreaRiscoUseCase;
 
     @MockitoBean
-    private AutenticarUsuarioCasoDeUso autenticarUsuarioCasoDeUso;
+    private AutenticarUsuarioUseCase autenticarUsuarioUseCase;
 
     @MockitoBean
-    private TokenPorta tokenPorta;
+    private GerenciadorToken gerenciadorToken;
 
     private static final String JSON_EPI = """
             {
@@ -272,7 +272,7 @@ class SegurancaControleAcessoIntegracaoTest {
         @WithMockUser(roles = "SUPERVISOR")
         @DisplayName("Supervisor não pode consultar dados de outro Supervisor por ID (RF23)")
         void supervisorNaoPodeConsultarSupervisorPorId() throws Exception {
-            when(gerenciarUsuarioCasoDeUso.buscarPorId(1))
+            when(gerenciarUsuarioUseCase.buscarPorId(1))
                     .thenThrow(new br.edu.safeplace.backend.domain.usuario.exception.AcessoNegadoException("Supervisor não tem permissão para consultar dados de Supervisor."));
 
             mockMvc.perform(get("/api/usuarios/1"))
@@ -350,10 +350,10 @@ class SegurancaControleAcessoIntegracaoTest {
         @WithMockUser(roles = "GESTOR_SEGURANCA")
         @DisplayName("Gestor de Segurança pode cadastrar Supervisor")
         void gestorPodeCadastrarSupervisor() throws Exception {
-            UsuarioSaidaDTO supervisor = new UsuarioSaidaDTO(1, "Carlos Supervisor", "52998224725",
+            UsuarioOutputDTO supervisor = new UsuarioOutputDTO(1, "Carlos Supervisor", "52998224725",
                     LocalDate.of(1985, 5, 20), "carlos.supervisor@safeplace.com", Perfil.SUPERVISOR,
                     true, LocalDateTime.now(), "SenhaInicial@123");
-            when(gerenciarUsuarioCasoDeUso.cadastrarSupervisor(any(CadastrarSupervisorInputDTO.class))).thenReturn(supervisor);
+            when(gerenciarUsuarioUseCase.cadastrarSupervisor(any(CadastrarSupervisorInputDTO.class))).thenReturn(supervisor);
 
             mockMvc.perform(post("/api/usuarios/supervisores")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -377,10 +377,10 @@ class SegurancaControleAcessoIntegracaoTest {
         @WithMockUser(roles = "SUPERVISOR")
         @DisplayName("Supervisor pode cadastrar Colaborador (RF23)")
         void supervisorPodeCadastrarColaborador() throws Exception {
-            UsuarioSaidaDTO colaborador = new UsuarioSaidaDTO(2, "João Operador", "52998224725",
+            UsuarioOutputDTO colaborador = new UsuarioOutputDTO(2, "João Operador", "52998224725",
                     LocalDate.of(1990, 10, 15), "joao.operador@safeplace.com", null,
                     true, LocalDateTime.now(), null);
-            when(gerenciarUsuarioCasoDeUso.cadastrarColaborador(any(CadastrarColaboradorInputDTO.class))).thenReturn(colaborador);
+            when(gerenciarUsuarioUseCase.cadastrarColaborador(any(CadastrarColaboradorInputDTO.class))).thenReturn(colaborador);
 
             mockMvc.perform(post("/api/usuarios/colaboradores")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -394,10 +394,10 @@ class SegurancaControleAcessoIntegracaoTest {
         @WithMockUser(roles = "GESTOR_SEGURANCA")
         @DisplayName("Gestor de Segurança também pode cadastrar Colaborador (RF23)")
         void gestorTambemPodeCadastrarColaborador() throws Exception {
-            UsuarioSaidaDTO colaborador = new UsuarioSaidaDTO(2, "João Operador", "52998224725",
+            UsuarioOutputDTO colaborador = new UsuarioOutputDTO(2, "João Operador", "52998224725",
                     LocalDate.of(1990, 10, 15), "joao.operador@safeplace.com", null,
                     true, LocalDateTime.now(), null);
-            when(gerenciarUsuarioCasoDeUso.cadastrarColaborador(any(CadastrarColaboradorInputDTO.class))).thenReturn(colaborador);
+            when(gerenciarUsuarioUseCase.cadastrarColaborador(any(CadastrarColaboradorInputDTO.class))).thenReturn(colaborador);
 
             mockMvc.perform(post("/api/usuarios/colaboradores")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -421,7 +421,7 @@ class SegurancaControleAcessoIntegracaoTest {
         @WithMockUser(roles = "GESTOR_SEGURANCA")
         @DisplayName("Gestor de Segurança pode listar todos os usuários (RF23)")
         void gestorPodeListarUsuarios() throws Exception {
-            when(gerenciarUsuarioCasoDeUso.listarUsuarios()).thenReturn(List.of());
+            when(gerenciarUsuarioUseCase.listarUsuarios()).thenReturn(List.of());
 
             mockMvc.perform(get("/api/usuarios"))
                     .andExpect(status().isOk());
@@ -431,7 +431,7 @@ class SegurancaControleAcessoIntegracaoTest {
         @WithMockUser(roles = "SUPERVISOR")
         @DisplayName("Supervisor pode listar colaboradores (RF23)")
         void supervisorPodeListarColaboradores() throws Exception {
-            when(gerenciarUsuarioCasoDeUso.listarColaboradores(any())).thenReturn(List.of());
+            when(gerenciarUsuarioUseCase.listarColaboradores(any())).thenReturn(List.of());
 
             mockMvc.perform(get("/api/usuarios/colaboradores"))
                     .andExpect(status().isOk());
@@ -441,10 +441,10 @@ class SegurancaControleAcessoIntegracaoTest {
         @WithMockUser(roles = "SUPERVISOR", username = "supervisor@safeplace.com")
         @DisplayName("Supervisor pode consultar o próprio perfil (GET /api/usuarios/me)")
         void supervisorPodeConsultarProprioPerfil() throws Exception {
-            UsuarioSaidaDTO supervisor = new UsuarioSaidaDTO(1, "Carlos Supervisor", "52998224725",
+            UsuarioOutputDTO supervisor = new UsuarioOutputDTO(1, "Carlos Supervisor", "52998224725",
                     LocalDate.of(1985, 5, 20), "supervisor@safeplace.com", Perfil.SUPERVISOR,
                     true, LocalDateTime.now(), null);
-            when(gerenciarUsuarioCasoDeUso.buscarPorEmail("supervisor@safeplace.com")).thenReturn(supervisor);
+            when(gerenciarUsuarioUseCase.buscarPorEmail("supervisor@safeplace.com")).thenReturn(supervisor);
 
             mockMvc.perform(get("/api/usuarios/me"))
                     .andExpect(status().isOk())
@@ -455,10 +455,10 @@ class SegurancaControleAcessoIntegracaoTest {
         @WithMockUser(roles = "SUPERVISOR")
         @DisplayName("Supervisor pode consultar dados de Colaborador por ID (RF23)")
         void supervisorPodeConsultarColaboradorPorId() throws Exception {
-            UsuarioSaidaDTO colaborador = new UsuarioSaidaDTO(2, "João Operador", "52998224725",
+            UsuarioOutputDTO colaborador = new UsuarioOutputDTO(2, "João Operador", "52998224725",
                     LocalDate.of(1990, 10, 15), "joao.operador@safeplace.com", null,
                     true, LocalDateTime.now(), null);
-            when(gerenciarUsuarioCasoDeUso.buscarPorId(2)).thenReturn(colaborador);
+            when(gerenciarUsuarioUseCase.buscarPorId(2)).thenReturn(colaborador);
 
             mockMvc.perform(get("/api/usuarios/2"))
                     .andExpect(status().isOk())
@@ -470,10 +470,10 @@ class SegurancaControleAcessoIntegracaoTest {
         @WithMockUser(roles = "GESTOR_SEGURANCA")
         @DisplayName("Gestor de Segurança pode consultar qualquer usuário por ID (RF23)")
         void gestorPodeConsultarUsuarioPorId() throws Exception {
-            UsuarioSaidaDTO supervisor = new UsuarioSaidaDTO(1, "Carlos Supervisor", "52998224725",
+            UsuarioOutputDTO supervisor = new UsuarioOutputDTO(1, "Carlos Supervisor", "52998224725",
                     LocalDate.of(1985, 5, 20), "supervisor@safeplace.com", Perfil.SUPERVISOR,
                     true, LocalDateTime.now(), null);
-            when(gerenciarUsuarioCasoDeUso.buscarPorId(1)).thenReturn(supervisor);
+            when(gerenciarUsuarioUseCase.buscarPorId(1)).thenReturn(supervisor);
 
             mockMvc.perform(get("/api/usuarios/1"))
                     .andExpect(status().isOk())
@@ -489,9 +489,9 @@ class SegurancaControleAcessoIntegracaoTest {
         @Test
         @DisplayName("POST /api/auth/login é público e não exige autenticação prévia")
         void loginEhPublico() throws Exception {
-            TokenSaidaDTO tokenSaida = new TokenSaidaDTO("jwt-token-exemplo", "Bearer",
+            TokenOutputDTO tokenSaida = new TokenOutputDTO("jwt-token-exemplo", "Bearer",
                     "gestor@safeplace.com", "Gestor", "GESTOR_SEGURANCA");
-            when(autenticarUsuarioCasoDeUso.autenticar(any(LoginEntradaDTO.class))).thenReturn(tokenSaida);
+            when(autenticarUsuarioUseCase.autenticar(any(LoginInputDTO.class))).thenReturn(tokenSaida);
 
             mockMvc.perform(post("/api/auth/login")
                             .contentType(MediaType.APPLICATION_JSON)

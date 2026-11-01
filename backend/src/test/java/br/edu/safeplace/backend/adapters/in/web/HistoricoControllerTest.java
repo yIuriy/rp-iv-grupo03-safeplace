@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest({AreaRiscoController.class, TarefaController.class,
-        AreaRiscoTratadorExcecoes.class, TarefaTratadorExcecoes.class})
+        AreaRiscoExceptionHandler.class, TarefaExceptionHandler.class})
 @Import(SecurityConfig.class)
 class HistoricoControllerTest {
 
@@ -48,7 +48,7 @@ class HistoricoControllerTest {
     private GerenciarAreaRiscoUseCase areaUseCase;
 
     @MockitoBean
-    private ClassificarTarefaUseCase tarefaUseCase;
+    private ClassificarTarefaUseCase tarefaService;
 
     @MockitoBean
     private AlocarColaboradorTarefaUseCase alocarUseCase;
@@ -111,7 +111,7 @@ class HistoricoControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("Gestor consulta o histórico de classificações de uma tarefa")
     void gestorConsultaHistoricoDaTarefa() throws Exception {
-        when(tarefaUseCase.listarHistorico(3)).thenReturn(List.of(new RegistroHistoricoOutputDTO(
+        when(tarefaService.listarHistorico(3)).thenReturn(List.of(new RegistroHistoricoOutputDTO(
                 5, "ALTERACAO", MOMENTO, "gestor@safeplace.com",
                 "Classificação de periculosidade da tarefa: de MEDIO para ALTO")));
 
@@ -126,14 +126,14 @@ class HistoricoControllerTest {
     void supervisorNaoConsultaHistoricoDaTarefa() throws Exception {
         mockMvc.perform(get("/api/tarefas/3/historico"))
                 .andExpect(status().isForbidden());
-        verify(tarefaUseCase, never()).listarHistorico(any());
+        verify(tarefaService, never()).listarHistorico(any());
     }
 
     @Test
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("Histórico de tarefa inexistente responde 404")
     void historicoDeTarefaInexistente() throws Exception {
-        when(tarefaUseCase.listarHistorico(99)).thenThrow(new TarefaNaoEncontradaException(99));
+        when(tarefaService.listarHistorico(99)).thenThrow(new TarefaNaoEncontradaException(99));
 
         mockMvc.perform(get("/api/tarefas/99/historico"))
                 .andExpect(status().isNotFound());

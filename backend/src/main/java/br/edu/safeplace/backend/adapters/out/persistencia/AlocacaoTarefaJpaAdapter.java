@@ -4,11 +4,11 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import br.edu.safeplace.backend.application.port.out.AlocacaoTarefaRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.AlocacaoTarefaRepository;
 import br.edu.safeplace.backend.domain.tarefa.AlocacaoTarefa;
 
 @Component
-public class AlocacaoTarefaJpaAdapter implements AlocacaoTarefaRepositoryPort {
+public class AlocacaoTarefaJpaAdapter implements AlocacaoTarefaRepository {
 
     private final AlocacaoTarefaJpaRepository repository;
 

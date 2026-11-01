@@ -35,7 +35,7 @@ import br.edu.safeplace.backend.application.dto.input.RegistrarEntregaInputDTO;
 import br.edu.safeplace.backend.application.dto.output.EmprestimoOutputDTO;
 import br.edu.safeplace.backend.application.port.in.ControlarEmprestimoUseCase;
 import br.edu.safeplace.backend.application.port.in.ControlarEmprestimoUseCase.Situacao;
-import br.edu.safeplace.backend.config.RestSegurancaTratadorExcecoes;
+import br.edu.safeplace.backend.config.RestSegurancaExceptionHandler;
 import br.edu.safeplace.backend.config.SecurityConfig;
 import br.edu.safeplace.backend.domain.emprestimo.ClassificacaoEmprestimo;
 import br.edu.safeplace.backend.domain.emprestimo.EstadoDevolucao;
@@ -44,7 +44,7 @@ import br.edu.safeplace.backend.domain.emprestimo.exception.EmprestimoNaoEncontr
 import br.edu.safeplace.backend.domain.emprestimo.exception.EntregaImpedidaException;
 
 @WebMvcTest({EmprestimoController.class, EmprestimoExceptionHandler.class})
-@Import({SecurityConfig.class, RestSegurancaTratadorExcecoes.class})
+@Import({SecurityConfig.class, RestSegurancaExceptionHandler.class})
 class EmprestimoControllerTest {
 
     @Autowired

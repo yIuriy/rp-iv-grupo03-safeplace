@@ -6,7 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 
 /**
@@ -14,7 +14,7 @@ import br.edu.safeplace.backend.domain.comum.LogAuditoria;
  * nos casos de uso; este dublê guarda os registros para que o teste confira o que foi auditado.
  * Não comprova imutabilidade, coberta por LogAuditoriaImutabilidadeIntegracaoTest.
  */
-public class TrilhaAuditoriaEmMemoria implements LogAuditoriaRepositoryPort {
+public class TrilhaAuditoriaEmMemoria implements LogAuditoriaRepository {
 
     private final List<LogAuditoria> registros = new ArrayList<>();
 

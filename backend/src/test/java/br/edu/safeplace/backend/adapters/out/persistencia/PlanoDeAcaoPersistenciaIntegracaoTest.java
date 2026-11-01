@@ -25,9 +25,9 @@ import br.edu.safeplace.backend.application.dto.input.AtualizarResponsavelInputD
 import br.edu.safeplace.backend.application.port.in.ConsultarNotificacoesAcaoUseCase;
 import br.edu.safeplace.backend.application.port.in.EmitirAlertasPrazoUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarPlanoDeAcaoUseCase;
-import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.NotificacaoAcaoPort;
-import br.edu.safeplace.backend.application.port.out.PlanoDeAcaoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
+import br.edu.safeplace.backend.application.port.out.NotificadorAcao;
+import br.edu.safeplace.backend.application.port.out.PlanoDeAcaoRepository;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
@@ -70,13 +70,13 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
     }
 
     @Autowired
-    private PlanoDeAcaoRepositoryPort planoRepository;
+    private PlanoDeAcaoRepository planoRepository;
 
     @Autowired
-    private LogAuditoriaRepositoryPort auditoriaRepository;
+    private LogAuditoriaRepository auditoriaRepository;
 
     @Autowired
-    private NotificacaoAcaoPort notificacaoAcaoPort;
+    private NotificadorAcao notificadorAcao;
 
     @Autowired
     private EmitirAlertasPrazoUseCase emitirAlertasPrazo;
