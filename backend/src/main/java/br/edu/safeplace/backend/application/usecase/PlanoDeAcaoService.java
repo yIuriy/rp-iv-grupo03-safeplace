@@ -59,28 +59,21 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
             UsuarioRepository usuarioRepository,
             SetorRepository setorRepository,
             NotificadorAcao notificadorAcao,
-            @Autowired(required = false) GerenciarOcorrenciaUseCase consultaOcorrencia,
+            GerenciarOcorrenciaUseCase consultaOcorrencia,
             Validador<AcaoDoPlano> acaoValidador,
             Validador<PlanoDaOcorrencia> planoValidador) {
         this.acaoValidador = acaoValidador;
         this.planoValidador = planoValidador;
         this.planoDeAcaoRepository = planoDeAcaoRepository;
         this.ocorrenciaRepository = ocorrenciaRepository;
-        this.usuarioRepository = usuarioRepository;
-        this.setorRepository = setorRepository;
+        // #241: portas obrigatórias, sem construtores que repassam null.
+        this.usuarioRepository = Objects.requireNonNull(usuarioRepository, "Repositório de usuários é obrigatório.");
+        this.setorRepository = Objects.requireNonNull(setorRepository, "Repositório de setores é obrigatório.");
         // UC07, alternativo II: a reatribuição sempre avisa o novo encarregado (issue #196).
         this.notificadorAcao = Objects.requireNonNull(
                 notificadorAcao, "Porta de notificação das ações é obrigatória (UC07).");
-        this.consultaOcorrencia = consultaOcorrencia;
-    }
-
-    public PlanoDeAcaoService(
-            PlanoDeAcaoRepository planoDeAcaoRepository,
-            OcorrenciaRepository ocorrenciaRepository,
-            UsuarioRepository usuarioRepository,
-            SetorRepository setorRepository,
-            NotificadorAcao notificadorAcao) {
-        this(planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository, notificadorAcao, null);
+        this.consultaOcorrencia = Objects.requireNonNull(
+                consultaOcorrencia, "Consulta de ocorrências é obrigatória (visibilidade do plano, issue #100).");
     }
 
     /** Usa os validadores padrão; usado pelos testes sem contexto Spring. */
@@ -107,12 +100,7 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
      * inexistente, do mesmo modo que o detalhe.
      */
     private void garantirOcorrenciaVisivel(Integer idOcorrencia) {
-        if (consultaOcorrencia != null) {
-            consultaOcorrencia.buscarPorId(idOcorrencia);
-            return;
-        }
-        ocorrenciaRepository.buscarPorId(idOcorrencia)
-                .orElseThrow(() -> new OcorrenciaNaoEncontradaException(idOcorrencia));
+        consultaOcorrencia.buscarPorId(idOcorrencia);
     }
 
     @Override
@@ -122,13 +110,13 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
                 .orElseThrow(() -> new OcorrenciaNaoEncontradaException(idOcorrencia));
 
         Colaborador colaborador = null;
-        if (inputDTO.responsavelColaboradorId() != null && usuarioRepository != null) {
+        if (inputDTO.responsavelColaboradorId() != null) {
             colaborador = usuarioRepository.buscarPorId(inputDTO.responsavelColaboradorId())
                     .orElseThrow(() -> new IllegalArgumentException("Colaborador não encontrado para o ID: " + inputDTO.responsavelColaboradorId()));
         }
 
         Setor setor = null;
-        if (inputDTO.responsavelSetorId() != null && setorRepository != null) {
+        if (inputDTO.responsavelSetorId() != null) {
             setor = setorRepository.buscarPorId(inputDTO.responsavelSetorId())
                     .orElseThrow(() -> new IllegalArgumentException("Setor não encontrado para o ID: " + inputDTO.responsavelSetorId()));
         }
@@ -241,16 +229,12 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
 
         AvisoAcao aviso;
         if (inputDTO.colaboradorId() != null) {
-            Colaborador colaborador = usuarioRepository != null
-                    ? usuarioRepository.buscarPorId(inputDTO.colaboradorId())
-                    .orElseThrow(() -> new IllegalArgumentException("Colaborador não encontrado para o ID: " + inputDTO.colaboradorId()))
-                    : null;
+            Colaborador colaborador = usuarioRepository.buscarPorId(inputDTO.colaboradorId())
+                    .orElseThrow(() -> new IllegalArgumentException("Colaborador não encontrado para o ID: " + inputDTO.colaboradorId()));
             aviso = acao.atualizarResponsavel(colaborador, LocalDate.now());
         } else if (inputDTO.setorId() != null) {
-            Setor setor = setorRepository != null
-                    ? setorRepository.buscarPorId(inputDTO.setorId())
-                    .orElseThrow(() -> new IllegalArgumentException("Setor não encontrado para o ID: " + inputDTO.setorId()))
-                    : null;
+            Setor setor = setorRepository.buscarPorId(inputDTO.setorId())
+                    .orElseThrow(() -> new IllegalArgumentException("Setor não encontrado para o ID: " + inputDTO.setorId()));
             aviso = acao.atualizarResponsavel(setor, LocalDate.now());
         } else {
             throw new IllegalArgumentException("Informe o novo responsável: colaboradorId ou setorId.");

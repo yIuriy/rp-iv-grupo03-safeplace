@@ -85,13 +85,9 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.auditoria = java.util.Objects.requireNonNull(
                 auditoria, "Porta de auditoria é obrigatória (RNF05).");
-        this.manutencoes = manutencoes;
-    }
-
-    public EmprestimoService(EmprestimoRepository emprestimos, EpiRepository epis,
-                             UsuarioRepository usuarios, VerificadorImpedimentoCapacitacao capacitacoes,
-                             LogAuditoriaRepository auditoria) {
-        this(emprestimos, epis, usuarios, capacitacoes, auditoria, null);
+        // #241: devolução para manutenção sempre grava o registro; a porta não é opcional.
+        this.manutencoes = java.util.Objects.requireNonNull(
+                manutencoes, "Repositório de manutenções é obrigatório.");
     }
 
     /** Usa os validadores padrão; usado pelos testes sem contexto Spring. */
@@ -166,9 +162,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
                     operador.getId()
             );
             manutencaoValidador.validar(manutencao);
-            if (manutencoes != null) {
-                manutencoes.salvar(manutencao);
-            }
+            manutencoes.salvar(manutencao);
             epi.registrarDevolucaoManutencao(manutencao);
             epis.salvar(epi);
         } else if (estado == EstadoDevolucao.DESCARTE) {

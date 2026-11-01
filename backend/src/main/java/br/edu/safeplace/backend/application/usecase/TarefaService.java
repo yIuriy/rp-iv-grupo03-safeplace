@@ -63,9 +63,11 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.logAuditoriaRepository = java.util.Objects.requireNonNull(
                 logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
-        this.usuarioRepositorio = usuarioRepositorio;
+        // #241: portas obrigatórias, sem construtores que repassam null.
+        this.usuarioRepositorio = java.util.Objects.requireNonNull(
+                usuarioRepositorio, "Repositório de usuários é obrigatório.");
         this.validador = java.util.Objects.requireNonNull(validador, "Validador da tarefa é obrigatório.");
-        this.epiRepository = epiRepository;
+        this.epiRepository = java.util.Objects.requireNonNull(epiRepository, "Repositório de EPIs é obrigatório.");
     }
 
     /** Monta o validador com as portas informadas; usado pelos testes sem contexto Spring. */
@@ -74,17 +76,6 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
             SetorRepository setorRepository, EpiRepository epiRepository) {
         this(repository, logAuditoriaRepository, usuarioRepositorio,
                 new TarefaValidador(areaRiscoRepository, setorRepository), epiRepository);
-    }
-
-    public TarefaService(TarefaRepository repository, LogAuditoriaRepository logAuditoriaRepository,
-            UsuarioRepository usuarioRepositorio, AreaRiscoRepository areaRiscoRepository,
-            SetorRepository setorRepository) {
-        this(repository, logAuditoriaRepository, usuarioRepositorio, areaRiscoRepository, setorRepository, null);
-    }
-
-    public TarefaService(TarefaRepository repository, LogAuditoriaRepository logAuditoriaRepository,
-            UsuarioRepository usuarioRepositorio) {
-        this(repository, logAuditoriaRepository, usuarioRepositorio, null, null, null);
     }
 
     @Override
@@ -219,9 +210,6 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
         if (epiIds.stream().anyMatch(java.util.Objects::isNull)) {
             throw new IllegalArgumentException("Identificador de EPI não pode ser nulo.");
         }
-        if (epiRepository == null) {
-            return List.of();
-        }
         return epiIds.stream()
                 .distinct()
                 .map(epiId -> epiRepository.buscarPorId(epiId)
@@ -254,7 +242,7 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
      */
     private GestorDeSeguranca resolverResponsavelTecnico() {
         String email = emailAutenticado();
-        if (email != null && usuarioRepositorio != null) {
+        if (email != null) {
             GestorDeSeguranca gestor = usuarioRepositorio.buscarPorEmail(email)
                     .filter(GestorDeSeguranca.class::isInstance)
                     .map(GestorDeSeguranca.class::cast)

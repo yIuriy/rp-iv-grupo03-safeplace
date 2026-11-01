@@ -6,6 +6,7 @@
 
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.adapters.out.seguranca.OperadorAutenticadoNulo;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
 
 import java.time.LocalDate;
@@ -56,7 +57,8 @@ class UsuarioServiceAtualizacaoTest {
     @BeforeEach
     void setUp() {
         repositorio = new RepositorioEmMemoria();
-        casoDeUso = new UsuarioService(repositorio, new CodificadorFake(), () -> "SenhaGerada#1", auditoria);
+        casoDeUso = new UsuarioService(repositorio, new CodificadorFake(), () -> "SenhaGerada#1", auditoria,
+                new OperadorAutenticadoNulo());
         idSupervisora = casoDeUso.cadastrarSupervisor(new CadastrarSupervisorInputDTO(
                 "Joana Ribeiro", CPF_SUPERVISORA, LocalDate.of(1988, 4, 20), "joana@safeplace.com")).id();
         idColaborador = casoDeUso.cadastrarColaborador(new CadastrarColaboradorInputDTO(

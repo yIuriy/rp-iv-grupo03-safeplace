@@ -71,7 +71,7 @@ class HistoricoAreaRiscoTarefaUseCaseTest {
         when(areas.atualizar(any(AreaRisco.class))).thenAnswer(chamada -> chamada.getArgument(0));
 
         areaUseCase = new AreaRiscoService(areas, epis, setores, auditoria);
-        tarefaService = new TarefaService(tarefas, auditoria, mock(UsuarioRepository.class));
+        tarefaService = new TarefaService(tarefas, auditoria, mock(UsuarioRepository.class), null, null, epis);
     }
 
     private static Epi epi(Integer id, String nome) {
