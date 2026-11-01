@@ -31,7 +31,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [DTO Assembler](#dto-assembler--ocorrenciaoutputdto) | Fowler / PoEAA | Backend: `OcorrenciaOutputAssembler` sem expor `PlanoDeAcao` | [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245) | Pendente |
 | [Strategy (Backend)](#strategy--fonte-de-tempo-clock) | GoF, comportamental | Backend: injeção de `java.time.Clock` nas regras de vencimento | [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247) | Pendente |
 | [Adapter (Frontend)](#adapter--leitura-da-api-e-contrato-de-epi) | GoF, estrutural | Frontend: primitivas de leitura da API e unificação de `Epi` | [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244), [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) | Pendente |
-| [Template Method (hook)](#template-method-hook--envio-de-formulario) | GoF, comportamental | Frontend: submissão de formulários (`useEnvioFormulario`) | [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233), [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243) | Pendente |
+| [Template Method (hook)](#template-method-hook--envio-de-formulario) | GoF, comportamental | Frontend: submissão de formulários (`useEnvioFormulario`) | [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233), [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243) | Aplicado (1/2: #233) |
 | [State (Frontend)](#state--dialogos-de-taskspage) | GoF, comportamental | Frontend: estado único `DialogoTarefa` em `TasksPage` | [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246) | Pendente |
 
 ---
@@ -1522,34 +1522,233 @@ As regras que continuam no domínio são das **operações** que mudam o estado 
 
 **Catálogo:** GoF, comportamental (implementado como React Hook).
 
-**Intenção:** definir o esqueleto de 8 passos da submissão de formulários (`useEnvioFormulario`), delegando leitura, validação, ordem de foco, envio e descrição de falha por parâmetros.
+**Intenção:** definir o esqueleto da submissão de formulários (`executarEnvio`, usado pelo hook `useEnvioFormulario`), delegando leitura, validação, ordem de foco, envio e descrição de falha por parâmetros.
 
-**Issues:** [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233) e [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243).
+**Issues:** [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233) (parte 1, aplicada) e [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243) (parte 2).
 
 ### Problema (antes)
 
-*A preencher nas issues [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233) e [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, §6).*
+**Parte 1 ([#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233)).** Na `dev` antes desta issue, 19 componentes declaravam `const [enviando, setEnviando] = useState(false)` e repetiam à mão o mesmo algoritmo de envio:
+
+1. `preventDefault`;
+2. ignorar envio duplo;
+3. ler os dados;
+4. validar;
+5. focar o primeiro campo inválido;
+6. limpar a falha anterior;
+7. `try/catch` com a descrição da falha;
+8. `enviando = false` quando a API falha.
+
+As cópias já tinham divergido. Nos 5 formulários desta parte havia duas variantes:
+
+| Formulário | Envio duplo | Foco no primeiro erro | Falha da API |
+| --- | --- | --- | --- |
+| `SetorFormDialog`, `PessoaFormulario` | bloqueado | `focarCampo` local (uma cópia em cada arquivo) | `descreverFalha` (Strategy, #232) |
+| `InspecaoFormDialog` | bloqueado | `document.getElementById` | `descreverFalha` |
+| `AreaRiscoFormDialog`, `TarefaFormDialog` | **não bloqueado** | nenhum | `mensagemDaApi(err) \|\| texto` |
+
+### Por que Template Method
+
+O algoritmo de envio é invariante; só mudam as etapas (ler, validar, ordenar os campos, enviar e descrever a falha). O Template Method fixa o esqueleto num lugar e deixa as etapas como ganchos. Em React, a forma idiomática é um hook que recebe as etapas como funções, em vez de uma classe abstrata com subclasses.
+
+O esqueleto ficou em duas peças:
+
+- `executarEnvio` (`shared/formularios/envioFormulario.ts`): o método-modelo, uma função assíncrona sem React. Ela recebe as etapas e as ações sobre a tela (`definirErros`, `definirFalha`, `definirEnviando`, `focar`). Por não depender do React, é testada sem navegador, como o `erros.ts` da #232.
+- `useEnvioFormulario` (`shared/formularios/useEnvioFormulario.ts`): guarda `erros`, `falha` e `enviando` no estado do React, bloqueia o envio duplo com uma referência (`useRef`) e entrega `onSubmit`.
+
+Decisões de comportamento:
+
+- **Sucesso mantém `enviando`.** Depois do sucesso o diálogo fecha; o botão continua em carregamento até sumir, como já faziam setor, inspeção e pessoa. Área e tarefa voltavam o botão no `finally`, mas também fechavam o diálogo logo em seguida, então a tela não muda.
+- **Envio duplo bloqueado em todos.** Área e tarefa ganharam o bloqueio que não tinham.
+- **Mensagem única continua única.** Área e tarefa mostram uma mensagem por vez, não erros por campo. A validação delas devolve `{ geral: '...' }`, com `ordem: []`, e a tela mostra `erros.geral || falha` no mesmo alerta de antes. Os textos não mudaram, porque os specs dependem deles.
+- **Foco por `name` ou por `id`.** `focarCampo` procura o campo pelo `name` e, sem ele (grupos de rádio e campos controlados, como os itens da inspeção), pelo `id` dentro do formulário.
+
+Descartado por agora: `react-hook-form`, que está instalado sem uso e exigiria reescrever todos os formulários.
 
 ### Papéis do padrão
 
 | Papel no padrão | Elemento no código | Responsabilidade |
 | --- | --- | --- |
-| Template Method (Hook) | `useEnvioFormulario` | Orquestrar o algoritmo fixo de submissão (`enviando`, `erros`, `falha`, `onSubmit`) |
+| Template Method (método-modelo) | `executarEnvio` | Sequência fixa: ler, validar, focar, limpar falha, enviar, descrever falha |
+| Template Method (hook) | `useEnvioFormulario` → `{ enviando, erros, falha, temPendencias, onSubmit }` | Ligar o método-modelo ao estado do React e bloquear envio duplo |
 | Primitive Operations | `ler`, `validar`, `ordem`, `enviar`, `descreverFalha` | Passos variáveis fornecidos por cada formulário |
+| ConcreteClasses | `SetorFormDialog`, `AreaRiscoFormDialog`, `InspecaoFormDialog`, `TarefaFormDialog`, `PessoaFormulario` (#233) | Preencher as operações primitivas |
 
 ### Diagramas
 
-*Diagramas PlantUML antes e depois a preencher nas issues [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233) e [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243).*
+**Antes (#233).** Cada formulário tinha a sua cópia do algoritmo, com variações.
+
+```mermaid
+classDiagram
+  direction LR
+  class SetorFormDialog {
+    <<ConcreteClass>>
+    useState enviando, erros, falha
+    focarCampo (cópia local)
+    enviar(event) algoritmo completo
+  }
+  class PessoaFormulario {
+    <<ConcreteClass>>
+    useState enviando, erros, falha
+    focarCampo (cópia local)
+    enviar(event) algoritmo completo
+  }
+  class InspecaoFormDialog {
+    <<ConcreteClass>>
+    useState enviando, erros, falha
+    document.getElementById(...).focus()
+    enviar(event) algoritmo completo
+  }
+  class AreaRiscoFormDialog {
+    <<ConcreteClass>>
+    useState enviando, erro
+    submeter(event) sem bloqueio de envio duplo
+  }
+  class TarefaFormDialog {
+    <<ConcreteClass>>
+    useState enviando, erro
+    submeter(event) sem bloqueio de envio duplo
+  }
+```
+
+**Depois (#233).** O algoritmo existe uma vez; os formulários só informam as etapas.
+
+```mermaid
+classDiagram
+  direction TB
+  class executarEnvio {
+    <<Template Method>>
+    ler → validar → focar → limpar falha → enviar → descrever falha
+  }
+  class useEnvioFormulario {
+    <<Hook>>
+    +enviando
+    +erros
+    +falha
+    +temPendencias
+    +onSubmit(event)
+  }
+  class EtapasDoEnvio {
+    <<Primitive Operations>>
+    +ler(form)
+    +validar(lido)
+    +ordem
+    +enviar(dados)
+    +descreverFalha(erro)
+  }
+  class Formularios {
+    <<ConcreteClasses>>
+    SetorFormDialog
+    AreaRiscoFormDialog
+    InspecaoFormDialog
+    TarefaFormDialog
+    PessoaFormulario
+  }
+  useEnvioFormulario --> executarEnvio : executa
+  executarEnvio --> EtapasDoEnvio : chama os ganchos
+  Formularios --> useEnvioFormulario : usa
+  Formularios ..> EtapasDoEnvio : fornece
+```
+
+### Código antes × depois
+
+**`SetorFormDialog` (#233).**
+
+Antes:
+
+```tsx
+const [erros, setErros] = useState<ErrosSetor>({})
+const [falha, setFalha] = useState('')
+const [enviando, setEnviando] = useState(false)
+
+async function enviar(event: FormEvent<HTMLFormElement>) {
+  event.preventDefault()
+  if (enviando) return
+  const form = event.currentTarget
+  const { dados, erros: pendencias } = lerDadosSetor(new FormData(form))
+  setErros(pendencias)
+  const primeiroInvalido = ordemDosCamposSetor.find(campo => pendencias[campo])
+  if (primeiroInvalido || !dados) {
+    if (primeiroInvalido) focarCampo(form, primeiroInvalido)
+    return
+  }
+  setFalha('')
+  setEnviando(true)
+  try {
+    if (editando && setor) {
+      aoSalvar(await atualizarSetor(setor.id, dados))
+    } else {
+      aoSalvar(await cadastrarSetor(dados))
+    }
+  } catch (erro) {
+    setFalha(descreverFalha(erro))
+    setEnviando(false)
+  }
+}
+```
+
+Depois:
+
+```tsx
+const { enviando, erros, falha, temPendencias, onSubmit } = useEnvioFormulario({
+  ler: form => new FormData(form),
+  validar: lerDadosSetor,
+  ordem: ordemDosCamposSetor,
+  enviar: async dados => aoSalvar(editando && setor ? await atualizarSetor(setor.id, dados) : await cadastrarSetor(dados)),
+  descreverFalha,
+}, {} as ErrosSetor)
+```
+
+**Método-modelo (`envioFormulario.ts`, novo).**
+
+```ts
+export async function executarEnvio<L, D, E>(form, etapas, acoes): Promise<ResultadoDoEnvio> {
+  const { dados, erros } = etapas.validar(etapas.ler(form))
+  acoes.definirErros(erros)
+  if (dados === null || dados === undefined) {
+    const [primeiro] = camposInvalidos(etapas.ordem, erros)
+    if (primeiro) acoes.focar(primeiro)
+    return 'invalido'
+  }
+  acoes.definirFalha('')
+  acoes.definirEnviando(true)
+  try {
+    await etapas.enviar(dados)
+    return 'enviado'
+  } catch (erro) {
+    acoes.definirFalha(etapas.descreverFalha(erro))
+    acoes.definirEnviando(false)
+    return 'falhou'
+  }
+}
+```
+
+### Benefício
+
+**Parte 1 (#233).** A regra de envio passou a existir em um lugar só, com testes próprios. Corrigir ou melhorar o envio (por exemplo, o bloqueio de envio duplo) vale para todos os formulários migrados de uma vez: área e tarefa ganharam esse bloqueio sem nenhuma linha específica. Cada formulário ficou com o que é dele (como ler, validar e chamar a API), e não com a mecânica de `try/catch` e de estado de carregamento. Um formulário novo não precisa copiar o fluxo de outro, que era como as cópias divergiam.
 
 ### Métricas locais
 
-| Métrica | Antes (v1.0.0) | Depois |
-| --- | --- | --- |
-| Formulários que repetem o fluxo manual de submissão e foco | 19 | *A medir* |
+| Métrica | Antes (v1.0.0) | `dev` antes da #233 | Depois da #233 |
+| --- | ---: | ---: | ---: |
+| Formulários com `useState` próprio de `enviando` | 19 | 19 | 14 |
+| Cópias locais de `focarCampo` nos formulários | | 2 | 0 (uma em `shared/formularios`) |
+| `useState` no frontend | | 202 | 192 |
+| Linhas de código TS/TSX do frontend | 9.140 | 9.142 | 9.152 |
+
+As linhas de código subiram 10 nesta parte: o hook e o método-modelo são novos, e só 5 formulários foram migrados. A redução de linhas é critério da parte 2 ([#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243)), quando os demais formulários deixam de repetir o fluxo. Medição: `python scripts/metricas/coletar_metricas.py` (`frontend.linhas_ts_tsx.codigo`, `frontend.useState`).
 
 ### Evidências
 
-*A preencher nas issues [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233) e [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243).*
+**Parte 1 (#233).**
+
+Testes novos: `tests/envio-formulario.spec.ts` (7 testes, sem navegador) exercita o método-modelo e a operação primitiva `ordem`. Dados inválidos mostram os erros, focam o primeiro campo da ordem e não enviam; o sucesso limpa a falha anterior e mantém `enviando`; a falha da API é descrita e libera o botão; dados `undefined` contam como inválidos; validação de mensagem única não tenta focar; `ordem` funciona como lista de chaves e como função (erros aninhados da inspeção).
+
+Os specs de tela dos 5 formulários (`setores`, `areas-risco`, `inspecoes`, `tarefas`, `users`) continuam passando sem alteração, o que mostra que rótulos, papéis e textos foram mantidos.
+
+Suíte do frontend: `npm ci && npm run lint && npm run build` sem erros; Playwright `--workers=2` em servidor isolado: **287 testes, 287 aprovados** (280 existentes e 7 novos).
+
+**Parte 2 (#243).** *A preencher.*
 
 ---
 

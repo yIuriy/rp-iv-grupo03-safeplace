@@ -1,17 +1,13 @@
 // Formulário compartilhado de cadastro e edição de pessoa: nome, CPF (com máscara; somente leitura
-// na edição), data de nascimento e e-mail, com validação local e foco no primeiro erro.
+// na edição), data de nascimento e e-mail, com validação local e foco no primeiro erro. O fluxo de envio vem
+// do hook useEnvioFormulario (Template Method, #233).
 
-import { useState, type FormEvent } from 'react'
 import { Alert, Button, TextField } from '../../shared/components'
+import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
 import { descreverFalhaDeCadastro, type DadosPessoa, type Usuario } from './api'
 import { CpfField } from './CpfField'
 import { hojeIso } from './formatos'
 import { lerDadosPessoa, ordemDosCampos, validarPessoa, type ErrosPessoa } from './validacaoPessoa'
-
-function focarCampo(form: HTMLFormElement, nome: string) {
-  const campo = form.elements.namedItem(nome)
-  if (campo instanceof HTMLElement) campo.focus()
-}
 
 /**
  * Cadastro e edição de pessoa. Em edição, o CPF aparece somente leitura: ele identifica o cadastro
@@ -25,35 +21,19 @@ export function PessoaFormulario({ emailObrigatorio, emailHelper, enviarLabel, v
   aoEnviar: (dados: DadosPessoa) => Promise<void>
   aoCancelar: () => void
 }) {
-  const [erros, setErros] = useState<ErrosPessoa>({})
-  const [falha, setFalha] = useState('')
-  const [enviando, setEnviando] = useState(false)
   const editando = valoresIniciais !== undefined
+  const { enviando, erros, falha, temPendencias, onSubmit } = useEnvioFormulario({
+    ler: form => lerDadosPessoa(new FormData(form)),
+    validar: dados => {
+      const pendencias = validarPessoa(dados, emailObrigatorio)
+      return { dados: ordemDosCampos.some(campo => pendencias[campo]) ? null : dados, erros: pendencias }
+    },
+    ordem: ordemDosCampos,
+    enviar: aoEnviar,
+    descreverFalha: descreverFalhaDeCadastro,
+  }, {} as ErrosPessoa)
 
-  async function enviar(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (enviando) return
-    const form = event.currentTarget
-    const dados = lerDadosPessoa(new FormData(form))
-    const pendencias = validarPessoa(dados, emailObrigatorio)
-    setErros(pendencias)
-    const primeiroInvalido = ordemDosCampos.find(campo => pendencias[campo])
-    if (primeiroInvalido) {
-      focarCampo(form, primeiroInvalido)
-      return
-    }
-    setFalha('')
-    setEnviando(true)
-    try {
-      await aoEnviar(dados)
-    } catch (erro) {
-      setFalha(descreverFalhaDeCadastro(erro))
-      setEnviando(false)
-    }
-  }
-
-  const temPendencias = ordemDosCampos.some(campo => erros[campo])
-  return <form className="sp-form" onSubmit={enviar} noValidate>
+  return <form className="sp-form" onSubmit={onSubmit} noValidate>
     <TextField label="Nome completo" name="nome" autoComplete="off" required error={erros.nome}
       defaultValue={valoresIniciais?.nome} />
     <CpfField label="CPF" name="cpf" required error={erros.cpf} defaultValue={valoresIniciais?.cpf} readOnly={editando}

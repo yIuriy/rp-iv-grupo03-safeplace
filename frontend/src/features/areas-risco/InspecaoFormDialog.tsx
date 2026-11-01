@@ -1,10 +1,12 @@
 // Diálogo de registro de inspeção pelo Gestor de Segurança (RF09, US09, issue #136): data e itens
 // verificados, cada um com referência avaliada, resultado e observações, com validação local, foco no
-// primeiro erro e mensagem da API. Inspeção registrada não é editada depois.
+// primeiro erro e mensagem da API. Inspeção registrada não é editada depois. O fluxo de envio vem do hook
+// useEnvioFormulario (Template Method, #233).
 
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { Alert, Button, Dialog, Radio, TextArea, TextField } from '../../shared/components'
 import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
+import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
 import { registrarInspecao, type Inspecao } from './apiInspecoes'
 import { hojeIso, validarInspecao, type ErrosInspecao, type ErrosItem, type RascunhoItem } from './validacaoInspecao'
 
@@ -68,9 +70,16 @@ function InspecaoFormulario({ areaId, aoSalvar, aoCancelar }: {
   const [dataInspecao, setDataInspecao] = useState(hoje)
   const [itens, setItens] = useState<RascunhoItem[]>([itemVazio(1)])
   const [proximaChave, setProximaChave] = useState(2)
-  const [erros, setErros] = useState<ErrosInspecao>({ itens: {} })
-  const [falha, setFalha] = useState('')
-  const [enviando, setEnviando] = useState(false)
+  const { enviando, erros, falha, onSubmit } = useEnvioFormulario({
+    ler: () => ({ dataInspecao, itens }),
+    validar: rascunho => validarInspecao(rascunho.dataInspecao, rascunho.itens, hoje),
+    ordem: pendencias => {
+      const campo = primeiroCampoInvalido(pendencias, itens)
+      return campo ? [campo] : []
+    },
+    enviar: async dados => aoSalvar(await registrarInspecao(areaId, dados)),
+    descreverFalha,
+  }, { itens: {} } as ErrosInspecao)
 
   function alterarItem(chave: number, alteracao: Partial<RascunhoItem>) {
     setItens(atuais => atuais.map(item => (item.chave === chave ? { ...item, ...alteracao } : item)))
@@ -81,28 +90,8 @@ function InspecaoFormulario({ areaId, aoSalvar, aoCancelar }: {
     setProximaChave(chave => chave + 1)
   }
 
-  async function enviar(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (enviando) return
-    const { dados, erros: pendencias } = validarInspecao(dataInspecao, itens, hoje)
-    setErros(pendencias)
-    if (!dados) {
-      const campo = primeiroCampoInvalido(pendencias, itens)
-      if (campo) document.getElementById(campo)?.focus()
-      return
-    }
-    setFalha('')
-    setEnviando(true)
-    try {
-      aoSalvar(await registrarInspecao(areaId, dados))
-    } catch (erro) {
-      setFalha(descreverFalha(erro))
-      setEnviando(false)
-    }
-  }
-
   const temPendencias = Boolean(erros.dataInspecao) || Object.keys(erros.itens).length > 0
-  return <form className="sp-form" onSubmit={enviar} noValidate>
+  return <form className="sp-form" onSubmit={onSubmit} noValidate>
     <TextField id="data-inspecao" label="Data da inspeção" type="date" max={hoje} required value={dataInspecao}
       onChange={e => setDataInspecao(e.target.value)} error={erros.dataInspecao}
       helper="Dia em que a inspeção foi realizada; não pode ser posterior a hoje." />

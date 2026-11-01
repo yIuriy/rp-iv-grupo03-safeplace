@@ -1,9 +1,10 @@
 // Diálogo de cadastro e edição de setor físico pelo Gestor de Segurança (RF05, UC03, issue #174): nome, grau de
-// perigo, localização e descrição, com validação local, foco no primeiro erro e mensagem da API.
+// perigo, localização e descrição, com validação local, foco no primeiro erro e mensagem da API. O fluxo de
+// envio vem do hook useEnvioFormulario (Template Method, #233); aqui ficam só as etapas próprias do setor.
 
-import { useState, type FormEvent } from 'react'
 import { Alert, Button, Dialog, Select, TextArea, TextField } from '../../shared/components'
 import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
+import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
 import { atualizarSetor, cadastrarSetor, niveisPerigo, rotuloNivelPerigo, type Setor } from './api'
 import {
   lerDadosSetor, ordemDosCamposSetor, TAMANHO_MAXIMO_LOCALIZACAO, TAMANHO_MAXIMO_NOME, type ErrosSetor,
@@ -12,11 +13,6 @@ import {
 const descreverFalha = criarDescritorDeFalha({
   403: 'Seu perfil não tem permissão para gerenciar setores.'
 }, usarMensagemDaApi('O servidor não confirmou a operação. Verifique a conexão e tente novamente.'))
-
-function focarCampo(form: HTMLFormElement, nome: string) {
-  const campo = form.elements.namedItem(nome)
-  if (campo instanceof HTMLElement) campo.focus()
-}
 
 function SetorFormulario({
   setor,
@@ -28,37 +24,15 @@ function SetorFormulario({
   aoCancelar: () => void
 }) {
   const editando = !!setor
-  const [erros, setErros] = useState<ErrosSetor>({})
-  const [falha, setFalha] = useState('')
-  const [enviando, setEnviando] = useState(false)
+  const { enviando, erros, falha, temPendencias, onSubmit } = useEnvioFormulario({
+    ler: form => new FormData(form),
+    validar: lerDadosSetor,
+    ordem: ordemDosCamposSetor,
+    enviar: async dados => aoSalvar(editando && setor ? await atualizarSetor(setor.id, dados) : await cadastrarSetor(dados)),
+    descreverFalha,
+  }, {} as ErrosSetor)
 
-  async function enviar(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (enviando) return
-    const form = event.currentTarget
-    const { dados, erros: pendencias } = lerDadosSetor(new FormData(form))
-    setErros(pendencias)
-    const primeiroInvalido = ordemDosCamposSetor.find(campo => pendencias[campo])
-    if (primeiroInvalido || !dados) {
-      if (primeiroInvalido) focarCampo(form, primeiroInvalido)
-      return
-    }
-    setFalha('')
-    setEnviando(true)
-    try {
-      if (editando && setor) {
-        aoSalvar(await atualizarSetor(setor.id, dados))
-      } else {
-        aoSalvar(await cadastrarSetor(dados))
-      }
-    } catch (erro) {
-      setFalha(descreverFalha(erro))
-      setEnviando(false)
-    }
-  }
-
-  const temPendencias = ordemDosCamposSetor.some(campo => erros[campo])
-  return <form className="sp-form" onSubmit={enviar} noValidate>
+  return <form className="sp-form" onSubmit={onSubmit} noValidate>
     <TextField label="Nome do setor" name="nome" required autoComplete="off" maxLength={TAMANHO_MAXIMO_NOME}
       defaultValue={setor?.nome ?? ''} error={erros.nome} autoFocus
       helper="Use o mesmo nome informado na localização dos EPIs deste setor." />
