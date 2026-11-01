@@ -1,9 +1,12 @@
 // Cadastro e edição de área de risco pelo Gestor (UC03): código, grau, setor físico, agentes,
-// limites e EPIs obrigatórios, com justificativa na edição.
+// limites e EPIs obrigatórios, com justificativa na edição. O fluxo de envio vem do hook useEnvioFormulario
+// (Template Method, #233); aqui ficam a leitura do rascunho, a validação e as chamadas à API.
 
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { Alert, Button, Checkbox, Dialog, Select, TextArea, TextField } from '../../shared/components'
-import { mensagemDaApi } from '../../shared/api/erros'
+import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
+import type { Validacao } from '../../shared/formularios/envioFormulario'
+import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
 import type { Epi } from '../epis/api'
 import {
   atualizarAreaRisco,
@@ -12,9 +15,53 @@ import {
   niveisPerigo,
   rotuloNivelPerigo,
   type AreaRisco,
+  type DadosAtualizacaoAreaRisco,
   type NivelPerigo,
   type Setor,
 } from './api'
+
+const descreverFalha = criarDescritorDeFalha({},
+  usarMensagemDaApi('Não foi possível salvar a área de risco. Verifique os dados.'))
+
+type ErrosArea = { geral?: string }
+type DadosArea = DadosAtualizacaoAreaRisco & { codigo: string }
+type RascunhoArea = {
+  codigo: string
+  nome: string
+  descricao: string
+  nivelPerigo: NivelPerigo
+  setorId: string
+  agentesTexto: string
+  limites: string
+  episSelecionados: number[]
+  justificativa: string
+}
+
+/** Mesmas regras e mensagens de antes, na mesma ordem: a primeira pendência encontrada é a exibida. */
+function validarArea(rascunho: RascunhoArea): Validacao<DadosArea, ErrosArea> {
+  if (!rascunho.codigo.trim()) return { erros: { geral: 'O código da área é obrigatório.' } }
+  if (!rascunho.nome.trim()) return { erros: { geral: 'O nome da área é obrigatório.' } }
+  if (rascunho.episSelecionados.length === 0) {
+    return { erros: { geral: 'A área de risco exige ao menos um EPI obrigatório para acesso.' } }
+  }
+  const agentesRisco = rascunho.agentesTexto.split(',').map(a => a.trim()).filter(Boolean)
+  if (agentesRisco.length === 0) return { erros: { geral: 'Ao menos um agente de risco deve ser informado.' } }
+  if (!rascunho.limites.trim()) return { erros: { geral: 'Os limites físicos ou operacionais são obrigatórios.' } }
+  return {
+    erros: {},
+    dados: {
+      codigo: rascunho.codigo.trim(),
+      nome: rascunho.nome.trim(),
+      descricao: rascunho.descricao.trim() || undefined,
+      nivelPerigo: rascunho.nivelPerigo,
+      setorId: rascunho.setorId ? Number(rascunho.setorId) : undefined,
+      agentesRisco,
+      limites: rascunho.limites.trim(),
+      episObrigatoriosIds: rascunho.episSelecionados,
+      justificativa: rascunho.justificativa.trim() || undefined,
+    },
+  }
+}
 
 export function AreaRiscoFormDialog({
   open,
@@ -82,8 +129,6 @@ function FormularioArea({
   const [limites, setLimites] = useState(area?.limites ?? '')
   const [episSelecionados, setEpisSelecionados] = useState<number[]>(area ? area.episObrigatorios.map(e => e.id) : [])
   const [justificativa, setJustificativa] = useState('')
-  const [enviando, setEnviando] = useState(false)
-  const [erro, setErro] = useState<string | null>(null)
 
   function alternarEpi(id: number) {
     setEpisSelecionados(atual =>
@@ -91,77 +136,25 @@ function FormularioArea({
     )
   }
 
-  async function submeter(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setErro(null)
-
-    if (!codigo.trim()) {
-      setErro('O código da área é obrigatório.')
-      return
-    }
-    if (!nome.trim()) {
-      setErro('O nome da área é obrigatório.')
-      return
-    }
-    if (episSelecionados.length === 0) {
-      setErro('A área de risco exige ao menos um EPI obrigatório para acesso.')
-      return
-    }
-
-    const agentesRisco = agentesTexto
-      .split(',')
-      .map(a => a.trim())
-      .filter(Boolean)
-
-    if (agentesRisco.length === 0) {
-      setErro('Ao menos um agente de risco deve ser informado.')
-      return
-    }
-
-    if (!limites.trim()) {
-      setErro('Os limites físicos ou operacionais são obrigatórios.')
-      return
-    }
-
-    const parsedSetorId = setorId ? Number(setorId) : undefined
-
-    setEnviando(true)
-    try {
+  const { enviando, erros, falha, onSubmit } = useEnvioFormulario({
+    ler: () => ({ codigo, nome, descricao, nivelPerigo, setorId, agentesTexto, limites, episSelecionados, justificativa }),
+    validar: validarArea,
+    ordem: [],
+    enviar: async ({ codigo: codigoArea, justificativa: justificativaEdicao, ...comuns }) => {
       if (editando && area) {
-        const atualizada = await atualizarAreaRisco(area.id, {
-          nome: nome.trim(),
-          descricao: descricao.trim() || undefined,
-          nivelPerigo,
-          setorId: parsedSetorId,
-          agentesRisco,
-          limites: limites.trim(),
-          episObrigatoriosIds: episSelecionados,
-          justificativa: justificativa.trim() || undefined,
-        })
-        aoSalvar(atualizada, 'atualizado')
+        aoSalvar(await atualizarAreaRisco(area.id, { ...comuns, justificativa: justificativaEdicao }), 'atualizado')
       } else {
-        const criada = await cadastrarAreaRisco({
-          codigo: codigo.trim(),
-          nome: nome.trim(),
-          descricao: descricao.trim() || undefined,
-          nivelPerigo,
-          setorId: parsedSetorId,
-          agentesRisco,
-          limites: limites.trim(),
-          episObrigatoriosIds: episSelecionados,
-        })
-        aoSalvar(criada, 'criado')
+        aoSalvar(await cadastrarAreaRisco({ codigo: codigoArea, ...comuns }), 'criado')
       }
       aoFechar()
-    } catch (err: unknown) {
-      setErro(mensagemDaApi(err) || 'Não foi possível salvar a área de risco. Verifique os dados.')
-    } finally {
-      setEnviando(false)
-    }
-  }
+    },
+    descreverFalha,
+  }, {} as ErrosArea)
+  // A validação devolve uma mensagem única; ela aparece no mesmo alerta da falha da API.
+  const erro = erros.geral || falha
 
   return (
-      <form onSubmit={submeter} className="sp-dialog-body" noValidate>
+      <form onSubmit={onSubmit} className="sp-dialog-body" noValidate>
         {erro && (
           <Alert tone="danger" title="Não foi possível salvar" live="assertive">
             {erro}

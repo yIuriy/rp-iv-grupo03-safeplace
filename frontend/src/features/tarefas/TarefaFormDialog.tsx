@@ -1,6 +1,12 @@
-import { useState, useEffect, type FormEvent } from 'react'
+// Cadastro e edição de tarefa operacional (UC11): descrição, grau de perigo, área de risco e setores. O
+// fluxo de envio vem do hook useEnvioFormulario (Template Method, #233); aqui ficam a validação e as
+// chamadas à API, inclusive a reclassificação do grau na edição.
+
+import { useState, useEffect } from 'react'
 import { Alert, Button, Checkbox, Dialog, Select, TextArea } from '../../shared/components'
-import { mensagemDaApi } from '../../shared/api/erros'
+import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
+import type { Validacao } from '../../shared/formularios/envioFormulario'
+import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
 import {
   listarAreasRisco,
   listarSetores,
@@ -16,6 +22,18 @@ import {
   type NivelPerigo,
   type Tarefa,
 } from './api'
+
+type ErrosTarefa = { geral?: string }
+
+/** Mesma regra e mensagem de antes: só a descrição é obrigatória. */
+function validarTarefa(rascunho: { descricao: string; areaRiscoId: string }): Validacao<
+  { descricao: string; areaRiscoId?: number },
+  ErrosTarefa
+> {
+  const descricao = rascunho.descricao.trim()
+  if (!descricao) return { erros: { geral: 'A descrição da atividade é obrigatória.' } }
+  return { erros: {}, dados: { descricao, areaRiscoId: rascunho.areaRiscoId ? Number(rascunho.areaRiscoId) : undefined } }
+}
 
 export function TarefaFormDialog({
   open,
@@ -76,8 +94,6 @@ function FormularioTarefa({
   const [setores, setSetores] = useState<Setor[]>([])
   // O formulário é recriado a cada abertura (key), então já nasce carregando as relações.
   const [carregandoRelacoes, setCarregandoRelacoes] = useState(true)
-  const [enviando, setEnviando] = useState(false)
-  const [erro, setErro] = useState<string | null>(null)
 
   useEffect(() => {
     let ativo = true
@@ -106,23 +122,15 @@ function FormularioTarefa({
     )
   }
 
-  async function submeter(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setErro(null)
-
-    if (!descricao.trim()) {
-      setErro('A descrição da atividade é obrigatória.')
-      return
-    }
-
-    const parsedAreaId = areaRiscoId ? Number(areaRiscoId) : undefined
-
-    setEnviando(true)
-    try {
+  const { enviando, erros, falha, onSubmit } = useEnvioFormulario({
+    ler: () => ({ descricao, areaRiscoId }),
+    validar: validarTarefa,
+    ordem: [],
+    enviar: async ({ descricao: descricaoTarefa, areaRiscoId: areaId }) => {
       if (editando && tarefa) {
         let resultado = await atualizarTarefa(tarefa.id, {
-          descricao: descricao.trim(),
-          areaRiscoId: parsedAreaId,
+          descricao: descricaoTarefa,
+          areaRiscoId: areaId,
           setoresIds: setoresSelecionados,
         })
         if (nivelPerigo && nivelPerigo !== (tarefa.nivelPerigo ?? '')) {
@@ -133,26 +141,24 @@ function FormularioTarefa({
         aoSalvar(resultado)
       } else {
         const criada = await cadastrarTarefa({
-          descricao: descricao.trim(),
+          descricao: descricaoTarefa,
           nivelPerigo: nivelPerigo ? (nivelPerigo as NivelPerigo) : undefined,
-          areaRiscoId: parsedAreaId,
+          areaRiscoId: areaId,
           setoresIds: setoresSelecionados,
         })
         aoSalvar(criada)
       }
       aoFechar()
-    } catch (err: unknown) {
-      setErro(
-        mensagemDaApi(err) ||
-          `Não foi possível ${editando ? 'atualizar' : 'cadastrar'} a tarefa. Verifique os dados informados.`
-      )
-    } finally {
-      setEnviando(false)
-    }
-  }
+    },
+    descreverFalha: criarDescritorDeFalha({}, usarMensagemDaApi(
+      `Não foi possível ${editando ? 'atualizar' : 'cadastrar'} a tarefa. Verifique os dados informados.`
+    )),
+  }, {} as ErrosTarefa)
+  // A validação devolve uma mensagem única; ela aparece no mesmo alerta da falha da API.
+  const erro = erros.geral || falha
 
   return (
-    <form onSubmit={submeter} className="sp-dialog-body" noValidate>
+    <form onSubmit={onSubmit} className="sp-dialog-body" noValidate>
       {erro && (
         <Alert tone="danger" title="Não foi possível salvar" live="assertive">
           {erro}
