@@ -28,10 +28,10 @@ O propósito primordial da Arquitetura Hexagonal é isolar as regras de negócio
 +---------------------------------------------------------------------------------+
 ```
 
-1. **Domínio (`domain/`)**: É o núcleo do sistema. Composto por classes Java puras (`POJOs`, `Records`, `Enums`). **Não possui dependência** do Spring Framework, de anotações JPA (`@Entity`, `@Table`), nem de bibliotecas de transporte HTTP.
+1. **Domínio (`domain/`)**: É o núcleo do sistema. As entidades de domínio são também as entidades JPA ([decisão #254](decisao-entidades-jpa-dominio.md)): podem usar anotações de `jakarta.persistence` (e `@Immutable` do Hibernate nas tabelas só de inserção), mas **não dependem** do Spring Framework, do Spring Data, de Jackson nem de bibliotecas de transporte HTTP.
 2. **Aplicação (`application/`)**: Orquestra a execução das regras de negócio. Define as **Portas de Entrada** (`port/in/`), as **Portas de Saída** (`port/out/`), os contratos de transporte de dados (`dto/`) e as implementações dos **Casos de Uso** (`usecase/`). Depende apenas do Domínio.
 3. **Adaptadores de Entrada (`adapters/in/`)**: Recebem requisições externas (controladores REST anotados com `@RestController`), validam a camada HTTP e invocam as portas de entrada.
-4. **Adaptadores de Saída (`adapters/out/`)**: Implementam as portas de saída (`port/out/`), interagindo com o PostgreSQL via Spring Data JPA, `JdbcTemplate` ou serviços de infraestrutura, convertendo dados entre o formato relacional e as entidades puras de domínio.
+4. **Adaptadores de Saída (`adapters/out/`)**: Implementam as portas de saída (`port/out/`), delegando a repositórios Spring Data JPA das próprias entidades de domínio, sem classes espelhadas, conversões ou SQL escrito à mão.
 
 ---
 
@@ -41,7 +41,7 @@ O backend do SafePlace (`backend/src/main/java/br/edu/safeplace/backend/`) organ
 
 ```
 br.edu.safeplace.backend/
-├── domain/                                  # NÚCLEO DE NEGÓCIO PURO (Sem dependências externas)
+├── domain/                                  # NÚCLEO DE NEGÓCIO (entidades JPA; sem Spring)
 │   ├── comum/                               # Tipos e enumeradores transversais (NivelPerigo, LogAuditoria)
 │   ├── ocorrencia/                          # Ocorrencia, Acidente, Incidente, NumeroProtocoloCAT, StatusOcorrencia
 │   ├── epi/                                 # Epi, ModeloEpi, MovimentacaoEstoque, ManutencaoEpi, StatusEpi
@@ -63,7 +63,7 @@ br.edu.safeplace.backend/
 │   ├── in/
 │   │   └── web/                             # Controladores REST Spring (@RestController) e Handlers de Erro
 │   └── out/
-│       └── persistencia/                    # Adaptadores de Persistência (@Repository / JpaAdapter) e Mappers
+│       └── persistencia/                    # Adaptadores (XxxJpaAdapter) e repositórios Spring Data (XxxJpaRepository)
 └── config/                                  # CONFIGURAÇÕES TÉCNICAS DE INFRAESTRUTURA
     ├── SecurityConfig.java                  # Autenticação JWT e autorização RBAC
     ├── OpenApiConfig.java                   # Documentação Swagger/OpenAPI v3
@@ -75,7 +75,7 @@ br.edu.safeplace.backend/
 ## 3. Anatomia das Camadas e Seus Contratos
 
 ### 3.1 Camada de Domínio (`domain/`)
-* **Entidades**: Classes ricas que encapsulam dados e comportamento (ex.: `Acidente`, `Epi`, `Emprestimo`). Não usam anotações JPA.
+* **Entidades**: Classes ricas que encapsulam dados e comportamento (ex.: `Acidente`, `Epi`, `Emprestimo`). São mapeadas com anotações JPA, seguindo as convenções da [decisão #254](decisao-entidades-jpa-dominio.md#22-convenções-de-mapeamento). Associações são referências a objetos, não ids. Não têm setters públicos nem validam entrada nos construtores; a validação fica na camada `validacao` (#228).
 * **Objetos de Valor (Value Objects)**: Tipos imutáveis com validação própria (ex.: `NumeroProtocoloCAT`).
 * **Enumerações**: Vocabulário formal do negócio (ex.: `NivelPerigo`: `BAIXO`, `MEDIO`, `ALTO`, `CRITICO`; `StatusOcorrencia`: `ABERTA`, `EM_TRIAGEM`, `ARQUIVADA`).
 * **Regra**: Esta camada **jamais** importa classes de `org.springframework.*`, `jakarta.persistence.*` ou `adapters.*`.
@@ -104,7 +104,7 @@ As portas são interfaces Java puras:
 | DTO da aplicação | `XxxInputDTO`, `XxxOutputDTO` | `LoginInputDTO`, `TokenOutputDTO` |
 | Repositório Spring Data | `XxxJpaRepository` | `TarefaJpaRepository` |
 
-Os sufixos `Port`, `Porta`, `RepositoryPort`, `CasoDeUso`, `UseCaseImpl` `Adaptador`, `Controlador`, `TratadorExcecoes`, `Requisicao`, `Resposta`, `EntradaDTO` e `SaidaDTO` não são mais usados.
+Os sufixos `Port`, `Porta`, `RepositoryPort`, `CasoDeUso`, `UseCaseImpl`, `Adaptador`, `Controlador`, `TratadorExcecoes`, `Requisicao`, `Resposta`, `EntradaDTO` e `SaidaDTO` não são mais usados.
 
 ### 3.3 Data Transfer Objects (`application/dto/`)
 Modelados como Java `record` imutáveis para garantir concisão e segurança de memória:
@@ -125,10 +125,10 @@ Modelados como Java `record` imutáveis para garantir concisão e segurança de 
 
 ### 3.6 Adaptadores de Saída (`adapters/out/persistencia/`)
 * Implementam as interfaces de `port/out/`.
-* Utilizam Spring Data JPA, `JdbcTemplate` ou repositórios específicos.
-* Realizam o mapeamento bidirecional:
-  - **Domínio para Banco**: Converte atributos da entidade de domínio para parâmetros SQL ou entidades JPA.
-  - **Banco para Domínio**: Reconstrói as entidades puras a partir de `ResultSet` ou modelos JPA, preservando datas, identificadores e vínculos.
+* Delegam a um repositório Spring Data (`XxxJpaRepository extends JpaRepository<Xxx, Integer>`) da própria entidade de domínio.
+* Não fazem conversão entre classes: a entidade de domínio é a entidade JPA.
+* Consultam com métodos derivados ou JPQL (`@Query` sem `nativeQuery`). `JdbcTemplate` e SQL escrito à mão não são usados.
+* Durante a migração (#255 a #262), os módulos ainda não migrados mantêm as classes `*Entity` antigas.
 
 ---
 
@@ -343,9 +343,9 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
 
 Antes de concluir qualquer adição ou refatoração no sistema, verifique cada uma das seguintes regras invioláveis:
 
-- [ ] **Pureza do Domínio**: Nenhuma classe no pacote `br.edu.safeplace.backend.domain` importa Spring, Jakarta Persistence (`@Entity`, `@Table`, `@Id`), Hibernate ou Jackson.
-- [ ] **Desacoplamento dos Casos de Uso**: Os serviços em `application/usecase` dependem exclusivamente de interfaces `port/out` e nunca de classes adaptadoras concretas (`*JpaAdapter`, `*Repository`).
-- [ ] **Controle de Vazamento de Persistência**: Nenhuma conexão com banco (`JdbcTemplate`, `EntityManager`), `ResultSet` ou entidade relacional transpassa o limite do adaptador para os casos de uso.
+- [ ] **Limites do Domínio**: Nenhuma classe no pacote `br.edu.safeplace.backend.domain` importa Spring, Spring Data, Jackson, `application` ou `adapters`. Do JPA, só `jakarta.persistence.*` e `org.hibernate.annotations.Immutable` ([decisão #254](decisao-entidades-jpa-dominio.md)).
+- [ ] **Desacoplamento dos Casos de Uso**: Os serviços em `application/usecase` dependem exclusivamente de interfaces `port/out` e nunca de classes adaptadoras concretas (`*JpaAdapter`) nem de repositórios Spring Data (`*JpaRepository`).
+- [ ] **Controle de Vazamento de Persistência**: Nenhuma conexão com banco (`EntityManager`) ou repositório Spring Data transpassa o limite do adaptador para os casos de uso. Nenhum `JdbcTemplate` ou SQL nativo nos adaptadores.
 - [ ] **Uso Obrigatório de DTOs**: Os controladores nunca recebem ou expõem diretamente entidades de domínio. A comunicação ocorre exclusivamente através de Records de `application/dto/input` e `application/dto/output`.
 - [ ] **Testabilidade Unitária**: Qualquer caso de uso pode ser testado de forma unitária instanciando-se a classe diretamente com mocks ou fakes em memória das portas de saída, sem necessidade de carregar o Spring Context ou conectar a um banco de dados real.
 - [ ] **Isolamento de Testes de Integração**: Testes de persistência em PostgreSQL real (`*PersistenciaIntegracaoTest`) devem gerenciar adequadamente a limpeza de dados (inclusive desfazendo chaves estrangeiras circulares) para não interferir na execução de outros testes da suíte.
