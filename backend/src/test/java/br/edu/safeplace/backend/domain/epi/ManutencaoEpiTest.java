@@ -41,26 +41,6 @@ class ManutencaoEpiTest {
     }
 
     @Test
-    void deveValidarCamposObrigatoriosNaConstrucao() {
-        LocalDateTime agora = LocalDateTime.now();
-
-        assertThrows(IllegalArgumentException.class, () ->
-                new ManutencaoEpi(1, null, agora, TipoManutencao.PREVENTIVA, "Desc", ResultadoManutencao.APROVADO, "Resp"));
-
-        assertThrows(IllegalArgumentException.class, () ->
-                new ManutencaoEpi(1, 10, null, TipoManutencao.PREVENTIVA, "Desc", ResultadoManutencao.APROVADO, "Resp"));
-
-        assertThrows(IllegalArgumentException.class, () ->
-                new ManutencaoEpi(1, 10, agora, TipoManutencao.PREVENTIVA, "   ", ResultadoManutencao.APROVADO, "Resp"));
-
-        assertThrows(IllegalArgumentException.class, () ->
-                new ManutencaoEpi(1, 10, agora, TipoManutencao.PREVENTIVA, "Desc", null, "Resp"));
-
-        assertThrows(IllegalArgumentException.class, () ->
-                new ManutencaoEpi(1, 10, agora, TipoManutencao.PREVENTIVA, "Desc", ResultadoManutencao.APROVADO, "  "));
-    }
-
-    @Test
     void devePermitirTipoDeManutencaoAusenteNoMvp() {
         ManutencaoEpi manutencao = new ManutencaoEpi(
                 1, 10, LocalDateTime.now(), null, "Inspeção concluída",

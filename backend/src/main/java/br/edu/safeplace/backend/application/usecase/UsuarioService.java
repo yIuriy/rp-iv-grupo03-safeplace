@@ -69,7 +69,7 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
                             LogAuditoriaRepository logAuditoriaRepository,
                             OperadorAutenticado operadorAutenticado,
                             Validador<Colaborador> validador,
-                            Validador<String> cpfValidador) {
+                            @org.springframework.beans.factory.annotation.Qualifier("cpfValidador") Validador<String> cpfValidador) {
         this.repositorioPorta = repositorioPorta;
         this.validador = java.util.Objects.requireNonNull(validador, "Validador de pessoas é obrigatório.");
         this.cpfValidador = java.util.Objects.requireNonNull(cpfValidador, "Validador de CPF é obrigatório.");

@@ -1,11 +1,8 @@
 package br.edu.safeplace.backend.domain.epi;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EspecificacaoEPITest {
 
@@ -36,17 +33,5 @@ class EspecificacaoEPITest {
         );
 
         assertThat(especificacao.getQuantidadeMinima()).isZero();
-    }
-
-    @ParameterizedTest
-    @ValueSource(ints = {-1, Integer.MIN_VALUE})
-    void deveRejeitarQuantidadeMinimaNegativa(int quantidadeMinima) {
-        assertThatThrownBy(() -> new EspecificacaoEPI(
-                "Capacete",
-                quantidadeMinima,
-                ClassificacaoEPI.PROTECAO_DE_CABECA
-        ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Quantidade mínima não pode ser negativa.");
     }
 }

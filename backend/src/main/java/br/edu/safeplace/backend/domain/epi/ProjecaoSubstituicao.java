@@ -10,7 +10,6 @@ import java.util.Objects;
  * associada ao EPI analisado.
  */
 public class ProjecaoSubstituicao {
-
     private final Integer id;
     private final Integer epiId;
     private final LocalDate dataProjecao;
@@ -19,24 +18,11 @@ public class ProjecaoSubstituicao {
 
     public ProjecaoSubstituicao(Integer id, Integer epiId, LocalDate dataProjecao,
                                LocalDate dataEstimadaDescarte, String justificativa) {
-        if (epiId == null) {
-            throw new IllegalArgumentException("Identificador do EPI é obrigatório para a projeção.");
-        }
-        if (dataProjecao == null) {
-            throw new IllegalArgumentException("Data da projeção é obrigatória.");
-        }
-        if (dataEstimadaDescarte == null) {
-            throw new IllegalArgumentException("Data estimada de descarte é obrigatória.");
-        }
-        if (justificativa == null || justificativa.isBlank()) {
-            throw new IllegalArgumentException("Justificativa da projeção é obrigatória.");
-        }
-
         this.id = id;
         this.epiId = epiId;
         this.dataProjecao = dataProjecao;
         this.dataEstimadaDescarte = dataEstimadaDescarte;
-        this.justificativa = justificativa.trim();
+        this.justificativa = justificativa != null ? justificativa.trim() : null;
     }
 
     public static ProjecaoSubstituicao nova(Integer epiId, LocalDate dataProjecao,

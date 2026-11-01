@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import br.edu.safeplace.backend.validacao.Validador;
+import br.edu.safeplace.backend.validacao.epi.ManutencaoEpiValidador;
 
 @Service
 public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseCase {
@@ -28,12 +30,24 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
     private final ManutencaoEpiRepository manutencaoEpiRepository;
     private final UsuarioRepository usuarioRepository;
     private final LogAuditoriaRepository logAuditoriaRepository;
+    private final Validador<ManutencaoEpi> manutencaoValidador;
+
+    /** Usa o validador padrão; usado pelos testes sem contexto Spring. */
+    public ControlarManutencaoEpiService(EpiRepository epiRepository,
+                                         ManutencaoEpiRepository manutencaoEpiRepository,
+                                         UsuarioRepository usuarioRepository,
+                                         LogAuditoriaRepository logAuditoriaRepository) {
+        this(epiRepository, manutencaoEpiRepository, usuarioRepository, logAuditoriaRepository,
+                new ManutencaoEpiValidador());
+    }
 
     @Autowired
     public ControlarManutencaoEpiService(EpiRepository epiRepository,
                                          ManutencaoEpiRepository manutencaoEpiRepository,
                                          UsuarioRepository usuarioRepository,
-                                         LogAuditoriaRepository logAuditoriaRepository) {
+                                         LogAuditoriaRepository logAuditoriaRepository,
+                                         Validador<ManutencaoEpi> manutencaoValidador) {
+        this.manutencaoValidador = manutencaoValidador;
         this.epiRepository = epiRepository;
         this.manutencaoEpiRepository = manutencaoEpiRepository;
         this.usuarioRepository = usuarioRepository;
@@ -97,6 +111,8 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
                 responsavelEmail != null ? responsavelEmail : inputDTO.responsavelManutencao(),
                 buscarResponsavelId(responsavelEmail)
         );
+        // Chain of Responsibility (#264): valida antes de concluir a manutenção e de gravar.
+        manutencaoValidador.validar(manutencao);
 
         epi.concluirManutencao(manutencao);
         epiRepository.salvar(epi);

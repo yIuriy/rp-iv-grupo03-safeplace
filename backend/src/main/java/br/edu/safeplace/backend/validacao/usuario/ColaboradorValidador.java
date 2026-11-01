@@ -6,6 +6,7 @@ import static br.edu.safeplace.backend.validacao.RegraElo.vazio;
 import java.time.LocalDate;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
@@ -26,7 +27,8 @@ import br.edu.safeplace.backend.validacao.ValidadorEmCadeia;
 public class ColaboradorValidador extends ValidadorEmCadeia<Colaborador> {
 
     @Autowired
-    public ColaboradorValidador(UsuarioRepository usuarios, Validador<String> cpfValidador) {
+    public ColaboradorValidador(UsuarioRepository usuarios,
+            @Qualifier("cpfValidador") Validador<String> cpfValidador) {
         super(montarCadeia(usuarios, cpfValidador));
     }
 

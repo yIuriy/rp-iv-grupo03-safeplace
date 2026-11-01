@@ -23,22 +23,6 @@ public class ManutencaoEpi {
                          TipoManutencao tipoManutencao, String descricao,
                          ResultadoManutencao resultado, String responsavelManutencao,
                          Integer responsavelId) {
-        if (epiId == null) {
-            throw new IllegalArgumentException("Identificador do EPI é obrigatório.");
-        }
-        if (dataManutencao == null) {
-            throw new IllegalArgumentException("Data da manutenção é obrigatória.");
-        }
-        if (descricao == null || descricao.isBlank()) {
-            throw new IllegalArgumentException("Descrição da manutenção é obrigatória.");
-        }
-        if (resultado == null) {
-            throw new IllegalArgumentException("Resultado da manutenção é obrigatório.");
-        }
-        if (responsavelManutencao == null || responsavelManutencao.isBlank()) {
-            throw new IllegalArgumentException("Responsável pela manutenção é obrigatório.");
-        }
-
         this.id = id;
         this.epiId = epiId;
         this.dataManutencao = dataManutencao;

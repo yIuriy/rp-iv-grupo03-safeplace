@@ -21,11 +21,6 @@ public class LoteEPI {
             int quantidadeRecebida,
             ModeloEPI modelo
     ) {
-        if (modelo == null) {
-            throw new IllegalArgumentException(
-                    "Modelo do EPI é obrigatório para o lote."
-            );
-        }
 
         this.id = id;
         this.numeroLote = numeroLote;

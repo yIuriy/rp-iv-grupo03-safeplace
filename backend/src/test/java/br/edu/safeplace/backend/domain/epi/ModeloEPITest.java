@@ -64,15 +64,6 @@ class ModeloEPITest {
     }
 
     @Test
-    void deveRejeitarValidadeAusente() {
-        assertThatThrownBy(() ->
-                new ModeloEPI(1234, "Marca Teste", null)
-        )
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Data de validade do CA é obrigatória.");
-    }
-
-    @Test
     void deveRejeitarReferenciaAusente() {
         ModeloEPI modelo = new ModeloEPI(
                 1234,

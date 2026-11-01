@@ -7,7 +7,6 @@ import java.util.Objects;
  * Value Object representando um alerta preventivo gerado para um EPI (RF21, UC10).
  */
 public class AlertaSubstituicaoEpi {
-
     private final Integer epiId;
     private final String nomeEpi;
     private final TipoAlertaSubstituicao tipoAlerta;
@@ -19,23 +18,10 @@ public class AlertaSubstituicaoEpi {
     public AlertaSubstituicaoEpi(Integer epiId, String nomeEpi, TipoAlertaSubstituicao tipoAlerta,
                                  String mensagem, LocalDate dataLimiteEstimada, Long diasRestantes,
                                  String prioridade) {
-        if (epiId == null) {
-            throw new IllegalArgumentException("Identificador do EPI é obrigatório no alerta.");
-        }
-        if (nomeEpi == null || nomeEpi.isBlank()) {
-            throw new IllegalArgumentException("Nome do EPI é obrigatório no alerta.");
-        }
-        if (tipoAlerta == null) {
-            throw new IllegalArgumentException("Tipo de alerta é obrigatório.");
-        }
-        if (mensagem == null || mensagem.isBlank()) {
-            throw new IllegalArgumentException("Mensagem do alerta é obrigatória.");
-        }
-
         this.epiId = epiId;
-        this.nomeEpi = nomeEpi.trim();
+        this.nomeEpi = nomeEpi != null ? nomeEpi.trim() : null;
         this.tipoAlerta = tipoAlerta;
-        this.mensagem = mensagem.trim();
+        this.mensagem = mensagem != null ? mensagem.trim() : null;
         this.dataLimiteEstimada = dataLimiteEstimada;
         this.diasRestantes = diasRestantes;
         this.prioridade = prioridade != null ? prioridade.trim() : "MEDIA";

@@ -105,21 +105,6 @@ class EpiTest {
                 assertTrue(epi.isEstoqueCritico());
         }
 
-        @Test
-        void deveValidarCamposObrigatoriosNaConstrucao() {
-                assertThrows(IllegalArgumentException.class,
-                                () -> new Epi(1, "", "CA-111", 5, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null, null,
-                                                null));
-
-                assertThrows(IllegalArgumentException.class,
-                                () -> new Epi(1, "Luva", null, 5, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null, null,
-                                                null));
-
-                assertThrows(IllegalArgumentException.class,
-                                () -> new Epi(1, "Luva", "CA-111", -1, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null, null,
-                                                null));
-        }
-
         @ParameterizedTest
         @NullAndEmptySource
         @ValueSource(strings = { " ", "\t", "\n" })
@@ -211,40 +196,12 @@ class EpiTest {
         }
 
         @Test
-        void deveRejeitarCadastroComCaVencido() {
-                assertThatThrownBy(() -> Epi.novo(
-                                "Capacete", "CA-1234", 10, 2,
-                                DATA_CADASTRO.minusDays(1), 365, DATA_CADASTRO, null, null))
-                                .isInstanceOf(IllegalArgumentException.class)
-                                .hasMessage("Não é permitido cadastrar EPI com CA vencido.");
-        }
-
-        @Test
         void devePermitirCadastroNoDiaDoVencimento() {
                 Epi epi = Epi.novo(
                                 "Capacete", "CA-1234", 10, 2,
                                 DATA_CADASTRO, 365, DATA_CADASTRO, null, null);
 
                 assertThat(epi.getDataValidadeCa()).isEqualTo(DATA_CADASTRO);
-        }
-
-        @Test
-        void deveRejeitarCadastroSemValidadeDoCa() {
-                assertThatThrownBy(() -> Epi.novo(
-                                "Capacete", "CA-1234", 10, 2,
-                                null, 365, DATA_CADASTRO, null, null))
-                                .isInstanceOf(IllegalArgumentException.class)
-                                .hasMessage("Data de validade do CA é obrigatória.");
-        }
-
-        @Test
-        void deveRejeitarCadastroComFormatoDeCaInvalido() {
-                assertThatThrownBy(() -> Epi.novo(
-                                "Capacete", "ABC", 10, 2,
-                                VALIDADE_CA, 365, DATA_CADASTRO, null, null))
-                                .isInstanceOf(IllegalArgumentException.class)
-                                .hasMessage(
-                                                "Número do CA deve conter apenas dígitos, com prefixo CA- opcional.");
         }
 
         @Test
@@ -258,15 +215,6 @@ class EpiTest {
                 assertThat(epi.getId()).isEqualTo(1);
                 assertThat(epi.getDataValidadeCa()).isEqualTo(validadeAntiga);
                 assertThat(epi.getModelo().verificarCA(DATA_CADASTRO)).isFalse();
-        }
-
-        @Test
-        void deveImpedirCadastroComCaVencidoPeloConstrutorPublico() {
-                assertThatThrownBy(() -> new Epi(
-                                null, "Capacete", "CA-1234", 10, 2,
-                                StatusEpi.DISPONIVEL, LocalDate.MIN, 365, null, null))
-                                .isInstanceOf(IllegalArgumentException.class)
-                                .hasMessage("Não é permitido cadastrar EPI com CA vencido.");
         }
 
         @Test
@@ -310,20 +258,6 @@ class EpiTest {
         }
 
         @Test
-        void deveRejeitarMinimoNegativoNaCriacaoDoEpi() {
-                assertThatThrownBy(() -> Epi.novo(
-                                "Óculos",
-                                "1234",
-                                10,
-                                -1,
-                                VALIDADE_CA,
-                                365,
-                                DATA_CADASTRO, null, null))
-                                .isInstanceOf(IllegalArgumentException.class)
-                                .hasMessage("Quantidade mínima não pode ser negativa.");
-        }
-
-        @Test
         void deveValidarCaAoCriarEpiSemIdPeloConstrutorPublico() {
                 Epi epi = new Epi(
                                 null,
@@ -339,40 +273,6 @@ class EpiTest {
 
                 assertThat(epi.getId()).isNull();
                 assertThat(epi.getNumeroCa()).isEqualTo("1234");
-        }
-
-        @Test
-        void deveRejeitarNomeNulo() {
-                assertThatThrownBy(() -> new Epi(
-                                1,
-                                null,
-                                "1234",
-                                10,
-                                2,
-                                StatusEpi.DISPONIVEL,
-                                VALIDADE_CA,
-                                365,
-                                "Capacete de segurança",
-                                ClassificacaoEPI.PROTECAO_DE_CABECA))
-                                .isInstanceOf(IllegalArgumentException.class)
-                                .hasMessage("Nome do EPI é obrigatório.");
-        }
-
-        @Test
-        void deveRejeitarStatusNulo() {
-                assertThatThrownBy(() -> new Epi(
-                                1,
-                                "Capacete",
-                                "1234",
-                                10,
-                                2,
-                                null,
-                                VALIDADE_CA,
-                                365,
-                                "Capacete de segurança",
-                                ClassificacaoEPI.PROTECAO_DE_CABECA))
-                                .isInstanceOf(IllegalArgumentException.class)
-                                .hasMessage("Status do EPI é obrigatório.");
         }
 
         @Test

@@ -14,40 +14,45 @@ public class ModeloEPI {
     }
 
     public ModeloEPI(Integer id, int ca, String marca, LocalDate validadeCA) {
-        if (ca <= 0)
-            throw new IllegalArgumentException("CA inválido.");
-        if (validadeCA == null)
-            throw new IllegalArgumentException("Data de validade do CA é obrigatória.");
-
         this.id = id;
         this.ca = ca;
         this.marca = marca;
         this.validadeCA = validadeCA;
     }
 
-    /** Adapta o formato textual legado da API ao CA inteiro do modelo UML. */
+    /**
+     * Adapta o formato textual legado da API ao CA inteiro do modelo UML. Texto fora do formato vira
+     * CA 0, recusado como "CA inválido."; o formato é validado antes por NumeroCaValidador (#264).
+     */
     public static ModeloEPI deCadastroLegado(String numero, LocalDate validadeCA) {
         return deCadastroLegado(numero, null, validadeCA);
     }
 
     /** Igual a {@link #deCadastroLegado(String, LocalDate)}, preservando a marca informada no cadastro. */
     public static ModeloEPI deCadastroLegado(String numero, String marca, LocalDate validadeCA) {
-        if (numero == null || numero.isBlank()) {
-            throw new IllegalArgumentException("Número do CA é obrigatório.");
-        }
-        String normalizado = numero.strip();
-        if (normalizado.startsWith("CA-")) {
-            normalizado = normalizado.substring(3);
-        }
-        if (!normalizado.matches("[0-9]+")) {
-            throw new IllegalArgumentException(
-                    "Número do CA deve conter apenas dígitos, com prefixo CA- opcional.");
+        return new ModeloEPI(converterNumero(numero), normalizarMarca(marca), validadeCA);
+    }
+
+    /** Dígitos do CA, com prefixo "CA-" opcional; qualquer outro texto vira 0. */
+    public static int converterNumero(String numero) {
+        String normalizado = numeroSemPrefixo(numero);
+        if (normalizado == null || !normalizado.matches("[0-9]+")) {
+            return 0;
         }
         try {
-            return new ModeloEPI(Integer.parseInt(normalizado), normalizarMarca(marca), validadeCA);
-        } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException("Número do CA excede o limite inteiro do modelo.", ex);
+            return Integer.parseInt(normalizado);
+        } catch (NumberFormatException acimaDoLimite) {
+            return 0;
         }
+    }
+
+    /** Remove espaços e o prefixo "CA-"; nulo continua nulo. */
+    public static String numeroSemPrefixo(String numero) {
+        if (numero == null) {
+            return null;
+        }
+        String normalizado = numero.strip();
+        return normalizado.startsWith("CA-") ? normalizado.substring(3) : normalizado;
     }
 
     /**

@@ -49,6 +49,9 @@ import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
 import br.edu.safeplace.backend.domain.epi.exception.CertificadoAprovacaoVencidoException;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
+import br.edu.safeplace.backend.validacao.Validador;
+import br.edu.safeplace.backend.validacao.epi.ManutencaoEpiValidador;
+import br.edu.safeplace.backend.validacao.epi.MovimentacaoEstoqueValidador;
 
 @Service
 public class EmprestimoService implements ControlarEmprestimoUseCase {
@@ -60,11 +63,17 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
     private final VerificadorImpedimentoCapacitacao capacitacoes;
     private final LogAuditoriaRepository auditoria;
     private final ManutencaoEpiRepository manutencoes;
+    private final Validador<MovimentacaoEstoque> movimentacaoValidador;
+    private final Validador<ManutencaoEpi> manutencaoValidador;
 
     @Autowired
     public EmprestimoService(EmprestimoRepository emprestimos, EpiRepository epis,
                              UsuarioRepository usuarios, VerificadorImpedimentoCapacitacao capacitacoes,
-                             LogAuditoriaRepository auditoria, ManutencaoEpiRepository manutencoes) {
+                             LogAuditoriaRepository auditoria, ManutencaoEpiRepository manutencoes,
+                             Validador<MovimentacaoEstoque> movimentacaoValidador,
+                             Validador<ManutencaoEpi> manutencaoValidador) {
+        this.movimentacaoValidador = movimentacaoValidador;
+        this.manutencaoValidador = manutencaoValidador;
         this.emprestimos = emprestimos;
         this.epis = epis;
         this.usuarios = usuarios;
@@ -79,6 +88,14 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
                              UsuarioRepository usuarios, VerificadorImpedimentoCapacitacao capacitacoes,
                              LogAuditoriaRepository auditoria) {
         this(emprestimos, epis, usuarios, capacitacoes, auditoria, null);
+    }
+
+    /** Usa os validadores padrão; usado pelos testes sem contexto Spring. */
+    public EmprestimoService(EmprestimoRepository emprestimos, EpiRepository epis,
+                             UsuarioRepository usuarios, VerificadorImpedimentoCapacitacao capacitacoes,
+                             LogAuditoriaRepository auditoria, ManutencaoEpiRepository manutencoes) {
+        this(emprestimos, epis, usuarios, capacitacoes, auditoria, manutencoes,
+                new MovimentacaoEstoqueValidador(), new ManutencaoEpiValidador());
     }
 
     @Override
@@ -99,6 +116,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
 
         MovimentacaoEstoque saida = epi.removerEstoque(Emprestimo.QUANTIDADE_POR_EMPRESTIMO,
                 "Empréstimo ao colaborador " + beneficiario.getNome(), operador.getId());
+        movimentacaoValidador.validar(saida);
         epis.atualizarSaldo(epi);
         epis.salvarMovimentacao(saida);
 
@@ -128,6 +146,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
         if (estado.retornaAoEstoque()) {
             MovimentacaoEstoque retorno = epi.adicionarEstoque(Emprestimo.QUANTIDADE_POR_EMPRESTIMO,
                     "Devolução do empréstimo " + emprestimoId + " (item apto)", operador.getId());
+            movimentacaoValidador.validar(retorno);
             epis.atualizarSaldo(epi);
             epis.salvarMovimentacao(retorno);
         } else if (estado == EstadoDevolucao.MANUTENCAO) {
@@ -140,6 +159,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
                     operador.getNome(),
                     operador.getId()
             );
+            manutencaoValidador.validar(manutencao);
             if (manutencoes != null) {
                 manutencoes.salvar(manutencao);
             }
@@ -156,6 +176,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
                     LocalDateTime.now(),
                     "Baixa por descarte na devolução do empréstimo " + emprestimoId
             );
+            movimentacaoValidador.validar(baixaDescarte);
             epis.salvarMovimentacao(baixaDescarte);
             epi.registrarDevolucaoDescarte();
             epis.salvar(epi);
