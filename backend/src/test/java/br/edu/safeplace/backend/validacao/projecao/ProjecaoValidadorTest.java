@@ -131,7 +131,10 @@ class ProjecaoValidadorTest {
     @Test
     @DisplayName("Lista todas as pendências na ordem antiga; validar lança a primeira, como o cálculo fazia")
     void listaPendenciasNaOrdemDosElos() {
-        Epi epi = criarEpi(8, "Luva", null, null, 10, 2);
+        // Mock: o construtor de Epi ainda recusa CA nulo (essa validação sai do domínio em #264).
+        Epi epi = org.mockito.Mockito.mock(Epi.class);
+        org.mockito.Mockito.when(epi.getId()).thenReturn(8);
+        org.mockito.Mockito.when(epi.getNome()).thenReturn("Luva");
         ContextoProjecao contexto = new ContextoProjecao(epi, null, List.of(), hoje, 90);
 
         assertThat(validador.verificar(contexto).mensagens()).containsExactly(
