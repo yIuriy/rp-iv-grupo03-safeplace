@@ -31,7 +31,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [DTO Assembler](#dto-assembler--ocorrenciaoutputdto) | Fowler / PoEAA | Backend: `OcorrenciaOutputAssembler` sem expor `PlanoDeAcao` | [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245) | Pendente |
 | [Strategy (Backend)](#strategy--fonte-de-tempo-clock) | GoF, comportamental | Backend: injeção de `java.time.Clock` nas regras de vencimento | [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247) | Pendente |
 | [Adapter (Frontend)](#adapter--leitura-da-api-e-contrato-de-epi) | GoF, estrutural | Frontend: primitivas de leitura da API e unificação de `Epi` | [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244), [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) | Pendente |
-| [Template Method (hook)](#template-method-hook--envio-de-formulario) | GoF, comportamental | Frontend: submissão de formulários (`useEnvioFormulario`) | [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233), [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243) | Aplicado (1/2: #233) |
+| [Template Method (hook)](#template-method-hook--envio-de-formulario) | GoF, comportamental | Frontend: submissão de formulários (`useEnvioFormulario`) | [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233), [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243) | Aplicado (2/2: #233, #243) |
 | [State (Frontend)](#state--dialogos-de-taskspage) | GoF, comportamental | Frontend: estado único `DialogoTarefa` em `TasksPage` | [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246) | Pendente |
 
 ---
@@ -1524,7 +1524,7 @@ As regras que continuam no domínio são das **operações** que mudam o estado 
 
 **Intenção:** definir o esqueleto da submissão de formulários (`executarEnvio`, usado pelo hook `useEnvioFormulario`), delegando leitura, validação, ordem de foco, envio e descrição de falha por parâmetros.
 
-**Issues:** [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233) (parte 1, aplicada) e [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243) (parte 2).
+**Issues:** [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233) (parte 1) e [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243) (parte 2), ambas aplicadas.
 
 ### Problema (antes)
 
@@ -1565,6 +1565,23 @@ Decisões de comportamento:
 
 Descartado por agora: `react-hook-form`, que está instalado sem uso e exigiria reescrever todos os formulários.
 
+**Parte 2 ([#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243)).** Os formulários restantes trouxeram dois casos que o esqueleto da parte 1 não cobria, e ele ganhou três peças:
+
+- **Hook operation `liberarAposSucesso`.** No Template Method do GoF, uma *hook operation* é um passo opcional com comportamento padrão. O padrão continua sendo manter `enviando` depois do sucesso, porque o formulário é desmontado. Com `liberarAposSucesso: true`, o botão é liberado. Usam a opção os formulários que continuam montados: os três de capacitações (seções da página, que limpam o rascunho e aceitam o próximo cadastro), os dois diálogos de `EpiPage` e os dois de tarefas (que liberavam o botão no `finally`).
+- **`ordemPorId`.** Os formulários de capacitações identificam os campos por `id` com prefixo (`certificacao-nome`). A função monta a `ordem` a partir da lista de campos e do prefixo.
+- **Foco em grupo de rádio.** `focarCampo` passou a focar a primeira opção quando o `name` é de um grupo de rádio (`RadioNodeList`), como já faziam `RelatoFormDialog` e `PlanoAcaoPainel`.
+
+`MovimentacaoDialog` guardava o estado de envio no componente do diálogo, que fica montado entre uma abertura e outra, e zerava esse estado à mão ao fechar. O formulário foi para um componente interno (`MovimentacaoFormulario`) que só existe com o diálogo aberto, como os demais diálogos do projeto.
+
+**Formulários que não entraram (4 de 19), com a justificativa:**
+
+| Componente | Por que não usa o hook |
+| --- | --- |
+| `EntregaDialog` | Fluxo em etapas (`formulario` → `duplicidade` → `concluida`): quando o servidor aponta duplicidade de tipo de EPI, o diálogo troca de etapa e pede confirmação com justificativa, em vez de mostrar uma falha. As cópias locais do foco (`EntregaDialog` e `EntregaEtapas`) foram trocadas pelo `focarCampo` compartilhado. |
+| `AcaoPlanoItem` | Vários envios no mesmo item (concluir, prorrogar, reatribuir, configurar alerta), todos pelo mesmo `executar`. As três cópias locais do foco foram trocadas pelo `focarCampo` compartilhado. |
+| `OcorrenciaDetalheDialog` | Não é um formulário: são botões de ação (enviar para triagem e arquivar) que chamam a API, sem leitura nem validação de campos. |
+| `LoginPage` | Depois de uma falha da API devolve o foco ao campo de senha, um passo a mais no ramo de falha. O foco usa `ref` do React, sem cópia de `focarCampo`. |
+
 ### Papéis do padrão
 
 | Papel no padrão | Elemento no código | Responsabilidade |
@@ -1572,7 +1589,8 @@ Descartado por agora: `react-hook-form`, que está instalado sem uso e exigiria 
 | Template Method (método-modelo) | `executarEnvio` | Sequência fixa: ler, validar, focar, limpar falha, enviar, descrever falha |
 | Template Method (hook) | `useEnvioFormulario` → `{ enviando, erros, falha, temPendencias, onSubmit }` | Ligar o método-modelo ao estado do React e bloquear envio duplo |
 | Primitive Operations | `ler`, `validar`, `ordem`, `enviar`, `descreverFalha` | Passos variáveis fornecidos por cada formulário |
-| ConcreteClasses | `SetorFormDialog`, `AreaRiscoFormDialog`, `InspecaoFormDialog`, `TarefaFormDialog`, `PessoaFormulario` (#233) | Preencher as operações primitivas |
+| Hook operation | `liberarAposSucesso` (#243) | Passo opcional: liberar o botão depois do sucesso nos formulários que continuam montados |
+| ConcreteClasses | `SetorFormDialog`, `AreaRiscoFormDialog`, `InspecaoFormDialog`, `TarefaFormDialog`, `PessoaFormulario` (#233); `CertificacaoForm`, `ExigenciaForm`, `TreinamentoForm`, `MovimentacaoDialog`, `DevolucaoDialog`, `RelatoFormDialog`, `PlanoAcaoPainel` (nova ação), `EpiPage` (cadastro e manutenção), `ClassificarTarefaDialog`, `VincularEpisTarefaDialog` (#243) | Preencher as operações primitivas |
 
 ### Diagramas
 
@@ -1650,6 +1668,48 @@ classDiagram
   Formularios ..> EtapasDoEnvio : fornece
 ```
 
+**Depois (#243).** O esqueleto ganhou a hook operation opcional; 15 dos 19 componentes usam o hook.
+
+```mermaid
+classDiagram
+  direction TB
+  class executarEnvio {
+    <<Template Method>>
+    ler → validar → focar → limpar falha → enviar → descrever falha
+    se liberarAposSucesso: libera o botão
+  }
+  class EtapasDoEnvio {
+    <<Primitive Operations + Hook operation>>
+    +ler(form)
+    +validar(lido)
+    +ordem
+    +enviar(dados)
+    +descreverFalha(erro)
+    +liberarAposSucesso? (opcional)
+  }
+  class FormulariosQueFecham {
+    <<ConcreteClasses>>
+    Setor, Área, Inspeção, Tarefa, Pessoa
+    Movimentação, Devolução, Relato, Nova ação
+  }
+  class FormulariosQueContinuamMontados {
+    <<ConcreteClasses>>
+    Certificação, Exigência, Treinamento
+    Cadastro de EPI, Manutenção de EPI
+    Classificar tarefa, Vincular EPIs
+    liberarAposSucesso: true
+  }
+  class ForaDoHook {
+    <<Justificados>>
+    EntregaDialog, AcaoPlanoItem
+    OcorrenciaDetalheDialog, LoginPage
+  }
+  executarEnvio --> EtapasDoEnvio : chama os ganchos
+  FormulariosQueFecham ..> EtapasDoEnvio : fornece
+  FormulariosQueContinuamMontados ..> EtapasDoEnvio : fornece
+  ForaDoHook ..> focarCampo : só o foco compartilhado
+```
+
 ### Código antes × depois
 
 **`SetorFormDialog` (#233).**
@@ -1723,20 +1783,69 @@ export async function executarEnvio<L, D, E>(form, etapas, acoes): Promise<Resul
 }
 ```
 
+**`CertificacaoForm` (#243), formulário que continua aberto.**
+
+Antes:
+
+```tsx
+async function enviar(event: FormEvent<HTMLFormElement>) {
+  event.preventDefault()
+  if (enviando) return
+  const { dados, erros: pendencias } = validarCertificacao(rascunho, hoje)
+  setErros(pendencias)
+  if (!dados) {
+    const primeiro = ordemDeFoco.find(campo => pendencias[campo])
+    if (primeiro) document.getElementById(`certificacao-${primeiro}`)?.focus()
+    return
+  }
+  setFalha('')
+  setEnviando(true)
+  try {
+    const salva = await cadastrarCertificacao(dados)
+    setSucesso(`Certificação "${salva.nome}" cadastrada.`)
+    setRascunho(vazio)
+  } catch (erro) {
+    setFalha(descreverFalhaCadastro(erro))
+  } finally {
+    setEnviando(false)
+  }
+}
+```
+
+Depois:
+
+```tsx
+const { enviando, erros, falha, onSubmit } = useEnvioFormulario({
+  ler: () => rascunho,
+  validar: atual => validarCertificacao(atual, hoje),
+  ordem: ordemPorId<Erros<CampoCertificacao>>('certificacao', ordemDeFoco),
+  enviar: async dados => {
+    const salva = await cadastrarCertificacao(dados)
+    setSucesso(`Certificação "${salva.nome}" cadastrada.`)
+    setRascunho(vazio)
+  },
+  descreverFalha: descreverFalhaCadastro,
+  liberarAposSucesso: true,
+}, {} as Erros<CampoCertificacao>)
+```
+
 ### Benefício
 
 **Parte 1 (#233).** A regra de envio passou a existir em um lugar só, com testes próprios. Corrigir ou melhorar o envio (por exemplo, o bloqueio de envio duplo) vale para todos os formulários migrados de uma vez: área e tarefa ganharam esse bloqueio sem nenhuma linha específica. Cada formulário ficou com o que é dele (como ler, validar e chamar a API), e não com a mecânica de `try/catch` e de estado de carregamento. Um formulário novo não precisa copiar o fluxo de outro, que era como as cópias divergiam.
 
+**Parte 2 (#243).** A regra ficou com uma variação explícita e nomeada (`liberarAposSucesso`) em vez de variações acidentais. Antes, uns formulários liberavam o botão no `finally` e outros não, sem que o código dissesse por quê; agora a escolha aparece numa linha e tem teste. Dez componentes a mais deixaram de repetir o fluxo, e o código do frontend diminuiu. Os quatro que ficaram de fora estão justificados e já usam o `focarCampo` compartilhado onde focavam campos por `name`; o mesmo vale para `ConsultaOcorrenciasForm`, que só repassa os critérios de busca à tela (`aoConsultar`) e não tem estado de envio.
+
 ### Métricas locais
 
-| Métrica | Antes (v1.0.0) | `dev` antes da #233 | Depois da #233 |
-| --- | ---: | ---: | ---: |
-| Formulários com `useState` próprio de `enviando` | 19 | 19 | 14 |
-| Cópias locais de `focarCampo` nos formulários | | 2 | 0 (uma em `shared/formularios`) |
-| `useState` no frontend | | 202 | 192 |
-| Linhas de código TS/TSX do frontend | 9.140 | 9.142 | 9.152 |
+| Métrica | Antes (v1.0.0) | `dev` antes da #233 | Depois da #233 | Depois da #243 |
+| --- | ---: | ---: | ---: | ---: |
+| Componentes com `useState` próprio de `enviando` | 19 | 19 | 14 | 4 (justificados) |
+| Componentes que usam `useEnvioFormulario` | 0 | 0 | 5 | 15 |
+| Cópias locais da lógica de foco por `name` | | 2 funções + 9 trechos inline | 9 trechos inline | 0 (uma função em `shared/formularios`) |
+| `useState` no frontend | | 202 | 192 | 164 |
+| Linhas de código TS/TSX do frontend | 9.140 | 9.142 | 9.152 | 9.044 |
 
-As linhas de código subiram 10 nesta parte: o hook e o método-modelo são novos, e só 5 formulários foram migrados. A redução de linhas é critério da parte 2 ([#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243)), quando os demais formulários deixam de repetir o fluxo. Medição: `python scripts/metricas/coletar_metricas.py` (`frontend.linhas_ts_tsx.codigo`, `frontend.useState`).
+Na parte 1 as linhas subiram 10, porque o hook e o método-modelo são novos e só 5 formulários tinham sido migrados. Na parte 2 o código do frontend ficou 96 linhas abaixo da linha de base (9.140) e 108 abaixo da parte 1. Medição: `python scripts/metricas/coletar_metricas.py` (`frontend.linhas_ts_tsx.codigo`, `frontend.useState`).
 
 ### Evidências
 
@@ -1748,7 +1857,13 @@ Os specs de tela dos 5 formulários (`setores`, `areas-risco`, `inspecoes`, `tar
 
 Suíte do frontend: `npm ci && npm run lint && npm run build` sem erros; Playwright `--workers=2` em servidor isolado: **287 testes, 287 aprovados** (280 existentes e 7 novos).
 
-**Parte 2 (#243).** *A preencher.*
+**Parte 2 (#243).**
+
+Testes novos em `tests/envio-formulario.spec.ts` (agora 9): a hook operation `liberarAposSucesso` libera o botão depois do sucesso; `ordemPorId` monta a ordem dos campos com prefixo. O foco em grupo de rádio é exercitado pelos specs de tela de relato e de plano de ação.
+
+Os specs de tela dos componentes migrados (`capacitacoes`, `estoque`, `emprestimos`, `ocorrencias`, `ocorrencias-acompanhamento`, `epis`, `tarefas`) continuam passando sem alteração.
+
+Suíte do frontend: `npm ci && npm run lint && npm run build` sem erros; Playwright `--workers=2` em servidor isolado: **289 testes, 289 aprovados** (287 da parte 1 e 2 novos).
 
 ---
 

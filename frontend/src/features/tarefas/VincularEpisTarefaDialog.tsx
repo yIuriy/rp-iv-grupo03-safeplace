@@ -1,9 +1,11 @@
 // Modal de vinculação de EPIs obrigatórios a uma tarefa (RF12, UC08, US12).
-// Exclusivo do Gestor de Segurança: seleciona quais EPIs do catálogo são obrigatórios.
+// Exclusivo do Gestor de Segurança: seleciona quais EPIs do catálogo são obrigatórios. O fluxo de envio
+// vem do hook useEnvioFormulario (Template Method, #243).
 
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
 import { Alert, Button, Checkbox, Dialog, Select } from '../../shared/components'
-import { mensagemDaApi } from '../../shared/api/erros'
+import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
+import { criarDescritorDeFalha, mensagemDaApi, usarMensagemDaApi } from '../../shared/api/erros'
 import {
   classificacoesEpi,
   listarEpis,
@@ -42,8 +44,7 @@ function DialogoVinculo({
   const [episSelecionados, setEpisSelecionados] = useState<number[]>(tarefa.episIds ?? [])
   const [filtroClassificacao, setFiltroClassificacao] = useState<string>('')
   const [carregando, setCarregando] = useState(true)
-  const [enviando, setEnviando] = useState(false)
-  const [erro, setErro] = useState<string | null>(null)
+  const [falhaCarga, setFalhaCarga] = useState('')
 
   useEffect(() => {
     Promise.all([
@@ -57,10 +58,7 @@ function DialogoVinculo({
         }
       })
       .catch(err => {
-        setErro(
-          mensagemDaApi(err) ||
-            'Não foi possível carregar os EPIs. Verifique sua conexão.'
-        )
+        setFalhaCarga(mensagemDaApi(err) || 'Não foi possível carregar os EPIs. Verifique sua conexão.')
       })
       .finally(() => {
         setCarregando(false)
@@ -73,24 +71,20 @@ function DialogoVinculo({
     )
   }
 
-  async function submeter(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setErro(null)
-    setEnviando(true)
-
-    try {
-      const atualizada = await associarEpisTarefa(tarefa.id, episSelecionados)
-      aoSalvar(atualizada)
+  const { enviando, falha, onSubmit } = useEnvioFormulario({
+    ler: () => episSelecionados,
+    validar: ids => ({ dados: ids, erros: {} }),
+    ordem: [],
+    enviar: async ids => {
+      aoSalvar(await associarEpisTarefa(tarefa.id, ids))
       aoFechar()
-    } catch (err: unknown) {
-      setErro(
-        mensagemDaApi(err) ||
-          'Não foi possível associar os EPIs à tarefa. Tente novamente.'
-      )
-    } finally {
-      setEnviando(false)
-    }
-  }
+    },
+    descreverFalha: criarDescritorDeFalha({},
+      usarMensagemDaApi('Não foi possível associar os EPIs à tarefa. Tente novamente.')),
+    liberarAposSucesso: true,
+  }, {})
+  // Uma mensagem por vez, como antes: a falha do envio vence a do carregamento, que some durante o envio.
+  const erro = falha || (enviando ? '' : falhaCarga)
 
   const episFiltrados = episDisponiveis.filter(epi => {
     if (!filtroClassificacao) return true
@@ -105,7 +99,7 @@ function DialogoVinculo({
       description="Selecione os equipamentos de proteção individual necessários para a realização desta atividade operacional."
       onClose={aoFechar}
     >
-      <form onSubmit={submeter} className="sp-dialog-body" noValidate>
+      <form onSubmit={onSubmit} className="sp-dialog-body" noValidate>
         {erro && (
           <Alert tone="danger" title="Não foi possível salvar" live="assertive">
             {erro}

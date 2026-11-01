@@ -1,7 +1,10 @@
-// Cadastro de certificação de um colaborador (UC02): nome, emissão e vencimento.
+// Cadastro de certificação de um colaborador (UC02): nome, emissão e vencimento. O fluxo de envio
+// vem do hook useEnvioFormulario (Template Method, #243); o formulário fica aberto para o próximo cadastro.
 
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { Alert, Button, Select, TextField } from '../../shared/components'
+import { ordemPorId } from '../../shared/formularios/envioFormulario'
+import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
 import { cadastrarCertificacao, descreverFalhaCadastro } from './api'
 import { validarCertificacao, type CampoCertificacao, type Erros, type RascunhoCertificacao } from './validacaoCapacitacao'
 import { useColaboradoresOpcoes } from './useColaboradoresOpcoes'
@@ -13,42 +16,29 @@ const ordemDeFoco: CampoCertificacao[] = ['colaboradorId', 'nome', 'dataEmissao'
 export function CertificacaoForm({ hoje }: { hoje: string }) {
   const colaboradores = useColaboradoresOpcoes()
   const [rascunho, setRascunho] = useState(vazio)
-  const [erros, setErros] = useState<Erros<CampoCertificacao>>({})
-  const [falha, setFalha] = useState('')
   const [sucesso, setSucesso] = useState('')
-  const [enviando, setEnviando] = useState(false)
 
   const alterar = (campo: CampoCertificacao, valor: string) => {
     setRascunho(atual => ({ ...atual, [campo]: valor }))
     setSucesso('')
   }
 
-  async function enviar(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (enviando) return
-    const { dados, erros: pendencias } = validarCertificacao(rascunho, hoje)
-    setErros(pendencias)
-    if (!dados) {
-      const primeiro = ordemDeFoco.find(campo => pendencias[campo])
-      if (primeiro) document.getElementById(`certificacao-${primeiro}`)?.focus()
-      return
-    }
-    setFalha('')
-    setEnviando(true)
-    try {
+  const { enviando, erros, falha, onSubmit } = useEnvioFormulario({
+    ler: () => rascunho,
+    validar: atual => validarCertificacao(atual, hoje),
+    ordem: ordemPorId<Erros<CampoCertificacao>>('certificacao', ordemDeFoco),
+    enviar: async dados => {
       const salva = await cadastrarCertificacao(dados)
       setSucesso(`Certificação "${salva.nome}" cadastrada.`)
       setRascunho(vazio)
-    } catch (erro) {
-      setFalha(descreverFalhaCadastro(erro))
-    } finally {
-      setEnviando(false)
-    }
-  }
+    },
+    descreverFalha: descreverFalhaCadastro,
+    liberarAposSucesso: true,
+  }, {} as Erros<CampoCertificacao>)
 
   return <section className="sp-secao" aria-label="Cadastrar certificação">
     <h2 className="sp-type-heading-sm">Cadastrar certificação</h2>
-    <form className="sp-form" noValidate onSubmit={enviar}>
+    <form className="sp-form" noValidate onSubmit={onSubmit}>
       <Select id="certificacao-colaboradorId" label="Colaborador" value={rascunho.colaboradorId} error={erros.colaboradorId}
         disabled={colaboradores.dados === null} onChange={e => alterar('colaboradorId', e.target.value)}
         helper={colaboradores.erro ? 'Não foi possível carregar os colaboradores.' : undefined}>

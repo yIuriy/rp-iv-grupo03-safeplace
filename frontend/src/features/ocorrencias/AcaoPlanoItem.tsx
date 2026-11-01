@@ -5,6 +5,7 @@
 
 import { useCallback, useState, type FormEvent } from 'react'
 import { Alert, Badge, Button, Checkbox, Radio, Select, TextArea, TextField } from '../../shared/components'
+import { focarCampo } from '../../shared/formularios/envioFormulario'
 import { useConsulta } from '../../shared/api/useConsulta'
 import { descreverSetor, type Setor } from '../areas-risco/api'
 import { formatarData } from '../estoque/formatos'
@@ -149,8 +150,7 @@ function FormProrrogacao({ acao, hoje, aoCancelar, aoConcluir }: PropsOperacao &
     setErros(pendencias)
     const primeiro = (['novoPrazo', 'justificativa'] as const).find(campo => pendencias[campo])
     if (primeiro) {
-      const campo = form.elements.namedItem(primeiro)
-      if (campo instanceof HTMLElement) campo.focus()
+      focarCampo(form, primeiro)
       return
     }
     void executar(() => prorrogarPrazo(acao.id, novoPrazo, justificativa),
@@ -182,8 +182,7 @@ function FormReatribuicao({ acao, colaboradores, setores, aoCancelar, aoConcluir
     const pendencia = !id ? 'Selecione o novo responsável.' : mesmo ? 'Escolha um responsável diferente do atual.' : undefined
     setErro(pendencia)
     if (pendencia) {
-      const campo = form.elements.namedItem('responsavelId')
-      if (campo instanceof HTMLElement) campo.focus()
+      focarCampo(form, 'responsavelId')
       return
     }
     const nome = tipo === 'SETOR' ? setores.find(s => s.id === id)?.nome : colaboradores.find(c => c.id === id)?.nome
@@ -226,8 +225,7 @@ function FormAlerta({ acao, aoCancelar, aoConcluir }: PropsOperacao) {
     const pendencia = validarAntecedencia(ativo, valor)
     setErro(pendencia)
     if (pendencia) {
-      const campo = form.elements.namedItem('antecedenciaDias')
-      if (campo instanceof HTMLElement) campo.focus()
+      focarCampo(form, 'antecedenciaDias')
       return
     }
     void executar(() => configurarAlerta(acao.id, ativo, ativo ? Number(valor) : undefined),

@@ -6,6 +6,7 @@
 
 import { useState, type FormEvent } from 'react'
 import { Alert, Button, Dialog, Select, TextField } from '../../shared/components'
+import { focarCampo } from '../../shared/formularios/envioFormulario'
 import { useConsulta, type Consulta } from '../../shared/api/useConsulta'
 import { useSessaoAtiva } from '../autenticacao/contexto'
 import type { Epi } from '../estoque/api'
@@ -110,8 +111,7 @@ function EntregaFormulario({ colaboradores, epis, rascunho, falha, enviando, foc
       aoEnviar(novo)
       return
     }
-    const campo = form.elements.namedItem(primeiro)
-    if (campo instanceof HTMLElement) campo.focus()
+    focarCampo(form, primeiro)
   }
 
   return <form className="sp-form" onSubmit={submeter} noValidate>

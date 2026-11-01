@@ -1,11 +1,13 @@
-// Testes do Template Method em shared/formularios/envioFormulario.ts (#233): o método-modelo
+// Testes do Template Method em shared/formularios/envioFormulario.ts (#233, #243): o método-modelo
 // executarEnvio segue sempre a mesma sequência e chama as operações primitivas (ler, validar, ordem,
-// enviar, descreverFalha) de cada formulário. Não usa navegador: as ações sobre a tela são registradas.
+// enviar, descreverFalha) e a hook operation liberarAposSucesso. Não usa navegador: as ações sobre a
+// tela são registradas.
 
 import { expect, test } from '@playwright/test'
 import {
   camposInvalidos,
   executarEnvio,
+  ordemPorId,
   type AcoesDoEnvio,
   type EtapasDoEnvio,
 } from '../src/shared/formularios/envioFormulario'
@@ -77,6 +79,17 @@ test.describe('Método-modelo executarEnvio', () => {
     expect(passos).toEqual(['erros:{}', 'falha:', 'enviando:true', 'falha:Falhou: HTTP 500', 'enviando:false'])
   })
 
+  test('hook operation liberarAposSucesso: o formulário que continua montado libera o botão', async () => {
+    const { passos, acoes } = registrarAcoes()
+    const resultado = await executarEnvio(formulario, {
+      ...etapas({ nome: 'Ana', email: 'ana@safeplace.com' }, async () => {}),
+      liberarAposSucesso: true,
+    }, acoes)
+
+    expect(resultado).toBe('enviado')
+    expect(passos).toEqual(['erros:{}', 'falha:', 'enviando:true', 'enviando:false'])
+  })
+
   test('dados ausentes (undefined) contam como inválidos, como em validarInspecao', async () => {
     const { passos, acoes } = registrarAcoes()
     const resultado = await executarEnvio(formulario, {
@@ -107,6 +120,12 @@ test.describe('Operação primitiva ordem', () => {
   test('lista de chaves: devolve só os campos com mensagem, na ordem da tela', () => {
     expect(camposInvalidos<Erros>(['nome', 'email'], { email: 'x' })).toEqual(['email'])
     expect(camposInvalidos<Erros>(['nome', 'email'], {})).toEqual([])
+  })
+
+  test('ordemPorId: campos identificados por id com prefixo, como nos formulários de capacitação', () => {
+    expect(ordemPorId<Erros>('certificacao', ['nome', 'email'])({ email: 'x', nome: 'y' }))
+      .toEqual(['certificacao-nome', 'certificacao-email'])
+    expect(ordemPorId<Erros>('certificacao', ['nome', 'email'])({})).toEqual([])
   })
 
   test('função: usada para erros aninhados, como os itens da inspeção', () => {

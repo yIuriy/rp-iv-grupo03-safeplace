@@ -1,7 +1,10 @@
-// Definição da certificação ou do treinamento exigido para uma tarefa ou EPI (UC02, exceção I).
+// Definição da certificação ou do treinamento exigido para uma tarefa ou EPI (UC02, exceção I). O fluxo de envio
+// vem do hook useEnvioFormulario (Template Method, #243); o formulário fica aberto para o próximo cadastro.
 
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { Alert, Button, Select, TextField } from '../../shared/components'
+import { ordemPorId } from '../../shared/formularios/envioFormulario'
+import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
 import { useConsulta } from '../../shared/api/useConsulta'
 import { listarEpis } from '../epis/api'
 import { listarTarefas } from '../tarefas/api'
@@ -16,10 +19,7 @@ export function ExigenciaForm() {
   const tarefas = useConsulta('capacitacoes-cadastro-tarefas', listarTarefas)
   const epis = useConsulta('capacitacoes-cadastro-epis', listarEpis)
   const [rascunho, setRascunho] = useState(vazio)
-  const [erros, setErros] = useState<Erros<CampoExigencia>>({})
-  const [falha, setFalha] = useState('')
   const [sucesso, setSucesso] = useState('')
-  const [enviando, setEnviando] = useState(false)
 
   const alterar = (alteracao: Partial<RascunhoExigencia>) => {
     setRascunho(atual => ({ ...atual, ...alteracao }))
@@ -30,32 +30,22 @@ export function ExigenciaForm() {
     ? (tarefas.dados ?? []).map(t => ({ id: t.id, rotulo: t.descricao }))
     : rascunho.alvo === 'EPI' ? (epis.dados ?? []).map(e => ({ id: e.id, rotulo: `${e.nome} (CA ${e.numeroCa})` })) : []
 
-  async function enviar(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (enviando) return
-    const { dados, erros: pendencias } = validarExigencia(rascunho)
-    setErros(pendencias)
-    if (!dados) {
-      const primeiro = ordemDeFoco.find(campo => pendencias[campo])
-      if (primeiro) document.getElementById(`exigencia-${primeiro}`)?.focus()
-      return
-    }
-    setFalha('')
-    setEnviando(true)
-    try {
+  const { enviando, erros, falha, onSubmit } = useEnvioFormulario({
+    ler: () => rascunho,
+    validar: validarExigencia,
+    ordem: ordemPorId<Erros<CampoExigencia>>('exigencia', ordemDeFoco),
+    enviar: async dados => {
       await definirExigencia(dados)
       setSucesso(`Exigência "${dados.nomeCapacitacao}" definida.`)
       setRascunho(vazio)
-    } catch (erro) {
-      setFalha(descreverFalhaCadastro(erro))
-    } finally {
-      setEnviando(false)
-    }
-  }
+    },
+    descreverFalha: descreverFalhaCadastro,
+    liberarAposSucesso: true,
+  }, {} as Erros<CampoExigencia>)
 
   return <section className="sp-secao" aria-label="Definir exigência">
     <h2 className="sp-type-heading-sm">Definir exigência de capacitação</h2>
-    <form className="sp-form" noValidate onSubmit={enviar}>
+    <form className="sp-form" noValidate onSubmit={onSubmit}>
       <TextField id="exigencia-nomeCapacitacao" label="Certificação ou treinamento exigido" value={rascunho.nomeCapacitacao}
         error={erros.nomeCapacitacao} autoComplete="off" helper="Use o mesmo nome do cadastro da certificação ou do treinamento."
         onChange={e => alterar({ nomeCapacitacao: e.target.value })} />

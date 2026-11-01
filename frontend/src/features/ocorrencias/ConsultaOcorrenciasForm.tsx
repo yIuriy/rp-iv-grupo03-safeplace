@@ -4,6 +4,7 @@
 
 import { useState, type FormEvent } from 'react'
 import { Button, SearchInput, Select, TextField } from '../../shared/components'
+import { focarCampo } from '../../shared/formularios/envioFormulario'
 import type { Consulta } from '../../shared/api/useConsulta'
 import { descreverSetor, niveisPerigo, rotuloNivelPerigo, type Setor } from '../areas-risco/api'
 import type { Usuario } from '../usuarios/api'
@@ -31,8 +32,7 @@ export function ConsultaOcorrenciasForm({ setores, colaboradores, aoConsultar, a
     const leitura = lerCriterios(new FormData(form))
     setErroPeriodo(leitura.erroPeriodo)
     if (leitura.erroPeriodo) {
-      const campo = form.elements.namedItem('dataFim')
-      if (campo instanceof HTMLElement) campo.focus()
+      focarCampo(form, 'dataFim')
       return
     }
     aoConsultar(leitura.criterios)

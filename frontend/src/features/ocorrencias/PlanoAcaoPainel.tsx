@@ -1,9 +1,11 @@
 // Plano de ação de uma ocorrência (UC07; UC05, alternativo I, passo 9): resumo das ações abertas, em
 // atraso e com alerta, a lista de ações e, para o Gestor, o cadastro de nova ação com medidas,
-// prazo, responsável (colaborador ou setor) e alerta. O Supervisor acompanha sem alterar.
+// prazo, responsável (colaborador ou setor) e alerta. O Supervisor acompanha sem alterar. O envio da nova
+// ação vem do hook useEnvioFormulario (Template Method, #243).
 
-import { useCallback, useState, type FormEvent } from 'react'
+import { useCallback, useState } from 'react'
 import { Alert, Button, Checkbox, Radio, Select, TextArea, TextField, Toast } from '../../shared/components'
+import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
 import { useConsulta } from '../../shared/api/useConsulta'
 import { descreverSetor, listarSetores, type Setor } from '../areas-risco/api'
 import { hojeIso } from '../usuarios/formatos'
@@ -112,38 +114,24 @@ function NovaAcaoForm({ ocorrencia, hoje, colaboradores, setores, listasCarregan
 }) {
   const [tipoResponsavel, setTipoResponsavel] = useState<'' | 'COLABORADOR' | 'SETOR'>('')
   const [alertaAtivo, setAlertaAtivo] = useState(false)
-  const [erros, setErros] = useState<ErrosAcao>({})
-  const [falha, setFalha] = useState('')
-  const [enviando, setEnviando] = useState(false)
   const diaDoFato = ocorrencia.dataOcorrencia.slice(0, 10)
   const prazoMinimo = diaDoFato > hoje ? diaDoFato : hoje
 
-  async function enviar(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (enviando) return
-    const form = event.currentTarget
-    const leitura = lerNovaAcao(new FormData(form))
-    const pendencias = validarNovaAcao(leitura, prazoMinimo)
-    setErros(pendencias)
-    const primeiro = ordemDosCamposDaAcao.find(campo => pendencias[campo])
-    if (primeiro) {
-      const campo = form.elements.namedItem(primeiro)
-      const alvo = campo instanceof RadioNodeList ? campo[0] : campo
-      if (alvo instanceof HTMLElement) alvo.focus()
-      return
-    }
-    setFalha('')
-    setEnviando(true)
-    try {
-      const acao = await cadastrarAcao(ocorrencia.idOcorrencia, leitura.dados)
+  const { enviando, erros, falha, onSubmit } = useEnvioFormulario({
+    ler: form => lerNovaAcao(new FormData(form)),
+    validar: leitura => {
+      const pendencias = validarNovaAcao(leitura, prazoMinimo)
+      return { dados: ordemDosCamposDaAcao.some(campo => pendencias[campo]) ? null : leitura.dados, erros: pendencias }
+    },
+    ordem: ordemDosCamposDaAcao,
+    enviar: async dados => {
+      const acao = await cadastrarAcao(ocorrencia.idOcorrencia, dados)
       aoSalvar(`Ação #${acao.id} cadastrada no plano.`)
-    } catch (erro) {
-      setFalha(descreverFalhaDeOcorrencia(erro))
-      setEnviando(false)
-    }
-  }
+    },
+    descreverFalha: descreverFalhaDeOcorrencia,
+  }, {} as ErrosAcao)
 
-  return <form className="sp-form sp-acao-operacao" noValidate onSubmit={enviar} aria-label="Nova ação do plano">
+  return <form className="sp-form sp-acao-operacao" noValidate onSubmit={onSubmit} aria-label="Nova ação do plano">
     <TextArea label="Medida corretiva" name="medidasCorretivas" rows={2} error={erros.medidasCorretivas}
       helper={erros.medidasCorretivas ? undefined : 'Corrige a causa do fato. Informe esta, a preventiva ou ambas.'} />
     <TextArea label="Medida preventiva" name="medidasPreventivas" rows={2}

@@ -4,6 +4,7 @@
 
 import { useState, type FormEvent } from 'react'
 import { Alert, Button, TextArea } from '../../shared/components'
+import { focarCampo } from '../../shared/formularios/envioFormulario'
 import { formatarData } from '../estoque/formatos'
 import type { Emprestimo } from './api'
 import { validarJustificativa } from './validacaoEntrega'
@@ -29,8 +30,7 @@ export function DuplicidadeConfirmacao({ mensagem, falha, enviando, aoVoltar, ao
       aoConfirmar(justificativa)
       return
     }
-    const campo = form.elements.namedItem('justificativaSubstituicao')
-    if (campo instanceof HTMLElement) campo.focus()
+    focarCampo(form, 'justificativaSubstituicao')
   }
 
   return <form className="sp-form" onSubmit={submeter} noValidate>

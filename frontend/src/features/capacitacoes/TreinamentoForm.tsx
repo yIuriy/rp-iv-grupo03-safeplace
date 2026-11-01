@@ -1,8 +1,11 @@
 // Cadastro de treinamento realizado por um ou mais colaboradores. A validade em meses é
-// opcional: sem ela o treinamento não vence (#116, #192).
+// opcional: sem ela o treinamento não vence (#116, #192). O fluxo de envio
+// vem do hook useEnvioFormulario (Template Method, #243); o formulário fica aberto para o próximo cadastro.
 
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { Alert, Button, Checkbox, TextField } from '../../shared/components'
+import { ordemPorId } from '../../shared/formularios/envioFormulario'
+import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
 import { cadastrarTreinamento, descreverFalhaCadastro } from './api'
 import { validarTreinamento, type CampoTreinamento, type Erros, type RascunhoTreinamento } from './validacaoCapacitacao'
 import { useColaboradoresOpcoes } from './useColaboradoresOpcoes'
@@ -16,10 +19,7 @@ const ordemDeFoco: CampoTreinamento[] = ['nome', 'dataRealizacao', 'cargaHoraria
 export function TreinamentoForm({ hoje }: { hoje: string }) {
   const colaboradores = useColaboradoresOpcoes()
   const [rascunho, setRascunho] = useState(vazio)
-  const [erros, setErros] = useState<Erros<CampoTreinamento>>({})
-  const [falha, setFalha] = useState('')
   const [sucesso, setSucesso] = useState('')
-  const [enviando, setEnviando] = useState(false)
 
   const alterar = (alteracao: Partial<RascunhoTreinamento>) => {
     setRascunho(atual => ({ ...atual, ...alteracao }))
@@ -30,32 +30,22 @@ export function TreinamentoForm({ hoje }: { hoje: string }) {
     colaboradoresIds: marcado ? [...rascunho.colaboradoresIds, id] : rascunho.colaboradoresIds.filter(atual => atual !== id),
   })
 
-  async function enviar(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (enviando) return
-    const { dados, erros: pendencias } = validarTreinamento(rascunho, hoje)
-    setErros(pendencias)
-    if (!dados) {
-      const primeiro = ordemDeFoco.find(campo => pendencias[campo])
-      if (primeiro) document.getElementById(`treinamento-${primeiro}`)?.focus()
-      return
-    }
-    setFalha('')
-    setEnviando(true)
-    try {
+  const { enviando, erros, falha, onSubmit } = useEnvioFormulario({
+    ler: () => rascunho,
+    validar: atual => validarTreinamento(atual, hoje),
+    ordem: ordemPorId<Erros<CampoTreinamento>>('treinamento', ordemDeFoco),
+    enviar: async dados => {
       const salvo = await cadastrarTreinamento(dados)
       setSucesso(`Treinamento "${salvo.nome}" cadastrado.`)
       setRascunho(vazio)
-    } catch (erro) {
-      setFalha(descreverFalhaCadastro(erro))
-    } finally {
-      setEnviando(false)
-    }
-  }
+    },
+    descreverFalha: descreverFalhaCadastro,
+    liberarAposSucesso: true,
+  }, {} as Erros<CampoTreinamento>)
 
   return <section className="sp-secao" aria-label="Cadastrar treinamento">
     <h2 className="sp-type-heading-sm">Cadastrar treinamento</h2>
-    <form className="sp-form" noValidate onSubmit={enviar}>
+    <form className="sp-form" noValidate onSubmit={onSubmit}>
       <TextField id="treinamento-nome" label="Treinamento" value={rascunho.nome} error={erros.nome} autoComplete="off"
         placeholder="Ex.: NR-10 Segurança em Eletricidade" onChange={e => alterar({ nome: e.target.value })} />
       <TextField id="treinamento-conteudo" label="Conteúdo (opcional)" value={rascunho.conteudo} autoComplete="off"
