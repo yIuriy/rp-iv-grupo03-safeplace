@@ -16,8 +16,11 @@ import br.edu.safeplace.backend.domain.epi.exception.DadosInsuficientesParaProje
  * <p>Implementa o contrato matemático formal com taxa de utilização real baseada em empréstimos,
  * multiplicadores de agressividade do ambiente (NivelPerigo) e teto intransponível de CA.
  * Dados ausentes ou inconsistentes geram pendência, nunca estimativa fictícia (DS10, 2.3).</p>
+ *
+ * <p>As pré-condições do cálculo (vida útil, setor, CA e histórico) ficam na cadeia
+ * {@code ProjecaoValidador}, executada pelo caso de uso antes deste serviço (issue #267).</p>
  */
-public class SubstituicaoInteligenteService {
+public class SubstituicaoInteligenteService implements CalculoProjecaoSubstituicao {
 
     /** DS10, 2.4: antecedência fixa dos alertas preventivos no MVP. */
     public static final long DIAS_ANTECEDENCIA_PADRAO = 30L;
@@ -38,69 +41,24 @@ public class SubstituicaoInteligenteService {
     }
 
     /**
-     * Executa o cálculo da projeção de descarte de um EPI (DS10.1).
+     * Executa o cálculo da projeção de descarte de um EPI (DS10.1). Pressupõe o contexto já validado
+     * por {@code ProjecaoValidador}.
      *
-     * @param epi O equipamento analisado.
-     * @param periculosidadeSetor O grau de perigo do setor onde o EPI opera.
-     * @param emprestimos Histórico de empréstimos do equipamento.
-     * @param dataReferencia Data base da projeção (se nula, assume hoje).
-     * @param diasAmostragem Período de amostragem informado pelo Gestor, em dias. Se nulo ou não
-     *                       positivo, o período vai da primeira retirada registrada até a data de
-     *                       referência, sem valor padrão arbitrado.
      * @return Entidade de domínio ProjecaoSubstituicao com as datas e justificativa geradas.
-     * @throws DadosInsuficientesParaProjecaoException Quando faltam dados obrigatórios para o cálculo.
+     * @throws DadosInsuficientesParaProjecaoException Quando não há uso no período de amostragem,
+     *         o que só se sabe depois de calcular o período.
      */
-    public ProjecaoSubstituicao calcularProjecao(Epi epi, NivelPerigo periculosidadeSetor,
-                                                 List<Emprestimo> emprestimos, LocalDate dataReferencia,
-                                                 Integer diasAmostragem) {
-        if (epi == null) {
-            throw new IllegalArgumentException("EPI é obrigatório para a projeção.");
-        }
-        Integer epiId = epi.getId() != null ? epi.getId() : epi.getCodigoEPI();
-        if (dataReferencia == null) {
-            dataReferencia = LocalDate.now();
-        }
-
-        // 1. Validação de durabilidade nominal (UC10 Exceção I)
-        if (epi.getVidaUtilDias() == null || epi.getVidaUtilDias() <= 0) {
-            throw new DadosInsuficientesParaProjecaoException(epiId,
-                    String.format("EPI '%s' (ID %d) não possui durabilidade nominal (vida útil em dias) cadastrada.",
-                            epi.getNome(), epiId));
-        }
-
-        // 2. Validação de condições ambientais do setor
-        if (periculosidadeSetor == null) {
-            throw new DadosInsuficientesParaProjecaoException(epiId,
-                    String.format("EPI '%s' (ID %d) não possui setor com nível de periculosidade definido.",
-                            epi.getNome(), epiId));
-        }
-
-        // 3. Validação de Certificado de Aprovação (CA): ausente ou vencido não gera estimativa (DS10, 2.3)
+    @Override
+    public ProjecaoSubstituicao calcularProjecao(ContextoProjecao contexto) {
+        Epi epi = contexto.epi();
+        Integer epiId = contexto.epiId();
+        NivelPerigo periculosidadeSetor = contexto.periculosidadeSetor();
+        LocalDate dataReferencia = contexto.dataReferencia();
+        Integer diasAmostragem = contexto.diasAmostragem();
         LocalDate validadeCa = epi.getDataValidadeCa();
-        if (validadeCa == null) {
-            throw new DadosInsuficientesParaProjecaoException(epiId,
-                    String.format("EPI '%s' (ID %d) não possui Certificado de Aprovação (CA) com validade cadastrada.",
-                            epi.getNome(), epiId));
-        }
-        if (validadeCa.isBefore(dataReferencia)) {
-            throw new DadosInsuficientesParaProjecaoException(epiId,
-                    String.format("EPI '%s' (ID %d) não possui CA válido: o CA venceu em %s.",
-                            epi.getNome(), epiId, validadeCa));
-        }
+        List<Emprestimo> historico = contexto.historico();
 
-        // 4. Validação do histórico de empréstimos até a data de referência
-        LocalDate referencia = dataReferencia;
-        List<Emprestimo> historico = emprestimos == null ? List.of() : emprestimos.stream()
-                .filter(emp -> emp.getDataRetirada() != null
-                        && !emp.getDataRetirada().toLocalDate().isAfter(referencia))
-                .toList();
-        if (historico.isEmpty()) {
-            throw new DadosInsuficientesParaProjecaoException(epiId,
-                    String.format("EPI '%s' (ID %d) não possui registros de empréstimo para apuração da frequência de uso.",
-                            epi.getNome(), epiId));
-        }
-
-        // 5. Período de amostragem: informado pelo Gestor ou derivado do próprio histórico
+        // 1. Período de amostragem: informado pelo Gestor ou derivado do próprio histórico
         LocalDate fimAmostragem = dataReferencia;
         LocalDate inicioAmostragem = (diasAmostragem != null && diasAmostragem > 0)
                 ? dataReferencia.minusDays(diasAmostragem)
@@ -108,7 +66,7 @@ public class SubstituicaoInteligenteService {
                         .min(LocalDate::compareTo).orElseThrow();
         long diasDoPeriodo = Math.max(1, ChronoUnit.DAYS.between(inicioAmostragem, fimAmostragem));
 
-        // 6. Apuração dos dias de uso: no período (taxa U) e em todo o histórico (desgaste acumulado)
+        // 2. Apuração dos dias de uso: no período (taxa U) e em todo o histórico (desgaste acumulado)
         long diasUsoNoPeriodo = 0;
         long totalDiasUsados = 0;
         for (Emprestimo emp : historico) {
@@ -136,7 +94,7 @@ public class SubstituicaoInteligenteService {
         // Taxa diária de utilização U (0.0 < U <= 1.0, DS10 2.1)
         double taxaUso = Math.min(1.0, (double) diasUsoNoPeriodo / (double) diasDoPeriodo);
 
-        // 7. Aplicação do multiplicador da matriz de risco ambiental
+        // 3. Aplicação do multiplicador da matriz de risco ambiental
         double fatorAmbiente = obterMultiplicadorAmbiente(periculosidadeSetor);
         double taxaDesgasteDiario = taxaUso * fatorAmbiente;
 
@@ -147,7 +105,7 @@ public class SubstituicaoInteligenteService {
         long diasAteDesgasteFisico = (long) Math.ceil(vidaUtilRestante / taxaDesgasteDiario);
         LocalDate dataFisicaEstimada = dataReferencia.plusDays(diasAteDesgasteFisico);
 
-        // 8. Aplicação da regra prioritária do CA (UC10 Regra 1)
+        // 4. Aplicação da regra prioritária do CA (UC10 Regra 1)
         LocalDate dataEstimadaDescarte;
         String justificativa;
 
@@ -176,6 +134,7 @@ public class SubstituicaoInteligenteService {
      * com a antecedência fixa de 30 dias do DS10, 2.4. A projeção pode ser nula quando o cálculo
      * gerou pendência; estoque crítico e CA continuam sendo avaliados.
      */
+    @Override
     public List<AlertaSubstituicaoEpi> emitirAlertas(Epi epi, ProjecaoSubstituicao projecao,
                                                      LocalDate dataReferencia) {
         List<AlertaSubstituicaoEpi> alertas = new ArrayList<>();

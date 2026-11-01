@@ -56,7 +56,7 @@ class SubstituicaoInteligenteServiceTest {
                 criarEmprestimo(1, 1, hoje.minusDays(40).atStartOfDay(), hoje.minusDays(10).atStartOfDay())
         );
 
-        ProjecaoSubstituicao projecao = service.calcularProjecao(epi, NivelPerigo.ALTO, emprestimos, hoje, 90);
+        ProjecaoSubstituicao projecao = service.calcularProjecao(new ContextoProjecao(epi, NivelPerigo.ALTO, emprestimos, hoje, 90));
 
         assertNotNull(projecao);
         assertEquals(1, projecao.getEpiId());
@@ -78,75 +78,11 @@ class SubstituicaoInteligenteServiceTest {
                 criarEmprestimo(2, 2, hoje.minusDays(15).atStartOfDay(), hoje.minusDays(5).atStartOfDay())
         );
 
-        ProjecaoSubstituicao projecao = service.calcularProjecao(epi, NivelPerigo.BAIXO, emprestimos, hoje, 90);
+        ProjecaoSubstituicao projecao = service.calcularProjecao(new ContextoProjecao(epi, NivelPerigo.BAIXO, emprestimos, hoje, 90));
 
         assertNotNull(projecao);
         assertEquals(validadeCa, projecao.getDataEstimadaDescarte());
         assertTrue(projecao.getJustificativa().contains("Substituição antecipada pelo vencimento legal do CA"));
-    }
-
-    @Test
-    @DisplayName("Deve lançar exceção quando EPI não possui durabilidade nominal cadastrada")
-    void deveFalharQuandoEpiNaoPossuiDurabilidadeNominal() {
-        Epi epiSemVidaUtil = criarEpi(3, "Luva de Raspa", null, hoje.plusYears(1), 5, 1);
-        List<Emprestimo> emprestimos = List.of(criarEmprestimo(3, 3, hoje.minusDays(5).atStartOfDay(), null));
-
-        DadosInsuficientesParaProjecaoException ex = assertThrows(
-                DadosInsuficientesParaProjecaoException.class,
-                () -> service.calcularProjecao(epiSemVidaUtil, NivelPerigo.MEDIO, emprestimos, hoje, 90)
-        );
-
-        assertEquals(3, ex.getEpiId());
-        assertTrue(ex.getMessage().contains("durabilidade nominal"));
-    }
-
-    @Test
-    @DisplayName("Deve lançar exceção quando EPI não possui CA cadastrado")
-    void deveFalharQuandoEpiNaoPossuiCaValido() {
-        Epi epiMock = org.mockito.Mockito.mock(Epi.class);
-        org.mockito.Mockito.when(epiMock.getId()).thenReturn(4);
-        org.mockito.Mockito.when(epiMock.getNome()).thenReturn("Máscara PFF2");
-        org.mockito.Mockito.when(epiMock.getVidaUtilDias()).thenReturn(120);
-        org.mockito.Mockito.when(epiMock.getDataValidadeCa()).thenReturn(null);
-
-        List<Emprestimo> emprestimos = List.of(criarEmprestimo(4, 4, hoje.minusDays(5).atStartOfDay(), null));
-
-        DadosInsuficientesParaProjecaoException ex = assertThrows(
-                DadosInsuficientesParaProjecaoException.class,
-                () -> service.calcularProjecao(epiMock, NivelPerigo.BAIXO, emprestimos, hoje, 90)
-        );
-
-        assertEquals(4, ex.getEpiId());
-        assertTrue(ex.getMessage().contains("Certificado de Aprovação"));
-    }
-
-    @Test
-    @DisplayName("Deve lançar exceção quando histórico de empréstimos for vazio")
-    void deveFalharQuandoHistoricoEmprestimosForVazio() {
-        Epi epi = criarEpi(5, "Protetor Auditivo", 180, hoje.plusYears(1), 10, 2);
-
-        DadosInsuficientesParaProjecaoException ex = assertThrows(
-                DadosInsuficientesParaProjecaoException.class,
-                () -> service.calcularProjecao(epi, NivelPerigo.BAIXO, List.of(), hoje, 90)
-        );
-
-        assertEquals(5, ex.getEpiId());
-        assertTrue(ex.getMessage().contains("empréstimo"));
-    }
-
-    @Test
-    @DisplayName("Deve lançar exceção quando nível de perigo do setor for nulo")
-    void deveFalharQuandoSetorNulo() {
-        Epi epi = criarEpi(6, "Calçado de Segurança", 180, hoje.plusYears(1), 10, 2);
-        List<Emprestimo> emprestimos = List.of(criarEmprestimo(6, 6, hoje.minusDays(5).atStartOfDay(), null));
-
-        DadosInsuficientesParaProjecaoException ex = assertThrows(
-                DadosInsuficientesParaProjecaoException.class,
-                () -> service.calcularProjecao(epi, null, emprestimos, hoje, 90)
-        );
-
-        assertEquals(6, ex.getEpiId());
-        assertTrue(ex.getMessage().contains("nível de periculosidade"));
     }
 
     @Test
@@ -192,8 +128,7 @@ class SubstituicaoInteligenteServiceTest {
                 retirada.toLocalDate().plusDays(15), "Termo", null,
                 hoje.minusDays(2).atStartOfDay(), 1, EstadoDevolucao.DESCARTE, ClassificacaoEmprestimo.DISPONIVEL);
 
-        ProjecaoSubstituicao projecao = service.calcularProjecao(
-                epi, NivelPerigo.MEDIO, List.of(emprestimoAvariado), hoje, 90);
+        ProjecaoSubstituicao projecao = service.calcularProjecao(new ContextoProjecao(epi, NivelPerigo.MEDIO, List.of(emprestimoAvariado), hoje, 90));
 
         assertFalse(projecao.getJustificativa().contains("avaria"));
         assertTrue(projecao.getJustificativa().contains("MEDIO"));
@@ -208,7 +143,7 @@ class SubstituicaoInteligenteServiceTest {
         List<Emprestimo> emprestimos = List.of(
                 criarEmprestimo(10, 10, hoje.minusDays(40).atStartOfDay(), hoje.minusDays(10).atStartOfDay()));
 
-        ProjecaoSubstituicao projecao = service.calcularProjecao(epi, NivelPerigo.ALTO, emprestimos, hoje, null);
+        ProjecaoSubstituicao projecao = service.calcularProjecao(new ContextoProjecao(epi, NivelPerigo.ALTO, emprestimos, hoje, null));
 
         assertEquals(hoje.plusDays(120), projecao.getDataEstimadaDescarte());
         assertTrue(projecao.getJustificativa().contains("75,0%") || projecao.getJustificativa().contains("75.0%"));
@@ -221,7 +156,7 @@ class SubstituicaoInteligenteServiceTest {
         List<Emprestimo> emprestimos = List.of(
                 criarEmprestimo(11, 11, hoje.minusDays(200).atStartOfDay(), hoje.minusDays(199).atStartOfDay()));
 
-        ProjecaoSubstituicao projecao = service.calcularProjecao(epi, NivelPerigo.BAIXO, emprestimos, hoje, 365);
+        ProjecaoSubstituicao projecao = service.calcularProjecao(new ContextoProjecao(epi, NivelPerigo.BAIXO, emprestimos, hoje, 365));
 
         // U = 1/365 = 0,3%; com o piso antigo a justificativa mostraria 5,0%
         assertTrue(projecao.getJustificativa().contains("0,3%") || projecao.getJustificativa().contains("0.3%"));
@@ -235,21 +170,9 @@ class SubstituicaoInteligenteServiceTest {
                 criarEmprestimo(12, 12, hoje.minusDays(200).atStartOfDay(), hoje.minusDays(190).atStartOfDay()));
 
         DadosInsuficientesParaProjecaoException ex = assertThrows(DadosInsuficientesParaProjecaoException.class,
-                () -> service.calcularProjecao(epi, NivelPerigo.BAIXO, emprestimos, hoje, 30));
+                () -> service.calcularProjecao(new ContextoProjecao(epi, NivelPerigo.BAIXO, emprestimos, hoje, 30)));
 
         assertTrue(ex.getMessage().contains("não possui uso registrado no período de amostragem"));
-    }
-
-    @Test
-    @DisplayName("#199 / DS10 2.3: CA vencido não gera estimativa, gera pendência")
-    void caVencidoGeraPendencia() {
-        Epi epi = criarEpi(13, "Respirador", 180, hoje.minusDays(1), 10, 2);
-        List<Emprestimo> emprestimos = List.of(criarEmprestimo(13, 13, hoje.minusDays(5).atStartOfDay(), null));
-
-        DadosInsuficientesParaProjecaoException ex = assertThrows(DadosInsuficientesParaProjecaoException.class,
-                () -> service.calcularProjecao(epi, NivelPerigo.BAIXO, emprestimos, hoje, 90));
-
-        assertTrue(ex.getMessage().contains("venceu em " + hoje.minusDays(1)));
     }
 
     @Test

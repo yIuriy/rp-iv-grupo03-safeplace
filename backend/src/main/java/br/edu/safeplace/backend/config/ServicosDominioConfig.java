@@ -1,0 +1,20 @@
+/*
+ * Registra no Spring os serviços de domínio, que não usam anotações do framework. Os casos de uso
+ * recebem esses serviços pelas interfaces do domínio (issue #267).
+ */
+package br.edu.safeplace.backend.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import br.edu.safeplace.backend.domain.epi.CalculoProjecaoSubstituicao;
+import br.edu.safeplace.backend.domain.epi.SubstituicaoInteligenteService;
+
+@Configuration
+public class ServicosDominioConfig {
+
+    @Bean
+    public CalculoProjecaoSubstituicao calculoProjecaoSubstituicao() {
+        return new SubstituicaoInteligenteService();
+    }
+}

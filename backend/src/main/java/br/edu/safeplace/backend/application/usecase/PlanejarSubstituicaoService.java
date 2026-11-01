@@ -27,8 +27,12 @@ import br.edu.safeplace.backend.domain.emprestimo.Emprestimo;
 import br.edu.safeplace.backend.domain.epi.AlertaSubstituicaoEpi;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.ProjecaoSubstituicao;
+import br.edu.safeplace.backend.domain.epi.CalculoProjecaoSubstituicao;
+import br.edu.safeplace.backend.domain.epi.ContextoProjecao;
 import br.edu.safeplace.backend.domain.epi.SubstituicaoInteligenteService;
 import br.edu.safeplace.backend.domain.epi.exception.DadosInsuficientesParaProjecaoException;
+import br.edu.safeplace.backend.validacao.Validador;
+import br.edu.safeplace.backend.validacao.projecao.ProjecaoValidador;
 
 @Service
 public class PlanejarSubstituicaoService implements PlanejarSubstituicaoUseCase {
@@ -37,33 +41,33 @@ public class PlanejarSubstituicaoService implements PlanejarSubstituicaoUseCase 
     private final EmprestimoRepository emprestimoRepository;
     private final SetorRepository setorRepository;
     private final ProjecaoSubstituicaoRepository projecaoRepository;
-    private final SubstituicaoInteligenteService calculoService;
+    private final CalculoProjecaoSubstituicao calculoService;
+    private final Validador<ContextoProjecao> validadorProjecao;
 
     @Autowired
     public PlanejarSubstituicaoService(
             EpiRepository epiRepository,
             EmprestimoRepository emprestimoRepository,
             SetorRepository setorRepository,
-            ProjecaoSubstituicaoRepository projecaoRepository) {
-        this.epiRepository = epiRepository;
-        this.emprestimoRepository = emprestimoRepository;
-        this.setorRepository = setorRepository;
-        this.projecaoRepository = projecaoRepository;
-        this.calculoService = new SubstituicaoInteligenteService();
-    }
-
-    /** Construtor com serviço injetável para testes unitários */
-    public PlanejarSubstituicaoService(
-            EpiRepository epiRepository,
-            EmprestimoRepository emprestimoRepository,
-            SetorRepository setorRepository,
             ProjecaoSubstituicaoRepository projecaoRepository,
-            SubstituicaoInteligenteService calculoService) {
+            CalculoProjecaoSubstituicao calculoService,
+            Validador<ContextoProjecao> validadorProjecao) {
         this.epiRepository = epiRepository;
         this.emprestimoRepository = emprestimoRepository;
         this.setorRepository = setorRepository;
         this.projecaoRepository = projecaoRepository;
         this.calculoService = calculoService;
+        this.validadorProjecao = validadorProjecao;
+    }
+
+    /** Monta o cálculo e o validador padrão; usado pelos testes sem contexto Spring. */
+    public PlanejarSubstituicaoService(
+            EpiRepository epiRepository,
+            EmprestimoRepository emprestimoRepository,
+            SetorRepository setorRepository,
+            ProjecaoSubstituicaoRepository projecaoRepository) {
+        this(epiRepository, emprestimoRepository, setorRepository, projecaoRepository,
+                new SubstituicaoInteligenteService(), new ProjecaoValidador());
     }
 
     @Override
@@ -108,8 +112,11 @@ public class PlanejarSubstituicaoService implements PlanejarSubstituicaoUseCase 
             List<Emprestimo> emprestimos = emprestimoRepository.listarPorEpi(epiId);
 
             try {
-                ProjecaoSubstituicao projecao = calculoService.calcularProjecao(
+                ContextoProjecao contexto = new ContextoProjecao(
                         epi, perigo, emprestimos, dataReferencia, diasAmostragem);
+                // Chain of Responsibility (#267): pré-condições antes do cálculo e do repository.
+                validadorProjecao.validar(contexto);
+                ProjecaoSubstituicao projecao = calculoService.calcularProjecao(contexto);
 
                 projecoesParaSalvar.add(projecao);
 
