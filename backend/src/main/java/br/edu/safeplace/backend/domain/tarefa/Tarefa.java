@@ -6,7 +6,6 @@ import java.util.List;
 
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.Epi;
-import br.edu.safeplace.backend.domain.tarefa.exception.TarefaSemClassificacaoException;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
 /**
@@ -19,7 +18,8 @@ import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
  *
  * <p>Uma tarefa pode existir sem classificação: o cenário de exceção I do UC11 prevê justamente a
  * tentativa de alocar um colaborador em atividade "sem grau de risco cadastrado". Por isso o nível
- * é opcional no cadastro e a proteção fica em {@link #validarClassificacaoParaAlocacao()}. Uma vez
+ * é opcional no cadastro e a proteção fica no {@code TarefaClassificadaElo} da camada de validação
+ * (issue #228). Uma vez
  * classificada, a tarefa não volta a ficar sem grau de risco.</p>
  *
  * <p>O vínculo entre tarefa e EPIs ({@code associarEPIs} e {@code verificarEPIsObrigatoriosTarefa}
@@ -54,12 +54,9 @@ public class Tarefa {
     public Tarefa(Integer id, String descricao, NivelPerigo nivelPerigo, LocalDateTime dataClassificacao,
             GestorDeSeguranca responsavelClassificacao, Integer areaRiscoId, List<Integer> setoresIds,
             List<Epi> episObrigatorios) {
-        if (descricao == null || descricao.isBlank()) {
-            throw new IllegalArgumentException("Descrição da tarefa é obrigatória.");
-        }
-
+        // A descrição é validada em TarefaValidador, antes do repository (issue #228).
         this.id = id;
-        this.descricao = descricao.trim();
+        this.descricao = descricao != null ? descricao.trim() : null;
         this.nivelPerigo = nivelPerigo;
         this.dataClassificacao = nivelPerigo != null && dataClassificacao == null
                 ? LocalDateTime.now()
@@ -87,12 +84,9 @@ public class Tarefa {
     }
 
     public Tarefa atualizar(String novaDescricao, Integer novaAreaRiscoId, List<Integer> novosSetoresIds) {
-        if (novaDescricao == null || novaDescricao.isBlank()) {
-            throw new IllegalArgumentException("Descrição da tarefa é obrigatória.");
-        }
         return new Tarefa(
                 this.id,
-                novaDescricao.trim(),
+                novaDescricao,
                 this.nivelPerigo,
                 this.dataClassificacao,
                 this.responsavelClassificacao,
@@ -136,16 +130,6 @@ public class Tarefa {
 
     public boolean estaClassificada() {
         return nivelPerigo != null;
-    }
-
-    /**
-     * UC11, cenário de exceção I: bloqueia a alocação em atividade sem grau de risco cadastrado.
-     * O ponto de alocação que chama esta verificação pertence a #117 e #126.
-     */
-    public void validarClassificacaoParaAlocacao() {
-        if (!estaClassificada()) {
-            throw new TarefaSemClassificacaoException(descricao);
-        }
     }
 
     public Integer getId() {

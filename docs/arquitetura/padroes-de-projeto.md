@@ -25,7 +25,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [Factory Method](#factory-method--criacao-de-epi-e-ocorrencia) | GoF, criacional | Backend: criação de `Epi` e `Acidente`/`Incidente` (`Ocorrencia` `sealed`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225), [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Pendente |
 | [Builder (Test Data Builder)](#builder--test-data-builders-de-epi-tarefa-e-ocorrencia) | GoF, criacional | Backend (`src/test`): builders de `Epi`, `Tarefa` e `Ocorrencia` | [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) | Pendente |
 | [Null Object](#null-object--adaptador-nulo-de-notificacao-e-dependencias-opcionais) | Woolf / PLoPD 3 | Backend: `NotificacaoOcorrenciaNula` e dependências opcionais | [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227), [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) | Pendente |
-| [Notification](#notification--validador-de-aptidao) | Fowler / PoEAA | Backend: acumulador de impedimentos em `ValidadorAptidaoColaboradorService` | [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228) | Pendente |
+| [Chain of Responsibility](#chain-of-responsibility--camada-de-validação) | GoF, comportamental | Backend: camada `validacao` (aptidão do colaborador e tarefa) | [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228); continua em [#263](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/263) a [#267](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/267) | Aplicado (1/6) |
 | [Data Mapper](#data-mapper--mapeadores-de-persistencia) | Fowler / PoEAA | Backend: `EpiEntityMapper`, `AreaRiscoEntityMapper` e `PlanoDeAcaoEntityMapper` | [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229), [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242) | Pendente |
 | [Value Object](#value-object--protocolo-cat-em-acidente) | Fowler / DDD | Backend: `NumeroProtocoloCAT` dentro de `Acidente` | [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230) | Pendente |
 | [DTO Assembler](#dto-assembler--ocorrenciaoutputdto) | Fowler / PoEAA | Backend: `OcorrenciaOutputAssembler` sem expor `PlanoDeAcao` | [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245) | Pendente |
@@ -756,39 +756,274 @@ A identificação do operador autenticado e o descarte de `"anonymousUser"` pass
 
 ---
 
-## Notification — validador de aptidão
+## Chain of Responsibility — camada de validação
 
-**Catálogo:** PoEAA (Fowler) — Notification.
+**Catálogo:** GoF, comportamental.
 
-**Intenção:** acumular todos os impedimentos de aptidão de um colaborador em `obterImpedimentos` e reutilizar o mesmo coletor em `validarAptidaoParaTarefa`, eliminando a duplicação das regras normativas.
+**Intenção:** evitar acoplar quem envia uma requisição a quem a trata, dando a vários objetos a chance de tratá-la. Os objetos são encadeados, e a requisição passa pela cadeia.
 
-**Issue:** [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228).
+**Issue:** [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228). Primeira de seis: as issues [#263](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/263) a [#267](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/267) seguem a convenção criada aqui.
+
+**Origem:** avaliação do professor. Ele pediu para tirar a validação do domínio, criar uma camada de validação no mesmo nível do domínio, com uma validação para cada classe, e chamá-la antes do repository, lançando a exceção nesse ponto. Citou `AlocarColaboradorTarefaService` e `TarefaService`, os dois na linha 87. Chain of Responsibility é um dos dois padrões que ele exigiu.
 
 ### Problema (antes)
 
-*A preencher na issue [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, R7).*
+**1. A regra de aptidão existia duas vezes.** `domain/capacitacao/ValidadorAptidaoColaboradorService` tinha dois métodos com as mesmas verificações:
+
+```java
+// Usado na alocação: lança exceção.
+public void validarAptidaoParaTarefa(Colaborador colaborador, Tarefa tarefa,
+        List<Certificacao> certificacoes, List<Treinamento> treinamentos,
+        List<ExigenciaCapacitacao> exigencias, LocalDate dataReferencia) {
+    if (colaborador == null) { throw new IllegalArgumentException(...); }
+    if (tarefa == null) { throw new IllegalArgumentException(...); }
+    if (!colaborador.podeSerAlocado()) { throw new ColaboradorNaoAlocavelException(...); }
+    tarefa.validarClassificacaoParaAlocacao();
+    List<String> impedimentos = verificarPendenciasNormativas(...);
+    if (!impedimentos.isEmpty()) { throw new AlocacaoBloqueadaException(impedimentos); }
+}
+
+// Usado na consulta de aptidão: devolve a lista. Mesmas regras, escritas de novo.
+public List<String> obterImpedimentos(Colaborador colaborador, Tarefa tarefa, ...) {
+    if (tarefa == null) { impedimentos.add("tarefa não informada"); return impedimentos; }
+    if (colaborador == null) { impedimentos.add("colaborador não informado"); return impedimentos; }
+    if (!colaborador.podeSerAlocado()) { ... return ...; }
+    if (!tarefa.estaClassificada()) { impedimentos.add("tarefa '...' sem grau de periculosidade classificado"); }
+    impedimentos.addAll(verificarPendenciasNormativas(...));
+    return impedimentos;
+}
+```
+
+Se uma regra mudasse num método e não no outro, a tela "Consultar aptidão" e o bloqueio da alocação passariam a discordar: a tela diria "apto" e a alocação recusaria, ou o contrário. As cópias já divergiam na ordem das verificações de nulo.
+
+**2. O caso de uso criava o validador com `new`**, em vez de recebê-lo por interface:
+
+```java
+this(..., auditoriaRepository, new ValidadorAptidaoColaboradorService());
+```
+
+**3. A tarefa validava na própria criação.** O construtor de `Tarefa` e `Tarefa.atualizar` lançavam `IllegalArgumentException` para descrição vazia, e `TarefaService.validarRelacoes` verificava área e setores num método privado. As regras da tarefa ficavam espalhadas entre a entidade e o caso de uso.
+
+### Por que Chain of Responsibility
+
+As regras de validação são independentes entre si e têm ordem. Cada uma decide sozinha se há problema e, em alguns casos, se a validação deve parar (sem colaborador não há certificação a conferir). É exatamente o formato de uma cadeia: cada regra vira um elo, e a cadeia é montada uma vez.
+
+Os elos registram os problemas num acumulador, `ResultadoValidacao`, em vez de lançar exceção na hora. Com isso, a **mesma cadeia** atende os dois usos:
+
+- `verificar(alvo)` devolve todos os problemas, para a consulta de aptidão listar;
+- `validar(alvo)` lança a exceção do primeiro problema, para bloquear a alocação.
+
+Descartados:
+
+- **Notification sozinho** (escopo original desta issue): unificava a coleta, mas mantinha as regras num método único de complexidade alta e não atendia o padrão exigido pelo professor.
+- **Bean Validation (`@NotNull`, `@Valid`):** cobre campos isolados, mas não regras que consultam o banco (área e setores existentes) nem regras que dependem de vários objetos (aptidão).
 
 ### Papéis do padrão
 
-| Papel no padrão | Elemento no código | Responsabilidade |
+| Papel GoF | Elemento no código | Responsabilidade |
 | --- | --- | --- |
-| Notification | Lista de impedimentos / `ResultadoAptidao` | Acumular as violações encontradas durante a verificação |
-| Validator | `ValidadorAptidaoColaboradorService.obterImpedimentos` | Implementar as regras de aptidão em um único fluxo |
-| Client | `validarAptidaoParaTarefa`, `AlocarColaboradorTarefaService` | Lançar `AlocacaoBloqueadaException` ou devolver os impedimentos na consulta |
+| Handler | `validacao/EloValidacao<T>` | Guarda o próximo elo; `processar` verifica e repassa, a menos que a cadeia tenha sido interrompida |
+| ConcreteHandlers (aptidão) | `DadosInformadosElo`, `ColaboradorAlocavelElo`, `TarefaClassificadaElo`, `ExigenciasCapacitacaoElo` | Uma regra de aptidão cada |
+| ConcreteHandlers (tarefa) | `AreaRiscoExistenteElo`, `SetoresInformadosElo`, `SetoresExistentesElo`, `DescricaoObrigatoriaElo` | Uma regra da tarefa cada |
+| Montagem da cadeia | `ValidadorEmCadeia<T>` e as subclasses `AptidaoColaboradorValidador`, `TarefaValidador` | Uma classe por objeto validado; monta a cadeia no construtor e define a exceção padrão |
+| Interface usada pelo cliente | `validacao/Validador<T>` | `verificar` e `validar`; os casos de uso dependem só dela |
+| Acumulador | `ResultadoValidacao`, `Problema` | Guardam os problemas e a exceção própria de cada um |
+| Client | `AlocarColaboradorTarefaService`, `TarefaService` | Chamam `validar` antes do repository |
+
+`AptidaoParaTarefa` é um objeto de contexto: reúne colaborador, tarefa, certificações, treinamentos, exigências e data, que antes eram 6 parâmetros soltos.
+
+**Convenção para as próximas issues (#263 a #267):**
+
+- o pacote `br.edu.safeplace.backend.validacao` fica ao lado de `domain`, `application` e `adapters`, com um subpacote por objeto validado;
+- cada objeto validado tem um `XxxValidador extends ValidadorEmCadeia<Xxx>`, anotado com `@Component`, e um elo por regra (`XxxElo`, visível só no pacote);
+- o caso de uso recebe `Validador<Xxx>` pelo construtor e chama `validar` antes de `repository.salvar`;
+- a mensagem e o tipo da exceção continuam os mesmos de antes; o problema leva a exceção própria em `Problema.comExcecao`, ou usa a exceção padrão do validador;
+- os elos podem consultar portas de saída (`AreaRiscoRepository`, `SetorRepository`), nunca adaptadores.
 
 ### Diagramas
 
-*Diagramas PlantUML antes e depois a preencher na issue [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228).*
+**Antes.** Duas cópias das regras no mesmo serviço; o caso de uso o criava com `new`.
+
+```mermaid
+classDiagram
+  direction LR
+  class ValidadorAptidaoColaboradorService {
+    +validarAptidaoParaTarefa(colaborador, tarefa, certificacoes, treinamentos, exigencias, data)
+    +obterImpedimentos(colaborador, tarefa, certificacoes, treinamentos, exigencias, data) List~String~
+    -verificarPendenciasNormativas(...) List~String~
+  }
+  class AlocarColaboradorTarefaService {
+    +alocar()
+    +consultarAptidao()
+  }
+  class Tarefa {
+    +Tarefa(...) lança se descrição vazia
+    +atualizar(...) lança se descrição vazia
+  }
+  class TarefaService {
+    +cadastrarTarefa()
+    -validarRelacoes(areaRiscoId, setoresIds)
+  }
+  AlocarColaboradorTarefaService ..> ValidadorAptidaoColaboradorService : new
+  TarefaService ..> Tarefa : valida no construtor
+```
+
+**Depois.** Uma cadeia por objeto validado; os casos de uso conhecem só a interface.
+
+```mermaid
+classDiagram
+  direction TB
+  class Validador~T~ {
+    <<interface>>
+    +verificar(alvo) ResultadoValidacao
+    +validar(alvo)
+  }
+  class ValidadorEmCadeia~T~ {
+    <<abstract>>
+    -primeiro EloValidacao~T~
+    #excecaoPadrao(mensagens) RuntimeException
+  }
+  class EloValidacao~T~ {
+    <<Handler>>
+    -proximo EloValidacao~T~
+    +encadear(proximo) EloValidacao~T~
+    +processar(alvo, resultado)
+    #verificar(alvo, resultado)
+  }
+  class ResultadoValidacao {
+    +adicionar(problema)
+    +interromper(problema)
+    +mensagens() List~String~
+  }
+  class AptidaoColaboradorValidador
+  class TarefaValidador
+  class DadosInformadosElo { <<ConcreteHandler>> }
+  class ColaboradorAlocavelElo { <<ConcreteHandler>> }
+  class TarefaClassificadaElo { <<ConcreteHandler>> }
+  class ExigenciasCapacitacaoElo { <<ConcreteHandler>> }
+  class AlocarColaboradorTarefaService { <<Client>> }
+  class TarefaService { <<Client>> }
+  Validador <|.. ValidadorEmCadeia
+  ValidadorEmCadeia <|-- AptidaoColaboradorValidador
+  ValidadorEmCadeia <|-- TarefaValidador
+  ValidadorEmCadeia o-- EloValidacao : primeiro elo
+  EloValidacao o-- EloValidacao : próximo
+  EloValidacao <|-- DadosInformadosElo
+  EloValidacao <|-- ColaboradorAlocavelElo
+  EloValidacao <|-- TarefaClassificadaElo
+  EloValidacao <|-- ExigenciasCapacitacaoElo
+  EloValidacao ..> ResultadoValidacao : registra problemas
+  AlocarColaboradorTarefaService --> Validador : Validador~AptidaoParaTarefa~
+  TarefaService --> Validador : Validador~Tarefa~
+```
+
+**Execução** de uma alocação de colaborador com certificação vencida:
+
+```mermaid
+sequenceDiagram
+  participant UC as AlocarColaboradorTarefaService
+  participant V as AptidaoColaboradorValidador
+  participant E1 as DadosInformadosElo
+  participant E2 as ColaboradorAlocavelElo
+  participant E3 as TarefaClassificadaElo
+  participant E4 as ExigenciasCapacitacaoElo
+  participant R as AlocacaoTarefaRepository
+  UC->>V: validar(AptidaoParaTarefa)
+  V->>E1: processar
+  E1->>E2: tarefa e colaborador informados
+  E2->>E3: perfil de colaborador
+  E3->>E4: tarefa classificada
+  E4-->>V: "certificação obrigatória 'NR-35' ausente ou vencida"
+  V-->>UC: AlocacaoBloqueadaException
+  Note over UC,R: salvar não é chamado: nada é gravado
+```
+
+### Depois (código)
+
+A consulta e o bloqueio usam a mesma cadeia:
+
+```java
+// AlocarColaboradorTarefaService.alocar: valida antes do repository.
+validadorAptidao.validar(new AptidaoParaTarefa(
+        colaborador, tarefa, certificacoes, treinamentos, exigencias, LocalDate.now()));
+AlocacaoTarefa salva = alocacaoTarefaRepository.salvar(alocacao);
+
+// AlocarColaboradorTarefaService.consultarAptidao: mesma cadeia, sem exceção.
+List<String> impedimentos = validadorAptidao.verificar(new AptidaoParaTarefa(
+        colaborador, tarefa, certificacoes, treinamentos, exigencias, LocalDate.now())).mensagens();
+```
+
+A cadeia é montada uma vez, na ordem das regras:
+
+```java
+@Component
+public class AptidaoColaboradorValidador extends ValidadorEmCadeia<AptidaoParaTarefa> {
+
+    private static EloValidacao<AptidaoParaTarefa> montarCadeia() {
+        EloValidacao<AptidaoParaTarefa> primeiro = new DadosInformadosElo();
+        primeiro.encadear(new ColaboradorAlocavelElo())
+                .encadear(new TarefaClassificadaElo())
+                .encadear(new ExigenciasCapacitacaoElo());
+        return primeiro;
+    }
+
+    @Override
+    protected RuntimeException excecaoPadrao(List<String> impedimentos) {
+        return new AlocacaoBloqueadaException(impedimentos);
+    }
+}
+```
+
+Cada elo cuida de uma regra:
+
+```java
+class ColaboradorAlocavelElo extends EloValidacao<AptidaoParaTarefa> {
+    @Override
+    protected void verificar(AptidaoParaTarefa aptidao, ResultadoValidacao resultado) {
+        if (!aptidao.colaborador().podeSerAlocado()) {
+            ColaboradorNaoAlocavelException excecao = new ColaboradorNaoAlocavelException(aptidao.colaborador().getNome());
+            resultado.interromper(Problema.comExcecao(excecao.getMessage(), () -> excecao));
+        }
+    }
+}
+```
+
+Na tarefa, a validação saiu do construtor e passou a rodar no caso de uso, antes do repository:
+
+```java
+Tarefa novaTarefa = Tarefa.cadastrarComRelacoes(
+        inputDTO.descricao(), inputDTO.areaRiscoId(), inputDTO.setoresIds());
+validador.validar(novaTarefa);
+...
+Tarefa salva = repository.salvar(novaTarefa);
+```
+
+### Benefício
+
+- **Uma implementação das regras de aptidão.** A consulta e a alocação passam pela mesma cadeia e não podem mais discordar.
+- **Validação fora do domínio e antes do repository**, como pediu o professor. Nada é gravado quando a validação falha.
+- **Uma regra por classe.** Incluir uma regra é criar um elo e encadeá-lo, sem mexer nos outros (aberto/fechado). Cada elo é testável sozinho.
+- **Programação por interface.** Os casos de uso recebem `Validador<T>` e não criam mais o validador com `new`.
+- **Comportamento preservado.** Mensagens, tipos de exceção e respostas HTTP são os mesmos de antes, e a ordem dos elos repete a ordem antiga das verificações.
 
 ### Métricas locais
 
+Medidas com `scripts/metricas/coletar_metricas.py` (complexidade ciclomática por método):
+
 | Métrica | Antes (v1.0.0) | Depois |
-| --- | --- | --- |
-| Complexidade ciclomática em `ValidadorAptidaoColaboradorService` | 13 | *A medir* |
+| --- | ---: | ---: |
+| Implementações das regras de aptidão | 2 (`validarAptidaoParaTarefa` e `obterImpedimentos`) | 1 (a cadeia) |
+| Maior complexidade de método nas regras de aptidão | 13 (`verificarPendenciasNormativas`) | 9 (`ExigenciasCapacitacaoElo.verificar`) |
+| Complexidade dos elos de regra única | — | 2 a 4 |
+| Parâmetros da validação de aptidão | 6 | 1 (`AptidaoParaTarefa`) |
+| Validadores criados com `new` nos casos de uso | 1 | 0 |
+| `throw` de validação de entrada em `Tarefa` | 2 (construtor e `atualizar`) | 0 |
 
 ### Evidências
 
-*A preencher na issue [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228).*
+- Testes da cadeia de aptidão: `validacao/aptidao/AptidaoColaboradorValidadorTest`, com os 13 casos do antigo `ValidadorAptidaoColaboradorServiceTest` e as mesmas asserções, além de um caso provando que a consulta e o bloqueio concordam.
+- Testes da cadeia da tarefa: `validacao/tarefa/TarefaValidadorTest`, um caso por elo e a ordem dos problemas.
+- `TarefaServiceTest` e `AlocarColaboradorTarefaUseCaseTest` sem alteração de asserções; o teste de descrição vazia saiu de `TarefaTest` e passou para `TarefaValidadorTest`.
 
 ---
 

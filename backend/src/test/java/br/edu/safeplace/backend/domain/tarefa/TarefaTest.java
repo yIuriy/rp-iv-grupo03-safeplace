@@ -6,14 +6,10 @@ import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
-import br.edu.safeplace.backend.domain.tarefa.exception.TarefaSemClassificacaoException;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,16 +51,6 @@ class TarefaTest {
         assertThat(tarefa.getDataClassificacao()).isNull();
         assertThat(tarefa.getResponsavelClassificacao()).isNull();
         assertThat(Tarefa.cadastrar("Inspeção visual", null, null).estaClassificada()).isFalse();
-    }
-
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = {"   ", "\t", "\n"})
-    @DisplayName("Deve rejeitar descrição nula ou em branco")
-    void deveRejeitarDescricaoNulaOuEmBranco(String descricaoInvalida) {
-        assertThatThrownBy(() -> Tarefa.cadastrar(descricaoInvalida))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Descrição da tarefa é obrigatória.");
     }
 
     @Test
@@ -134,20 +120,6 @@ class TarefaTest {
 
         assertThat(legada.estaClassificada()).isTrue();
         assertThat(legada.getResponsavelClassificacao()).isNull();
-    }
-
-    @Test
-    @DisplayName("UC11 exceção I: deve bloquear alocação em tarefa sem grau de risco cadastrado")
-    void deveBloquearAlocacaoEmTarefaSemClassificacao() {
-        Tarefa tarefa = Tarefa.cadastrar("Inspeção visual");
-
-        assertThatThrownBy(tarefa::validarClassificacaoParaAlocacao)
-                .isInstanceOf(TarefaSemClassificacaoException.class)
-                .hasMessageContaining("Inspeção visual");
-
-        tarefa.classificar(NivelPerigo.BAIXO, gestor(7));
-
-        assertThatCode(tarefa::validarClassificacaoParaAlocacao).doesNotThrowAnyException();
     }
 
     @Test

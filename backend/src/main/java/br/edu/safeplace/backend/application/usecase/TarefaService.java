@@ -26,6 +26,8 @@ import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.application.port.out.SetorRepository;
 import br.edu.safeplace.backend.application.port.out.TarefaRepository;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
+import br.edu.safeplace.backend.validacao.Validador;
+import br.edu.safeplace.backend.validacao.tarefa.TarefaValidador;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.Epi;
@@ -51,22 +53,27 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
     private final TarefaRepository repository;
     private final LogAuditoriaRepository logAuditoriaRepository;
     private final UsuarioRepository usuarioRepositorio;
-    private final AreaRiscoRepository areaRiscoRepository;
-    private final SetorRepository setorRepository;
+    private final Validador<Tarefa> validador;
     private final EpiRepository epiRepository;
 
     @Autowired
     public TarefaService(TarefaRepository repository, LogAuditoriaRepository logAuditoriaRepository,
-            UsuarioRepository usuarioRepositorio, AreaRiscoRepository areaRiscoRepository,
-            SetorRepository setorRepository, EpiRepository epiRepository) {
+            UsuarioRepository usuarioRepositorio, Validador<Tarefa> validador, EpiRepository epiRepository) {
         this.repository = repository;
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.logAuditoriaRepository = java.util.Objects.requireNonNull(
                 logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
         this.usuarioRepositorio = usuarioRepositorio;
-        this.areaRiscoRepository = areaRiscoRepository;
-        this.setorRepository = setorRepository;
+        this.validador = java.util.Objects.requireNonNull(validador, "Validador da tarefa é obrigatório.");
         this.epiRepository = epiRepository;
+    }
+
+    /** Monta o validador com as portas informadas; usado pelos testes sem contexto Spring. */
+    public TarefaService(TarefaRepository repository, LogAuditoriaRepository logAuditoriaRepository,
+            UsuarioRepository usuarioRepositorio, AreaRiscoRepository areaRiscoRepository,
+            SetorRepository setorRepository, EpiRepository epiRepository) {
+        this(repository, logAuditoriaRepository, usuarioRepositorio,
+                new TarefaValidador(areaRiscoRepository, setorRepository), epiRepository);
     }
 
     public TarefaService(TarefaRepository repository, LogAuditoriaRepository logAuditoriaRepository,
@@ -83,9 +90,10 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
     @Override
     @Transactional
     public TarefaOutputDTO cadastrarTarefa(CadastrarTarefaInputDTO inputDTO) {
-        validarRelacoes(inputDTO.areaRiscoId(), inputDTO.setoresIds());
         Tarefa novaTarefa = Tarefa.cadastrarComRelacoes(
                 inputDTO.descricao(), inputDTO.areaRiscoId(), inputDTO.setoresIds());
+        // Chain of Responsibility (#228): valida antes de classificar e de chamar o repository.
+        validador.validar(novaTarefa);
         GestorDeSeguranca responsavel = null;
         if (inputDTO.nivelPerigo() != null) {
             responsavel = resolverResponsavelTecnico();
@@ -107,13 +115,13 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
     @Transactional
     public TarefaOutputDTO atualizarTarefa(Integer id, AtualizarTarefaInputDTO inputDTO, String operador) {
         Tarefa existente = buscarTarefa(id);
-        validarRelacoes(inputDTO.areaRiscoId(), inputDTO.setoresIds());
 
         Tarefa atualizada = existente.atualizar(
                 inputDTO.descricao(),
                 inputDTO.areaRiscoId(),
                 inputDTO.setoresIds()
         );
+        validador.validar(atualizada);
 
         Tarefa salva = repository.salvar(atualizada);
         String op = operador != null ? operador : resolverOperador();
@@ -276,24 +284,5 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
     private Tarefa buscarTarefa(Integer id) {
         return repository.buscarPorId(id)
                 .orElseThrow(() -> new TarefaNaoEncontradaException(id));
-    }
-
-    private void validarRelacoes(Integer areaRiscoId, List<Integer> setoresIds) {
-        if (areaRiscoId != null && areaRiscoRepository != null) {
-            areaRiscoRepository.buscarPorId(areaRiscoId)
-                    .orElseThrow(() -> new IllegalArgumentException("Área de risco não encontrada com id: " + areaRiscoId));
-        }
-        if (setoresIds == null || setoresIds.isEmpty()) {
-            return;
-        }
-        if (setoresIds.stream().anyMatch(java.util.Objects::isNull)) {
-            throw new IllegalArgumentException("Identificador de setor não pode ser nulo.");
-        }
-        if (setorRepository == null) {
-            return;
-        }
-        setoresIds.stream().distinct().forEach(setorId ->
-                setorRepository.buscarPorId(setorId)
-                        .orElseThrow(() -> new IllegalArgumentException("Setor não encontrado com id: " + setorId)));
     }
 }

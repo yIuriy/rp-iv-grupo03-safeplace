@@ -30,7 +30,7 @@ import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepository;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
-import br.edu.safeplace.backend.domain.capacitacao.ValidadorAptidaoColaboradorService;
+import br.edu.safeplace.backend.validacao.aptidao.AptidaoColaboradorValidador;
 import br.edu.safeplace.backend.domain.capacitacao.exception.AlocacaoBloqueadaException;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
@@ -75,7 +75,7 @@ class AlocarColaboradorTarefaUseCaseTest {
                 capacitacaoRepository,
                 alocacaoTarefaRepository,
                 auditoriaRepository,
-                new ValidadorAptidaoColaboradorService()
+                new AptidaoColaboradorValidador()
         );
 
         gestor = new GestorDeSeguranca(1, "11122233344", "Gestor Silva", LocalDate.of(1980, 5, 10),

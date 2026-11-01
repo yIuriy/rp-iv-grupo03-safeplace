@@ -35,7 +35,7 @@ O único atributo novo persistido é `Treinamento.validadeMeses` (seção 8.2). 
 | Operação no PNG | Correspondência na API |
 | --- | --- |
 | `Certificacao.calcularStatus(data)` e `Treinamento.calcularStatus(data)` | Domínio; situação usada em `GET /api/capacitacoes/colaboradores` e nos alertas. |
-| `Certificacao.estaValidaEm(data)` | Domínio; usada na verificação de aptidão (`ValidadorAptidaoColaboradorService`, #117). |
+| `Certificacao.estaValidaEm(data)` | Domínio; usada na verificação de aptidão (`ExigenciasCapacitacaoElo` da cadeia `AptidaoColaboradorValidador`, #117 e #228). |
 | `Treinamento.verificarStatusTreinamentos(lista)` | Domínio; consolida a situação dos treinamentos de um colaborador. |
 | `Certificacao.validarInconsistenciaCronologica(...)` | Aplicada no domínio ao cadastrar uma certificação (seção 8). |
 | Regra 1 do UC02 (alerta de 30 dias) e cenários I e III | `GET /api/capacitacoes/alertas`. |
@@ -47,7 +47,7 @@ Na revisão do diagrama de 16/10/2026, as operações de consulta foram retirada
 | `Colaborador.buscarColaboradores()` | `GET /api/capacitacoes/colaboradores` (UC02, passo 2). |
 | `Colaborador.buscarColaboradoresPorStatus(status)` e `Certificacao.verificarStatusCertificacoes(lista)` | `GET /api/capacitacoes/colaboradores?situacao=` (UC02, cenário IV). A situação do colaborador é a mais crítica entre suas certificações. |
 | `Certificacao.buscarCertificacoes(cpf)` e `Treinamento.buscarTreinamentos()` | `GET /api/capacitacoes/colaboradores/{colaboradorId}` (UC02, passos 4 e 5). |
-| `Certificacao.verificarCertificacaoObrigatoria(cpf, tarefa)` | `GET /api/capacitacoes/colaboradores/{colaboradorId}/aptidao?tarefaId=`, que reutiliza a regra de #117 (`ValidadorAptidaoColaboradorService`). |
+| `Certificacao.verificarCertificacaoObrigatoria(cpf, tarefa)` | `GET /api/capacitacoes/colaboradores/{colaboradorId}/aptidao?tarefaId=`, que reutiliza a regra de #117 (cadeia `AptidaoColaboradorValidador`, a mesma usada no bloqueio da alocação desde #228). |
 
 - **CPF e identificador**: as operações antigas recebiam `cpf`. A API usa o identificador do colaborador, como as demais rotas do sistema; a busca por CPF continua em `/api/usuarios/colaboradores`.
 

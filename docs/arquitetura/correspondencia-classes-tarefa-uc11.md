@@ -63,8 +63,8 @@ A revisão de escopo da issue #112 consultou o PNG no commit `34d6b6d` (14/09/20
 - **Ator e operação**: Gestor de Segurança ou Supervisor confirma a alocação por `POST /api/tarefas/{id}/alocacoes`, com o colaborador no corpo. O e-mail do ator vem da autenticação; o cliente não informa o responsável pela alocação.
 - **Ponto de bloqueio**: `AlocarColaboradorTarefaUseCase.alocar` é a mutação final. Ele busca a tarefa, o colaborador e os dados de capacitação novamente antes de criar `AlocacaoTarefa`.
 - **Origem das exigências**: `exigencias_capacitacao`, filtrada por `tipo_alvo = TAREFA` e `alvo_id = tarefa.id`; certificações vêm de `certificacoes` e treinamentos realizados de `treinamentos`/`treinamentos_colaboradores`.
-- **Sem classificação**: `Tarefa.validarClassificacaoParaAlocacao()` lança `TarefaSemClassificacaoException`, tratada como HTTP 409, sem inserir alocação ou auditoria.
-- **Capacitação inválida**: `ValidadorAptidaoColaboradorService` lança `AlocacaoBloqueadaException` com as pendências de certificação ou treinamento; a API responde HTTP 422, sem inserir alocação ou auditoria.
+- **Sem classificação**: o elo `TarefaClassificadaElo` da cadeia `AptidaoColaboradorValidador` (#228) lança `TarefaSemClassificacaoException`, tratada como HTTP 409, sem inserir alocação ou auditoria.
+- **Capacitação inválida**: a cadeia `AptidaoColaboradorValidador` (camada `validacao`, #228) lança `AlocacaoBloqueadaException` com as pendências de certificação ou treinamento; a API responde HTTP 422, sem inserir alocação ou auditoria.
 - **Efeito permitido**: a alocação entra em `tarefas_alocacoes` com tarefa, colaborador, data/hora e operador; `LogAuditoria` registra a mutação como `AlocacaoTarefa`.
 - **Consulta prévia**: `GET /api/tarefas/{id}/aptidao/{colaboradorId}` é somente leitura e não grava nem autoriza uma futura confirmação. O `POST` sempre revalida os dados atuais.
 
@@ -86,7 +86,7 @@ A revisão de escopo da issue #112 consultou o PNG no commit `34d6b6d` (14/09/20
 | `consultarTarefas()` (retirada do PNG em 16/10/2026) | Porta de entrada `ClassificarTarefaUseCase.listar` e `listarPorNivelPerigo`; `GET /api/tarefas?nivelPerigo=` | Matriz de periculosidade para Gestor e Supervisor. |
 | `classificar(nivel, responsavel)` (UC11, passos 3 a 6 e alternativo I) | `ClassificarTarefaUseCase.classificar`; domínio `Tarefa.classificar(nivel, responsavel)`; `PATCH /api/tarefas/{id}/classificacao` | Grava nível, data, hora e responsável técnico e devolve `RegistroClassificacaoTarefa`. |
 | Registro com data, hora e responsável técnico (UC11, regra 1) | `LogAuditoriaRepository.salvar` e `tarefas.responsavel_classificacao_id` | Histórico com valor anterior e novo (RNF05). |
-| Bloqueio de alocação (UC11, exceção I) | `AlocarColaboradorTarefaUseCase.alocar` → `ValidadorAptidaoColaboradorService` → `Tarefa.validarClassificacaoParaAlocacao()` | Bloqueio ocorre na confirmação, antes de persistir `AlocacaoTarefa`. |
+| Bloqueio de alocação (UC11, exceção I) | `AlocarColaboradorTarefaUseCase.alocar` → `AptidaoColaboradorValidador` → `TarefaClassificadaElo` | Bloqueio ocorre na confirmação, antes de persistir `AlocacaoTarefa`. |
 | `associarEPIs(...)` / `verificarEPIsObrigatoriosTarefa()` | Ver [Correspondência Classes vs RF12](correspondencia-classes-tarefa-rf12.md) | RF12, UC08 (MVP desde 17/10/2026). |
 | Associações com `Setor` e `AreaRisco` | `Tarefa.areaRiscoId` e `Tarefa.setoresIds`; `TarefaJpaAdapter` | V26, preservadas na leitura e expostas pela API. |
 
@@ -110,7 +110,7 @@ A revisão de escopo da issue #112 consultou o PNG no commit `34d6b6d` (14/09/20
 | UC03 / UC11 | Vocabulário de risco divergente | Vocabulário único com correspondência explícita (2.1). |
 | UC11, regra 1 / US06, regra 2 e critério 2 | Data, hora e responsável técnico em toda alteração | `dataClassificacao`, `responsavelClassificacao` e `LogAuditoria` com valor anterior (2.3). |
 | UC11, atores / US06, regra 1 e critérios 1 e 4 | Gestor define; Supervisor consulta | RBAC existente e consulta com nível, data e responsável (2.3). |
-| UC11, exceção I / US06, regra 3 e critério 3 | Alocação bloqueada sem classificação | `validarClassificacaoParaAlocacao` para #117 e #126 (2.4). |
+| UC11, exceção I / US06, regra 3 e critério 3 | Alocação bloqueada sem classificação | `TarefaClassificadaElo` na cadeia de aptidão (#228), usada por #117 e #126 (2.4). |
 | UC11, regra 2 / US06, regra 4 | Exigências normativas | Pendente (2.5, seção 6). |
 | RNF03 / RNF05 | Perfis e rastreabilidade | Acesso por perfil e auditoria (2.3). |
 
