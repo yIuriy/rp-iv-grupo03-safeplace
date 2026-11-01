@@ -1,5 +1,5 @@
 /*
- * Adaptador JPA da porta EmprestimoRepositoryPort: converte entre Emprestimo (domínio) e
+ * Adaptador JPA da porta EmprestimoRepository: converte entre Emprestimo (domínio) e
  * EmprestimoEntity (tabela emprestimos).
  */
 package br.edu.safeplace.backend.adapters.out.persistencia;
@@ -9,13 +9,13 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import br.edu.safeplace.backend.application.port.out.EmprestimoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.EmprestimoRepository;
 import br.edu.safeplace.backend.domain.emprestimo.ClassificacaoEmprestimo;
 import br.edu.safeplace.backend.domain.emprestimo.Emprestimo;
 import br.edu.safeplace.backend.domain.emprestimo.EstadoDevolucao;
 
 @Repository
-public class EmprestimoJpaAdapter implements EmprestimoRepositoryPort {
+public class EmprestimoJpaAdapter implements EmprestimoRepository {
     private final EmprestimoJpaRepository repositorio;
 
     public EmprestimoJpaAdapter(EmprestimoJpaRepository repositorio) {

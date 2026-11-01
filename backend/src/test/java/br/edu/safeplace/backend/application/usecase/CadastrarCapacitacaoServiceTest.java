@@ -20,8 +20,8 @@ import br.edu.safeplace.backend.application.dto.capacitacao.TreinamentoOutputDTO
 import br.edu.safeplace.backend.application.dto.input.CadastrarCertificacaoInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarTreinamentoInputDTO;
 import br.edu.safeplace.backend.application.dto.input.DefinirExigenciaInputDTO;
-import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
+import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepository;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
@@ -105,7 +105,7 @@ class CadastrarCapacitacaoServiceTest {
         assertThat(log.getEntidadeId()).isEqualTo(1);
     }
 
-    private static class FakeCapacitacaoRepository implements CapacitacaoRepositoryPort {
+    private static class FakeCapacitacaoRepository implements CapacitacaoRepository {
         private final List<Certificacao> certificacoes = new ArrayList<>();
         private final List<Treinamento> treinamentos = new ArrayList<>();
         private final List<ExigenciaCapacitacao> exigencias = new ArrayList<>();
@@ -168,7 +168,7 @@ class CadastrarCapacitacaoServiceTest {
         }
     }
 
-    private static class FakeLogAuditoriaRepository implements LogAuditoriaRepositoryPort {
+    private static class FakeLogAuditoriaRepository implements LogAuditoriaRepository {
         private final List<LogAuditoria> logs = new ArrayList<>();
         private int seq = 1;
 

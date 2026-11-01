@@ -6,7 +6,7 @@ Este documento registra o contrato da classificação de periculosidade das tare
 
 - **Situação**: contrato aprovado (RF06; UC11; US06; issue #112). A reconciliação do vocabulário único de `NivelPerigo` foi formalizada no modelo, casos de uso, histórias e código.
 - **Fontes**: [Diagrama de classes](../diagramas/classes/Diagrama%20de%20Classes%20-%20SafePlace.png), [UC03](../casos-de-uso/casos-de-uso.md#uc03--mapear-áreas-de-risco), [UC11](../casos-de-uso/casos-de-uso.md#uc11--classificar-nível-de-periculosidade), [US06](../historias-de-usuario.md#us06--classificar-a-periculosidade-das-tarefas), [RF06](../requisitos/requisitos-funcionais.md#rf06-o-sistema-deve-permitir-classificar-o-nível-de-periculosidade-da-tarefa-a-ser-realizada), [RNF03 e RNF05](../requisitos/requisitos-nao-funcionais.md) e o [glossário](../glossario.md#grau-de-risco).
-- **Implementação de referência**: domínio em `backend/src/main/java/br/edu/safeplace/backend/domain/tarefa/` (`Tarefa`, `RegistroClassificacaoTarefa`) e `domain/comum/NivelPerigo`; caso de uso `TarefaUseCase`; persistência `TarefaJpaAdapter` com a migração `V23__registrar_responsavel_classificacao_tarefa.sql`; API `/api/tarefas`; tela `frontend/src/features/tarefas/`.
+- **Implementação de referência**: domínio em `backend/src/main/java/br/edu/safeplace/backend/domain/tarefa/` (`Tarefa`, `RegistroClassificacaoTarefa`) e `domain/comum/NivelPerigo`; caso de uso `TarefaService`; persistência `TarefaJpaAdapter` com a migração `V23__registrar_responsavel_classificacao_tarefa.sql`; API `/api/tarefas`; tela `frontend/src/features/tarefas/`.
 
 ### 1.1. Modelo de referência
 
@@ -85,7 +85,7 @@ A revisão de escopo da issue #112 consultou o PNG no commit `34d6b6d` (14/09/20
 | `Tarefa.dataClassificacao : DateTime` | Domínio `Tarefa.dataClassificacao`; coluna `tarefas.data_classificacao` (V7) | Data e hora da última classificação. |
 | `consultarTarefas()` (retirada do PNG em 16/10/2026) | Porta de entrada `ClassificarTarefaUseCase.listar` e `listarPorNivelPerigo`; `GET /api/tarefas?nivelPerigo=` | Matriz de periculosidade para Gestor e Supervisor. |
 | `classificar(nivel, responsavel)` (UC11, passos 3 a 6 e alternativo I) | `ClassificarTarefaUseCase.classificar`; domínio `Tarefa.classificar(nivel, responsavel)`; `PATCH /api/tarefas/{id}/classificacao` | Grava nível, data, hora e responsável técnico e devolve `RegistroClassificacaoTarefa`. |
-| Registro com data, hora e responsável técnico (UC11, regra 1) | `LogAuditoriaRepositoryPort.salvar` e `tarefas.responsavel_classificacao_id` | Histórico com valor anterior e novo (RNF05). |
+| Registro com data, hora e responsável técnico (UC11, regra 1) | `LogAuditoriaRepository.salvar` e `tarefas.responsavel_classificacao_id` | Histórico com valor anterior e novo (RNF05). |
 | Bloqueio de alocação (UC11, exceção I) | `AlocarColaboradorTarefaUseCase.alocar` → `ValidadorAptidaoColaboradorService` → `Tarefa.validarClassificacaoParaAlocacao()` | Bloqueio ocorre na confirmação, antes de persistir `AlocacaoTarefa`. |
 | `associarEPIs(...)` / `verificarEPIsObrigatoriosTarefa()` | Ver [Correspondência Classes vs RF12](correspondencia-classes-tarefa-rf12.md) | RF12, UC08 (MVP desde 17/10/2026). |
 | Associações com `Setor` e `AreaRisco` | `Tarefa.areaRiscoId` e `Tarefa.setoresIds`; `TarefaJpaAdapter` | V26, preservadas na leitura e expostas pela API. |
@@ -95,7 +95,7 @@ A revisão de escopo da issue #112 consultou o PNG no commit `34d6b6d` (14/09/20
 ## 4. Verificação
 
 - **Domínio**: `TarefaTest` cobre classificação com responsável, reavaliação com valor anterior, reavaliação para o mesmo nível, recusa sem nível ou sem responsável, registro legado sem autoria e bloqueio de alocação.
-- **Caso de uso**: `TarefaUseCaseTest` e `AuditoriaEvidenciaIntegracaoTest` cobrem responsável técnico, histórico com valor anterior e recusa sem Gestor identificável, sem gravar nada.
+- **Caso de uso**: `TarefaServiceTest` e `AuditoriaEvidenciaIntegracaoTest` cobrem responsável técnico, histórico com valor anterior e recusa sem Gestor identificável, sem gravar nada.
 - **API**: `TarefaControllerTest` cobre RBAC (Gestor classifica; Supervisor consulta e não altera), resposta com o responsável, recusa de termos fora do vocabulário (HTTP 400) e HTTP 403 sem responsável.
 - **PostgreSQL**: `AreaRiscoTarefaPersistenciaTest` aplica as migrações até a V23 e verifica, após limpar o contexto de persistência, o responsável gravado em `tarefas`, o histórico em `logs_auditoria` e a leitura de tarefa legada sem autoria.
 - **Interface**: `tests/tarefas.spec.ts` verifica a lista de níveis, o responsável exibido após a classificação e a indicação de responsável não registrado.

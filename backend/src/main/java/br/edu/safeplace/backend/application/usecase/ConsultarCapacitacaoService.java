@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import br.edu.safeplace.backend.application.dto.capacitacao.PendenciasColaboradorDTO;
 import br.edu.safeplace.backend.application.port.in.capacitacao.ConsultarCapacitacaoUseCase;
-import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepository;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
 import br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao;
@@ -17,9 +17,9 @@ import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
 @Service
 public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase {
 
-    private final CapacitacaoRepositoryPort capacitacaoRepository;
+    private final CapacitacaoRepository capacitacaoRepository;
 
-    public ConsultarCapacitacaoService(CapacitacaoRepositoryPort capacitacaoRepository) {
+    public ConsultarCapacitacaoService(CapacitacaoRepository capacitacaoRepository) {
         this.capacitacaoRepository = capacitacaoRepository;
     }
 

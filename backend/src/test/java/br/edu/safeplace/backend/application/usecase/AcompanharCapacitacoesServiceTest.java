@@ -12,7 +12,7 @@ import br.edu.safeplace.backend.application.dto.capacitacao.AlertasCapacitacaoOu
 import br.edu.safeplace.backend.application.dto.capacitacao.CapacitacoesColaboradorOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.ColaboradorCapacitacaoResumoOutputDTO;
 import br.edu.safeplace.backend.application.port.in.capacitacao.ConsultarCapacitacaoUseCase;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao;
 import br.edu.safeplace.backend.domain.capacitacao.StatusTreinamento;
@@ -34,13 +34,13 @@ class AcompanharCapacitacoesServiceTest {
     private final Colaborador carla = colaborador(3, "Carla", "11900000326");
     private final Colaborador davi = colaborador(4, "Davi", "11900000407");
 
-    private UsuarioRepositorioPorta usuarioRepository;
+    private UsuarioRepository usuarioRepository;
     private ConsultarCapacitacaoUseCase consultarCapacitacao;
     private AcompanharCapacitacoesService service;
 
     @BeforeEach
     void setUp() {
-        usuarioRepository = mock(UsuarioRepositorioPorta.class);
+        usuarioRepository = mock(UsuarioRepository.class);
         consultarCapacitacao = mock(ConsultarCapacitacaoUseCase.class);
         service = new AcompanharCapacitacoesService(usuarioRepository, consultarCapacitacao);
 

@@ -10,7 +10,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
 import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
-import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.OcorrenciaRepository;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
@@ -22,16 +22,16 @@ import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 
 @Repository
-public class OcorrenciaJpaAdapter implements OcorrenciaRepositoryPort {
+public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
     private final OcorrenciaJpaRepository repository;
     private final AreaRiscoJpaRepository areaRiscoRepository;
-    private final UsuarioJpaRepositorio usuarioRepository;
+    private final UsuarioJpaRepository usuarioRepository;
     private final SequenciaProtocoloCatJpaRepository sequenciaProtocoloCatRepository;
 
     public OcorrenciaJpaAdapter(
             OcorrenciaJpaRepository repository,
             AreaRiscoJpaRepository areaRiscoRepository,
-            UsuarioJpaRepositorio usuarioRepository,
+            UsuarioJpaRepository usuarioRepository,
             SequenciaProtocoloCatJpaRepository sequenciaProtocoloCatRepository) {
         this.repository = repository;
         this.areaRiscoRepository = areaRiscoRepository;

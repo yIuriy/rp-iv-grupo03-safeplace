@@ -1,5 +1,5 @@
 /*
- * Testes unitários da consulta de ocorrências no OcorrenciaUseCase (issue #128): o Supervisor só vê,
+ * Testes unitários da consulta de ocorrências no OcorrenciaService (issue #128): o Supervisor só vê,
  * na lista, no detalhe e na busca por protocolo, os relatos que registrou; o Gestor vê todos; os
  * critérios se combinam com essa regra.
  */
@@ -26,8 +26,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
-import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
+import br.edu.safeplace.backend.application.port.out.OcorrenciaRepository;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
@@ -45,15 +45,15 @@ class OcorrenciaConsultaUseCaseTest {
     private final Acidente alheio = acidente(2, LocalDateTime.of(2026, 9, 12, 8, 0), "CAT-2026-09-0002");
     private final Incidente proprioAntigo = incidente(3, LocalDateTime.of(2026, 8, 5, 8, 0));
 
-    private LogAuditoriaRepositoryPort auditoria;
-    private OcorrenciaUseCase useCase;
+    private LogAuditoriaRepository auditoria;
+    private OcorrenciaService useCase;
 
     @BeforeEach
     void preparar() {
-        auditoria = mock(LogAuditoriaRepositoryPort.class);
-        when(auditoria.buscarIdsPorResponsavelETipoOperacao(SUPERVISOR, "CADASTRO", OcorrenciaUseCase.ENTIDADES_DE_RELATO))
+        auditoria = mock(LogAuditoriaRepository.class);
+        when(auditoria.buscarIdsPorResponsavelETipoOperacao(SUPERVISOR, "CADASTRO", OcorrenciaService.ENTIDADES_DE_RELATO))
                 .thenReturn(List.of(1, 3));
-        useCase = new OcorrenciaUseCase(new RepositorioFixo(List.of(proprio, alheio, proprioAntigo)), null, null, auditoria);
+        useCase = new OcorrenciaService(new RepositorioFixo(List.of(proprio, alheio, proprioAntigo)), null, null, auditoria);
     }
 
     @AfterEach
@@ -126,7 +126,7 @@ class OcorrenciaConsultaUseCaseTest {
     }
 
     /** Repositório somente leitura: a consulta filtrada usa a implementação padrão da porta. */
-    private record RepositorioFixo(List<Ocorrencia> ocorrencias) implements OcorrenciaRepositoryPort {
+    private record RepositorioFixo(List<Ocorrencia> ocorrencias) implements OcorrenciaRepository {
         @Override
         public Acidente salvarAcidente(Acidente acidente) {
             throw new UnsupportedOperationException();

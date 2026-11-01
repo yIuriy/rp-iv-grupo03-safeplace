@@ -10,7 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import br.edu.safeplace.backend.application.dto.capacitacao.PendenciasColaboradorDTO;
-import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepository;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
@@ -141,7 +141,7 @@ class ConsultarCapacitacaoServiceTest {
         assertThat(impedimentos).containsExactly("certificação NR-35 ausente ou vencida");
     }
 
-    private static class FakeCapacitacaoRepository implements CapacitacaoRepositoryPort {
+    private static class FakeCapacitacaoRepository implements CapacitacaoRepository {
         private final List<Certificacao> certificacoes = new ArrayList<>();
         private final List<Treinamento> treinamentos = new ArrayList<>();
         private final List<ExigenciaCapacitacao> exigencias = new ArrayList<>();

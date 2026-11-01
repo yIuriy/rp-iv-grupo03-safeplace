@@ -29,8 +29,8 @@ import org.springframework.test.context.DynamicPropertySource;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import br.edu.safeplace.backend.application.port.out.CodificadorSenhaPorta;
-import br.edu.safeplace.backend.application.port.out.TokenPorta;
+import br.edu.safeplace.backend.application.port.out.CodificadorSenha;
+import br.edu.safeplace.backend.application.port.out.GerenciadorToken;
 import br.edu.safeplace.backend.domain.usuario.Perfil;
 import br.edu.safeplace.backend.suporte.PostgresDeTeste;
 
@@ -63,10 +63,10 @@ class UsuarioIntegracaoTest {
     private int porta;
 
     @Autowired
-    private TokenPorta tokenPorta;
+    private GerenciadorToken gerenciadorToken;
 
     @Autowired
-    private CodificadorSenhaPorta codificadorSenhaPorta;
+    private CodificadorSenha codificadorSenha;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -97,7 +97,7 @@ class UsuarioIntegracaoTest {
 
         if (perfil != null) {
             builder.header("Authorization", "Bearer "
-                    + tokenPorta.gerarToken(perfil.name().toLowerCase() + "@safeplace.test", perfil.name()));
+                    + gerenciadorToken.gerarToken(perfil.name().toLowerCase() + "@safeplace.test", perfil.name()));
         }
 
         try {
@@ -157,7 +157,7 @@ class UsuarioIntegracaoTest {
         String hashPersistido = jdbcTemplate.queryForObject(
                 "SELECT senha FROM usuarios WHERE cpf = ?", String.class, CPF_SUPERVISOR);
         assertThat(hashPersistido).isNotBlank().isNotEqualTo(senhaInicial);
-        assertThat(codificadorSenhaPorta.validar(senhaInicial, hashPersistido)).isTrue();
+        assertThat(codificadorSenha.validar(senhaInicial, hashPersistido)).isTrue();
 
         String perfilPersistido = jdbcTemplate.queryForObject(
                 "SELECT perfil FROM usuarios WHERE cpf = ?", String.class, CPF_SUPERVISOR);

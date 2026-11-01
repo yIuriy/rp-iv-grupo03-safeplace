@@ -6,13 +6,13 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import br.edu.safeplace.backend.application.port.out.AreaRiscoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.AreaRiscoRepository;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.Epi;
 
 @Repository
-public class AreaRiscoJpaAdapter implements AreaRiscoRepositoryPort {
+public class AreaRiscoJpaAdapter implements AreaRiscoRepository {
 
     private final AreaRiscoJpaRepository areaRiscoRepository;
     private final EpiJpaRepository epiRepository;

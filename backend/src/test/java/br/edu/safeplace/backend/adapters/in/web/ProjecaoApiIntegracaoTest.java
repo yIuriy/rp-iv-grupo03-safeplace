@@ -30,8 +30,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarEpiUseCase;
-import br.edu.safeplace.backend.application.port.out.SetorRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.application.port.out.SetorRepository;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
@@ -63,10 +63,10 @@ class ProjecaoApiIntegracaoTest {
     private GerenciarEpiUseCase gerenciarEpiUseCase;
 
     @Autowired
-    private UsuarioRepositorioPorta usuarioRepository;
+    private UsuarioRepository usuarioRepository;
 
     @Autowired
-    private SetorRepositoryPort setorRepository;
+    private SetorRepository setorRepository;
 
     @Autowired
     private JdbcTemplate jdbc;

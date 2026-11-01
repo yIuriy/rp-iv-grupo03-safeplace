@@ -11,11 +11,11 @@ import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
-import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 
 @Component
-public class LogAuditoriaJpaAdapter implements LogAuditoriaRepositoryPort {
+public class LogAuditoriaJpaAdapter implements LogAuditoriaRepository {
 
     private final LogAuditoriaJpaRepository jpaRepository;
 

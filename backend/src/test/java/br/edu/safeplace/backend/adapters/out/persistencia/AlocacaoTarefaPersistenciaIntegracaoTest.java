@@ -19,8 +19,8 @@ import org.springframework.test.context.DynamicPropertySource;
 import br.edu.safeplace.backend.application.dto.input.AlocarColaboradorInputDTO;
 import br.edu.safeplace.backend.application.dto.output.AlocacaoTarefaOutputDTO;
 import br.edu.safeplace.backend.application.port.in.AlocarColaboradorTarefaUseCase;
-import br.edu.safeplace.backend.application.port.out.TarefaRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.application.port.out.TarefaRepository;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.capacitacao.exception.AlocacaoBloqueadaException;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.tarefa.Tarefa;
@@ -51,10 +51,10 @@ class AlocacaoTarefaPersistenciaIntegracaoTest {
     private AlocarColaboradorTarefaUseCase alocacaoUseCase;
 
     @Autowired
-    private TarefaRepositoryPort tarefas;
+    private TarefaRepository tarefas;
 
     @Autowired
-    private UsuarioRepositorioPorta usuarios;
+    private UsuarioRepository usuarios;
 
     @Autowired
     private JdbcTemplate jdbc;

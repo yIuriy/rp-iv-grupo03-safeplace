@@ -8,12 +8,12 @@ import br.edu.safeplace.backend.application.dto.input.AtualizarAreaRiscoInputDTO
 import br.edu.safeplace.backend.application.dto.input.AtualizarPessoaInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarTarefaInputDTO;
 import br.edu.safeplace.backend.application.dto.input.ConcluirManutencaoInputDTO;
-import br.edu.safeplace.backend.application.port.out.AreaRiscoRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.TarefaRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.application.port.out.AreaRiscoRepository;
+import br.edu.safeplace.backend.application.port.out.EpiRepository;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
+import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepository;
+import br.edu.safeplace.backend.application.port.out.TarefaRepository;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
@@ -53,22 +53,22 @@ import static org.mockito.Mockito.*;
 class AuditoriaEvidenciaIntegracaoTest {
 
     @Mock
-    private LogAuditoriaRepositoryPort logAuditoriaRepositoryPort;
+    private LogAuditoriaRepository logAuditoriaRepository;
 
     @Mock
-    private AreaRiscoRepositoryPort areaRiscoRepositoryPort;
+    private AreaRiscoRepository areaRiscoRepository;
 
     @Mock
-    private UsuarioRepositorioPorta usuarioRepositorioPorta;
+    private UsuarioRepository usuarioRepository;
 
     @Mock
-    private TarefaRepositoryPort tarefaRepositoryPort;
+    private TarefaRepository tarefaRepository;
 
     @Mock
-    private EpiRepositoryPort epiRepositoryPort;
+    private EpiRepository epiRepository;
 
     @Mock
-    private ManutencaoEpiRepositoryPort manutencaoEpiRepositoryPort;
+    private ManutencaoEpiRepository manutencaoEpiRepository;
 
     private List<LogAuditoria> auditoriaGravada;
 
@@ -77,7 +77,7 @@ class AuditoriaEvidenciaIntegracaoTest {
         auditoriaGravada = new ArrayList<>();
 
         // Simula armazenamento e consulta de evidência no repositório de auditoria
-        lenient().when(logAuditoriaRepositoryPort.salvar(any(LogAuditoria.class))).thenAnswer(invocation -> {
+        lenient().when(logAuditoriaRepository.salvar(any(LogAuditoria.class))).thenAnswer(invocation -> {
             LogAuditoria log = invocation.getArgument(0);
             LogAuditoria persistido = new LogAuditoria(
                     auditoriaGravada.size() + 1,
@@ -92,7 +92,7 @@ class AuditoriaEvidenciaIntegracaoTest {
             return persistido;
         });
 
-        lenient().when(logAuditoriaRepositoryPort.listarPorEntidade(anyString(), anyInt())).thenAnswer(invocation -> {
+        lenient().when(logAuditoriaRepository.listarPorEntidade(anyString(), anyInt())).thenAnswer(invocation -> {
             String entidade = invocation.getArgument(0);
             Integer entidadeId = invocation.getArgument(1);
             return auditoriaGravada.stream()
@@ -114,26 +114,26 @@ class AuditoriaEvidenciaIntegracaoTest {
     @DisplayName("Deve realizar alteração de Área de Risco seguida de consulta e verificação de evidência")
     void alteracaoAreaRiscoSeguidaDeConsultaDeEvidencia() {
         Epi epi = new Epi(50, "Capacete", 10, StatusEpi.DISPONIVEL);
-        when(epiRepositoryPort.buscarPorId(50)).thenReturn(Optional.of(epi));
+        when(epiRepository.buscarPorId(50)).thenReturn(Optional.of(epi));
 
-        AreaRiscoUseCase areaRiscoUseCase = new AreaRiscoUseCase(
-                areaRiscoRepositoryPort, epiRepositoryPort, null, logAuditoriaRepositoryPort
+        AreaRiscoService areaRiscoService = new AreaRiscoService(
+                areaRiscoRepository, epiRepository, null, logAuditoriaRepository
         );
 
         AreaRisco existente = new AreaRisco(
                 10, "AR-01", "Corte", "Desc", NivelPerigo.BAIXO, null, List.of("Ruído"), "Galpão", List.of(epi)
         );
-        when(areaRiscoRepositoryPort.buscarPorId(10)).thenReturn(Optional.of(existente));
-        when(areaRiscoRepositoryPort.atualizar(any(AreaRisco.class))).thenAnswer(i -> i.getArgument(0));
+        when(areaRiscoRepository.buscarPorId(10)).thenReturn(Optional.of(existente));
+        when(areaRiscoRepository.atualizar(any(AreaRisco.class))).thenAnswer(i -> i.getArgument(0));
 
         AtualizarAreaRiscoInputDTO inputDTO = new AtualizarAreaRiscoInputDTO(
                 "Corte Atualizado", "Nova desc", NivelPerigo.ALTO, null, List.of("Ruído"), "Limites", List.of(50), "Reclassificação de risco"
         );
 
-        areaRiscoUseCase.atualizarAreaRisco(10, inputDTO, "gestor.auditor@safeplace.com");
+        areaRiscoService.atualizarAreaRisco(10, inputDTO, "gestor.auditor@safeplace.com");
 
         // Consulta de evidência
-        List<LogAuditoria> evidencias = logAuditoriaRepositoryPort.listarPorEntidade("AreaRisco", 10);
+        List<LogAuditoria> evidencias = logAuditoriaRepository.listarPorEntidade("AreaRisco", 10);
         assertThat(evidencias).hasSize(1);
 
         LogAuditoria evidencia = evidencias.get(0);
@@ -152,25 +152,25 @@ class AuditoriaEvidenciaIntegracaoTest {
     @Test
     @DisplayName("Deve realizar alteração cadastral de Colaborador seguida de consulta e verificação de evidência")
     void alteracaoColaboradorSeguidaDeConsultaDeEvidencia() {
-        UsuarioCasoDeUso usuarioCasoDeUso = new UsuarioCasoDeUso(
-                usuarioRepositorioPorta, null, null, logAuditoriaRepositoryPort
+        UsuarioService usuarioService = new UsuarioService(
+                usuarioRepository, null, null, logAuditoriaRepository
         );
 
         Colaborador existente = new Colaborador(
                 25, "52998224725", "Marcos Silva", LocalDate.of(1989, 3, 15),
                 "marcos@safeplace.com", true, LocalDateTime.now(), LocalDateTime.now()
         );
-        when(usuarioRepositorioPorta.buscarPorId(25)).thenReturn(Optional.of(existente));
-        when(usuarioRepositorioPorta.salvar(any(Colaborador.class))).thenAnswer(i -> i.getArgument(0));
+        when(usuarioRepository.buscarPorId(25)).thenReturn(Optional.of(existente));
+        when(usuarioRepository.salvar(any(Colaborador.class))).thenAnswer(i -> i.getArgument(0));
 
         AtualizarPessoaInputDTO inputDTO = new AtualizarPessoaInputDTO(
                 "Marcos Silva Jr", LocalDate.of(1989, 3, 15), "marcos.jr@safeplace.com"
         );
 
-        usuarioCasoDeUso.atualizarColaborador(25, inputDTO, "gestor.auditor@safeplace.com");
+        usuarioService.atualizarColaborador(25, inputDTO, "gestor.auditor@safeplace.com");
 
         // Consulta de evidência
-        List<LogAuditoria> evidencias = logAuditoriaRepositoryPort.listarPorEntidade("Colaborador", 25);
+        List<LogAuditoria> evidencias = logAuditoriaRepository.listarPorEntidade("Colaborador", 25);
         assertThat(evidencias).hasSize(1);
 
         LogAuditoria evidencia = evidencias.get(0);
@@ -188,20 +188,20 @@ class AuditoriaEvidenciaIntegracaoTest {
         Colaborador operador = new Colaborador(
                 1, "52998224725", "Gestor", LocalDate.now(), "gestor.auditor@safeplace.com", true, LocalDateTime.now(), LocalDateTime.now()
         );
-        when(usuarioRepositorioPorta.buscarPorEmail("gestor.auditor@safeplace.com")).thenReturn(Optional.of(operador));
+        when(usuarioRepository.buscarPorEmail("gestor.auditor@safeplace.com")).thenReturn(Optional.of(operador));
 
-        EpiUseCase epiUseCase = new EpiUseCase(
-                epiRepositoryPort, usuarioRepositorioPorta, logAuditoriaRepositoryPort
+        EpiService epiService = new EpiService(
+                epiRepository, usuarioRepository, logAuditoriaRepository
         );
 
         Epi epi = new Epi(50, "Capacete de Segurança", 100, StatusEpi.DISPONIVEL);
-        when(epiRepositoryPort.buscarPorIdComLock(50)).thenReturn(Optional.of(epi));
-        when(epiRepositoryPort.salvarMovimentacao(any(MovimentacaoEstoque.class))).thenAnswer(i -> i.getArgument(0));
+        when(epiRepository.buscarPorIdComLock(50)).thenReturn(Optional.of(epi));
+        when(epiRepository.salvarMovimentacao(any(MovimentacaoEstoque.class))).thenAnswer(i -> i.getArgument(0));
 
-        epiUseCase.registrarMovimentacao(50, TipoMovimentacao.ENTRADA, 20, "Recebimento novo lote", "gestor.auditor@safeplace.com");
+        epiService.registrarMovimentacao(50, TipoMovimentacao.ENTRADA, 20, "Recebimento novo lote", "gestor.auditor@safeplace.com");
 
         // Consulta de evidência
-        List<LogAuditoria> evidencias = logAuditoriaRepositoryPort.listarPorEntidade("Epi", 50);
+        List<LogAuditoria> evidencias = logAuditoriaRepository.listarPorEntidade("Epi", 50);
         assertThat(evidencias).hasSize(1);
 
         LogAuditoria evidencia = evidencias.get(0);
@@ -215,23 +215,23 @@ class AuditoriaEvidenciaIntegracaoTest {
     @Test
     @DisplayName("Deve realizar classificação de Tarefa seguida de consulta de evidência")
     void classificacaoTarefaSeguidaDeConsultaDeEvidencia() {
-        TarefaUseCase tarefaUseCase = new TarefaUseCase(
-                tarefaRepositoryPort, logAuditoriaRepositoryPort, usuarioRepositorioPorta
+        TarefaService tarefaService = new TarefaService(
+                tarefaRepository, logAuditoriaRepository, usuarioRepository
         );
 
         GestorDeSeguranca auditor = new GestorDeSeguranca(3, "49216091040", "Gestor Auditor",
                 LocalDate.of(1988, 7, 20), "gestor.auditor@safeplace.com", "hash", true,
                 LocalDateTime.now(), LocalDateTime.now());
-        when(usuarioRepositorioPorta.buscarPorEmail("gestor.auditor@safeplace.com")).thenReturn(Optional.of(auditor));
+        when(usuarioRepository.buscarPorEmail("gestor.auditor@safeplace.com")).thenReturn(Optional.of(auditor));
 
         Tarefa tarefa = new Tarefa(15, "Manuseio de Prensa", NivelPerigo.BAIXO, LocalDateTime.now());
-        when(tarefaRepositoryPort.buscarPorId(15)).thenReturn(Optional.of(tarefa));
-        when(tarefaRepositoryPort.salvar(any(Tarefa.class))).thenAnswer(i -> i.getArgument(0));
+        when(tarefaRepository.buscarPorId(15)).thenReturn(Optional.of(tarefa));
+        when(tarefaRepository.salvar(any(Tarefa.class))).thenAnswer(i -> i.getArgument(0));
 
-        tarefaUseCase.classificar(15, NivelPerigo.CRITICO);
+        tarefaService.classificar(15, NivelPerigo.CRITICO);
 
         // Consulta de evidência
-        List<LogAuditoria> evidencias = logAuditoriaRepositoryPort.listarPorEntidade("Tarefa", 15);
+        List<LogAuditoria> evidencias = logAuditoriaRepository.listarPorEntidade("Tarefa", 15);
         assertThat(evidencias).hasSize(1);
 
         LogAuditoria evidencia = evidencias.get(0);

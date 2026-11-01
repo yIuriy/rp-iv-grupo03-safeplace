@@ -34,7 +34,7 @@ import com.jayway.jsonpath.JsonPath;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarEpiUseCase;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.Supervisor;
@@ -66,7 +66,7 @@ class EmprestimoApiIntegracaoTest {
     private GerenciarEpiUseCase gerenciarEpiUseCase;
 
     @Autowired
-    private UsuarioRepositorioPorta usuarioRepository;
+    private UsuarioRepository usuarioRepository;
 
     @Autowired
     private JdbcTemplate jdbc;

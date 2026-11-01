@@ -15,7 +15,7 @@ import org.springframework.test.context.DynamicPropertySource;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarEpiUseCase;
-import br.edu.safeplace.backend.application.port.out.ProjecaoSubstituicaoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.ProjecaoSubstituicaoRepository;
 import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
 import br.edu.safeplace.backend.domain.epi.ProjecaoSubstituicao;
 import br.edu.safeplace.backend.suporte.PostgresDeTeste;
@@ -35,7 +35,7 @@ class ProjecaoSubstituicaoPersistenciaIntegracaoTest {
     }
 
     @Autowired
-    private ProjecaoSubstituicaoRepositoryPort projecaoRepository;
+    private ProjecaoSubstituicaoRepository projecaoRepository;
 
     @Autowired
     private GerenciarEpiUseCase gerenciarEpiUseCase;

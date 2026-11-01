@@ -32,7 +32,7 @@ class TarefaJpaAdapterTest {
     private TarefaJpaRepository tarefaRepository;
 
     @Mock
-    private UsuarioJpaRepositorio usuarioRepository;
+    private UsuarioJpaRepository usuarioRepository;
 
     @Mock
     private AreaRiscoJpaRepository areaRiscoRepository;

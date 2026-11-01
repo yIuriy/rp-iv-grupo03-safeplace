@@ -1,14 +1,14 @@
 package br.edu.safeplace.backend.config;
 
-import br.edu.safeplace.backend.adapters.in.web.AutenticacaoControlador;
+import br.edu.safeplace.backend.adapters.in.web.AutenticacaoController;
 import br.edu.safeplace.backend.adapters.in.web.HealthController;
-import br.edu.safeplace.backend.adapters.in.web.UsuarioControlador;
-import br.edu.safeplace.backend.adapters.in.web.UsuarioTratadorExcecoes;
-import br.edu.safeplace.backend.adapters.out.seguranca.JwtTokenAdaptador;
-import br.edu.safeplace.backend.application.dto.output.UsuarioSaidaDTO;
-import br.edu.safeplace.backend.application.port.in.AutenticarUsuarioCasoDeUso;
-import br.edu.safeplace.backend.application.port.in.GerenciarUsuarioCasoDeUso;
-import br.edu.safeplace.backend.application.port.out.TokenPorta;
+import br.edu.safeplace.backend.adapters.in.web.UsuarioController;
+import br.edu.safeplace.backend.adapters.in.web.UsuarioExceptionHandler;
+import br.edu.safeplace.backend.adapters.out.seguranca.JwtTokenAdapter;
+import br.edu.safeplace.backend.application.dto.output.UsuarioOutputDTO;
+import br.edu.safeplace.backend.application.port.in.AutenticarUsuarioUseCase;
+import br.edu.safeplace.backend.application.port.in.GerenciarUsuarioUseCase;
+import br.edu.safeplace.backend.application.port.out.GerenciadorToken;
 import br.edu.safeplace.backend.domain.usuario.Perfil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,14 +35,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest({
         HealthController.class,
-        UsuarioControlador.class,
-        AutenticacaoControlador.class,
-        UsuarioTratadorExcecoes.class
+        UsuarioController.class,
+        AutenticacaoController.class,
+        UsuarioExceptionHandler.class
 })
 @Import({
         SecurityConfig.class,
-        JwtTokenAdaptador.class,
-        RestSegurancaTratadorExcecoes.class
+        JwtTokenAdapter.class,
+        RestSegurancaExceptionHandler.class
 })
 @DisplayName("Testes de Integração de Segurança e Filtro JWT (RBAC)")
 class SegurancaRbacIntegrationTest {
@@ -51,13 +51,13 @@ class SegurancaRbacIntegrationTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private TokenPorta tokenPorta;
+    private GerenciadorToken gerenciadorToken;
 
     @MockitoBean
-    private GerenciarUsuarioCasoDeUso gerenciarUsuarioCasoDeUso;
+    private GerenciarUsuarioUseCase gerenciarUsuarioUseCase;
 
     @MockitoBean
-    private AutenticarUsuarioCasoDeUso autenticarUsuarioCasoDeUso;
+    private AutenticarUsuarioUseCase autenticarUsuarioUseCase;
 
     private String tokenGestor;
     private String tokenSupervisor;
@@ -65,8 +65,8 @@ class SegurancaRbacIntegrationTest {
     @BeforeEach
     void setUp() {
         SecurityContextHolder.clearContext();
-        tokenGestor = "Bearer " + tokenPorta.gerarToken("gestor@safeplace.com", Perfil.GESTOR_SEGURANCA.name());
-        tokenSupervisor = "Bearer " + tokenPorta.gerarToken("supervisor@safeplace.com", Perfil.SUPERVISOR.name());
+        tokenGestor = "Bearer " + gerenciadorToken.gerarToken("gestor@safeplace.com", Perfil.GESTOR_SEGURANCA.name());
+        tokenSupervisor = "Bearer " + gerenciadorToken.gerarToken("supervisor@safeplace.com", Perfil.SUPERVISOR.name());
     }
 
     @AfterEach
@@ -103,7 +103,7 @@ class SegurancaRbacIntegrationTest {
     @Test
     @DisplayName("Gestor de Segurança acessando listagem geral GET /api/usuarios deve retornar 200 OK")
     void gestorListandoTodosUsuariosDeveRetornar200() throws Exception {
-        when(gerenciarUsuarioCasoDeUso.listarUsuarios()).thenReturn(List.of());
+        when(gerenciarUsuarioUseCase.listarUsuarios()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/usuarios")
                         .header("Authorization", tokenGestor))
@@ -113,7 +113,7 @@ class SegurancaRbacIntegrationTest {
     @Test
     @DisplayName("Supervisor acessando GET /api/usuarios/colaboradores deve retornar 200 OK")
     void supervisorConsultandoColaboradoresDeveRetornar200() throws Exception {
-        when(gerenciarUsuarioCasoDeUso.listarColaboradores(any())).thenReturn(List.of());
+        when(gerenciarUsuarioUseCase.listarColaboradores(any())).thenReturn(List.of());
 
         mockMvc.perform(get("/api/usuarios/colaboradores")
                         .header("Authorization", tokenSupervisor))
@@ -144,11 +144,11 @@ class SegurancaRbacIntegrationTest {
     @Test
     @DisplayName("Gestor de Segurança cadastrando Supervisor deve retornar 201 Created (RF23)")
     void gestorCriandoSupervisorDeveRetornar201() throws Exception {
-        UsuarioSaidaDTO saida = new UsuarioSaidaDTO(
+        UsuarioOutputDTO saida = new UsuarioOutputDTO(
                 10, "Novo Supervisor", "52998224725", LocalDate.of(1988, 4, 12),
                 "supervisor.novo@safeplace.com", Perfil.SUPERVISOR, true, LocalDateTime.now(), "senhaInicial123"
         );
-        when(gerenciarUsuarioCasoDeUso.cadastrarSupervisor(any())).thenReturn(saida);
+        when(gerenciarUsuarioUseCase.cadastrarSupervisor(any())).thenReturn(saida);
 
         String jsonSupervisor = """
                 {
@@ -170,11 +170,11 @@ class SegurancaRbacIntegrationTest {
     @Test
     @DisplayName("Supervisor cadastrando Colaborador deve retornar 201 Created (RF23)")
     void supervisorCriandoColaboradorDeveRetornar201() throws Exception {
-        UsuarioSaidaDTO saida = new UsuarioSaidaDTO(
+        UsuarioOutputDTO saida = new UsuarioOutputDTO(
                 11, "Novo Colaborador", "52998224725", LocalDate.of(1992, 6, 18),
                 "colaborador@safeplace.com", null, true, LocalDateTime.now(), null
         );
-        when(gerenciarUsuarioCasoDeUso.cadastrarColaborador(any())).thenReturn(saida);
+        when(gerenciarUsuarioUseCase.cadastrarColaborador(any())).thenReturn(saida);
 
         String jsonColaborador = """
                 {

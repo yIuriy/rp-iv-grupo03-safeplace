@@ -23,11 +23,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import br.edu.safeplace.backend.application.dto.input.AlocarColaboradorInputDTO;
 import br.edu.safeplace.backend.application.dto.output.AlocacaoTarefaOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.ConsultaAptidaoOutputDTO;
-import br.edu.safeplace.backend.application.port.out.AlocacaoTarefaRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.TarefaRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
-import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.AlocacaoTarefaRepository;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
+import br.edu.safeplace.backend.application.port.out.TarefaRepository;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
+import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepository;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
 import br.edu.safeplace.backend.domain.capacitacao.ValidadorAptidaoColaboradorService;
@@ -47,21 +47,21 @@ import br.edu.safeplace.backend.domain.usuario.exception.UsuarioNaoEncontradoExc
 class AlocarColaboradorTarefaUseCaseTest {
 
     @Mock
-    private TarefaRepositoryPort tarefaRepository;
+    private TarefaRepository tarefaRepository;
 
     @Mock
-    private UsuarioRepositorioPorta usuarioRepository;
+    private UsuarioRepository usuarioRepository;
 
     @Mock
-    private CapacitacaoRepositoryPort capacitacaoRepository;
+    private CapacitacaoRepository capacitacaoRepository;
 
     @Mock
-    private AlocacaoTarefaRepositoryPort alocacaoTarefaRepository;
+    private AlocacaoTarefaRepository alocacaoTarefaRepository;
 
     @Mock
-    private LogAuditoriaRepositoryPort auditoriaRepository;
+    private LogAuditoriaRepository auditoriaRepository;
 
-    private AlocarColaboradorTarefaUseCaseImpl useCase;
+    private AlocarColaboradorTarefaService useCase;
 
     private GestorDeSeguranca gestor;
     private Colaborador colaborador;
@@ -69,7 +69,7 @@ class AlocarColaboradorTarefaUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        useCase = new AlocarColaboradorTarefaUseCaseImpl(
+        useCase = new AlocarColaboradorTarefaService(
                 tarefaRepository,
                 usuarioRepository,
                 capacitacaoRepository,

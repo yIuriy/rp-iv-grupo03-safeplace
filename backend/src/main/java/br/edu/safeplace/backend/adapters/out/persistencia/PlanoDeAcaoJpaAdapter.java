@@ -10,8 +10,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.PlanoDeAcaoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
+import br.edu.safeplace.backend.application.port.out.PlanoDeAcaoRepository;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
@@ -25,20 +25,20 @@ import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
  * Adaptador JPA de persistência de planos de ação (RF07, RNF05, UC07, US07, Issue #98).
  */
 @Component
-public class PlanoDeAcaoJpaAdapter implements PlanoDeAcaoRepositoryPort {
+public class PlanoDeAcaoJpaAdapter implements PlanoDeAcaoRepository {
 
     private final PlanoDeAcaoJpaRepository planoRepository;
     private final ProrrogacaoPrazoJpaRepository prorrogacaoRepository;
-    private final UsuarioJpaRepositorio usuarioRepository;
+    private final UsuarioJpaRepository usuarioRepository;
     private final SetorJpaRepository setorRepository;
-    private final LogAuditoriaRepositoryPort auditoriaRepository;
+    private final LogAuditoriaRepository auditoriaRepository;
 
     public PlanoDeAcaoJpaAdapter(
             PlanoDeAcaoJpaRepository planoRepository,
             ProrrogacaoPrazoJpaRepository prorrogacaoRepository,
-            UsuarioJpaRepositorio usuarioRepository,
+            UsuarioJpaRepository usuarioRepository,
             SetorJpaRepository setorRepository,
-            LogAuditoriaRepositoryPort auditoriaRepository) {
+            LogAuditoriaRepository auditoriaRepository) {
         this.planoRepository = planoRepository;
         this.prorrogacaoRepository = prorrogacaoRepository;
         this.usuarioRepository = usuarioRepository;

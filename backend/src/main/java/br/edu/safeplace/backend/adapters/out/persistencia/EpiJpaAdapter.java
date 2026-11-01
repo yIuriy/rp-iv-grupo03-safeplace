@@ -1,6 +1,6 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
-import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.EpiRepository;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.ModeloEPI;
 import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class EpiJpaAdapter implements EpiRepositoryPort {
+public class EpiJpaAdapter implements EpiRepository {
     private final EpiJpaRepository epiRepository;
     private final MovimentacaoEstoqueJpaRepository movimentacaoRepository;
     private final ModeloEpiJpaRepository modeloRepository;

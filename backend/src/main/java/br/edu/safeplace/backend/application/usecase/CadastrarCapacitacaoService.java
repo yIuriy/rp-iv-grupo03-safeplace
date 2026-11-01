@@ -12,8 +12,8 @@ import br.edu.safeplace.backend.application.dto.input.CadastrarCertificacaoInput
 import br.edu.safeplace.backend.application.dto.input.CadastrarTreinamentoInputDTO;
 import br.edu.safeplace.backend.application.dto.input.DefinirExigenciaInputDTO;
 import br.edu.safeplace.backend.application.port.in.capacitacao.CadastrarCapacitacaoUseCase;
-import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
+import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepository;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
@@ -23,12 +23,12 @@ import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 @Transactional
 public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase {
 
-    private final CapacitacaoRepositoryPort capacitacaoRepository;
-    private final LogAuditoriaRepositoryPort logAuditoriaRepository;
+    private final CapacitacaoRepository capacitacaoRepository;
+    private final LogAuditoriaRepository logAuditoriaRepository;
 
     public CadastrarCapacitacaoService(
-            CapacitacaoRepositoryPort capacitacaoRepository,
-            LogAuditoriaRepositoryPort logAuditoriaRepository) {
+            CapacitacaoRepository capacitacaoRepository,
+            LogAuditoriaRepository logAuditoriaRepository) {
         this.capacitacaoRepository = capacitacaoRepository;
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.logAuditoriaRepository = java.util.Objects.requireNonNull(

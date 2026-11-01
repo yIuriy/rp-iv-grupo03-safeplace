@@ -18,8 +18,8 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
-import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
-import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
+import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepository;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
@@ -68,10 +68,10 @@ class CapacitacaoApiIntegracaoTest {
     private JdbcTemplate jdbc;
 
     @Autowired
-    private UsuarioRepositorioPorta usuarioRepositorio;
+    private UsuarioRepository usuarioRepositorio;
 
     @Autowired
-    private CapacitacaoRepositoryPort capacitacaoRepositorio;
+    private CapacitacaoRepository capacitacaoRepositorio;
 
     private Integer vencidoId;
     private Integer proximoId;

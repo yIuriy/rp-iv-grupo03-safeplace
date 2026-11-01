@@ -3,10 +3,10 @@ package br.edu.safeplace.backend.application.usecase;
 import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
-import br.edu.safeplace.backend.application.port.out.AreaRiscoRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.OcorrenciaRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.application.port.out.AreaRiscoRepository;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
+import br.edu.safeplace.backend.application.port.out.OcorrenciaRepository;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
@@ -38,22 +38,22 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Testes de Auditoria - OcorrenciaUseCase")
+@DisplayName("Testes de Auditoria - OcorrenciaService")
 class OcorrenciaUseCaseAuditoriaTest {
 
     @Mock
-    private OcorrenciaRepositoryPort repository;
+    private OcorrenciaRepository repository;
 
     @Mock
-    private AreaRiscoRepositoryPort areaRiscoRepository;
+    private AreaRiscoRepository areaRiscoRepository;
 
     @Mock
-    private UsuarioRepositorioPorta usuarioRepository;
+    private UsuarioRepository usuarioRepository;
 
     @Mock
-    private LogAuditoriaRepositoryPort logAuditoriaRepositoryPort;
+    private LogAuditoriaRepository logAuditoriaRepository;
 
-    private OcorrenciaUseCase useCase;
+    private OcorrenciaService useCase;
 
     private final AreaRisco area = new AreaRisco(10, "AR-10", "Galpão 1", null, NivelPerigo.ALTO, 1,
             List.of(), null, List.of());
@@ -67,7 +67,7 @@ class OcorrenciaUseCaseAuditoriaTest {
 
     @BeforeEach
     void setUp() {
-        useCase = new OcorrenciaUseCase(repository, areaRiscoRepository, usuarioRepository, logAuditoriaRepositoryPort);
+        useCase = new OcorrenciaService(repository, areaRiscoRepository, usuarioRepository, logAuditoriaRepository);
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("gestor@safeplace.com", "senha")
         );
@@ -120,7 +120,7 @@ class OcorrenciaUseCaseAuditoriaTest {
         assertThat(dto.idOcorrencia()).isEqualTo(1);
 
         ArgumentCaptor<LogAuditoria> captor = ArgumentCaptor.forClass(LogAuditoria.class);
-        verify(logAuditoriaRepositoryPort).salvar(captor.capture());
+        verify(logAuditoriaRepository).salvar(captor.capture());
 
         LogAuditoria log = captor.getValue();
         assertThat(log.getTipoOperacao()).isEqualTo("CADASTRO");
@@ -163,7 +163,7 @@ class OcorrenciaUseCaseAuditoriaTest {
         assertThat(dto.idOcorrencia()).isEqualTo(2);
 
         ArgumentCaptor<LogAuditoria> captor = ArgumentCaptor.forClass(LogAuditoria.class);
-        verify(logAuditoriaRepositoryPort).salvar(captor.capture());
+        verify(logAuditoriaRepository).salvar(captor.capture());
 
         LogAuditoria log = captor.getValue();
         assertThat(log.getTipoOperacao()).isEqualTo("CADASTRO");
@@ -186,7 +186,7 @@ class OcorrenciaUseCaseAuditoriaTest {
         useCase.enviarParaTriagem(3);
 
         ArgumentCaptor<LogAuditoria> captor = ArgumentCaptor.forClass(LogAuditoria.class);
-        verify(logAuditoriaRepositoryPort).salvar(captor.capture());
+        verify(logAuditoriaRepository).salvar(captor.capture());
 
         LogAuditoria log = captor.getValue();
         assertThat(log.getTipoOperacao()).isEqualTo("ALTERACAO");
@@ -210,7 +210,7 @@ class OcorrenciaUseCaseAuditoriaTest {
         useCase.arquivar(4);
 
         ArgumentCaptor<LogAuditoria> captor = ArgumentCaptor.forClass(LogAuditoria.class);
-        verify(logAuditoriaRepositoryPort).salvar(captor.capture());
+        verify(logAuditoriaRepository).salvar(captor.capture());
 
         LogAuditoria log = captor.getValue();
         assertThat(log.getTipoOperacao()).isEqualTo("ALTERACAO");
@@ -235,7 +235,7 @@ class OcorrenciaUseCaseAuditoriaTest {
         useCase.consolidarCAT(5);
 
         ArgumentCaptor<LogAuditoria> captor = ArgumentCaptor.forClass(LogAuditoria.class);
-        verify(logAuditoriaRepositoryPort).salvar(captor.capture());
+        verify(logAuditoriaRepository).salvar(captor.capture());
 
         LogAuditoria log = captor.getValue();
         assertThat(log.getTipoOperacao()).isEqualTo("ALTERACAO");
@@ -253,6 +253,6 @@ class OcorrenciaUseCaseAuditoriaTest {
         assertThatThrownBy(() -> useCase.arquivar(99))
                 .isInstanceOf(OcorrenciaNaoEncontradaException.class);
 
-        verifyNoInteractions(logAuditoriaRepositoryPort);
+        verifyNoInteractions(logAuditoriaRepository);
     }
 }

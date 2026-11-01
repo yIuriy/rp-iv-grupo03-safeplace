@@ -2,8 +2,8 @@ package br.edu.safeplace.backend.adapters.out.persistencia;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
 import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
-import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
-import br.edu.safeplace.backend.application.usecase.EpiUseCase;
+import br.edu.safeplace.backend.application.port.out.EpiRepository;
+import br.edu.safeplace.backend.application.usecase.EpiService;
 import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
@@ -47,10 +47,10 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
     }
 
     @Autowired
-    private EpiUseCase epiUseCase;
+    private EpiService epiService;
 
     @Autowired
-    private EpiRepositoryPort epiRepositoryPort;
+    private EpiRepository epiRepository;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -76,7 +76,7 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
                 "Descrição de teste",
                 ClassificacaoEPI.PROTECAO_DE_CABECA
         );
-        EpiOutputDTO output = epiUseCase.cadastrarEpi(dto);
+        EpiOutputDTO output = epiService.cadastrarEpi(dto);
         return output.id();
     }
 
@@ -96,7 +96,7 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
         Callable<Void> tarefa = () -> {
             latch.await();
             try {
-                epiUseCase.registrarMovimentacao(epiId, TipoMovimentacao.SAIDA, 8, "Saída concorrente", GESTOR_DEMO);
+                epiService.registrarMovimentacao(epiId, TipoMovimentacao.SAIDA, 8, "Saída concorrente", GESTOR_DEMO);
                 sucessos.incrementAndGet();
             } catch (SaldoInsuficienteException e) {
                 falhasSaldoInsuficiente.incrementAndGet();
@@ -118,10 +118,10 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
         assertThat(sucessos.get()).isEqualTo(1);
         assertThat(falhasSaldoInsuficiente.get()).isEqualTo(1);
 
-        Epi epiAtualizado = epiRepositoryPort.buscarPorId(epiId).orElseThrow();
+        Epi epiAtualizado = epiRepository.buscarPorId(epiId).orElseThrow();
         assertThat(epiAtualizado.getQuantidade()).isEqualTo(2);
 
-        var movimentacoes = epiRepositoryPort.listarMovimentacoesPorEpi(epiId);
+        var movimentacoes = epiRepository.listarMovimentacoesPorEpi(epiId);
         assertThat(movimentacoes).hasSize(1);
         assertThat(movimentacoes.get(0).getQuantidade()).isEqualTo(8);
         assertThat(movimentacoes.get(0).getTipo()).isEqualTo(TipoMovimentacao.SAIDA);
@@ -151,7 +151,7 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
             tarefas.add(() -> {
                 latch.await();
                 try {
-                    epiUseCase.registrarMovimentacao(epiId, TipoMovimentacao.ENTRADA, qtdEntrada, "Reposição concorrente", GESTOR_DEMO);
+                    epiService.registrarMovimentacao(epiId, TipoMovimentacao.ENTRADA, qtdEntrada, "Reposição concorrente", GESTOR_DEMO);
                     sucessos.incrementAndGet();
                 } catch (Throwable t) {
                     falhas.add(t);
@@ -164,7 +164,7 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
             tarefas.add(() -> {
                 latch.await();
                 try {
-                    epiUseCase.registrarMovimentacao(epiId, TipoMovimentacao.SAIDA, qtdSaida, "Retirada concorrente", GESTOR_DEMO);
+                    epiService.registrarMovimentacao(epiId, TipoMovimentacao.SAIDA, qtdSaida, "Retirada concorrente", GESTOR_DEMO);
                     sucessos.incrementAndGet();
                 } catch (Throwable t) {
                     falhas.add(t);
@@ -189,10 +189,10 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
         assertThat(sucessos.get()).isEqualTo(totalOperacoes);
 
         int saldoEsperado = saldoInicial + (totalEntradas * qtdEntrada) - (totalSaidas * qtdSaida);
-        Epi epiAtualizado = epiRepositoryPort.buscarPorId(epiId).orElseThrow();
+        Epi epiAtualizado = epiRepository.buscarPorId(epiId).orElseThrow();
         assertThat(epiAtualizado.getQuantidade()).isEqualTo(saldoEsperado);
 
-        var movimentacoes = epiRepositoryPort.listarMovimentacoesPorEpi(epiId);
+        var movimentacoes = epiRepository.listarMovimentacoesPorEpi(epiId);
         assertThat(movimentacoes).hasSize(totalOperacoes);
     }
 
@@ -203,10 +203,10 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
         criarEpi("Óculos de Proteção Transparente", caCompartilhado, 25);
         criarEpi("Óculos de Proteção Fumê", caCompartilhado, 30);
 
-        List<Epi> episEncontrados = epiRepositoryPort.listarPorCA(caCompartilhado);
+        List<Epi> episEncontrados = epiRepository.listarPorCA(caCompartilhado);
         assertThat(episEncontrados).hasSize(2);
 
-        Optional<Epi> primeiroEpi = epiRepositoryPort.buscarPorCA(caCompartilhado);
+        Optional<Epi> primeiroEpi = epiRepository.buscarPorCA(caCompartilhado);
         assertThat(primeiroEpi).isPresent();
         assertThat(primeiroEpi.get().getNumeroCa()).isIn("998877", caCompartilhado);
     }
@@ -217,14 +217,14 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
         Integer epiId = criarEpi("Protetor Auricular", "CA-33333", 5);
 
         try {
-            epiUseCase.registrarMovimentacao(epiId, TipoMovimentacao.SAIDA, 10, "Tentativa excessiva", GESTOR_DEMO);
+            epiService.registrarMovimentacao(epiId, TipoMovimentacao.SAIDA, 10, "Tentativa excessiva", GESTOR_DEMO);
         } catch (SaldoInsuficienteException ignored) {
         }
 
-        Epi epi = epiRepositoryPort.buscarPorId(epiId).orElseThrow();
+        Epi epi = epiRepository.buscarPorId(epiId).orElseThrow();
         assertThat(epi.getQuantidade()).isEqualTo(5);
 
-        var movimentacoes = epiRepositoryPort.listarMovimentacoesPorEpi(epiId);
+        var movimentacoes = epiRepository.listarMovimentacoesPorEpi(epiId);
         assertThat(movimentacoes).isEmpty();
     }
 }

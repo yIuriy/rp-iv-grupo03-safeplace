@@ -1,6 +1,6 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
-import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepository;
 import br.edu.safeplace.backend.domain.epi.ManutencaoEpi;
 import br.edu.safeplace.backend.domain.epi.ResultadoManutencao;
 import br.edu.safeplace.backend.domain.epi.TipoManutencao;
@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class ManutencaoEpiJpaAdapter implements ManutencaoEpiRepositoryPort {
+public class ManutencaoEpiJpaAdapter implements ManutencaoEpiRepository {
     private final ManutencaoEpiJpaRepository repository;
 
     public ManutencaoEpiJpaAdapter(ManutencaoEpiJpaRepository repository) {

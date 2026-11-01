@@ -24,7 +24,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
-import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.suporte.PostgresDeTeste;
 
@@ -45,7 +45,7 @@ class LogAuditoriaImutabilidadeIntegracaoTest {
     }
 
     @Autowired
-    private LogAuditoriaRepositoryPort auditoria;
+    private LogAuditoriaRepository auditoria;
 
     @Autowired
     private JdbcTemplate jdbc;

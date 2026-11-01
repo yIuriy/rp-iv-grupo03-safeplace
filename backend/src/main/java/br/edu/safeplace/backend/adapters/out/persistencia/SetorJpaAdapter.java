@@ -5,11 +5,11 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
-import br.edu.safeplace.backend.application.port.out.SetorRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.SetorRepository;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
 
 @Component
-public class SetorJpaAdapter implements SetorRepositoryPort {
+public class SetorJpaAdapter implements SetorRepository {
 
     private final SetorJpaRepository jpaRepository;
 

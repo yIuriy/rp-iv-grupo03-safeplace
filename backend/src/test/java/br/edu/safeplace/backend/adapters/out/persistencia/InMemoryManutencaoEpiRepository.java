@@ -1,6 +1,6 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
-import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepositoryPort;
+import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepository;
 import br.edu.safeplace.backend.domain.epi.ManutencaoEpi;
 
 import java.util.Collections;
@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Dublê de teste da porta de manutenção. Não comprova persistência: a gravação real é coberta por
  * ManutencaoEpiPersistenciaIntegracaoTest (issue #197).
  */
-public class InMemoryManutencaoEpiRepository implements ManutencaoEpiRepositoryPort {
+public class InMemoryManutencaoEpiRepository implements ManutencaoEpiRepository {
     private final Map<Integer, ManutencaoEpi> storage = new ConcurrentHashMap<>();
     private final AtomicInteger sequence = new AtomicInteger(1);
 

@@ -24,8 +24,8 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
-import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.application.port.out.EpiRepository;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import br.edu.safeplace.backend.suporte.PostgresDeTeste;
@@ -65,10 +65,10 @@ class InspecaoPersistenciaIntegracaoTest {
     private JdbcTemplate jdbc;
 
     @Autowired
-    private EpiRepositoryPort epiRepositoryPort;
+    private EpiRepository epiRepository;
 
     @Autowired
-    private UsuarioRepositorioPorta usuarioRepositorio;
+    private UsuarioRepository usuarioRepositorio;
 
     private Integer areaId;
     private Integer gestorId;
@@ -78,7 +78,7 @@ class InspecaoPersistenciaIntegracaoTest {
         limpar();
         gestorId = usuarioRepositorio.salvar(GestorDeSeguranca.novo(
                 "Gestor Inspeções 134", CPF_GESTOR, LocalDate.of(1986, 5, 20), EMAIL_GESTOR, "hash-de-teste")).getId();
-        Integer epiId = epiRepositoryPort.salvar(Epi.novo(NOME_EPI, "13401", 10, 2,
+        Integer epiId = epiRepository.salvar(Epi.novo(NOME_EPI, "13401", 10, 2,
                 LocalDate.now().plusYears(2), 365, null, null)).getId();
         mockMvc.perform(post("/api/areas-risco").with(gestor())
                         .contentType(MediaType.APPLICATION_JSON)

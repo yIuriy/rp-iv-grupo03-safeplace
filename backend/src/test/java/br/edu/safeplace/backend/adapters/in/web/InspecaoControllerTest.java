@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest({InspecaoController.class, InspecaoTratadorExcecoes.class, AreaRiscoTratadorExcecoes.class,
+@WebMvcTest({InspecaoController.class, InspecaoExceptionHandler.class, AreaRiscoExceptionHandler.class,
         EpiExceptionHandler.class})
 @Import(SecurityConfig.class)
 class InspecaoControllerTest {

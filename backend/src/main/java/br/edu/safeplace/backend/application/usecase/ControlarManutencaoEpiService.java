@@ -4,10 +4,10 @@ import br.edu.safeplace.backend.application.dto.input.ConcluirManutencaoInputDTO
 import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.ManutencaoEpiOutputDTO;
 import br.edu.safeplace.backend.application.port.in.ControlarManutencaoEpiUseCase;
-import br.edu.safeplace.backend.application.port.out.EpiRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepositoryPort;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepositorioPorta;
+import br.edu.safeplace.backend.application.port.out.EpiRepository;
+import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
+import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepository;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.ManutencaoEpi;
@@ -24,32 +24,32 @@ import java.util.List;
 
 @Service
 public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseCase {
-    private final EpiRepositoryPort epiRepositoryPort;
-    private final ManutencaoEpiRepositoryPort manutencaoEpiRepositoryPort;
-    private final UsuarioRepositorioPorta usuarioRepositorioPorta;
-    private final LogAuditoriaRepositoryPort logAuditoriaRepositoryPort;
+    private final EpiRepository epiRepository;
+    private final ManutencaoEpiRepository manutencaoEpiRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final LogAuditoriaRepository logAuditoriaRepository;
 
     @Autowired
-    public ControlarManutencaoEpiService(EpiRepositoryPort epiRepositoryPort,
-                                         ManutencaoEpiRepositoryPort manutencaoEpiRepositoryPort,
-                                         UsuarioRepositorioPorta usuarioRepositorioPorta,
-                                         LogAuditoriaRepositoryPort logAuditoriaRepositoryPort) {
-        this.epiRepositoryPort = epiRepositoryPort;
-        this.manutencaoEpiRepositoryPort = manutencaoEpiRepositoryPort;
-        this.usuarioRepositorioPorta = usuarioRepositorioPorta;
+    public ControlarManutencaoEpiService(EpiRepository epiRepository,
+                                         ManutencaoEpiRepository manutencaoEpiRepository,
+                                         UsuarioRepository usuarioRepository,
+                                         LogAuditoriaRepository logAuditoriaRepository) {
+        this.epiRepository = epiRepository;
+        this.manutencaoEpiRepository = manutencaoEpiRepository;
+        this.usuarioRepository = usuarioRepository;
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
-        this.logAuditoriaRepositoryPort = java.util.Objects.requireNonNull(
-                logAuditoriaRepositoryPort, "Porta de auditoria é obrigatória (RNF05).");
+        this.logAuditoriaRepository = java.util.Objects.requireNonNull(
+                logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
     }
 
     @Override
     @Transactional
     public EpiOutputDTO enviarParaManutencao(Integer epiId) {
-        Epi epi = epiRepositoryPort.buscarPorId(epiId)
+        Epi epi = epiRepository.buscarPorId(epiId)
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId));
 
         epi.enviarParaManutencao();
-        Epi salvo = epiRepositoryPort.salvar(epi);
+        Epi salvo = epiRepository.salvar(epi);
 
         LogAuditoria log = LogAuditoria.registrarAlteracao(
                 resolverOperador(null),
@@ -57,7 +57,7 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
                 salvo.getId(),
                 "EPI enviado para manutenção"
         );
-        logAuditoriaRepositoryPort.salvar(log);
+        logAuditoriaRepository.salvar(log);
 
         return EpiOutputDTO.deDominio(salvo);
     }
@@ -76,7 +76,7 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
             throw new IllegalArgumentException("Dados para conclusão de manutenção são obrigatórios.");
         }
 
-        Epi epi = epiRepositoryPort.buscarPorId(inputDTO.epiId())
+        Epi epi = epiRepository.buscarPorId(inputDTO.epiId())
                 .orElseThrow(() -> new EpiNaoEncontradoException(inputDTO.epiId()));
 
         LocalDate dataReferencia = inputDTO.dataManutencao() != null
@@ -99,9 +99,9 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
         );
 
         epi.concluirManutencao(manutencao);
-        epiRepositoryPort.salvar(epi);
+        epiRepository.salvar(epi);
 
-        ManutencaoEpi salva = manutencaoEpiRepositoryPort.salvar(manutencao);
+        ManutencaoEpi salva = manutencaoEpiRepository.salvar(manutencao);
 
         LogAuditoria log = LogAuditoria.registrarAlteracao(
                 resolverOperador(responsavelEmail),
@@ -109,7 +109,7 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
                 salva.getId(),
                 "Manutenção de EPI concluída com resultado: " + inputDTO.resultado()
         );
-        logAuditoriaRepositoryPort.salvar(log);
+        logAuditoriaRepository.salvar(log);
 
         return ManutencaoEpiOutputDTO.deDominio(salva, epi.getStatus());
     }
@@ -127,15 +127,15 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
 
     private Integer buscarResponsavelId(String responsavelEmail) {
         if (responsavelEmail == null || responsavelEmail.isBlank()) {
-            if (usuarioRepositorioPorta != null) {
+            if (usuarioRepository != null) {
                 throw new IllegalArgumentException("Responsável autenticado é obrigatório.");
             }
             return null;
         }
-        if (usuarioRepositorioPorta == null) {
+        if (usuarioRepository == null) {
             throw new IllegalStateException("Repositório de usuários indisponível para rastrear manutenção.");
         }
-        return usuarioRepositorioPorta.buscarPorEmail(responsavelEmail.toLowerCase())
+        return usuarioRepository.buscarPorEmail(responsavelEmail.toLowerCase())
                 .map(usuario -> usuario.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Responsável autenticado não encontrado."));
     }
@@ -143,10 +143,10 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
     @Override
     @Transactional(readOnly = true)
     public List<ManutencaoEpiOutputDTO> listarHistoricoPorEpi(Integer epiId) {
-        Epi epi = epiRepositoryPort.buscarPorId(epiId)
+        Epi epi = epiRepository.buscarPorId(epiId)
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId));
 
-        return manutencaoEpiRepositoryPort.listarPorEpiId(epiId).stream()
+        return manutencaoEpiRepository.listarPorEpiId(epiId).stream()
                 .map(m -> ManutencaoEpiOutputDTO.deDominio(m, epi.getStatus()))
                 .toList();
     }
