@@ -5,10 +5,10 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +29,8 @@ import br.edu.safeplace.backend.domain.inspecao.Inspecao;
 import br.edu.safeplace.backend.domain.inspecao.ItemVerificado;
 import br.edu.safeplace.backend.domain.inspecao.exception.InspecaoInvalidaException;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
+import br.edu.safeplace.backend.validacao.Validador;
+import br.edu.safeplace.backend.validacao.inspecao.InspecaoValidador;
 
 @Service
 public class InspecaoService implements GerenciarInspecaoUseCase {
@@ -40,14 +42,24 @@ public class InspecaoService implements GerenciarInspecaoUseCase {
     private final AreaRiscoRepository areaRiscoRepository;
     private final UsuarioRepository usuarioRepositorio;
     private final LogAuditoriaRepository logAuditoria;
+    private final Validador<Inspecao> validador;
 
+    @Autowired
     public InspecaoService(InspecaoRepository inspecaoRepository,
             AreaRiscoRepository areaRiscoRepository, UsuarioRepository usuarioRepositorio,
-            LogAuditoriaRepository logAuditoria) {
+            LogAuditoriaRepository logAuditoria, Validador<Inspecao> validador) {
         this.inspecaoRepository = inspecaoRepository;
         this.areaRiscoRepository = areaRiscoRepository;
         this.usuarioRepositorio = usuarioRepositorio;
         this.logAuditoria = logAuditoria;
+        this.validador = validador;
+    }
+
+    /** Usa o validador padrão, com a data de hoje; usado pelos testes sem contexto Spring. */
+    public InspecaoService(InspecaoRepository inspecaoRepository,
+            AreaRiscoRepository areaRiscoRepository, UsuarioRepository usuarioRepositorio,
+            LogAuditoriaRepository logAuditoria) {
+        this(inspecaoRepository, areaRiscoRepository, usuarioRepositorio, logAuditoria, new InspecaoValidador());
     }
 
     @Override
@@ -56,7 +68,9 @@ public class InspecaoService implements GerenciarInspecaoUseCase {
         AreaRisco area = exigirArea(areaRiscoId);
         GestorDeSeguranca responsavel = resolverGestorAutenticado();
         Inspecao inspecao = Inspecao.registrar(
-                areaRiscoId, inputDTO.dataInspecao(), responsavel, converterItens(inputDTO.itens()), LocalDate.now());
+                areaRiscoId, inputDTO.dataInspecao(), responsavel, converterItens(inputDTO.itens()));
+        // Chain of Responsibility (#263): itens, área, responsável e data, antes do repository.
+        validador.validar(inspecao);
         InspecaoOutputDTO salva = InspecaoOutputDTO.deDominio(inspecaoRepository.salvar(inspecao));
         logAuditoria.salvar(LogAuditoria.registrarCadastro(
                 responsavel.getEmail(), ENTIDADE_LOG, salva.id(), descreverCadastro(area, salva)));

@@ -7,7 +7,6 @@ package br.edu.safeplace.backend.domain.inspecao;
 import java.time.LocalDate;
 import java.util.List;
 
-import br.edu.safeplace.backend.domain.inspecao.exception.InspecaoInvalidaException;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
 /**
@@ -33,30 +32,15 @@ public class Inspecao {
         this.areaRiscoId = areaRiscoId;
         this.dataInspecao = dataInspecao;
         this.responsavel = responsavel;
-        this.itens = List.copyOf(itens);
+        this.itens = itens != null ? List.copyOf(itens) : List.of();
     }
 
     /**
-     * Registro de uma nova inspeção (US09, critério 1). {@code hoje} vem do caso de uso para que a
-     * regra da data seja testável.
+     * Registro de uma nova inspeção (US09, critério 1). Área, responsável, data e itens são
+     * validados por InspecaoValidador antes de salvar (issue #263).
      */
     public static Inspecao registrar(Integer areaRiscoId, LocalDate dataInspecao, GestorDeSeguranca responsavel,
-            List<ItemVerificado> itens, LocalDate hoje) {
-        if (areaRiscoId == null) {
-            throw new InspecaoInvalidaException("Informe a área de risco inspecionada.");
-        }
-        if (responsavel == null) {
-            throw new IllegalArgumentException("O registro da inspeção exige o Gestor de Segurança responsável.");
-        }
-        if (dataInspecao == null) {
-            throw new InspecaoInvalidaException("Informe a data em que a inspeção foi realizada.");
-        }
-        if (dataInspecao.isAfter(hoje)) {
-            throw new InspecaoInvalidaException("A data da inspeção não pode ser posterior a hoje.");
-        }
-        if (itens == null || itens.isEmpty()) {
-            throw new InspecaoInvalidaException("Informe ao menos um item verificado com seu resultado.");
-        }
+            List<ItemVerificado> itens) {
         return new Inspecao(null, areaRiscoId, dataInspecao, responsavel, itens);
     }
 

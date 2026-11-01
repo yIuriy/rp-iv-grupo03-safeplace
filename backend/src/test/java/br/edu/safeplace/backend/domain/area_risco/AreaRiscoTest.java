@@ -5,11 +5,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.ValueSource;
 
-import br.edu.safeplace.backend.domain.area_risco.exception.AreaRiscoSemEpiObrigatorioException;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
@@ -49,59 +45,6 @@ class AreaRiscoTest {
         assertThat(area.getDescricao()).isEqualTo("Setor de alta pressão");
         assertThat(area.getNivelPerigo()).isEqualTo(NivelPerigo.CRITICO);
         assertThat(area.isCadastrada()).isTrue();
-    }
-
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = {"   ", "\t", "\n"})
-    @DisplayName("Deve rejeitar nome nulo ou em branco")
-    void deveRejeitarNomeNuloOuEmBranco(String nomeInvalido) {
-        assertThatThrownBy(() -> new AreaRisco(1, "SET-01", nomeInvalido, "Descricao",
-                NivelPerigo.MEDIO, List.of()))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Nome da área de risco é obrigatório.");
-    }
-
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = {"   "})
-    @DisplayName("UC03: deve rejeitar cadastro sem código identificador do setor")
-    void deveRejeitarCadastroSemCodigo(String codigoInvalido) {
-        assertThatThrownBy(() -> AreaRisco.cadastrar(codigoInvalido, "Caldeiras", null,
-                NivelPerigo.ALTO, List.of(epi(1, "Capacete"))))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Código da área de risco é obrigatório.");
-    }
-
-    @Test
-    @DisplayName("UC03: deve rejeitar cadastro sem nível de perigo")
-    void deveRejeitarCadastroSemNivelPerigo() {
-        assertThatThrownBy(() -> AreaRisco.cadastrar("SET-03", "Caldeiras", null, null,
-                List.of(epi(1, "Capacete"))))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Nível de perigo da área de risco é obrigatório.");
-    }
-
-    @Test
-    @DisplayName("UC03 RN1: deve bloquear cadastro sem EPIs obrigatórios de acesso")
-    void deveBloquearCadastroSemEpisObrigatorios() {
-        assertThatThrownBy(() -> AreaRisco.cadastrar("SET-04", "Caldeiras", null,
-                NivelPerigo.BAIXO, List.of()))
-                .isInstanceOf(AreaRiscoSemEpiObrigatorioException.class)
-                .hasMessageContaining("SET-04");
-
-        assertThatThrownBy(() -> AreaRisco.cadastrar("SET-04", "Caldeiras", null,
-                NivelPerigo.BAIXO, null))
-                .isInstanceOf(AreaRiscoSemEpiObrigatorioException.class);
-    }
-
-    @Test
-    @DisplayName("UC03 RN1: a exigência de EPI vale para qualquer grau de perigo")
-    void deveExigirEpiEmQualquerNivelDePerigo() {
-        for (NivelPerigo nivel : NivelPerigo.values()) {
-            assertThatThrownBy(() -> AreaRisco.cadastrar("SET-05", "Setor", null, nivel, List.of()))
-                    .isInstanceOf(AreaRiscoSemEpiObrigatorioException.class);
-        }
     }
 
     @Test

@@ -17,16 +17,10 @@ public class Setor {
     private final String localizacao;
     private final NivelPerigo status;
 
+    /** Nome e status são validados por SetorValidador antes de salvar (issue #263). */
     public Setor(Integer id, String nome, String descricao, String localizacao, NivelPerigo status) {
-        if (nome == null || nome.isBlank()) {
-            throw new IllegalArgumentException("Nome do setor é obrigatório.");
-        }
-        if (status == null) {
-            throw new IllegalArgumentException("Status/Nível de perigo do setor é obrigatório.");
-        }
-
         this.id = id;
-        this.nome = nome.trim();
+        this.nome = nome != null ? nome.trim() : null;
         this.descricao = descricao != null ? descricao.trim() : null;
         this.localizacao = localizacao != null ? localizacao.trim() : null;
         this.status = status;
@@ -96,11 +90,11 @@ public class Setor {
         if (id != null && setor.id != null) {
             return id.equals(setor.id);
         }
-        return nome.equalsIgnoreCase(setor.nome);
+        return nome != null && nome.equalsIgnoreCase(setor.nome);
     }
 
     @Override
     public int hashCode() {
-        return id != null ? Objects.hashCode(id) : Objects.hashCode(nome.toLowerCase());
+        return id != null ? Objects.hashCode(id) : Objects.hashCode(nome != null ? nome.toLowerCase() : null);
     }
 }

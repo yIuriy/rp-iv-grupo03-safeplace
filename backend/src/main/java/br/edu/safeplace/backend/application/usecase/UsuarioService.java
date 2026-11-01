@@ -20,15 +20,16 @@ import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
-import br.edu.safeplace.backend.domain.usuario.CpfValidador;
+import br.edu.safeplace.backend.domain.usuario.Cpf;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import br.edu.safeplace.backend.application.port.out.OperadorAutenticado;
 import br.edu.safeplace.backend.domain.usuario.Perfil;
 import br.edu.safeplace.backend.domain.usuario.Supervisor;
 import br.edu.safeplace.backend.domain.usuario.exception.AcessoNegadoException;
-import br.edu.safeplace.backend.domain.usuario.exception.CpfJaCadastradoException;
-import br.edu.safeplace.backend.domain.usuario.exception.EmailJaCadastradoException;
 import br.edu.safeplace.backend.domain.usuario.exception.UsuarioNaoEncontradoException;
+import br.edu.safeplace.backend.validacao.Validador;
+import br.edu.safeplace.backend.validacao.usuario.ColaboradorValidador;
+import br.edu.safeplace.backend.validacao.usuario.CpfValidador;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +42,8 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
     private final GeradorSenha geradorSenha;
     private final LogAuditoriaRepository logAuditoriaRepository;
     private final OperadorAutenticado operadorAutenticado;
+    private final Validador<Colaborador> validador;
+    private final Validador<String> cpfValidador;
 
     public UsuarioService(UsuarioRepository repositorioPorta,
                             CodificadorSenha codificadorSenha,
@@ -49,13 +52,27 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
         this(repositorioPorta, codificadorSenha, geradorSenha, logAuditoriaRepository, null);
     }
 
-    @org.springframework.beans.factory.annotation.Autowired
+    /** Monta os validadores padrão; usado pelos testes sem contexto Spring. */
     public UsuarioService(UsuarioRepository repositorioPorta,
                             CodificadorSenha codificadorSenha,
                             GeradorSenha geradorSenha,
                             LogAuditoriaRepository logAuditoriaRepository,
                             OperadorAutenticado operadorAutenticado) {
+        this(repositorioPorta, codificadorSenha, geradorSenha, logAuditoriaRepository, operadorAutenticado,
+                new ColaboradorValidador(repositorioPorta, new CpfValidador()), new CpfValidador());
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public UsuarioService(UsuarioRepository repositorioPorta,
+                            CodificadorSenha codificadorSenha,
+                            GeradorSenha geradorSenha,
+                            LogAuditoriaRepository logAuditoriaRepository,
+                            OperadorAutenticado operadorAutenticado,
+                            Validador<Colaborador> validador,
+                            Validador<String> cpfValidador) {
         this.repositorioPorta = repositorioPorta;
+        this.validador = java.util.Objects.requireNonNull(validador, "Validador de pessoas é obrigatório.");
+        this.cpfValidador = java.util.Objects.requireNonNull(cpfValidador, "Validador de CPF é obrigatório.");
         this.codificadorSenha = codificadorSenha;
         this.geradorSenha = geradorSenha;
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
@@ -84,7 +101,7 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
     @Override
     @Transactional
     public UsuarioOutputDTO cadastrarUsuario(CadastrarUsuarioInputDTO entrada, String operador) {
-        String cpfSanitizado = validarIdentificacaoDisponivel(entrada.cpf(), entrada.email());
+        String cpfSanitizado = Cpf.sanitizar(entrada.cpf());
 
         Colaborador novoUsuario;
         String senhaInicial = null;
@@ -100,6 +117,8 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
             novoUsuario = Colaborador.novo(entrada.nome(), cpfSanitizado, entrada.dataNascimento(), entrada.email());
         }
 
+        // Chain of Responsibility (#263): CPF, e-mail, dados pessoais e credenciais, antes do repository.
+        validador.validar(novoUsuario);
         Colaborador salvo = repositorioPorta.salvar(novoUsuario);
 
         LogAuditoria log = LogAuditoria.registrarCadastro(
@@ -122,7 +141,7 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
     @Override
     @Transactional
     public UsuarioOutputDTO cadastrarSupervisor(CadastrarSupervisorInputDTO entrada, String operador) {
-        String cpfSanitizado = validarIdentificacaoDisponivel(entrada.cpf(), entrada.email());
+        String cpfSanitizado = Cpf.sanitizar(entrada.cpf());
 
         // RF23 / issue #91: a credencial inicial é gerada pelo sistema e só o hash é persistido.
         String senhaInicial = geradorSenha.gerar();
@@ -131,6 +150,7 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
         Supervisor novoSupervisor = Supervisor.novo(
                 entrada.nome(), cpfSanitizado, entrada.dataNascimento(), entrada.email(), hash);
 
+        validador.validar(novoSupervisor);
         Colaborador salvo = repositorioPorta.salvar(novoSupervisor);
 
         LogAuditoria log = LogAuditoria.registrarCadastro(
@@ -153,11 +173,12 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
     @Override
     @Transactional
     public UsuarioOutputDTO cadastrarColaborador(CadastrarColaboradorInputDTO entrada, String operador) {
-        String cpfSanitizado = validarIdentificacaoDisponivel(entrada.cpf(), entrada.email());
+        String cpfSanitizado = Cpf.sanitizar(entrada.cpf());
 
         Colaborador novoColaborador = Colaborador.novo(
                 entrada.nome(), cpfSanitizado, entrada.dataNascimento(), entrada.email());
 
+        validador.validar(novoColaborador);
         Colaborador salvo = repositorioPorta.salvar(novoColaborador);
 
         LogAuditoria log = LogAuditoria.registrarCadastro(
@@ -207,9 +228,8 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
                 .orElseThrow(() -> new UsuarioNaoEncontradoException(
                         nomeDoPerfil(perfilEsperado) + " não encontrado com ID: " + id));
 
-        validarEmailDisponivelPara(atual, entrada.email());
-
         Colaborador atualizado = atual.comDadosAtualizados(entrada.nome(), entrada.dataNascimento(), entrada.email());
+        validador.validar(atualizado);
         Colaborador salvo = repositorioPorta.salvar(atualizado);
 
         LogAuditoria log = LogAuditoria.registrarAlteracao(
@@ -259,20 +279,6 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
         }
         return "Colaborador";
     }
-
-    /** O e-mail continua único, mas a própria pessoa pode manter o que já tem. */
-    private void validarEmailDisponivelPara(Colaborador atual, String email) {
-        if (email == null || email.isBlank()) {
-            return;
-        }
-        String emailSanitizado = email.trim().toLowerCase();
-        repositorioPorta.buscarPorEmail(emailSanitizado)
-                .filter(outro -> !outro.getId().equals(atual.getId()))
-                .ifPresent(outro -> {
-                    throw new EmailJaCadastradoException("Email já cadastrado no sistema: " + emailSanitizado);
-                });
-    }
-
     @Override
     @Transactional(readOnly = true)
     public List<UsuarioOutputDTO> listarUsuarios() {
@@ -311,8 +317,8 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
     @Override
     @Transactional(readOnly = true)
     public UsuarioOutputDTO buscarPorCpf(String cpf) {
-        CpfValidador.validar(cpf);
-        String cpfSanitizado = CpfValidador.sanitizar(cpf);
+        cpfValidador.validar(cpf);
+        String cpfSanitizado = Cpf.sanitizar(cpf);
         return repositorioPorta.buscarPorCpf(cpfSanitizado)
                 .map(UsuarioOutputDTO::deDominio)
                 .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com CPF: " + cpfSanitizado));
@@ -325,28 +331,5 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
         return repositorioPorta.buscarPorEmail(emailSanitizado)
                 .map(UsuarioOutputDTO::deDominio)
                 .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com e-mail: " + emailSanitizado));
-    }
-
-    /**
-     * Valida o CPF e garante que nem ele nem o e-mail já estejam em uso.
-     *
-     * @return o CPF sanitizado, pronto para persistência
-     */
-    private String validarIdentificacaoDisponivel(String cpf, String email) {
-        CpfValidador.validar(cpf);
-        String cpfSanitizado = CpfValidador.sanitizar(cpf);
-
-        if (repositorioPorta.buscarPorCpf(cpfSanitizado).isPresent()) {
-            throw new CpfJaCadastradoException("CPF já cadastrado no sistema: " + cpfSanitizado);
-        }
-
-        if (email != null && !email.isBlank()) {
-            String emailSanitizado = email.trim().toLowerCase();
-            if (repositorioPorta.buscarPorEmail(emailSanitizado).isPresent()) {
-                throw new EmailJaCadastradoException("Email já cadastrado no sistema: " + emailSanitizado);
-            }
-        }
-
-        return cpfSanitizado;
     }
 }

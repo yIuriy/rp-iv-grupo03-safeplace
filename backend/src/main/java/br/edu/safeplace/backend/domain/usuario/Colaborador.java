@@ -22,20 +22,10 @@ public class Colaborador {
 
     public Colaborador(Integer id, String cpf, String nome, LocalDate dataNascimento,
                        String email, boolean ativo, LocalDateTime criadoEm, LocalDateTime atualizadoEm) {
-        if (nome == null || nome.isBlank()) {
-            throw new IllegalArgumentException("Nome é obrigatório.");
-        }
-        if (dataNascimento == null) {
-            throw new IllegalArgumentException("Data de nascimento é obrigatória.");
-        }
-        if (dataNascimento.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Data de nascimento não pode estar no futuro.");
-        }
-        CpfValidador.validar(cpf);
-
+        // Nome, nascimento e CPF são validados por ColaboradorValidador antes de salvar (issue #263).
         this.id = id;
-        this.cpf = CpfValidador.sanitizar(cpf);
-        this.nome = nome.trim();
+        this.cpf = Cpf.sanitizar(cpf);
+        this.nome = nome != null ? nome.trim() : null;
         this.dataNascimento = dataNascimento;
         this.email = (email != null && !email.isBlank()) ? email.trim().toLowerCase() : null;
         this.ativo = ativo;

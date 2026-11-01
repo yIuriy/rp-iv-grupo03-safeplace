@@ -13,7 +13,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Issue #122: a atualização cadastral devolve uma cópia com os dados novos e preserva tudo o que
@@ -88,27 +87,5 @@ class AtualizacaoCadastralTest {
         assertThat(atualizado).isInstanceOf(GestorDeSeguranca.class);
         assertThat(atualizado.getPerfil()).isEqualTo(Perfil.GESTOR_SEGURANCA);
         assertThat(((GestorDeSeguranca) atualizado).getSenha()).isEqualTo("hash:xyz");
-    }
-
-    @Test
-    @DisplayName("Supervisor não pode ficar sem e-mail, porque ele é a identificação de acesso")
-    void supervisorExigeEmail() {
-        Supervisor original = supervisora();
-
-        assertThatThrownBy(() -> original.comDadosAtualizados("Joana", LocalDate.of(1988, 4, 20), " "))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Email");
-    }
-
-    @Test
-    @DisplayName("Dados inválidos são recusados pelas mesmas regras do cadastro")
-    void dadosInvalidosSaoRecusados() {
-        Colaborador original = colaborador();
-        LocalDate futuro = LocalDate.now().plusDays(1);
-
-        assertThatThrownBy(() -> original.comDadosAtualizados(" ", NASCIMENTO, null))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> original.comDadosAtualizados("João", futuro, null))
-                .isInstanceOf(IllegalArgumentException.class);
     }
 }
