@@ -24,7 +24,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [State (Backend)](#state--transicoes-de-statusepi) | GoF, comportamental | Backend: transições de `StatusEpi` | [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) | Pendente |
 | [Factory Method](#factory-method--criacao-de-epi-e-ocorrencia) | GoF, criacional | Backend: criação de `Epi` e `Acidente`/`Incidente` (`Ocorrencia` `sealed`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225), [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Pendente |
 | [Builder (Test Data Builder)](#builder--test-data-builders-de-epi-tarefa-e-ocorrencia) | GoF, criacional | Backend (`src/test`): builders de `Epi`, `Tarefa` e `Ocorrencia` | [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) | Pendente |
-| [Null Object](#null-object--adaptador-nulo-de-notificacao-e-dependencias-opcionais) | Woolf / PLoPD 3 | Backend: `NotificacaoOcorrenciaNula` e dependências opcionais | [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227), [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) | Pendente |
+| [Null Object](#null-object--adaptador-nulo-de-notificacao-e-dependencias-opcionais) | Woolf / PLoPD 3 | Backend: `NotificadorOcorrenciaNulo` e dependências opcionais | [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227), [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) | Aplicado (1/2: #227) |
 | [Chain of Responsibility](#chain-of-responsibility--camada-de-validação) | GoF, comportamental | Backend: camada `validacao` (aptidão do colaborador e tarefa) | [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228); continua em [#263](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/263) a [#267](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/267) | Aplicado (6/6: #228, #267, #263, #264, #265, #266) |
 | [Data Mapper](#data-mapper--mapeadores-de-persistencia) | Fowler / PoEAA | Backend: `EpiEntityMapper`, `AreaRiscoEntityMapper` e `PlanoDeAcaoEntityMapper` | [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229), [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242) | Pendente |
 | [Value Object](#value-object--protocolo-cat-em-acidente) | Fowler / DDD | Backend: `NumeroProtocoloCAT` dentro de `Acidente` | [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230) | Pendente |
@@ -723,13 +723,27 @@ A identificação do operador autenticado e o descarte de `"anonymousUser"` pass
 
 **Catálogo:** Woolf (PLoPD 3), comportamental.
 
-**Intenção:** fornecer implementações neutras para portas opcionais (`NotificacaoOcorrenciaNula`, `OperadorAutenticadoNulo`), eliminando construtores secundários que repassam `null` e checagens `!= null` nos casos de uso.
+**Intenção:** fornecer implementações neutras para portas opcionais (`NotificadorOcorrenciaNulo`, `OperadorAutenticadoNulo`), eliminando construtores secundários que repassam `null` e checagens `!= null` nos casos de uso.
 
-**Issues:** [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227) e [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241).
+**Issues:** [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227) (parte 1, aplicada) e [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) (parte 2).
+
+**Nome da classe nula:** a issue #227 e o esqueleto desta seção usavam `NotificacaoOcorrenciaNula`. Depois da [#269](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/269), a porta passou a se chamar `NotificadorOcorrencia`, e `NotificacaoOcorrencia` já é a classe de domínio da notificação gravada. Por isso a classe nula se chama `NotificadorOcorrenciaNulo`: o nome segue a porta que ela implementa e não se confunde com o registro de domínio.
 
 ### Problema (antes)
 
-*A preencher nas issues [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227) e [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, §4).*
+**Parte 1 ([#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227)).** `OcorrenciaService` recebia a porta `NotificadorOcorrencia` com `@Autowired(required = false)`. A ausência do notificador chegava ao caso de uso como `null`, e o fluxo de negócio decidia o que fazer:
+
+- `registrarAcidente` e `registrarIncidente` testavam `if (notificadorOcorrencia != null)` antes de notificar;
+- um construtor de 4 parâmetros repassava `null` explicitamente ao construtor principal;
+- quem escrevesse um novo fluxo de relato e esquecesse o `if` causaria um `NullPointerException`.
+
+**Parte 2 ([#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241)).** *A preencher.*
+
+### Por que Null Object
+
+O padrão troca o "não há notificador" por um objeto que implementa a mesma interface e não faz nada. O caso de uso passa a chamar a porta sempre, sem condição. A decisão "notificar ou não" sai do fluxo de negócio e vai para a montagem dos objetos: em produção o Spring injeta o adaptador real; quem não quer notificação (por exemplo, um teste) entrega o objeto nulo.
+
+O `NotificadorOcorrenciaNulo` não é um bean do Spring. Se fosse, o contexto teria duas implementações da mesma porta e a injeção ficaria ambígua. Ele fica em `adapters/out/notificacao`, ao lado do adaptador real, porque também é uma implementação da porta de saída.
 
 ### Papéis do padrão
 
@@ -737,22 +751,163 @@ A identificação do operador autenticado e o descarte de `"anonymousUser"` pass
 | --- | --- | --- |
 | AbstractObject | `NotificadorOcorrencia`, `OperadorAutenticado` | Contratos das portas de saída |
 | RealObject | `NotificacaoOcorrenciaInternaAdapter`, `SpringSecurityOperadorAutenticadoAdapter` | Implementações reais das portas |
-| NullObject | `NotificacaoOcorrenciaNula`, `OperadorAutenticadoNulo` | Implementações neutras sem efeito colateral |
-| Client | `OcorrenciaService`, `EmprestimoService`, `PlanoDeAcaoService`, `TarefaService`, `UsuarioService` | Invocar as portas sem testar `!= null` |
+| NullObject | `NotificadorOcorrenciaNulo` (#227), `OperadorAutenticadoNulo` (#241) | Implementações neutras sem efeito colateral |
+| Client | `OcorrenciaService` (#227); `EmprestimoService`, `PlanoDeAcaoService`, `TarefaService`, `UsuarioService` (#241) | Invocar as portas sem testar `!= null` |
 
 ### Diagramas
 
-*Diagramas PlantUML antes e depois a preencher nas issues [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227) e [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241).*
+**Antes (#227).** A porta é opcional; o cliente testa `null` em cada uso.
+
+```mermaid
+classDiagram
+  direction LR
+  class NotificadorOcorrencia {
+    <<AbstractObject / Interface>>
+    +notificarGestor(ocorrencia)
+    +listar() List~NotificacaoOcorrencia~
+  }
+  class NotificacaoOcorrenciaInternaAdapter {
+    <<RealObject>>
+    +notificarGestor(ocorrencia)
+    +listar() List~NotificacaoOcorrencia~
+  }
+  class OcorrenciaService {
+    <<Client>>
+    -notificadorOcorrencia (pode ser null)
+    +OcorrenciaService(notificador opcional)
+    +OcorrenciaService(4 parâmetros) repassa null
+    +registrarAcidente(dto) if != null
+    +registrarIncidente(dto) if != null
+  }
+  NotificadorOcorrencia <|.. NotificacaoOcorrenciaInternaAdapter
+  OcorrenciaService --> "0..1" NotificadorOcorrencia : usa se não for null
+```
+
+**Depois (#227).** A porta é obrigatória; a ausência é representada pelo `NotificadorOcorrenciaNulo`.
+
+```mermaid
+classDiagram
+  direction LR
+  class NotificadorOcorrencia {
+    <<AbstractObject / Interface>>
+    +notificarGestor(ocorrencia)
+    +listar() List~NotificacaoOcorrencia~
+  }
+  class NotificacaoOcorrenciaInternaAdapter {
+    <<RealObject>>
+    +notificarGestor(ocorrencia) grava e registra log
+    +listar() notificações gravadas
+  }
+  class NotificadorOcorrenciaNulo {
+    <<NullObject>>
+    +notificarGestor(ocorrencia) não faz nada
+    +listar() List.of()
+  }
+  class OcorrenciaService {
+    <<Client>>
+    -notificadorOcorrencia (requireNonNull)
+    +registrarAcidente(dto) sempre notifica
+    +registrarIncidente(dto) sempre notifica
+  }
+  NotificadorOcorrencia <|.. NotificacaoOcorrenciaInternaAdapter
+  NotificadorOcorrencia <|.. NotificadorOcorrenciaNulo
+  OcorrenciaService --> "1" NotificadorOcorrencia : chama sem condição
+```
+
+### Código antes × depois
+
+**Construtor de `OcorrenciaService` (#227).**
+
+Antes:
+
+```java
+public OcorrenciaService(..., LogAuditoriaRepository logAuditoriaRepository,
+        @Autowired(required = false) NotificadorOcorrencia notificadorOcorrencia,
+        @Qualifier("ocorrenciaValidador") Validador<Ocorrencia> validador) {
+    ...
+    this.notificadorOcorrencia = notificadorOcorrencia;
+}
+
+public OcorrenciaService(OcorrenciaRepository repository, AreaRiscoRepository areaRiscoRepository,
+        UsuarioRepository usuarioRepository, LogAuditoriaRepository logAuditoriaRepository) {
+    this(repository, areaRiscoRepository, usuarioRepository, logAuditoriaRepository, null);
+}
+```
+
+Depois:
+
+```java
+public OcorrenciaService(..., LogAuditoriaRepository logAuditoriaRepository,
+        NotificadorOcorrencia notificadorOcorrencia,
+        @Qualifier("ocorrenciaValidador") Validador<Ocorrencia> validador) {
+    ...
+    // Null Object (#227): a porta é obrigatória; sem notificação, injeta-se NotificadorOcorrenciaNulo.
+    this.notificadorOcorrencia = Objects.requireNonNull(
+            notificadorOcorrencia, "Notificador de ocorrência é obrigatório.");
+}
+```
+
+**Ponto de uso em `registrarAcidente` e `registrarIncidente` (#227).**
+
+Antes:
+
+```java
+if (notificadorOcorrencia != null) {
+    notificadorOcorrencia.notificarGestor(salvo);
+}
+```
+
+Depois:
+
+```java
+notificadorOcorrencia.notificarGestor(salvo);
+```
+
+**Objeto nulo (`NotificadorOcorrenciaNulo.java`, novo).**
+
+```java
+public final class NotificadorOcorrenciaNulo implements NotificadorOcorrencia {
+    @Override
+    public void notificarGestor(Ocorrencia ocorrencia) {
+        // Intencionalmente vazio: é o comportamento neutro do Null Object.
+    }
+
+    @Override
+    public List<NotificacaoOcorrencia> listar() {
+        return List.of();
+    }
+}
+```
+
+### Benefício
+
+**Parte 1 (#227).** A pergunta "existe notificador?" deixou de ser respondida dentro do fluxo de relato. Ela é respondida uma única vez, na montagem do serviço: o construtor recusa `null` e o caso de uso confia na porta. Um novo fluxo que precise notificar o gestor chama a porta direto, sem o risco de esquecer o `if` e gerar `NullPointerException`. Os testes que não querem notificação deixam isso explícito ao passar `new NotificadorOcorrenciaNulo()`, em vez de esconder a escolha num construtor que repassava `null`.
 
 ### Métricas locais
 
-| Métrica | Antes (v1.0.0) | Depois |
-| --- | --- | --- |
-| `comparacao_null` no backend | 578 | *A medir* |
+| Métrica | Antes (v1.0.0) | `dev` antes da #227 | Depois da #227 |
+| --- | ---: | ---: | ---: |
+| `comparacao_null` no backend (`backend_main`) | 578 | 597 | 595 |
+| `@Autowired(required = false)` para `NotificadorOcorrencia` | 1 | 1 | 0 |
+| `!= null` para `NotificadorOcorrencia` em `OcorrenciaService` | 2 | 2 | 0 |
+| Construtores de `OcorrenciaService` | 3 | 3 | 2 |
+
+O valor de `dev` antes da #227 é maior que o da v1.0.0 porque outras funcionalidades entraram entre a release e esta refatoração. Medição: `python scripts/metricas/coletar_metricas.py`.
 
 ### Evidências
 
-*A preencher nas issues [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227) e [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241).*
+**Parte 1 (#227).**
+
+Testes novos:
+
+1. `NotificadorOcorrenciaNuloTest` (2 testes): o objeto nulo aceita um relato sem efeito e sem exceção, e `listar()` devolve uma lista vazia e imutável, nunca `null`.
+2. `OcorrenciaServiceNotificadorTest` (3 testes): o construtor recusa notificador `null`; com um dublê escrito à mão que registra a chamada (papel RealObject), o caso de uso notifica uma vez com a ocorrência gravada; com o `NotificadorOcorrenciaNulo`, o relato é gravado e devolvido normalmente e a consulta de notificações fica vazia.
+
+Testes ajustados: `OcorrenciaConsultaUseCaseTest` e `OcorrenciaUseCaseAuditoriaTest` usavam o construtor de 4 parâmetros e agora passam `new NotificadorOcorrenciaNulo()`.
+
+Suíte existente (`TESTCONTAINERS_RYUK_DISABLED=true ./mvnw clean test -Dapi.version=1.44`, banco PostgreSQL novo): **1139 testes, 0 falhas, 6 erros**. Os 6 erros (`EpiEstoqueConcorrenciaIntegracaoTest` 4, `EstoqueCriticoPersistenciaIntegracaoTest` 2) são anteriores à #227: a `dev` sem esta mudança (`f78f2c3`) dá 1134 testes com os mesmos 6 erros, causados por `DELETE FROM epis` bloqueado por linhas de `projecoes_substituicao` que outro teste de integração não limpa.
+
+**Parte 2 (#241).** *A preencher.*
 
 ---
 
