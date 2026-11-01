@@ -52,6 +52,7 @@ import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.validacao.Validador;
 import br.edu.safeplace.backend.validacao.epi.ManutencaoEpiValidador;
 import br.edu.safeplace.backend.validacao.epi.MovimentacaoEstoqueValidador;
+import br.edu.safeplace.backend.validacao.emprestimo.EmprestimoValidador;
 
 @Service
 public class EmprestimoService implements ControlarEmprestimoUseCase {
@@ -65,13 +66,16 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
     private final ManutencaoEpiRepository manutencoes;
     private final Validador<MovimentacaoEstoque> movimentacaoValidador;
     private final Validador<ManutencaoEpi> manutencaoValidador;
+    private final Validador<Emprestimo> emprestimoValidador;
 
     @Autowired
     public EmprestimoService(EmprestimoRepository emprestimos, EpiRepository epis,
                              UsuarioRepository usuarios, VerificadorImpedimentoCapacitacao capacitacoes,
                              LogAuditoriaRepository auditoria, ManutencaoEpiRepository manutencoes,
                              Validador<MovimentacaoEstoque> movimentacaoValidador,
-                             Validador<ManutencaoEpi> manutencaoValidador) {
+                             Validador<ManutencaoEpi> manutencaoValidador,
+                             Validador<Emprestimo> emprestimoValidador) {
+        this.emprestimoValidador = emprestimoValidador;
         this.movimentacaoValidador = movimentacaoValidador;
         this.manutencaoValidador = manutencaoValidador;
         this.emprestimos = emprestimos;
@@ -95,7 +99,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
                              UsuarioRepository usuarios, VerificadorImpedimentoCapacitacao capacitacoes,
                              LogAuditoriaRepository auditoria, ManutencaoEpiRepository manutencoes) {
         this(emprestimos, epis, usuarios, capacitacoes, auditoria, manutencoes,
-                new MovimentacaoEstoqueValidador(), new ManutencaoEpiValidador());
+                new MovimentacaoEstoqueValidador(), new ManutencaoEpiValidador(), new EmprestimoValidador());
     }
 
     @Override
@@ -113,6 +117,8 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
         String termo = termoDeCautela(epi, beneficiario, operador, agora, entrada.dataDevolucaoPrevista());
         Emprestimo emprestimo = Emprestimo.registrarEntrega(epi.getId(), beneficiario.getId(), operador.getId(),
                 agora, entrada.dataDevolucaoPrevista(), termo, entrada.justificativaSubstituicao());
+        // Chain of Responsibility (#265): valida antes de baixar o estoque e de gravar.
+        emprestimoValidador.validar(emprestimo);
 
         MovimentacaoEstoque saida = epi.removerEstoque(Emprestimo.QUANTIDADE_POR_EMPRESTIMO,
                 "Empréstimo ao colaborador " + beneficiario.getNome(), operador.getId());
@@ -182,6 +188,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
             epis.salvar(epi);
         }
 
+        emprestimoValidador.validar(emprestimo);
         Emprestimo salvo = emprestimos.salvar(emprestimo);
         auditar(LogAuditoria.registrarAlteracao(operadorEmail, ENTIDADE_AUDITADA, salvo.getId(),
                 "Devolução do EPI " + epi.getNome() + " com estado " + estado));

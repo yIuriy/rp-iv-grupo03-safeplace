@@ -15,31 +15,12 @@ public class Certificacao {
     private final Integer colaboradorId;
 
     public Certificacao(Integer id, String nome, LocalDate dataVencimento, LocalDate dataEmissao, Integer colaboradorId) {
-        if (nome == null || nome.isBlank()) {
-            throw new IllegalArgumentException("Nome da certificação é obrigatório.");
-        }
-        if (dataEmissao == null) {
-            throw new IllegalArgumentException("Data de emissão é obrigatória.");
-        }
-        if (dataVencimento == null) {
-            throw new IllegalArgumentException("Data de vencimento é obrigatória.");
-        }
-        if (dataEmissao.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Data de emissão não pode ser no futuro.");
-        }
-        if (validarInconsistenciaCronologica(dataEmissao, dataVencimento)) {
-            throw new IllegalArgumentException("Data de emissão não pode ser posterior à data de vencimento.");
-        }
-        if (colaboradorId == null) {
-            throw new IllegalArgumentException("Colaborador é obrigatório.");
-        }
-
         this.id = id;
-        this.nome = nome.trim();
+        this.nome = nome != null ? nome.trim() : null;
         this.dataVencimento = dataVencimento;
         this.dataEmissao = dataEmissao;
         this.colaboradorId = colaboradorId;
-        this.status = calcularStatus(LocalDate.now());
+        this.status = dataVencimento != null ? calcularStatus(LocalDate.now()) : null;
     }
 
     public static boolean validarInconsistenciaCronologica(LocalDate dataEmissao, LocalDate dataValidade) {
@@ -49,10 +30,8 @@ public class Certificacao {
         return dataEmissao.isAfter(dataValidade);
     }
 
+    /** Cadastro de certificação; as datas e o vínculo são validados por CertificacaoValidador (#265). */
     public static Certificacao cadastrar(String nome, LocalDate dataVencimento, LocalDate dataEmissao, Integer colaboradorId) {
-        if (dataVencimento.isBefore(LocalDate.now()) || dataVencimento.isEqual(LocalDate.now())) {
-            throw new IllegalArgumentException("Data de vencimento não pode ser no passado ou presente no momento do cadastro.");
-        }
         return new Certificacao(null, nome, dataVencimento, dataEmissao, colaboradorId);
     }
 

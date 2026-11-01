@@ -27,6 +27,7 @@ import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.exception.UsuarioNaoEncontradoException;
 import br.edu.safeplace.backend.validacao.Validador;
 import br.edu.safeplace.backend.validacao.aptidao.AptidaoParaTarefa;
+import br.edu.safeplace.backend.validacao.tarefa.AlocacaoTarefaValidador;
 
 @Service
 public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUseCase {
@@ -39,6 +40,19 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
     private final AlocacaoTarefaRepository alocacaoTarefaRepository;
     private final LogAuditoriaRepository auditoriaRepository;
     private final Validador<AptidaoParaTarefa> validadorAptidao;
+    private final Validador<AlocacaoTarefa> validadorAlocacao;
+
+    /** Usa o validador padrão da alocação; usado pelos testes sem contexto Spring. */
+    public AlocarColaboradorTarefaService(
+            TarefaRepository tarefaRepository,
+            UsuarioRepository usuarioRepository,
+            CapacitacaoRepository capacitacaoRepository,
+            AlocacaoTarefaRepository alocacaoTarefaRepository,
+            LogAuditoriaRepository auditoriaRepository,
+            Validador<AptidaoParaTarefa> validadorAptidao) {
+        this(tarefaRepository, usuarioRepository, capacitacaoRepository, alocacaoTarefaRepository,
+                auditoriaRepository, validadorAptidao, new AlocacaoTarefaValidador());
+    }
 
     @Autowired
     public AlocarColaboradorTarefaService(
@@ -47,7 +61,9 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
             CapacitacaoRepository capacitacaoRepository,
             AlocacaoTarefaRepository alocacaoTarefaRepository,
             LogAuditoriaRepository auditoriaRepository,
-            Validador<AptidaoParaTarefa> validadorAptidao) {
+            Validador<AptidaoParaTarefa> validadorAptidao,
+            Validador<AlocacaoTarefa> validadorAlocacao) {
+        this.validadorAlocacao = validadorAlocacao;
         this.tarefaRepository = tarefaRepository;
         this.usuarioRepository = usuarioRepository;
         this.capacitacaoRepository = capacitacaoRepository;
@@ -75,6 +91,7 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
                 colaborador, tarefa, certificacoes, treinamentos, exigencias, LocalDate.now()));
 
         AlocacaoTarefa alocacao = AlocacaoTarefa.nova(tarefa.getId(), colaborador.getId(), operador.getId(), entrada.observacao());
+        validadorAlocacao.validar(alocacao);
         AlocacaoTarefa salva = alocacaoTarefaRepository.salvar(alocacao);
 
         auditoriaRepository.salvar(LogAuditoria.registrarCadastro(
