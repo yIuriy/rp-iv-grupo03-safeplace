@@ -3,6 +3,7 @@ package br.edu.safeplace.backend.application.usecase;
 import java.util.List;
 import java.util.Objects;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,8 @@ import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.application.port.out.SetorRepository;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
+import br.edu.safeplace.backend.validacao.Validador;
+import br.edu.safeplace.backend.validacao.setor.SetorValidador;
 
 @Service
 public class SetorService implements GerenciarSetorUseCase {
@@ -22,12 +25,21 @@ public class SetorService implements GerenciarSetorUseCase {
 
     private final SetorRepository setorRepository;
     private final LogAuditoriaRepository logAuditoriaRepository;
+    private final Validador<Setor> validador;
 
-    public SetorService(SetorRepository setorRepository, LogAuditoriaRepository logAuditoriaRepository) {
+    @Autowired
+    public SetorService(SetorRepository setorRepository, LogAuditoriaRepository logAuditoriaRepository,
+            Validador<Setor> validador) {
         this.setorRepository = setorRepository;
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.logAuditoriaRepository = Objects.requireNonNull(
                 logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
+        this.validador = Objects.requireNonNull(validador, "Validador do setor é obrigatório.");
+    }
+
+    /** Usa o validador padrão; usado pelos testes sem contexto Spring. */
+    public SetorService(SetorRepository setorRepository, LogAuditoriaRepository logAuditoriaRepository) {
+        this(setorRepository, logAuditoriaRepository, new SetorValidador());
     }
 
     @Override
@@ -39,6 +51,8 @@ public class SetorService implements GerenciarSetorUseCase {
                 inputDTO.localizacao(),
                 inputDTO.status()
         );
+        // Chain of Responsibility (#263): valida antes do repository.
+        validador.validar(setor);
         Setor salvo = setorRepository.salvar(setor);
         logAuditoriaRepository.salvar(LogAuditoria.registrarCadastro(
                 operador != null ? operador : "sistema",
@@ -61,6 +75,7 @@ public class SetorService implements GerenciarSetorUseCase {
                 inputDTO.status()
         );
 
+        validador.validar(atualizado);
         Setor salvo = setorRepository.salvar(atualizado);
         logAuditoriaRepository.salvar(LogAuditoria.registrarAlteracao(
                 operador != null ? operador : "sistema",

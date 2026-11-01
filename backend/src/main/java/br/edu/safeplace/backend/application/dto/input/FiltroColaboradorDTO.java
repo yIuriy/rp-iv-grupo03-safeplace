@@ -1,6 +1,6 @@
 package br.edu.safeplace.backend.application.dto.input;
 
-import br.edu.safeplace.backend.domain.usuario.CpfValidador;
+import br.edu.safeplace.backend.domain.usuario.Cpf;
 
 /**
  * Filtros opcionais da listagem de colaboradores. Campos ausentes significam "sem filtro".
@@ -17,6 +17,6 @@ public record FiltroColaboradorDTO(
      */
     public FiltroColaboradorDTO {
         nome = nome != null && !nome.isBlank() ? nome.trim() : null;
-        cpf = cpf != null && !cpf.isBlank() ? CpfValidador.sanitizar(cpf) : null;
+        cpf = cpf != null && !cpf.isBlank() ? Cpf.sanitizar(cpf) : null;
     }
 }

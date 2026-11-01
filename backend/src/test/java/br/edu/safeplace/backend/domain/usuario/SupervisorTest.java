@@ -1,6 +1,5 @@
 package br.edu.safeplace.backend.domain.usuario;
 
-import br.edu.safeplace.backend.domain.usuario.exception.CpfInvalidoException;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -34,15 +33,5 @@ class SupervisorTest {
         Supervisor supervisor = Supervisor.novo("Ana Lima", "529.982.247-25", NASCIMENTO, "ana@empresa.com", "$2a$10$hash");
 
         assertEquals(CPF, supervisor.getCpf());
-    }
-
-    @Test
-    void deveHerdarInvariantesDeIdentificacao() {
-        assertThrows(IllegalArgumentException.class, () ->
-                Supervisor.novo("", CPF, NASCIMENTO, "ana@empresa.com", "$2a$10$hash"));
-        assertThrows(IllegalArgumentException.class, () ->
-                Supervisor.novo("Ana Lima", CPF, LocalDate.now().plusDays(1), "ana@empresa.com", "$2a$10$hash"));
-        assertThrows(CpfInvalidoException.class, () ->
-                Supervisor.novo("Ana Lima", "123", NASCIMENTO, "ana@empresa.com", "$2a$10$hash"));
     }
 }

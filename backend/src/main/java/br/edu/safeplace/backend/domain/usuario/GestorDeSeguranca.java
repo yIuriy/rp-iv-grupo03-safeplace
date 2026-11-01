@@ -15,12 +15,7 @@ public class GestorDeSeguranca extends Colaborador {
                              String email, String senha, boolean ativo,
                              LocalDateTime criadoEm, LocalDateTime atualizadoEm) {
         super(id, cpf, nome, dataNascimento, email, ativo, criadoEm, atualizadoEm);
-        if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email é obrigatório para o perfil Gestor de Segurança.");
-        }
-        if (senha == null || senha.isBlank()) {
-            throw new IllegalArgumentException("Senha é obrigatória para o perfil Gestor de Segurança.");
-        }
+        // E-mail e senha do perfil são validados por ColaboradorValidador (issue #263).
         this.senha = senha;
     }
 

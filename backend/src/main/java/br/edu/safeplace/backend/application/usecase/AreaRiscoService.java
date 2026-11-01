@@ -25,11 +25,12 @@ import br.edu.safeplace.backend.domain.area_risco.AlteracaoAreaRisco;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.area_risco.exception.AreaRiscoNaoEncontradaException;
-import br.edu.safeplace.backend.domain.area_risco.exception.CodigoAreaRiscoDuplicadoException;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
+import br.edu.safeplace.backend.validacao.Validador;
+import br.edu.safeplace.backend.validacao.arearisco.AreaRiscoValidador;
 
 /**
  * Mapeamento das áreas de risco do ambiente de trabalho (RF05 / UC03 / US05).
@@ -43,42 +44,41 @@ public class AreaRiscoService implements GerenciarAreaRiscoUseCase {
     private final EpiRepository epiRepository;
     private final SetorRepository setorRepository;
     private final LogAuditoriaRepository logAuditoriaRepository;
+    private final Validador<AreaRisco> validador;
 
     @Autowired
     public AreaRiscoService(
             AreaRiscoRepository areaRiscoRepository,
             EpiRepository epiRepository,
             SetorRepository setorRepository,
-            LogAuditoriaRepository logAuditoriaRepository) {
+            LogAuditoriaRepository logAuditoriaRepository,
+            Validador<AreaRisco> validador) {
         this.areaRiscoRepository = areaRiscoRepository;
         this.epiRepository = epiRepository;
         this.setorRepository = setorRepository;
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.logAuditoriaRepository = Objects.requireNonNull(
                 logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
+        this.validador = Objects.requireNonNull(validador, "Validador da área de risco é obrigatório.");
+    }
+
+    /** Monta o validador com as portas informadas; usado pelos testes sem contexto Spring. */
+    public AreaRiscoService(
+            AreaRiscoRepository areaRiscoRepository,
+            EpiRepository epiRepository,
+            SetorRepository setorRepository,
+            LogAuditoriaRepository logAuditoriaRepository) {
+        this(areaRiscoRepository, epiRepository, setorRepository, logAuditoriaRepository,
+                new AreaRiscoValidador(areaRiscoRepository, setorRepository));
     }
 
     @Override
     @Transactional
     public AreaRiscoOutputDTO cadastrarAreaRisco(CadastrarAreaRiscoInputDTO inputDTO, String operador) {
-        String codigo = inputDTO.codigo();
-
-        if (codigo != null && !codigo.isBlank()) {
-            String codigoNormalizado = codigo.trim().toUpperCase();
-            areaRiscoRepository.buscarPorCodigo(codigoNormalizado).ifPresent(existente -> {
-                throw new CodigoAreaRiscoDuplicadoException(codigoNormalizado);
-            });
-        }
-
-        if (inputDTO.setorId() != null && setorRepository != null) {
-            setorRepository.buscarPorId(inputDTO.setorId())
-                    .orElseThrow(() -> new IllegalArgumentException("Setor não encontrado com id: " + inputDTO.setorId()));
-        }
-
         List<Epi> episObrigatorios = resolverEpis(inputDTO.episObrigatoriosIds());
 
         AreaRisco novaArea = AreaRisco.cadastrar(
-                codigo,
+                inputDTO.codigo(),
                 inputDTO.nome(),
                 inputDTO.descricao(),
                 inputDTO.nivelPerigo(),
@@ -86,6 +86,8 @@ public class AreaRiscoService implements GerenciarAreaRiscoUseCase {
                 inputDTO.agentesRisco(),
                 inputDTO.limites(),
                 episObrigatorios);
+        // Chain of Responsibility (#263): código único, setor existente e campos, antes do repository.
+        validador.validar(novaArea);
 
         AreaRisco salva = areaRiscoRepository.salvar(novaArea);
         logAuditoriaRepository.salvar(LogAuditoria.registrarCadastro(
@@ -103,11 +105,6 @@ public class AreaRiscoService implements GerenciarAreaRiscoUseCase {
         AreaRisco existente = areaRiscoRepository.buscarPorId(id)
                 .orElseThrow(() -> new AreaRiscoNaoEncontradaException(id));
 
-        if (inputDTO.setorId() != null && setorRepository != null) {
-            setorRepository.buscarPorId(inputDTO.setorId())
-                    .orElseThrow(() -> new IllegalArgumentException("Setor não encontrado com id: " + inputDTO.setorId()));
-        }
-
         List<Epi> episObrigatorios = resolverEpis(inputDTO.episObrigatoriosIds());
 
         AreaRisco atualizada = existente.atualizar(
@@ -118,6 +115,7 @@ public class AreaRiscoService implements GerenciarAreaRiscoUseCase {
                 inputDTO.agentesRisco(),
                 inputDTO.limites(),
                 episObrigatorios);
+        validador.validar(atualizada);
 
         List<AlteracaoAreaRisco> alteracoes = existente.compararCom(atualizada, this::descreverSetor);
         AreaRisco salva = areaRiscoRepository.atualizar(atualizada);
