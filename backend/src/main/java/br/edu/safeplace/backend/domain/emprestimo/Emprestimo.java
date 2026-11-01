@@ -37,20 +37,8 @@ public class Emprestimo {
                       String justificativaSubstituicao, LocalDateTime dataDevolucaoReal,
                       Integer responsavelDevolucaoId, EstadoDevolucao estadoDevolucao,
                       ClassificacaoEmprestimo status) {
-        exigir(epiId != null, "EPI é obrigatório.");
-        exigir(colaboradorId != null, "Colaborador é obrigatório.");
-        exigir(responsavelEntregaId != null, "Responsável pela entrega é obrigatório.");
-        exigir(dataRetirada != null, "Data e hora da retirada são obrigatórias.");
-        exigir(dataDevolucaoPrevista != null, "Data prevista de devolução é obrigatória.");
-        exigir(!dataDevolucaoPrevista.isBefore(dataRetirada.toLocalDate()),
-                "Data prevista de devolução não pode ser anterior à retirada.");
-        exigir(termoCautela != null && !termoCautela.isBlank(), "Termo de cautela é obrigatório.");
-        exigir(status != null, "Status do empréstimo é obrigatório.");
-        boolean devolvido = dataDevolucaoReal != null;
-        exigir(devolvido == (status == ClassificacaoEmprestimo.DISPONIVEL),
-                "Empréstimo devolvido deve estar DISPONIVEL; empréstimo ativo não pode ter devolução.");
-        exigir(!devolvido || estadoDevolucao != null, "Estado na devolução é obrigatório.");
-        exigir(!devolvido || responsavelDevolucaoId != null, "Responsável pela devolução é obrigatório.");
+        // Os dados da entrega e a coerência com a devolução são validados por EmprestimoValidador
+        // antes do repository (issue #265).
 
         this.id = id;
         this.epiId = epiId;
@@ -58,7 +46,7 @@ public class Emprestimo {
         this.responsavelEntregaId = responsavelEntregaId;
         this.dataRetirada = dataRetirada;
         this.dataDevolucaoPrevista = dataDevolucaoPrevista;
-        this.termoCautela = termoCautela.trim();
+        this.termoCautela = termoCautela != null ? termoCautela.trim() : null;
         this.justificativaSubstituicao = justificativaSubstituicao;
         this.dataDevolucaoReal = dataDevolucaoReal;
         this.responsavelDevolucaoId = responsavelDevolucaoId;

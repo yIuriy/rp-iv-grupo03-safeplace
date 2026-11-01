@@ -17,16 +17,6 @@ public class AlocacaoTarefa {
 
     public AlocacaoTarefa(Integer id, Integer tarefaId, Integer colaboradorId,
                           LocalDateTime dataAlocacao, Integer responsavelAlocacaoId, String observacao) {
-        if (tarefaId == null) {
-            throw new IllegalArgumentException("Identificador da tarefa é obrigatório para alocação.");
-        }
-        if (colaboradorId == null) {
-            throw new IllegalArgumentException("Identificador do colaborador é obrigatório para alocação.");
-        }
-        if (responsavelAlocacaoId == null) {
-            throw new IllegalArgumentException("Responsável pelo registro da alocação é obrigatório.");
-        }
-
         this.id = id;
         this.tarefaId = tarefaId;
         this.colaboradorId = colaboradorId;

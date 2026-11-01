@@ -18,15 +18,8 @@ public class ExigenciaCapacitacao {
     }
 
     public ExigenciaCapacitacao(Integer id, String nomeCapacitacao, TipoCapacitacao tipoCapacitacao, Integer alvoId, TipoAlvo alvo) {
-        if (nomeCapacitacao == null || nomeCapacitacao.isBlank()) {
-            throw new IllegalArgumentException("Nome da capacitação exigida é obrigatório.");
-        }
-        if (tipoCapacitacao == null || alvoId == null || alvo == null) {
-            throw new IllegalArgumentException("Todos os campos de vínculo são obrigatórios.");
-        }
-
         this.id = id;
-        this.nomeCapacitacao = nomeCapacitacao.trim();
+        this.nomeCapacitacao = nomeCapacitacao != null ? nomeCapacitacao.trim() : null;
         this.tipoCapacitacao = tipoCapacitacao;
         this.alvoId = alvoId;
         this.alvo = alvo;

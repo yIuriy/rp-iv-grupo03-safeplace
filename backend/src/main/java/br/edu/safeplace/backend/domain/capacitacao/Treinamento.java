@@ -21,30 +21,14 @@ public class Treinamento {
     }
 
     public Treinamento(Integer id, String nome, String conteudo, String instrutor, LocalDate dataRealizacao, Integer cargaHoraria, Integer validadeMeses, List<Integer> colaboradoresIds) {
-        if (nome == null || nome.isBlank()) {
-            throw new IllegalArgumentException("Nome do treinamento é obrigatório.");
-        }
-        if (dataRealizacao == null) {
-            throw new IllegalArgumentException("Data de realização é obrigatória.");
-        }
-        if (dataRealizacao.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Data de realização não pode ser no futuro.");
-        }
-        if (validadeMeses != null && validadeMeses < 1) {
-            throw new IllegalArgumentException("Validade do treinamento deve ser de ao menos 1 mês.");
-        }
-        if (colaboradoresIds == null || colaboradoresIds.isEmpty()) {
-            throw new IllegalArgumentException("Treinamento deve possuir ao menos um colaborador vinculado.");
-        }
-
         this.id = id;
-        this.nome = nome.trim();
+        this.nome = nome != null ? nome.trim() : null;
         this.conteudo = conteudo;
         this.instrutor = instrutor;
         this.dataRealizacao = dataRealizacao;
         this.cargaHoraria = cargaHoraria;
         this.validadeMeses = validadeMeses;
-        this.colaboradoresIds = new ArrayList<>(colaboradoresIds);
+        this.colaboradoresIds = colaboradoresIds != null ? new ArrayList<>(colaboradoresIds) : new ArrayList<>();
     }
 
     public static Treinamento cadastrar(String nome, String conteudo, String instrutor, LocalDate dataRealizacao, Integer cargaHoraria, List<Integer> colaboradoresIds) {
