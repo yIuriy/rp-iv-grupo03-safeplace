@@ -1,6 +1,10 @@
-import { useState, type FormEvent } from 'react'
+// Diálogo de classificação do grau de perigo de uma tarefa pelo Gestor (UC11). O fluxo de envio vem do
+// hook useEnvioFormulario (Template Method, #243).
+
+import { useState } from 'react'
 import { Alert, Button, Dialog, Select } from '../../shared/components'
-import { mensagemDaApi } from '../../shared/api/erros'
+import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
+import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
 import {
   classificarTarefa,
   niveisPerigo,
@@ -32,27 +36,19 @@ function DialogoClassificacao({
   aoSalvar: (tarefa: Tarefa) => void
 }) {
   const [nivelPerigo, setNivelPerigo] = useState<NivelPerigo>(tarefa.nivelPerigo ?? 'MEDIO')
-  const [enviando, setEnviando] = useState(false)
-  const [erro, setErro] = useState<string | null>(null)
 
-  async function submeter(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setErro(null)
-    setEnviando(true)
-
-    try {
-      const atualizada = await classificarTarefa(tarefa.id, { nivelPerigo })
-      aoSalvar(atualizada)
+  const { enviando, falha: erro, onSubmit } = useEnvioFormulario({
+    ler: () => nivelPerigo,
+    validar: nivel => ({ dados: nivel, erros: {} }),
+    ordem: [],
+    enviar: async nivel => {
+      aoSalvar(await classificarTarefa(tarefa.id, { nivelPerigo: nivel }))
       aoFechar()
-    } catch (err: unknown) {
-      setErro(
-        mensagemDaApi(err) ||
-          'Não foi possível atualizar a classificação da tarefa. Tente novamente.'
-      )
-    } finally {
-      setEnviando(false)
-    }
-  }
+    },
+    descreverFalha: criarDescritorDeFalha({},
+      usarMensagemDaApi('Não foi possível atualizar a classificação da tarefa. Tente novamente.')),
+    liberarAposSucesso: true,
+  }, {})
 
   return (
     <Dialog
@@ -61,7 +57,7 @@ function DialogoClassificacao({
       description="Atribua o grau de periculosidade da atividade operacional conforme a avaliação técnica de segurança."
       onClose={aoFechar}
     >
-      <form onSubmit={submeter} className="sp-dialog-body" noValidate>
+      <form onSubmit={onSubmit} className="sp-dialog-body" noValidate>
         {erro && (
           <Alert tone="danger" title="Não foi possível classificar" live="assertive">
             {erro}

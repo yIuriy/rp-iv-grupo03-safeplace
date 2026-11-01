@@ -1,8 +1,13 @@
-import { useCallback, useMemo, useState, type FormEvent } from 'react'
+// Cadastro de EPI, registro de manutenção e painel com filtro por situação e histórico do EPI
+// selecionado. Os dois diálogos usam o hook useEnvioFormulario (Template Method, #243); como seguem
+// montados entre uma abertura e outra, liberam o botão depois do sucesso.
+
+import { useCallback, useMemo, useState } from 'react'
 import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
 import { useConsulta, type Consulta } from '../../shared/api/useConsulta'
 import { Alert, Badge, Button, Dialog, EmptyState, HistoryItem, Select, Table, TableRow, TextArea, TextField, Toast } from '../../shared/components'
 import { FeaturePage } from '../../shared/layout/FeaturePage'
+import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
 import { useSessaoAtiva } from '../autenticacao/contexto'
 import { listarEpis, type Epi, type StatusEpi } from '../estoque/api'
 import { cadastrarEpi, listarHistorico, registrarManutencao, type ClassificacaoEpi, type DadosCadastroEpi, type DadosManutencao } from './api'
@@ -52,40 +57,36 @@ function numeroOpcional(form: FormData, nome: string): number | undefined {
   return valor === undefined ? undefined : Number(valor)
 }
 
+/** Lê o formulário de cadastro: os campos obrigatórios são garantidos pela validação nativa (required). */
+function lerCadastroEpi(form: FormData): DadosCadastroEpi {
+  return {
+    nome: textoOpcional(form, 'nome') ?? '', numeroCa: textoOpcional(form, 'numeroCa') ?? '',
+    quantidade: Number(form.get('quantidade')), estoqueMinimo: Number(form.get('estoqueMinimo')),
+    dataValidadeCa: textoOpcional(form, 'dataValidadeCa') ?? '', vidaUtilDias: numeroOpcional(form, 'vidaUtilDias'),
+    descricao: textoOpcional(form, 'descricao'), classificacao: textoOpcional(form, 'classificacao') as ClassificacaoEpi | undefined,
+    localizacao: textoOpcional(form, 'localizacao'), numeroLote: textoOpcional(form, 'numeroLote'),
+    notaFiscal: textoOpcional(form, 'notaFiscal'), dataFabricacao: textoOpcional(form, 'dataFabricacao'),
+    validadeLote: textoOpcional(form, 'validadeLote'), marca: textoOpcional(form, 'marca'),
+  }
+}
+
 function DialogoCadastroEpi({ aberto, aoFechar, aoSalvar }: {
   aberto: boolean
   aoFechar: () => void
   aoSalvar: (epi: Pick<Epi, 'id'>) => void
 }) {
-  const [enviando, setEnviando] = useState(false)
-  const [erro, setErro] = useState('')
-
-  async function enviar(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const form = new FormData(event.currentTarget)
-    const dados: DadosCadastroEpi = {
-      nome: textoOpcional(form, 'nome') ?? '', numeroCa: textoOpcional(form, 'numeroCa') ?? '',
-      quantidade: Number(form.get('quantidade')), estoqueMinimo: Number(form.get('estoqueMinimo')),
-      dataValidadeCa: textoOpcional(form, 'dataValidadeCa') ?? '', vidaUtilDias: numeroOpcional(form, 'vidaUtilDias'),
-      descricao: textoOpcional(form, 'descricao'), classificacao: textoOpcional(form, 'classificacao') as ClassificacaoEpi | undefined,
-      localizacao: textoOpcional(form, 'localizacao'), numeroLote: textoOpcional(form, 'numeroLote'),
-      notaFiscal: textoOpcional(form, 'notaFiscal'), dataFabricacao: textoOpcional(form, 'dataFabricacao'),
-      validadeLote: textoOpcional(form, 'validadeLote'), marca: textoOpcional(form, 'marca'),
-    }
-    setErro('')
-    setEnviando(true)
-    try {
-      aoSalvar(await cadastrarEpi(dados))
-    } catch (falha) {
-      setErro(descreverErro(falha))
-    } finally {
-      setEnviando(false)
-    }
-  }
+  const { enviando, falha: erro, onSubmit } = useEnvioFormulario({
+    ler: form => lerCadastroEpi(new FormData(form)),
+    validar: dados => ({ dados, erros: {} }),
+    ordem: [],
+    enviar: async dados => aoSalvar(await cadastrarEpi(dados)),
+    descreverFalha: descreverErro,
+    liberarAposSucesso: true,
+  }, {})
 
   return <Dialog open={aberto} title="Cadastrar EPI"
     description="Nome, CA, validade do CA, quantidade inicial e estoque mínimo são obrigatórios. Campos adicionais são opcionais." onClose={() => { if (!enviando) aoFechar() }}>
-    {aberto && <form className="sp-form" onSubmit={enviar}>
+    {aberto && <form className="sp-form" onSubmit={onSubmit}>
       {erro && <Alert tone="danger" title="Cadastro não concluído" live="assertive">{erro}</Alert>}
       <div className="sp-epi-form-grid">
         <TextField label="Nome do EPI" name="nome" required maxLength={255} autoFocus />
@@ -131,32 +132,25 @@ function DialogoManutencao({ epi, aberto, aoFechar, aoSalvar }: {
   aoFechar: () => void
   aoSalvar: () => void
 }) {
-  const [enviando, setEnviando] = useState(false)
-  const [erro, setErro] = useState('')
-
-  async function enviar(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const form = new FormData(event.currentTarget)
-    const dados: DadosManutencao = {
+  const { enviando, falha: erro, onSubmit } = useEnvioFormulario({
+    ler: form => new FormData(form),
+    validar: form => ({ dados: {
       dataManutencao: String(form.get('dataManutencao') ?? ''),
       descricao: String(form.get('descricao') ?? '').trim(),
       resultado: String(form.get('resultado') ?? '') as DadosManutencao['resultado'],
-    }
-    setErro('')
-    setEnviando(true)
-    try {
+    }, erros: {} }),
+    ordem: [],
+    enviar: async dados => {
       await registrarManutencao(epi.id, dados)
       aoSalvar()
-    } catch (falha) {
-      setErro(descreverErro(falha))
-    } finally {
-      setEnviando(false)
-    }
-  }
+    },
+    descreverFalha: descreverErro,
+    liberarAposSucesso: true,
+  }, {})
 
   return <Dialog open={aberto} title={`Registrar manutenção: ${epi.nome}`}
     description="Informe data, descrição e resultado. O tipo de manutenção não é obrigatório no MVP." onClose={() => { if (!enviando) aoFechar() }}>
-    {aberto && <form className="sp-form" onSubmit={enviar}>
+    {aberto && <form className="sp-form" onSubmit={onSubmit}>
       {erro && <Alert tone="danger" title="Registro não concluído" live="assertive">{erro}</Alert>}
       <TextField label="Data e hora da manutenção" name="dataManutencao" type="datetime-local" required />
       <TextArea label="Descrição da manutenção" name="descricao" required maxLength={1000}

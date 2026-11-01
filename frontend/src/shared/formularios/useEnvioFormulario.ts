@@ -23,7 +23,7 @@ export function useEnvioFormulario<L, D, E>(etapas: EtapasDoEnvio<L, D, E>, erro
       definirEnviando: setEnviando,
       focar: campo => focarCampo(form, campo),
     })
-    if (resultado !== 'enviado') emAndamento.current = false
+    if (resultado !== 'enviado' || etapas.liberarAposSucesso) emAndamento.current = false
   }
 
   const temPendencias = camposInvalidos(etapas.ordem, erros).length > 0

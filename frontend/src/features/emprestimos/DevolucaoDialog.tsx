@@ -1,9 +1,11 @@
 // Diálogo "Registrar devolução" (UC12, alternativo I; US11, regra 5 e critério 4): mostra o titular e
 // o item em posse, pede a condição do item (apto, manutenção ou descarte), confirma o destino antes do
-// envio e exibe a recusa do servidor, como um empréstimo já encerrado por outra pessoa.
+// envio e exibe a recusa do servidor, como um empréstimo já encerrado por outra pessoa. O fluxo de envio
+// vem do hook useEnvioFormulario (Template Method, #243).
 
-import { useId, useState, type FormEvent } from 'react'
+import { useId, useState } from 'react'
 import { Alert, Button, Dialog, Radio } from '../../shared/components'
+import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
 import { formatarData, formatarDataHora } from '../estoque/formatos'
 import {
   descreverFalhaDeDevolucao, estadosDeDevolucao, registrarDevolucao, type Emprestimo, type EstadoDevolucao,
@@ -28,31 +30,21 @@ function DevolucaoFormulario({ emprestimo, aoFechar, aoDevolver }: {
 }) {
   const idErro = useId()
   const [estado, setEstado] = useState<EstadoDevolucao | null>(null)
-  const [erro, setErro] = useState('')
-  const [falha, setFalha] = useState('')
-  const [enviando, setEnviando] = useState(false)
 
-  async function submeter(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (enviando) return
-    if (!estado) {
-      setErro('Informe a condição do item devolvido.')
-      event.currentTarget.querySelector<HTMLInputElement>('input[name="estado"]')?.focus()
-      return
-    }
-    setErro('')
-    setFalha('')
-    setEnviando(true)
-    try {
-      aoDevolver(await registrarDevolucao(emprestimo.id, estado))
+  const { enviando, erros, falha, onSubmit } = useEnvioFormulario({
+    ler: () => estado,
+    validar: escolhido => escolhido ? { dados: escolhido, erros: {} } : { erros: { estado: 'Informe a condição do item devolvido.' } },
+    ordem: ['estado'],
+    enviar: async escolhido => {
+      aoDevolver(await registrarDevolucao(emprestimo.id, escolhido))
       aoFechar()
-    } catch (falhaDaApi) {
-      setFalha(descreverFalhaDeDevolucao(falhaDaApi))
-      setEnviando(false)
-    }
-  }
+    },
+    descreverFalha: descreverFalhaDeDevolucao,
+  }, {} as { estado?: string })
+  // A pendência some ao escolher uma condição, como antes.
+  const erro = estado ? '' : erros.estado ?? ''
 
-  return <form className="sp-form" onSubmit={submeter} noValidate>
+  return <form className="sp-form" onSubmit={onSubmit} noValidate>
     <dl className="sp-detalhes">
       <div><dt>Colaborador</dt><dd>{emprestimo.colaboradorNome}</dd></div>
       <div><dt>Equipamento devolvido</dt><dd>{emprestimo.epiNome} (código {emprestimo.epiId})</dd></div>
@@ -65,10 +57,7 @@ function DevolucaoFormulario({ emprestimo, aoFechar, aoDevolver }: {
       <div className="sp-opcoes sp-opcoes--coluna">
         {estadosDeDevolucao.map(opcao => <Radio key={opcao} label={opcaoDoEstado[opcao]} name="estado" value={opcao}
           checked={estado === opcao} aria-invalid={erro ? true : undefined}
-          onChange={() => {
-            setEstado(opcao)
-            setErro('')
-          }} />)}
+          onChange={() => setEstado(opcao)} />)}
       </div>
       {erro && <p id={idErro} className="sp-field-message sp-field-message--error">{erro}</p>}
     </fieldset>

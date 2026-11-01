@@ -1,10 +1,12 @@
 // Formulário de relato de ocorrência (UC09, relato rápido; UC05, cadastro) e de edição pelo Gestor
 // (UC05, alternativo IV). Distingue acidente de incidente, pede a data do fato, o setor e a área de
 // risco do setor, o colaborador envolvido e a descrição, e só os campos próprios de cada tipo. Valida
-// antes do envio com foco no primeiro campo pendente e mantém os dados quando a API recusa.
+// antes do envio com foco no primeiro campo pendente e mantém os dados quando a API recusa. O fluxo de envio
+// vem do hook useEnvioFormulario (Template Method, #243).
 
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { Alert, Button, Dialog, Radio, Select, TextArea, TextField } from '../../shared/components'
+import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
 import { useConsulta } from '../../shared/api/useConsulta'
 import { descreverSetor, listarAreasRisco, listarSetores, niveisPerigo, rotuloNivelPerigo, type AreaRisco, type Setor } from '../areas-risco/api'
 import { listarColaboradores } from '../usuarios/api'
@@ -87,41 +89,24 @@ function Campos({ ocorrencia, edicao, aoFechar, aoSalvar, setores, areas, colabo
   const [tipo, setTipo] = useState<TipoOcorrencia | ''>(ocorrencia?.tipoOcorrencia ?? '')
   const [setorId, setSetorId] = useState(setorInicial)
   const [areaId, setAreaId] = useState(ocorrencia?.areaId ? String(ocorrencia.areaId) : '')
-  const [erros, setErros] = useState<ErrosRelato>({})
-  const [falha, setFalha] = useState('')
-  const [enviando, setEnviando] = useState(false)
   const agora = agoraLocal()
 
   const areasDoSetor = setorId ? areas.filter(area => area.setorId === Number(setorId)) : []
 
-  async function enviar(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (enviando) return
-    const form = event.currentTarget
-    const leitura = lerRelato(new FormData(form), ocorrencia?.tipoOcorrencia)
-    const pendencias = validarRelato(leitura, agoraLocal())
-    setErros(pendencias)
-    const primeiro = ordemDosCamposDoRelato.find(campo => pendencias[campo])
-    if (primeiro) {
-      const campo = form.elements.namedItem(primeiro)
-      const alvo = campo instanceof RadioNodeList ? campo[0] : campo
-      if (alvo instanceof HTMLElement) alvo.focus()
-      return
-    }
-    setFalha('')
-    setEnviando(true)
-    try {
-      const salva = ocorrencia
-        ? await atualizarOcorrencia(ocorrencia.idOcorrencia, leitura.dados)
-        : await registrarOcorrencia(leitura.tipo as TipoOcorrencia, leitura.dados)
-      aoSalvar(salva)
-    } catch (erro) {
-      setFalha(descreverFalhaDeOcorrencia(erro))
-      setEnviando(false)
-    }
-  }
+  const { enviando, erros, falha, onSubmit } = useEnvioFormulario({
+    ler: form => lerRelato(new FormData(form), ocorrencia?.tipoOcorrencia),
+    validar: leitura => {
+      const pendencias = validarRelato(leitura, agoraLocal())
+      return { dados: ordemDosCamposDoRelato.some(campo => pendencias[campo]) ? null : leitura, erros: pendencias }
+    },
+    ordem: ordemDosCamposDoRelato,
+    enviar: async leitura => aoSalvar(ocorrencia
+      ? await atualizarOcorrencia(ocorrencia.idOcorrencia, leitura.dados)
+      : await registrarOcorrencia(leitura.tipo as TipoOcorrencia, leitura.dados)),
+    descreverFalha: descreverFalhaDeOcorrencia,
+  }, {} as ErrosRelato)
 
-  return <form className="sp-form sp-relato" onSubmit={enviar} noValidate aria-label={edicao ? 'Editar ocorrência' : 'Relatar ocorrência'}>
+  return <form className="sp-form sp-relato" onSubmit={onSubmit} noValidate aria-label={edicao ? 'Editar ocorrência' : 'Relatar ocorrência'}>
     {edicao && ocorrencia
       ? <p className="sp-texto-secundario">Tipo: <strong>{rotuloTipoOcorrencia[ocorrencia.tipoOcorrencia]}</strong> (não muda na edição)</p>
       : <fieldset className="sp-fieldset" aria-describedby={erros.tipoOcorrencia ? 'relato-tipo-erro' : undefined}>
