@@ -40,6 +40,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
+import org.springframework.beans.factory.annotation.Qualifier;
+import br.edu.safeplace.backend.validacao.Validador;
+import br.edu.safeplace.backend.validacao.ocorrencia.OcorrenciaValidador;
 
 @Service
 public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarOcorrenciaUseCase {
@@ -51,6 +54,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
     private final UsuarioRepository usuarioRepository;
     private final LogAuditoriaRepository logAuditoriaRepository;
     private final NotificadorOcorrencia notificadorOcorrencia;
+    private final Validador<Ocorrencia> validador;
 
     @org.springframework.beans.factory.annotation.Autowired
     public OcorrenciaService(
@@ -58,7 +62,9 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
             AreaRiscoRepository areaRiscoRepository,
             UsuarioRepository usuarioRepository,
             LogAuditoriaRepository logAuditoriaRepository,
-            @org.springframework.beans.factory.annotation.Autowired(required = false) NotificadorOcorrencia notificadorOcorrencia) {
+            @org.springframework.beans.factory.annotation.Autowired(required = false) NotificadorOcorrencia notificadorOcorrencia,
+            @Qualifier("ocorrenciaValidador") Validador<Ocorrencia> validador) {
+        this.validador = java.util.Objects.requireNonNull(validador, "Validador da ocorrência é obrigatório.");
         this.repository = repository;
         this.areaRiscoRepository = areaRiscoRepository;
         this.usuarioRepository = usuarioRepository;
@@ -74,6 +80,17 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
             UsuarioRepository usuarioRepository,
             LogAuditoriaRepository logAuditoriaRepository) {
         this(repository, areaRiscoRepository, usuarioRepository, logAuditoriaRepository, null);
+    }
+
+    /** Usa o validador padrão; usado pelos testes sem contexto Spring. */
+    public OcorrenciaService(
+            OcorrenciaRepository repository,
+            AreaRiscoRepository areaRiscoRepository,
+            UsuarioRepository usuarioRepository,
+            LogAuditoriaRepository logAuditoriaRepository,
+            NotificadorOcorrencia notificadorOcorrencia) {
+        this(repository, areaRiscoRepository, usuarioRepository, logAuditoriaRepository, notificadorOcorrencia,
+                new OcorrenciaValidador());
     }
 
     @Override
@@ -110,6 +127,8 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
                 inputDTO.destino(),
                 gravidade
         );
+        // Chain of Responsibility (#266): valida antes do repository.
+        validador.validar(acidente);
         Acidente salvo = repository.salvarAcidente(acidente);
 
         LogAuditoria log = LogAuditoria.registrarCadastro(
@@ -150,6 +169,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
                 inputDTO.situacaoRisco(),
                 inputDTO.potencialDano()
         );
+        validador.validar(incidente);
         Incidente salvo = repository.salvarIncidente(incidente);
 
         LogAuditoria log = LogAuditoria.registrarCadastro(
@@ -290,7 +310,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
             CausaRaizAcidente causaRaiz = inputDTO.causaRaiz() == null || inputDTO.causaRaiz().isBlank()
                     ? acidente.getCausaRaiz()
                     : CausaRaizAcidente.de(inputDTO.causaRaiz());
-            salva = repository.salvarAcidente(new Acidente(
+            Acidente atualizado = new Acidente(
                     acidente.getIdOcorrencia(),
                     inputDTO.descricao(),
                     inputDTO.dataOcorrencia(),
@@ -306,9 +326,11 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
                     inputDTO.dano(),
                     acidente.getNumeroProtocoloCAT(),
                     inputDTO.destino(),
-                    gravidade));
+                    gravidade);
+            validador.validar(atualizado);
+            salva = repository.salvarAcidente(atualizado);
         } else if (atual instanceof Incidente incidente) {
-            salva = repository.salvarIncidente(new Incidente(
+            Incidente atualizado = new Incidente(
                     incidente.getIdOcorrencia(),
                     inputDTO.descricao(),
                     inputDTO.dataOcorrencia(),
@@ -320,7 +342,9 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
                     incidente.getLocalInformado(),
                     incidente.getPlanoDeAcao(),
                     inputDTO.situacaoRisco(),
-                    inputDTO.potencialDano()));
+                    inputDTO.potencialDano());
+            validador.validar(atualizado);
+            salva = repository.salvarIncidente(atualizado);
         } else {
             throw new IllegalStateException("Tipo de ocorrência não suportado.");
         }

@@ -58,11 +58,11 @@ No PNG, o atributo é `statusPlanoDeAcao : StatusPlanoDeAcao`. No código, o val
 
 - **Reconhecimento**: reutiliza a decisão 2.7 da [correspondência Classes vs DS09](correspondencia-classes-ds09.md). É grave o `Acidente` cuja `gravidade : NivelPerigo` é `ALTO` ou `CRITICO` (`Ocorrencia.isGrave()`, que `Acidente` sobrescreve). Nenhuma escala nova foi criada.
 - **Incidente**: `Incidente.potencialDano` é texto livre e o modelo não tem escala de gravidade para incidentes. O texto não é convertido em gravidade por suposição: `Incidente.isGrave()` devolve falso e a regra 1 de UC07 não é aplicada automaticamente a incidentes. Esta limitação está na seção 6.
-- **Regra**: `PlanoDeAcao.validarPlano(ocorrencia, acoes)` recebe o conjunto de ações da ocorrência (as já gravadas somadas às novas). Rejeita conjunto vazio e ações de outra ocorrência. Se a ocorrência for grave, exige ao menos uma ação com `medidasPreventivas`; caso contrário, lança `AcaoPreventivaObrigatoriaException`, a pendência prevista no critério 2 de US07. Ações concluídas também contam.
+- **Regra**: a cadeia `PlanoValidador` (camada `validacao`, issue #266; antes, o estático `PlanoDeAcao.validarPlano`) recebe o conjunto de ações da ocorrência (as já gravadas somadas às novas). Rejeita conjunto vazio e ações de outra ocorrência. Se a ocorrência for grave, exige ao menos uma ação com `medidasPreventivas`; caso contrário, lança `AcaoPreventivaObrigatoriaException`, a pendência prevista no critério 2 de US07. Ações concluídas também contam.
 
 ### 2.5. Prazo, prorrogação e histórico
 
-- **Cadastro** (UC07, exceção I; US07): o `prazo` é obrigatório e não pode ser anterior à data atual nem à data do fato (`dataOcorrencia`). O prazo igual à data atual é aceito. A violação lança `PrazoAcaoInvalidoException` e nada é criado. A data atual é parâmetro do domínio, como em `validarPlano(..., dataAtual)` do PNG.
+- **Cadastro** (UC07, exceção I; US07): o `prazo` é obrigatório e não pode ser anterior à data atual nem à data do fato (`dataOcorrencia`). O prazo igual à data atual é aceito. A violação lança `PrazoAcaoInvalidoException` e nada é gravado. As regras ficam na cadeia `AcaoPlanoValidador` (issue #266), que recebe a data atual como em `validarPlano(..., dataAtual)` do PNG.
 - **Prorrogação** (UC07, alternativo I): só em ação `ABERTA`. Exige justificativa técnica não vazia, e o novo prazo deve ser posterior ao prazo atual e não anterior à data atual. Por ser posterior ao prazo vigente, também não antecede a ocorrência.
 - **Histórico**: `prorrogarPrazo(...)` devolve `ProrrogacaoPrazo(idAcao, prazoAnterior, novoPrazo, justificativa)`. É o dado a registrar no histórico, e o `LogAuditoria` já possui `justificativa`. O valor anterior nunca é sobrescrito sem registro. A forma de gravação, na tabela de auditoria ou em histórico próprio, é decidida em #98, desde que a consulta preserve cada prorrogação.
 - **Alerta reajustado**: a data do alerta é calculada a partir do prazo (seção 2.6), portanto se reajusta sozinha após a prorrogação.
@@ -104,7 +104,7 @@ Os elementos da camada de persistência foram implementados na issue #98 (`Plano
 
 | Operação no Diagrama | Destino / Camada Hexagonal | Papel arquitetural e semântica |
 | :--- | :--- | :--- |
-| `validarPlano(dadosPlano, ocorrencia, dataAtual)` | Domínio: `PlanoDeAcao.definir(...)` valida cada ação; `PlanoDeAcao.validarPlano(ocorrencia, acoes)` valida o conjunto | Vínculo com ocorrência registrada, medida, responsável único, prazo não retroativo e regra da ocorrência grave. Lança exceções de domínio em vez de devolver `boolean`. |
+| `validarPlano(dadosPlano, ocorrencia, dataAtual)` | Camada `validacao` (issue #266): `AcaoPlanoValidador` valida cada ação e `PlanoValidador` valida o conjunto, antes de gravar | Vínculo com ocorrência registrada, medida, responsável único, prazo não retroativo, alerta e regra da ocorrência grave. Lança as exceções de domínio em vez de devolver `boolean`. |
 | `salvarVinculado(idOcorrencia, dadosPlano)` (retirada do diagrama em 16/10/2026) | Porta de entrada `GerenciarPlanoDeAcaoUseCase.cadastrarAcao` (implementada em `PlanoDeAcaoService`, #99) e porta de saída `PlanoDeAcaoRepository.salvar` (implementada em `PlanoDeAcaoJpaAdapter`, #98) | Grava as ações vinculadas à ocorrência numa transação, com auditoria. |
 | `buscarPlano(idPlano)` / `buscarAcao(idAcao)` (retirada do diagrama em 16/10/2026) | `PlanoDeAcaoRepository.buscarPorId` (implementada em `PlanoDeAcaoJpaAdapter`, #98) | Mesmo identificador (seção 2.1). |
 | `buscarPorFiltros(criterios)` (retirada do diagrama em 16/10/2026) | `PlanoDeAcaoRepository.listarPorOcorrencia` (implementada em `PlanoDeAcaoJpaAdapter`, #98) | Consulta do andamento (US07, critério 1; UC05, alternativo I, passo 9). |
@@ -151,7 +151,7 @@ Os elementos da camada de persistência foram implementados na issue #98 (`Plano
 | --- | --- | --- |
 | RF07 | Plano de ação para cada acidente ou incidente | Ações `PlanoDeAcao` 0..* por ocorrência (2.1, 2.2). |
 | UC07, cenário principal | Ações, prazos, responsáveis e gatilhos de alerta | `definir(...)` e `configurarAlerta(...)` (2.2, 2.5, 2.6). |
-| UC07, regra 1 / US07, critério 2 | Ocorrência grave exige ação preventiva | `validarPlano` com `isGrave()` (2.4). |
+| UC07, regra 1 / US07, critério 2 | Ocorrência grave exige ação preventiva | `PlanoValidador` com `isGrave()` (2.4; issue #266). |
 | UC07, regra 2 / US07, regra 3 e critério 5 | Antecedência configurável; três dias como exemplo | `antecedenciaAlertaDias` por ação, sem padrão (2.6). |
 | UC07, alternativo I / US07, regra 4 e critério 4 | Prorrogação com justificativa, histórico e alerta reajustado | `prorrogarPrazo` → `ProrrogacaoPrazo`; data do alerta derivada (2.5). |
 | UC07, alternativo II / US07, regra 5 | Reatribuição com notificação ao novo encarregado | `atualizarResponsavel` → `AvisoAcao`; canal interno (2.6). |

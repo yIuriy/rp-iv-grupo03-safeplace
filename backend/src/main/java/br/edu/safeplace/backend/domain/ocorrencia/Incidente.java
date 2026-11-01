@@ -25,15 +25,9 @@ public class Incidente extends Ocorrencia {
         super(idOcorrencia, descricao, dataOcorrencia, dataRegistro, statusOcorrencia,
                 colaborador, area, relator, local, planoDeAcao);
 
-        if (situacaoRisco == null || situacaoRisco.isBlank()) {
-            throw new IllegalArgumentException("Situação de risco é obrigatória para incidentes.");
-        }
-        if (potencialDano == null || potencialDano.isBlank()) {
-            throw new IllegalArgumentException("Potencial de dano é obrigatório para incidentes.");
-        }
-
-        this.situacaoRisco = situacaoRisco.trim();
-        this.potencialDano = potencialDano.trim();
+        // Situação de risco e potencial de dano: OcorrenciaValidador (issue #266).
+        this.situacaoRisco = situacaoRisco != null ? situacaoRisco.trim() : null;
+        this.potencialDano = potencialDano != null ? potencialDano.trim() : null;
     }
 
     public static Incidente novo(

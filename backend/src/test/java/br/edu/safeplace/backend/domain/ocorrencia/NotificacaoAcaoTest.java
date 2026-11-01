@@ -11,7 +11,6 @@ import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NotificacaoAcaoTest {
 
@@ -60,22 +59,5 @@ class NotificacaoAcaoTest {
         assertThat(notificacao.motivo()).isEqualTo(MotivoAvisoAcao.REATRIBUICAO);
         assertThat(notificacao.mensagem()).isEqualTo("Ação #12 da ocorrência #5 reatribuída a setor Manutenção. "
                 + "Prazo: 22/10/2026. Comunique o novo responsável.");
-    }
-
-    @Test
-    @DisplayName("Aviso sem ação gravada, sem prazo ou sem responsável único é recusado")
-    void avisoIncompletoRecusado() {
-        assertThatThrownBy(() -> NotificacaoAcao.deAviso(new AvisoAcao(
-                null, 5, MotivoAvisoAcao.PRAZO, maria, null, HOJE, HOJE)))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> NotificacaoAcao.deAviso(new AvisoAcao(
-                12, 5, MotivoAvisoAcao.PRAZO, maria, null, null, HOJE)))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> NotificacaoAcao.deAviso(new AvisoAcao(
-                12, 5, MotivoAvisoAcao.PRAZO, null, null, HOJE, HOJE)))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> NotificacaoAcao.deAviso(new AvisoAcao(
-                12, 5, MotivoAvisoAcao.PRAZO, maria, manutencao, HOJE, HOJE)))
-                .isInstanceOf(IllegalArgumentException.class);
     }
 }

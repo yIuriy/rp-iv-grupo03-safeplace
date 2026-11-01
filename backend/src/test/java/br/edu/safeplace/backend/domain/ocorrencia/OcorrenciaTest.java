@@ -6,15 +6,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
-import br.edu.safeplace.backend.domain.ocorrencia.exception.DataOcorrenciaInvalidaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.TransicaoStatusInvalidaException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
@@ -74,54 +70,6 @@ class OcorrenciaTest {
         assertThat(ocorrencia.getRelator()).isEqualTo(gestor);
         assertThat(ocorrencia.getArea()).isEqualTo(area);
         assertThat(ocorrencia.getLocal()).isEqualTo("Caldeiras");
-    }
-
-    @Test
-    @DisplayName("Deve rejeitar data do fato no futuro")
-    void deveRejeitarDataDoFatoFutura() {
-        LocalDateTime dataFutura = LocalDateTime.now().plusDays(1);
-
-        assertThatThrownBy(() -> new OcorrenciaConcreta(
-                null,
-                "Descricao",
-                dataFutura,
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                null, null, null, null, null
-        )).isInstanceOf(DataOcorrenciaInvalidaException.class)
-                .hasMessage("Data da ocorrência não pode ser futura.");
-    }
-
-    @Test
-    @DisplayName("Deve rejeitar data da ocorrência nula")
-    void deveRejeitarDataOcorrenciaNula() {
-        assertThatThrownBy(() -> new OcorrenciaConcreta(
-                null,
-                "Descricao",
-                null,
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                null, null, null, null, null
-        )).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Data da ocorrência é obrigatória.");
-    }
-
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = {"  ", "\t", "\n"})
-    @DisplayName("Deve rejeitar descrição nula ou em branco")
-    void deveRejeitarDescricaoInvalida(String descricaoInvalida) {
-        LocalDateTime dataPassada = LocalDateTime.now().minusHours(2);
-
-        assertThatThrownBy(() -> new OcorrenciaConcreta(
-                null,
-                descricaoInvalida,
-                dataPassada,
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                null, null, null, null, null
-        )).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Descrição é obrigatória.");
     }
 
     @Test

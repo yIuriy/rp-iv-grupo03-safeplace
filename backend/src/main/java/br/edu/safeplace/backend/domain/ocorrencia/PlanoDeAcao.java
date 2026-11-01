@@ -1,12 +1,10 @@
 package br.edu.safeplace.backend.domain.ocorrencia;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import br.edu.safeplace.backend.domain.area_risco.Setor;
-import br.edu.safeplace.backend.domain.ocorrencia.exception.AcaoPreventivaObrigatoriaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PlanoDeAcaoInvalidoException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PrazoAcaoInvalidoException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
@@ -52,12 +50,7 @@ public class PlanoDeAcao {
             boolean alertaAtivo,
             Integer antecedenciaAlertaDias,
             GestorDeSeguranca gestor) {
-        if (responsavelColaborador != null && responsavelSetor != null) {
-            throw new PlanoDeAcaoInvalidoException(
-                    "A ação deve ter um único responsável: colaborador ou setor, não ambos.");
-        }
-        validarConfiguracaoAlerta(alertaAtivo, antecedenciaAlertaDias);
-
+        // Responsável único e alerta são validados por AcaoPlanoValidador antes de salvar (#266).
         this.id = id;
         this.idOcorrencia = idOcorrencia;
         this.medidasCorretivas = normalizar(medidasCorretivas);
@@ -104,18 +97,10 @@ public class PlanoDeAcao {
             Integer antecedenciaAlertaDias,
             GestorDeSeguranca gestor,
             LocalDate dataAtual) {
-        if (ocorrencia == null || ocorrencia.getId() == null) {
-            throw new PlanoDeAcaoInvalidoException("A ação deve estar vinculada a uma ocorrência registrada.");
-        }
-        if (isVazio(medidasCorretivas) && isVazio(medidasPreventivas)) {
-            throw new PlanoDeAcaoInvalidoException("Informe a medida corretiva ou a medida preventiva da ação.");
-        }
-        validarResponsavel(responsavelColaborador, responsavelSetor);
-        validarPrazo(prazo, ocorrencia, dataAtual);
-
+        // Ocorrência, medidas, responsável, prazo e alerta: AcaoPlanoValidador, antes de salvar (#266).
         return new PlanoDeAcao(
                 null,
-                ocorrencia.getId(),
+                ocorrencia != null ? ocorrencia.getId() : null,
                 medidasCorretivas,
                 medidasPreventivas,
                 prazo,
@@ -125,29 +110,6 @@ public class PlanoDeAcao {
                 alertaAtivo,
                 antecedenciaAlertaDias,
                 gestor);
-    }
-
-    /**
-     * Operação {@code validarPlano} do diagrama: confere o conjunto de ações de uma ocorrência (as já
-     * gravadas somadas às que serão salvas). Toda ocorrência grave exige ao menos uma ação
-     * preventiva (UC07, regra 1).
-     */
-    public static void validarPlano(Ocorrencia ocorrencia, List<PlanoDeAcao> acoes) {
-        if (ocorrencia == null || ocorrencia.getId() == null) {
-            throw new PlanoDeAcaoInvalidoException("O plano deve estar vinculado a uma ocorrência registrada.");
-        }
-        if (acoes == null || acoes.isEmpty()) {
-            throw new PlanoDeAcaoInvalidoException("O plano de ação deve conter ao menos uma ação.");
-        }
-        for (PlanoDeAcao acao : acoes) {
-            if (!ocorrencia.getId().equals(acao.getIdOcorrencia())) {
-                throw new PlanoDeAcaoInvalidoException(
-                        "Todas as ações do plano devem pertencer à ocorrência " + ocorrencia.getId() + ".");
-            }
-        }
-        if (ocorrencia.isGrave() && acoes.stream().noneMatch(PlanoDeAcao::possuiMedidaPreventiva)) {
-            throw new AcaoPreventivaObrigatoriaException(ocorrencia.getId());
-        }
     }
 
     /**
@@ -356,18 +318,6 @@ public class PlanoDeAcao {
         Integer idResponsavel = colaborador != null ? colaborador.getId() : setor.getId();
         if (idResponsavel == null) {
             throw new PlanoDeAcaoInvalidoException("O responsável pela ação deve estar cadastrado.");
-        }
-    }
-
-    private static void validarPrazo(LocalDate prazo, Ocorrencia ocorrencia, LocalDate dataAtual) {
-        if (prazo == null) {
-            throw new PrazoAcaoInvalidoException("O prazo da ação é obrigatório.");
-        }
-        if (prazo.isBefore(exigirDataAtual(dataAtual))) {
-            throw new PrazoAcaoInvalidoException("O prazo da ação não pode ser anterior à data atual.");
-        }
-        if (prazo.isBefore(ocorrencia.getDataOcorrencia().toLocalDate())) {
-            throw new PrazoAcaoInvalidoException("O prazo da ação não pode ser anterior à data da ocorrência.");
         }
     }
 

@@ -15,7 +15,6 @@ import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.DadosOcorrenciaInvalidosException;
-import br.edu.safeplace.backend.domain.ocorrencia.exception.ProtocoloCATInvalidoException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
@@ -64,46 +63,6 @@ class AcidenteTest {
         assertThat(acidente.getRelator()).isEqualTo(gestor);
     }
 
-    @Test
-    @DisplayName("Deve rejeitar criação de acidente sem causa raiz")
-    void deveRejeitarAcidenteSemCausaRaiz() {
-        assertThatThrownBy(() -> new Acidente(
-                null,
-                "Descricao",
-                LocalDateTime.now().minusHours(1),
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                null, null, null, null, null,
-                null,
-                "Tipo",
-                "Dano",
-                null,
-                "Destino",
-                NivelPerigo.BAIXO
-        )).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Causa raiz é obrigatória para acidentes.");
-    }
-
-    @Test
-    @DisplayName("Deve rejeitar acidente sem gravidade, sem assumir BAIXO (issue #195)")
-    void deveRejeitarAcidenteSemGravidade() {
-        assertThatThrownBy(() -> new Acidente(
-                null,
-                "Descricao",
-                LocalDateTime.now().minusHours(1),
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                null, null, null, null, null,
-                CausaRaizAcidente.FATOR_HUMANO,
-                "Tipo",
-                "Dano",
-                null,
-                "Destino",
-                null
-        )).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Gravidade é obrigatória para acidentes.");
-    }
-
     @ParameterizedTest
     @ValueSource(strings = {"BAIXO", "medio", " Alto ", "CRITICO"})
     @DisplayName("Lê gravidade válida sem diferenciar maiúsculas")
@@ -119,26 +78,6 @@ class AcidenteTest {
         assertThatThrownBy(() -> Acidente.lerGravidade(valor))
                 .isInstanceOf(DadosOcorrenciaInvalidosException.class)
                 .hasMessageContaining("Gravidade");
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"INVALIDO", "12345", "OC-2026-09-0001", "CAT-26-9-1"})
-    @DisplayName("Deve rejeitar formato inválido de protocolo CAT")
-    void deveRejeitarFormatoInvalidoDeProtocoloCAT(String protocoloInvalido) {
-        assertThatThrownBy(() -> new Acidente(
-                null,
-                "Descricao",
-                LocalDateTime.now().minusHours(1),
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                null, null, null, null, null,
-                CausaRaizAcidente.FATOR_HUMANO,
-                "Tipo",
-                "Dano",
-                protocoloInvalido,
-                "Destino",
-                NivelPerigo.BAIXO
-        )).isInstanceOf(ProtocoloCATInvalidoException.class);
     }
 
     @Test

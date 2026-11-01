@@ -2,7 +2,6 @@ package br.edu.safeplace.backend.domain.ocorrencia;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -10,7 +9,6 @@ import org.junit.jupiter.api.Test;
 
 import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
-import br.edu.safeplace.backend.domain.ocorrencia.exception.AcaoPreventivaObrigatoriaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PlanoDeAcaoInvalidoException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PrazoAcaoInvalidoException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
@@ -86,103 +84,9 @@ class PlanoDeAcaoTest {
         }
 
         @Test
-        @DisplayName("Deve exigir exatamente um responsável cadastrado")
-        void deveExigirUmResponsavel() {
-            Acidente ocorrencia = acidente(NivelPerigo.BAIXO);
-
-            assertThatThrownBy(() -> PlanoDeAcao.definir(ocorrencia, "Medida", null, HOJE,
-                    null, null, false, null, null, HOJE))
-                    .isInstanceOf(PlanoDeAcaoInvalidoException.class);
-            assertThatThrownBy(() -> PlanoDeAcao.definir(ocorrencia, "Medida", null, HOJE,
-                    colaborador(1), setor(3), false, null, null, HOJE))
-                    .isInstanceOf(PlanoDeAcaoInvalidoException.class);
-            assertThatThrownBy(() -> PlanoDeAcao.definir(ocorrencia, "Medida", null, HOJE,
-                    colaborador(null), null, false, null, null, HOJE))
-                    .isInstanceOf(PlanoDeAcaoInvalidoException.class)
-                    .hasMessage("O responsável pela ação deve estar cadastrado.");
-        }
-
-        @Test
-        @DisplayName("Deve exigir ocorrência registrada e ao menos uma medida")
-        void deveExigirOcorrenciaEMedida() {
-            Acidente naoRegistrado = new Acidente(null, "Corte", LocalDateTime.of(2026, 9, 18, 10, 0), null,
-                    StatusOcorrencia.ABERTA, null, null, null, null, null,
-                    CausaRaizAcidente.OUTRO, null, null, null, null, NivelPerigo.BAIXO);
-
-            assertThatThrownBy(() -> acaoCorretiva(naoRegistrado, HOJE))
-                    .isInstanceOf(PlanoDeAcaoInvalidoException.class);
-            assertThatThrownBy(() -> PlanoDeAcao.definir(acidente(NivelPerigo.BAIXO), " ", null, HOJE,
-                    colaborador(1), null, false, null, null, HOJE))
-                    .isInstanceOf(PlanoDeAcaoInvalidoException.class);
-        }
-
-        @Test
-        @DisplayName("Deve bloquear prazo ausente, anterior à data atual ou à ocorrência")
-        void deveBloquearPrazoRetroativo() {
-            assertThatThrownBy(() -> acaoCorretiva(acidente(NivelPerigo.BAIXO), null))
-                    .isInstanceOf(PrazoAcaoInvalidoException.class);
-            assertThatThrownBy(() -> acaoCorretiva(acidente(NivelPerigo.BAIXO), HOJE.minusDays(1)))
-                    .isInstanceOf(PrazoAcaoInvalidoException.class)
-                    .hasMessage("O prazo da ação não pode ser anterior à data atual.");
-
-            // Data de referência anterior ao fato isola a regra da data da ocorrência.
-            Acidente ocorrencia = acidente(NivelPerigo.BAIXO, LocalDateTime.of(2026, 9, 18, 10, 0));
-            assertThatThrownBy(() -> PlanoDeAcao.definir(ocorrencia, "Medida", null, LocalDate.of(2026, 9, 17),
-                    colaborador(1), null, false, null, null, LocalDate.of(2026, 9, 16)))
-                    .isInstanceOf(PrazoAcaoInvalidoException.class)
-                    .hasMessage("O prazo da ação não pode ser anterior à data da ocorrência.");
-        }
-
-        @Test
         @DisplayName("Deve aceitar prazo igual à data atual")
         void deveAceitarPrazoNaDataAtual() {
             assertThat(acaoCorretiva(acidente(NivelPerigo.BAIXO), HOJE).getPrazo()).isEqualTo(HOJE);
-        }
-    }
-
-    @Nested
-    @DisplayName("Plano da ocorrência e ocorrência grave")
-    class ValidacaoDoPlano {
-
-        @Test
-        @DisplayName("Ocorrência grave sem ação preventiva deve indicar pendência")
-        void ocorrenciaGraveSemPreventiva() {
-            Acidente grave = acidente(NivelPerigo.ALTO);
-
-            assertThatThrownBy(() -> PlanoDeAcao.validarPlano(grave, List.of(acaoCorretiva(grave, HOJE))))
-                    .isInstanceOf(AcaoPreventivaObrigatoriaException.class);
-        }
-
-        @Test
-        @DisplayName("Ocorrência grave com ação preventiva deve ser aceita")
-        void ocorrenciaGraveComPreventiva() {
-            Acidente critico = acidente(NivelPerigo.CRITICO);
-            PlanoDeAcao preventiva = PlanoDeAcao.definir(critico, null, "Treinar equipe", HOJE,
-                    colaborador(1), null, false, null, null, HOJE);
-
-            PlanoDeAcao.validarPlano(critico, List.of(acaoCorretiva(critico, HOJE), preventiva));
-        }
-
-        @Test
-        @DisplayName("Ocorrência não grave e incidente não exigem ação preventiva")
-        void naoGraveNaoExigePreventiva() {
-            Acidente medio = acidente(NivelPerigo.MEDIO);
-            Incidente incidente = incidente();
-
-            PlanoDeAcao.validarPlano(medio, List.of(acaoCorretiva(medio, HOJE)));
-            PlanoDeAcao.validarPlano(incidente, List.of(acaoCorretiva(incidente, HOJE)));
-            assertThat(incidente.isGrave()).isFalse();
-        }
-
-        @Test
-        @DisplayName("Plano deve conter ações da própria ocorrência")
-        void planoDeveConterAcoesDaOcorrencia() {
-            Acidente ocorrencia = acidente(NivelPerigo.BAIXO);
-
-            assertThatThrownBy(() -> PlanoDeAcao.validarPlano(ocorrencia, List.of()))
-                    .isInstanceOf(PlanoDeAcaoInvalidoException.class);
-            assertThatThrownBy(() -> PlanoDeAcao.validarPlano(ocorrencia, List.of(acaoCorretiva(incidente(), HOJE))))
-                    .isInstanceOf(PlanoDeAcaoInvalidoException.class);
         }
     }
 
@@ -324,15 +228,6 @@ class PlanoDeAcaoTest {
             acao.configurarAlerta(false, 5);
             assertThat(acao.getAntecedenciaAlertaDias()).isNull();
             assertThat(acao.emitirAvisoPrazo(HOJE.plusDays(10))).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Alerta ativo exige antecedência não negativa")
-        void alertaExigeAntecedencia() {
-            assertThatThrownBy(() -> acaoComAlerta(HOJE, -1)).isInstanceOf(PlanoDeAcaoInvalidoException.class);
-            assertThatThrownBy(() -> PlanoDeAcao.definir(acidente(NivelPerigo.BAIXO), "Medida", null, HOJE,
-                    colaborador(1), null, true, null, null, HOJE))
-                    .isInstanceOf(PlanoDeAcaoInvalidoException.class);
         }
 
         @Test

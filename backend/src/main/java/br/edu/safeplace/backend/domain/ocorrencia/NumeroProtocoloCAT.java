@@ -11,14 +11,14 @@ import br.edu.safeplace.backend.domain.ocorrencia.exception.ProtocoloCATInvalido
 public record NumeroProtocoloCAT(String valor) {
     private static final Pattern PADRAO_CAT = Pattern.compile("^CAT-\\d{4}-\\d{2}-\\d{4,}$");
 
+    /** Normaliza o texto; o formato é validado pelo OcorrenciaValidador antes de salvar (issue #266). */
     public NumeroProtocoloCAT {
-        if (valor == null || valor.isBlank()) {
-            throw new ProtocoloCATInvalidoException("Protocolo CAT não pode ser nulo ou vazio.");
-        }
-        valor = valor.trim().toUpperCase();
-        if (!PADRAO_CAT.matcher(valor).matches()) {
-            throw new ProtocoloCATInvalidoException("Formato de protocolo CAT inválido: " + valor);
-        }
+        valor = valor != null ? valor.trim().toUpperCase() : null;
+    }
+
+    /** Verdadeiro quando o valor segue o formato CAT-AAAA-MM-NNNN. */
+    public boolean formatoValido() {
+        return valor != null && PADRAO_CAT.matcher(valor).matches();
     }
 
     public static NumeroProtocoloCAT de(String valor) {

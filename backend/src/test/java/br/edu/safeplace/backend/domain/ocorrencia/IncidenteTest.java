@@ -6,9 +6,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
@@ -18,7 +15,6 @@ import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class IncidenteTest {
 
@@ -52,42 +48,6 @@ class IncidenteTest {
         assertThat(incidente.getPotencialDano()).isEqualTo("Esmagamento e fraturas múltiplas");
         assertThat(incidente.getStatusOcorrencia()).isEqualTo(StatusOcorrencia.ABERTA);
         assertThat(incidente.getRelator()).isEqualTo(gestor);
-    }
-
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = {"   ", "\t"})
-    @DisplayName("Deve rejeitar incidente com situação de risco vazia ou nula")
-    void deveRejeitarSituacaoRiscoInvalida(String situacaoInvalida) {
-        assertThatThrownBy(() -> new Incidente(
-                null,
-                "Descricao",
-                LocalDateTime.now().minusHours(1),
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                null, null, null, null, null,
-                situacaoInvalida,
-                "Potencial de corte"
-        )).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Situação de risco é obrigatória para incidentes.");
-    }
-
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = {"   ", "\t"})
-    @DisplayName("Deve rejeitar incidente com potencial de dano vazio ou nulo")
-    void deveRejeitarPotencialDanoInvalido(String potencialInvalido) {
-        assertThatThrownBy(() -> new Incidente(
-                null,
-                "Descricao",
-                LocalDateTime.now().minusHours(1),
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                null, null, null, null, null,
-                "Piso escorregadio",
-                potencialInvalido
-        )).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Potencial de dano é obrigatório para incidentes.");
     }
 
     @Test

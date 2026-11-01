@@ -40,17 +40,13 @@ class NumeroProtocoloCATTest {
         String prefixoEsperado = String.format("CAT-%d-%02d-0042", agora.getYear(), agora.getMonthValue());
         assertThat(cat.getValor()).isEqualTo(prefixoEsperado);
     }
-
     @ParameterizedTest
     @NullAndEmptySource
-    @ValueSource(strings = {"   ", "\t"})
-    @DisplayName("Deve rejeitar criação com valor nulo ou em branco")
+    @ValueSource(strings = {"   ", "	"})
+    @DisplayName("Valor nulo ou em branco não é um protocolo válido")
     void deveRejeitarValorNuloOuEmBranco(String valorInvalido) {
-        assertThatThrownBy(() -> NumeroProtocoloCAT.de(valorInvalido))
-                .isInstanceOf(ProtocoloCATInvalidoException.class)
-                .hasMessage("Protocolo CAT não pode ser nulo ou vazio.");
+        assertThat(NumeroProtocoloCAT.de(valorInvalido).formatoValido()).isFalse();
     }
-
     @ParameterizedTest
     @ValueSource(strings = {
             "CAT-2026-9-0001",
@@ -60,11 +56,9 @@ class NumeroProtocoloCATTest {
             "CAT_2026_09_0001",
             "PROTOCOLO-123"
     })
-    @DisplayName("Deve rejeitar formatos inválidos de NumeroProtocoloCAT")
+    @DisplayName("Formatos inválidos não seguem o padrão; a recusa é do OcorrenciaValidador (issue #266)")
     void deveRejeitarFormatosInvalidos(String valorInvalido) {
-        assertThatThrownBy(() -> NumeroProtocoloCAT.de(valorInvalido))
-                .isInstanceOf(ProtocoloCATInvalidoException.class)
-                .hasMessageContaining("Formato de protocolo CAT inválido");
+        assertThat(NumeroProtocoloCAT.de(valorInvalido).formatoValido()).isFalse();
     }
 
     @Test

@@ -41,12 +41,7 @@ public class Acidente extends Ocorrencia {
         super(idOcorrencia, descricao, dataOcorrencia, dataRegistro, statusOcorrencia,
                 colaborador, area, relator, local, planoDeAcao);
 
-        if (causaRaiz == null) {
-            throw new IllegalArgumentException("Causa raiz é obrigatória para acidentes.");
-        }
-        if (gravidade == null) {
-            throw new IllegalArgumentException("Gravidade é obrigatória para acidentes.");
-        }
+        // Causa raiz, gravidade e formato do protocolo: OcorrenciaValidador (issue #266).
 
         if (numeroProtocoloCAT != null && !numeroProtocoloCAT.isBlank()) {
             this.numeroProtocoloCAT = NumeroProtocoloCAT.de(numeroProtocoloCAT).getValor();

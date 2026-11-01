@@ -10,7 +10,6 @@ import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NotificacaoOcorrenciaTest {
 
@@ -48,15 +47,5 @@ class NotificacaoOcorrenciaTest {
         assertThat(notificacao.tipoOcorrencia()).isEqualTo(TipoOcorrencia.INCIDENTE);
         assertThat(notificacao.numeroProtocoloCAT()).isNull();
         assertThat(notificacao.mensagem()).isEqualTo("Novo incidente registrado na área Solda. Aguarda triagem.");
-    }
-
-    @Test
-    @DisplayName("Ocorrência ainda não gravada não gera notificação")
-    void deveRecusarOcorrenciaSemId() {
-        Incidente naoGravado = new Incidente(null, "Piso molhado", FATO, FATO, StatusOcorrencia.ABERTA, null, area(),
-                null, null, null, "Vazamento", "Queda");
-
-        assertThatThrownBy(() -> NotificacaoOcorrencia.deNovoRelato(naoGravado))
-                .isInstanceOf(IllegalArgumentException.class);
     }
 }

@@ -31,17 +31,9 @@ public record NotificacaoAcao(
     private static final DateTimeFormatter DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public static NotificacaoAcao deAviso(AvisoAcao aviso) {
-        if (aviso == null || aviso.idAcao() == null) {
-            throw new IllegalArgumentException("O aviso exige uma ação já registrada.");
-        }
-        if (aviso.prazo() == null || aviso.dataAviso() == null) {
-            throw new IllegalArgumentException("O aviso exige o prazo da ação e a data do aviso.");
-        }
+        // O aviso é validado por AvisoAcaoValidador no adaptador, antes de montar a notificação (#266).
         Colaborador colaborador = aviso.responsavelColaborador();
         Setor setor = aviso.responsavelSetor();
-        if ((colaborador == null) == (setor == null)) {
-            throw new IllegalArgumentException("O aviso exige um único responsável: colaborador ou setor.");
-        }
 
         String tipo = colaborador != null ? RESPONSAVEL_COLABORADOR : RESPONSAVEL_SETOR;
         Integer idResponsavel = colaborador != null ? colaborador.getId() : setor.getId();
