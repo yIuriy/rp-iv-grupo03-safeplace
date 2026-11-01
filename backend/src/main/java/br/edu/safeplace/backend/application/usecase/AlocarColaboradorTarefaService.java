@@ -19,13 +19,14 @@ import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepo
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
-import br.edu.safeplace.backend.domain.capacitacao.ValidadorAptidaoColaboradorService;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.tarefa.AlocacaoTarefa;
 import br.edu.safeplace.backend.domain.tarefa.Tarefa;
 import br.edu.safeplace.backend.domain.tarefa.exception.TarefaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.exception.UsuarioNaoEncontradoException;
+import br.edu.safeplace.backend.validacao.Validador;
+import br.edu.safeplace.backend.validacao.aptidao.AptidaoParaTarefa;
 
 @Service
 public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUseCase {
@@ -37,7 +38,7 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
     private final CapacitacaoRepository capacitacaoRepository;
     private final AlocacaoTarefaRepository alocacaoTarefaRepository;
     private final LogAuditoriaRepository auditoriaRepository;
-    private final ValidadorAptidaoColaboradorService validadorAptidaoService;
+    private final Validador<AptidaoParaTarefa> validadorAptidao;
 
     @Autowired
     public AlocarColaboradorTarefaService(
@@ -45,24 +46,14 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
             UsuarioRepository usuarioRepository,
             CapacitacaoRepository capacitacaoRepository,
             AlocacaoTarefaRepository alocacaoTarefaRepository,
-            LogAuditoriaRepository auditoriaRepository) {
-        this(tarefaRepository, usuarioRepository, capacitacaoRepository, alocacaoTarefaRepository,
-                auditoriaRepository, new ValidadorAptidaoColaboradorService());
-    }
-
-    public AlocarColaboradorTarefaService(
-            TarefaRepository tarefaRepository,
-            UsuarioRepository usuarioRepository,
-            CapacitacaoRepository capacitacaoRepository,
-            AlocacaoTarefaRepository alocacaoTarefaRepository,
             LogAuditoriaRepository auditoriaRepository,
-            ValidadorAptidaoColaboradorService validadorAptidaoService) {
+            Validador<AptidaoParaTarefa> validadorAptidao) {
         this.tarefaRepository = tarefaRepository;
         this.usuarioRepository = usuarioRepository;
         this.capacitacaoRepository = capacitacaoRepository;
         this.alocacaoTarefaRepository = alocacaoTarefaRepository;
         this.auditoriaRepository = auditoriaRepository;
-        this.validadorAptidaoService = validadorAptidaoService;
+        this.validadorAptidao = validadorAptidao;
     }
 
     @Override
@@ -79,9 +70,9 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
         List<ExigenciaCapacitacao> exigencias = capacitacaoRepository.buscarExigenciasPorAlvo(
                 ExigenciaCapacitacao.TipoAlvo.TAREFA, tarefa.getId());
 
-        LocalDate hoje = LocalDate.now();
-        // Validação estrita e atômica: se falhar, lança exceção e nada é gravado
-        validadorAptidaoService.validarAptidaoParaTarefa(colaborador, tarefa, certificacoes, treinamentos, exigencias, hoje);
+        // Chain of Responsibility (#228): valida antes do repository; se falhar, nada é gravado.
+        validadorAptidao.validar(new AptidaoParaTarefa(
+                colaborador, tarefa, certificacoes, treinamentos, exigencias, LocalDate.now()));
 
         AlocacaoTarefa alocacao = AlocacaoTarefa.nova(tarefa.getId(), colaborador.getId(), operador.getId(), entrada.observacao());
         AlocacaoTarefa salva = alocacaoTarefaRepository.salvar(alocacao);
@@ -110,8 +101,9 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
         List<ExigenciaCapacitacao> exigencias = capacitacaoRepository.buscarExigenciasPorAlvo(
                 ExigenciaCapacitacao.TipoAlvo.TAREFA, tarefa.getId());
 
-        List<String> impedimentos = validadorAptidaoService.obterImpedimentos(
-                colaborador, tarefa, certificacoes, treinamentos, exigencias, LocalDate.now());
+        // Mesma cadeia da alocação: a consulta e o bloqueio não podem discordar.
+        List<String> impedimentos = validadorAptidao.verificar(new AptidaoParaTarefa(
+                colaborador, tarefa, certificacoes, treinamentos, exigencias, LocalDate.now())).mensagens();
 
         if (impedimentos.isEmpty()) {
             return ConsultaAptidaoOutputDTO.apto(tarefa.getId(), tarefa.getDescricao(), colaborador.getId(), colaborador.getNome());

@@ -1,4 +1,4 @@
-package br.edu.safeplace.backend.domain.capacitacao;
+package br.edu.safeplace.backend.validacao.aptidao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -11,6 +11,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
+import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
+import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
+import br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao;
 import br.edu.safeplace.backend.domain.capacitacao.exception.AlocacaoBloqueadaException;
 import br.edu.safeplace.backend.domain.capacitacao.exception.ColaboradorNaoAlocavelException;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
@@ -20,16 +24,16 @@ import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import br.edu.safeplace.backend.domain.usuario.Supervisor;
 
-@DisplayName("ValidadorAptidaoColaboradorService - Regras de Domínio de Aptidão e Bloqueio")
-class ValidadorAptidaoColaboradorServiceTest {
+@DisplayName("AptidaoColaboradorValidador - cadeia de aptidão para alocação (Chain of Responsibility)")
+class AptidaoColaboradorValidadorTest {
 
-    private ValidadorAptidaoColaboradorService validador;
+    private AptidaoColaboradorValidador validador;
     private Colaborador colaborador;
     private LocalDate hoje;
 
     @BeforeEach
     void setUp() {
-        validador = new ValidadorAptidaoColaboradorService();
+        validador = new AptidaoColaboradorValidador();
         colaborador = new Colaborador(1, "12345678901", "João da Silva", LocalDate.of(1990, 1, 1),
                 null, true, java.time.LocalDateTime.now(), java.time.LocalDateTime.now());
         hoje = LocalDate.now();
@@ -40,8 +44,8 @@ class ValidadorAptidaoColaboradorServiceTest {
     void deveBloquearAlocacaoEmTarefaSemClassificacao() {
         Tarefa tarefaNaoClassificada = Tarefa.cadastrar("Manutenção em telhado");
 
-        assertThatThrownBy(() -> validador.validarAptidaoParaTarefa(colaborador, tarefaNaoClassificada,
-                List.of(), List.of(), List.of(), hoje))
+        assertThatThrownBy(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefaNaoClassificada,
+                List.of(), List.of(), List.of(), hoje)))
                 .isInstanceOf(TarefaSemClassificacaoException.class);
     }
 
@@ -50,8 +54,8 @@ class ValidadorAptidaoColaboradorServiceTest {
     void devePermitirAlocacaoEmTarefaSemExigencias() {
         Tarefa tarefa = new Tarefa(10, "Pintura de meio-fio", NivelPerigo.BAIXO, hoje.atStartOfDay());
 
-        assertThatCode(() -> validador.validarAptidaoParaTarefa(colaborador, tarefa,
-                List.of(), List.of(), List.of(), hoje))
+        assertThatCode(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefa,
+                List.of(), List.of(), List.of(), hoje)))
                 .doesNotThrowAnyException();
     }
 
@@ -62,8 +66,8 @@ class ValidadorAptidaoColaboradorServiceTest {
         ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(1, "NR-10 Básico",
                 ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, 10, ExigenciaCapacitacao.TipoAlvo.TAREFA);
 
-        assertThatThrownBy(() -> validador.validarAptidaoParaTarefa(colaborador, tarefa,
-                List.of(), List.of(), List.of(exigencia), hoje))
+        assertThatThrownBy(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefa,
+                List.of(), List.of(), List.of(exigencia), hoje)))
                 .isInstanceOf(AlocacaoBloqueadaException.class)
                 .hasMessageContaining("NR-10 Básico")
                 .hasMessageContaining("ausente ou vencida");
@@ -78,8 +82,8 @@ class ValidadorAptidaoColaboradorServiceTest {
 
         Certificacao certVencida = new Certificacao(1, "NR-35 Altura", hoje.minusDays(1), hoje.minusYears(1), 1);
 
-        assertThatThrownBy(() -> validador.validarAptidaoParaTarefa(colaborador, tarefa,
-                List.of(certVencida), List.of(), List.of(exigencia), hoje))
+        assertThatThrownBy(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefa,
+                List.of(certVencida), List.of(), List.of(exigencia), hoje)))
                 .isInstanceOf(AlocacaoBloqueadaException.class)
                 .hasMessageContaining("NR-35 Altura")
                 .hasMessageContaining("vencida");
@@ -95,15 +99,15 @@ class ValidadorAptidaoColaboradorServiceTest {
         Certificacao venceAmanha = new Certificacao(2, "NR-35 Altura", hoje.plusDays(1), hoje.minusYears(1), 1);
 
         assertThat(venceHoje.getStatus()).isEqualTo(StatusCertificacao.VENCIDA);
-        assertThatThrownBy(() -> validador.validarAptidaoParaTarefa(colaborador, tarefa,
-                List.of(venceHoje), List.of(), List.of(exigencia), hoje))
+        assertThatThrownBy(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefa,
+                List.of(venceHoje), List.of(), List.of(exigencia), hoje)))
                 .isInstanceOf(AlocacaoBloqueadaException.class)
                 .hasMessageContaining("NR-35 Altura");
-        assertThat(validador.obterImpedimentos(colaborador, tarefa,
-                List.of(venceHoje), List.of(), List.of(exigencia), hoje))
+        assertThat(validador.verificar(new AptidaoParaTarefa(colaborador, tarefa,
+                List.of(venceHoje), List.of(), List.of(exigencia), hoje)).mensagens())
                 .containsExactly("certificação obrigatória 'NR-35 Altura' ausente ou vencida");
-        assertThatCode(() -> validador.validarAptidaoParaTarefa(colaborador, tarefa,
-                List.of(venceAmanha), List.of(), List.of(exigencia), hoje))
+        assertThatCode(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefa,
+                List.of(venceAmanha), List.of(), List.of(exigencia), hoje)))
                 .doesNotThrowAnyException();
     }
 
@@ -116,8 +120,8 @@ class ValidadorAptidaoColaboradorServiceTest {
 
         Certificacao certValida = new Certificacao(1, "NR-35 Altura", hoje.plusMonths(6), hoje.minusMonths(6), 1);
 
-        assertThatCode(() -> validador.validarAptidaoParaTarefa(colaborador, tarefa,
-                List.of(certValida), List.of(), List.of(exigencia), hoje))
+        assertThatCode(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefa,
+                List.of(certValida), List.of(), List.of(exigencia), hoje)))
                 .doesNotThrowAnyException();
     }
 
@@ -128,8 +132,8 @@ class ValidadorAptidaoColaboradorServiceTest {
         ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(1, "NR-33 Vigia",
                 ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO, 10, ExigenciaCapacitacao.TipoAlvo.TAREFA);
 
-        assertThatThrownBy(() -> validador.validarAptidaoParaTarefa(colaborador, tarefa,
-                List.of(), List.of(), List.of(exigencia), hoje))
+        assertThatThrownBy(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefa,
+                List.of(), List.of(), List.of(exigencia), hoje)))
                 .isInstanceOf(AlocacaoBloqueadaException.class)
                 .hasMessageContaining("NR-33 Vigia")
                 .hasMessageContaining("pendente ou não realizado");
@@ -145,20 +149,20 @@ class ValidadorAptidaoColaboradorServiceTest {
         Treinamento treinoRealizado = new Treinamento(1, "NR-33 Vigia", "Prática", "Instrutor A",
                 hoje.minusDays(10), 16, List.of(colaborador.getId()));
 
-        assertThatCode(() -> validador.validarAptidaoParaTarefa(colaborador, tarefa,
-                List.of(), List.of(treinoRealizado), List.of(exigencia), hoje))
+        assertThatCode(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefa,
+                List.of(), List.of(treinoRealizado), List.of(exigencia), hoje)))
                 .doesNotThrowAnyException();
     }
 
     @Test
-    @DisplayName("obterImpedimentos retorna lista descritiva completa para consulta prévia sem lançar exceção")
+    @DisplayName("verificar retorna lista descritiva completa para consulta prévia sem lançar exceção")
     void deveRetornarImpedimentosNaConsultaSemLancarExcecao() {
         Tarefa tarefaNaoClassificada = new Tarefa(20, "Atividade perigosa", null, null, null);
         ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(1, "NR-10",
                 ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, tarefaNaoClassificada.getId(), ExigenciaCapacitacao.TipoAlvo.TAREFA);
 
-        List<String> impedimentos = validador.obterImpedimentos(colaborador, tarefaNaoClassificada,
-                List.of(), List.of(), List.of(exigencia), hoje);
+        List<String> impedimentos = validador.verificar(new AptidaoParaTarefa(colaborador, tarefaNaoClassificada,
+                List.of(), List.of(), List.of(exigencia), hoje)).mensagens();
 
         assertThat(impedimentos).hasSize(2);
         assertThat(impedimentos).anyMatch(msg -> msg.contains("sem grau de periculosidade classificado"));
@@ -174,8 +178,8 @@ class ValidadorAptidaoColaboradorServiceTest {
         Treinamento vencido = new Treinamento(1, "NR-33 Vigia", "Prática", "Instrutor A",
                 hoje.minusMonths(13), 16, 12, List.of(colaborador.getId()));
 
-        assertThatThrownBy(() -> validador.validarAptidaoParaTarefa(colaborador, tarefa,
-                List.of(), List.of(vencido), List.of(exigencia), hoje))
+        assertThatThrownBy(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefa,
+                List.of(), List.of(vencido), List.of(exigencia), hoje)))
                 .isInstanceOf(AlocacaoBloqueadaException.class)
                 .hasMessageContaining("NR-33 Vigia")
                 .hasMessageContaining("vencido em " + hoje.minusMonths(1).format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
@@ -190,8 +194,8 @@ class ValidadorAptidaoColaboradorServiceTest {
         Treinamento proximo = new Treinamento(1, "NR-33 Vigia", "Prática", "Instrutor A",
                 hoje.minusMonths(12).plusDays(10), 16, 12, List.of(colaborador.getId()));
 
-        assertThatCode(() -> validador.validarAptidaoParaTarefa(colaborador, tarefa,
-                List.of(), List.of(proximo), List.of(exigencia), hoje))
+        assertThatCode(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefa,
+                List.of(), List.of(proximo), List.of(exigencia), hoje)))
                 .doesNotThrowAnyException();
     }
 
@@ -201,7 +205,7 @@ class ValidadorAptidaoColaboradorServiceTest {
         Supervisor supervisor = Supervisor.novo("Maria Souza", "98765432100", LocalDate.of(1985, 5, 5), "maria@safeplace.com", "senha");
         Tarefa tarefa = new Tarefa(10, "Espaço Confinado", NivelPerigo.ALTO, hoje.atStartOfDay());
 
-        assertThatThrownBy(() -> validador.validarAptidaoParaTarefa(supervisor, tarefa, List.of(), List.of(), List.of(), hoje))
+        assertThatThrownBy(() -> validador.validar(new AptidaoParaTarefa(supervisor, tarefa, List.of(), List.of(), List.of(), hoje)))
                 .isInstanceOf(ColaboradorNaoAlocavelException.class)
                 .hasMessageContaining("Maria Souza");
     }
@@ -212,7 +216,51 @@ class ValidadorAptidaoColaboradorServiceTest {
         GestorDeSeguranca gestor = GestorDeSeguranca.novo("Carlos Lima", "11122233344", LocalDate.of(1980, 3, 3), "carlos@safeplace.com", "senha");
         Tarefa tarefa = new Tarefa(10, "Espaço Confinado", NivelPerigo.ALTO, hoje.atStartOfDay());
 
-        assertThat(validador.obterImpedimentos(gestor, tarefa, List.of(), List.of(), List.of(), hoje))
+        assertThat(validador.verificar(new AptidaoParaTarefa(gestor, tarefa, List.of(), List.of(), List.of(), hoje)).mensagens())
                 .singleElement().asString().contains("Somente colaboradores");
+    }
+
+    @Test
+    @DisplayName("Consulta e bloqueio usam a mesma cadeia: a lista vazia equivale a alocação permitida")
+    void consultaEBloqueioConcordam() {
+        Tarefa classificada = new Tarefa(10, "Espaço Confinado", NivelPerigo.ALTO, hoje.atStartOfDay());
+        Tarefa semClassificacao = new Tarefa(11, "Atividade sem grau", null, null, null);
+        ExigenciaCapacitacao certificacao = new ExigenciaCapacitacao(1, "NR-35 Altura",
+                ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, 10, ExigenciaCapacitacao.TipoAlvo.TAREFA);
+        Certificacao valida = new Certificacao(1, "NR-35 Altura", hoje.plusYears(1), hoje.minusYears(1), 1);
+        Supervisor supervisor = Supervisor.novo("Maria Souza", "98765432100", LocalDate.of(1985, 5, 5), "maria@safeplace.com", "senha");
+
+        List<AptidaoParaTarefa> cenarios = List.of(
+                new AptidaoParaTarefa(colaborador, classificada, List.of(), List.of(), List.of(), hoje),
+                new AptidaoParaTarefa(colaborador, classificada, List.of(valida), List.of(), List.of(certificacao), hoje),
+                new AptidaoParaTarefa(colaborador, classificada, List.of(), List.of(), List.of(certificacao), hoje),
+                new AptidaoParaTarefa(colaborador, semClassificacao, List.of(), List.of(), List.of(), hoje),
+                new AptidaoParaTarefa(supervisor, classificada, List.of(), List.of(), List.of(), hoje),
+                new AptidaoParaTarefa(null, classificada, List.of(), List.of(), List.of(), hoje));
+
+        for (AptidaoParaTarefa cenario : cenarios) {
+            boolean consultaDizApto = validador.verificar(cenario).valido();
+            boolean alocacaoPermitida;
+            try {
+                validador.validar(cenario);
+                alocacaoPermitida = true;
+            } catch (RuntimeException bloqueio) {
+                alocacaoPermitida = false;
+            }
+            assertThat(alocacaoPermitida).as("cenário %s", cenario).isEqualTo(consultaDizApto);
+        }
+    }
+
+    @Test
+    @DisplayName("Colaborador sem perfil alocável interrompe a cadeia: as pendências não são listadas")
+    void perfilNaoAlocavelInterrompeACadeia() {
+        Supervisor supervisor = Supervisor.novo("Maria Souza", "98765432100", LocalDate.of(1985, 5, 5), "maria@safeplace.com", "senha");
+        Tarefa semClassificacao = new Tarefa(11, "Atividade sem grau", null, null, null);
+        ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(1, "NR-10",
+                ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, 11, ExigenciaCapacitacao.TipoAlvo.TAREFA);
+
+        assertThat(validador.verificar(new AptidaoParaTarefa(supervisor, semClassificacao,
+                List.of(), List.of(), List.of(exigencia), hoje)).mensagens())
+                .singleElement().asString().contains("Maria Souza");
     }
 }
