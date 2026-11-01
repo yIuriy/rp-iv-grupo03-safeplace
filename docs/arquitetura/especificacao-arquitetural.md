@@ -26,7 +26,7 @@ A arquitetura é dividida em três partes:
 2. Aplicação: coordena os casos de uso e declara as portas.
 3. Adaptadores: conectam a aplicação à interface web, à persistência, à autenticação e à auditoria.
 
-As dependências apontam para o núcleo. O domínio não conhece frameworks, banco de dados ou detalhes da interface.
+As dependências apontam para o núcleo. O domínio não conhece o Spring, o banco de dados nem detalhes da interface. A exceção registrada é o mapeamento: desde a [decisão #254](decisao-entidades-jpa-dominio.md), as entidades de domínio são também as entidades JPA, com anotações de `jakarta.persistence`. Os casos de uso continuam dependendo só das portas.
 
 ### 3.1. Portas de entrada
 
@@ -100,6 +100,7 @@ O [PlantUML da proposta hexagonal](../diagramas/arquitetura/safeplace-arquitetur
 | Diagrama de componentes executável | Pendente de atualização |
 | Diagrama de sequência | Pendente de atualização |
 | Diagrama de classes (completo, com o que está fora do MVP em cinza) | Atualizado em 16/10/2026 conforme o domínio implementado |
+| Decisão sobre entidades JPA no domínio | Registrada em [Entidades JPA no domínio](decisao-entidades-jpa-dominio.md) (#254); migração em andamento nas issues #255 a #262 |
 | Catálogo de padrões de projeto e classes auxiliares | Registrado em [Padrões de Projeto](padroes-de-projeto.md) e [Correspondência de EPIs](correspondencia-classes-epi.md) |
 
 ## 7. Base técnica existente e limites
@@ -107,7 +108,7 @@ O [PlantUML da proposta hexagonal](../diagramas/arquitetura/safeplace-arquitetur
 | Parte | Tecnologia e evidência no repositório |
 | --- | --- |
 | Backend | Java 21 e Spring Boot 4.1.1 em [pom.xml](../../backend/pom.xml). |
-| Persistência | Spring Data JPA, PostgreSQL e Flyway; conexão em [application.yaml](../../backend/src/main/resources/application.yaml), ocorrências em [V1__create_ocorrencias.sql](../../backend/src/main/resources/db/migration/V1__create_ocorrencias.sql) e estoque de EPIs em [V2__create_epis.sql](../../backend/src/main/resources/db/migration/V2__create_epis.sql). |
+| Persistência | Spring Data JPA (entidades no domínio, conforme a [decisão #254](decisao-entidades-jpa-dominio.md)), PostgreSQL e Flyway; conexão em [application.yaml](../../backend/src/main/resources/application.yaml), ocorrências em [V1__create_ocorrencias.sql](../../backend/src/main/resources/db/migration/V1__create_ocorrencias.sql) e estoque de EPIs em [V2__create_epis.sql](../../backend/src/main/resources/db/migration/V2__create_epis.sql). |
 | Interface | React 19, TypeScript e Vite 8 em [package.json](../../frontend/package.json). |
 | Ambiente local | [Docker Compose](../../docker-compose.yml) com PostgreSQL 16, backend e frontend na mesma máquina. |
 | Documentação da API | Springdoc configurado em `application.yaml`: interface em `/docs` e descrição OpenAPI em `/v3/api-docs`. |
