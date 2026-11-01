@@ -4,7 +4,6 @@ import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,21 +44,5 @@ class ProjecaoSubstituicaoTest {
 
         assertTrue(projecao.isVencido(hoje));
         assertFalse(projecao.isProximoDoDescarte(hoje, 30L));
-    }
-
-    @Test
-    @DisplayName("Deve validar campos obrigatórios no construtor")
-    void deveValidarCamposObrigatorios() {
-        assertThrows(IllegalArgumentException.class, () ->
-                new ProjecaoSubstituicao(null, null, hoje, hoje.plusDays(10), "Ok"));
-
-        assertThrows(IllegalArgumentException.class, () ->
-                new ProjecaoSubstituicao(null, 1, null, hoje.plusDays(10), "Ok"));
-
-        assertThrows(IllegalArgumentException.class, () ->
-                new ProjecaoSubstituicao(null, 1, hoje, null, "Ok"));
-
-        assertThrows(IllegalArgumentException.class, () ->
-                new ProjecaoSubstituicao(null, 1, hoje, hoje.plusDays(10), "   "));
     }
 }

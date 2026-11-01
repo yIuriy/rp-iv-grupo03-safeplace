@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LoteEPITest {
 
@@ -72,19 +71,5 @@ class LoteEPITest {
 
         assertThat(primeiro.getQuantidadeRecebida()).isEqualTo(10);
         assertThat(segundo.getQuantidadeRecebida()).isEqualTo(30);
-    }
-
-    @Test
-    void deveRejeitarLoteSemModelo() {
-        assertThatThrownBy(() -> new LoteEPI(
-                "LOTE-001",
-                "NF-123",
-                LocalDate.of(2026, 1, 1),
-                LocalDate.of(2027, 1, 1),
-                20,
-                null
-        ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Modelo do EPI é obrigatório para o lote.");
     }
 }

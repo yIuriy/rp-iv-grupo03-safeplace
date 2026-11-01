@@ -24,9 +24,19 @@ import br.edu.safeplace.backend.application.port.in.GerenciarEstoqueUseCase;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Qualifier;
+import br.edu.safeplace.backend.validacao.Validador;
+import br.edu.safeplace.backend.validacao.epi.EpiValidador;
+import br.edu.safeplace.backend.validacao.epi.ModeloEpiValidador;
+import br.edu.safeplace.backend.validacao.epi.MovimentacaoEstoqueValidador;
+import br.edu.safeplace.backend.validacao.epi.NumeroCaValidador;
 
 @Service
 public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase {
+    private final Validador<String> numeroCaValidador;
+    private final Validador<ModeloEPI> modeloValidador;
+    private final Validador<Epi> epiValidador;
+    private final Validador<MovimentacaoEstoque> movimentacaoValidador;
     private final EpiRepository repository;
     private final UsuarioRepository usuarioRepositorio;
     private final LogAuditoriaRepository logAuditoriaRepository;
@@ -35,19 +45,39 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
     public EpiService(
             EpiRepository repository,
             UsuarioRepository usuarioRepositorio,
-            LogAuditoriaRepository logAuditoriaRepository) {
+            LogAuditoriaRepository logAuditoriaRepository,
+            @Qualifier("numeroCaValidador") Validador<String> numeroCaValidador,
+            Validador<ModeloEPI> modeloValidador,
+            Validador<Epi> epiValidador,
+            Validador<MovimentacaoEstoque> movimentacaoValidador) {
         this.repository = repository;
         this.usuarioRepositorio = usuarioRepositorio;
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.logAuditoriaRepository = java.util.Objects.requireNonNull(
                 logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
+        this.numeroCaValidador = numeroCaValidador;
+        this.modeloValidador = modeloValidador;
+        this.epiValidador = epiValidador;
+        this.movimentacaoValidador = movimentacaoValidador;
+    }
+
+    /** Monta os validadores padrão; usado pelos testes sem contexto Spring. */
+    public EpiService(
+            EpiRepository repository,
+            UsuarioRepository usuarioRepositorio,
+            LogAuditoriaRepository logAuditoriaRepository) {
+        this(repository, usuarioRepositorio, logAuditoriaRepository, new NumeroCaValidador(),
+                new ModeloEpiValidador(), new EpiValidador(), new MovimentacaoEstoqueValidador());
     }
 
     @Override
     @Transactional
     public EpiOutputDTO cadastrarEpi(CadastrarEpiInputDTO inputDTO) {
+        // Chain of Responsibility (#264): CA e modelo antes da busca pelo modelo existente.
+        numeroCaValidador.validar(inputDTO.numeroCa());
         ModeloEPI informado = ModeloEPI.deCadastroLegado(
                 inputDTO.numeroCa(), inputDTO.marca(), inputDTO.dataValidadeCa());
+        modeloValidador.validar(informado);
         // Decisão #124: o CA tem fonte única; um CA já cadastrado reaproveita o mesmo modelo.
         ModeloEPI modelo = repository.buscarModeloPorCa(informado.getCa())
                 .map(existente -> existente.reutilizarPara(informado))
@@ -62,6 +92,7 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
                 inputDTO.vidaUtilDias(),
                 inputDTO.descricao(),
                 inputDTO.classificacao(), inputDTO.localizacao());
+        epiValidador.validar(novoEpi);
         Epi salvo = repository.salvar(novoEpi);
 
         LogAuditoria log = LogAuditoria.registrarCadastro(
@@ -114,6 +145,7 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
         } else {
             throw new IllegalArgumentException("Tipo de movimentação inválido: " + tipo);
         }
+        movimentacaoValidador.validar(movimentacao);
 
         repository.atualizarSaldo(epi);
         MovimentacaoEstoque salvo = repository.salvarMovimentacao(movimentacao);

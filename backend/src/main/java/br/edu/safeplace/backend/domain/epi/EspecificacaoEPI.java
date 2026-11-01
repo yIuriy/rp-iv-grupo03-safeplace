@@ -9,10 +9,6 @@ public class EspecificacaoEPI {
             String descricao,
             int quantidadeMinima,
             ClassificacaoEPI classificacao) {
-        if (quantidadeMinima < 0) {
-            throw new IllegalArgumentException(
-                    "Quantidade mínima não pode ser negativa.");
-        }
 
         this.descricao = descricao;
         this.quantidadeMinima = quantidadeMinima;

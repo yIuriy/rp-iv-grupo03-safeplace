@@ -53,10 +53,7 @@ public class Epi {
                 new EspecificacaoEPI(descricao, estoqueMinimo, classificacao),
                 status,
                 vidaUtilDias, localizacao);
-
-        if (id == null) {
-            this.lote.getModelo().validarParaCadastroEm(LocalDate.now());
-        }
+        // O CA vigente no cadastro é verificado por EpiValidador antes de salvar (issue #264).
     }
 
     public Epi(
@@ -96,29 +93,9 @@ public class Epi {
             EspecificacaoEPI especificacao,
             StatusEpi status,
             Integer vidaUtilDias, String localizacao) {
-        if (nome == null || nome.isBlank()) {
-            throw new IllegalArgumentException("Nome do EPI é obrigatório.");
-        }
-
-        if (quantidade < 0) {
-            throw new IllegalArgumentException(
-                    "Quantidade em estoque não pode ser negativa.");
-        }
-
-        if (especificacao == null) {
-            throw new IllegalArgumentException(
-                    "Especificação do EPI é obrigatória.");
-        }
-
-        if (status == null) {
-            throw new IllegalArgumentException("Status do EPI é obrigatório.");
-        }
-
+        // Regras de cadastro em EpiValidador, antes do repository (issue #264).
         this.codigoEPI = id;
         this.nome = nome;
-        if (lote == null) {
-            throw new IllegalArgumentException("Lote do EPI é obrigatório.");
-        }
         this.lote = lote;
         this.localizacao = localizacao;
         this.quantidade = quantidade;
@@ -180,7 +157,6 @@ public class Epi {
                            LocalDate dataValidadeCa, Integer vidaUtilDias, LocalDate dataCadastro,
                            String descricao, ClassificacaoEPI classificacao, String localizacao) {
         LoteEPI lote = loteLegado(numeroCa, dataValidadeCa, quantidade);
-        lote.getModelo().validarParaCadastroEm(dataCadastro);
 
         StatusEpi statusInicial = quantidade > 0
                 ? StatusEpi.DISPONIVEL
@@ -199,7 +175,6 @@ public class Epi {
     public static Epi novo(String nome, LoteEPI lote, int quantidade, int estoqueMinimo,
                            Integer vidaUtilDias, String descricao,
                            ClassificacaoEPI classificacao, String localizacao) {
-        lote.getModelo().validarParaCadastroEm(LocalDate.now());
         return new Epi(null, nome, lote, quantidade,
                 new EspecificacaoEPI(descricao, estoqueMinimo, classificacao),
                 quantidade > 0 ? StatusEpi.DISPONIVEL : StatusEpi.ESGOTADO,
@@ -230,6 +205,10 @@ public class Epi {
                     "Entrada excede o limite de quantidade do estoque.");
         }
 
+        // UC06: toda movimentação registra o motivo. A regra é da operação, e não da criação do
+        // objeto, para que o saldo nunca mude sem uma movimentação válida (issue #264).
+        exigirMotivo(motivo);
+
         int novoSaldo = this.quantidade + qtd;
 
         MovimentacaoEstoque movimentacao = new MovimentacaoEstoque(
@@ -251,6 +230,12 @@ public class Epi {
         return movimentacao;
     }
 
+    private static void exigirMotivo(String motivo) {
+        if (motivo == null || motivo.isBlank()) {
+            throw new IllegalArgumentException("Motivo da movimentação é obrigatório.");
+        }
+    }
+
     public MovimentacaoEstoque removerEstoque(int qtd, String motivo) {
         return removerEstoque(qtd, motivo, null);
     }
@@ -268,6 +253,10 @@ public class Epi {
                             + ", quantidade solicitada: "
                             + qtd);
         }
+
+        // UC06: toda movimentação registra o motivo. A regra é da operação, e não da criação do
+        // objeto, para que o saldo nunca mude sem uma movimentação válida (issue #264).
+        exigirMotivo(motivo);
 
         int novoSaldo = this.quantidade - qtd;
 

@@ -19,21 +19,6 @@ public class MovimentacaoEstoque {
 
     public MovimentacaoEstoque(Integer id, Integer epiId, Integer loteId, Integer responsavelId,
             TipoMovimentacao tipo, int quantidade, LocalDateTime dataHora, String motivo) {
-        if (tipo == null) {
-            throw new IllegalArgumentException("Tipo de movimentação é obrigatório.");
-        }
-        if (quantidade <= 0) {
-            throw new IllegalArgumentException("Quantidade movimentada deve ser maior que zero.");
-        }
-        if (dataHora == null) {
-            throw new IllegalArgumentException("Data e hora da movimentação são obrigatórias.");
-        }
-
-        if (motivo == null || motivo.isBlank()) {
-            throw new IllegalArgumentException(
-                    "Motivo da movimentação é obrigatório.");
-        }
-
         this.id = id;
         this.epiId = epiId;
         this.loteId = loteId;

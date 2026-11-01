@@ -33,6 +33,8 @@ import br.edu.safeplace.backend.domain.epi.SubstituicaoInteligenteService;
 import br.edu.safeplace.backend.domain.epi.exception.DadosInsuficientesParaProjecaoException;
 import br.edu.safeplace.backend.validacao.Validador;
 import br.edu.safeplace.backend.validacao.projecao.ProjecaoValidador;
+import br.edu.safeplace.backend.validacao.epi.ProjecaoSubstituicaoValidador;
+import br.edu.safeplace.backend.validacao.epi.AlertaSubstituicaoValidador;
 
 @Service
 public class PlanejarSubstituicaoService implements PlanejarSubstituicaoUseCase {
@@ -43,6 +45,8 @@ public class PlanejarSubstituicaoService implements PlanejarSubstituicaoUseCase 
     private final ProjecaoSubstituicaoRepository projecaoRepository;
     private final CalculoProjecaoSubstituicao calculoService;
     private final Validador<ContextoProjecao> validadorProjecao;
+    private final Validador<ProjecaoSubstituicao> projecaoValidador;
+    private final Validador<AlertaSubstituicaoEpi> alertaValidador;
 
     @Autowired
     public PlanejarSubstituicaoService(
@@ -51,7 +55,11 @@ public class PlanejarSubstituicaoService implements PlanejarSubstituicaoUseCase 
             SetorRepository setorRepository,
             ProjecaoSubstituicaoRepository projecaoRepository,
             CalculoProjecaoSubstituicao calculoService,
-            Validador<ContextoProjecao> validadorProjecao) {
+            Validador<ContextoProjecao> validadorProjecao,
+            Validador<ProjecaoSubstituicao> projecaoValidador,
+            Validador<AlertaSubstituicaoEpi> alertaValidador) {
+        this.projecaoValidador = projecaoValidador;
+        this.alertaValidador = alertaValidador;
         this.epiRepository = epiRepository;
         this.emprestimoRepository = emprestimoRepository;
         this.setorRepository = setorRepository;
@@ -67,7 +75,8 @@ public class PlanejarSubstituicaoService implements PlanejarSubstituicaoUseCase 
             SetorRepository setorRepository,
             ProjecaoSubstituicaoRepository projecaoRepository) {
         this(epiRepository, emprestimoRepository, setorRepository, projecaoRepository,
-                new SubstituicaoInteligenteService(), new ProjecaoValidador());
+                new SubstituicaoInteligenteService(), new ProjecaoValidador(),
+                new ProjecaoSubstituicaoValidador(), new AlertaSubstituicaoValidador());
     }
 
     @Override
@@ -117,6 +126,8 @@ public class PlanejarSubstituicaoService implements PlanejarSubstituicaoUseCase 
                 // Chain of Responsibility (#267): pré-condições antes do cálculo e do repository.
                 validadorProjecao.validar(contexto);
                 ProjecaoSubstituicao projecao = calculoService.calcularProjecao(contexto);
+                // #264: a projeção calculada é validada antes de entrar no lote a gravar.
+                projecaoValidador.validar(projecao);
 
                 projecoesParaSalvar.add(projecao);
 
@@ -204,6 +215,7 @@ public class PlanejarSubstituicaoService implements PlanejarSubstituicaoUseCase 
     private void adicionarAlertas(List<AlertaSubstituicaoOutputDTO> destino, Epi epi,
                                   ProjecaoSubstituicao projecao, LocalDate dataReferencia) {
         for (AlertaSubstituicaoEpi alerta : calculoService.emitirAlertas(epi, projecao, dataReferencia)) {
+            alertaValidador.validar(alerta);
             destino.add(AlertaSubstituicaoOutputDTO.aPartirDe(alerta));
         }
     }
