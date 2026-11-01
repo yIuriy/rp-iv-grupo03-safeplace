@@ -3,7 +3,6 @@ package br.edu.safeplace.backend.domain.ocorrencia;
 import java.time.LocalDateTime;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
-import br.edu.safeplace.backend.domain.ocorrencia.exception.DataOcorrenciaInvalidaException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 
 /**
@@ -61,18 +60,9 @@ public abstract class Ocorrencia {
             String local,
             PlanoDeAcao planoDeAcao) {
 
-        if (dataOcorrencia == null) {
-            throw new IllegalArgumentException("Data da ocorrência é obrigatória.");
-        }
-        if (dataOcorrencia.isAfter(LocalDateTime.now())) {
-            throw new DataOcorrenciaInvalidaException("Data da ocorrência não pode ser futura.");
-        }
-        if (descricao == null || descricao.isBlank()) {
-            throw new IllegalArgumentException("Descrição é obrigatória.");
-        }
-
+        // Data e descrição são validadas por OcorrenciaValidador antes de salvar (issue #266).
         this.idOcorrencia = idOcorrencia;
-        this.descricao = descricao.trim();
+        this.descricao = descricao != null ? descricao.trim() : null;
         this.dataOcorrencia = dataOcorrencia;
         this.dataRegistro = dataRegistro != null ? dataRegistro : LocalDateTime.now();
         this.statusOcorrencia = statusOcorrencia != null ? statusOcorrencia : StatusOcorrencia.ABERTA;

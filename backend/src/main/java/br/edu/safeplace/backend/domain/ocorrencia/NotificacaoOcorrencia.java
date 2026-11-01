@@ -17,9 +17,7 @@ public record NotificacaoOcorrencia(
         LocalDateTime criadaEm) {
 
     public static NotificacaoOcorrencia deNovoRelato(Ocorrencia ocorrencia) {
-        if (ocorrencia == null || ocorrencia.getId() == null) {
-            throw new IllegalArgumentException("A notificação exige uma ocorrência já registrada.");
-        }
+        // A ocorrência é validada por NotificacaoOcorrenciaValidador no adaptador (#266).
         TipoOcorrencia tipo = ocorrencia instanceof Acidente ? TipoOcorrencia.ACIDENTE : TipoOcorrencia.INCIDENTE;
         String protocolo = ocorrencia instanceof Acidente acidente ? acidente.getNumeroProtocoloCAT() : null;
         String area = ocorrencia.getArea() != null ? ocorrencia.getArea().getNome() : null;

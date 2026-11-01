@@ -13,6 +13,9 @@ import br.edu.safeplace.backend.adapters.out.persistencia.NotificacaoAcaoJpaRepo
 import br.edu.safeplace.backend.application.port.out.NotificadorAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.AvisoAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoAcao;
+import org.springframework.beans.factory.annotation.Autowired;
+import br.edu.safeplace.backend.validacao.Validador;
+import br.edu.safeplace.backend.validacao.ocorrencia.AvisoAcaoValidador;
 
 /**
  * Canal interno dos avisos das ações do plano (UC07; decisão 2.6 da correspondência do plano de ação;
@@ -26,14 +29,24 @@ public class NotificacaoAcaoInternaAdapter implements NotificadorAcao {
     private static final Logger log = LoggerFactory.getLogger(NotificacaoAcaoInternaAdapter.class);
 
     private final NotificacaoAcaoJpaRepository repository;
+    private final Validador<AvisoAcao> validador;
 
-    public NotificacaoAcaoInternaAdapter(NotificacaoAcaoJpaRepository repository) {
+    @Autowired
+    public NotificacaoAcaoInternaAdapter(NotificacaoAcaoJpaRepository repository, Validador<AvisoAcao> validador) {
         this.repository = repository;
+        this.validador = validador;
+    }
+
+    /** Usa o validador padrão; usado pelos testes sem contexto Spring. */
+    public NotificacaoAcaoInternaAdapter(NotificacaoAcaoJpaRepository repository) {
+        this(repository, new AvisoAcaoValidador());
     }
 
     @Override
     @Transactional
     public boolean notificar(AvisoAcao aviso) {
+        // Chain of Responsibility (#266): valida antes de montar e gravar a notificação.
+        validador.validar(aviso);
         NotificacaoAcao notificacao = NotificacaoAcao.deAviso(aviso);
         int gravados = repository.inserir(
                 notificacao.idAcao(),

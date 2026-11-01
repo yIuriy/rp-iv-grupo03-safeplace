@@ -11,6 +11,10 @@ import br.edu.safeplace.backend.adapters.out.persistencia.NotificacaoOcorrenciaJ
 import br.edu.safeplace.backend.application.port.out.NotificadorOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import br.edu.safeplace.backend.validacao.Validador;
+import br.edu.safeplace.backend.validacao.ocorrencia.NotificacaoOcorrenciaValidador;
 
 /**
  * Adaptador de notificação interna para alertar o Gestor de Segurança sobre novos relatos
@@ -24,9 +28,18 @@ public class NotificacaoOcorrenciaInternaAdapter implements NotificadorOcorrenci
     private static final Logger log = LoggerFactory.getLogger(NotificacaoOcorrenciaInternaAdapter.class);
 
     private final NotificacaoOcorrenciaJpaRepository repository;
+    private final Validador<Ocorrencia> validador;
 
-    public NotificacaoOcorrenciaInternaAdapter(NotificacaoOcorrenciaJpaRepository repository) {
+    @Autowired
+    public NotificacaoOcorrenciaInternaAdapter(NotificacaoOcorrenciaJpaRepository repository,
+            @Qualifier("notificacaoOcorrenciaValidador") Validador<Ocorrencia> validador) {
         this.repository = repository;
+        this.validador = validador;
+    }
+
+    /** Usa o validador padrão; usado pelos testes sem contexto Spring. */
+    public NotificacaoOcorrenciaInternaAdapter(NotificacaoOcorrenciaJpaRepository repository) {
+        this(repository, new NotificacaoOcorrenciaValidador());
     }
 
     @Override
@@ -35,6 +48,8 @@ public class NotificacaoOcorrenciaInternaAdapter implements NotificadorOcorrenci
             return;
         }
 
+        // Chain of Responsibility (#266): valida antes de montar e gravar a notificação.
+        validador.validar(ocorrencia);
         NotificacaoOcorrencia notificacao = NotificacaoOcorrencia.deNovoRelato(ocorrencia);
         repository.save(NotificacaoOcorrenciaEntity.deDominio(notificacao));
 

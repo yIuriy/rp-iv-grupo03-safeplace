@@ -34,6 +34,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import br.edu.safeplace.backend.validacao.Validador;
+import br.edu.safeplace.backend.validacao.ocorrencia.AcaoDoPlano;
+import br.edu.safeplace.backend.validacao.ocorrencia.AcaoPlanoValidador;
+import br.edu.safeplace.backend.validacao.ocorrencia.PlanoDaOcorrencia;
+import br.edu.safeplace.backend.validacao.ocorrencia.PlanoValidador;
 
 @Service
 public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
@@ -44,6 +49,8 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
     private final SetorRepository setorRepository;
     private final NotificadorAcao notificadorAcao;
     private final GerenciarOcorrenciaUseCase consultaOcorrencia;
+    private final Validador<AcaoDoPlano> acaoValidador;
+    private final Validador<PlanoDaOcorrencia> planoValidador;
 
     @Autowired
     public PlanoDeAcaoService(
@@ -52,7 +59,11 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
             UsuarioRepository usuarioRepository,
             SetorRepository setorRepository,
             NotificadorAcao notificadorAcao,
-            @Autowired(required = false) GerenciarOcorrenciaUseCase consultaOcorrencia) {
+            @Autowired(required = false) GerenciarOcorrenciaUseCase consultaOcorrencia,
+            Validador<AcaoDoPlano> acaoValidador,
+            Validador<PlanoDaOcorrencia> planoValidador) {
+        this.acaoValidador = acaoValidador;
+        this.planoValidador = planoValidador;
         this.planoDeAcaoRepository = planoDeAcaoRepository;
         this.ocorrenciaRepository = ocorrenciaRepository;
         this.usuarioRepository = usuarioRepository;
@@ -70,6 +81,18 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
             SetorRepository setorRepository,
             NotificadorAcao notificadorAcao) {
         this(planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository, notificadorAcao, null);
+    }
+
+    /** Usa os validadores padrão; usado pelos testes sem contexto Spring. */
+    public PlanoDeAcaoService(
+            PlanoDeAcaoRepository planoDeAcaoRepository,
+            OcorrenciaRepository ocorrenciaRepository,
+            UsuarioRepository usuarioRepository,
+            SetorRepository setorRepository,
+            NotificadorAcao notificadorAcao,
+            GerenciarOcorrenciaUseCase consultaOcorrencia) {
+        this(planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository, notificadorAcao,
+                consultaOcorrencia, new AcaoPlanoValidador(), new PlanoValidador());
     }
 
     /** Ação inexistente responde como não encontrada (404), não como dado inválido (issue #196). */
@@ -111,6 +134,7 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
         }
 
         GestorDeSeguranca gestor = gestorAutenticado();
+        LocalDate hoje = LocalDate.now();
 
         PlanoDeAcao acao = PlanoDeAcao.definir(
                 ocorrencia,
@@ -122,13 +146,15 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
                 inputDTO.alertaAtivo(),
                 inputDTO.antecedenciaAlertaDias(),
                 gestor,
-                LocalDate.now()
+                hoje
         );
+        // Chain of Responsibility (#266): a ação e, depois, o plano inteiro, antes do repository.
+        acaoValidador.validar(new AcaoDoPlano(acao, ocorrencia, hoje));
 
         List<PlanoDeAcao> acoesExistentes = planoDeAcaoRepository.listarPorOcorrencia(idOcorrencia);
         List<PlanoDeAcao> todasAcoes = new ArrayList<>(acoesExistentes);
         todasAcoes.add(acao);
-        PlanoDeAcao.validarPlano(ocorrencia, todasAcoes);
+        planoValidador.validar(new PlanoDaOcorrencia(ocorrencia, todasAcoes));
 
         PlanoDeAcao salvo = planoDeAcaoRepository.salvar(acao);
         return PlanoDeAcaoOutputDTO.deDominio(salvo);
