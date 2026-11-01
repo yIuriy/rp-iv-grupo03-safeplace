@@ -24,6 +24,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import br.edu.safeplace.backend.adapters.out.notificacao.NotificadorOcorrenciaNulo;
 import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
@@ -53,7 +54,8 @@ class OcorrenciaConsultaUseCaseTest {
         auditoria = mock(LogAuditoriaRepository.class);
         when(auditoria.buscarIdsPorResponsavelETipoOperacao(SUPERVISOR, "CADASTRO", OcorrenciaService.ENTIDADES_DE_RELATO))
                 .thenReturn(List.of(1, 3));
-        useCase = new OcorrenciaService(new RepositorioFixo(List.of(proprio, alheio, proprioAntigo)), null, null, auditoria);
+        useCase = new OcorrenciaService(new RepositorioFixo(List.of(proprio, alheio, proprioAntigo)), null, null, auditoria,
+                new NotificadorOcorrenciaNulo());
     }
 
     @AfterEach

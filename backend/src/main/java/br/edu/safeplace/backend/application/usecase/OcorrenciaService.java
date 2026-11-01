@@ -62,7 +62,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
             AreaRiscoRepository areaRiscoRepository,
             UsuarioRepository usuarioRepository,
             LogAuditoriaRepository logAuditoriaRepository,
-            @org.springframework.beans.factory.annotation.Autowired(required = false) NotificadorOcorrencia notificadorOcorrencia,
+            NotificadorOcorrencia notificadorOcorrencia,
             @Qualifier("ocorrenciaValidador") Validador<Ocorrencia> validador) {
         this.validador = java.util.Objects.requireNonNull(validador, "Validador da ocorrência é obrigatório.");
         this.repository = repository;
@@ -71,15 +71,9 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.logAuditoriaRepository = java.util.Objects.requireNonNull(
                 logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
-        this.notificadorOcorrencia = notificadorOcorrencia;
-    }
-
-    public OcorrenciaService(
-            OcorrenciaRepository repository,
-            AreaRiscoRepository areaRiscoRepository,
-            UsuarioRepository usuarioRepository,
-            LogAuditoriaRepository logAuditoriaRepository) {
-        this(repository, areaRiscoRepository, usuarioRepository, logAuditoriaRepository, null);
+        // Null Object (#227): a porta é obrigatória; sem notificação, injeta-se NotificadorOcorrenciaNulo.
+        this.notificadorOcorrencia = java.util.Objects.requireNonNull(
+                notificadorOcorrencia, "Notificador de ocorrência é obrigatório.");
     }
 
     /** Usa o validador padrão; usado pelos testes sem contexto Spring. */
@@ -139,9 +133,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         );
         logAuditoriaRepository.salvar(log);
 
-        if (notificadorOcorrencia != null) {
-            notificadorOcorrencia.notificarGestor(salvo);
-        }
+        notificadorOcorrencia.notificarGestor(salvo);
 
         return OcorrenciaOutputDTO.deDominio(salvo);
     }
@@ -180,9 +172,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         );
         logAuditoriaRepository.salvar(log);
 
-        if (notificadorOcorrencia != null) {
-            notificadorOcorrencia.notificarGestor(salvo);
-        }
+        notificadorOcorrencia.notificarGestor(salvo);
 
         return OcorrenciaOutputDTO.deDominio(salvo);
     }

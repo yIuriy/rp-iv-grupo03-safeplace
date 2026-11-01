@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.adapters.out.notificacao.NotificadorOcorrenciaNulo;
 import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
@@ -67,7 +68,8 @@ class OcorrenciaUseCaseAuditoriaTest {
 
     @BeforeEach
     void setUp() {
-        useCase = new OcorrenciaService(repository, areaRiscoRepository, usuarioRepository, logAuditoriaRepository);
+        useCase = new OcorrenciaService(repository, areaRiscoRepository, usuarioRepository, logAuditoriaRepository,
+                new NotificadorOcorrenciaNulo());
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("gestor@safeplace.com", "senha")
         );
