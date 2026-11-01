@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.adapters.out.seguranca.OperadorAutenticadoNulo;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarUsuarioInputDTO;
@@ -51,7 +52,8 @@ class UsuarioServiceSenhaInicialTest {
 
     @BeforeEach
     void setUp() {
-        casoDeUso = new UsuarioService(repositorioPorta, codificadorSenha, geradorSenha, auditoria);
+        casoDeUso = new UsuarioService(repositorioPorta, codificadorSenha, geradorSenha, auditoria,
+                new OperadorAutenticadoNulo());
         lenient().when(repositorioPorta.buscarPorCpf(CPF)).thenReturn(Optional.empty());
         lenient().when(repositorioPorta.buscarPorEmail(any())).thenReturn(Optional.empty());
         lenient().when(repositorioPorta.salvar(any(Colaborador.class))).thenAnswer(inv -> inv.getArgument(0));

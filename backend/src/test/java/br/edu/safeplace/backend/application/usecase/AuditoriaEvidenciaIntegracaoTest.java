@@ -4,6 +4,7 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.adapters.out.seguranca.OperadorAutenticadoNulo;
 import br.edu.safeplace.backend.application.dto.input.AtualizarAreaRiscoInputDTO;
 import br.edu.safeplace.backend.application.dto.input.AtualizarPessoaInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarTarefaInputDTO;
@@ -153,7 +154,7 @@ class AuditoriaEvidenciaIntegracaoTest {
     @DisplayName("Deve realizar alteração cadastral de Colaborador seguida de consulta e verificação de evidência")
     void alteracaoColaboradorSeguidaDeConsultaDeEvidencia() {
         UsuarioService usuarioService = new UsuarioService(
-                usuarioRepository, null, null, logAuditoriaRepository
+                usuarioRepository, null, null, logAuditoriaRepository, new OperadorAutenticadoNulo()
         );
 
         Colaborador existente = new Colaborador(
@@ -216,7 +217,7 @@ class AuditoriaEvidenciaIntegracaoTest {
     @DisplayName("Deve realizar classificação de Tarefa seguida de consulta de evidência")
     void classificacaoTarefaSeguidaDeConsultaDeEvidencia() {
         TarefaService tarefaService = new TarefaService(
-                tarefaRepository, logAuditoriaRepository, usuarioRepository
+                tarefaRepository, logAuditoriaRepository, usuarioRepository, null, null, mock(EpiRepository.class)
         );
 
         GestorDeSeguranca auditor = new GestorDeSeguranca(3, "49216091040", "Gestor Auditor",

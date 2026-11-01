@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.adapters.out.seguranca.OperadorAutenticadoNulo;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
 
 import java.time.LocalDate;
@@ -53,7 +54,8 @@ class UsuarioServiceCadastroPorPapelTest {
             geradorDeSenhaFoiChamado = true;
             return "SenhaGerada#1";
         };
-        casoDeUso = new UsuarioService(repositorio, new CodificadorSenhaFake(), gerador, auditoria);
+        casoDeUso = new UsuarioService(repositorio, new CodificadorSenhaFake(), gerador, auditoria,
+                new OperadorAutenticadoNulo());
     }
 
     /**

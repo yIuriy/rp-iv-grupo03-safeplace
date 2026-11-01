@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.adapters.out.seguranca.OperadorAutenticadoNulo;
 import br.edu.safeplace.backend.application.dto.input.AtualizarPessoaInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarColaboradorInputDTO;
 import br.edu.safeplace.backend.application.dto.input.CadastrarSupervisorInputDTO;
@@ -54,7 +55,8 @@ class UsuarioServiceAuditoriaTest {
                 usuarioRepository,
                 codificadorSenha,
                 geradorSenha,
-                logAuditoriaRepository
+                logAuditoriaRepository,
+                new OperadorAutenticadoNulo()
         );
     }
 

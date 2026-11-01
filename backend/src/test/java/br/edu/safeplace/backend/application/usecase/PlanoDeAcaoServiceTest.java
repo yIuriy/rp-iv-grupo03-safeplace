@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.application.port.in.GerenciarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.dto.input.AtualizarResponsavelInputDTO;
 import br.edu.safeplace.backend.application.dto.input.AtualizarStatusPlanoInputDTO;
 import br.edu.safeplace.backend.application.dto.input.ConfigurarAlertaInputDTO;
@@ -68,6 +69,9 @@ class PlanoDeAcaoServiceTest {
     @Mock
     private NotificadorAcao notificadorAcao;
 
+    @Mock
+    private GerenciarOcorrenciaUseCase consultaOcorrencia;
+
     private PlanoDeAcaoService useCase;
 
     private Colaborador colaborador;
@@ -78,7 +82,7 @@ class PlanoDeAcaoServiceTest {
     @BeforeEach
     void setUp() {
         useCase = new PlanoDeAcaoService(planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository,
-                notificadorAcao);
+                notificadorAcao, consultaOcorrencia);
 
         colaborador = new Colaborador(10, "11122233344", "Carlos", LocalDate.of(1990, 1, 1), "carlos@safeplace.com", true, LocalDateTime.now(), LocalDateTime.now());
         setor = new Setor(20, "Manutenção", "Setor de Manutenção", "Bloco M", NivelPerigo.MEDIO);
@@ -309,7 +313,6 @@ class PlanoDeAcaoServiceTest {
         );
         when(planoDeAcaoRepository.buscarPorId(80)).thenReturn(Optional.of(vencida));
         when(planoDeAcaoRepository.buscarPorId(81)).thenReturn(Optional.of(futura));
-        when(ocorrenciaRepository.buscarPorId(2)).thenReturn(Optional.of(ocorrenciaLeve));
 
         PlanoDeAcaoOutputDTO atrasada = useCase.buscarPorId(80);
         PlanoDeAcaoOutputDTO noPrazo = useCase.buscarPorId(81);

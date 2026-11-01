@@ -6,6 +6,7 @@
 
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.adapters.out.seguranca.OperadorAutenticadoNulo;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
 
 import br.edu.safeplace.backend.application.dto.output.UsuarioOutputDTO;
@@ -46,7 +47,8 @@ class UsuarioServicePerfilProprioTest {
 
     @BeforeEach
     void setUp() {
-        casoDeUso = new UsuarioService(repositorioPorta, codificadorSenha, geradorSenha, auditoria);
+        casoDeUso = new UsuarioService(repositorioPorta, codificadorSenha, geradorSenha, auditoria,
+                new OperadorAutenticadoNulo());
     }
 
     @Test

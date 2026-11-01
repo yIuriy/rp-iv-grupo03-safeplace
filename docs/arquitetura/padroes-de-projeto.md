@@ -24,7 +24,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [State (Backend)](#state--transicoes-de-statusepi) | GoF, comportamental | Backend: transições de `StatusEpi` | [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) | Pendente |
 | [Factory Method](#factory-method--criacao-de-epi-e-ocorrencia) | GoF, criacional | Backend: criação de `Epi` e `Acidente`/`Incidente` (`Ocorrencia` `sealed`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225), [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Pendente |
 | [Builder (Test Data Builder)](#builder--test-data-builders-de-epi-tarefa-e-ocorrencia) | GoF, criacional | Backend (`src/test`): builders de `Epi`, `Tarefa` e `Ocorrencia` | [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) | Pendente |
-| [Null Object](#null-object--adaptador-nulo-de-notificacao-e-dependencias-opcionais) | Woolf / PLoPD 3 | Backend: `NotificadorOcorrenciaNulo` e dependências opcionais | [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227), [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) | Aplicado (1/2: #227) |
+| [Null Object](#null-object--adaptador-nulo-de-notificacao-e-dependencias-opcionais) | Woolf / PLoPD 3 | Backend: `NotificadorOcorrenciaNulo` e dependências opcionais | [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227), [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) | Aplicado (2/2: #227, #241) |
 | [Chain of Responsibility](#chain-of-responsibility--camada-de-validação) | GoF, comportamental | Backend: camada `validacao` (aptidão do colaborador e tarefa) | [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228); continua em [#263](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/263) a [#267](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/267) | Aplicado (6/6: #228, #267, #263, #264, #265, #266) |
 | [Data Mapper](#data-mapper--mapeadores-de-persistencia) | Fowler / PoEAA | Backend: `EpiEntityMapper`, `AreaRiscoEntityMapper` e `PlanoDeAcaoEntityMapper` | [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229), [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242) | Pendente |
 | [Value Object](#value-object--protocolo-cat-em-acidente) | Fowler / DDD | Backend: `NumeroProtocoloCAT` dentro de `Acidente` | [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230) | Pendente |
@@ -725,7 +725,7 @@ A identificação do operador autenticado e o descarte de `"anonymousUser"` pass
 
 **Intenção:** fornecer implementações neutras para portas opcionais (`NotificadorOcorrenciaNulo`, `OperadorAutenticadoNulo`), eliminando construtores secundários que repassam `null` e checagens `!= null` nos casos de uso.
 
-**Issues:** [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227) (parte 1, aplicada) e [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) (parte 2).
+**Issues:** [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227) (parte 1) e [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) (parte 2), ambas aplicadas.
 
 **Nome da classe nula:** a issue #227 e o esqueleto desta seção usavam `NotificacaoOcorrenciaNula`. Depois da [#269](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/269), a porta passou a se chamar `NotificadorOcorrencia`, e `NotificacaoOcorrencia` já é a classe de domínio da notificação gravada. Por isso a classe nula se chama `NotificadorOcorrenciaNulo`: o nome segue a porta que ela implementa e não se confunde com o registro de domínio.
 
@@ -737,13 +737,26 @@ A identificação do operador autenticado e o descarte de `"anonymousUser"` pass
 - um construtor de 4 parâmetros repassava `null` explicitamente ao construtor principal;
 - quem escrevesse um novo fluxo de relato e esquecesse o `if` causaria um `NullPointerException`.
 
-**Parte 2 ([#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241)).** *A preencher.*
+**Parte 2 ([#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241)).** Quatro casos de uso tinham construtores telescópicos que repassavam `null` para uma dependência "opcional", e cada `null` virava um `if` mais adiante:
+
+| Caso de uso | Construtor que repassava `null` | Checagens decorrentes |
+| --- | --- | --- |
+| `UsuarioService` | `this(..., logAuditoriaRepository, null)` (sem operador) | `operadorAutenticado != null ? ... : new OperadorAutenticado() { ... }`, um Null Object improvisado como classe anônima |
+| `EmprestimoService` | `this(..., auditoria, null)` (sem repositório de manutenções) | `if (manutencoes != null)` na devolução para manutenção |
+| `TarefaService` | `this(..., setorRepository, null)` e `this(..., null, null, null)` | `if (epiRepository == null) return List.of();` e `usuarioRepositorio != null` |
+| `PlanoDeAcaoService` | `this(..., notificadorAcao, null)`, com `@Autowired(required = false)` na consulta de ocorrências | `if (consultaOcorrencia != null)` com caminho alternativo pelo repositório, e quatro `usuarioRepository`/`setorRepository != null` |
+
+Em produção nenhuma dessas dependências é ausente: o Spring sempre injeta todas. Os construtores curtos existiam só para os testes, mas abriam caminhos de código que a aplicação real nunca percorre.
 
 ### Por que Null Object
 
 O padrão troca o "não há notificador" por um objeto que implementa a mesma interface e não faz nada. O caso de uso passa a chamar a porta sempre, sem condição. A decisão "notificar ou não" sai do fluxo de negócio e vai para a montagem dos objetos: em produção o Spring injeta o adaptador real; quem não quer notificação (por exemplo, um teste) entrega o objeto nulo.
 
 O `NotificadorOcorrenciaNulo` não é um bean do Spring. Se fosse, o contexto teria duas implementações da mesma porta e a injeção ficaria ambígua. Ele fica em `adapters/out/notificacao`, ao lado do adaptador real, porque também é uma implementação da porta de saída.
+
+**Onde o objeto nulo não se aplica (#241).** O padrão só vale quando "não fazer nada" é um comportamento correto. Isso acontece com o operador autenticado: sem sessão, não há identificador nem papel, e a auditoria registra `SISTEMA`. Por isso existe o `OperadorAutenticadoNulo`. Já para `ManutencaoEpiRepository`, `EpiRepository`, `UsuarioRepository`, `SetorRepository` e `GerenciarOcorrenciaUseCase`, um objeto que não faz nada perderia dados em silêncio (a manutenção da devolução não seria gravada) ou pularia uma regra (a visibilidade do plano para o Supervisor, issue #100). Nesses casos, a dependência passou a ser obrigatória (`requireNonNull`) e os testes informam um dublê explícito.
+
+**Construtores que continuam.** Cada caso de uso ainda tem um segundo construtor que monta os validadores padrão da camada `validacao` (Chain of Responsibility, #228) para os testes sem Spring. Ele não repassa `null`: entrega objetos reais. Por isso ficou fora do escopo, que é eliminar os `this(..., null)`.
 
 ### Papéis do padrão
 
@@ -814,6 +827,73 @@ classDiagram
   OcorrenciaService --> "1" NotificadorOcorrencia : chama sem condição
 ```
 
+**Antes (#241).** O `UsuarioService` improvisava o objeto nulo como classe anônima, e os demais clientes testavam `null`.
+
+```mermaid
+classDiagram
+  direction LR
+  class OperadorAutenticado {
+    <<AbstractObject / Interface>>
+    +obterIdentificadorOperador() Optional~String~
+    +possuiPapel(papel) boolean
+  }
+  class SpringSecurityOperadorAutenticadoAdapter {
+    <<RealObject>>
+  }
+  class ClasseAnonima {
+    <<NullObject improvisado>>
+    criada dentro do construtor
+  }
+  class UsuarioService {
+    <<Client>>
+    +UsuarioService(4 parâmetros) repassa null
+    operador != null ? operador : new OperadorAutenticado()
+  }
+  class OutrosCasosDeUso {
+    <<Client>>
+    EmprestimoService, TarefaService, PlanoDeAcaoService
+    construtores this(..., null)
+    if (dependencia != null)
+  }
+  OperadorAutenticado <|.. SpringSecurityOperadorAutenticadoAdapter
+  OperadorAutenticado <|.. ClasseAnonima
+  UsuarioService --> "0..1" OperadorAutenticado
+  UsuarioService ..> ClasseAnonima : cria se null
+```
+
+**Depois (#241).** O objeto nulo tem nome, arquivo e testes; as outras dependências são obrigatórias.
+
+```mermaid
+classDiagram
+  direction LR
+  class OperadorAutenticado {
+    <<AbstractObject / Interface>>
+    +obterIdentificadorOperador() Optional~String~
+    +possuiPapel(papel) boolean
+  }
+  class SpringSecurityOperadorAutenticadoAdapter {
+    <<RealObject>>
+  }
+  class OperadorAutenticadoNulo {
+    <<NullObject>>
+    +obterIdentificadorOperador() Optional.empty()
+    +possuiPapel(papel) false
+  }
+  class UsuarioService {
+    <<Client>>
+    -operadorAutenticado (requireNonNull)
+  }
+  class OutrosCasosDeUso {
+    <<Client>>
+    EmprestimoService, TarefaService, PlanoDeAcaoService
+    dependências com requireNonNull
+    sem this(..., null) e sem if != null
+  }
+  OperadorAutenticado <|.. SpringSecurityOperadorAutenticadoAdapter
+  OperadorAutenticado <|.. OperadorAutenticadoNulo
+  UsuarioService --> "1" OperadorAutenticado : chama sem condição
+```
+
 ### Código antes × depois
 
 **Construtor de `OcorrenciaService` (#227).**
@@ -879,18 +959,70 @@ public final class NotificadorOcorrenciaNulo implements NotificadorOcorrencia {
 }
 ```
 
+**Operador em `UsuarioService` (#241).**
+
+Antes:
+
+```java
+public UsuarioService(UsuarioRepository repositorioPorta, CodificadorSenha codificadorSenha,
+        GeradorSenha geradorSenha, LogAuditoriaRepository logAuditoriaRepository) {
+    this(repositorioPorta, codificadorSenha, geradorSenha, logAuditoriaRepository, null);
+}
+...
+this.operadorAutenticado = operadorAutenticado != null
+        ? operadorAutenticado
+        : new OperadorAutenticado() {
+            public Optional<String> obterIdentificadorOperador() { return Optional.empty(); }
+            public boolean possuiPapel(String papel) { return false; }
+        };
+```
+
+Depois:
+
+```java
+// Null Object (#241): sem sessão, quem monta o serviço passa OperadorAutenticadoNulo, não null.
+this.operadorAutenticado = Objects.requireNonNull(
+        operadorAutenticado, "Porta do operador autenticado é obrigatória.");
+```
+
+**Visibilidade do plano em `PlanoDeAcaoService` (#241).**
+
+Antes:
+
+```java
+private void garantirOcorrenciaVisivel(Integer idOcorrencia) {
+    if (consultaOcorrencia != null) {
+        consultaOcorrencia.buscarPorId(idOcorrencia);
+        return;
+    }
+    ocorrenciaRepository.buscarPorId(idOcorrencia)
+            .orElseThrow(() -> new OcorrenciaNaoEncontradaException(idOcorrencia));
+}
+```
+
+Depois:
+
+```java
+private void garantirOcorrenciaVisivel(Integer idOcorrencia) {
+    consultaOcorrencia.buscarPorId(idOcorrencia);
+}
+```
+
 ### Benefício
 
 **Parte 1 (#227).** A pergunta "existe notificador?" deixou de ser respondida dentro do fluxo de relato. Ela é respondida uma única vez, na montagem do serviço: o construtor recusa `null` e o caso de uso confia na porta. Um novo fluxo que precise notificar o gestor chama a porta direto, sem o risco de esquecer o `if` e gerar `NullPointerException`. Os testes que não querem notificação deixam isso explícito ao passar `new NotificadorOcorrenciaNulo()`, em vez de esconder a escolha num construtor que repassava `null`.
 
+**Parte 2 (#241).** Cada caso de uso passou a ter um único caminho de execução para cada dependência: o mesmo que roda em produção. Antes, `PlanoDeAcaoService` tinha duas regras de visibilidade (a do caso de uso de ocorrências e um atalho pelo repositório, usado só nos testes), e os testes podiam passar verificando o atalho. O Null Object improvisado como classe anônima ganhou nome (`OperadorAutenticadoNulo`), arquivo próprio e testes. Um teste que monta o serviço agora mostra, na própria linha, qual dependência está sendo substituída e por quê.
+
 ### Métricas locais
 
-| Métrica | Antes (v1.0.0) | `dev` antes da #227 | Depois da #227 |
-| --- | ---: | ---: | ---: |
-| `comparacao_null` no backend (`backend_main`) | 578 | 597 | 595 |
-| `@Autowired(required = false)` para `NotificadorOcorrencia` | 1 | 1 | 0 |
-| `!= null` para `NotificadorOcorrencia` em `OcorrenciaService` | 2 | 2 | 0 |
-| Construtores de `OcorrenciaService` | 3 | 3 | 2 |
+| Métrica | Antes (v1.0.0) | `dev` antes da #227 | Depois da #227 | Depois da #241 |
+| --- | ---: | ---: | ---: | ---: |
+| `comparacao_null` no backend (`backend_main`) | 578 | 597 | 595 | 586 |
+| `@Autowired(required = false)` em `application/usecase` | 2 | 2 | 1 | 0 |
+| `this(..., null)` em `application/usecase` | 6 | 6 | 5 | 0 |
+| Construtores de `OcorrenciaService` | 3 | 3 | 2 | 2 |
+| Construtores de `UsuarioService` / `EmprestimoService` / `TarefaService` / `PlanoDeAcaoService` | | 3 / 3 / 4 / 3 | 3 / 3 / 4 / 3 | 2 / 2 / 2 / 2 |
 
 O valor de `dev` antes da #227 é maior que o da v1.0.0 porque outras funcionalidades entraram entre a release e esta refatoração. Medição: `python scripts/metricas/coletar_metricas.py`.
 
@@ -907,7 +1039,16 @@ Testes ajustados: `OcorrenciaConsultaUseCaseTest` e `OcorrenciaUseCaseAuditoriaT
 
 Suíte existente (`TESTCONTAINERS_RYUK_DISABLED=true ./mvnw clean test -Dapi.version=1.44`, banco PostgreSQL novo): **1139 testes, 0 falhas, 6 erros**. Os 6 erros (`EpiEstoqueConcorrenciaIntegracaoTest` 4, `EstoqueCriticoPersistenciaIntegracaoTest` 2) são anteriores à #227: a `dev` sem esta mudança (`f78f2c3`) dá 1134 testes com os mesmos 6 erros, causados por `DELETE FROM epis` bloqueado por linhas de `projecoes_substituicao` que outro teste de integração não limpa.
 
-**Parte 2 (#241).** *A preencher.*
+**Parte 2 (#241).**
+
+Testes novos:
+
+1. `OperadorAutenticadoNuloTest` (6 testes): sem identificador (`Optional` vazio, nunca `null`) e sem papel algum, inclusive para papel nulo ou vazio.
+2. `DependenciasObrigatoriasCasosDeUsoTest` (7 testes): `UsuarioService`, `EmprestimoService`, `TarefaService` e `PlanoDeAcaoService` recusam `null` na dependência antes opcional, com mensagem clara; com `OperadorAutenticadoNulo` (NullObject), a auditoria do cadastro registra `SISTEMA`; com um dublê de operador identificado (RealObject), registra o e-mail dele.
+
+Testes ajustados (só a linha que montava o serviço, porque o construtor curto foi removido): `UsuarioServiceTest`, `UsuarioServiceAtualizacaoTest`, `UsuarioServiceAuditoriaTest`, `UsuarioServiceBuscaPorCpfTest`, `UsuarioServiceCadastroPorPapelTest`, `UsuarioServicePerfilProprioTest`, `UsuarioServiceSenhaInicialTest` e `AuditoriaEvidenciaIntegracaoTest` passam `new OperadorAutenticadoNulo()`; `HistoricoAreaRiscoTarefaUseCaseTest` e `AuditoriaEvidenciaIntegracaoTest` passam um `EpiRepository` de teste; `PlanoDeAcaoServiceTest` passa um dublê de `GerenciarOcorrenciaUseCase` e deixou de preparar `ocorrenciaRepository.buscarPorId(2)` em `alertaEAtrasoCalculadosNoServidor`, que só servia ao atalho removido.
+
+Suíte existente (mesmo comando da parte 1): **1152 testes, 0 falhas, 6 erros**, os mesmos 6 erros anteriores descritos na parte 1. Os 13 testes a mais em relação à #227 (1139) são os novos desta parte.
 
 ---
 

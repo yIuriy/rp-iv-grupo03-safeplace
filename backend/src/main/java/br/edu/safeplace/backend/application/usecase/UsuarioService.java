@@ -45,13 +45,6 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
     private final Validador<Colaborador> validador;
     private final Validador<String> cpfValidador;
 
-    public UsuarioService(UsuarioRepository repositorioPorta,
-                            CodificadorSenha codificadorSenha,
-                            GeradorSenha geradorSenha,
-                            LogAuditoriaRepository logAuditoriaRepository) {
-        this(repositorioPorta, codificadorSenha, geradorSenha, logAuditoriaRepository, null);
-    }
-
     /** Monta os validadores padrão; usado pelos testes sem contexto Spring. */
     public UsuarioService(UsuarioRepository repositorioPorta,
                             CodificadorSenha codificadorSenha,
@@ -78,18 +71,9 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.logAuditoriaRepository = java.util.Objects.requireNonNull(
                 logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
-        this.operadorAutenticado = operadorAutenticado != null
-                ? operadorAutenticado
-                : new OperadorAutenticado() {
-                    @Override
-                    public java.util.Optional<String> obterIdentificadorOperador() {
-                        return java.util.Optional.empty();
-                    }
-                    @Override
-                    public boolean possuiPapel(String papel) {
-                        return false;
-                    }
-                };
+        // Null Object (#241): sem sessão, quem monta o serviço passa OperadorAutenticadoNulo, não null.
+        this.operadorAutenticado = java.util.Objects.requireNonNull(
+                operadorAutenticado, "Porta do operador autenticado é obrigatória.");
     }
 
     @Override
