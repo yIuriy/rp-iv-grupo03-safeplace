@@ -33,6 +33,7 @@ import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
+import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException;
@@ -119,7 +120,8 @@ class OcorrenciaConsultaUseCaseTest {
 
     private static Acidente acidente(int id, LocalDateTime fato, String protocolo) {
         return new Acidente(id, "Corte na mão", fato, fato.plusHours(1), StatusOcorrencia.ABERTA, null, null,
-                null, "Linha 1", null, CausaRaizAcidente.OUTRO, null, null, protocolo, null, NivelPerigo.BAIXO);
+                null, "Linha 1", null, CausaRaizAcidente.OUTRO, null, null, NumeroProtocoloCAT.de(protocolo), null,
+                NivelPerigo.BAIXO);
     }
 
     private static Incidente incidente(int id, LocalDateTime fato) {

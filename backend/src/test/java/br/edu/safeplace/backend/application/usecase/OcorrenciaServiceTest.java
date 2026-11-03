@@ -22,6 +22,7 @@ import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
+import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.DadosOcorrenciaInvalidosException;
@@ -439,10 +440,10 @@ class OcorrenciaServiceTest {
 
         Acidente ac1 = new Acidente(1, "Desc 1", LocalDateTime.of(2026, 9, 1, 10, 0), LocalDateTime.now(),
                 StatusOcorrencia.ABERTA, colaborador, area, null, null, null,
-                CausaRaizAcidente.OUTRO, null, null, "CAT-2026-09-0001", null, NivelPerigo.BAIXO);
+                CausaRaizAcidente.OUTRO, null, null, NumeroProtocoloCAT.de("CAT-2026-09-0001"), null, NivelPerigo.BAIXO);
         Acidente ac2 = new Acidente(2, "Desc 2", LocalDateTime.of(2026, 9, 2, 10, 0), LocalDateTime.now(),
                 StatusOcorrencia.ABERTA, colaborador, area, null, null, null,
-                CausaRaizAcidente.OUTRO, null, null, "CAT-2026-09-0002", null, NivelPerigo.BAIXO);
+                CausaRaizAcidente.OUTRO, null, null, NumeroProtocoloCAT.de("CAT-2026-09-0002"), null, NivelPerigo.BAIXO);
         repository.salvarAcidente(ac1);
         repository.salvarAcidente(ac2);
 
@@ -597,7 +598,7 @@ class OcorrenciaServiceTest {
                     acidente.getCausaRaiz(),
                     acidente.getTipo(),
                     acidente.getDano(),
-                    acidente.getNumeroProtocoloCAT(),
+                    acidente.getProtocoloCAT(),
                     acidente.getDestino(),
                     acidente.getGravidade());
             ocorrencias.add(salvo);

@@ -14,6 +14,7 @@ import java.util.Optional;
 public interface OcorrenciaJpaRepository extends JpaRepository<OcorrenciaEntity, Integer>,
         JpaSpecificationExecutor<OcorrenciaEntity> {
 
-    @Query("SELECT a FROM AcidenteEntity a WHERE a.numeroProtocolo = :numeroProtocolo")
+    /** Compara o texto guardado no Value Object embutido (issue #230), sem mudar a regra da busca. */
+    @Query("SELECT a FROM AcidenteEntity a WHERE a.numeroProtocolo.valor = :numeroProtocolo")
     Optional<AcidenteEntity> findByNumeroProtocolo(@Param("numeroProtocolo") String numeroProtocolo);
 }

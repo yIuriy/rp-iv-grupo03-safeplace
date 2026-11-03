@@ -11,7 +11,7 @@ public record NotificacaoOcorrencia(
         Integer id,
         Integer ocorrenciaId,
         TipoOcorrencia tipoOcorrencia,
-        String numeroProtocoloCAT,
+        NumeroProtocoloCAT numeroProtocoloCAT,
         String areaNome,
         String mensagem,
         LocalDateTime criadaEm) {
@@ -19,7 +19,8 @@ public record NotificacaoOcorrencia(
     public static NotificacaoOcorrencia deNovoRelato(Ocorrencia ocorrencia) {
         // A ocorrência é validada por NotificacaoOcorrenciaValidador no adaptador (#266).
         TipoOcorrencia tipo = ocorrencia instanceof Acidente ? TipoOcorrencia.ACIDENTE : TipoOcorrencia.INCIDENTE;
-        String protocolo = ocorrencia instanceof Acidente acidente ? acidente.getNumeroProtocoloCAT() : null;
+        // Value Object (#230): usa o protocolo guardado no acidente, sem recriar nem revalidar.
+        NumeroProtocoloCAT protocolo = ocorrencia instanceof Acidente acidente ? acidente.getProtocoloCAT() : null;
         String area = ocorrencia.getArea() != null ? ocorrencia.getArea().getNome() : null;
 
         StringBuilder mensagem = new StringBuilder(tipo == TipoOcorrencia.ACIDENTE ? "Novo acidente" : "Novo incidente")

@@ -108,7 +108,7 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
                 acidente.getCausaRaiz() != null ? acidente.getCausaRaiz().name() : null,
                 acidente.getTipo(),
                 acidente.getDano(),
-                acidente.getNumeroProtocoloCAT(),
+                acidente.getProtocoloCAT(),
                 acidente.getDestino(),
                 acidente.getGravidade().name());
     }

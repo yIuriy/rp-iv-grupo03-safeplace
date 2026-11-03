@@ -27,7 +27,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [Null Object](#null-object--adaptador-nulo-de-notificacao-e-dependencias-opcionais) | Woolf / PLoPD 3 | Backend: `NotificadorOcorrenciaNulo` e dependências opcionais | [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227), [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) | Aplicado (2/2: #227, #241) |
 | [Chain of Responsibility](#chain-of-responsibility--camada-de-validação) | GoF, comportamental | Backend: camada `validacao` (aptidão do colaborador e tarefa) | [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228); continua em [#263](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/263) a [#267](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/267) | Aplicado (6/6: #228, #267, #263, #264, #265, #266) |
 | [Data Mapper](#data-mapper--mapeadores-de-persistencia) | Fowler / PoEAA | Backend: `EpiEntityMapper`, `AreaRiscoEntityMapper` e `PlanoDeAcaoEntityMapper` | [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229), [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242) | Pendente |
-| [Value Object](#value-object--protocolo-cat-em-acidente) | Fowler / DDD | Backend: `NumeroProtocoloCAT` dentro de `Acidente` | [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230) | Pendente |
+| [Value Object](#value-object--protocolo-cat-em-acidente) | Fowler / DDD | Backend: `NumeroProtocoloCAT` dentro de `Acidente` | [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230) | Aplicado |
 | [DTO Assembler](#dto-assembler--ocorrenciaoutputdto) | Fowler / PoEAA | Backend: `OcorrenciaOutputAssembler` sem expor `PlanoDeAcao` | [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245) | Pendente |
 | [Strategy (Backend)](#strategy--fonte-de-tempo-clock) | GoF, comportamental | Backend: injeção de `java.time.Clock` nas regras de vencimento | [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247) | Pendente |
 | [Adapter (Frontend)](#adapter--leitura-da-api-e-contrato-de-epi) | GoF, estrutural | Frontend: primitivas de leitura da API e unificação de `Epi` | [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244), [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) | Pendente |
@@ -1605,7 +1605,7 @@ Decisões:
 
 - **Objetos de contexto.** O prazo da ação é comparado com a data da ocorrência, que a ação guarda só pelo id. Por isso o validador recebe `AcaoDoPlano` (ação, ocorrência e data de hoje). O conjunto do plano vira `PlanoDaOcorrencia`. O mesmo arranjo de `AptidaoParaTarefa` na #228.
 - **Operação `validarPlano` do diagrama.** Era um método estático só de validação; agora é a cadeia `PlanoValidador`. A correspondência foi atualizada em `correspondencia-classes-plano-de-acao.md`.
-- **Value Object do protocolo.** `NumeroProtocoloCAT` só normaliza o texto e informa `formatoValido()`; a recusa ("Formato de protocolo CAT inválido") é um elo do `OcorrenciaValidador`. Isso adianta a parte de validação da #230.
+- **Value Object do protocolo.** `NumeroProtocoloCAT` só normaliza o texto e informa `formatoValido()`; a recusa ("Formato de protocolo CAT inválido") é um elo do `OcorrenciaValidador`. Isso adianta a parte de validação da #230, que depois passou a guardar o VO em `Acidente` (ver [Value Object](#value-object--protocolo-cat-em-acidente)).
 - **Notificações validadas no adaptador.** As duas notificações são montadas e gravadas pelos adaptadores de saída (`NotificadorAcao`, `NotificadorOcorrencia`), que são o "repository" delas. A validação roda ali, antes de gravar.
 - **Regras repetidas de propósito.** "Responsável único e cadastrado" e "antecedência do alerta" valem tanto na criação (validador) quanto nas operações `atualizarResponsavel` e `configurarAlerta` (domínio), como o motivo da movimentação na #264.
 - **`RegraElo.interrompendo()`.** Uma regra simples pode agora interromper a cadeia, para os elos seguintes não receberem um objeto nulo (usado no aviso).
@@ -1672,36 +1672,289 @@ As regras que continuam no domínio são das **operações** que mudam o estado 
 
 ## Value Object — protocolo CAT em `Acidente`
 
-**Catálogo:** Fowler (PoEAA) / Evans (DDD) — Value Object.
+**Catálogo:** Fowler (PoEAA) e Evans (DDD), Value Object.
 
-**Intenção:** armazenar o protocolo CAT internamente como `NumeroProtocoloCAT` dentro de `Acidente`, preservando a validação e o significado do objeto de valor em todo o ciclo de vida da entidade.
+**Intenção:** guardar o protocolo CAT como `NumeroProtocoloCAT` dentro de `Acidente` durante todo o ciclo de vida da entidade, para que o número circule como um tipo próprio, comparado por valor, e não como texto solto que precisa ser reconvertido a cada uso.
 
-**Issue:** [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230).
+**Issue:** [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230), aplicada. Depende da validação feita em [#266](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/266) e segue a convenção de objeto de valor da [decisão de JPA no domínio](decisao-entidades-jpa-dominio.md) (#254, seção 2.2).
 
 ### Problema (antes)
 
-*A preencher na issue [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, §4).*
+O VO existia, mas não era guardado. `Acidente` tinha o campo `private final String numeroProtocoloCAT`, e o construtor criava o VO só para validar e normalizar o texto, descartando-o na mesma linha: `NumeroProtocoloCAT.de(numeroProtocoloCAT).getValor()`. Na v1.0.0 essa chamada lançava exceção para formato inválido; depois da #266, o construtor do VO deixou de validar, e a chamada passou a servir só para normalizar.
+
+O mesmo vaivém entre texto e objeto aparecia em quatro pontos de produção:
+
+| Ponto | Código antes |
+| --- | --- |
+| Construtor de `Acidente` | `NumeroProtocoloCAT.de(numeroProtocoloCAT).getValor()` |
+| `Acidente.consolidarCAT` | gerava o VO e passava `protocolo.getValor()` ao construtor |
+| `OcorrenciaService.registrarAcidente` | `NumeroProtocoloCAT.gerar(dataRef, sequencial).getValor()` |
+| `OcorrenciaValidador` (elo do formato) | `new NumeroProtocoloCAT(acidente.getNumeroProtocoloCAT()).formatoValido()` |
+
+Havia também uma lacuna de validação: `OcorrenciaService.consolidarCAT`, que emite a CAT dos acidentes antigos, gravava o protocolo novo sem passar pelo elo do formato.
+
+Além disso, o protocolo circulava como `String` em `NotificacaoOcorrencia` e nas classes de persistência (`AcidenteEntity`, `NotificacaoOcorrenciaEntity`). Qualquer código podia montar um `Acidente` com um texto qualquer no lugar do protocolo, e a igualdade entre dois protocolos dependia de quem lembrasse de normalizar (maiúsculas e espaços) antes de comparar.
+
+### Por que Value Object
+
+O protocolo CAT não tem identidade própria: dois protocolos com o mesmo número são o mesmo protocolo. É o caso típico de Value Object. O VO já sabia normalizar o texto, gerar o número a partir da sequência e informar se o formato é válido; faltava a entidade guardá-lo. Com o VO como atributo:
+
+- a normalização acontece uma vez, quando o VO é criado, e não a cada conversão;
+- a igualdade é por valor (`record`), então `CAT-2026-09-0001` e ` cat-2026-09-0001 ` são iguais;
+- o elo do formato consulta o objeto guardado, sem recriá-lo a partir do texto;
+- a notificação recebe o mesmo objeto do acidente, sem revalidar.
+
+**Validação fora do domínio.** Conforme a avaliação do professor, o VO não recusa nada na criação. A verificação do formato é o elo "Formato de protocolo CAT inválido" (Chain of Responsibility, #266), que roda no caso de uso antes do repository. O VO continua responsável pela igualdade por valor e pela geração do número.
+
+**Elo do formato reaproveitado.** O elo saiu do corpo do `OcorrenciaValidador` para `ProtocoloCATValidador.eloFormato()`, sem mudar mensagem, exceção nem posição na cadeia. O `OcorrenciaValidador` continua encadeando o elo no registro e na atualização. O `ProtocoloCATValidador` usa o mesmo elo sozinho em `consolidarCAT`, antes de `salvarAcidente`. A cadeia completa não foi usada ali porque a consolidação atende acidentes antigos, e o banco aceita `causa_raiz` nula (V32): reaplicar as regras do relato passaria a recusar consolidações que hoje funcionam. Como só o protocolo muda nessa operação, só ele é conferido.
+
+**Mapeamento JPA.** O VO recebeu `@Embeddable`, como define a decisão #254. Enquanto a ocorrência não migra para o domínio (#261), ele é embutido com `@Embedded` nas classes de persistência que ainda existem, na mesma coluna de antes, via `@AttributeOverride`: `acidentes.numero_protocolo` em `AcidenteEntity` e `notificacoes_ocorrencia.numero_protocolo_cat` em `NotificacaoOcorrenciaEntity`. Quando a #261 anotar `Acidente` com `@Entity`, o campo `@Embedded` passa para a classe de domínio sem mudar o VO nem o banco. A consulta por protocolo compara o texto do VO (`a.numeroProtocolo.valor`), com a mesma regra de busca de antes.
+
+**Contrato preservado.** `Acidente.getNumeroProtocoloCAT()` e `getNumeroProtocolo()` continuam devolvendo `String`. O VO é exposto por `getProtocoloCAT()`. Os DTOs e as respostas HTTP continuam com o protocolo em texto, e nenhuma migração Flyway foi criada.
 
 ### Papéis do padrão
 
 | Papel no padrão | Elemento no código | Responsabilidade |
 | --- | --- | --- |
-| Value Object | `NumeroProtocoloCAT` | Encapsular o formato e a validação do protocolo CAT |
-| Entity | `Acidente` | Manter a instância de `NumeroProtocoloCAT` como atributo |
+| Value Object | `NumeroProtocoloCAT` (`record`, `@Embeddable`) | Normalizar o texto, gerar o número pela sequência, informar `formatoValido()` e comparar por valor |
+| Entity que o contém | `Acidente` | Guardar o VO como atributo (`getProtocoloCAT()`) e manter o getter em `String` |
+| Outros usuários do VO | `NotificacaoOcorrencia`, `AcidenteEntity`, `NotificacaoOcorrenciaEntity` | Receber o mesmo VO, sem reconverter; as duas entidades o embutem na coluna de hoje |
+| Validação do formato | `ProtocoloCATValidador.eloFormato()`, encadeado no `OcorrenciaValidador` (#266) e usado sozinho pelo `ProtocoloCATValidador` | Recusar o formato inválido antes do repository, consultando o VO guardado, no registro, na atualização e na consolidação da CAT |
 
 ### Diagramas
 
-*Diagramas PlantUML antes e depois a preencher na issue [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230).*
+**Antes.** `Acidente` guarda texto; o VO é criado e descartado em cada ponto de uso.
+
+```mermaid
+classDiagram
+  direction LR
+  class NumeroProtocoloCAT {
+    <<Value Object>>
+    +valor String
+    +de(texto) NumeroProtocoloCAT
+    +gerar(data, sequencial) NumeroProtocoloCAT
+    +formatoValido() boolean
+    +getValor() String
+  }
+  class Acidente {
+    <<Entity>>
+    -numeroProtocoloCAT String
+    +Acidente(..., String numeroProtocoloCAT, ...)
+    +consolidarCAT(sequencial) Acidente
+    +getNumeroProtocoloCAT() String
+  }
+  class NotificacaoOcorrencia {
+    +numeroProtocoloCAT String
+    +deNovoRelato(ocorrencia)
+  }
+  class OcorrenciaValidador {
+    <<Chain of Responsibility>>
+    elo do formato: new NumeroProtocoloCAT(texto)
+  }
+  class AcidenteEntity {
+    -numeroProtocolo String
+  }
+  Acidente ..> NumeroProtocoloCAT : cria, chama getValor() e descarta
+  OcorrenciaValidador ..> NumeroProtocoloCAT : recria a partir do texto
+  NotificacaoOcorrencia ..> Acidente : copia o texto
+  AcidenteEntity ..> Acidente : texto
+```
+
+**Depois.** `Acidente` guarda o VO; os demais recebem o mesmo objeto.
+
+```mermaid
+classDiagram
+  direction LR
+  class NumeroProtocoloCAT {
+    <<Value Object / Embeddable>>
+    +valor String
+    +de(texto) NumeroProtocoloCAT
+    +gerar(data, sequencial) NumeroProtocoloCAT
+    +formatoValido() boolean
+    +semValor() boolean
+    +equals() por valor
+  }
+  class Acidente {
+    <<Entity>>
+    -numeroProtocoloCAT NumeroProtocoloCAT
+    +Acidente(..., NumeroProtocoloCAT protocolo, ...)
+    +consolidarCAT(sequencial) Acidente
+    +getProtocoloCAT() NumeroProtocoloCAT
+    +getNumeroProtocoloCAT() String
+  }
+  class NotificacaoOcorrencia {
+    +numeroProtocoloCAT NumeroProtocoloCAT
+    +deNovoRelato(ocorrencia)
+  }
+  class OcorrenciaValidador {
+    <<Chain of Responsibility>>
+    relato + ProtocoloCATValidador.eloFormato()
+  }
+  class ProtocoloCATValidador {
+    <<Chain of Responsibility>>
+    +eloFormato() getProtocoloCAT().formatoValido()
+  }
+  class OcorrenciaService {
+    registrar e atualizar: OcorrenciaValidador
+    consolidarCAT: ProtocoloCATValidador
+  }
+  class AcidenteEntity {
+    -numeroProtocolo NumeroProtocoloCAT
+    embutido na coluna numero_protocolo
+  }
+  class NotificacaoOcorrenciaEntity {
+    -numeroProtocoloCAT NumeroProtocoloCAT
+    embutido na coluna numero_protocolo_cat
+  }
+  Acidente *-- "0..1" NumeroProtocoloCAT : guarda
+  NotificacaoOcorrencia o-- "0..1" NumeroProtocoloCAT : mesmo objeto do acidente
+  OcorrenciaValidador ..> ProtocoloCATValidador : encadeia o elo do formato
+  ProtocoloCATValidador ..> Acidente : consulta o VO guardado
+  OcorrenciaService ..> OcorrenciaValidador
+  OcorrenciaService ..> ProtocoloCATValidador : antes do repository
+  AcidenteEntity *-- "0..1" NumeroProtocoloCAT
+  NotificacaoOcorrenciaEntity *-- "0..1" NumeroProtocoloCAT
+```
+
+### Código antes × depois
+
+**Campo e construtor de `Acidente`.**
+
+Antes:
+
+```java
+private final String numeroProtocoloCAT;
+...
+if (numeroProtocoloCAT != null && !numeroProtocoloCAT.isBlank()) {
+    this.numeroProtocoloCAT = NumeroProtocoloCAT.de(numeroProtocoloCAT).getValor();
+} else {
+    this.numeroProtocoloCAT = null;
+}
+...
+public String getNumeroProtocoloCAT() {
+    return numeroProtocoloCAT;
+}
+```
+
+Depois:
+
+```java
+private final NumeroProtocoloCAT numeroProtocoloCAT;
+...
+// Value Object (#230): o protocolo é guardado como veio, sem revalidar; sem texto, não foi emitido.
+this.numeroProtocoloCAT = numeroProtocoloCAT != null && !numeroProtocoloCAT.semValor()
+        ? numeroProtocoloCAT
+        : null;
+...
+public NumeroProtocoloCAT getProtocoloCAT() {
+    return numeroProtocoloCAT;
+}
+
+public String getNumeroProtocoloCAT() {
+    return numeroProtocoloCAT != null ? numeroProtocoloCAT.getValor() : null;
+}
+```
+
+**Elo do formato.**
+
+Antes (`OcorrenciaValidador`):
+
+```java
+.encadear(exigirComMensagem(OcorrenciaValidador::protocoloInvalido,
+        o -> "Formato de protocolo CAT inválido: " + ((Acidente) o).getNumeroProtocoloCAT(),
+        ProtocoloCATInvalidoException::new))
+...
+return ocorrencia instanceof Acidente acidente
+        && acidente.getNumeroProtocoloCAT() != null
+        && !new NumeroProtocoloCAT(acidente.getNumeroProtocoloCAT()).formatoValido();
+```
+
+Depois (`OcorrenciaValidador` e `ProtocoloCATValidador`):
+
+```java
+// OcorrenciaValidador: mesmo elo, mesma posição na cadeia.
+.encadear(ProtocoloCATValidador.<Ocorrencia>eloFormato())
+
+// ProtocoloCATValidador
+public static <T extends Ocorrencia> RegraElo<T> eloFormato() {
+    return exigirComMensagem(ProtocoloCATValidador::protocoloInvalido,
+            o -> "Formato de protocolo CAT inválido: " + ((Acidente) o).getNumeroProtocoloCAT(),
+            ProtocoloCATInvalidoException::new);
+}
+
+private static boolean protocoloInvalido(Ocorrencia ocorrencia) {
+    if (!(ocorrencia instanceof Acidente acidente)) {
+        return false;
+    }
+    NumeroProtocoloCAT protocolo = acidente.getProtocoloCAT();
+    return protocolo != null && !protocolo.formatoValido();
+}
+```
+
+**Consolidação da CAT em `OcorrenciaService`.**
+
+Antes:
+
+```java
+Acidente consolidado = acidente.consolidarCAT(sequencial);
+Acidente salvo = repository.salvarAcidente(consolidado);
+```
+
+Depois:
+
+```java
+Acidente consolidado = acidente.consolidarCAT(sequencial);
+protocoloValidador.validar(consolidado);
+Acidente salvo = repository.salvarAcidente(consolidado);
+```
+
+**Mapeamento em `AcidenteEntity` (mesma coluna).**
+
+Antes:
+
+```java
+@Column(name = "numero_protocolo")
+private String numeroProtocolo;
+```
+
+Depois:
+
+```java
+@Embedded
+@AttributeOverride(name = "valor", column = @Column(name = "numero_protocolo", length = 80))
+private NumeroProtocoloCAT numeroProtocolo;
+```
+
+### Benefício
+
+O protocolo deixou de ser um texto que cada ponto do código precisava reconverter e normalizar por conta própria. Ele é criado uma vez (gerado pela sequência no registro e na consolidação, ou lido do banco), guardado no acidente e repassado como o mesmo objeto à notificação e ao validador. Comparar dois protocolos ficou seguro, porque a igualdade é do próprio tipo e já considera a normalização. A assinatura do construtor de `Acidente` agora diz o que espera: um `NumeroProtocoloCAT`, e não uma `String` qualquer. E, como o VO já é `@Embeddable`, a migração da ocorrência para JPA no domínio (#261) só precisa mover o campo `@Embedded`, sem tocar no VO, no banco ou no contrato HTTP.
 
 ### Métricas locais
 
-| Métrica | Antes (v1.0.0) | Depois |
-| --- | --- | --- |
-| Descarte imediato do VO `NumeroProtocoloCAT` após validação no construtor | 1 | 0 |
+| Métrica | Antes (v1.0.0) | `dev` antes da #230 | Depois |
+| --- | ---: | ---: | ---: |
+| Descarte imediato do VO no construtor de `Acidente` (`de(...).getValor()`) | 1 | 1 | 0 |
+| Conversões VO → `String` → VO em produção (tabela do problema) | 3 | 4 | 0 |
+| Campos de domínio com o protocolo em `String` (`Acidente`, `NotificacaoOcorrencia`) | 2 | 2 | 0 |
+| Colunas de protocolo mapeadas pelo VO embutido | 0 | 0 | 2 |
+| Fluxos que gravam protocolo novo sem o elo do formato (`consolidarCAT`) | 1 | 1 | 0 |
+| Construtores de `OcorrenciaService` | 3 | 2 | 2 |
+| Migrações Flyway novas | | | 0 |
+
+Na v1.0.0 o elo do formato não existia (a validação estava no construtor do VO), por isso a contagem é 3. Medição por busca no código de `backend/src/main`.
 
 ### Evidências
 
-*A preencher na issue [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230).*
+Testes novos:
+
+1. `AcidenteProtocoloCATTest` (6 testes, 7 casos; papéis Entity e Value Object): `Acidente` guarda a própria instância do VO recebido e o getter em texto devolve o valor dele; formato inválido fica guardado, sem revalidar, para o validador recusar; protocolo ausente ou sem texto significa CAT não emitida; `consolidarCAT` guarda o VO gerado pela sequência; dois acidentes com o mesmo número têm protocolos iguais vindos de instâncias diferentes; a `NotificacaoOcorrencia` recebe o mesmo objeto do acidente (`isSameAs`).
+2. `NumeroProtocoloCATTest` (4 testes novos, 7 casos; igualdade por valor): protocolos com valores diferentes não são iguais, nem iguais ao texto; o número gerado é igual ao lido do texto e conta como um só elemento num `HashSet`; espaços e caixa não mudam a identidade; `semValor()` distingue protocolo não emitido de protocolo com texto, mesmo inválido.
+3. `ProtocoloCATValidadorTest` (3 testes, 5 casos; elo do formato sozinho): aceita protocolo no formato e acidente sem protocolo; recusa formato inválido com a mesma exceção e mensagem do `OcorrenciaValidador`; não reaplica as regras do relato (o mesmo acidente incompleto passa no `ProtocoloCATValidador` e é recusado pelo `OcorrenciaValidador`).
+4. `OcorrenciaServiceConsolidacaoCATTest` (3 testes; Client da validação): o validador do protocolo recebe o acidente já com o VO gerado e roda antes de `salvarAcidente`; se o formato for recusado, nada é salvo e a exceção do elo chega ao cliente; um acidente antigo sem causa raiz continua sendo consolidado.
+
+Testes ajustados (só a forma de informar o protocolo, agora `NumeroProtocoloCAT.de(...)`): `AcidenteTest`, `NotificacaoOcorrenciaTest`, `OcorrenciaValidadorTest`, `OcorrenciaServiceTest`, `OcorrenciaConsultaUseCaseTest`, `PlanoDeAcaoServiceTest`, `OcorrenciaJpaAdapterTest` e `SegurancaOcorrenciaPlanoRbacTest`. Em `OcorrenciaPersistenciaIntegracaoTest`, a notificação lida do banco é comparada pelo valor do VO. As asserções de `OcorrenciaControllerTest` e `SegurancaOcorrenciaPlanoRbacTest` sobre `numeroProtocoloCAT` no JSON não mudaram, o que confirma o contrato HTTP. Os testes de integração com PostgreSQL (`ddl-auto: validate`) confirmam que o VO embutido corresponde às colunas atuais.
+
+Suíte existente (`TESTCONTAINERS_RYUK_DISABLED=true ./mvnw clean test -Dapi.version=1.44`, banco PostgreSQL novo): **1174 testes, 0 falhas, 4 erros**. Os 15 testes de `OcorrenciaPersistenciaIntegracaoTest` passam com o VO embutido. Os 4 erros (`SetorAreaRiscoPersistenciaIntegracaoTest`) são anteriores à #230: a `dev` sem esta mudança (`5b7ad04`) dá 1152 testes com os mesmos 4 erros, causados por `DELETE FROM epis` bloqueado por linhas de `projecoes_substituicao` que outro teste de integração não limpa (o mesmo problema descrito no Null Object). A classe executada sozinha passa (4 testes, 0 erros). Os 22 testes a mais em relação à `dev` são os novos desta issue.
 
 ---
 

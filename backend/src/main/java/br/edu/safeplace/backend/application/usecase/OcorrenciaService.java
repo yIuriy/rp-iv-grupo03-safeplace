@@ -43,6 +43,7 @@ import java.util.function.Predicate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import br.edu.safeplace.backend.validacao.Validador;
 import br.edu.safeplace.backend.validacao.ocorrencia.OcorrenciaValidador;
+import br.edu.safeplace.backend.validacao.ocorrencia.ProtocoloCATValidador;
 
 @Service
 public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarOcorrenciaUseCase {
@@ -55,6 +56,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
     private final LogAuditoriaRepository logAuditoriaRepository;
     private final NotificadorOcorrencia notificadorOcorrencia;
     private final Validador<Ocorrencia> validador;
+    private final Validador<Acidente> protocoloValidador;
 
     @org.springframework.beans.factory.annotation.Autowired
     public OcorrenciaService(
@@ -63,8 +65,11 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
             UsuarioRepository usuarioRepository,
             LogAuditoriaRepository logAuditoriaRepository,
             NotificadorOcorrencia notificadorOcorrencia,
-            @Qualifier("ocorrenciaValidador") Validador<Ocorrencia> validador) {
+            @Qualifier("ocorrenciaValidador") Validador<Ocorrencia> validador,
+            @Qualifier("protocoloCATValidador") Validador<Acidente> protocoloValidador) {
         this.validador = java.util.Objects.requireNonNull(validador, "Validador da ocorrência é obrigatório.");
+        this.protocoloValidador = java.util.Objects.requireNonNull(
+                protocoloValidador, "Validador do protocolo CAT é obrigatório.");
         this.repository = repository;
         this.areaRiscoRepository = areaRiscoRepository;
         this.usuarioRepository = usuarioRepository;
@@ -84,7 +89,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
             LogAuditoriaRepository logAuditoriaRepository,
             NotificadorOcorrencia notificadorOcorrencia) {
         this(repository, areaRiscoRepository, usuarioRepository, logAuditoriaRepository, notificadorOcorrencia,
-                new OcorrenciaValidador());
+                new OcorrenciaValidador(), new ProtocoloCATValidador());
     }
 
     @Override
@@ -101,7 +106,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         // US13: o protocolo do acidente é sempre gerado pelo servidor, nunca informado pelo cliente.
         LocalDateTime dataRef = inputDTO.dataOcorrencia() != null ? inputDTO.dataOcorrencia() : LocalDateTime.now();
         long sequencial = repository.proximoSequencialCAT(dataRef.getYear(), dataRef.getMonthValue());
-        String numeroProtocolo = NumeroProtocoloCAT.gerar(dataRef, sequencial).getValor();
+        NumeroProtocoloCAT numeroProtocolo = NumeroProtocoloCAT.gerar(dataRef, sequencial);
 
         Acidente acidente = new Acidente(
                 null,
@@ -314,7 +319,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
                     causaRaiz,
                     inputDTO.tipo(),
                     inputDTO.dano(),
-                    acidente.getNumeroProtocoloCAT(),
+                    acidente.getProtocoloCAT(),
                     inputDTO.destino(),
                     gravidade);
             validador.validar(atualizado);
@@ -430,6 +435,9 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
 
         long sequencial = repository.proximoSequencialCAT(dataRef.getYear(), dataRef.getMonthValue());
         Acidente consolidado = acidente.consolidarCAT(sequencial);
+        // Só o protocolo muda: valida o formato (elo de #266) antes do repository, sem reaplicar as
+        // regras do relato a acidentes antigos (issue #230).
+        protocoloValidador.validar(consolidado);
         Acidente salvo = repository.salvarAcidente(consolidado);
 
         LogAuditoria log = LogAuditoria.registrarAlteracao(

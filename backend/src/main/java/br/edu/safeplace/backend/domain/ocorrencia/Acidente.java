@@ -17,7 +17,8 @@ public class Acidente extends Ocorrencia {
     private final CausaRaizAcidente causaRaiz;
     private final String tipo;
     private final String dano;
-    private final String numeroProtocoloCAT;
+    /** Value Object guardado como atributo (issue #230); {@code null} enquanto a CAT não é emitida. */
+    private final NumeroProtocoloCAT numeroProtocoloCAT;
     private final String destino;
     private final NivelPerigo gravidade;
 
@@ -35,7 +36,7 @@ public class Acidente extends Ocorrencia {
             CausaRaizAcidente causaRaiz,
             String tipo,
             String dano,
-            String numeroProtocoloCAT,
+            NumeroProtocoloCAT numeroProtocoloCAT,
             String destino,
             NivelPerigo gravidade) {
         super(idOcorrencia, descricao, dataOcorrencia, dataRegistro, statusOcorrencia,
@@ -43,11 +44,10 @@ public class Acidente extends Ocorrencia {
 
         // Causa raiz, gravidade e formato do protocolo: OcorrenciaValidador (issue #266).
 
-        if (numeroProtocoloCAT != null && !numeroProtocoloCAT.isBlank()) {
-            this.numeroProtocoloCAT = NumeroProtocoloCAT.de(numeroProtocoloCAT).getValor();
-        } else {
-            this.numeroProtocoloCAT = null;
-        }
+        // Value Object (#230): o protocolo é guardado como veio, sem revalidar; sem texto, não foi emitido.
+        this.numeroProtocoloCAT = numeroProtocoloCAT != null && !numeroProtocoloCAT.semValor()
+                ? numeroProtocoloCAT
+                : null;
 
         this.causaRaiz = causaRaiz;
         this.tipo = tipo != null ? tipo.trim() : null;
@@ -122,7 +122,7 @@ public class Acidente extends Ocorrencia {
                 this.causaRaiz,
                 this.tipo,
                 this.dano,
-                protocolo.getValor(),
+                protocolo,
                 this.destino,
                 this.gravidade
         );
@@ -149,12 +149,18 @@ public class Acidente extends Ocorrencia {
         return dano;
     }
 
-    public String getNumeroProtocoloCAT() {
+    /** O Value Object do protocolo, ou {@code null} enquanto a CAT não é emitida. */
+    public NumeroProtocoloCAT getProtocoloCAT() {
         return numeroProtocoloCAT;
     }
 
+    /** Texto do protocolo, como antes da issue #230 (contrato HTTP e banco inalterados). */
+    public String getNumeroProtocoloCAT() {
+        return numeroProtocoloCAT != null ? numeroProtocoloCAT.getValor() : null;
+    }
+
     public String getNumeroProtocolo() {
-        return numeroProtocoloCAT;
+        return getNumeroProtocoloCAT();
     }
 
     public String getDestino() {

@@ -1,7 +1,6 @@
 package br.edu.safeplace.backend.validacao.ocorrencia;
 
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
-import static br.edu.safeplace.backend.validacao.RegraElo.exigirComMensagem;
 import static br.edu.safeplace.backend.validacao.RegraElo.vazio;
 
 import java.time.LocalDateTime;
@@ -12,10 +11,8 @@ import org.springframework.stereotype.Component;
 
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
-import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.DataOcorrenciaInvalidaException;
-import br.edu.safeplace.backend.domain.ocorrencia.exception.ProtocoloCATInvalidoException;
 import br.edu.safeplace.backend.validacao.EloValidacao;
 import br.edu.safeplace.backend.validacao.ValidadorEmCadeia;
 
@@ -49,20 +46,12 @@ public class OcorrenciaValidador extends ValidadorEmCadeia<Ocorrencia> {
                         "Causa raiz é obrigatória para acidentes."))
                 .encadear(exigir(o -> o instanceof Acidente a && a.getGravidade() == null,
                         "Gravidade é obrigatória para acidentes."))
-                .encadear(exigirComMensagem(OcorrenciaValidador::protocoloInvalido,
-                        o -> "Formato de protocolo CAT inválido: " + ((Acidente) o).getNumeroProtocoloCAT(),
-                        ProtocoloCATInvalidoException::new))
+                // Mesmo elo usado sozinho pelo ProtocoloCATValidador na consolidação da CAT (#230).
+                .encadear(ProtocoloCATValidador.<Ocorrencia>eloFormato())
                 .encadear(exigir(o -> o instanceof Incidente i && vazio(i.getSituacaoRisco()),
                         "Situação de risco é obrigatória para incidentes."))
                 .encadear(exigir(o -> o instanceof Incidente i && vazio(i.getPotencialDano()),
                         "Potencial de dano é obrigatório para incidentes."));
         return primeiro;
-    }
-
-    /** O protocolo é opcional até ser emitido; quando existe, precisa seguir CAT-AAAA-MM-NNNN. */
-    private static boolean protocoloInvalido(Ocorrencia ocorrencia) {
-        return ocorrencia instanceof Acidente acidente
-                && acidente.getNumeroProtocoloCAT() != null
-                && !new NumeroProtocoloCAT(acidente.getNumeroProtocoloCAT()).formatoValido();
     }
 }
