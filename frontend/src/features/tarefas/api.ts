@@ -2,6 +2,7 @@
 // com responsável técnico e histórico das classificações (#114).
 
 import { http } from '../../shared/api/https'
+import { lista, listaOuVazia, numeroOuNulo, objeto } from '../../shared/api/leitura'
 import {
   ehNivelPerigo,
   lerEpiResumo,
@@ -61,8 +62,7 @@ export type DadosClassificacaoTarefa = {
 }
 
 function lerTarefa(dado: unknown): Tarefa {
-  if (dado === null || typeof dado !== 'object') throw new Error('Tarefa inválida na resposta da API')
-  const b = dado as Record<string, unknown>
+  const b = objeto(dado, 'Tarefa inválida na resposta da API')
   if (
     typeof b.id !== 'number' ||
     typeof b.descricao !== 'string' ||
@@ -75,7 +75,7 @@ function lerTarefa(dado: unknown): Tarefa {
   const dataClassificacao = typeof b.dataClassificacao === 'string' ? b.dataClassificacao : null
   const responsavelClassificacaoNome =
     typeof b.responsavelClassificacaoNome === 'string' ? b.responsavelClassificacaoNome : null
-  const areaRiscoId = typeof b.areaRiscoId === 'number' ? b.areaRiscoId : null
+  const areaRiscoId = numeroOuNulo(b.areaRiscoId)
   const setoresIds = Array.isArray(b.setoresIds)
     ? b.setoresIds.filter((item): item is number => typeof item === 'number')
     : []
@@ -98,8 +98,7 @@ function lerTarefa(dado: unknown): Tarefa {
 
 export async function listarTarefas(signal?: AbortSignal): Promise<Tarefa[]> {
   const { data } = await http.get<unknown>('/tarefas', { signal })
-  if (!Array.isArray(data)) throw new Error('Esperava uma lista de tarefas')
-  return data.map(lerTarefa)
+  return lista(data, lerTarefa, 'Esperava uma lista de tarefas')
 }
 
 export async function cadastrarTarefa(dados: DadosCadastroTarefa): Promise<Tarefa> {
@@ -128,8 +127,7 @@ export async function associarEpisTarefa(id: number, epiIds: number[]): Promise<
 
 export async function listarEpisTarefa(id: number, signal?: AbortSignal): Promise<EpiResumo[]> {
   const { data } = await http.get<unknown>(`/tarefas/${id}/epis`, { signal })
-  if (!Array.isArray(data)) throw new Error('Esperava uma lista de EPIs')
-  return data.map(lerEpiResumo)
+  return lista(data, lerEpiResumo, 'Esperava uma lista de EPIs')
 }
 
 export async function atualizarTarefa(id: number, dados: DadosAtualizacaoTarefa): Promise<Tarefa> {
@@ -138,8 +136,7 @@ export async function atualizarTarefa(id: number, dados: DadosAtualizacaoTarefa)
 }
 
 function lerItemExigenciaCapacitacao(dado: unknown): ItemExigenciaCapacitacao {
-  if (dado === null || typeof dado !== 'object') throw new Error('Exigência de capacitação inválida')
-  const b = dado as Record<string, unknown>
+  const b = objeto(dado, 'Exigência de capacitação inválida')
   return {
     id: typeof b.id === 'number' ? b.id : 0,
     nomeCapacitacao: typeof b.nomeCapacitacao === 'string' ? b.nomeCapacitacao : '',
@@ -148,15 +145,14 @@ function lerItemExigenciaCapacitacao(dado: unknown): ItemExigenciaCapacitacao {
 }
 
 function lerExigenciasTarefa(dado: unknown): ExigenciasTarefa {
-  if (dado === null || typeof dado !== 'object') throw new Error('Resposta de exigências inválida')
-  const b = dado as Record<string, unknown>
+  const b = objeto(dado, 'Resposta de exigências inválida')
   return {
     tarefaId: typeof b.tarefaId === 'number' ? b.tarefaId : 0,
     descricao: typeof b.descricao === 'string' ? b.descricao : '',
     nivelPerigo: ehNivelPerigo(b.nivelPerigo) ? b.nivelPerigo : null,
     classificada: typeof b.classificada === 'boolean' ? b.classificada : false,
-    capacitacoes: Array.isArray(b.capacitacoes) ? b.capacitacoes.map(lerItemExigenciaCapacitacao) : [],
-    episObrigatorios: Array.isArray(b.episObrigatorios) ? b.episObrigatorios.map(lerEpiResumo) : [],
+    capacitacoes: listaOuVazia(b.capacitacoes, lerItemExigenciaCapacitacao),
+    episObrigatorios: listaOuVazia(b.episObrigatorios, lerEpiResumo),
   }
 }
 

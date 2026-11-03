@@ -83,6 +83,28 @@ test('details dialog lists history with operator, date and time, quantity, reaso
   await expect(dialogo).not.toBeVisible()
 })
 
+test('blank text from the API reads as missing, as on the other screens (Adapter, #244)', async ({ page }) => {
+  await iniciarSessao(page, supervisor)
+  await simularEstoque(page)
+  // Rotas registradas depois têm prioridade: só a luva e o histórico dela mudam.
+  await page.route('**/api/epis', route => route.fulfill({ json: [capacete, { ...luva, localizacao: '   ', descricao: '' }] }))
+  await page.route('**/api/epis/2/movimentacoes', route => route.fulfill({
+    json: [{ id: 20, epiId: 2, loteId: 2, responsavelId: null, tipo: 'ENTRADA', quantidade: 5, dataHora: '2026-09-18T08:00:00', motivo: '  ', saldoAtual: 5 }],
+  }))
+  await page.goto('/epis')
+
+  const tabela = page.getByRole('table', { name: 'Catálogo de EPIs em estoque' })
+  const linhaLuva = tabela.getByRole('row', { name: /Luva nitrílica/ })
+  await expect(linhaLuva.getByRole('cell', { name: 'Não informada', exact: true })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Detalhes e histórico de Luva nitrílica' }).click()
+  const dialogo = page.getByRole('dialog', { name: 'Luva nitrílica' })
+  await expect(dialogo.getByText('Não informada', { exact: true })).toBeVisible()
+  await expect(dialogo.getByText('Descrição', { exact: true })).toHaveCount(0)
+  await expect(dialogo.getByRole('list', { name: 'Histórico de movimentações' }))
+    .toContainText('Operador: Não identificado. Motivo: não informado.')
+})
+
 test('Supervisor consults stock but has no movement action', async ({ page }) => {
   await iniciarSessao(page, supervisor)
   await simularEstoque(page)

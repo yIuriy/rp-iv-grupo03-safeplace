@@ -1,4 +1,5 @@
 import { http } from '../../shared/api/https'
+import { lista, objeto } from '../../shared/api/leitura'
 
 export type StatusEpi = 'DISPONIVEL' | 'EM_USO' | 'EM_MANUTENCAO' | 'ESGOTADO' | 'DESCARTADO'
 export type ResultadoManutencao = 'APROVADO' | 'REPROVADO'
@@ -86,8 +87,7 @@ function ehClassificacao(valor: unknown): valor is ClassificacaoEpi {
 }
 
 function lerEpi(dado: unknown): Epi {
-  if (dado === null || typeof dado !== 'object') throw new Error('EPI inválido na resposta da API')
-  const bruto = dado as Record<string, unknown>
+  const bruto = objeto(dado, 'EPI inválido na resposta da API')
   if (typeof bruto.id !== 'number' || typeof bruto.nome !== 'string' || typeof bruto.numeroCa !== 'string'
     || typeof bruto.quantidade !== 'number' || typeof bruto.estoqueMinimo !== 'number' || !ehStatus(bruto.status)) {
     throw new Error('EPI incompatível com contrato da API')
@@ -101,8 +101,7 @@ function lerEpi(dado: unknown): Epi {
 }
 
 function lerManutencao(dado: unknown): ManutencaoEpi {
-  if (dado === null || typeof dado !== 'object') throw new Error('Manutenção inválida na resposta da API')
-  const bruto = dado as Record<string, unknown>
+  const bruto = objeto(dado, 'Manutenção inválida na resposta da API')
   if (typeof bruto.id !== 'number' || typeof bruto.epiId !== 'number' || typeof bruto.dataManutencao !== 'string'
     || typeof bruto.descricao !== 'string' || !ehResultado(bruto.resultado) || !ehStatus(bruto.statusAtualEpi)) {
     throw new Error('Manutenção incompatível com contrato da API')
@@ -116,14 +115,12 @@ function lerManutencao(dado: unknown): ManutencaoEpi {
 
 export async function listarEpis(signal?: AbortSignal): Promise<Epi[]> {
   const { data } = await http.get<unknown>('/epis', { signal })
-  if (!Array.isArray(data)) throw new Error('Esperava uma lista de EPIs')
-  return data.map(lerEpi)
+  return lista(data, lerEpi, 'Esperava uma lista de EPIs')
 }
 
 export async function listarHistorico(epiId: number, signal?: AbortSignal): Promise<ManutencaoEpi[]> {
   const { data } = await http.get<unknown>(`/epis/${epiId}/manutencoes`, { signal })
-  if (!Array.isArray(data)) throw new Error('Esperava uma lista de manutenções')
-  return data.map(lerManutencao)
+  return lista(data, lerManutencao, 'Esperava uma lista de manutenções')
 }
 
 export async function registrarManutencao(epiId: number, dados: DadosManutencao): Promise<ManutencaoEpi> {

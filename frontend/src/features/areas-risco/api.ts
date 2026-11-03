@@ -3,6 +3,7 @@
 // antes de entregá-la às telas.
 
 import { http } from '../../shared/api/https'
+import { lista, listaOuVazia, numeroOuNulo, objeto } from '../../shared/api/leitura'
 import type { FeedbackTone } from '../../shared/components'
 
 export type NivelPerigo = 'BAIXO' | 'MEDIO' | 'ALTO' | 'CRITICO'
@@ -98,8 +99,7 @@ export function ehNivelPerigo(valor: unknown): valor is NivelPerigo {
 }
 
 export function lerEpiResumo(dado: unknown): EpiResumo {
-  if (dado === null || typeof dado !== 'object') throw new Error('EPI resumo inválido na resposta')
-  const b = dado as Record<string, unknown>
+  const b = objeto(dado, 'EPI resumo inválido na resposta')
   if (typeof b.id !== 'number' || typeof b.nome !== 'string' || typeof b.numeroCa !== 'string') {
     throw new Error('EPI resumo incompatível com contrato da API')
   }
@@ -112,8 +112,7 @@ export function lerEpiResumo(dado: unknown): EpiResumo {
 }
 
 function lerAreaRisco(dado: unknown): AreaRisco {
-  if (dado === null || typeof dado !== 'object') throw new Error('Área de risco inválida na resposta da API')
-  const b = dado as Record<string, unknown>
+  const b = objeto(dado, 'Área de risco inválida na resposta da API')
   if (
     typeof b.id !== 'number' ||
     typeof b.codigo !== 'string' ||
@@ -125,9 +124,7 @@ function lerAreaRisco(dado: unknown): AreaRisco {
   const agentesRisco = Array.isArray(b.agentesRisco)
     ? b.agentesRisco.filter((a): a is string => typeof a === 'string')
     : []
-  const episObrigatorios = Array.isArray(b.episObrigatorios)
-    ? b.episObrigatorios.map(lerEpiResumo)
-    : []
+  const episObrigatorios = listaOuVazia(b.episObrigatorios, lerEpiResumo)
 
   return {
     id: b.id,
@@ -135,7 +132,7 @@ function lerAreaRisco(dado: unknown): AreaRisco {
     nome: b.nome,
     descricao: typeof b.descricao === 'string' ? b.descricao : null,
     nivelPerigo: b.nivelPerigo,
-    setorId: typeof b.setorId === 'number' ? b.setorId : null,
+    setorId: numeroOuNulo(b.setorId),
     agentesRisco,
     limites: typeof b.limites === 'string' ? b.limites : null,
     episObrigatorios,
@@ -143,8 +140,7 @@ function lerAreaRisco(dado: unknown): AreaRisco {
 }
 
 function lerRegistroHistorico(dado: unknown): RegistroHistorico {
-  if (dado === null || typeof dado !== 'object') throw new Error('Registro de histórico inválido na resposta')
-  const b = dado as Record<string, unknown>
+  const b = objeto(dado, 'Registro de histórico inválido na resposta')
   if (
     typeof b.id !== 'number' ||
     typeof b.tipoOperacao !== 'string' ||
@@ -164,13 +160,11 @@ function lerRegistroHistorico(dado: unknown): RegistroHistorico {
 
 /** Valida a lista devolvida pelas rotas `/historico` de áreas de risco e tarefas. */
 export function lerHistorico(data: unknown): RegistroHistorico[] {
-  if (!Array.isArray(data)) throw new Error('Esperava uma lista de registros de histórico')
-  return data.map(lerRegistroHistorico)
+  return lista(data, lerRegistroHistorico, 'Esperava uma lista de registros de histórico')
 }
 
 function lerSetor(dado: unknown): Setor {
-  if (dado === null || typeof dado !== 'object') throw new Error('Setor inválido na resposta')
-  const b = dado as Record<string, unknown>
+  const b = objeto(dado, 'Setor inválido na resposta')
   if (typeof b.id !== 'number' || typeof b.nome !== 'string' || !ehNivelPerigo(b.status)) {
     throw new Error('Setor incompatível com contrato da API')
   }
@@ -185,8 +179,7 @@ function lerSetor(dado: unknown): Setor {
 
 export async function listarAreasRisco(signal?: AbortSignal): Promise<AreaRisco[]> {
   const { data } = await http.get<unknown>('/areas-risco', { signal })
-  if (!Array.isArray(data)) throw new Error('Esperava uma lista de áreas de risco')
-  return data.map(lerAreaRisco)
+  return lista(data, lerAreaRisco, 'Esperava uma lista de áreas de risco')
 }
 
 export async function cadastrarAreaRisco(dados: DadosCadastroAreaRisco): Promise<AreaRisco> {
@@ -207,8 +200,7 @@ export async function listarHistoricoAreaRisco(id: number, signal?: AbortSignal)
 
 export async function listarSetores(signal?: AbortSignal): Promise<Setor[]> {
   const { data } = await http.get<unknown>('/setores', { signal })
-  if (!Array.isArray(data)) throw new Error('Esperava uma lista de setores')
-  return data.map(lerSetor)
+  return lista(data, lerSetor, 'Esperava uma lista de setores')
 }
 
 /** Somente o Gestor de Segurança cadastra setores; o `SecurityConfig` recusa os demais perfis. */

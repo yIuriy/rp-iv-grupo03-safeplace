@@ -4,6 +4,7 @@
 // não são estados gravados: o servidor os calcula a partir do prazo e da data de hoje (issue #196).
 
 import { http } from '../../shared/api/https'
+import { lista, numeroOuNulo, objeto, textoOuNulo } from '../../shared/api/leitura'
 
 export type SituacaoAcao = 'ABERTA' | 'CONCLUIDA'
 export type TipoResponsavel = 'COLABORADOR' | 'SETOR'
@@ -42,29 +43,24 @@ export type Prorrogacao = {
   justificativa: string
 }
 
-function textoOuNulo(valor: unknown): string | null {
-  return typeof valor === 'string' && valor.trim() ? valor : null
-}
-
 function lerAcao(dado: unknown): AcaoPlano {
-  if (dado === null || typeof dado !== 'object') throw new Error('Ação do plano inválida na resposta')
-  const b = dado as Record<string, unknown>
+  const b = objeto(dado, 'Ação do plano inválida na resposta')
   if (typeof b.id !== 'number' || typeof b.prazo !== 'string') throw new Error('Ação do plano incompatível com o contrato da API')
   const situacao = String(b.situacao ?? '').toUpperCase()
   const tipo = String(b.responsavelTipo ?? '').toUpperCase()
   return {
     id: b.id,
-    idOcorrencia: typeof b.idOcorrencia === 'number' ? b.idOcorrencia : null,
+    idOcorrencia: numeroOuNulo(b.idOcorrencia),
     medidasCorretivas: textoOuNulo(b.medidasCorretivas),
     medidasPreventivas: textoOuNulo(b.medidasPreventivas),
     prazo: b.prazo,
     situacao: situacao === 'ABERTA' || situacao === 'CONCLUIDA' ? situacao : null,
     statusGravado: String(b.status ?? b.situacao ?? ''),
     responsavelTipo: tipo === 'COLABORADOR' || tipo === 'SETOR' ? tipo : null,
-    responsavelId: typeof b.responsavelId === 'number' ? b.responsavelId : null,
+    responsavelId: numeroOuNulo(b.responsavelId),
     responsavelNome: textoOuNulo(b.responsavelNome),
     alertaAtivo: b.alertaAtivo === true,
-    antecedenciaAlertaDias: typeof b.antecedenciaAlertaDias === 'number' ? b.antecedenciaAlertaDias : null,
+    antecedenciaAlertaDias: numeroOuNulo(b.antecedenciaAlertaDias),
     dataAlerta: textoOuNulo(b.dataAlerta),
     alertaDevido: b.alertaDevido === true,
     emAtraso: b.emAtraso === true,
@@ -73,8 +69,7 @@ function lerAcao(dado: unknown): AcaoPlano {
 }
 
 function lerProrrogacao(dado: unknown): Prorrogacao {
-  if (dado === null || typeof dado !== 'object') throw new Error('Prorrogação inválida na resposta')
-  const b = dado as Record<string, unknown>
+  const b = objeto(dado, 'Prorrogação inválida na resposta')
   return {
     idAcao: typeof b.idAcao === 'number' ? b.idAcao : 0,
     prazoAnterior: String(b.prazoAnterior ?? ''),
@@ -85,8 +80,7 @@ function lerProrrogacao(dado: unknown): Prorrogacao {
 
 export async function listarAcoes(idOcorrencia: number, signal?: AbortSignal): Promise<AcaoPlano[]> {
   const { data } = await http.get<unknown>(`/ocorrencias/${idOcorrencia}/planos-acao`, { signal })
-  if (!Array.isArray(data)) throw new Error('Esperava a lista de ações do plano')
-  return data.map(lerAcao)
+  return lista(data, lerAcao, 'Esperava a lista de ações do plano')
 }
 
 /** Corpo de `CriarPlanoDeAcaoRequest`: exatamente um entre colaborador e setor responsável. */
@@ -117,8 +111,7 @@ export async function prorrogarPrazo(id: number, novoPrazo: string, justificativ
 
 export async function listarProrrogacoes(id: number, signal?: AbortSignal): Promise<Prorrogacao[]> {
   const { data } = await http.get<unknown>(`/planos-acao/${id}/prorrogacoes`, { signal })
-  if (!Array.isArray(data)) throw new Error('Esperava o histórico de prorrogações')
-  return data.map(lerProrrogacao)
+  return lista(data, lerProrrogacao, 'Esperava o histórico de prorrogações')
 }
 
 export async function reatribuirResponsavel(id: number, responsavel: { colaboradorId?: number; setorId?: number }): Promise<AcaoPlano> {

@@ -4,6 +4,7 @@
 // calcula nem completa nenhum valor: datas, justificativas e alertas vêm do servidor.
 
 import { http } from '../../shared/api/https'
+import { lista, listaOuVazia, numeroOuNulo, objeto, texto, textoOuNulo } from '../../shared/api/leitura'
 import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
 
 /** Campos de `ProjecaoSubstituicaoOutputDTO` (decisão de DS10 em docs/arquitetura). */
@@ -42,25 +43,8 @@ export type ResultadoAnalise = {
   totalPendencias: number
 }
 
-function texto(valor: unknown, reserva: string): string {
-  return typeof valor === 'string' && valor.trim() ? valor : reserva
-}
-
-function textoOuNulo(valor: unknown): string | null {
-  return typeof valor === 'string' && valor.trim() ? valor : null
-}
-
-function numeroOuNulo(valor: unknown): number | null {
-  return typeof valor === 'number' ? valor : null
-}
-
-function registro(dado: unknown, descricao: string): Record<string, unknown> {
-  if (dado === null || typeof dado !== 'object') throw new Error(`${descricao} inválido`)
-  return dado as Record<string, unknown>
-}
-
 function lerProjecao(dado: unknown): Projecao {
-  const bruto = registro(dado, 'Registro de projeção')
+  const bruto = objeto(dado, 'Registro de projeção inválido')
   if (typeof bruto.id !== 'number' || typeof bruto.epiId !== 'number'
     || typeof bruto.dataProjecao !== 'string' || typeof bruto.dataEstimadaDescarte !== 'string') {
     throw new Error('Projeção incompatível com o contrato da API')
@@ -79,7 +63,7 @@ function lerProjecao(dado: unknown): Projecao {
 }
 
 function lerAlerta(dado: unknown): AlertaReposicao {
-  const bruto = registro(dado, 'Alerta de reposição')
+  const bruto = objeto(dado, 'Alerta de reposição inválido')
   if (typeof bruto.epiId !== 'number' || typeof bruto.tipoAlerta !== 'string') {
     throw new Error('Alerta incompatível com o contrato da API')
   }
@@ -94,7 +78,7 @@ function lerAlerta(dado: unknown): AlertaReposicao {
 }
 
 function lerPendencia(dado: unknown): PendenciaProjecao {
-  const bruto = registro(dado, 'Pendência da análise')
+  const bruto = objeto(dado, 'Pendência da análise inválido')
   const epiId = numeroOuNulo(bruto.epiId)
   return {
     epiId,
@@ -103,14 +87,10 @@ function lerPendencia(dado: unknown): PendenciaProjecao {
   }
 }
 
-function lerLista<T>(dados: unknown, ler: (dado: unknown) => T): T[] {
-  return Array.isArray(dados) ? dados.map(ler) : []
-}
-
 function lerResultado(dado: unknown): ResultadoAnalise {
-  const bruto = registro(dado, 'Resultado da análise')
+  const bruto = objeto(dado, 'Resultado da análise inválido')
   const calculadas = Array.isArray(bruto.projecoes) ? bruto.projecoes.length : 0
-  const pendencias = lerLista(bruto.pendenciasFalhas, lerPendencia)
+  const pendencias = listaOuVazia(bruto.pendenciasFalhas, lerPendencia)
   return {
     pendencias,
     totalProcessados: numeroOuNulo(bruto.totalProcessados) ?? calculadas + pendencias.length,
@@ -119,21 +99,16 @@ function lerResultado(dado: unknown): ResultadoAnalise {
   }
 }
 
-function lerListaObrigatoria<T>(dados: unknown, ler: (dado: unknown) => T, descricao: string): T[] {
-  if (!Array.isArray(dados)) throw new Error(`Esperava uma lista de ${descricao}`)
-  return dados.map(ler)
-}
-
 /** `GET /api/projecoes`: histórico de projeções registradas pelas análises anteriores. */
 export async function listarProjecoes(signal?: AbortSignal): Promise<Projecao[]> {
   const { data } = await http.get<unknown>('/projecoes', { signal })
-  return lerListaObrigatoria(data, lerProjecao, 'projeções')
+  return lista(data, lerProjecao, 'Esperava uma lista de projeções')
 }
 
 /** `GET /api/projecoes/alertas`: lista de reposição com a antecedência padrão do servidor (30 dias). */
 export async function listarAlertas(signal?: AbortSignal): Promise<AlertaReposicao[]> {
   const { data } = await http.get<unknown>('/projecoes/alertas', { signal })
-  return lerListaObrigatoria(data, lerAlerta, 'alertas de reposição')
+  return lista(data, lerAlerta, 'Esperava uma lista de alertas de reposição')
 }
 
 /** Exclusivo do Gestor (`POST /api/projecoes/**`). Sem corpo, o servidor usa a data de hoje e 90 dias de amostragem. */

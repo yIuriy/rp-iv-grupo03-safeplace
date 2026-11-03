@@ -5,6 +5,7 @@
 import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
 import type { NivelPerigo } from '../areas-risco/api'
 import { http } from '../../shared/api/https'
+import { lista, numeroOuNulo, objeto } from '../../shared/api/leitura'
 
 export type TipoOcorrencia = 'ACIDENTE' | 'INCIDENTE'
 export type StatusOcorrencia = 'ABERTA' | 'EM_TRIAGEM' | 'ARQUIVADA'
@@ -49,8 +50,7 @@ function normalizarStatus(status: unknown): StatusOcorrencia {
 }
 
 function lerOcorrenciaResumo(dado: unknown): OcorrenciaResumo {
-  if (dado === null || typeof dado !== 'object') throw new Error('Ocorrência inválida na resposta')
-  const b = dado as Record<string, unknown>
+  const b = objeto(dado, 'Ocorrência inválida na resposta')
   const idOcorrencia = typeof b.idOcorrencia === 'number' ? b.idOcorrencia : 0
   const tipoOcorrencia: TipoOcorrencia =
     String(b.tipoOcorrencia).toUpperCase() === 'ACIDENTE' ? 'ACIDENTE' : 'INCIDENTE'
@@ -71,11 +71,11 @@ function lerOcorrenciaResumo(dado: unknown): OcorrenciaResumo {
     destino: typeof b.destino === 'string' ? b.destino : null,
     situacaoRisco: typeof b.situacaoRisco === 'string' ? b.situacaoRisco : null,
     potencialDano: typeof b.potencialDano === 'string' ? b.potencialDano : null,
-    areaId: typeof b.areaId === 'number' ? b.areaId : null,
+    areaId: numeroOuNulo(b.areaId),
     areaNome: typeof b.areaNome === 'string' ? b.areaNome : null,
-    colaboradorId: typeof b.colaboradorId === 'number' ? b.colaboradorId : null,
+    colaboradorId: numeroOuNulo(b.colaboradorId),
     colaboradorNome: typeof b.colaboradorNome === 'string' ? b.colaboradorNome : null,
-    relatorId: typeof b.relatorId === 'number' ? b.relatorId : null,
+    relatorId: numeroOuNulo(b.relatorId),
     relatorNome: typeof b.relatorNome === 'string' ? b.relatorNome : null,
     relatorPerfil: typeof b.relatorPerfil === 'string' ? b.relatorPerfil : null,
   }
@@ -102,8 +102,7 @@ export function temCriterios(filtro: FiltroOcorrencias): boolean {
 export async function listarOcorrencias(filtro: FiltroOcorrencias, signal?: AbortSignal): Promise<OcorrenciaResumo[]> {
   const params = Object.fromEntries(Object.entries(filtro).filter(([, valor]) => valor !== undefined))
   const { data } = await http.get<unknown>('/ocorrencias', { params, signal })
-  if (!Array.isArray(data)) throw new Error('Esperava uma lista de ocorrências')
-  return data.map(lerOcorrenciaResumo)
+  return lista(data, lerOcorrenciaResumo, 'Esperava uma lista de ocorrências')
 }
 
 /** Só acidentes têm protocolo, o número da CAT (decisão DS09, seção 2.1). */
