@@ -9,7 +9,7 @@ Este documento formaliza as decisões arquiteturais e a matriz de correspondênc
 ## 2. Decisões de Modelo Registradas
 
 ### 2.1. Protocolo de Acompanhamento vs. Protocolo CAT
-- **Decisão**: Apenas a classe `Acidente` possui o atributo de protocolo (`numeroProtocoloCAT`), padronizado pelo Value Object `NumeroProtocoloCAT` (anteriormente `ProtocoloCAT`).
+- **Decisão**: Apenas a classe `Acidente` possui o atributo de protocolo (`numeroProtocoloCAT`), padronizado pelo Value Object `NumeroProtocoloCAT` (anteriormente `ProtocoloCAT`). Desde a [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230), `Acidente` guarda o próprio VO (`getProtocoloCAT()`), embutido na coluna `numero_protocolo`; `getNumeroProtocoloCAT()` continua devolvendo o texto para a API.
 - **Incidente e Ocorrência Genérica**: Não possuem protocolo de acompanhamento.
 - **Relação com o DS09**: A operação `gerarProtocolo()` do DS09 aplica-se estritamente ao fluxo de persistência de `Acidente`. Quando um `Incidente` é registrado, o fluxo é confirmado sem emissão de protocolo.
 - **Acompanhamento do incidente**: a confirmação do relato apresenta o número do registro (`idOcorrencia`), com o qual o incidente é localizado na consulta. Esse número não é um protocolo (issue #189).

@@ -1,10 +1,14 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
+
+import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 
 @Entity
 @Table(name = "acidentes")
@@ -15,8 +19,10 @@ public class AcidenteEntity extends OcorrenciaEntity {
     private String tipo;
     private String dano;
 
-    @Column(name = "numero_protocolo")
-    private String numeroProtocolo;
+    /** Value Object embutido na mesma coluna de antes (issue #230); nulo enquanto a CAT não é emitida. */
+    @Embedded
+    @AttributeOverride(name = "valor", column = @Column(name = "numero_protocolo", length = 80))
+    private NumeroProtocoloCAT numeroProtocolo;
 
     private String destino;
 
@@ -40,7 +46,7 @@ public class AcidenteEntity extends OcorrenciaEntity {
             String causaRaiz,
             String tipo,
             String dano,
-            String numeroProtocolo,
+            NumeroProtocoloCAT numeroProtocolo,
             String destino,
             String gravidade) {
         super(idOcorrencia, dataOcorrencia, dataRegistro, statusOcorrencia, area, colaborador, relator, local, descricao, planoDeAcao);
@@ -65,7 +71,7 @@ public class AcidenteEntity extends OcorrenciaEntity {
         return dano;
     }
 
-    public String getNumeroProtocolo() {
+    public NumeroProtocoloCAT getNumeroProtocolo() {
         return numeroProtocolo;
     }
 

@@ -23,13 +23,13 @@ class NotificacaoOcorrenciaTest {
     @DisplayName("Notificação de acidente traz tipo, protocolo e área (DS09, VisaoNotificacao)")
     void deveMontarNotificacaoDeAcidente() {
         Acidente acidente = new Acidente(7, "Queimadura", FATO, FATO, StatusOcorrencia.ABERTA, null, area(), null,
-                null, null, CausaRaizAcidente.FALHA_EPI, null, null, "CAT-2026-09-0003", null, NivelPerigo.ALTO);
+                null, null, CausaRaizAcidente.FALHA_EPI, null, null, NumeroProtocoloCAT.de("CAT-2026-09-0003"), null, NivelPerigo.ALTO);
 
         NotificacaoOcorrencia notificacao = NotificacaoOcorrencia.deNovoRelato(acidente);
 
         assertThat(notificacao.ocorrenciaId()).isEqualTo(7);
         assertThat(notificacao.tipoOcorrencia()).isEqualTo(TipoOcorrencia.ACIDENTE);
-        assertThat(notificacao.numeroProtocoloCAT()).isEqualTo("CAT-2026-09-0003");
+        assertThat(notificacao.numeroProtocoloCAT()).isEqualTo(NumeroProtocoloCAT.de("CAT-2026-09-0003"));
         assertThat(notificacao.areaNome()).isEqualTo("Solda");
         assertThat(notificacao.mensagem())
                 .isEqualTo("Novo acidente registrado (protocolo CAT-2026-09-0003) na área Solda. Aguarda triagem.");

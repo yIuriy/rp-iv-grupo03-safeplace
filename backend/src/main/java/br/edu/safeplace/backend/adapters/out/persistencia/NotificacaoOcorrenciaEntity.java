@@ -3,8 +3,11 @@ package br.edu.safeplace.backend.adapters.out.persistencia;
 import java.time.LocalDateTime;
 
 import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoOcorrencia;
+import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 import br.edu.safeplace.backend.domain.ocorrencia.TipoOcorrencia;
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,8 +31,10 @@ public class NotificacaoOcorrenciaEntity {
     @Column(name = "tipo_ocorrencia", nullable = false, length = 20)
     private String tipoOcorrencia;
 
-    @Column(name = "numero_protocolo_cat", length = 80)
-    private String numeroProtocoloCAT;
+    /** Value Object embutido na mesma coluna de antes (issue #230); nulo para incidentes. */
+    @Embedded
+    @AttributeOverride(name = "valor", column = @Column(name = "numero_protocolo_cat", length = 80))
+    private NumeroProtocoloCAT numeroProtocoloCAT;
 
     @Column(name = "area_nome", length = 160)
     private String areaNome;

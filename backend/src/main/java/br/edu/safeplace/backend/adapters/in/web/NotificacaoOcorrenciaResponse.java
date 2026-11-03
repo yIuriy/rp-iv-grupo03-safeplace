@@ -18,7 +18,7 @@ public record NotificacaoOcorrenciaResponse(
                 notificacao.id(),
                 notificacao.ocorrenciaId(),
                 notificacao.tipoOcorrencia().name(),
-                notificacao.numeroProtocoloCAT(),
+                notificacao.numeroProtocoloCAT() != null ? notificacao.numeroProtocoloCAT().getValor() : null,
                 notificacao.areaNome(),
                 notificacao.mensagem(),
                 notificacao.criadaEm());

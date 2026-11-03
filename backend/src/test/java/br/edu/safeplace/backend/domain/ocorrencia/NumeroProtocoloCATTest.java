@@ -1,6 +1,8 @@
 package br.edu.safeplace.backend.domain.ocorrencia;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -81,5 +83,43 @@ class NumeroProtocoloCATTest {
 
         assertThat(cat1).isEqualTo(cat2);
         assertThat(cat1.hashCode()).isEqualTo(cat2.hashCode());
+    }
+
+    @Test
+    @DisplayName("Value Object (#230): protocolos com valores diferentes não são iguais")
+    void protocolosDiferentesNaoSaoIguais() {
+        assertThat(NumeroProtocoloCAT.de("CAT-2026-09-0001")).isNotEqualTo(NumeroProtocoloCAT.de("CAT-2026-09-0002"));
+        assertThat(NumeroProtocoloCAT.de("CAT-2026-09-0001")).isNotEqualTo(NumeroProtocoloCAT.de("CAT-2026-10-0001"));
+        assertThat(NumeroProtocoloCAT.de("CAT-2026-09-0001")).isNotEqualTo("CAT-2026-09-0001");
+    }
+
+    @Test
+    @DisplayName("Value Object (#230): o número gerado é igual ao lido do texto, sem depender da instância")
+    void protocoloGeradoIgualAoLidoDoTexto() {
+        NumeroProtocoloCAT gerado = NumeroProtocoloCAT.gerar(LocalDateTime.of(2026, 9, 15, 10, 30), 7);
+        NumeroProtocoloCAT lido = NumeroProtocoloCAT.de("  cat-2026-09-0007 ");
+
+        assertThat(gerado).isEqualTo(lido).isNotSameAs(lido);
+        assertThat(new HashSet<>(List.of(gerado, lido))).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Value Object (#230): espaços e caixa não mudam a identidade do protocolo")
+    void normalizacaoPreservaIgualdade() {
+        NumeroProtocoloCAT normalizado = NumeroProtocoloCAT.de(" cat-2026-09-0001 ");
+
+        assertThat(normalizado.getValor()).isEqualTo("CAT-2026-09-0001");
+        assertThat(normalizado.formatoValido()).isTrue();
+        assertThat(NumeroProtocoloCAT.de(normalizado.getValor())).isEqualTo(normalizado);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"   ", "	"})
+    @DisplayName("Sem texto, o protocolo não foi emitido; com texto, foi, mesmo em formato inválido")
+    void deveInformarQuandoNaoHaValor(String semTexto) {
+        assertThat(NumeroProtocoloCAT.de(semTexto).semValor()).isTrue();
+        assertThat(NumeroProtocoloCAT.de("CAT-2026-09-0001").semValor()).isFalse();
+        assertThat(NumeroProtocoloCAT.de("PROTOCOLO-123").semValor()).isFalse();
     }
 }

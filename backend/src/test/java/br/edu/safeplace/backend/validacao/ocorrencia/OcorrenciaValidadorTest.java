@@ -20,6 +20,7 @@ import br.edu.safeplace.backend.domain.ocorrencia.AvisoAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
 import br.edu.safeplace.backend.domain.ocorrencia.MotivoAvisoAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.DataOcorrenciaInvalidaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.ProtocoloCATInvalidoException;
@@ -39,7 +40,8 @@ class OcorrenciaValidadorTest {
     private static Acidente acidente(String descricao, LocalDateTime data, CausaRaizAcidente causa,
             String protocolo, NivelPerigo gravidade) {
         return new Acidente(null, descricao, data, LocalDateTime.now(), StatusOcorrencia.ABERTA,
-                null, null, null, null, null, causa, "Tipo", "Dano", protocolo, "Destino", gravidade);
+                null, null, null, null, null, causa, "Tipo", "Dano", NumeroProtocoloCAT.de(protocolo), "Destino",
+                gravidade);
     }
 
     private static Incidente incidente(String descricao, LocalDateTime data, String situacao, String potencial) {

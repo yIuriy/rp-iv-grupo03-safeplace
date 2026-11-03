@@ -19,6 +19,7 @@ import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.AvisoAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
 import br.edu.safeplace.backend.domain.ocorrencia.MotivoAvisoAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.ProrrogacaoPrazo;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
@@ -90,13 +91,13 @@ class PlanoDeAcaoServiceTest {
         ocorrenciaGrave = new Acidente(
                 1, "Amputacao de dedo", LocalDateTime.now().minusDays(1), LocalDateTime.now(),
                 StatusOcorrencia.ABERTA, colaborador, null, null, "Prensa",
-                null, CausaRaizAcidente.FALHA_EPI, "Amputação", "Grave", "CAT-2026-09-0001", "Hospital", NivelPerigo.CRITICO
+                null, CausaRaizAcidente.FALHA_EPI, "Amputação", "Grave", NumeroProtocoloCAT.de("CAT-2026-09-0001"), "Hospital", NivelPerigo.CRITICO
         );
 
         ocorrenciaLeve = new Acidente(
                 2, "Escoriacao no braco", LocalDateTime.now().minusDays(1), LocalDateTime.now(),
                 StatusOcorrencia.ABERTA, colaborador, null, null, "Pátio",
-                null, CausaRaizAcidente.OUTRO, "Escoriação", "Leve", "CAT-2026-09-0002", "Ambulatório", NivelPerigo.BAIXO
+                null, CausaRaizAcidente.OUTRO, "Escoriação", "Leve", NumeroProtocoloCAT.de("CAT-2026-09-0002"), "Ambulatório", NivelPerigo.BAIXO
         );
     }
 

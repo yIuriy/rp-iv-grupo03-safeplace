@@ -21,6 +21,7 @@ import br.edu.safeplace.backend.config.SecurityConfig;
 import br.edu.safeplace.backend.domain.ocorrencia.MotivoAvisoAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoOcorrencia;
+import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 import br.edu.safeplace.backend.domain.ocorrencia.TipoOcorrencia;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -380,7 +381,7 @@ class SegurancaOcorrenciaPlanoRbacTest {
         @DisplayName("Gestor de Segurança consulta notificações de novos relatos (UC09, passo 12)")
         void gestorPodeConsultarNotificacoes() throws Exception {
             when(consultarNotificacoesUseCase.listar()).thenReturn(List.of(new NotificacaoOcorrencia(
-                    5, 1, TipoOcorrencia.ACIDENTE, "CAT-2026-09-0001", "Setor A",
+                    5, 1, TipoOcorrencia.ACIDENTE, NumeroProtocoloCAT.de("CAT-2026-09-0001"), "Setor A",
                     "Novo acidente registrado (protocolo CAT-2026-09-0001) na área Setor A. Aguarda triagem.",
                     LocalDateTime.of(2026, 9, 20, 10, 5))));
 

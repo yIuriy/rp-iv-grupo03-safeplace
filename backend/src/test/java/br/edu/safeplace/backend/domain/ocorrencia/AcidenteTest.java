@@ -46,7 +46,7 @@ class AcidenteTest {
                 CausaRaizAcidente.FALHA_EPI,
                 "Fratura",
                 "Contusão no pé",
-                "CAT-2026-09-0001",
+                NumeroProtocoloCAT.de("CAT-2026-09-0001"),
                 "Hospital Santa Casa",
                 NivelPerigo.ALTO
         );

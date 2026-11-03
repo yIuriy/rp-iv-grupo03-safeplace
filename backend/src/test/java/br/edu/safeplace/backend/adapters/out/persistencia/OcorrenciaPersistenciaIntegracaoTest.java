@@ -388,7 +388,7 @@ class OcorrenciaPersistenciaIntegracaoTest {
         assertThat(maisRecente.numeroProtocoloCAT()).isNull();
         NotificacaoOcorrencia doAcidente = notificacoes.get(1);
         assertThat(doAcidente.ocorrenciaId()).isEqualTo(acidente.idOcorrencia());
-        assertThat(doAcidente.numeroProtocoloCAT()).isEqualTo(acidente.numeroProtocoloCAT());
+        assertThat(doAcidente.numeroProtocoloCAT().getValor()).isEqualTo(acidente.numeroProtocoloCAT());
         assertThat(doAcidente.areaNome()).isEqualTo("Linha de Prensas");
         assertThat(doAcidente.mensagem()).contains(acidente.numeroProtocoloCAT(), "Linha de Prensas");
     }

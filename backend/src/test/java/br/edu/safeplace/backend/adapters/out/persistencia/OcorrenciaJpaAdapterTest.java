@@ -5,6 +5,7 @@ import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
+import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
@@ -211,7 +212,7 @@ class OcorrenciaJpaAdapterTest {
                 "FALHA_EPI",
                 "Corte",
                 "Dedo",
-                "CAT-2026-09-0050",
+                NumeroProtocoloCAT.de("CAT-2026-09-0050"),
                 "Ambulatório",
                 "ALTO"
         );
