@@ -3,6 +3,7 @@
 // entrega, devolução, nomes dos responsáveis e leitura das recusas do servidor.
 
 import { http } from '../../shared/api/https'
+import { lista, numeroOuNulo, objeto, textoOuNulo } from '../../shared/api/leitura'
 import { criarDescritorDeFalha, mensagemDaApi, statusDoErro, usarMensagemDaApi } from '../../shared/api/erros'
 import { lerEpi, nomeDoOperador, type Epi } from '../estoque/api'
 import { listarColaboradores, type Usuario } from '../usuarios/api'
@@ -46,21 +47,12 @@ export type Responsaveis = { entrega: string; devolucao: string | null }
 export const estadosDeDevolucao: readonly EstadoDevolucao[] = ['APTO', 'MANUTENCAO', 'DESCARTE']
 const classificacoes: readonly ClassificacaoEmprestimo[] = ['INDISPONIVEL', 'DEVOLUCAO_ATRASADA', 'DISPONIVEL']
 
-function textoOuNulo(valor: unknown): string | null {
-  return typeof valor === 'string' && valor.trim() ? valor : null
-}
-
-function numeroOuNulo(valor: unknown): number | null {
-  return typeof valor === 'number' ? valor : null
-}
-
 function estadoOuNulo(valor: unknown): EstadoDevolucao | null {
   return estadosDeDevolucao.includes(valor as EstadoDevolucao) ? valor as EstadoDevolucao : null
 }
 
 function lerEmprestimo(dado: unknown): Emprestimo {
-  if (dado === null || typeof dado !== 'object') throw new Error('Registro de empréstimo inválido')
-  const bruto = dado as Record<string, unknown>
+  const bruto = objeto(dado, 'Registro de empréstimo inválido')
   if (typeof bruto.id !== 'number' || typeof bruto.epiId !== 'number' || typeof bruto.colaboradorId !== 'number'
     || typeof bruto.dataRetirada !== 'string' || typeof bruto.dataDevolucaoPrevista !== 'string'
     || !classificacoes.includes(bruto.status as ClassificacaoEmprestimo)) {
@@ -85,21 +77,16 @@ function lerEmprestimo(dado: unknown): Emprestimo {
   }
 }
 
-function lerLista<T>(dados: unknown, ler: (dado: unknown) => T, descricao: string): T[] {
-  if (!Array.isArray(dados)) throw new Error(`Esperava uma lista de ${descricao}`)
-  return dados.map(ler)
-}
-
 /** `GET /api/emprestimos?situacao=...`: posse, pendências e atrasos (Supervisor e Gestor). */
 export async function listarEmprestimos(situacao: SituacaoConsulta, signal?: AbortSignal): Promise<Emprestimo[]> {
   const { data } = await http.get<unknown>('/emprestimos', { params: { situacao }, signal })
-  return lerLista(data, lerEmprestimo, 'empréstimos')
+  return lista(data, lerEmprestimo, 'Esperava uma lista de empréstimos')
 }
 
 /** Passo 4 do UC12: EPIs na situação Disponível, com saldo e CA válido, filtrados pelo backend. */
 export async function listarEpisDisponiveis(signal?: AbortSignal): Promise<Epi[]> {
   const { data } = await http.get<unknown>('/emprestimos/epis-disponiveis', { signal })
-  return lerLista(data, lerEpi, 'EPIs disponíveis')
+  return lista(data, lerEpi, 'Esperava uma lista de EPIs disponíveis')
 }
 
 /** Só cadastros ativos podem receber EPI: o backend recusa a entrega a colaborador inativo. */
@@ -115,8 +102,7 @@ export async function registrarEntrega(dados: DadosEntrega): Promise<Emprestimo>
 }
 
 function lerDevolucao(dado: unknown): Emprestimo {
-  if (dado === null || typeof dado !== 'object') throw new Error('Registro de devolução inválido')
-  const bruto = dado as Record<string, unknown>
+  const bruto = objeto(dado, 'Registro de devolução inválido')
   const id = typeof bruto.emprestimoId === 'number'
     ? bruto.emprestimoId
     : typeof bruto.id === 'number' ? bruto.id : 0

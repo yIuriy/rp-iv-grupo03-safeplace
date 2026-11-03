@@ -30,7 +30,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [Value Object](#value-object--protocolo-cat-em-acidente) | Fowler / DDD | Backend: `NumeroProtocoloCAT` dentro de `Acidente` | [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230) | Aplicado |
 | [DTO Assembler](#dto-assembler--ocorrenciaoutputdto) | Fowler / PoEAA | Backend: `OcorrenciaOutputAssembler` sem expor `PlanoDeAcao` | [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245) | Pendente |
 | [Strategy (Backend)](#strategy--fonte-de-tempo-clock) | GoF, comportamental | Backend: injeção de `java.time.Clock` nas regras de vencimento | [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247) | Pendente |
-| [Adapter (Frontend)](#adapter--leitura-da-api-e-contrato-de-epi) | GoF, estrutural | Frontend: primitivas de leitura da API e unificação de `Epi` | [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244), [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) | Pendente |
+| [Adapter (Frontend)](#adapter--leitura-da-api-e-contrato-de-epi) | GoF, estrutural | Frontend: primitivas de leitura da API e unificação de `Epi` | [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244), [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) | Aplicado (1/2: #244) |
 | [Template Method (hook)](#template-method-hook--envio-de-formulario) | GoF, comportamental | Frontend: submissão de formulários (`useEnvioFormulario`) | [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233), [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243) | Aplicado (2/2: #233, #243) |
 | [State (Frontend)](#state--dialogos-de-taskspage) | GoF, comportamental | Frontend: estado único `DialogoTarefa` em `TasksPage` | [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246) | Pendente |
 
@@ -2036,34 +2036,214 @@ Suíte existente (`TESTCONTAINERS_RYUK_DISABLED=true ./mvnw clean test -Dapi.ver
 
 **Intenção:** centralizar as primitivas de leitura de JSON da API (`shared/api/leitura.ts`) e unificar o adaptador `lerEpi` e o tipo `Epi` no frontend.
 
-**Issues:** [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244) e [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231).
+**Issues:** [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244) (parte 1, aplicada: primitivas de leitura) e [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) (parte 2, pendente: `Epi` único).
 
 ### Problema (antes)
 
-*A preencher nas issues [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244) e [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, §6).*
+**Parte 1 ([#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244)).** Cada `api.ts` tem funções `lerX` que convertem o JSON da API (`unknown`) nos tipos da feature. Elas já eram adaptadores, mas cada arquivo reimplementava as primitivas que usam:
+
+| Primitiva | Cópias locais | Onde |
+| --- | ---: | --- |
+| `textoOuNulo` | 4 | `emprestimos/api.ts`, `emprestimos/apiProjecoes.ts`, `estoque/api.ts`, `ocorrencias/apiPlanos.ts` |
+| `texto` | 3 | `capacitacoes/api.ts` e `usuarios/apiHistorico.ts` (mesma regra do `textoOuNulo`, com outro nome); `emprestimos/apiProjecoes.ts` (com valor reserva) |
+| `numeroOuNulo` | 2 | `emprestimos/api.ts`, `emprestimos/apiProjecoes.ts` |
+| `objeto` / `registro` | 2 | `capacitacoes/api.ts`, `emprestimos/apiProjecoes.ts` |
+| `lista` / `lerLista` / `lerListaObrigatoria` | 6 | `capacitacoes/api.ts`, `emprestimos/api.ts`, `emprestimos/apiProjecoes.ts` (duas), `estoque/api.ts`, `usuarios/api.ts` |
+
+Além das 17 funções, a mesma lógica aparecia escrita na linha: 22 verificações de objeto (`dado === null || typeof dado !== 'object'`), 17 de lista (`if (!Array.isArray(...)) throw`) e 14 leituras de número (`typeof x === 'number' ? x : null`).
+
+As cópias não eram iguais. A de `estoque/api.ts` aceitava texto em branco (`typeof valor === 'string' ? valor : null`), enquanto as outras três o trocavam por `null`. Assim, o mesmo campo vazio aparecia como célula em branco no catálogo do estoque e como "Não informado" nas demais telas. As verificações de objeto também divergiam: só a de `capacitacoes` recusava uma lista no lugar do objeto.
+
+### Por que Adapter
+
+O Adapter converte a interface de uma fonte (Adaptee) na interface que o cliente espera (Target). Aqui o Adaptee é o JSON sem tipo devolvido pelo axios, e o Target são os tipos das features (`Epi`, `Emprestimo`, `AcaoPlano`...). As funções `lerX` já faziam esse papel; o problema era que cada uma carregava a sua própria versão das regras de leitura. Com as primitivas num módulo único, os adaptadores passam a dizer só **quais** campos ler e **qual** reserva usar, e a regra de **como** ler um texto, um número, um objeto ou uma lista fica num lugar só. Uma mudança no formato do JSON, ou na regra de leitura, afeta um arquivo, e o comportamento fica igual em todas as telas.
+
+**Semântica única, documentada em `shared/api/leitura.ts`:**
+
+| Primitiva | Devolve | Recusa ou troca |
+| --- | --- | --- |
+| `textoOuNulo(valor)` | o texto com conteúdo, exatamente como veio (sem `trim`) | vazio, só espaços, ausência e outros tipos viram `null` |
+| `texto(valor, reserva)` | o texto com conteúdo | a reserva da tela no lugar de `null` |
+| `numeroOuNulo(valor)` | o número como veio | texto numérico, ausência e outros tipos viram `null` |
+| `objeto(dado, mensagem)` | o objeto JSON (`Bruto`) | `null`, lista e valor simples lançam `Error(mensagem)` |
+| `lista(dado, ler, mensagem)` | cada item passado por `ler` | o que não é lista lança `Error(mensagem)` |
+| `listaOuVazia(dado, ler)` | cada item passado por `ler` | ausência ou outro tipo vira lista vazia |
+
+As mensagens de erro continuam sendo do adaptador (cada `lerX` passa a sua), então nenhum texto mudou.
+
+**O que ficou fora da parte 1, de propósito:**
+
+- **35 leituras de "texto como veio"** (`typeof x === 'string' ? x : null` ou `: ''`), a maioria em `ocorrencias/api.ts`. Elas mantêm texto em branco, enquanto `textoOuNulo` o troca por `null`. Trocá-las mudaria o que aparece na tela quando a API devolve um campo vazio, e a issue pede nenhuma mudança visível. Ficam registradas para uma revisão futura.
+- **Leitura de formulário.** `validacaoPlano.ts` e `validacaoRelato.ts` têm uma função `texto(form, campo)` com o mesmo nome, mas ela lê `FormData`, não o JSON da API. Não é uma primitiva de leitura da resposta e não entrou no escopo.
+- **Filtros de lista por tipo** (`agentesRisco`, `setoresIds`, `episIds`, `textos` da capacitação), que filtram itens em vez de convertê-los.
 
 ### Papéis do padrão
 
 | Papel no padrão | Elemento no código | Responsabilidade |
 | --- | --- | --- |
-| Target | `export type Epi` e tipos de domínio das features no frontend | Contratos tipados consumidos pelas telas |
 | Adaptee | JSON bruto (`unknown`) retornado pelo axios | Dados recebidos da API HTTP |
-| Adapter | `lerEpi` e primitivas em `shared/api/leitura.ts` (`texto`, `textoOuNulo`, `numeroOuNulo`, `lista`) | Converter e normalizar o payload da API em um único lugar |
+| Adapter | funções `lerX` de cada `api.ts` (`lerEpi`, `lerEmprestimo`, `lerAcao`...), apoiadas nas primitivas de `shared/api/leitura.ts` (`textoOuNulo`, `texto`, `numeroOuNulo`, `objeto`, `lista`, `listaOuVazia`) | Converter o payload da API no tipo da feature; as primitivas guardam a regra única de leitura de cada tipo de campo |
+| Target | tipos das features (`Epi`, `Emprestimo`, `AcaoPlano`, `Projecao`...) e, depois da #231, um único `export type Epi` | Contratos tipados consumidos pelas telas |
+| Client | telas e hooks das features (`EstoquePage`, `EpiDetalheDialog`, `useConsulta`...) | Usar só o Target, sem conhecer o JSON |
 
 ### Diagramas
 
-*Diagramas PlantUML antes e depois a preencher nas issues [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244) e [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231).*
+**Antes (#244).** Cada adaptador carrega a sua cópia das regras de leitura; a de `estoque` diverge.
+
+```mermaid
+flowchart LR
+  API["JSON da API (unknown)<br/>«Adaptee»"]
+  subgraph estoque["estoque/api.ts"]
+    LE["lerEpi, lerMovimentacao<br/>«Adapter»"]
+    CE["textoOuNulo sem checar branco<br/>lerLista"]
+  end
+  subgraph emprestimos["emprestimos/api.ts e apiProjecoes.ts"]
+    LP["lerEmprestimo, lerProjecao...<br/>«Adapter»"]
+    CP["textoOuNulo, texto, numeroOuNulo<br/>registro, lerLista (x2)"]
+  end
+  subgraph outras["capacitacoes, ocorrencias, usuarios..."]
+    LO["lerX<br/>«Adapter»"]
+    CO["texto, objeto, lista<br/>verificações na linha"]
+  end
+  T["Tipos das features<br/>«Target»"]
+  API --> LE & LP & LO
+  LE --- CE
+  LP --- CP
+  LO --- CO
+  LE & LP & LO --> T
+```
+
+**Depois (#244).** Os adaptadores se apoiam nas mesmas primitivas.
+
+```mermaid
+flowchart LR
+  API["JSON da API (unknown)<br/>«Adaptee»"]
+  subgraph features["features/*/api*.ts"]
+    LE["estoque: lerEpi, lerMovimentacao"]
+    LP["emprestimos: lerEmprestimo, lerProjecao..."]
+    LO["capacitacoes, ocorrencias, usuarios, tarefas, areas-risco, epis: lerX"]
+  end
+  L["shared/api/leitura.ts<br/>textoOuNulo · texto · numeroOuNulo<br/>objeto · lista · listaOuVazia"]
+  T["Tipos das features<br/>«Target»"]
+  C["Telas e hooks<br/>«Client»"]
+  API --> LE & LP & LO
+  LE & LP & LO -->|usam| L
+  LE & LP & LO --> T
+  C --> T
+  classDef adapter stroke-width:2px
+  class LE,LP,LO,L adapter
+```
+
+O diagrama da parte 2 (`Epi` único) fica para a [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231).
+
+### Código antes × depois
+
+**Adaptador `lerEpi` do estoque.**
+
+Antes:
+
+```ts
+function textoOuNulo(valor: unknown): string | null {
+  return typeof valor === 'string' ? valor : null     // aceitava texto em branco
+}
+
+function lerMovimentacao(dado: unknown): Movimentacao {
+  if (dado === null || typeof dado !== 'object') throw new Error('Movimentação inválida')
+  const bruto = dado as Record<string, unknown>
+  ...
+  responsavelId: typeof bruto.responsavelId === 'number' ? bruto.responsavelId : null,
+  motivo: textoOuNulo(bruto.motivo),
+}
+
+function lerLista<T>(dados: unknown, ler: (dado: unknown) => T, descricao: string): T[] {
+  if (!Array.isArray(dados)) throw new Error(`Esperava uma lista de ${descricao}`)
+  return dados.map(ler)
+}
+```
+
+Depois:
+
+```ts
+import { lista, numeroOuNulo, objeto, texto, textoOuNulo } from '../../shared/api/leitura'
+
+function lerMovimentacao(dado: unknown): Movimentacao {
+  const bruto = objeto(dado, 'Movimentação inválida')
+  ...
+  responsavelId: numeroOuNulo(bruto.responsavelId),
+  motivo: textoOuNulo(bruto.motivo),                  // texto em branco vira null, como nas outras telas
+}
+
+export async function listarHistorico(epiId: number, signal?: AbortSignal) {
+  const { data } = await http.get<unknown>(`/epis/${epiId}/movimentacoes`, { signal })
+  const movimentacoes = lista(data, lerMovimentacao, 'Esperava uma lista de movimentações')
+  ...
+}
+```
+
+**Primitivas (`shared/api/leitura.ts`, novo).**
+
+```ts
+export function textoOuNulo(valor: unknown): string | null {
+  return typeof valor === 'string' && valor.trim() ? valor : null
+}
+
+export function texto(valor: unknown, reserva: string): string {
+  return textoOuNulo(valor) ?? reserva
+}
+
+export function numeroOuNulo(valor: unknown): number | null {
+  return typeof valor === 'number' ? valor : null
+}
+
+export function objeto(dado: unknown, mensagem: string): Bruto {
+  if (dado === null || typeof dado !== 'object' || Array.isArray(dado)) throw new Error(mensagem)
+  return dado as Bruto
+}
+
+export function lista<T>(dado: unknown, ler: (item: unknown) => T, mensagem: string): T[] {
+  if (!Array.isArray(dado)) throw new Error(mensagem)
+  return dado.map(ler)
+}
+
+export function listaOuVazia<T>(dado: unknown, ler: (item: unknown) => T): T[] {
+  return Array.isArray(dado) ? dado.map(ler) : []
+}
+```
+
+### Benefício
+
+**Parte 1 (#244).** A regra de leitura de cada tipo de campo passou a existir uma vez. Antes, "o que é um texto vazio" tinha duas respostas no frontend, e um campo em branco aparecia de jeitos diferentes conforme a tela; agora a resposta é única e documentada, e o catálogo do estoque mostra "Não informada" como as demais telas. Os adaptadores ficaram mais curtos (cerca de 100 linhas a menos nos `api*.ts`) e dizem só o que é próprio de cada recurso: quais campos ler, qual reserva usar e qual mensagem mostrar. Uma mudança na regra, por exemplo passar a aparar espaços, é feita em `leitura.ts` e vale para todas as telas, com os testes das primitivas mostrando o efeito.
 
 ### Métricas locais
 
-| Métrica | Antes (v1.0.0) | Depois |
-| --- | --- | --- |
-| Tipos e adaptadores `Epi` duplicados para `GET /api/epis` | 2 | 1 |
-| Cópias de `textoOuNulo` nas features | 4 | 1 |
+| Métrica | Antes (`dev`, `a5aa9be`) | Depois da #244 |
+| --- | ---: | ---: |
+| Cópias locais de primitivas de leitura (funções) | 17 | 0 |
+| Cópias de `textoOuNulo` nas features | 4 | 0 (1 em `shared/api/leitura.ts`) |
+| Semânticas de texto em branco entre as cópias de `textoOuNulo` | 2 | 1 |
+| Verificações de objeto escritas na linha | 22 | 0 |
+| Verificações de lista obrigatória escritas na linha | 17 | 0 |
+| Leituras de número escritas na linha | 14 | 0 |
+| Leituras de "texto como veio" (fora do escopo, ver acima) | 36 | 35 |
+| Linhas dos `features/*/api*.ts` | 1984 | 1883 |
+| Tipos e adaptadores `Epi` duplicados para `GET /api/epis` (#231) | 2 | 2 |
+
+Medição por busca nos arquivos `frontend/src/features/*/api*.ts`. A contagem de verificações de lista inclui as que estavam dentro das funções locais. A leitura de "texto como veio" a menos é a cópia de `textoOuNulo` do estoque, que passou à semântica única.
 
 ### Evidências
 
-*A preencher nas issues [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244) e [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231).*
+**Parte 1 (#244).**
+
+Testes novos:
+
+1. `tests/leitura.spec.ts` (11 testes, sem navegador; papel Adapter): `textoOuNulo` devolve o texto como veio e troca vazio, espaços, ausência e outros tipos por `null`; `texto` usa a reserva nos mesmos casos; `numeroOuNulo` aceita zero e negativos e recusa texto numérico; `objeto` recusa `null`, lista e valor simples com a mensagem do adaptador; `lista` aplica o leitor, recusa o que não é lista e propaga a recusa de um item inválido; `listaOuVazia` troca ausência por lista vazia.
+2. `tests/estoque.spec.ts`, teste "blank text from the API reads as missing" (Client e Target): com a API devolvendo localização em branco, descrição vazia e motivo só com espaços, o catálogo mostra "Não informada", o detalhe não mostra a descrição e o histórico mostra "Motivo: não informado". Executado contra o `estoque/api.ts` anterior, o teste falha: a célula fica em branco.
+
+Os adaptadores das features não são importados direto no `leitura.spec.ts` porque dependem do cliente `http`, que lê o `import.meta.env` do Vite. Eles são exercitados pelas specs de cada tela, que simulam as respostas da API e não mudaram.
+
+Suíte existente (`npm run lint`, `npm run build` e `npx playwright test`, 301 testes): lint e build sem erros. Em duas execuções completas, 300 testes passaram e 1 falhou, e o teste que falhou não foi o mesmo. Na primeira, falhou o "fluxo completo pelo teclado" de `capacitacoes.spec.ts` (foco depois de `Tab`), que passa nas três execuções isoladas. Na segunda, falhou "Gestor cadastra nova tarefa" de `tarefas.spec.ts` (botão do diálogo instável). Executado sozinho, ele falha também na `dev` sem esta mudança (`a5aa9be`), então a instabilidade é anterior à #244.
+
+**Parte 2 (#231).** *A preencher na issue [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231).*
 
 ---
 

@@ -3,6 +3,7 @@
 // #94 e #122), além da consulta do perfil da pessoa logada.
 
 import { http } from '../../shared/api/https'
+import { lista, objeto } from '../../shared/api/leitura'
 import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
 
 export type PerfilUsuario = 'SUPERVISOR' | 'GESTOR_SEGURANCA'
@@ -31,8 +32,7 @@ function ehPerfil(valor: unknown): valor is PerfilUsuario {
 }
 
 function lerUsuario(dado: unknown): UsuarioCriado {
-  if (dado === null || typeof dado !== 'object') throw new Error('Registro de usuário inválido')
-  const bruto = dado as Record<string, unknown>
+  const bruto = objeto(dado, 'Registro de usuário inválido')
   if (typeof bruto.id !== 'number' || typeof bruto.nome !== 'string' || typeof bruto.cpf !== 'string'
     || typeof bruto.dataNascimento !== 'string' || (bruto.perfil != null && !ehPerfil(bruto.perfil))) {
     throw new Error('Registro de usuário incompatível com o contrato da API')
@@ -49,15 +49,10 @@ function lerUsuario(dado: unknown): UsuarioCriado {
   }
 }
 
-function lerLista(dados: unknown): Usuario[] {
-  if (!Array.isArray(dados)) throw new Error('Esperava uma lista de usuários')
-  return dados.map(lerUsuario)
-}
-
 /** `GET /api/usuarios` devolve contas e colaboradores; a tela do Gestor mostra só os supervisores. */
 export async function listarSupervisores(signal?: AbortSignal): Promise<Usuario[]> {
   const { data } = await http.get<unknown>('/usuarios', { signal })
-  return lerLista(data).filter(usuario => usuario.perfil === 'SUPERVISOR')
+  return lista(data, lerUsuario, 'Esperava uma lista de usuários').filter(usuario => usuario.perfil === 'SUPERVISOR')
 }
 
 export async function listarColaboradores(filtro: FiltroColaboradores, signal?: AbortSignal): Promise<Usuario[]> {
@@ -65,7 +60,7 @@ export async function listarColaboradores(filtro: FiltroColaboradores, signal?: 
   if (filtro.nome) params.nome = filtro.nome
   if (filtro.cpf) params.cpf = filtro.cpf
   const { data } = await http.get<unknown>('/usuarios/colaboradores', { params, signal })
-  return lerLista(data)
+  return lista(data, lerUsuario, 'Esperava uma lista de usuários')
 }
 
 /** Dados da pessoa logada, com a data do cadastro (`criadoEm`, data e hora ISO, ou nulo). */

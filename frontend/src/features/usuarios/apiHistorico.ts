@@ -2,6 +2,7 @@
 // a pessoa logada registrou, lidas da trilha de auditoria, da mais recente para a mais antiga.
 
 import { http } from '../../shared/api/https'
+import { lista, numeroOuNulo, objeto, textoOuNulo } from '../../shared/api/leitura'
 
 export type TipoOperacao = 'CADASTRO' | 'ALTERACAO' | 'REMOCAO'
 
@@ -16,13 +17,8 @@ export type AcaoUsuario = {
 
 export const LIMITE_HISTORICO = 20
 
-function texto(valor: unknown): string | null {
-  return typeof valor === 'string' && valor.trim() ? valor : null
-}
-
 function lerAcao(dado: unknown): AcaoUsuario {
-  if (dado === null || typeof dado !== 'object') throw new Error('Ação inválida na resposta')
-  const b = dado as Record<string, unknown>
+  const b = objeto(dado, 'Ação inválida na resposta')
   if (typeof b.id !== 'number' || typeof b.tipoOperacao !== 'string' || typeof b.dataHora !== 'string') {
     throw new Error('Ação inválida na resposta')
   }
@@ -30,16 +26,15 @@ function lerAcao(dado: unknown): AcaoUsuario {
     id: b.id,
     tipoOperacao: b.tipoOperacao,
     dataHora: b.dataHora,
-    entidade: texto(b.entidade),
-    entidadeId: typeof b.entidadeId === 'number' ? b.entidadeId : null,
-    descricao: texto(b.descricao),
+    entidade: textoOuNulo(b.entidade),
+    entidadeId: numeroOuNulo(b.entidadeId),
+    descricao: textoOuNulo(b.descricao),
   }
 }
 
 export async function listarMinhasAcoes(signal?: AbortSignal): Promise<AcaoUsuario[]> {
   const { data } = await http.get<unknown>('/usuarios/me/historico', { params: { limite: LIMITE_HISTORICO }, signal })
-  if (!Array.isArray(data)) throw new Error('Resposta inválida do histórico')
-  return data.map(lerAcao)
+  return lista(data, lerAcao, 'Resposta inválida do histórico')
 }
 
 /** Nomes gravados no log pelo backend, em português para a tela; nome desconhecido aparece como veio. */

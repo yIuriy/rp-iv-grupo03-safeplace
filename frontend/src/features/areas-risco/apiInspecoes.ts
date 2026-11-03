@@ -3,6 +3,7 @@
 // a resposta da API antes de entregá-la à tela.
 
 import { http } from '../../shared/api/https'
+import { lista, objeto } from '../../shared/api/leitura'
 
 export type ItemVerificado = {
   id: number
@@ -28,8 +29,7 @@ export type DadosRegistroInspecao = {
 }
 
 function lerItem(dado: unknown): ItemVerificado {
-  if (dado === null || typeof dado !== 'object') throw new Error('Item verificado inválido na resposta')
-  const b = dado as Record<string, unknown>
+  const b = objeto(dado, 'Item verificado inválido na resposta')
   if (typeof b.id !== 'number' || typeof b.descricao !== 'string' || typeof b.conformidade !== 'boolean') {
     throw new Error('Item verificado incompatível com contrato da API')
   }
@@ -42,8 +42,7 @@ function lerItem(dado: unknown): ItemVerificado {
 }
 
 function lerInspecao(dado: unknown): Inspecao {
-  if (dado === null || typeof dado !== 'object') throw new Error('Inspeção inválida na resposta')
-  const b = dado as Record<string, unknown>
+  const b = objeto(dado, 'Inspeção inválida na resposta')
   if (
     typeof b.id !== 'number' ||
     typeof b.areaRiscoId !== 'number' ||
@@ -66,8 +65,7 @@ function lerInspecao(dado: unknown): Inspecao {
 
 export async function listarInspecoes(areaId: number, signal?: AbortSignal): Promise<Inspecao[]> {
   const { data } = await http.get<unknown>(`/areas-risco/${areaId}/inspecoes`, { signal })
-  if (!Array.isArray(data)) throw new Error('Esperava uma lista de inspeções')
-  return data.map(lerInspecao)
+  return lista(data, lerInspecao, 'Esperava uma lista de inspeções')
 }
 
 export async function registrarInspecao(areaId: number, dados: DadosRegistroInspecao): Promise<Inspecao> {

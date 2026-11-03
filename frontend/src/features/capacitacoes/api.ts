@@ -4,6 +4,7 @@
 
 import { isAxiosError } from 'axios'
 import { http } from '../../shared/api/https'
+import { lista, numeroOuNulo, objeto, textoOuNulo, type Bruto } from '../../shared/api/leitura'
 import { criarDescritorDeFalha, mensagemDaApi, statusDoErro, usarMensagemDaApi } from '../../shared/api/erros'
 
 /** Situação de `Certificacao.status` calculada pelo backend (UC02, cenário alternativo IV). */
@@ -104,24 +105,6 @@ export type Aptidao = {
   impedimentos: string[]
 }
 
-type Bruto = Record<string, unknown>
-
-function objeto(dado: unknown, contexto: string): Bruto {
-  if (dado === null || typeof dado !== 'object' || Array.isArray(dado)) {
-    throw new Error(`${contexto} inválido na resposta da API`)
-  }
-  return dado as Bruto
-}
-
-function lista<T>(dado: unknown, ler: (item: unknown) => T, contexto: string): T[] {
-  if (!Array.isArray(dado)) throw new Error(`Esperava uma lista de ${contexto}`)
-  return dado.map(ler)
-}
-
-function texto(valor: unknown): string | null {
-  return typeof valor === 'string' && valor.trim() ? valor : null
-}
-
 function textos(valor: unknown): string[] {
   return Array.isArray(valor) ? valor.filter((item): item is string => typeof item === 'string') : []
 }
@@ -139,7 +122,7 @@ function exigir(condicao: boolean, contexto: string): void {
 }
 
 function lerResumo(dado: unknown): ResumoColaborador {
-  const b = objeto(dado, 'Colaborador')
+  const b = objeto(dado, 'Colaborador inválido na resposta da API')
   exigir(typeof b.colaboradorId === 'number' && typeof b.colaboradorNome === 'string', 'Colaborador')
   return {
     colaboradorId: b.colaboradorId as number,
@@ -153,7 +136,7 @@ function lerResumo(dado: unknown): ResumoColaborador {
 }
 
 function lerCertificacao(dado: unknown): Certificacao {
-  const b = objeto(dado, 'Certificação')
+  const b = objeto(dado, 'Certificação inválido na resposta da API')
   exigir(typeof b.id === 'number' && typeof b.nome === 'string' && ehSituacao(b.status)
     && typeof b.dataVencimento === 'string' && typeof b.dataEmissao === 'string', 'Certificação')
   return {
@@ -166,40 +149,40 @@ function lerCertificacao(dado: unknown): Certificacao {
 }
 
 function lerTreinamento(dado: unknown): Treinamento {
-  const b = objeto(dado, 'Treinamento')
+  const b = objeto(dado, 'Treinamento inválido na resposta da API')
   exigir(typeof b.id === 'number' && typeof b.nome === 'string' && typeof b.dataRealizacao === 'string', 'Treinamento')
   return {
     id: b.id as number,
     nome: b.nome as string,
-    conteudo: texto(b.conteudo),
-    instrutor: texto(b.instrutor),
+    conteudo: textoOuNulo(b.conteudo),
+    instrutor: textoOuNulo(b.instrutor),
     dataRealizacao: b.dataRealizacao as string,
-    cargaHoraria: typeof b.cargaHoraria === 'number' ? b.cargaHoraria : null,
-    validadeMeses: typeof b.validadeMeses === 'number' ? b.validadeMeses : null,
-    dataVencimento: texto(b.dataVencimento),
+    cargaHoraria: numeroOuNulo(b.cargaHoraria),
+    validadeMeses: numeroOuNulo(b.validadeMeses),
+    dataVencimento: textoOuNulo(b.dataVencimento),
     status: situacoesTreinamento.includes(b.status as SituacaoTreinamento) ? b.status as SituacaoTreinamento : 'REALIZADO',
   }
 }
 
 function lerDetalhe(dado: unknown): CapacitacoesColaborador {
-  const b = objeto(dado, 'Capacitações do colaborador')
+  const b = objeto(dado, 'Capacitações do colaborador inválido na resposta da API')
   exigir(typeof b.colaboradorId === 'number' && typeof b.colaboradorNome === 'string', 'Capacitações do colaborador')
   return {
     colaboradorId: b.colaboradorId as number,
     colaboradorNome: b.colaboradorNome as string,
     situacaoCertificacoes: situacaoOuNula(b.situacaoCertificacoes),
-    certificacoes: lista(b.certificacoes ?? [], lerCertificacao, 'certificações'),
-    treinamentos: lista(b.treinamentos ?? [], lerTreinamento, 'treinamentos'),
-    certificacoesVencidas: lista(b.certificacoesVencidas ?? [], lerCertificacao, 'certificações vencidas'),
+    certificacoes: lista(b.certificacoes ?? [], lerCertificacao, 'Esperava uma lista de certificações'),
+    treinamentos: lista(b.treinamentos ?? [], lerTreinamento, 'Esperava uma lista de treinamentos'),
+    certificacoesVencidas: lista(b.certificacoesVencidas ?? [], lerCertificacao, 'Esperava uma lista de certificações vencidas'),
     certificacoesProximasDoVencimento: lista(b.certificacoesProximasDoVencimento ?? [], lerCertificacao,
-      'certificações próximas do vencimento'),
+      'Esperava uma lista de certificações próximas do vencimento'),
     pendenteIntegracaoAdmissional: b.pendenteIntegracaoAdmissional === true,
     pendencias: textos(b.pendencias),
   }
 }
 
 function lerAlerta(dado: unknown): AlertaCertificacao {
-  const b = objeto(dado, 'Alerta de certificação')
+  const b = objeto(dado, 'Alerta de certificação inválido na resposta da API')
   exigir(typeof b.certificacaoId === 'number' && typeof b.nome === 'string' && ehSituacao(b.status)
     && typeof b.dataVencimento === 'string' && typeof b.colaboradorId === 'number', 'Alerta de certificação')
   return {
@@ -209,12 +192,12 @@ function lerAlerta(dado: unknown): AlertaCertificacao {
     dataVencimento: b.dataVencimento as string,
     dataEmissao: typeof b.dataEmissao === 'string' ? b.dataEmissao : '',
     colaboradorId: b.colaboradorId as number,
-    colaboradorNome: texto(b.colaboradorNome) ?? `Colaborador #${b.colaboradorId}`,
+    colaboradorNome: textoOuNulo(b.colaboradorNome) ?? `Colaborador #${b.colaboradorId}`,
   }
 }
 
 function lerAlertaTreinamento(dado: unknown): AlertaTreinamento {
-  const b = objeto(dado, 'Alerta de treinamento')
+  const b = objeto(dado, 'Alerta de treinamento inválido na resposta da API')
   exigir(typeof b.treinamentoId === 'number' && typeof b.nome === 'string'
     && situacoesTreinamento.includes(b.status as SituacaoTreinamento)
     && typeof b.dataVencimento === 'string' && typeof b.colaboradorId === 'number', 'Alerta de treinamento')
@@ -225,43 +208,43 @@ function lerAlertaTreinamento(dado: unknown): AlertaTreinamento {
     dataRealizacao: typeof b.dataRealizacao === 'string' ? b.dataRealizacao : '',
     dataVencimento: b.dataVencimento as string,
     colaboradorId: b.colaboradorId as number,
-    colaboradorNome: texto(b.colaboradorNome) ?? `Colaborador #${b.colaboradorId}`,
+    colaboradorNome: textoOuNulo(b.colaboradorNome) ?? `Colaborador #${b.colaboradorId}`,
   }
 }
 
 function lerPendencia(dado: unknown): PendenciaColaborador {
-  const b = objeto(dado, 'Pendência')
+  const b = objeto(dado, 'Pendência inválido na resposta da API')
   exigir(typeof b.colaboradorId === 'number', 'Pendência')
   return {
     colaboradorId: b.colaboradorId as number,
-    colaboradorNome: texto(b.colaboradorNome) ?? `Colaborador #${b.colaboradorId}`,
+    colaboradorNome: textoOuNulo(b.colaboradorNome) ?? `Colaborador #${b.colaboradorId}`,
     mensagens: textos(b.mensagens),
   }
 }
 
 function lerAlertas(dado: unknown): AlertasCapacitacao {
-  const b = objeto(dado, 'Alertas')
+  const b = objeto(dado, 'Alertas inválido na resposta da API')
   exigir(typeof b.dataReferencia === 'string' && typeof b.diasAntecedenciaAlerta === 'number', 'Alertas')
   return {
     dataReferencia: b.dataReferencia as string,
     diasAntecedenciaAlerta: b.diasAntecedenciaAlerta as number,
-    proximasDoVencimento: lista(b.proximasDoVencimento ?? [], lerAlerta, 'alertas'),
-    vencidas: lista(b.vencidas ?? [], lerAlerta, 'alertas'),
-    pendencias: lista(b.pendencias ?? [], lerPendencia, 'pendências'),
-    treinamentosProximosDoVencimento: lista(b.treinamentosProximosDoVencimento ?? [], lerAlertaTreinamento, 'alertas de treinamento'),
-    treinamentosVencidos: lista(b.treinamentosVencidos ?? [], lerAlertaTreinamento, 'alertas de treinamento'),
+    proximasDoVencimento: lista(b.proximasDoVencimento ?? [], lerAlerta, 'Esperava uma lista de alertas'),
+    vencidas: lista(b.vencidas ?? [], lerAlerta, 'Esperava uma lista de alertas'),
+    pendencias: lista(b.pendencias ?? [], lerPendencia, 'Esperava uma lista de pendências'),
+    treinamentosProximosDoVencimento: lista(b.treinamentosProximosDoVencimento ?? [], lerAlertaTreinamento, 'Esperava uma lista de alertas de treinamento'),
+    treinamentosVencidos: lista(b.treinamentosVencidos ?? [], lerAlertaTreinamento, 'Esperava uma lista de alertas de treinamento'),
   }
 }
 
 function lerAptidao(dado: unknown): Aptidao {
-  const b = objeto(dado, 'Aptidão')
+  const b = objeto(dado, 'Aptidão inválido na resposta da API')
   exigir(typeof b.apto === 'boolean' && typeof b.tarefaId === 'number' && typeof b.colaboradorId === 'number', 'Aptidão')
   return {
     apto: b.apto as boolean,
     tarefaId: b.tarefaId as number,
-    tarefaDescricao: texto(b.tarefaDescricao) ?? `Tarefa #${b.tarefaId}`,
+    tarefaDescricao: textoOuNulo(b.tarefaDescricao) ?? `Tarefa #${b.tarefaId}`,
     colaboradorId: b.colaboradorId as number,
-    colaboradorNome: texto(b.colaboradorNome) ?? `Colaborador #${b.colaboradorId}`,
+    colaboradorNome: textoOuNulo(b.colaboradorNome) ?? `Colaborador #${b.colaboradorId}`,
     impedimentos: textos(b.impedimentos),
   }
 }
@@ -269,7 +252,7 @@ function lerAptidao(dado: unknown): Aptidao {
 export async function listarColaboradores(situacao: SituacaoCertificacao | null, signal?: AbortSignal): Promise<ResumoColaborador[]> {
   const params = situacao ? { situacao } : undefined
   const { data } = await http.get<unknown>('/capacitacoes/colaboradores', { params, signal })
-  return lista(data, lerResumo, 'colaboradores')
+  return lista(data, lerResumo, 'Esperava uma lista de colaboradores')
 }
 
 export async function consultarColaborador(colaboradorId: number, signal?: AbortSignal): Promise<CapacitacoesColaborador> {

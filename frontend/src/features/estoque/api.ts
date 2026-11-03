@@ -3,6 +3,7 @@
 // do operador de cada movimentação (RF03, UC06, US03, issues #123 e #133).
 
 import { http } from '../../shared/api/https'
+import { lista, numeroOuNulo, objeto, texto, textoOuNulo } from '../../shared/api/leitura'
 import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
 
 export type StatusEpi = 'DISPONIVEL' | 'EM_USO' | 'EM_MANUTENCAO' | 'ESGOTADO' | 'DESCARTADO'
@@ -42,14 +43,9 @@ export type DadosMovimentacao = { tipo: TipoMovimentacao; quantidade: number; mo
 
 const statusConhecidos: readonly StatusEpi[] = ['DISPONIVEL', 'EM_USO', 'EM_MANUTENCAO', 'ESGOTADO', 'DESCARTADO']
 
-function textoOuNulo(valor: unknown): string | null {
-  return typeof valor === 'string' ? valor : null
-}
-
 /** Também lê `GET /api/emprestimos/epis-disponiveis`, que devolve o mesmo `EpiResponse` (issue #110). */
 export function lerEpi(dado: unknown): Epi {
-  if (dado === null || typeof dado !== 'object') throw new Error('Registro de EPI inválido')
-  const bruto = dado as Record<string, unknown>
+  const bruto = objeto(dado, 'Registro de EPI inválido')
   if (typeof bruto.id !== 'number' || typeof bruto.nome !== 'string' || typeof bruto.quantidade !== 'number'
     || typeof bruto.estoqueMinimo !== 'number' || !statusConhecidos.includes(bruto.status as StatusEpi)) {
     throw new Error('Registro de EPI incompatível com o contrato da API')
@@ -70,8 +66,7 @@ export function lerEpi(dado: unknown): Epi {
 }
 
 function lerMovimentacao(dado: unknown): Movimentacao {
-  if (dado === null || typeof dado !== 'object') throw new Error('Movimentação inválida')
-  const bruto = dado as Record<string, unknown>
+  const bruto = objeto(dado, 'Movimentação inválida')
   if (typeof bruto.id !== 'number' || typeof bruto.epiId !== 'number' || typeof bruto.quantidade !== 'number'
     || typeof bruto.dataHora !== 'string' || (bruto.tipo !== 'ENTRADA' && bruto.tipo !== 'SAIDA')) {
     throw new Error('Movimentação incompatível com o contrato da API')
@@ -79,7 +74,7 @@ function lerMovimentacao(dado: unknown): Movimentacao {
   return {
     id: bruto.id,
     epiId: bruto.epiId,
-    responsavelId: typeof bruto.responsavelId === 'number' ? bruto.responsavelId : null,
+    responsavelId: numeroOuNulo(bruto.responsavelId),
     tipo: bruto.tipo,
     quantidade: bruto.quantidade,
     dataHora: bruto.dataHora,
@@ -88,15 +83,10 @@ function lerMovimentacao(dado: unknown): Movimentacao {
   }
 }
 
-function lerLista<T>(dados: unknown, ler: (dado: unknown) => T, descricao: string): T[] {
-  if (!Array.isArray(dados)) throw new Error(`Esperava uma lista de ${descricao}`)
-  return dados.map(ler)
-}
-
 /** `GET /api/epis`: catálogo com saldo e situação crítica (Gestor e Supervisor consultam). */
 export async function listarEpis(signal?: AbortSignal): Promise<Epi[]> {
   const { data } = await http.get<unknown>('/epis', { signal })
-  return lerLista(data, lerEpi, 'EPIs')
+  return lista(data, lerEpi, 'Esperava uma lista de EPIs')
 }
 
 /** Exclusivo do Gestor (UC06). O backend valida quantidade, saldo e registra o operador do token. */
@@ -114,7 +104,7 @@ export function nomeDoOperador(id: number, signal?: AbortSignal): Promise<string
   const consulta = http.get<unknown>(`/usuarios/${id}`, { signal })
     .then(({ data }) => {
       const nome = data !== null && typeof data === 'object' ? (data as { nome?: unknown }).nome : undefined
-      return typeof nome === 'string' && nome.trim() ? nome : `Usuário ${id}`
+      return texto(nome, `Usuário ${id}`)
     })
     .catch(erro => {
       nomesDeOperadores.delete(id)
@@ -127,7 +117,7 @@ export function nomeDoOperador(id: number, signal?: AbortSignal): Promise<string
 /** `GET /api/epis/{id}/movimentacoes` com o operador de cada linha resolvido; falha de nome não derruba o histórico. */
 export async function listarHistorico(epiId: number, signal?: AbortSignal): Promise<MovimentacaoExibida[]> {
   const { data } = await http.get<unknown>(`/epis/${epiId}/movimentacoes`, { signal })
-  const movimentacoes = lerLista(data, lerMovimentacao, 'movimentações')
+  const movimentacoes = lista(data, lerMovimentacao, 'Esperava uma lista de movimentações')
   return Promise.all(movimentacoes.map(async movimentacao => ({
     ...movimentacao,
     operador: movimentacao.responsavelId === null
