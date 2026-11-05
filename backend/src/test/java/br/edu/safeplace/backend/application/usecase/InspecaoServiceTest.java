@@ -47,6 +47,7 @@ class InspecaoServiceTest {
 
     private static final String EMAIL_GESTOR = "gestora@safeplace.test";
     private static final String EMAIL_SUPERVISOR = "supervisor@safeplace.test";
+    private static final AreaRisco AREA = new AreaRisco(4, "AR-04", "Solda", null, NivelPerigo.ALTO, List.of());
     private static final GestorDeSeguranca GESTOR = new GestorDeSeguranca(1, "52998224725", "Gestora Ana",
             LocalDate.of(1985, 1, 15), EMAIL_GESTOR, "hash", true, LocalDateTime.now(), LocalDateTime.now());
 
@@ -65,12 +66,11 @@ class InspecaoServiceTest {
         when(usuarios.buscarPorEmail(EMAIL_SUPERVISOR)).thenReturn(Optional.of(new Supervisor(2, "11144477735",
                 "Supervisor Bruno", LocalDate.of(1990, 1, 10), EMAIL_SUPERVISOR, "hash", true,
                 LocalDateTime.now(), LocalDateTime.now())));
-        when(areas.buscarPorId(4)).thenReturn(Optional.of(
-                new AreaRisco(4, "AR-04", "Solda", null, NivelPerigo.ALTO, List.of())));
+        when(areas.buscarPorId(4)).thenReturn(Optional.of(AREA));
         when(areas.buscarPorId(99)).thenReturn(Optional.empty());
         when(inspecoes.salvar(any(Inspecao.class))).thenAnswer(chamada -> {
             Inspecao nova = chamada.getArgument(0);
-            return new Inspecao(10, nova.getAreaRiscoId(), nova.getDataInspecao(), nova.getResponsavel(), nova.getItens());
+            return new Inspecao(10, nova.getAreaRisco(), nova.getDataInspecao(), nova.getResponsavel(), nova.getItens());
         });
         useCase = new InspecaoService(inspecoes, areas, usuarios, logs);
         autenticarComo(EMAIL_GESTOR);
@@ -160,8 +160,8 @@ class InspecaoServiceTest {
     @DisplayName("Consulta devolve o histórico da área na ordem da porta de saída")
     void consultaHistorico() {
         when(inspecoes.listarPorArea(4)).thenReturn(List.of(
-                new Inspecao(12, 4, LocalDate.of(2026, 9, 30), GESTOR, List.of(new ItemVerificado(3, "NR-26", false, "Faixa"))),
-                new Inspecao(11, 4, LocalDate.of(2026, 9, 1), GESTOR, List.of(new ItemVerificado(2, "NR-26", true, null)))));
+                new Inspecao(12, AREA, LocalDate.of(2026, 9, 30), GESTOR, List.of(new ItemVerificado(3, "NR-26", false, "Faixa"))),
+                new Inspecao(11, AREA, LocalDate.of(2026, 9, 1), GESTOR, List.of(new ItemVerificado(2, "NR-26", true, null)))));
 
         assertThat(useCase.listarPorArea(4)).extracting(InspecaoOutputDTO::id).containsExactly(12, 11);
     }
