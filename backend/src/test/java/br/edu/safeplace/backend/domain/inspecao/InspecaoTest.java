@@ -11,6 +11,8 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class InspecaoTest {
 
     private static final LocalDate HOJE = LocalDate.of(2026, 10, 2);
+    private static final AreaRisco AREA = new AreaRisco(4, "AR-04", "Solda", null, NivelPerigo.ALTO, List.of());
     private static final GestorDeSeguranca GESTOR = new GestorDeSeguranca(1, "52998224725", "Gestora Ana",
             LocalDate.of(1985, 1, 15), "gestora@safeplace.test", "hash", true, LocalDateTime.now(), LocalDateTime.now());
 
@@ -30,10 +33,10 @@ class InspecaoTest {
     @Test
     @DisplayName("Registra inspeção com área, data, responsável e itens, contando as não conformidades")
     void registraInspecaoValida() {
-        Inspecao inspecao = Inspecao.registrar(4, HOJE, GESTOR, itens());
+        Inspecao inspecao = Inspecao.registrar(AREA, HOJE, GESTOR, itens());
 
         assertThat(inspecao.getId()).isNull();
-        assertThat(inspecao.getAreaRiscoId()).isEqualTo(4);
+        assertThat(inspecao.getAreaRisco()).isSameAs(AREA);
         assertThat(inspecao.getDataInspecao()).isEqualTo(HOJE);
         assertThat(inspecao.getResponsavel()).isSameAs(GESTOR);
         assertThat(inspecao.getItens()).extracting(ItemVerificado::getDescricao)
