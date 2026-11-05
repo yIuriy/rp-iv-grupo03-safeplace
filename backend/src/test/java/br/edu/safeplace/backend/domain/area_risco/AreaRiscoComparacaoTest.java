@@ -23,13 +23,16 @@ class AreaRiscoComparacaoTest {
     private static final Map<Integer, String> SETORES = Map.of(1, "Usinagem", 2, "Caldeiraria");
     private static final Function<Integer, String> NOME_DO_SETOR = SETORES::get;
 
+    private static final Setor USINAGEM = new Setor(1, "Usinagem", null, "Bloco 1", NivelPerigo.MEDIO);
+    private static final Setor CALDEIRARIA = new Setor(2, "Caldeiraria", null, "Bloco 2", NivelPerigo.ALTO);
+
     private static Epi epi(Integer id, String nome) {
         return new Epi(id, nome, "CA-" + id, 10, 2, StatusEpi.DISPONIVEL,
                 LocalDate.now().plusYears(1), 365, null, null);
     }
 
     private static AreaRisco original() {
-        return new AreaRisco(7, "AR-01", "Solda", "Solda MIG", NivelPerigo.MEDIO, 1,
+        return new AreaRisco(7, "AR-01", "Solda", "Solda MIG", NivelPerigo.MEDIO, USINAGEM,
                 List.of("Ruído"), "Entre as linhas A e B", List.of(epi(1, "Capacete")));
     }
 
@@ -37,7 +40,7 @@ class AreaRiscoComparacaoTest {
     @DisplayName("Sem mudança de dados, nenhuma alteração é registrada")
     void semMudancaNaoHaAlteracoes() {
         AreaRisco area = original();
-        AreaRisco igual = area.atualizar("Solda", "Solda MIG", NivelPerigo.MEDIO, 1,
+        AreaRisco igual = area.atualizar("Solda", "Solda MIG", NivelPerigo.MEDIO, USINAGEM,
                 List.of("Ruído"), "Entre as linhas A e B", List.of(epi(1, "Capacete")));
 
         assertThat(area.compararCom(igual, NOME_DO_SETOR)).isEmpty();
@@ -60,7 +63,7 @@ class AreaRiscoComparacaoTest {
     @DisplayName("Troca de setor aparece pelo nome do setor, e não pelo id")
     void trocaDeSetorUsaNome() {
         AreaRisco area = original();
-        AreaRisco atualizada = area.atualizar("Solda", "Solda MIG", NivelPerigo.MEDIO, 2,
+        AreaRisco atualizada = area.atualizar("Solda", "Solda MIG", NivelPerigo.MEDIO, CALDEIRARIA,
                 List.of("Ruído"), "Entre as linhas A e B", List.of(epi(1, "Capacete")));
 
         assertThat(area.compararCom(atualizada, NOME_DO_SETOR))
@@ -71,7 +74,7 @@ class AreaRiscoComparacaoTest {
     @DisplayName("Mudança nos EPIs obrigatórios lista os nomes antes e depois")
     void mudancaNosEpisListaNomes() {
         AreaRisco area = original();
-        AreaRisco atualizada = area.atualizar("Solda", "Solda MIG", NivelPerigo.MEDIO, 1,
+        AreaRisco atualizada = area.atualizar("Solda", "Solda MIG", NivelPerigo.MEDIO, USINAGEM,
                 List.of("Ruído"), "Entre as linhas A e B", List.of(epi(1, "Capacete"), epi(2, "Luva térmica")));
 
         assertThat(area.compararCom(atualizada, NOME_DO_SETOR))
@@ -94,7 +97,7 @@ class AreaRiscoComparacaoTest {
     void campoQuePassaATerValorRegistraAnteriorNulo() {
         AreaRisco area = new AreaRisco(7, "AR-01", "Solda", null, NivelPerigo.MEDIO, null,
                 List.of("Ruído"), null, List.of(epi(1, "Capacete")));
-        AreaRisco atualizada = area.atualizar("Solda", "Solda MIG", NivelPerigo.MEDIO, 1,
+        AreaRisco atualizada = area.atualizar("Solda", "Solda MIG", NivelPerigo.MEDIO, USINAGEM,
                 List.of("Ruído"), "Linha amarela", List.of(epi(1, "Capacete")));
 
         assertThat(area.compararCom(atualizada, NOME_DO_SETOR)).containsExactly(
