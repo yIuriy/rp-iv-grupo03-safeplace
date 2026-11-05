@@ -193,7 +193,7 @@ class AreaRiscoServiceTest {
             Integer id = areaRisco.getId() != null ? areaRisco.getId() : nextId++;
             AreaRisco salva = new AreaRisco(id, areaRisco.getCodigo(), areaRisco.getNome(),
                     areaRisco.getDescricao(), areaRisco.getNivelPerigo(),
-                    areaRisco.getSetorId(), areaRisco.getAgentesRisco(), areaRisco.getLimites(),
+                    areaRisco.getSetor(), areaRisco.getAgentesRisco(), areaRisco.getLimites(),
                     areaRisco.verificarEpisObrigatoriosArea());
             storage.put(id, salva);
             return salva;
