@@ -38,7 +38,7 @@ final class OcorrenciaEspecificacoes {
             }
             if (filtro.setorId() != null) {
                 // Ocorrência sem área não pertence a setor algum: a junção interna a exclui.
-                condicoes.add(builder.equal(root.join("area", JoinType.INNER).get("setorId"), filtro.setorId()));
+                condicoes.add(builder.equal(root.join("area", JoinType.INNER).get("setor").get("id"), filtro.setorId()));
             }
             if (filtro.colaboradorId() != null) {
                 condicoes.add(builder.equal(root.get("colaborador").get("id"), filtro.colaboradorId()));
