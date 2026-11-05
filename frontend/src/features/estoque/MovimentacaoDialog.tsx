@@ -5,7 +5,8 @@
 
 import { Alert, Button, Dialog, Radio, TextArea, TextField } from '../../shared/components'
 import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
-import { descreverFalhaDeMovimentacao, registrarMovimentacao, type Epi, type Movimentacao } from './api'
+import type { Epi } from '../epis/epi'
+import { descreverFalhaDeMovimentacao, registrarMovimentacao, type Movimentacao } from './api'
 import { lerDadosMovimentacao, ordemDosCamposDeMovimentacao, validarMovimentacao, type ErrosMovimentacao } from './validacaoMovimentacao'
 
 export function MovimentacaoDialog({ epi, aoFechar, aoSalvar }: {

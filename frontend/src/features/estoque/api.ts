@@ -1,29 +1,13 @@
-// Cliente tipado da API de EPIs e estoque (/api/epis): tipos Epi e Movimentacao, validação das
-// respostas, consulta de catálogo e histórico, registro de entrada e saída e resolução do nome
-// do operador de cada movimentação (RF03, UC06, US03, issues #123 e #133).
+// Cliente tipado da API de estoque (/api/epis/{id}/movimentacoes): tipo Movimentacao, validação das
+// respostas, registro de entrada e saída, histórico e resolução do nome do operador de cada
+// movimentação (RF03, UC06, US03, issues #123 e #133). O tipo `Epi`, o adaptador `lerEpi` e a
+// consulta do catálogo ficam em `features/epis` (issue #231).
 
 import { http } from '../../shared/api/https'
 import { lista, numeroOuNulo, objeto, texto, textoOuNulo } from '../../shared/api/leitura'
 import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
 
-export type StatusEpi = 'DISPONIVEL' | 'EM_USO' | 'EM_MANUTENCAO' | 'ESGOTADO' | 'DESCARTADO'
 export type TipoMovimentacao = 'ENTRADA' | 'SAIDA'
-
-/** Campos do contrato `EpiResponse` aprovados pela decisão #124: sem código de barras nem fornecedor. */
-export type Epi = {
-  id: number
-  nome: string
-  numeroCa: string
-  quantidade: number
-  estoqueMinimo: number
-  /** Regra do backend (saldo <= mínimo, US03 regra 3). A tela exibe, não recalcula. */
-  estoqueCritico: boolean
-  status: StatusEpi
-  dataValidadeCa: string | null
-  descricao: string | null
-  classificacao: string | null
-  localizacao: string | null
-}
 
 export type Movimentacao = {
   id: number
@@ -41,30 +25,6 @@ export type MovimentacaoExibida = Movimentacao & { operador: string }
 
 export type DadosMovimentacao = { tipo: TipoMovimentacao; quantidade: number; motivo: string }
 
-const statusConhecidos: readonly StatusEpi[] = ['DISPONIVEL', 'EM_USO', 'EM_MANUTENCAO', 'ESGOTADO', 'DESCARTADO']
-
-/** Também lê `GET /api/emprestimos/epis-disponiveis`, que devolve o mesmo `EpiResponse` (issue #110). */
-export function lerEpi(dado: unknown): Epi {
-  const bruto = objeto(dado, 'Registro de EPI inválido')
-  if (typeof bruto.id !== 'number' || typeof bruto.nome !== 'string' || typeof bruto.quantidade !== 'number'
-    || typeof bruto.estoqueMinimo !== 'number' || !statusConhecidos.includes(bruto.status as StatusEpi)) {
-    throw new Error('Registro de EPI incompatível com o contrato da API')
-  }
-  return {
-    id: bruto.id,
-    nome: bruto.nome,
-    numeroCa: typeof bruto.numeroCa === 'string' ? bruto.numeroCa : '',
-    quantidade: bruto.quantidade,
-    estoqueMinimo: bruto.estoqueMinimo,
-    estoqueCritico: bruto.estoqueCritico === true,
-    status: bruto.status as StatusEpi,
-    dataValidadeCa: textoOuNulo(bruto.dataValidadeCa),
-    descricao: textoOuNulo(bruto.descricao),
-    classificacao: textoOuNulo(bruto.classificacao),
-    localizacao: textoOuNulo(bruto.localizacao),
-  }
-}
-
 function lerMovimentacao(dado: unknown): Movimentacao {
   const bruto = objeto(dado, 'Movimentação inválida')
   if (typeof bruto.id !== 'number' || typeof bruto.epiId !== 'number' || typeof bruto.quantidade !== 'number'
@@ -81,12 +41,6 @@ function lerMovimentacao(dado: unknown): Movimentacao {
     motivo: textoOuNulo(bruto.motivo),
     saldoAtual: typeof bruto.saldoAtual === 'number' ? bruto.saldoAtual : NaN,
   }
-}
-
-/** `GET /api/epis`: catálogo com saldo e situação crítica (Gestor e Supervisor consultam). */
-export async function listarEpis(signal?: AbortSignal): Promise<Epi[]> {
-  const { data } = await http.get<unknown>('/epis', { signal })
-  return lista(data, lerEpi, 'Esperava uma lista de EPIs')
 }
 
 /** Exclusivo do Gestor (UC06). O backend valida quantidade, saldo e registra o operador do token. */

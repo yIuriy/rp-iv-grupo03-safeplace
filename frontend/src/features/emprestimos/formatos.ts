@@ -3,7 +3,7 @@
 // restantes. Datas usam os formatadores da tela de estoque.
 
 import type { FeedbackTone } from '../../shared/components'
-import type { Epi } from '../estoque/api'
+import type { Epi } from '../epis/epi'
 import type { Usuario } from '../usuarios/api'
 import { ocultarCpf } from '../usuarios/formatos'
 import type { Emprestimo, EstadoDevolucao } from './api'

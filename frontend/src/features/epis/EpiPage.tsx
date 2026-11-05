@@ -9,8 +9,8 @@ import { Alert, Badge, Button, Dialog, EmptyState, HistoryItem, Select, Table, T
 import { FeaturePage } from '../../shared/layout/FeaturePage'
 import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
 import { useSessaoAtiva } from '../autenticacao/contexto'
-import { listarEpis, type Epi, type StatusEpi } from '../estoque/api'
-import { cadastrarEpi, listarHistorico, registrarManutencao, type ClassificacaoEpi, type DadosCadastroEpi, type DadosManutencao } from './api'
+import { cadastrarEpi, listarEpis, listarHistorico, registrarManutencao, type DadosCadastroEpi, type DadosManutencao } from './api'
+import type { ClassificacaoEpi, Epi, StatusEpi } from './epi'
 
 // Somente situações que o backend atribui hoje; EM_USO e DESCARTADO não são gravadas no MVP (#197).
 const statusOperacionais: readonly StatusEpi[] = ['DISPONIVEL', 'EM_MANUTENCAO', 'ESGOTADO']
