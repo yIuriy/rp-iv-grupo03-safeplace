@@ -1,8 +1,8 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.stereotype.Repository;
 
@@ -24,7 +24,13 @@ public class AreaRiscoJpaAdapter implements AreaRiscoRepository {
 
     @Override
     public AreaRisco salvar(AreaRisco areaRisco) {
-        return toDomain(areaRiscoRepository.save(toEntity(areaRisco)));
+        List<Epi> epis = areaRisco.getEpisObrigatorios();
+        AreaRisco salva = areaRiscoRepository.save(areaRisco);
+        if (epis != null && !epis.isEmpty()) {
+            salva.definirEpisObrigatorios(epis);
+            return salva;
+        }
+        return hidratarEpis(salva);
     }
 
     @Override
@@ -34,63 +40,40 @@ public class AreaRiscoJpaAdapter implements AreaRiscoRepository {
 
     @Override
     public Optional<AreaRisco> buscarPorId(Integer id) {
-        return areaRiscoRepository.findById(id).map(this::toDomain);
+        return areaRiscoRepository.findById(id).map(this::hidratarEpis);
     }
 
     @Override
     public Optional<AreaRisco> buscarPorCodigo(String codigo) {
-        return areaRiscoRepository.findByCodigo(codigo).map(this::toDomain);
+        return areaRiscoRepository.findByCodigo(codigo).map(this::hidratarEpis);
     }
 
     @Override
     public List<AreaRisco> listarTodas() {
-        return areaRiscoRepository.findAll().stream().map(this::toDomain).toList();
+        return areaRiscoRepository.findAll().stream().map(this::hidratarEpis).toList();
     }
 
     @Override
     public List<AreaRisco> listarPorNivelPerigo(NivelPerigo nivelPerigo) {
-        return areaRiscoRepository.findByNivelPerigo(nivelPerigo.name()).stream()
-                .map(this::toDomain)
+        return areaRiscoRepository.findByNivelPerigo(nivelPerigo).stream()
+                .map(this::hidratarEpis)
                 .toList();
     }
 
-    private AreaRiscoEntity toEntity(AreaRisco domain) {
-        return new AreaRiscoEntity(
-                domain.getId(),
-                domain.getCodigo(),
-                domain.getNome(),
-                domain.getDescricao(),
-                domain.getNivelPerigo() == null ? null : domain.getNivelPerigo().name(),
-                domain.getSetorId(),
-                AreaRiscoEntity.formatAgentesRisco(domain.getAgentesRisco()),
-                domain.getLimites(),
-                carregarEpisGerenciados(domain));
-    }
-
-    /**
-     * Os EPIs vinculados já existem no catálogo: carrega as instâncias gerenciadas pelo id em vez
-     * de reconstruí-las, para que a gravação da área toque apenas a tabela de junção.
-     */
-    private List<EpiEntity> carregarEpisGerenciados(AreaRisco domain) {
-        List<Integer> ids = domain.verificarEpisObrigatoriosArea().stream()
-                .map(Epi::getId)
-                .filter(Objects::nonNull)
+    /** Ponte transicional até a issue #258 tornar Epi uma @Entity. */
+    private AreaRisco hidratarEpis(AreaRisco area) {
+        if (area == null || epiRepository == null) {
+            return area;
+        }
+        Set<Integer> ids = area.getEpisObrigatoriosIds();
+        if (ids == null || ids.isEmpty()) {
+            area.definirEpisObrigatorios(List.of());
+            return area;
+        }
+        List<Epi> epis = epiRepository.findAllById(ids).stream()
+                .map(EpiEntityMapper::toDomain)
                 .toList();
-        return ids.isEmpty() ? List.of() : epiRepository.findAllById(ids);
-    }
-
-    private AreaRisco toDomain(AreaRiscoEntity entity) {
-        return new AreaRisco(
-                entity.getId(),
-                entity.getCodigo(),
-                entity.getNome(),
-                entity.getDescricao(),
-                entity.getNivelPerigo() == null ? null : NivelPerigo.valueOf(entity.getNivelPerigo()),
-                entity.getSetorId(),
-                entity.getAgentesRiscoList(),
-                entity.getLimites(),
-                entity.getEpisObrigatorios().stream()
-                        .map(EpiEntityMapper::toDomain)
-                        .toList());
+        area.definirEpisObrigatorios(epis);
+        return area;
     }
 }
