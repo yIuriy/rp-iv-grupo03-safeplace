@@ -5,7 +5,8 @@
 import { http } from '../../shared/api/https'
 import { lista, numeroOuNulo, objeto, textoOuNulo } from '../../shared/api/leitura'
 import { criarDescritorDeFalha, mensagemDaApi, statusDoErro, usarMensagemDaApi } from '../../shared/api/erros'
-import { lerEpi, nomeDoOperador, type Epi } from '../estoque/api'
+import { lerEpi, type Epi } from '../epis/epi'
+import { nomeDoOperador } from '../estoque/api'
 import { listarColaboradores, type Usuario } from '../usuarios/api'
 
 /** Valores do diagrama de classes, lidos do ponto de vista do EPI dentro do empréstimo (issue #106). */

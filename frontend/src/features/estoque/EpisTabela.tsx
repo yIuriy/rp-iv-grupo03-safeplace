@@ -2,7 +2,7 @@
 // botão de detalhes/histórico para todos e botão de movimentação só para o Gestor (RNF03).
 
 import { Button, Table, TableRow } from '../../shared/components'
-import type { Epi } from './api'
+import type { Epi } from '../epis/epi'
 import { SituacaoEstoque } from './SituacaoEstoque'
 
 export function EpisTabela({ epis, podeMovimentar, aoDetalhar, aoMovimentar }: {

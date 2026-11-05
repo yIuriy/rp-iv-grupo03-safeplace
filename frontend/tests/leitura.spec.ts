@@ -1,7 +1,8 @@
 // Testes do padrão Adapter na leitura da API (#244): as primitivas de shared/api/leitura.ts têm uma
 // semântica única, usada por todos os adaptadores lerX das features. Não usa navegador. Os adaptadores
 // importam o cliente http, que depende do import.meta.env do Vite; por isso são exercitados pelas specs
-// de cada tela (por exemplo, estoque.spec.ts), que simulam as respostas da API.
+// de cada tela (por exemplo, estoque.spec.ts), que simulam as respostas da API. A exceção é o `lerEpi`
+// único (#231), que fica em features/epis/epi.ts, sem o cliente http, e é testado em leitura-epi.spec.ts.
 
 import { expect, test } from '@playwright/test'
 import {

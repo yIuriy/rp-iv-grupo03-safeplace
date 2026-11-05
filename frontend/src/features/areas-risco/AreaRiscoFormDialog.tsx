@@ -7,7 +7,7 @@ import { Alert, Button, Checkbox, Dialog, Select, TextArea, TextField } from '..
 import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
 import type { Validacao } from '../../shared/formularios/envioFormulario'
 import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
-import type { Epi } from '../epis/api'
+import type { Epi } from '../epis/epi'
 import {
   atualizarAreaRisco,
   cadastrarAreaRisco,

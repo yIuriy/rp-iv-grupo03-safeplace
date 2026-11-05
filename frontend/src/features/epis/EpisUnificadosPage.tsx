@@ -8,7 +8,7 @@ import { useConsulta } from '../../shared/api/useConsulta'
 import { Tabs } from '../../shared/components'
 import { FeaturePage } from '../../shared/layout/FeaturePage'
 import { EstoquePainel } from '../estoque/EstoquePage'
-import { listarEpis } from '../estoque/api'
+import { listarEpis } from './api'
 import { EpiManutencaoPainel } from './EpiPage'
 
 type AbaEpi = 'catalogo' | 'manutencao'

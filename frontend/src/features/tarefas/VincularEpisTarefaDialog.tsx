@@ -6,12 +6,8 @@ import { useEffect, useState } from 'react'
 import { Alert, Button, Checkbox, Dialog, Select } from '../../shared/components'
 import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
 import { criarDescritorDeFalha, mensagemDaApi, usarMensagemDaApi } from '../../shared/api/erros'
-import {
-  classificacoesEpi,
-  listarEpis,
-  rotuloClassificacaoEpi,
-  type Epi,
-} from '../epis/api'
+import { listarEpis } from '../epis/api'
+import { classificacoesEpi, rotuloClassificacaoEpi, type Epi } from '../epis/epi'
 import {
   associarEpisTarefa,
   listarEpisTarefa,

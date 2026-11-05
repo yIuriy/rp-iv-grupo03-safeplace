@@ -228,4 +228,18 @@ test.describe('Módulo Áreas de Risco (RF05, UC03, RNF11)', () => {
 
     await expect(page.getByText('Área de risco SET-01 atualizada com sucesso.')).toBeVisible()
   })
+
+  test('EPI sem CA no catálogo não esconde os demais EPIs do cadastro de área (adaptador único, #231)', async ({ page }) => {
+    await iniciarSessao(page, gestora)
+    await simularAreasRisco(page)
+    // O catálogo do estoque já aceitava este registro; o adaptador antigo de `epis` recusava a lista inteira.
+    await page.route('**/api/epis', route => route.fulfill({ json: [{ ...episMock[0], numeroCa: null }, episMock[1]] }))
+    await page.goto('/areas-risco')
+
+    await page.getByRole('button', { name: 'Cadastrar área' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Cadastrar área de risco' })
+    await expect(dialog.getByLabel('Óculos de proteção (CA 67890)')).toBeVisible()
+    await expect(dialog.getByLabel(/Capacete de segurança/)).toBeVisible()
+    await expect(dialog.getByText('Nenhum EPI disponível no catálogo.')).toHaveCount(0)
+  })
 })

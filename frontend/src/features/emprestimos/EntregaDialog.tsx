@@ -9,7 +9,7 @@ import { Alert, Button, Dialog, Select, TextField } from '../../shared/component
 import { focarCampo } from '../../shared/formularios/envioFormulario'
 import { useConsulta, type Consulta } from '../../shared/api/useConsulta'
 import { useSessaoAtiva } from '../autenticacao/contexto'
-import type { Epi } from '../estoque/api'
+import type { Epi } from '../epis/epi'
 import type { Usuario } from '../usuarios/api'
 import { hojeIso } from '../usuarios/formatos'
 import {

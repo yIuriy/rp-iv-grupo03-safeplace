@@ -30,7 +30,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [Value Object](#value-object--protocolo-cat-em-acidente) | Fowler / DDD | Backend: `NumeroProtocoloCAT` dentro de `Acidente` | [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230) | Aplicado |
 | [DTO Assembler](#dto-assembler--ocorrenciaoutputdto) | Fowler / PoEAA | Backend: `OcorrenciaOutputAssembler` sem expor `PlanoDeAcao` | [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245) | Pendente |
 | [Strategy (Backend)](#strategy--fonte-de-tempo-clock) | GoF, comportamental | Backend: injeção de `java.time.Clock` nas regras de vencimento | [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247) | Pendente |
-| [Adapter (Frontend)](#adapter--leitura-da-api-e-contrato-de-epi) | GoF, estrutural | Frontend: primitivas de leitura da API e unificação de `Epi` | [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244), [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) | Aplicado (1/2: #244) |
+| [Adapter (Frontend)](#adapter--leitura-da-api-e-contrato-de-epi) | GoF, estrutural | Frontend: primitivas de leitura da API e unificação de `Epi` | [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244), [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) | Aplicado (2/2: #244, #231) |
 | [Template Method (hook)](#template-method-hook--envio-de-formulario) | GoF, comportamental | Frontend: submissão de formulários (`useEnvioFormulario`) | [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233), [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243) | Aplicado (2/2: #233, #243) |
 | [State (Frontend)](#state--dialogos-de-taskspage) | GoF, comportamental | Frontend: estado único `DialogoTarefa` em `TasksPage` | [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246) | Pendente |
 
@@ -2036,7 +2036,7 @@ Suíte existente (`TESTCONTAINERS_RYUK_DISABLED=true ./mvnw clean test -Dapi.ver
 
 **Intenção:** centralizar as primitivas de leitura de JSON da API (`shared/api/leitura.ts`) e unificar o adaptador `lerEpi` e o tipo `Epi` no frontend.
 
-**Issues:** [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244) (parte 1, aplicada: primitivas de leitura) e [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) (parte 2, pendente: `Epi` único).
+**Issues:** [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244) (parte 1, aplicada: primitivas de leitura) e [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) (parte 2, aplicada: tipo `Epi` e adaptador `lerEpi` únicos).
 
 ### Problema (antes)
 
@@ -2053,6 +2053,19 @@ Suíte existente (`TESTCONTAINERS_RYUK_DISABLED=true ./mvnw clean test -Dapi.ver
 Além das 17 funções, a mesma lógica aparecia escrita na linha: 22 verificações de objeto (`dado === null || typeof dado !== 'object'`), 17 de lista (`if (!Array.isArray(...)) throw`) e 14 leituras de número (`typeof x === 'number' ? x : null`).
 
 As cópias não eram iguais. A de `estoque/api.ts` aceitava texto em branco (`typeof valor === 'string' ? valor : null`), enquanto as outras três o trocavam por `null`. Assim, o mesmo campo vazio aparecia como célula em branco no catálogo do estoque e como "Não informado" nas demais telas. As verificações de objeto também divergiam: só a de `capacitacoes` recusava uma lista no lugar do objeto.
+
+**Parte 2 ([#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231)).** O mesmo recurso, `GET /api/epis`, tinha dois clientes completos: dois `export type Epi`, dois adaptadores `lerEpi`, duas funções `listarEpis`, dois `StatusEpi` e dois mapas de rótulos de classificação, em `features/epis/api.ts` e `features/estoque/api.ts`. Os consumidores se misturavam: `EpiPage.tsx`, da feature `epis`, importava o tipo e a listagem de `estoque`, enquanto áreas de risco, capacitações e tarefas importavam de `epis`. Os dois adaptadores liam o mesmo JSON de formas diferentes:
+
+| Aspecto | `epis/api.ts` | `estoque/api.ts` |
+| --- | --- | --- |
+| Campos do tipo `Epi` | 8 (sem `estoqueCritico`, `descricao` e `localizacao`; `classificacao` opcional) | 11 |
+| CA ausente | recusava o registro e, com ele, a lista inteira | virava texto vazio |
+| Classificação | tipada (9 valores do enum); valor desconhecido virava `null` | texto livre |
+| Validade do CA em branco | mantida como `""` | `null` |
+| Mensagens de erro | `EPI inválido na resposta da API` | `Registro de EPI inválido` |
+| Consumidores | `RiskAreasPage`, `AreaRiscoFormDialog`, `ExigenciaForm`, `VincularEpisTarefaDialog` | `EpiPage`, `EpisUnificadosPage`, as telas de estoque, `emprestimos/api.ts`, `EntregaDialog`, `emprestimos/formatos.ts` |
+
+Na prática, eram dois contratos para o mesmo recurso. Diante da mesma resposta, as telas podiam discordar: um EPI sem CA apareceria no catálogo do estoque e, ao mesmo tempo, faria o cadastro de área de risco mostrar "Nenhum EPI disponível no catálogo", porque o adaptador de `epis` recusava a lista inteira. Um campo novo do `EpiResponse` precisaria ser lido em dois lugares, e nada garantia que as duas leituras continuassem iguais.
 
 ### Por que Adapter
 
@@ -2077,14 +2090,28 @@ As mensagens de erro continuam sendo do adaptador (cada `lerX` passa a sua), ent
 - **Leitura de formulário.** `validacaoPlano.ts` e `validacaoRelato.ts` têm uma função `texto(form, campo)` com o mesmo nome, mas ela lê `FormData`, não o JSON da API. Não é uma primitiva de leitura da resposta e não entrou no escopo.
 - **Filtros de lista por tipo** (`agentesRisco`, `setoresIds`, `episIds`, `textos` da capacitação), que filtram itens em vez de convertê-los.
 
+**Parte 2 (#231): um Adapter por Adaptee.** Um Adapter existe para dar ao cliente uma interface estável sobre uma fonte. Com dois adaptadores para o mesmo Adaptee, o cliente recebia duas interfaces, e cada tela via o recurso de um jeito. A parte 2 deixa um único Adapter (`lerEpi`) e um único Target (`Epi`) em `features/epis/epi.ts`, ao lado de um único `listarEpis` em `features/epis/api.ts`. O módulo `epi.ts` não importa o cliente `http`, então o adaptador pode ser testado diretamente, sem o Vite. As telas que antes divergiam passam a ler o recurso pela mesma regra.
+
+O tipo único é a união dos dois anteriores, para que nenhuma tela perca campo. Onde os adaptadores discordavam, a regra escolhida foi:
+
+| Campo | Regra única | Motivo |
+| --- | --- | --- |
+| `numeroCa` | `texto(valor, '')`: ausente ou em branco vira `''` | Um registro sem CA não pode derrubar a lista inteira; as telas já mostram "não informado" para o texto vazio |
+| `classificacao` | `ClassificacaoEpi \| null`: valor fora dos 9 do enum vira `null` | As telas indexam `rotuloClassificacaoEpi[classificacao]`; o tipo garante que o rótulo existe. O backend só serializa os 9 valores de `ClassificacaoEPI` |
+| `dataValidadeCa`, `descricao`, `localizacao` | `textoOuNulo` | Mesma semântica de texto em branco das primitivas da parte 1 |
+| `estoqueCritico` | `true` só quando a API envia `true` | Vem calculado pelo backend; as respostas reduzidas, sem o campo, não ficam críticas |
+| `id`, `nome`, `quantidade`, `estoqueMinimo`, `status` | obrigatórios; fora disso, `Registro de EPI incompatível com o contrato da API` | Os dois adaptadores já os exigiam |
+
+Os campos de lote e modelo do `EpiResponse` (`loteId`, `numeroLote`, `marca`...) continuam sem leitura, porque nenhuma tela os exibe. `EpiResumo`, de `areas-risco/api.ts`, não entrou no escopo, porque não é um segundo `Epi` para `GET /api/epis`. Ele modela outro contrato do backend, o `EpiResumoResponse` (os EPIs obrigatórios aninhados na resposta da área, com id, nome, CA e situação). As tarefas o reaproveitam para ler `GET /api/tarefas/{id}/epis` e as exigências da tarefa, que devolvem o `EpiResponse` completo, mas só usam esses quatro campos. É uma projeção de leitura de outros recursos; trocá-la pelo `Epi` mudaria as telas de tarefas e fica registrada para uma revisão futura.
+
 ### Papéis do padrão
 
 | Papel no padrão | Elemento no código | Responsabilidade |
 | --- | --- | --- |
 | Adaptee | JSON bruto (`unknown`) retornado pelo axios | Dados recebidos da API HTTP |
-| Adapter | funções `lerX` de cada `api.ts` (`lerEpi`, `lerEmprestimo`, `lerAcao`...), apoiadas nas primitivas de `shared/api/leitura.ts` (`textoOuNulo`, `texto`, `numeroOuNulo`, `objeto`, `lista`, `listaOuVazia`) | Converter o payload da API no tipo da feature; as primitivas guardam a regra única de leitura de cada tipo de campo |
-| Target | tipos das features (`Epi`, `Emprestimo`, `AcaoPlano`, `Projecao`...) e, depois da #231, um único `export type Epi` | Contratos tipados consumidos pelas telas |
-| Client | telas e hooks das features (`EstoquePage`, `EpiDetalheDialog`, `useConsulta`...) | Usar só o Target, sem conhecer o JSON |
+| Adapter | funções `lerX` de cada `api.ts` (`lerEmprestimo`, `lerAcao`...) e o `lerEpi` único de `features/epis/epi.ts` (#231), apoiadas nas primitivas de `shared/api/leitura.ts` (`textoOuNulo`, `texto`, `numeroOuNulo`, `objeto`, `lista`, `listaOuVazia`) | Converter o payload da API no tipo da feature; as primitivas guardam a regra única de leitura de cada tipo de campo |
+| Target | tipos das features (`Emprestimo`, `AcaoPlano`, `Projecao`...) e o `export type Epi` único de `features/epis/epi.ts` (#231) | Contratos tipados consumidos pelas telas |
+| Client | telas e hooks das features (`EstoquePage`, `EpiDetalheDialog`, `AreaRiscoFormDialog`, `VincularEpisTarefaDialog`, `useConsulta`...) | Usar só o Target, sem conhecer o JSON |
 
 ### Diagramas
 
@@ -2134,7 +2161,49 @@ flowchart LR
   class LE,LP,LO,L adapter
 ```
 
-O diagrama da parte 2 (`Epi` único) fica para a [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231).
+**Antes (#231).** Dois adaptadores e dois tipos `Epi` para o mesmo `GET /api/epis`, com consumidores misturados.
+
+```mermaid
+flowchart LR
+  API["GET /api/epis<br/>POST /api/epis<br/>GET /api/emprestimos/epis-disponiveis<br/>«Adaptee»"]
+  subgraph epis["epis/api.ts"]
+    A1["lerEpi, listarEpis<br/>«Adapter»"]
+    T1["type Epi (8 campos)<br/>StatusEpi, ClassificacaoEpi<br/>rotuloClassificacaoEpi<br/>«Target»"]
+  end
+  subgraph estoque["estoque/api.ts e formatos.ts"]
+    A2["lerEpi, listarEpis<br/>«Adapter»"]
+    T2["type Epi (11 campos)<br/>StatusEpi, classificação string<br/>rotulosDeClassificacao<br/>«Target»"]
+  end
+  C1["RiskAreasPage, AreaRiscoFormDialog<br/>ExigenciaForm, VincularEpisTarefaDialog<br/>«Client»"]
+  C2["EpiPage, EpisUnificadosPage, telas de estoque<br/>emprestimos/api.ts, EntregaDialog<br/>«Client»"]
+  API --> A1 & A2
+  A1 --> T1
+  A2 --> T2
+  C1 --> T1
+  C2 --> T2
+  EP["EpiPage (feature epis)"] -.importa de estoque.-> T2
+```
+
+**Depois (#231).** Um Adapter e um Target no módulo do recurso; `epis/api.ts` e `emprestimos/api.ts` só fazem as chamadas HTTP.
+
+```mermaid
+flowchart LR
+  API["GET /api/epis<br/>POST /api/epis<br/>GET /api/emprestimos/epis-disponiveis<br/>«Adaptee»"]
+  subgraph contrato["features/epis/epi.ts (sem http)"]
+    A["lerEpi<br/>«Adapter»"]
+    T["type Epi (11 campos)<br/>StatusEpi, ClassificacaoEpi<br/>rotuloClassificacaoEpi<br/>«Target»"]
+  end
+  L["shared/api/leitura.ts<br/>objeto · texto · textoOuNulo"]
+  H["epis/api.ts: listarEpis, cadastrarEpi<br/>emprestimos/api.ts: listarEpisDisponiveis"]
+  C["Telas de EPI, estoque, empréstimos,<br/>áreas de risco, tarefas e capacitações<br/>«Client»"]
+  API --> H
+  H -->|"lista(data, lerEpi)"| A
+  A -->|usa| L
+  A --> T
+  C --> T
+  classDef adapter stroke-width:2px
+  class A,L adapter
+```
 
 ### Código antes × depois
 
@@ -2210,9 +2279,113 @@ export function listaOuVazia<T>(dado: unknown, ler: (item: unknown) => T): T[] {
 }
 ```
 
+**Parte 2 (#231): tipo e adaptador `Epi`.**
+
+Antes, dois clientes para o mesmo recurso:
+
+```ts
+// features/epis/api.ts
+export type Epi = {
+  id: number; nome: string; numeroCa: string; quantidade: number; estoqueMinimo: number
+  status: StatusEpi; dataValidadeCa: string | null; classificacao?: ClassificacaoEpi | null
+}
+
+function lerEpi(dado: unknown): Epi {
+  const bruto = objeto(dado, 'EPI inválido na resposta da API')
+  if (... || typeof bruto.numeroCa !== 'string' || ...) {   // sem CA: recusa a lista inteira
+    throw new Error('EPI incompatível com contrato da API')
+  }
+  ...
+  dataValidadeCa: typeof bruto.dataValidadeCa === 'string' ? bruto.dataValidadeCa : null,
+  classificacao: ehClassificacao(bruto.classificacao) ? bruto.classificacao : null,
+}
+
+export async function listarEpis(signal?: AbortSignal): Promise<Epi[]> { ... }   // GET /epis
+
+// features/estoque/api.ts
+export type Epi = {
+  id: number; nome: string; numeroCa: string; quantidade: number; estoqueMinimo: number
+  estoqueCritico: boolean; status: StatusEpi; dataValidadeCa: string | null
+  descricao: string | null; classificacao: string | null; localizacao: string | null
+}
+
+export function lerEpi(dado: unknown): Epi {
+  const bruto = objeto(dado, 'Registro de EPI inválido')
+  ...
+  numeroCa: typeof bruto.numeroCa === 'string' ? bruto.numeroCa : '',   // sem CA: texto vazio
+  classificacao: textoOuNulo(bruto.classificacao),                      // qualquer texto
+}
+
+export async function listarEpis(signal?: AbortSignal): Promise<Epi[]> { ... }   // GET /epis, de novo
+
+// features/epis/EpiPage.tsx (feature epis lendo o Epi do estoque)
+import { listarEpis, type Epi, type StatusEpi } from '../estoque/api'
+```
+
+Depois, um contrato único em `features/epis/epi.ts`, sem dependência do cliente `http`:
+
+```ts
+export type Epi = {
+  id: number
+  nome: string
+  numeroCa: string
+  quantidade: number
+  estoqueMinimo: number
+  estoqueCritico: boolean
+  status: StatusEpi
+  dataValidadeCa: string | null
+  descricao: string | null
+  classificacao: ClassificacaoEpi | null
+  localizacao: string | null
+}
+
+export function lerEpi(dado: unknown): Epi {
+  const bruto = objeto(dado, 'Registro de EPI inválido')
+  if (typeof bruto.id !== 'number' || typeof bruto.nome !== 'string' || typeof bruto.quantidade !== 'number'
+    || typeof bruto.estoqueMinimo !== 'number' || !ehStatusEpi(bruto.status)) {
+    throw new Error('Registro de EPI incompatível com o contrato da API')
+  }
+  return {
+    id: bruto.id,
+    nome: bruto.nome,
+    numeroCa: texto(bruto.numeroCa, ''),
+    quantidade: bruto.quantidade,
+    estoqueMinimo: bruto.estoqueMinimo,
+    estoqueCritico: bruto.estoqueCritico === true,
+    status: bruto.status,
+    dataValidadeCa: textoOuNulo(bruto.dataValidadeCa),
+    descricao: textoOuNulo(bruto.descricao),
+    classificacao: ehClassificacaoEpi(bruto.classificacao) ? bruto.classificacao : null,
+    localizacao: textoOuNulo(bruto.localizacao),
+  }
+}
+```
+
+Os clientes HTTP só chamam o adaptador:
+
+```ts
+// features/epis/api.ts: a única listagem de GET /api/epis
+export async function listarEpis(signal?: AbortSignal): Promise<Epi[]> {
+  const { data } = await http.get<unknown>('/epis', { signal })
+  return lista(data, lerEpi, 'Esperava uma lista de EPIs')
+}
+
+// features/emprestimos/api.ts: mesmo contrato EpiResponse, mesmo adaptador
+import { lerEpi, type Epi } from '../epis/epi'
+
+// features/estoque/formatos.ts: rótulo vindo do mapa único
+export function rotuloDaClassificacao(valor: ClassificacaoEpi | null): string {
+  return valor ? rotuloClassificacaoEpi[valor] : 'Não informada'
+}
+```
+
 ### Benefício
 
 **Parte 1 (#244).** A regra de leitura de cada tipo de campo passou a existir uma vez. Antes, "o que é um texto vazio" tinha duas respostas no frontend, e um campo em branco aparecia de jeitos diferentes conforme a tela; agora a resposta é única e documentada, e o catálogo do estoque mostra "Não informada" como as demais telas. Os adaptadores ficaram mais curtos (cerca de 100 linhas a menos nos `api*.ts`) e dizem só o que é próprio de cada recurso: quais campos ler, qual reserva usar e qual mensagem mostrar. Uma mudança na regra, por exemplo passar a aparar espaços, é feita em `leitura.ts` e vale para todas as telas, com os testes das primitivas mostrando o efeito.
+
+**Parte 2 (#231).** O EPI passou a ter um contrato só no frontend. Ficou mais simples porque um campo novo do `EpiResponse` é lido em um lugar e chega a todas as telas, e o mesmo registro aparece do mesmo jeito no catálogo, no estoque, nos empréstimos, nas áreas de risco, nas tarefas e nas capacitações. Ficou mais seguro em dois pontos: um registro sem CA deixaria de apagar a lista inteira no cadastro de área de risco, na vinculação de tarefas e nas exigências de capacitação, e a classificação passou a ser tipada em todas as telas, então o compilador recusa um rótulo inexistente. Também ficou mais fácil de testar: como `epi.ts` não depende do cliente `http`, o adaptador é testado diretamente, sem navegador, o que a parte 1 não conseguia fazer com os adaptadores das features.
+
+**Nenhuma mudança visível.** Para respostas dentro do contrato, nenhuma tela mudou: os campos exibidos, os textos de reserva ("não informado", "Não informada") e os rótulos de classificação são os mesmos, e as mensagens dos adaptadores não aparecem na tela (`mensagemDaApi` só lê o corpo de erros HTTP). A regra única só difere da anterior em dois casos fora do contrato, e nos dois passa a valer a regra que já valia em parte das telas: EPI sem CA (antes recusado pelo adaptador de `epis`, agora lido como no estoque) e classificação fora do enum (antes exibida "legível" no detalhe do estoque, agora "Não informada", como na vinculação de tarefas). Nenhum dos dois ocorre com a API atual: o CA vem de `modelos_epi.ca`, `INTEGER NOT NULL` (V9), e `Epi.getNumeroCa()` sempre devolve os dígitos; a classificação é serializada a partir do enum `ClassificacaoEPI`, que tem os mesmos 9 valores.
 
 ### Métricas locais
 
@@ -2230,6 +2403,23 @@ export function listaOuVazia<T>(dado: unknown, ler: (item: unknown) => T): T[] {
 
 Medição por busca nos arquivos `frontend/src/features/*/api*.ts`. A contagem de verificações de lista inclui as que estavam dentro das funções locais. A leitura de "texto como veio" a menos é a cópia de `textoOuNulo` do estoque, que passou à semântica única.
 
+**Parte 2 (#231).**
+
+| Métrica | Antes (`dev`, `e338bc0`) | Depois da #231 |
+| --- | ---: | ---: |
+| `export type Epi` | 2 | 1 |
+| Adaptadores `lerEpi` | 2 | 1 |
+| Funções `listarEpis` para `GET /api/epis` | 2 | 1 |
+| `export type StatusEpi` | 2 | 1 |
+| Mapas de rótulos de classificação de EPI | 2 | 1 |
+| Módulos de onde as telas importam o tipo `Epi` | 2 | 1 (`features/epis/epi.ts`) |
+| Regras de leitura para CA ausente | 2 | 1 |
+| Linhas de `epis/api.ts`, `estoque/api.ts` e `estoque/formatos.ts` (mais `epis/epi.ts` depois) | 318 | 299 |
+| Linhas dos `features/*/api*.ts` | 1883 | 1784 |
+| Bundle JS de produção (`npm run build`) | 537,50 kB | 536,20 kB |
+
+Medição por busca em `frontend/src`. O contrato saiu dos `api*.ts` para `epis/epi.ts` (97 linhas), por isso a contagem dos `api*.ts` cai mais que o total. As duas medidas de bundle foram feitas na mesma máquina, com o mesmo comando.
+
 ### Evidências
 
 **Parte 1 (#244).**
@@ -2243,7 +2433,14 @@ Os adaptadores das features não são importados direto no `leitura.spec.ts` por
 
 Suíte existente (`npm run lint`, `npm run build` e `npx playwright test`, 301 testes): lint e build sem erros. Em duas execuções completas, 300 testes passaram e 1 falhou, e o teste que falhou não foi o mesmo. Na primeira, falhou o "fluxo completo pelo teclado" de `capacitacoes.spec.ts` (foco depois de `Tab`), que passa nas três execuções isoladas. Na segunda, falhou "Gestor cadastra nova tarefa" de `tarefas.spec.ts` (botão do diálogo instável). Executado sozinho, ele falha também na `dev` sem esta mudança (`a5aa9be`), então a instabilidade é anterior à #244.
 
-**Parte 2 (#231).** *A preencher na issue [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231).*
+**Parte 2 (#231).**
+
+Testes novos:
+
+1. `tests/leitura-epi.spec.ts` (11 testes, sem navegador; papéis Adapter e Target): `lerEpi` converte o `EpiResponse` completo no `Epi` único e ignora lote e modelo; lê o `estoqueCritico` do backend sem recalcular; aceita a resposta reduzida das specs de áreas e capacitações com as reservas de cada campo; troca CA ausente, nulo ou em branco por `''`; troca textos em branco por `null`; aceita as 9 classificações e as 5 situações e troca classificação desconhecida por `null`; recusa o que não é objeto e o registro sem `id`, `nome`, `quantidade`, `estoqueMinimo` ou com situação desconhecida, com as mensagens do adaptador. Também verifica que `rotuloDaClassificacao` (estoque) usa o mesmo mapa de rótulos da vinculação de tarefas.
+2. `tests/areas-risco.spec.ts`, teste "EPI sem CA no catálogo não esconde os demais EPIs do cadastro de área" (papel Client): com `GET /api/epis` devolvendo um EPI sem CA, o cadastro de área lista os dois EPIs e não mostra "Nenhum EPI disponível no catálogo", como o catálogo do estoque já fazia com a mesma resposta. Executado contra o código anterior (`e338bc0`), o teste falha: o adaptador de `epis` recusava a lista e nenhum EPI aparecia. A resposta é simulada fora do contrato de propósito, para mostrar que as telas passaram a seguir uma regra só.
+
+Linha de base antes da mudança (`e338bc0`): `npm run lint` e `npm run build` sem erros; as specs de EPI, estoque, áreas de risco, empréstimos, capacitações, tarefas, acessibilidade e leitura com 190 testes passando. Depois da mudança: lint e build sem erros e a suíte completa (`npx playwright test`) com **313 testes passando e 0 falhas**, sendo 301 anteriores e 12 novos. Nenhum teste existente foi alterado.
 
 ---
 

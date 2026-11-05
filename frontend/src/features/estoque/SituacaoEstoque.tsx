@@ -3,7 +3,7 @@
 // O aviso não depende só da cor (RNF11, WCAG 2.1 AA; issue #123).
 
 import { Badge, Icon, type FeedbackTone } from '../../shared/components'
-import type { Epi } from './api'
+import type { Epi } from '../epis/epi'
 import { rotuloDoStatus } from './formatos'
 
 const tomDoStatus: Record<Epi['status'], FeedbackTone> = {
