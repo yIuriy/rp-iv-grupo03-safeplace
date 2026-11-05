@@ -21,6 +21,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import br.edu.safeplace.backend.application.port.out.AreaRiscoRepository;
 import br.edu.safeplace.backend.application.port.out.SetorRepository;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.area_risco.exception.AreaRiscoSemEpiObrigatorioException;
 import br.edu.safeplace.backend.domain.area_risco.exception.CodigoAreaRiscoDuplicadoException;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
@@ -125,7 +126,8 @@ class AreaRiscoValidadorTest {
         SetorRepository setores = mock(SetorRepository.class);
         when(setores.buscarPorId(anyInt())).thenReturn(Optional.empty());
         AreaRiscoValidador comSetores = new AreaRiscoValidador(null, setores);
-        AreaRisco comSetor = new AreaRisco(null, "SET-08", "Pintura", null, NivelPerigo.MEDIO, 99,
+        Setor setorInexistente = new Setor(99, null, null, null, null);
+        AreaRisco comSetor = new AreaRisco(null, "SET-08", "Pintura", null, NivelPerigo.MEDIO, setorInexistente,
                 List.of("Solventes"), "Cabine", List.of(epi(1, "Máscara")));
 
         assertThatThrownBy(() -> comSetores.validar(comSetor))
