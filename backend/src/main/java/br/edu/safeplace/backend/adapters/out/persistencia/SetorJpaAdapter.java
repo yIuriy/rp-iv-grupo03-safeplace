@@ -19,24 +19,21 @@ public class SetorJpaAdapter implements SetorRepository {
 
     @Override
     public Setor salvar(Setor setor) {
-        SetorEntity salvo = jpaRepository.save(SetorEntity.deDominio(setor));
-        return salvo.paraDominio();
+        return jpaRepository.save(setor);
     }
 
     @Override
     public Optional<Setor> buscarPorId(Integer id) {
-        return jpaRepository.findById(id).map(SetorEntity::paraDominio);
+        return jpaRepository.findById(id);
     }
 
     @Override
     public List<Setor> listarTodos() {
-        return jpaRepository.findAll().stream()
-                .map(SetorEntity::paraDominio)
-                .toList();
+        return jpaRepository.findAll();
     }
 
     @Override
     public Optional<Setor> buscarPorNome(String nome) {
-        return jpaRepository.findByNomeIgnoreCase(nome).map(SetorEntity::paraDominio);
+        return jpaRepository.findByNomeIgnoreCase(nome);
     }
 }
