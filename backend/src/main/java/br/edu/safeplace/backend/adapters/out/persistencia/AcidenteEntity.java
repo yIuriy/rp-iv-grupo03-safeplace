@@ -8,6 +8,7 @@ import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
 
+import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 
 @Entity
@@ -37,7 +38,7 @@ public class AcidenteEntity extends OcorrenciaEntity {
             LocalDateTime dataOcorrencia,
             LocalDateTime dataRegistro,
             String statusOcorrencia,
-            AreaRiscoEntity area,
+            AreaRisco area,
             ColaboradorEntidade colaborador,
             ColaboradorEntidade relator,
             String local,
@@ -57,7 +58,6 @@ public class AcidenteEntity extends OcorrenciaEntity {
         this.destino = destino;
         this.gravidade = gravidade;
     }
-
 
     public String getCausaRaiz() {
         return causaRaiz;
