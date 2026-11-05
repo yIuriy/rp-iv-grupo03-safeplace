@@ -1,6 +1,6 @@
 /*
- * Adaptador JPA do histórico de inspeções (RF09, issue #134): converte Inspecao em entidade com seus
- * itens, grava e reconstrói as inspeções de uma área com o Gestor de Segurança responsável.
+ * Adaptador JPA do histórico de inspeções (RF09, issue #134): delega ao InspecaoJpaRepository e
+ * hidrata o Gestor de Segurança responsável (ponte transicional até a issue #256).
  */
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import br.edu.safeplace.backend.application.port.out.InspecaoRepository;
 import br.edu.safeplace.backend.domain.inspecao.Inspecao;
-import br.edu.safeplace.backend.domain.inspecao.ItemVerificado;
+import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
 @Repository
 public class InspecaoJpaAdapter implements InspecaoRepository {
@@ -25,37 +25,33 @@ public class InspecaoJpaAdapter implements InspecaoRepository {
 
     @Override
     public Inspecao salvar(Inspecao inspecao) {
-        InspecaoEntity entidade = new InspecaoEntity(
-                inspecao.getAreaRiscoId(), inspecao.getDataInspecao(), carregarGestor(inspecao.getResponsavel().getId()));
-        inspecao.getItens().forEach(item ->
-                entidade.adicionarItem(item.getDescricao(), item.isConformidade(), item.getObservacoes()));
-        return toDomain(inspecaoRepository.save(entidade));
+        GestorDeSeguranca gestor = carregarGestor(inspecao.getResponsavel().getId());
+        inspecao.definirResponsavel(gestor);
+        Inspecao salva = inspecaoRepository.save(inspecao);
+        salva.definirResponsavel(gestor);
+        return salva;
     }
 
     @Override
     public List<Inspecao> listarPorArea(Integer areaRiscoId) {
-        return inspecaoRepository.findByAreaRiscoIdOrderByDataInspecaoDescIdDesc(areaRiscoId).stream()
-                .map(this::toDomain)
+        return inspecaoRepository.findByAreaRisco_IdOrderByDataInspecaoDescIdDesc(areaRiscoId).stream()
+                .map(this::hidratarResponsavel)
                 .toList();
     }
 
-    private GestorDeSegurancaEntidade carregarGestor(Integer gestorId) {
+    private Inspecao hidratarResponsavel(Inspecao inspecao) {
+        if (inspecao != null && inspecao.getResponsavel() == null && inspecao.getGestorId() != null) {
+            inspecao.definirResponsavel(carregarGestor(inspecao.getGestorId()));
+        }
+        return inspecao;
+    }
+
+    private GestorDeSeguranca carregarGestor(Integer gestorId) {
         return usuarioRepository.findById(gestorId)
                 .filter(GestorDeSegurancaEntidade.class::isInstance)
                 .map(GestorDeSegurancaEntidade.class::cast)
+                .map(GestorDeSegurancaEntidade::paraDominio)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Responsável pela inspeção não encontrado entre os gestores de segurança: " + gestorId));
-    }
-
-    private Inspecao toDomain(InspecaoEntity entidade) {
-        return new Inspecao(
-                entidade.getId(),
-                entidade.getAreaRiscoId(),
-                entidade.getDataInspecao(),
-                entidade.getGestor().paraDominio(),
-                entidade.getItens().stream()
-                        .map(item -> new ItemVerificado(item.getId(), item.getDescricao(),
-                                item.isConformidade(), item.getObservacoes()))
-                        .toList());
     }
 }
