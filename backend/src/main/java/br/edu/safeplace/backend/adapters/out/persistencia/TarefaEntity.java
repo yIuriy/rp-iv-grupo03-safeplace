@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.area_risco.Setor;
 import jakarta.persistence.*;
 
 @Entity
@@ -29,12 +31,12 @@ public class TarefaEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "area_risco_id")
-    private AreaRiscoEntity areaRisco;
+    private AreaRisco areaRisco;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "tarefas_setores", joinColumns = @JoinColumn(name = "tarefa_id"),
             inverseJoinColumns = @JoinColumn(name = "setor_id"))
-    private List<SetorEntity> setores = new ArrayList<>();
+    private List<Setor> setores = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "tarefas_epis", joinColumns = @JoinColumn(name = "tarefa_id"),
@@ -51,12 +53,12 @@ public class TarefaEntity {
     }
 
     public TarefaEntity(Integer id, String descricao, String nivelPerigo, LocalDateTime dataClassificacao,
-            GestorDeSegurancaEntidade responsavelClassificacao, AreaRiscoEntity areaRisco, List<SetorEntity> setores) {
+            GestorDeSegurancaEntidade responsavelClassificacao, AreaRisco areaRisco, List<Setor> setores) {
         this(id, descricao, nivelPerigo, dataClassificacao, responsavelClassificacao, areaRisco, setores, List.of());
     }
 
     public TarefaEntity(Integer id, String descricao, String nivelPerigo, LocalDateTime dataClassificacao,
-            GestorDeSegurancaEntidade responsavelClassificacao, AreaRiscoEntity areaRisco, List<SetorEntity> setores,
+            GestorDeSegurancaEntidade responsavelClassificacao, AreaRisco areaRisco, List<Setor> setores,
             List<EpiEntity> epis) {
         this.id = id;
         this.descricao = descricao;
@@ -88,11 +90,11 @@ public class TarefaEntity {
         return responsavelClassificacao;
     }
 
-    public AreaRiscoEntity getAreaRisco() {
+    public AreaRisco getAreaRisco() {
         return areaRisco;
     }
 
-    public List<SetorEntity> getSetores() {
+    public List<Setor> getSetores() {
         return setores;
     }
 
