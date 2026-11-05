@@ -282,9 +282,7 @@ public class PlanoDeAcaoJpaAdapter implements PlanoDeAcaoRepository {
         if (setorRepository == null || id == null) {
             return null;
         }
-        return setorRepository.findById(id)
-                .map(SetorEntity::paraDominio)
-                .orElse(null);
+        return setorRepository.findById(id).orElse(null);
     }
 
     private GestorDeSeguranca carregarGestor(Integer id) {
