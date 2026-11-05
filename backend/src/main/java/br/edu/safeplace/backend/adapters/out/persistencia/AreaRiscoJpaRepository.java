@@ -6,19 +6,22 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface AreaRiscoJpaRepository extends JpaRepository<AreaRiscoEntity, Integer> {
+import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 
-    @EntityGraph(attributePaths = "episObrigatorios")
-    Optional<AreaRiscoEntity> findByCodigo(String codigo);
+public interface AreaRiscoJpaRepository extends JpaRepository<AreaRisco, Integer> {
+
+    @EntityGraph(attributePaths = {"setor", "episObrigatoriosIds"})
+    Optional<AreaRisco> findByCodigo(String codigo);
 
     @Override
-    @EntityGraph(attributePaths = "episObrigatorios")
-    List<AreaRiscoEntity> findAll();
+    @EntityGraph(attributePaths = {"setor", "episObrigatoriosIds"})
+    List<AreaRisco> findAll();
 
     @Override
-    @EntityGraph(attributePaths = "episObrigatorios")
-    Optional<AreaRiscoEntity> findById(Integer id);
+    @EntityGraph(attributePaths = {"setor", "episObrigatoriosIds"})
+    Optional<AreaRisco> findById(Integer id);
 
-    @EntityGraph(attributePaths = "episObrigatorios")
-    List<AreaRiscoEntity> findByNivelPerigo(String nivelPerigo);
+    @EntityGraph(attributePaths = {"setor", "episObrigatoriosIds"})
+    List<AreaRisco> findByNivelPerigo(NivelPerigo nivelPerigo);
 }
