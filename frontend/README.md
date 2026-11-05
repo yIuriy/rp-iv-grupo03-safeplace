@@ -220,7 +220,8 @@ Use o endereço exibido no terminal, normalmente [http://localhost:4173](http://
 - `src/features/emprestimos/`: entregas, devoluções, posse e atrasos e, para o Gestor, projeções de substituição.
 - `src/features/areas-risco/`: áreas de risco e setores físicos (UC03).
 - `src/features/ocorrencias/`: consulta, protocolo CAT e detalhe de ocorrências (UC05, UC09).
-- `src/features/epis/` e `tarefas/`: telas por funcionalidade.
+- `src/features/epis/`: catálogo, cadastro e manutenção de EPIs. `epi.ts` guarda o contrato único do recurso EPI (tipo `Epi` e adaptador `lerEpi`, issue #231), usado por todas as telas que listam EPIs.
+- `src/features/tarefas/`: tarefas, classificação e vinculação de EPIs obrigatórios.
 - `src/features/design-system/`: catálogo e exemplos com dados fictícios.
 - `src/shared/components/` e `src/shared/layout/`: componentes e estrutura visual compartilhados.
 - `src/shared/api/`: cliente HTTP para a integração com a API.
