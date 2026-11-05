@@ -76,13 +76,14 @@ public class AreaRiscoService implements GerenciarAreaRiscoUseCase {
     @Transactional
     public AreaRiscoOutputDTO cadastrarAreaRisco(CadastrarAreaRiscoInputDTO inputDTO, String operador) {
         List<Epi> episObrigatorios = resolverEpis(inputDTO.episObrigatoriosIds());
+        Setor setor = resolverSetor(inputDTO.setorId());
 
         AreaRisco novaArea = AreaRisco.cadastrar(
                 inputDTO.codigo(),
                 inputDTO.nome(),
                 inputDTO.descricao(),
                 inputDTO.nivelPerigo(),
-                inputDTO.setorId(),
+                setor,
                 inputDTO.agentesRisco(),
                 inputDTO.limites(),
                 episObrigatorios);
@@ -106,12 +107,13 @@ public class AreaRiscoService implements GerenciarAreaRiscoUseCase {
                 .orElseThrow(() -> new AreaRiscoNaoEncontradaException(id));
 
         List<Epi> episObrigatorios = resolverEpis(inputDTO.episObrigatoriosIds());
+        Setor setor = resolverSetor(inputDTO.setorId());
 
         AreaRisco atualizada = existente.atualizar(
                 inputDTO.nome(),
                 inputDTO.descricao(),
                 inputDTO.nivelPerigo(),
-                inputDTO.setorId(),
+                setor,
                 inputDTO.agentesRisco(),
                 inputDTO.limites(),
                 episObrigatorios);
@@ -186,6 +188,17 @@ public class AreaRiscoService implements GerenciarAreaRiscoUseCase {
 
     private static String valorNoHistorico(String valor) {
         return valor != null ? "\"" + valor + "\"" : "não informado";
+    }
+
+    private Setor resolverSetor(Integer setorId) {
+        if (setorId == null) {
+            return null;
+        }
+        if (setorRepository != null) {
+            return setorRepository.buscarPorId(setorId)
+                    .orElseGet(() -> new Setor(setorId, null, null, null, null));
+        }
+        return new Setor(setorId, null, null, null, null);
     }
 
     private String descreverSetor(Integer setorId) {
