@@ -17,6 +17,7 @@ import br.edu.safeplace.backend.application.port.out.NotificadorOcorrencia;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepository;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
@@ -62,7 +63,8 @@ class OcorrenciaServiceTest {
     private static final int AREA_ID = 10;
     private static final int COLABORADOR_ID = 20;
 
-    private final AreaRisco area = new AreaRisco(AREA_ID, "AR-10", "Laminação", "Setor L", NivelPerigo.ALTO, 5,
+    private final Setor setor = new Setor(5, "Setor L", null, "Galpão", NivelPerigo.ALTO);
+    private final AreaRisco area = new AreaRisco(AREA_ID, "AR-10", "Laminação", "Setor L", NivelPerigo.ALTO, setor,
             List.of(), "Galpão", List.of());
     private final Colaborador colaborador = new Colaborador(COLABORADOR_ID, "11122233344", "Carlos",
             LocalDate.of(1995, 2, 2), "carlos@email.com", true, LocalDateTime.now(), LocalDateTime.now());
