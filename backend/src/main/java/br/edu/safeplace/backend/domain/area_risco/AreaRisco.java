@@ -6,7 +6,9 @@
 package br.edu.safeplace.backend.domain.area_risco;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -16,6 +18,23 @@ import java.util.stream.Collectors;
 
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.Epi;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Converter;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 /**
  * Delimitação de perigo vinculada a um Setor físico da planta (RF05 / UC03).
@@ -24,17 +43,49 @@ import br.edu.safeplace.backend.domain.epi.Epi;
  * de perigo, exige o vínculo dos EPIs obrigatórios para acesso. A regra é verificada pelo
  * {@code EpisObrigatoriosElo} antes de salvar o cadastro ou a atualização (issue #263).</p>
  */
+@Entity
+@Table(name = "areas_risco")
 public class AreaRisco {
 
-    private final Integer id;
-    private final String codigo;
-    private final String nome;
-    private final String descricao;
-    private final NivelPerigo nivelPerigo;
-    private final Integer setorId;
-    private final List<String> agentesRisco;
-    private final String limites;
-    private final List<Epi> episObrigatorios;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(nullable = false, length = 50, unique = true)
+    private String codigo;
+
+    @Column(nullable = false, length = 160)
+    private String nome;
+
+    @Column(columnDefinition = "text")
+    private String descricao;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "nivel_perigo", nullable = false, length = 20)
+    private NivelPerigo nivelPerigo;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "setor_id")
+    private Setor setor;
+
+    @Convert(converter = AgentesRiscoConverter.class)
+    @Column(name = "agentes_risco", columnDefinition = "text")
+    private List<String> agentesRisco = Collections.emptyList();
+
+    @Column(name = "limites", columnDefinition = "text")
+    private String limites;
+
+    /** Ponte transicional para a tabela de junção até que Epi seja anotada com @Entity (#258). */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "areas_risco_epis", joinColumns = @JoinColumn(name = "area_risco_id"))
+    @Column(name = "epi_id", nullable = false)
+    private Set<Integer> episObrigatoriosIds = new LinkedHashSet<>();
+
+    @Transient
+    private List<Epi> episObrigatorios = Collections.emptyList();
+
+    protected AreaRisco() {
+    }
 
     public AreaRisco(
             Integer id,
@@ -42,7 +93,7 @@ public class AreaRisco {
             String nome,
             String descricao,
             NivelPerigo nivelPerigo,
-            Integer setorId,
+            Setor setor,
             List<String> agentesRisco,
             String limites,
             List<Epi> episObrigatorios) {
@@ -51,10 +102,10 @@ public class AreaRisco {
         this.nome = nome != null ? nome.trim() : null;
         this.descricao = descricao != null ? descricao.trim() : null;
         this.nivelPerigo = nivelPerigo;
-        this.setorId = setorId;
+        this.setor = setor;
         this.agentesRisco = agentesRisco != null ? List.copyOf(agentesRisco) : Collections.emptyList();
         this.limites = limites != null ? limites.trim() : null;
-        this.episObrigatorios = episObrigatorios != null ? List.copyOf(episObrigatorios) : Collections.emptyList();
+        definirEpisObrigatorios(episObrigatorios);
     }
 
     public AreaRisco(
@@ -73,11 +124,11 @@ public class AreaRisco {
             String nome,
             String descricao,
             NivelPerigo nivelPerigo,
-            Integer setorId,
+            Setor setor,
             List<String> agentesRisco,
             String limites,
             List<Epi> episObrigatorios) {
-        return new AreaRisco(null, codigo, nome, descricao, nivelPerigo, setorId, agentesRisco, limites, episObrigatorios);
+        return new AreaRisco(null, codigo, nome, descricao, nivelPerigo, setor, agentesRisco, limites, episObrigatorios);
     }
 
     public static AreaRisco cadastrar(
@@ -94,7 +145,7 @@ public class AreaRisco {
             String novoNome,
             String novaDescricao,
             NivelPerigo novoNivel,
-            Integer novoSetorId,
+            Setor novoSetor,
             List<String> novosAgentes,
             String novosLimites,
             List<Epi> novosEpis) {
@@ -104,7 +155,7 @@ public class AreaRisco {
                 novoNome,
                 novaDescricao,
                 novoNivel,
-                novoSetorId != null ? novoSetorId : this.setorId,
+                novoSetor != null ? novoSetor : this.setor,
                 novosAgentes,
                 novosLimites,
                 novosEpis);
@@ -115,17 +166,17 @@ public class AreaRisco {
      * compara esta versão com a {@code atualizada} e devolve cada campo que mudou, com o valor
      * anterior e o novo. Sem isso, a atualização sobrescreve a linha e o valor antigo se perde.
      *
-     * @param descreverSetor nome do setor a partir do id; a área guarda só o id do {@link Setor}
+     * @param descreverSetor função opcional de resolução de nome do setor a partir do id
      */
     public List<AlteracaoAreaRisco> compararCom(AreaRisco atualizada, Function<Integer, String> descreverSetor) {
         List<AlteracaoAreaRisco> alteracoes = new ArrayList<>();
         registrarSeMudou(alteracoes, "nome", nome, atualizada.nome);
         registrarSeMudou(alteracoes, "descrição", descricao, atualizada.descricao);
         registrarSeMudou(alteracoes, "nível de perigo", nomeDoNivel(nivelPerigo), nomeDoNivel(atualizada.nivelPerigo));
-        if (!Objects.equals(setorId, atualizada.setorId)) {
+        if (!Objects.equals(setor, atualizada.setor)) {
             alteracoes.add(new AlteracaoAreaRisco("setor",
-                    descreverSetorOuNulo(setorId, descreverSetor),
-                    descreverSetorOuNulo(atualizada.setorId, descreverSetor)));
+                    descreverSetorOuNulo(setor, descreverSetor),
+                    descreverSetorOuNulo(atualizada.setor, descreverSetor)));
         }
         registrarSeMudou(alteracoes, "agentes de risco", juntar(agentesRisco), juntar(atualizada.agentesRisco));
         registrarSeMudou(alteracoes, "limites", limites, atualizada.limites);
@@ -133,6 +184,10 @@ public class AreaRisco {
             alteracoes.add(new AlteracaoAreaRisco("EPIs obrigatórios", nomesDosEpis(), atualizada.nomesDosEpis()));
         }
         return alteracoes;
+    }
+
+    public List<AlteracaoAreaRisco> compararCom(AreaRisco atualizada) {
+        return compararCom(atualizada, null);
     }
 
     private static void registrarSeMudou(List<AlteracaoAreaRisco> alteracoes, String campo, String anterior, String novo) {
@@ -145,36 +200,64 @@ public class AreaRisco {
         return nivel != null ? nivel.name() : null;
     }
 
-    private static String descreverSetorOuNulo(Integer id, Function<Integer, String> descreverSetor) {
-        return id != null ? descreverSetor.apply(id) : null;
+    private static String descreverSetorOuNulo(Setor setor, Function<Integer, String> descreverSetor) {
+        if (setor == null) {
+            return null;
+        }
+        if (setor.getNome() != null && !setor.getNome().isBlank()) {
+            return setor.getNome();
+        }
+        return descreverSetor != null && setor.getId() != null ? descreverSetor.apply(setor.getId()) : null;
     }
 
     private static String juntar(List<String> valores) {
-        return valores.isEmpty() ? null : String.join(", ", valores);
+        return valores == null || valores.isEmpty() ? null : String.join(", ", valores);
     }
 
     private Set<Integer> idsDosEpis() {
-        return episObrigatorios.stream().map(Epi::getId).filter(Objects::nonNull)
-                .collect(Collectors.toCollection(TreeSet::new));
+        if (episObrigatorios != null && !episObrigatorios.isEmpty()) {
+            return episObrigatorios.stream().map(Epi::getId).filter(Objects::nonNull)
+                    .collect(Collectors.toCollection(TreeSet::new));
+        }
+        return episObrigatoriosIds != null ? new TreeSet<>(episObrigatoriosIds) : Collections.emptySet();
     }
 
     private String nomesDosEpis() {
-        return episObrigatorios.isEmpty() ? null
+        return episObrigatorios == null || episObrigatorios.isEmpty() ? null
                 : episObrigatorios.stream().map(Epi::getNome).collect(Collectors.joining(", "));
+    }
+
+    /**
+     * Hidrata a lista de objetos {@link Epi} após leitura JPA, sincronizando os identificadores
+     * quando os objetos possuem ID (ponte transicional até a issue #258).
+     */
+    public void definirEpisObrigatorios(List<Epi> epis) {
+        this.episObrigatorios = epis != null ? List.copyOf(epis) : Collections.emptyList();
+        this.episObrigatoriosIds = this.episObrigatorios.stream()
+                .map(Epi::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    public Set<Integer> getEpisObrigatoriosIds() {
+        return episObrigatoriosIds != null ? Collections.unmodifiableSet(episObrigatoriosIds) : Collections.emptySet();
     }
 
     /**
      * Operação {@code verificarEPIsObrigatoriosArea()} do diagrama de classes.
      */
     public List<Epi> verificarEpisObrigatoriosArea() {
-        return episObrigatorios;
+        return episObrigatorios != null ? episObrigatorios : Collections.emptyList();
     }
 
     public boolean exigeEpi(Integer epiId) {
         if (epiId == null) {
             return false;
         }
-        return episObrigatorios.stream().anyMatch(epi -> epiId.equals(epi.getId()));
+        if (episObrigatorios != null && !episObrigatorios.isEmpty()) {
+            return episObrigatorios.stream().anyMatch(epi -> epiId.equals(epi.getId()));
+        }
+        return episObrigatoriosIds != null && episObrigatoriosIds.contains(epiId);
     }
 
     public boolean isCadastrada() {
@@ -201,12 +284,12 @@ public class AreaRisco {
         return nivelPerigo;
     }
 
-    public Integer getSetorId() {
-        return setorId;
+    public Setor getSetor() {
+        return setor;
     }
 
     public List<String> getAgentesRisco() {
-        return agentesRisco;
+        return agentesRisco != null ? agentesRisco : Collections.emptyList();
     }
 
     public String getLimites() {
@@ -214,7 +297,7 @@ public class AreaRisco {
     }
 
     public List<Epi> getEpisObrigatorios() {
-        return episObrigatorios;
+        return episObrigatorios != null ? episObrigatorios : Collections.emptyList();
     }
 
     @Override
@@ -234,5 +317,28 @@ public class AreaRisco {
     @Override
     public int hashCode() {
         return Objects.hashCode(codigo);
+    }
+
+    @Converter
+    static class AgentesRiscoConverter implements AttributeConverter<List<String>, String> {
+
+        @Override
+        public String convertToDatabaseColumn(List<String> attribute) {
+            if (attribute == null || attribute.isEmpty()) {
+                return null;
+            }
+            return String.join(", ", attribute);
+        }
+
+        @Override
+        public List<String> convertToEntityAttribute(String dbData) {
+            if (dbData == null || dbData.isBlank()) {
+                return List.of();
+            }
+            return Arrays.stream(dbData.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .toList();
+        }
     }
 }
