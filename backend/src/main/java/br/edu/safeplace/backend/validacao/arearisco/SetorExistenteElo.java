@@ -2,6 +2,7 @@ package br.edu.safeplace.backend.validacao.arearisco;
 
 import br.edu.safeplace.backend.application.port.out.SetorRepository;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.validacao.EloValidacao;
 import br.edu.safeplace.backend.validacao.Problema;
 import br.edu.safeplace.backend.validacao.ResultadoValidacao;
@@ -17,7 +18,8 @@ class SetorExistenteElo extends EloValidacao<AreaRisco> {
 
     @Override
     protected void verificar(AreaRisco area, ResultadoValidacao resultado) {
-        Integer setorId = area.getSetorId();
+        Setor setor = area.getSetor();
+        Integer setorId = setor != null ? setor.getId() : null;
         if (setorId != null && setores != null && setores.buscarPorId(setorId).isEmpty()) {
             String mensagem = "Setor não encontrado com id: " + setorId;
             resultado.adicionar(Problema.comExcecao(mensagem, () -> new IllegalArgumentException(mensagem)));
