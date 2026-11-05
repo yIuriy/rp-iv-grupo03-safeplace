@@ -77,10 +77,6 @@ class PlanoDeAcaoJpaAdapterTest {
         return Setor.reconstituir(id, "Usinagem", "Setor de usinagem", "Bloco B", NivelPerigo.ALTO);
     }
 
-    private SetorEntity setorEntity(Integer id) {
-        return new SetorEntity(id, "Usinagem", "Setor de usinagem", "Bloco B", "ALTO");
-    }
-
     @Test
     @DisplayName("Deve salvar ação nova com colaborador e alerta, registrando auditoria de cadastro")
     void deveSalvarAcaoNovaComColaborador() {
@@ -166,7 +162,7 @@ class PlanoDeAcaoJpaAdapterTest {
         );
 
         when(planoRepository.save(any(PlanoDeAcaoEntity.class))).thenReturn(salva);
-        when(setorRepository.findById(5)).thenReturn(Optional.of(setorEntity(5)));
+        when(setorRepository.findById(5)).thenReturn(Optional.of(setor(5)));
 
         PlanoDeAcao resultado = adapter.salvar(plano);
 
@@ -210,7 +206,7 @@ class PlanoDeAcaoJpaAdapterTest {
 
         when(planoRepository.findById(100)).thenReturn(Optional.of(existente));
         when(planoRepository.save(any(PlanoDeAcaoEntity.class))).thenReturn(atualizada);
-        when(setorRepository.findById(5)).thenReturn(Optional.of(setorEntity(5)));
+        when(setorRepository.findById(5)).thenReturn(Optional.of(setor(5)));
 
         PlanoDeAcao plano = new PlanoDeAcao(
                 100, 10, "Medida", null, hoje.plusDays(5), "ABERTA", null, setor(5), false, null, null

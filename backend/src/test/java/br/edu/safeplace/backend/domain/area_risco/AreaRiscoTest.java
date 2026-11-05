@@ -20,6 +20,10 @@ class AreaRiscoTest {
                 LocalDate.now().plusYears(1), 365, null, null);
     }
 
+    private static Setor setor(Integer id, String nome) {
+        return new Setor(id, nome, null, "Bloco " + id, NivelPerigo.MEDIO);
+    }
+
     @Test
     @DisplayName("Deve instanciar AreaRisco com dados válidos")
     void deveInstanciarAreaRiscoComDadosValidos() {
@@ -63,15 +67,15 @@ class AreaRiscoTest {
     @DisplayName("Deve atualizar dados, agentes de risco e limites de uma área existente")
     void deveAtualizarDadosAgentesELimites() {
         AreaRisco area = AreaRisco.cadastrar("SET-06B", "Pintura", "Cabine 1", NivelPerigo.MEDIO,
-                1, List.of("Vapores"), "Bloco A", List.of(epi(7, "Máscara")));
+                setor(1, "Pintura"), List.of("Vapores"), "Bloco A", List.of(epi(7, "Máscara")));
 
         AreaRisco atualizada = area.atualizar("Pintura Automotiva", "Cabine Nova", NivelPerigo.ALTO,
-                2, List.of("Vapores", "Tíner"), "Bloco B", List.of(epi(7, "Máscara"), epi(8, "Luva")));
+                setor(2, "Automotivo"), List.of("Vapores", "Tíner"), "Bloco B", List.of(epi(7, "Máscara"), epi(8, "Luva")));
 
         assertThat(atualizada.getNome()).isEqualTo("Pintura Automotiva");
         assertThat(atualizada.getDescricao()).isEqualTo("Cabine Nova");
         assertThat(atualizada.getNivelPerigo()).isEqualTo(NivelPerigo.ALTO);
-        assertThat(atualizada.getSetorId()).isEqualTo(2);
+        assertThat(atualizada.getSetor().getId()).isEqualTo(2);
         assertThat(atualizada.getAgentesRisco()).containsExactly("Vapores", "Tíner");
         assertThat(atualizada.getLimites()).isEqualTo("Bloco B");
         assertThat(atualizada.exigeEpi(8)).isTrue();

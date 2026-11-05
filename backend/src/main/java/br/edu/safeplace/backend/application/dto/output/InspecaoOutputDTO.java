@@ -29,7 +29,7 @@ public record InspecaoOutputDTO(
     public static InspecaoOutputDTO deDominio(Inspecao inspecao) {
         return new InspecaoOutputDTO(
                 inspecao.getId(),
-                inspecao.getAreaRiscoId(),
+                inspecao.getAreaRisco() != null ? inspecao.getAreaRisco().getId() : null,
                 inspecao.getDataInspecao(),
                 inspecao.getResponsavel().getId(),
                 inspecao.getResponsavel().getNome(),

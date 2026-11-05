@@ -4,6 +4,8 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface SetorJpaRepository extends JpaRepository<SetorEntity, Integer> {
-    Optional<SetorEntity> findByNomeIgnoreCase(String nome);
+import br.edu.safeplace.backend.domain.area_risco.Setor;
+
+public interface SetorJpaRepository extends JpaRepository<Setor, Integer> {
+    Optional<Setor> findByNomeIgnoreCase(String nome);
 }

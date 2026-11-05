@@ -4,18 +4,42 @@ import java.util.List;
 import java.util.Objects;
 
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 /**
  * Representa um setor físico da planta industrial (RF05 / UC03).
  * Mapeado conforme o Diagrama de Classes UML.
  */
+@Entity
+@Table(name = "setores")
 public class Setor {
 
-    private final Integer id;
-    private final String nome;
-    private final String descricao;
-    private final String localizacao;
-    private final NivelPerigo status;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(nullable = false, unique = true, length = 150)
+    private String nome;
+
+    @Column(columnDefinition = "TEXT")
+    private String descricao;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String localizacao;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private NivelPerigo status;
+
+    protected Setor() {
+    }
 
     /** Nome e status são validados por SetorValidador antes de salvar (issue #263). */
     public Setor(Integer id, String nome, String descricao, String localizacao, NivelPerigo status) {

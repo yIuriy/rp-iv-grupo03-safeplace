@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
@@ -32,8 +33,9 @@ class FiltroOcorrenciasDTOTest {
     private static final LocalDate SETEMBRO_1 = LocalDate.of(2026, 9, 1);
     private static final LocalDate SETEMBRO_30 = LocalDate.of(2026, 9, 30);
 
+    private static final Setor SETOR_3 = new Setor(3, "Prensaria", null, "Bloco 3", NivelPerigo.ALTO);
     private static final AreaRisco AREA_DO_SETOR_3 = new AreaRisco(10, "AR-10", "Linha de Prensas", null,
-            NivelPerigo.ALTO, 3, List.of(), null, List.of());
+            NivelPerigo.ALTO, SETOR_3, List.of(), null, List.of());
     private static final Colaborador JOAO = new Colaborador(7, "52998224725", "João", LocalDate.of(1990, 1, 1),
             null, true, null, null);
 

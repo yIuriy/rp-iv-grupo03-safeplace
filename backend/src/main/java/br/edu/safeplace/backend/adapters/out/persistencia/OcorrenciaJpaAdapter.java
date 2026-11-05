@@ -6,13 +6,16 @@ package br.edu.safeplace.backend.adapters.out.persistencia;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepository;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
@@ -27,16 +30,28 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
     private final AreaRiscoJpaRepository areaRiscoRepository;
     private final UsuarioJpaRepository usuarioRepository;
     private final SequenciaProtocoloCatJpaRepository sequenciaProtocoloCatRepository;
+    private final EpiJpaRepository epiRepository;
+
+    @Autowired
+    public OcorrenciaJpaAdapter(
+            OcorrenciaJpaRepository repository,
+            AreaRiscoJpaRepository areaRiscoRepository,
+            UsuarioJpaRepository usuarioRepository,
+            SequenciaProtocoloCatJpaRepository sequenciaProtocoloCatRepository,
+            EpiJpaRepository epiRepository) {
+        this.repository = repository;
+        this.areaRiscoRepository = areaRiscoRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.sequenciaProtocoloCatRepository = sequenciaProtocoloCatRepository;
+        this.epiRepository = epiRepository;
+    }
 
     public OcorrenciaJpaAdapter(
             OcorrenciaJpaRepository repository,
             AreaRiscoJpaRepository areaRiscoRepository,
             UsuarioJpaRepository usuarioRepository,
             SequenciaProtocoloCatJpaRepository sequenciaProtocoloCatRepository) {
-        this.repository = repository;
-        this.areaRiscoRepository = areaRiscoRepository;
-        this.usuarioRepository = usuarioRepository;
-        this.sequenciaProtocoloCatRepository = sequenciaProtocoloCatRepository;
+        this(repository, areaRiscoRepository, usuarioRepository, sequenciaProtocoloCatRepository, null);
     }
 
     @Override
@@ -90,7 +105,7 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
     }
 
     private AcidenteEntity toEntity(Acidente acidente) {
-        AreaRiscoEntity areaEntity = carregarArea(acidente.getArea());
+        AreaRisco area = carregarArea(acidente.getArea());
         ColaboradorEntidade colaboradorEntity = carregarColaborador(acidente.getColaborador());
         ColaboradorEntidade relatorEntity = carregarColaborador(acidente.getRelator());
 
@@ -99,7 +114,7 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
                 acidente.getDataOcorrencia(),
                 acidente.getDataRegistro(),
                 acidente.getStatusOcorrencia() != null ? acidente.getStatusOcorrencia().name() : "ABERTA",
-                areaEntity,
+                area,
                 colaboradorEntity,
                 relatorEntity,
                 acidente.getLocalInformado(),
@@ -114,7 +129,7 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
     }
 
     private IncidenteEntity toEntity(Incidente incidente) {
-        AreaRiscoEntity areaEntity = carregarArea(incidente.getArea());
+        AreaRisco area = carregarArea(incidente.getArea());
         ColaboradorEntidade colaboradorEntity = carregarColaborador(incidente.getColaborador());
         ColaboradorEntidade relatorEntity = carregarColaborador(incidente.getRelator());
 
@@ -123,7 +138,7 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
                 incidente.getDataOcorrencia(),
                 incidente.getDataRegistro(),
                 incidente.getStatusOcorrencia() != null ? incidente.getStatusOcorrencia().name() : "ABERTA",
-                areaEntity,
+                area,
                 colaboradorEntity,
                 relatorEntity,
                 incidente.getLocalInformado(),
@@ -133,7 +148,7 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
                 incidente.getPotencialDano());
     }
 
-    private AreaRiscoEntity carregarArea(AreaRisco area) {
+    private AreaRisco carregarArea(AreaRisco area) {
         if (area == null || area.getId() == null || areaRiscoRepository == null) {
             return null;
         }
@@ -169,7 +184,7 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
     }
 
     private Acidente toDomain(AcidenteEntity entity) {
-        AreaRisco area = toDomain(entity.getArea());
+        AreaRisco area = hidratarEpisDaArea(entity.getArea());
         Colaborador colaborador = entity.getColaborador() != null ? entity.getColaborador().paraDominio() : null;
         Colaborador relator = entity.getRelator() != null ? entity.getRelator().paraDominio() : null;
         StatusOcorrencia status = entity.getStatusOcorrencia() != null
@@ -200,7 +215,7 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
     }
 
     private Incidente toDomain(IncidenteEntity entity) {
-        AreaRisco area = toDomain(entity.getArea());
+        AreaRisco area = hidratarEpisDaArea(entity.getArea());
         Colaborador colaborador = entity.getColaborador() != null ? entity.getColaborador().paraDominio() : null;
         Colaborador relator = entity.getRelator() != null ? entity.getRelator().paraDominio() : null;
         StatusOcorrencia status = entity.getStatusOcorrencia() != null
@@ -222,20 +237,18 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
                 entity.getPotencialDano());
     }
 
-    private AreaRisco toDomain(AreaRiscoEntity entity) {
-        if (entity == null) {
-            return null;
+    private AreaRisco hidratarEpisDaArea(AreaRisco area) {
+        if (area == null || epiRepository == null) {
+            return area;
         }
-        return new AreaRisco(
-                entity.getId(),
-                entity.getCodigo(),
-                entity.getNome(),
-                entity.getDescricao(),
-                entity.getNivelPerigo() != null ? NivelPerigo.valueOf(entity.getNivelPerigo()) : null,
-                entity.getSetorId(),
-                entity.getAgentesRiscoList(),
-                entity.getLimites(),
-                List.of());
+        Set<Integer> ids = area.getEpisObrigatoriosIds();
+        if (ids != null && !ids.isEmpty() && area.getEpisObrigatorios().isEmpty()) {
+            List<Epi> epis = epiRepository.findAllById(ids).stream()
+                    .map(EpiEntityMapper::toDomain)
+                    .toList();
+            area.definirEpisObrigatorios(epis);
+        }
+        return area;
     }
 
     private PlanoDeAcao toDomain(PlanoDeAcaoEntity entity) {

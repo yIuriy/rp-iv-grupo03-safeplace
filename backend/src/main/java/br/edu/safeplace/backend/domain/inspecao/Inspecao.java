@@ -5,55 +5,110 @@
 package br.edu.safeplace.backend.domain.inspecao;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
+import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 /**
  * O diagrama de classes liga {@code Inspecao} a {@code AreaRisco} e a exatamente um
- * {@code GestorDeSeguranca}. A área é guardada pelo id, como em {@code AreaRisco.setorId}. As
- * multiplicidades de {@code ItemVerificado} seguem a proposta de
+ * {@code GestorDeSeguranca}. As multiplicidades de {@code ItemVerificado} seguem a proposta de
  * {@code docs/arquitetura/correspondencia-classes-inspecao-rf09.md}, seção 2.3.
  */
+@Entity
+@Table(name = "inspecoes")
 public class Inspecao {
 
-    private final Integer id;
-    private final Integer areaRiscoId;
-    private final LocalDate dataInspecao;
-    private final GestorDeSeguranca responsavel;
-    private final List<ItemVerificado> itens;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "area_risco_id", nullable = false)
+    private AreaRisco areaRisco;
+
+    @Column(name = "data_inspecao", nullable = false)
+    private LocalDate dataInspecao;
+
+    /** Ponte transicional para a chave estrangeira até que GestorDeSeguranca seja @Entity (#256). */
+    @Column(name = "gestor_id", nullable = false)
+    private Integer gestorId;
+
+    @Transient
+    private GestorDeSeguranca responsavel;
+
+    @OneToMany(mappedBy = "inspecao", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OrderBy("id ASC")
+    private List<ItemVerificado> itens = new ArrayList<>();
+
+    protected Inspecao() {
+    }
 
     /**
      * Reconstitui uma inspeção gravada, sem repetir a validação da data, que vale no dia do registro.
      */
-    public Inspecao(Integer id, Integer areaRiscoId, LocalDate dataInspecao, GestorDeSeguranca responsavel,
+    public Inspecao(Integer id, AreaRisco areaRisco, LocalDate dataInspecao, GestorDeSeguranca responsavel,
             List<ItemVerificado> itens) {
         this.id = id;
-        this.areaRiscoId = areaRiscoId;
+        this.areaRisco = areaRisco;
         this.dataInspecao = dataInspecao;
-        this.responsavel = responsavel;
-        this.itens = itens != null ? List.copyOf(itens) : List.of();
+        definirResponsavel(responsavel);
+        this.itens = new ArrayList<>();
+        if (itens != null) {
+            for (ItemVerificado item : itens) {
+                if (item != null) {
+                    item.vincularInspecao(this);
+                }
+                this.itens.add(item);
+            }
+        }
     }
 
     /**
      * Registro de uma nova inspeção (US09, critério 1). Área, responsável, data e itens são
      * validados por InspecaoValidador antes de salvar (issue #263).
      */
-    public static Inspecao registrar(Integer areaRiscoId, LocalDate dataInspecao, GestorDeSeguranca responsavel,
+    public static Inspecao registrar(AreaRisco areaRisco, LocalDate dataInspecao, GestorDeSeguranca responsavel,
             List<ItemVerificado> itens) {
-        return new Inspecao(null, areaRiscoId, dataInspecao, responsavel, itens);
+        return new Inspecao(null, areaRisco, dataInspecao, responsavel, itens);
+    }
+
+    /** Hidrata o responsável técnico após leitura JPA (ponte transicional até a issue #256). */
+    public void definirResponsavel(GestorDeSeguranca responsavel) {
+        this.responsavel = responsavel;
+        this.gestorId = responsavel != null ? responsavel.getId() : null;
+    }
+
+    public Integer getGestorId() {
+        return gestorId;
     }
 
     public long contarNaoConformidades() {
-        return itens.stream().filter(item -> !item.isConformidade()).count();
+        return itens.stream().filter(Objects::nonNull).filter(item -> !item.isConformidade()).count();
     }
 
     public Integer getId() {
         return id;
     }
 
-    public Integer getAreaRiscoId() {
-        return areaRiscoId;
+    public AreaRisco getAreaRisco() {
+        return areaRisco;
     }
 
     public LocalDate getDataInspecao() {
@@ -65,6 +120,22 @@ public class Inspecao {
     }
 
     public List<ItemVerificado> getItens() {
-        return itens;
+        return itens != null ? Collections.unmodifiableList(itens) : List.of();
+    }
+
+    @Override
+    public boolean equals(Object outro) {
+        if (this == outro) {
+            return true;
+        }
+        if (!(outro instanceof Inspecao inspecao)) {
+            return false;
+        }
+        return id != null && id.equals(inspecao.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
     }
 }

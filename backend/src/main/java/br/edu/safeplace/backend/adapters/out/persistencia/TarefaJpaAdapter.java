@@ -7,6 +7,8 @@ import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
 import br.edu.safeplace.backend.application.port.out.TarefaRepository;
+import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.tarefa.Tarefa;
@@ -84,17 +86,17 @@ public class TarefaJpaAdapter implements TarefaRepository {
                         "Responsável técnico não encontrado entre os gestores de segurança: " + gestor.getId()));
     }
 
-    private AreaRiscoEntity carregarAreaRisco(Integer areaRiscoId) {
+    private AreaRisco carregarAreaRisco(Integer areaRiscoId) {
         return areaRiscoId == null ? null : areaRiscoRepository.findById(areaRiscoId)
                 .orElseThrow(() -> new IllegalArgumentException("Área de risco não encontrada com id: " + areaRiscoId));
     }
 
-    private List<SetorEntity> carregarSetores(List<Integer> setoresIds) {
+    private List<Setor> carregarSetores(List<Integer> setoresIds) {
         if (setoresIds == null || setoresIds.isEmpty()) {
             return List.of();
         }
         List<Integer> ids = setoresIds.stream().filter(Objects::nonNull).distinct().toList();
-        List<SetorEntity> setores = setorRepository.findAllById(ids);
+        List<Setor> setores = setorRepository.findAllById(ids);
         if (setores.size() != ids.size()) {
             throw new IllegalArgumentException("Um ou mais setores informados não existem.");
         }
@@ -109,7 +111,7 @@ public class TarefaJpaAdapter implements TarefaRepository {
                 entity.getDataClassificacao(),
                 entity.getResponsavelClassificacao() == null ? null : entity.getResponsavelClassificacao().paraDominio(),
                 entity.getAreaRisco() == null ? null : entity.getAreaRisco().getId(),
-                entity.getSetores().stream().map(SetorEntity::getId).toList(),
+                entity.getSetores().stream().map(Setor::getId).toList(),
                 entity.getEpis().stream().map(EpiEntityMapper::toDomain).toList());
     }
 }

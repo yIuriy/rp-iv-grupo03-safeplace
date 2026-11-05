@@ -36,7 +36,7 @@ public record AreaRiscoOutputDTO(
                 areaRisco.getNome(),
                 areaRisco.getDescricao(),
                 areaRisco.getNivelPerigo(),
-                areaRisco.getSetorId(),
+                areaRisco.getSetor() != null ? areaRisco.getSetor().getId() : null,
                 areaRisco.getAgentesRisco(),
                 areaRisco.getLimites(),
                 areaRisco.verificarEpisObrigatoriosArea().stream()

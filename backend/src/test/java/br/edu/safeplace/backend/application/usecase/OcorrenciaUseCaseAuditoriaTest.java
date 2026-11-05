@@ -9,6 +9,7 @@ import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepository;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
@@ -56,7 +57,8 @@ class OcorrenciaUseCaseAuditoriaTest {
 
     private OcorrenciaService useCase;
 
-    private final AreaRisco area = new AreaRisco(10, "AR-10", "Galpão 1", null, NivelPerigo.ALTO, 1,
+    private final Setor setor = new Setor(1, "Galpão", null, "Bloco 1", NivelPerigo.ALTO);
+    private final AreaRisco area = new AreaRisco(10, "AR-10", "Galpão 1", null, NivelPerigo.ALTO, setor,
             List.of(), null, List.of());
     private final Colaborador colaborador = new Colaborador(20, "11122233344", "Carlos",
             LocalDate.of(1995, 2, 2), null, true, null, null);

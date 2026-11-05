@@ -7,6 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,9 +15,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class NotificacaoOcorrenciaTest {
 
     private static final LocalDateTime FATO = LocalDateTime.of(2026, 9, 10, 10, 0);
+    private static final Setor SETOR = new Setor(1, "Solda", null, "Bloco 1", NivelPerigo.ALTO);
 
     private static AreaRisco area() {
-        return new AreaRisco(4, "SOL-01", "Solda", "Bancada de solda", NivelPerigo.ALTO, 1, List.of(), null, List.of());
+        return new AreaRisco(4, "SOL-01", "Solda", "Bancada de solda", NivelPerigo.ALTO, SETOR, List.of(), null, List.of());
     }
 
     @Test

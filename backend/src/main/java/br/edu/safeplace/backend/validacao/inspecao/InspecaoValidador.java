@@ -35,7 +35,7 @@ public class InspecaoValidador extends ValidadorEmCadeia<Inspecao> {
 
     private static EloValidacao<Inspecao> montarCadeia(Supplier<LocalDate> hoje) {
         EloValidacao<Inspecao> primeiro = new ItensValidosElo();
-        primeiro.encadear(exigir(i -> i.getAreaRiscoId() == null,
+        primeiro.encadear(exigir(i -> i.getAreaRisco() == null,
                         "Informe a área de risco inspecionada.", InspecaoInvalidaException::new))
                 .encadear(exigir(i -> i.getResponsavel() == null,
                         "O registro da inspeção exige o Gestor de Segurança responsável."))

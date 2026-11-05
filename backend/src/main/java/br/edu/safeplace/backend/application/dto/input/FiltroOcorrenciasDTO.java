@@ -74,7 +74,7 @@ public record FiltroOcorrenciasDTO(
             return false;
         }
         AreaRisco area = ocorrencia.getArea();
-        if (setorId != null && (area == null || !Objects.equals(area.getSetorId(), setorId))) {
+        if (setorId != null && (area == null || area.getSetor() == null || !Objects.equals(area.getSetor().getId(), setorId))) {
             return false;
         }
         Colaborador colaborador = ocorrencia.getColaborador();

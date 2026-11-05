@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
+import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -28,9 +29,9 @@ public abstract class OcorrenciaEntity {
     @Column(nullable = false)
     private String descricao;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "area_risco_id", nullable = false)
-    private AreaRiscoEntity area;
+    private AreaRisco area;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "colaborador_id", nullable = false)
@@ -57,7 +58,7 @@ public abstract class OcorrenciaEntity {
             LocalDateTime dataOcorrencia,
             LocalDateTime dataRegistro,
             String statusOcorrencia,
-            AreaRiscoEntity area,
+            AreaRisco area,
             ColaboradorEntidade colaborador,
             ColaboradorEntidade relator,
             String local,
@@ -75,7 +76,6 @@ public abstract class OcorrenciaEntity {
         this.planoDeAcao = planoDeAcao;
     }
 
-
     public Integer getIdOcorrencia() {
         return idOcorrencia;
     }
@@ -92,7 +92,7 @@ public abstract class OcorrenciaEntity {
         return statusOcorrencia;
     }
 
-    public AreaRiscoEntity getArea() {
+    public AreaRisco getArea() {
         return area;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Repositório Spring Data da tabela inspecoes (issue #134): histórico de uma área com itens e Gestor
+ * Repositório Spring Data da tabela inspecoes (issue #134): histórico de uma área com itens e área
  * carregados na mesma consulta, da data mais recente para a mais antiga.
  */
 package br.edu.safeplace.backend.adapters.out.persistencia;
@@ -9,8 +9,10 @@ import java.util.List;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface InspecaoJpaRepository extends JpaRepository<InspecaoEntity, Integer> {
+import br.edu.safeplace.backend.domain.inspecao.Inspecao;
 
-    @EntityGraph(attributePaths = {"itens", "gestor"})
-    List<InspecaoEntity> findByAreaRiscoIdOrderByDataInspecaoDescIdDesc(Integer areaRiscoId);
+public interface InspecaoJpaRepository extends JpaRepository<Inspecao, Integer> {
+
+    @EntityGraph(attributePaths = {"itens", "areaRisco"})
+    List<Inspecao> findByAreaRisco_IdOrderByDataInspecaoDescIdDesc(Integer areaRiscoId);
 }

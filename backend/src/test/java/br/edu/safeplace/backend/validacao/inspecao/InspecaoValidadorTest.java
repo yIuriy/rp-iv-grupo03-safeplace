@@ -12,6 +12,8 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.inspecao.Inspecao;
 import br.edu.safeplace.backend.domain.inspecao.ItemVerificado;
 import br.edu.safeplace.backend.domain.inspecao.exception.InspecaoInvalidaException;
@@ -25,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class InspecaoValidadorTest {
 
     private static final LocalDate HOJE = LocalDate.of(2026, 10, 2);
+    private static final AreaRisco AREA = new AreaRisco(4, "AR-04", "Solda", null, NivelPerigo.ALTO, List.of());
     private static final GestorDeSeguranca GESTOR = new GestorDeSeguranca(1, "52998224725", "Gestora Ana",
             LocalDate.of(1985, 1, 15), "gestora@safeplace.test", "hash", true, LocalDateTime.now(), LocalDateTime.now());
 
@@ -39,14 +42,14 @@ class InspecaoValidadorTest {
     @Test
     @DisplayName("Aceita inspeção com área, data de hoje, responsável e itens completos")
     void aceitaInspecaoValida() {
-        assertThatCode(() -> validador.validar(Inspecao.registrar(4, HOJE, GESTOR, itens())))
+        assertThatCode(() -> validador.validar(Inspecao.registrar(AREA, HOJE, GESTOR, itens())))
                 .doesNotThrowAnyException();
     }
 
     @Test
     @DisplayName("A data da inspeção não pode ser posterior ao dia do registro")
     void recusaDataFutura() {
-        assertThatThrownBy(() -> validador.validar(Inspecao.registrar(4, HOJE.plusDays(1), GESTOR, itens())))
+        assertThatThrownBy(() -> validador.validar(Inspecao.registrar(AREA, HOJE.plusDays(1), GESTOR, itens())))
                 .isInstanceOf(InspecaoInvalidaException.class)
                 .hasMessageContaining("posterior a hoje");
     }
@@ -54,10 +57,10 @@ class InspecaoValidadorTest {
     @Test
     @DisplayName("Inspeção sem item verificado não tem resultado e é recusada")
     void recusaSemItens() {
-        assertThatThrownBy(() -> validador.validar(Inspecao.registrar(4, HOJE, GESTOR, List.of())))
+        assertThatThrownBy(() -> validador.validar(Inspecao.registrar(AREA, HOJE, GESTOR, List.of())))
                 .isInstanceOf(InspecaoInvalidaException.class)
                 .hasMessageContaining("ao menos um item");
-        assertThatThrownBy(() -> validador.validar(Inspecao.registrar(4, HOJE, GESTOR, null)))
+        assertThatThrownBy(() -> validador.validar(Inspecao.registrar(AREA, HOJE, GESTOR, null)))
                 .isInstanceOf(InspecaoInvalidaException.class);
     }
 
@@ -66,19 +69,19 @@ class InspecaoValidadorTest {
     void exigeAreaDataEResponsavel() {
         assertThatThrownBy(() -> validador.validar(Inspecao.registrar(null, HOJE, GESTOR, itens())))
                 .isInstanceOf(InspecaoInvalidaException.class);
-        assertThatThrownBy(() -> validador.validar(Inspecao.registrar(4, null, GESTOR, itens())))
+        assertThatThrownBy(() -> validador.validar(Inspecao.registrar(AREA, null, GESTOR, itens())))
                 .isInstanceOf(InspecaoInvalidaException.class);
-        assertThatThrownBy(() -> validador.validar(Inspecao.registrar(4, HOJE, null, itens())))
+        assertThatThrownBy(() -> validador.validar(Inspecao.registrar(AREA, HOJE, null, itens())))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     @DisplayName("Item exige referência avaliada e resultado")
     void itemExigeDescricaoEResultado() {
-        assertThatThrownBy(() -> validador.validar(Inspecao.registrar(4, HOJE, GESTOR,
+        assertThatThrownBy(() -> validador.validar(Inspecao.registrar(AREA, HOJE, GESTOR,
                 List.of(ItemVerificado.novo("  ", true, null)))))
                 .isInstanceOf(InspecaoInvalidaException.class);
-        assertThatThrownBy(() -> validador.validar(Inspecao.registrar(4, HOJE, GESTOR,
+        assertThatThrownBy(() -> validador.validar(Inspecao.registrar(AREA, HOJE, GESTOR,
                 List.of(ItemVerificado.novo("NR-26", null, null)))))
                 .isInstanceOf(InspecaoInvalidaException.class)
                 .hasMessageContaining("NR-26");
@@ -87,7 +90,7 @@ class InspecaoValidadorTest {
     @Test
     @DisplayName("Os itens são verificados primeiro, como quando eram validados na conversão")
     void itensVemAntesDaData() {
-        Inspecao inspecao = Inspecao.registrar(4, HOJE.plusDays(1), GESTOR, List.of(ItemVerificado.novo("NR-26", null, null)));
+        Inspecao inspecao = Inspecao.registrar(AREA, HOJE.plusDays(1), GESTOR, List.of(ItemVerificado.novo("NR-26", null, null)));
 
         assertThat(validador.verificar(inspecao).mensagens()).containsExactly(
                 "Informe se o item \"NR-26\" está em conformidade ou não conformidade.",

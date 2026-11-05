@@ -68,7 +68,7 @@ public class InspecaoService implements GerenciarInspecaoUseCase {
         AreaRisco area = exigirArea(areaRiscoId);
         GestorDeSeguranca responsavel = resolverGestorAutenticado();
         Inspecao inspecao = Inspecao.registrar(
-                areaRiscoId, inputDTO.dataInspecao(), responsavel, converterItens(inputDTO.itens()));
+                area, inputDTO.dataInspecao(), responsavel, converterItens(inputDTO.itens()));
         // Chain of Responsibility (#263): itens, área, responsável e data, antes do repository.
         validador.validar(inspecao);
         InspecaoOutputDTO salva = InspecaoOutputDTO.deDominio(inspecaoRepository.salvar(inspecao));

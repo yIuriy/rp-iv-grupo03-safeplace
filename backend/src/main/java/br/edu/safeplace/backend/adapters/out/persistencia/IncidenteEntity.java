@@ -6,6 +6,8 @@ import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
 
+import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+
 @Entity
 @Table(name = "incidentes")
 public class IncidenteEntity extends OcorrenciaEntity {
@@ -23,7 +25,7 @@ public class IncidenteEntity extends OcorrenciaEntity {
             LocalDateTime dataOcorrencia,
             LocalDateTime dataRegistro,
             String statusOcorrencia,
-            AreaRiscoEntity area,
+            AreaRisco area,
             ColaboradorEntidade colaborador,
             ColaboradorEntidade relator,
             String local,
@@ -35,7 +37,6 @@ public class IncidenteEntity extends OcorrenciaEntity {
         this.situacaoRisco = situacaoRisco;
         this.potencialDano = potencialDano;
     }
-
 
     public String getSituacaoRisco() {
         return situacaoRisco;

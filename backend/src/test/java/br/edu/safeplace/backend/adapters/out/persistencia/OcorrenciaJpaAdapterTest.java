@@ -1,6 +1,7 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
@@ -32,6 +33,8 @@ import static org.mockito.Mockito.*;
 @DisplayName("Testes de Unidade do OcorrenciaJpaAdapter")
 class OcorrenciaJpaAdapterTest {
 
+    private static final Setor SETOR_10 = new Setor(10, "Prensaria", null, "Galpão", NivelPerigo.ALTO);
+
     @Mock
     private OcorrenciaJpaRepository ocorrenciaRepository;
 
@@ -55,15 +58,14 @@ class OcorrenciaJpaAdapterTest {
     @Test
     @DisplayName("Deve salvar acidente mapeando gravidade, area, colaborador e relator")
     void deveSalvarAcidenteComRelacionamentos() {
-        AreaRisco area = new AreaRisco(1, "AR-01", "Prensa", "Setor Prensa", NivelPerigo.ALTO, 10, List.of(), "Galpão", List.of());
+        AreaRisco area = new AreaRisco(1, "AR-01", "Prensa", "Setor Prensa", NivelPerigo.ALTO, SETOR_10, List.of(), "Galpão", List.of());
         Colaborador colaborador = new Colaborador(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
         GestorDeSeguranca gestor = new GestorDeSeguranca(3, "98765432100", "Maria Gestora", LocalDate.of(1985, 5, 5), "maria@email.com", "hash", true, LocalDateTime.now(), LocalDateTime.now());
 
-        AreaRiscoEntity areaEntity = new AreaRiscoEntity(1, "AR-01", "Prensa", "Setor Prensa", "ALTO", 10, null, "Galpão", List.of());
         ColaboradorEntidade colaboradorEntity = new ColaboradorEntidade(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
         GestorDeSegurancaEntidade gestorEntity = new GestorDeSegurancaEntidade(3, "98765432100", "Maria Gestora", LocalDate.of(1985, 5, 5), "maria@email.com", "hash", true, LocalDateTime.now(), LocalDateTime.now());
 
-        when(areaRiscoRepository.findById(1)).thenReturn(Optional.of(areaEntity));
+        when(areaRiscoRepository.findById(1)).thenReturn(Optional.of(area));
         when(usuarioRepository.findById(2)).thenReturn(Optional.of(colaboradorEntity));
         when(usuarioRepository.findById(3)).thenReturn(Optional.of(gestorEntity));
 
@@ -126,12 +128,11 @@ class OcorrenciaJpaAdapterTest {
     @Test
     @DisplayName("Supervisor que registrou o relato é gravado como relator (issue #195)")
     void deveSalvarSupervisorComoRelator() {
-        AreaRisco area = new AreaRisco(1, "AR-01", "Prensa", "Setor Prensa", NivelPerigo.MEDIO, 10, List.of(), "Galpão", List.of());
+        AreaRisco area = new AreaRisco(1, "AR-01", "Prensa", "Setor Prensa", NivelPerigo.MEDIO, SETOR_10, List.of(), "Galpão", List.of());
         Colaborador colaborador = new Colaborador(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
         Supervisor supervisor = new Supervisor(4, "11144477735", "Sérgio Supervisor", LocalDate.of(1987, 6, 6), "sergio@email.com", "hash", true, LocalDateTime.now(), LocalDateTime.now());
 
-        when(areaRiscoRepository.findById(1)).thenReturn(Optional.of(
-                new AreaRiscoEntity(1, "AR-01", "Prensa", "Setor Prensa", "MEDIO", 10, null, "Galpão", List.of())));
+        when(areaRiscoRepository.findById(1)).thenReturn(Optional.of(area));
         when(usuarioRepository.findById(2)).thenReturn(Optional.of(
                 new ColaboradorEntidade(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now())));
         when(usuarioRepository.findById(4)).thenReturn(Optional.of(
@@ -148,13 +149,12 @@ class OcorrenciaJpaAdapterTest {
     @Test
     @DisplayName("Deve salvar incidente mapeando area e colaborador")
     void deveSalvarIncidente() {
-        AreaRisco area = new AreaRisco(1, "AR-01", "Prensa", "Setor Prensa", NivelPerigo.MEDIO, 10, List.of(), "Galpão", List.of());
+        AreaRisco area = new AreaRisco(1, "AR-01", "Prensa", "Setor Prensa", NivelPerigo.MEDIO, SETOR_10, List.of(), "Galpão", List.of());
         Colaborador colaborador = new Colaborador(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
 
-        AreaRiscoEntity areaEntity = new AreaRiscoEntity(1, "AR-01", "Prensa", "Setor Prensa", "MEDIO", 10, null, "Galpão", List.of());
         ColaboradorEntidade colaboradorEntity = new ColaboradorEntidade(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
 
-        when(areaRiscoRepository.findById(1)).thenReturn(Optional.of(areaEntity));
+        when(areaRiscoRepository.findById(1)).thenReturn(Optional.of(area));
         when(usuarioRepository.findById(2)).thenReturn(Optional.of(colaboradorEntity));
 
         Incidente incidente = Incidente.novo(
