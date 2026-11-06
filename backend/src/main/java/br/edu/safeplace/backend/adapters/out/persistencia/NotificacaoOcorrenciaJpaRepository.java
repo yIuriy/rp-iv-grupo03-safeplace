@@ -4,9 +4,11 @@ import java.util.List;
 
 import org.springframework.data.repository.Repository;
 
-/** Notificações de novos relatos: só inclusão e consulta (issue #195). */
-public interface NotificacaoOcorrenciaJpaRepository extends Repository<NotificacaoOcorrenciaEntity, Integer> {
-    NotificacaoOcorrenciaEntity save(NotificacaoOcorrenciaEntity notificacao);
+import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoOcorrencia;
 
-    List<NotificacaoOcorrenciaEntity> findAllByOrderByCriadaEmDescIdDesc();
+/** Notificações de novos relatos: só inclusão e consulta (issue #195, #261). */
+public interface NotificacaoOcorrenciaJpaRepository extends Repository<NotificacaoOcorrencia, Integer> {
+    NotificacaoOcorrencia save(NotificacaoOcorrencia notificacao);
+
+    List<NotificacaoOcorrencia> findAllByOrderByCriadaEmDescIdDesc();
 }

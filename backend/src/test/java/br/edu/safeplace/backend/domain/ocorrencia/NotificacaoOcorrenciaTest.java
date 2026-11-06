@@ -3,12 +3,15 @@ package br.edu.safeplace.backend.domain.ocorrencia;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.Immutable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,5 +52,24 @@ class NotificacaoOcorrenciaTest {
         assertThat(notificacao.tipoOcorrencia()).isEqualTo(TipoOcorrencia.INCIDENTE);
         assertThat(notificacao.numeroProtocoloCAT()).isNull();
         assertThat(notificacao.mensagem()).isEqualTo("Novo incidente registrado na área Solda. Aguarda triagem.");
+    }
+
+    @Test
+    @DisplayName("Deve possuir anotações JPA e Immutable no domínio (#261)")
+    void devePossuirAnotacoesJpa() {
+        assertThat(NotificacaoOcorrencia.class.getAnnotation(Entity.class)).isNotNull();
+        assertThat(NotificacaoOcorrencia.class.getAnnotation(Table.class).name()).isEqualTo("notificacoes_ocorrencia");
+        assertThat(NotificacaoOcorrencia.class.getAnnotation(Immutable.class)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Identidade é pelo id gerado (#254)")
+    void identidadeEhPeloId() {
+        NotificacaoOcorrencia n1 = new NotificacaoOcorrencia(10, 1, TipoOcorrencia.ACIDENTE, null, "Área", "Msg", LocalDateTime.now());
+        NotificacaoOcorrencia n2 = new NotificacaoOcorrencia(10, 2, TipoOcorrencia.INCIDENTE, null, "Outra", "Msg 2", LocalDateTime.now());
+        NotificacaoOcorrencia n3 = new NotificacaoOcorrencia(11, 1, TipoOcorrencia.ACIDENTE, null, "Área", "Msg", LocalDateTime.now());
+
+        assertThat(n1).isEqualTo(n2).hasSameHashCodeAs(n2);
+        assertThat(n1).isNotEqualTo(n3);
     }
 }
