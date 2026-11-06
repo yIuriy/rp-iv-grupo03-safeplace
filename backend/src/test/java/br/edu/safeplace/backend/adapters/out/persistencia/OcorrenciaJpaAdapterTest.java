@@ -27,13 +27,15 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Testes de Unidade do OcorrenciaJpaAdapter")
+@DisplayName("Testes de Unidade do OcorrenciaJpaAdapter (#261)")
 class OcorrenciaJpaAdapterTest {
 
-    private static final Setor SETOR_10 = new Setor(10, "Prensaria", null, "Galpão", NivelPerigo.ALTO);
+    private static final Setor SETOR_10 = new Setor(10, "Estamparia", null, "Galpão 2", NivelPerigo.ALTO);
 
     @Mock
     private OcorrenciaJpaRepository ocorrenciaRepository;
@@ -56,18 +58,11 @@ class OcorrenciaJpaAdapterTest {
     }
 
     @Test
-    @DisplayName("Deve salvar acidente mapeando gravidade, area, colaborador e relator")
+    @DisplayName("Deve salvar acidente delegando diretamente ao repositório JPA")
     void deveSalvarAcidenteComRelacionamentos() {
         AreaRisco area = new AreaRisco(1, "AR-01", "Prensa", "Setor Prensa", NivelPerigo.ALTO, SETOR_10, List.of(), "Galpão", List.of());
         Colaborador colaborador = new Colaborador(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
         GestorDeSeguranca gestor = new GestorDeSeguranca(3, "98765432100", "Maria Gestora", LocalDate.of(1985, 5, 5), "maria@email.com", "hash", true, LocalDateTime.now(), LocalDateTime.now());
-
-        Colaborador colaboradorEntity = new Colaborador(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
-        GestorDeSeguranca gestorEntity = new GestorDeSeguranca(3, "98765432100", "Maria Gestora", LocalDate.of(1985, 5, 5), "maria@email.com", "hash", true, LocalDateTime.now(), LocalDateTime.now());
-
-        when(areaRiscoRepository.findById(1)).thenReturn(Optional.of(area));
-        when(usuarioRepository.findById(2)).thenReturn(Optional.of(colaboradorEntity));
-        when(usuarioRepository.findById(3)).thenReturn(Optional.of(gestorEntity));
 
         Acidente acidente = Acidente.novo(
                 "Acidente com prensa",
@@ -82,25 +77,25 @@ class OcorrenciaJpaAdapterTest {
                 NivelPerigo.CRITICO
         );
 
-        when(ocorrenciaRepository.save(any(AcidenteEntity.class))).thenAnswer(invocation -> {
-            AcidenteEntity entity = invocation.getArgument(0);
-            return new AcidenteEntity(
+        when(ocorrenciaRepository.save(any(Acidente.class))).thenAnswer(invocation -> {
+            Acidente a = invocation.getArgument(0);
+            return new Acidente(
                     100,
-                    entity.getDataOcorrencia(),
-                    entity.getDataRegistro(),
-                    entity.getStatusOcorrencia(),
-                    entity.getArea(),
-                    entity.getColaborador(),
-                    entity.getRelator(),
-                    entity.getLocal(),
-                    entity.getDescricao(),
-                    entity.getPlanoDeAcao(),
-                    entity.getCausaRaiz(),
-                    entity.getTipo(),
-                    entity.getDano(),
-                    entity.getNumeroProtocolo(),
-                    entity.getDestino(),
-                    entity.getGravidade()
+                    a.getDescricao(),
+                    a.getDataOcorrencia(),
+                    a.getDataRegistro(),
+                    a.getStatusOcorrencia(),
+                    a.getColaborador(),
+                    a.getArea(),
+                    a.getRelator(),
+                    a.getLocalInformado(),
+                    a.getPlanoDeAcao(),
+                    a.getCausaRaiz(),
+                    a.getTipo(),
+                    a.getDano(),
+                    a.getProtocoloCAT(),
+                    a.getDestino(),
+                    a.getGravidade()
             );
         });
 
@@ -116,13 +111,13 @@ class OcorrenciaJpaAdapterTest {
         assertThat(salvo.getRelator()).isInstanceOf(GestorDeSeguranca.class);
         assertThat(salvo.getRelator().getNome()).isEqualTo("Maria Gestora");
 
-        ArgumentCaptor<AcidenteEntity> captor = ArgumentCaptor.forClass(AcidenteEntity.class);
+        ArgumentCaptor<Acidente> captor = ArgumentCaptor.forClass(Acidente.class);
         verify(ocorrenciaRepository).save(captor.capture());
-        AcidenteEntity entitySalva = captor.getValue();
-        assertThat(entitySalva.getGravidade()).isEqualTo("CRITICO");
-        assertThat(entitySalva.getArea().getId()).isEqualTo(1);
-        assertThat(entitySalva.getColaborador().getId()).isEqualTo(2);
-        assertThat(entitySalva.getRelator().getId()).isEqualTo(3);
+        Acidente entidadeSalva = captor.getValue();
+        assertThat(entidadeSalva.getGravidade()).isEqualTo(NivelPerigo.CRITICO);
+        assertThat(entidadeSalva.getArea().getId()).isEqualTo(1);
+        assertThat(entidadeSalva.getColaborador().getId()).isEqualTo(2);
+        assertThat(entidadeSalva.getRelator().getId()).isEqualTo(3);
     }
 
     @Test
@@ -132,12 +127,7 @@ class OcorrenciaJpaAdapterTest {
         Colaborador colaborador = new Colaborador(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
         Supervisor supervisor = new Supervisor(4, "11144477735", "Sérgio Supervisor", LocalDate.of(1987, 6, 6), "sergio@email.com", "hash", true, LocalDateTime.now(), LocalDateTime.now());
 
-        when(areaRiscoRepository.findById(1)).thenReturn(Optional.of(area));
-        when(usuarioRepository.findById(2)).thenReturn(Optional.of(
-                new Colaborador(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now())));
-        when(usuarioRepository.findById(4)).thenReturn(Optional.of(
-                new Supervisor(4, "11144477735", "Sérgio Supervisor", LocalDate.of(1987, 6, 6), "sergio@email.com", "hash", true, LocalDateTime.now(), LocalDateTime.now())));
-        when(ocorrenciaRepository.save(any(IncidenteEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(ocorrenciaRepository.save(any(Incidente.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Incidente salvo = adapter.salvarIncidente(Incidente.novo("Quase queda", LocalDateTime.of(2026, 9, 10, 10, 0),
                 area, colaborador, supervisor, "Piso oleoso", "Queda de mesmo nível"));
@@ -147,15 +137,10 @@ class OcorrenciaJpaAdapterTest {
     }
 
     @Test
-    @DisplayName("Deve salvar incidente mapeando area e colaborador")
+    @DisplayName("Deve salvar incidente delegando diretamente ao repositório JPA")
     void deveSalvarIncidente() {
         AreaRisco area = new AreaRisco(1, "AR-01", "Prensa", "Setor Prensa", NivelPerigo.MEDIO, SETOR_10, List.of(), "Galpão", List.of());
         Colaborador colaborador = new Colaborador(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
-
-        Colaborador colaboradorEntity = new Colaborador(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
-
-        when(areaRiscoRepository.findById(1)).thenReturn(Optional.of(area));
-        when(usuarioRepository.findById(2)).thenReturn(Optional.of(colaboradorEntity));
 
         Incidente incidente = Incidente.novo(
                 "Quase queda",
@@ -167,21 +152,21 @@ class OcorrenciaJpaAdapterTest {
                 "Queda de mesmo nível"
         );
 
-        when(ocorrenciaRepository.save(any(IncidenteEntity.class))).thenAnswer(invocation -> {
-            IncidenteEntity entity = invocation.getArgument(0);
-            return new IncidenteEntity(
+        when(ocorrenciaRepository.save(any(Incidente.class))).thenAnswer(invocation -> {
+            Incidente inc = invocation.getArgument(0);
+            return new Incidente(
                     200,
-                    entity.getDataOcorrencia(),
-                    entity.getDataRegistro(),
-                    entity.getStatusOcorrencia(),
-                    entity.getArea(),
-                    entity.getColaborador(),
-                    entity.getRelator(),
-                    entity.getLocal(),
-                    entity.getDescricao(),
-                    entity.getPlanoDeAcao(),
-                    entity.getSituacaoRisco(),
-                    entity.getPotencialDano()
+                    inc.getDescricao(),
+                    inc.getDataOcorrencia(),
+                    inc.getDataRegistro(),
+                    inc.getStatusOcorrencia(),
+                    inc.getColaborador(),
+                    inc.getArea(),
+                    inc.getRelator(),
+                    inc.getLocalInformado(),
+                    inc.getPlanoDeAcao(),
+                    inc.getSituacaoRisco(),
+                    inc.getPotencialDano()
             );
         });
 
@@ -196,28 +181,28 @@ class OcorrenciaJpaAdapterTest {
     }
 
     @Test
-    @DisplayName("Deve buscar ocorrência por ID e mapear corretamente")
+    @DisplayName("Deve buscar ocorrência por ID diretamente do repositório JPA")
     void deveBuscarPorId() {
-        AcidenteEntity entity = new AcidenteEntity(
+        Acidente acidenteGravado = new Acidente(
                 50,
+                "Corte com ferramenta",
                 LocalDateTime.of(2026, 9, 11, 8, 0),
                 LocalDateTime.of(2026, 9, 11, 8, 30),
-                "EM_TRIAGEM",
+                StatusOcorrencia.EM_TRIAGEM,
                 null,
                 null,
                 null,
                 "Oficina",
-                "Corte com ferramenta",
                 null,
-                "FALHA_EPI",
+                CausaRaizAcidente.FALHA_EPI,
                 "Corte",
                 "Dedo",
                 NumeroProtocoloCAT.de("CAT-2026-09-0050"),
                 "Ambulatório",
-                "ALTO"
+                NivelPerigo.ALTO
         );
 
-        when(ocorrenciaRepository.findById(50)).thenReturn(Optional.of(entity));
+        when(ocorrenciaRepository.findById(50)).thenReturn(Optional.of(acidenteGravado));
 
         Optional<Ocorrencia> resultado = adapter.buscarPorId(50);
 
@@ -245,25 +230,25 @@ class OcorrenciaJpaAdapterTest {
     @Test
     @DisplayName("Deve reconstruir o local legado sem transformá-lo em área de risco")
     void naoDeveDerivarAreaFicticiaDoTextoLocal() {
-        AcidenteEntity entity = new AcidenteEntity(
+        Acidente acidenteGravado = new Acidente(
                 70,
+                "Corte com ferramenta",
                 LocalDateTime.of(2026, 9, 11, 8, 0),
                 LocalDateTime.of(2026, 9, 11, 8, 30),
-                "ABERTA",
+                StatusOcorrencia.ABERTA,
                 null,
                 null,
                 null,
                 "Oficina",
-                "Corte com ferramenta",
                 null,
-                "FALHA_EPI",
+                CausaRaizAcidente.FALHA_EPI,
                 "Corte",
                 "Dedo",
                 null,
                 "Ambulatório",
-                "BAIXO");
+                NivelPerigo.BAIXO);
 
-        when(ocorrenciaRepository.findById(70)).thenReturn(Optional.of(entity));
+        when(ocorrenciaRepository.findById(70)).thenReturn(Optional.of(acidenteGravado));
 
         Acidente acidente = (Acidente) adapter.buscarPorId(70).orElseThrow();
 
