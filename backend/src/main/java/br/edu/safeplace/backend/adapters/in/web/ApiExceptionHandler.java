@@ -23,6 +23,7 @@ import br.edu.safeplace.backend.domain.capacitacao.exception.ColaboradorNaoAloca
 import br.edu.safeplace.backend.domain.epi.exception.EpiIndisponivelParaManutencaoException;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 import br.edu.safeplace.backend.domain.epi.exception.SaldoInsuficienteException;
+import br.edu.safeplace.backend.domain.epi.exception.TransicaoStatusEpiInvalidaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.AcaoPlanoNaoEncontradaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.AcaoPreventivaObrigatoriaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.DadosOcorrenciaInvalidosException;
@@ -127,6 +128,11 @@ public class ApiExceptionHandler {
     public ResponseEntity<Map<String, Object>> epiIndisponivelParaManutencao(
             EpiIndisponivelParaManutencaoException ex) {
         return corpo(HttpStatus.BAD_REQUEST, "EPI Indisponível para Manutenção", ex.getMessage());
+    }
+
+    @ExceptionHandler(TransicaoStatusEpiInvalidaException.class)
+    public ResponseEntity<Map<String, Object>> transicaoStatusEpiInvalida(TransicaoStatusEpiInvalidaException ex) {
+        return corpo(HttpStatus.BAD_REQUEST, "Transição de Status Inválida", ex.getMessage());
     }
 
     // Tarefa e alocação (UC11, RF10)

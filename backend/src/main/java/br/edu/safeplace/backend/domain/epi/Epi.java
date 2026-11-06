@@ -9,6 +9,7 @@ import java.util.List;
 import br.edu.safeplace.backend.domain.epi.exception.CertificadoAprovacaoVencidoException;
 import br.edu.safeplace.backend.domain.epi.exception.EpiIndisponivelParaManutencaoException;
 import br.edu.safeplace.backend.domain.epi.exception.SaldoInsuficienteException;
+import br.edu.safeplace.backend.domain.epi.exception.TransicaoStatusEpiInvalidaException;
 
 public class Epi {
     private final Integer codigoEPI;
@@ -222,10 +223,7 @@ public class Epi {
                 motivo);
 
         this.quantidade = novoSaldo;
-
-        if (this.status == StatusEpi.ESGOTADO) {
-            this.status = StatusEpi.DISPONIVEL;
-        }
+        acompanharSaldo();
 
         return movimentacao;
     }
@@ -271,10 +269,7 @@ public class Epi {
                 motivo);
 
         this.quantidade = novoSaldo;
-
-        if (novoSaldo == 0 && this.status == StatusEpi.DISPONIVEL) {
-            this.status = StatusEpi.ESGOTADO;
-        }
+        acompanharSaldo();
 
         return movimentacao;
     }
@@ -305,7 +300,18 @@ public class Epi {
                     this.codigoEPI, this.status, "Apenas EPIs com status DISPONIVEL podem ser enviados para manutenção."
             );
         }
-        this.status = StatusEpi.EM_MANUTENCAO;
+        transicionarPara(StatusEpi.EM_MANUTENCAO);
+    }
+
+    /**
+     * Registra uma manutenção concluída (UC01). Um EPI disponível passa antes por {@code EM_MANUTENCAO}, para que a
+     * conclusão parta sempre da situação de manutenção.
+     */
+    public void registrarManutencao(ManutencaoEpi manutencao, LocalDate dataReferencia) {
+        if (this.status == StatusEpi.DISPONIVEL) {
+            enviarParaManutencao(dataReferencia);
+        }
+        concluirManutencao(manutencao);
     }
 
     public void concluirManutencao(ManutencaoEpi manutencao) {
@@ -319,7 +325,7 @@ public class Epi {
         }
         this.historicoManutencao.add(manutencao);
         if (manutencao.getResultado() == ResultadoManutencao.APROVADO) {
-            this.status = StatusEpi.DISPONIVEL;
+            transicionarPara(StatusEpi.DISPONIVEL);
         }
         // Reprovação preserva a indisponibilidade atual e não executa descarte (RF14).
         // O estado definitivo da reprovação depende da decisão de domínio #124.
@@ -346,13 +352,13 @@ public class Epi {
     public void registrarDevolucaoManutencao(ManutencaoEpi manutencao) {
         adicionarManutencao(manutencao);
         if (this.quantidade == 0) {
-            this.status = StatusEpi.EM_MANUTENCAO;
+            transicionarPara(StatusEpi.EM_MANUTENCAO);
         }
     }
 
     public void registrarDevolucaoDescarte() {
         if (this.quantidade == 0) {
-            this.status = StatusEpi.DESCARTADO;
+            transicionarPara(StatusEpi.DESCARTADO);
         }
     }
 
@@ -376,10 +382,26 @@ public class Epi {
             this.especificacao = especificacao;
         }
         this.quantidade = quantidade;
-        if (quantidade == 0 && status == StatusEpi.DISPONIVEL) {
-            status = StatusEpi.ESGOTADO;
-        } else if (quantidade > 0 && status == StatusEpi.ESGOTADO) {
-            status = StatusEpi.DISPONIVEL;
+        acompanharSaldo();
+    }
+
+    /**
+     * Único ponto de mudança de situação (State, #224): a situação atual decide se o destino é permitido.
+     * Pedir a situação em que o EPI já está não muda nada.
+     */
+    void transicionarPara(StatusEpi novoStatus) {
+        if (novoStatus == this.status) {
+            return;
+        }
+        if (this.status != null && !this.status.podeTransicaoPara(novoStatus)) {
+            throw new TransicaoStatusEpiInvalidaException(this.codigoEPI, this.status, novoStatus);
+        }
+        this.status = novoStatus;
+    }
+
+    private void acompanharSaldo() {
+        if (this.status != null) {
+            transicionarPara(this.status.aposMudancaDeSaldo(this.quantidade));
         }
     }
 
