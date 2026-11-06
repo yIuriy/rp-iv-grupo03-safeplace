@@ -84,37 +84,6 @@ public class Emprestimo {
     protected Emprestimo() {
     }
 
-    public Emprestimo(Integer id, Epi epi, Colaborador colaborador, Colaborador responsavelEntrega,
-                      LocalDateTime dataRetirada, LocalDate dataDevolucaoPrevista, String termoCautela,
-                      String justificativaSubstituicao, LocalDateTime dataDevolucaoReal,
-                      Colaborador responsavelDevolucao, EstadoDevolucao estadoDevolucao,
-                      ClassificacaoEmprestimo status) {
-        // Os dados da entrega e a coerência com a devolução são validados por EmprestimoValidador
-        // antes do repository (issue #265).
-
-        this.id = id;
-        this.epi = epi;
-        this.colaborador = colaborador;
-        this.responsavelEntrega = responsavelEntrega;
-        this.dataRetirada = dataRetirada;
-        this.dataDevolucaoPrevista = dataDevolucaoPrevista;
-        this.termoCautela = termoCautela != null ? termoCautela.trim() : null;
-        this.justificativaSubstituicao = justificativaSubstituicao;
-        this.dataDevolucaoReal = dataDevolucaoReal;
-        this.responsavelDevolucao = responsavelDevolucao;
-        this.estadoDevolucao = estadoDevolucao;
-        this.status = status;
-    }
-
-    /** Passo 6 do UC12: registra a entrega com data, hora, responsável e termo de cautela. */
-    public static Emprestimo registrarEntrega(Epi epi, Colaborador colaborador, Colaborador responsavelEntrega,
-                                              LocalDateTime dataRetirada, LocalDate dataDevolucaoPrevista,
-                                              String termoCautela, String justificativaSubstituicao) {
-        return new Emprestimo(null, epi, colaborador, responsavelEntrega, dataRetirada,
-                dataDevolucaoPrevista, termoCautela, justificativaSubstituicao,
-                null, null, null, ClassificacaoEmprestimo.INDISPONIVEL);
-    }
-
     private Emprestimo(Builder builder) {
         // Os dados da entrega e a coerência com a devolução são validados por EmprestimoValidador
         // antes do repository (issue #265); o Builder não valida (#226).
