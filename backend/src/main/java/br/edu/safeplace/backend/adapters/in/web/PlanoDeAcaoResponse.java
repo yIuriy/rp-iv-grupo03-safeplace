@@ -1,7 +1,6 @@
 package br.edu.safeplace.backend.adapters.in.web;
 
 import br.edu.safeplace.backend.application.dto.output.PlanoDeAcaoOutputDTO;
-import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
 
 import java.time.LocalDate;
 
@@ -24,13 +23,6 @@ public record PlanoDeAcaoResponse(
         Integer gestorId,
         String gestorNome
 ) {
-    public static PlanoDeAcaoResponse fromDomain(PlanoDeAcao plano) {
-        if (plano == null) {
-            return null;
-        }
-        return fromOutputDTO(PlanoDeAcaoOutputDTO.deDominio(plano));
-    }
-
     public static PlanoDeAcaoResponse fromOutputDTO(PlanoDeAcaoOutputDTO dto) {
         if (dto == null) {
             return null;

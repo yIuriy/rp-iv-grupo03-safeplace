@@ -1,7 +1,7 @@
 /*
  * Assembler (Fowler, PoEAA) do OcorrenciaOutputDTO (#245): único ponto que conhece o domínio da ocorrência
  * e o formato devolvido pelos casos de uso. A parte comum é montada uma vez; a específica de acidente e a
- * de incidente vêm de métodos separados.
+ * de incidente vêm de métodos separados; o plano de ação sai como PlanoDeAcaoOutputDTO.
  */
 package br.edu.safeplace.backend.application.assembler;
 
@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
+import br.edu.safeplace.backend.application.dto.output.PlanoDeAcaoOutputDTO;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
@@ -28,7 +29,7 @@ public class OcorrenciaOutputAssembler {
                 se(ocorrencia.getStatusOcorrencia(), Enum::name),
                 ocorrencia.getLocal(),
                 ocorrencia.getDescricao(),
-                ocorrencia.getPlanoDeAcao(),
+                PlanoDeAcaoOutputDTO.deDominio(ocorrencia.getPlanoDeAcao()),
                 tipo.causaRaiz(),
                 tipo.tipo(),
                 tipo.dano(),

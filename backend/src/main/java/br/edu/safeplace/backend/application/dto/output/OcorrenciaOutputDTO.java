@@ -1,7 +1,5 @@
 package br.edu.safeplace.backend.application.dto.output;
 
-import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
-
 import java.time.LocalDateTime;
 
 /**
@@ -17,7 +15,7 @@ public record OcorrenciaOutputDTO(
         String statusOcorrencia,
         String local,
         String descricao,
-        PlanoDeAcao planoDeAcao,
+        PlanoDeAcaoOutputDTO planoDeAcao,
         String causaRaiz,
         String tipo,
         String dano,
