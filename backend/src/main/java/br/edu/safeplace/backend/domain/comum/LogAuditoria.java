@@ -7,6 +7,10 @@ import java.time.LocalDateTime;
  */
 public class LogAuditoria {
 
+    public static final String CADASTRO = "CADASTRO";
+    public static final String ALTERACAO = "ALTERACAO";
+    public static final String REMOCAO = "REMOCAO";
+
     private final Integer id;
     private final String tipoOperacao;
     private final LocalDateTime dataHora;
@@ -45,7 +49,7 @@ public class LogAuditoria {
             String entidade,
             Integer entidadeId,
             String justificativa) {
-        return new LogAuditoria(null, "ALTERACAO", LocalDateTime.now(), responsavel, justificativa, entidade, entidadeId);
+        return new LogAuditoria(null, ALTERACAO, LocalDateTime.now(), responsavel, justificativa, entidade, entidadeId);
     }
 
     public static LogAuditoria registrarCadastro(
@@ -53,7 +57,7 @@ public class LogAuditoria {
             String entidade,
             Integer entidadeId,
             String justificativa) {
-        return new LogAuditoria(null, "CADASTRO", LocalDateTime.now(), responsavel, justificativa, entidade, entidadeId);
+        return new LogAuditoria(null, CADASTRO, LocalDateTime.now(), responsavel, justificativa, entidade, entidadeId);
     }
 
     public static LogAuditoria registrarRemocao(
@@ -61,7 +65,7 @@ public class LogAuditoria {
             String responsavel,
             LocalDateTime dataHora,
             String justificativa) {
-        return new LogAuditoria(null, "REMOCAO", dataHora, responsavel, justificativa, null, entidadeId);
+        return new LogAuditoria(null, REMOCAO, dataHora, responsavel, justificativa, null, entidadeId);
     }
 
     public static LogAuditoria registrarRemocao(
@@ -69,7 +73,7 @@ public class LogAuditoria {
             String entidade,
             Integer entidadeId,
             String justificativa) {
-        return new LogAuditoria(null, "REMOCAO", LocalDateTime.now(), responsavel, justificativa, entidade, entidadeId);
+        return new LogAuditoria(null, REMOCAO, LocalDateTime.now(), responsavel, justificativa, entidade, entidadeId);
     }
 
     public Integer getId() {
