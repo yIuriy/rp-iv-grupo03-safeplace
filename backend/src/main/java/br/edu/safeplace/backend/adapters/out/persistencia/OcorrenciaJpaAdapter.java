@@ -32,28 +32,17 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
     private final AreaRiscoJpaRepository areaRiscoRepository;
     private final UsuarioJpaRepository usuarioRepository;
     private final SequenciaProtocoloCatJpaRepository sequenciaProtocoloCatRepository;
-    private final EpiJpaRepository epiRepository;
 
     @Autowired
     public OcorrenciaJpaAdapter(
             OcorrenciaJpaRepository repository,
             AreaRiscoJpaRepository areaRiscoRepository,
             UsuarioJpaRepository usuarioRepository,
-            SequenciaProtocoloCatJpaRepository sequenciaProtocoloCatRepository,
-            EpiJpaRepository epiRepository) {
+            SequenciaProtocoloCatJpaRepository sequenciaProtocoloCatRepository) {
         this.repository = repository;
         this.areaRiscoRepository = areaRiscoRepository;
         this.usuarioRepository = usuarioRepository;
         this.sequenciaProtocoloCatRepository = sequenciaProtocoloCatRepository;
-        this.epiRepository = epiRepository;
-    }
-
-    public OcorrenciaJpaAdapter(
-            OcorrenciaJpaRepository repository,
-            AreaRiscoJpaRepository areaRiscoRepository,
-            UsuarioJpaRepository usuarioRepository,
-            SequenciaProtocoloCatJpaRepository sequenciaProtocoloCatRepository) {
-        this(repository, areaRiscoRepository, usuarioRepository, sequenciaProtocoloCatRepository, null);
     }
 
     @Override
@@ -194,7 +183,7 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
     }
 
     private Acidente toDomain(AcidenteEntity entity) {
-        AreaRisco area = hidratarEpisDaArea(entity.getArea());
+        AreaRisco area = entity.getArea();
         Colaborador colaborador = semProxy(entity.getColaborador());
         Colaborador relator = semProxy(entity.getRelator());
         StatusOcorrencia status = entity.getStatusOcorrencia() != null
@@ -225,7 +214,7 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
     }
 
     private Incidente toDomain(IncidenteEntity entity) {
-        AreaRisco area = hidratarEpisDaArea(entity.getArea());
+        AreaRisco area = entity.getArea();
         Colaborador colaborador = semProxy(entity.getColaborador());
         Colaborador relator = semProxy(entity.getRelator());
         StatusOcorrencia status = entity.getStatusOcorrencia() != null
@@ -245,18 +234,6 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
                 toDomain(entity.getPlanoDeAcao()),
                 entity.getSituacaoRisco(),
                 entity.getPotencialDano());
-    }
-
-    private AreaRisco hidratarEpisDaArea(AreaRisco area) {
-        if (area == null || epiRepository == null) {
-            return area;
-        }
-        Set<Integer> ids = area.getEpisObrigatoriosIds();
-        if (ids != null && !ids.isEmpty() && area.getEpisObrigatorios().isEmpty()) {
-            List<Epi> epis = epiRepository.findAllById(ids);
-            area.definirEpisObrigatorios(epis);
-        }
-        return area;
     }
 
     private PlanoDeAcao toDomain(PlanoDeAcaoEntity entity) {
