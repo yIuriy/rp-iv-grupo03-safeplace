@@ -69,7 +69,7 @@ public class TarefaJpaAdapter implements TarefaRepository {
                 carregarEpisGerenciados(domain));
     }
 
-    private List<EpiEntity> carregarEpisGerenciados(Tarefa domain) {
+    private List<Epi> carregarEpisGerenciados(Tarefa domain) {
         List<Integer> ids = domain.verificarEpisObrigatoriosTarefa().stream()
                 .map(Epi::getId)
                 .filter(Objects::nonNull)
@@ -115,6 +115,6 @@ public class TarefaJpaAdapter implements TarefaRepository {
                         : (GestorDeSeguranca) Hibernate.unproxy(entity.getResponsavelClassificacao()),
                 entity.getAreaRisco() == null ? null : entity.getAreaRisco().getId(),
                 entity.getSetores().stream().map(Setor::getId).toList(),
-                entity.getEpis().stream().map(EpiEntityMapper::toDomain).toList());
+                List.copyOf(entity.getEpis()));
     }
 }

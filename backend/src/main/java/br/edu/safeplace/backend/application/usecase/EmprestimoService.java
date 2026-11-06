@@ -117,7 +117,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
         emprestimoValidador.validar(emprestimo);
 
         MovimentacaoEstoque saida = epi.removerEstoque(Emprestimo.QUANTIDADE_POR_EMPRESTIMO,
-                "Empréstimo ao colaborador " + beneficiario.getNome(), operador.getId());
+                "Empréstimo ao colaborador " + beneficiario.getNome(), operador);
         movimentacaoValidador.validar(saida);
         epis.atualizarSaldo(epi);
         epis.salvarMovimentacao(saida);
@@ -147,7 +147,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
 
         if (estado.retornaAoEstoque()) {
             MovimentacaoEstoque retorno = epi.adicionarEstoque(Emprestimo.QUANTIDADE_POR_EMPRESTIMO,
-                    "Devolução do empréstimo " + emprestimoId + " (item apto)", operador.getId());
+                    "Devolução do empréstimo " + emprestimoId + " (item apto)", operador);
             movimentacaoValidador.validar(retorno);
             epis.atualizarSaldo(epi);
             epis.salvarMovimentacao(retorno);
@@ -168,9 +168,9 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
         } else if (estado == EstadoDevolucao.DESCARTE) {
             MovimentacaoEstoque baixaDescarte = new MovimentacaoEstoque(
                     null,
-                    epi.getId(),
-                    epi.getLote() != null ? epi.getLote().getId() : null,
-                    operador.getId(),
+                    epi,
+                    epi.getLote(),
+                    operador,
                     TipoMovimentacao.SAIDA,
                     Emprestimo.QUANTIDADE_POR_EMPRESTIMO,
                     LocalDateTime.now(),

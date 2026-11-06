@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.validacao.epi;
 
+import br.edu.safeplace.backend.domain.epi.StatusEpi;
+import br.edu.safeplace.backend.domain.epi.Epi;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,6 +31,9 @@ import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
 @DisplayName("Validadores de movimentação, manutenção, projeção e alerta (Chain of Responsibility)")
 class RegistrosEpiValidadoresTest {
 
+    private static final Epi EPI = new Epi(1, "Luva", "12345", 10, 1, StatusEpi.DISPONIVEL,
+            LocalDate.of(2030, 1, 1), 365);
+
     private static final LocalDateTime DATA_HORA = LocalDateTime.of(2026, 9, 11, 10, 0);
     private final LocalDate hoje = LocalDate.of(2026, 9, 24);
 
@@ -39,7 +44,7 @@ class RegistrosEpiValidadoresTest {
 
     @Test
     void deveRejeitarTipoAusente() {
-        assertThatThrownBy(() -> movimentacao.validar(new MovimentacaoEstoque(null, 1, null, 5, DATA_HORA, "Reposição")))
+        assertThatThrownBy(() -> movimentacao.validar(new MovimentacaoEstoque(null, EPI, null, null, null, 5, DATA_HORA, "Reposição")))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Tipo de movimentação é obrigatório.");
     }
@@ -48,7 +53,7 @@ class RegistrosEpiValidadoresTest {
     @ValueSource(ints = {0, -1, Integer.MIN_VALUE})
     void deveRejeitarQuantidadeNaoPositiva(int quantidade) {
         assertThatThrownBy(() -> movimentacao.validar(new MovimentacaoEstoque(
-                null, 1, TipoMovimentacao.ENTRADA, quantidade, DATA_HORA, "Reposição")))
+                null, EPI, null, null, TipoMovimentacao.ENTRADA, quantidade, DATA_HORA, "Reposição")))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Quantidade movimentada deve ser maior que zero.");
     }
@@ -56,7 +61,7 @@ class RegistrosEpiValidadoresTest {
     @Test
     void deveRejeitarDataHoraAusente() {
         assertThatThrownBy(() -> movimentacao.validar(new MovimentacaoEstoque(
-                null, 1, TipoMovimentacao.ENTRADA, 5, null, "Reposição")))
+                null, EPI, null, null, TipoMovimentacao.ENTRADA, 5, null, "Reposição")))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Data e hora da movimentação são obrigatórias.");
     }
@@ -66,7 +71,7 @@ class RegistrosEpiValidadoresTest {
     @ValueSource(strings = {" ", "\t", "\n"})
     void deveRejeitarMotivoAusenteOuEmBranco(String motivo) {
         assertThatThrownBy(() -> movimentacao.validar(new MovimentacaoEstoque(
-                null, 1, TipoMovimentacao.ENTRADA, 5, DATA_HORA, motivo)))
+                null, EPI, null, null, TipoMovimentacao.ENTRADA, 5, DATA_HORA, motivo)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Motivo da movimentação é obrigatório.");
     }

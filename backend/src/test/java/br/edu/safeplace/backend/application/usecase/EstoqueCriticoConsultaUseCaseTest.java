@@ -153,8 +153,8 @@ class EstoqueCriticoConsultaUseCaseTest {
 
         @Override
         public MovimentacaoEstoque salvarMovimentacao(MovimentacaoEstoque movimentacao) {
-            MovimentacaoEstoque salva = new MovimentacaoEstoque(proximaMovimentacaoId++, movimentacao.getEpiId(),
-                    movimentacao.getLoteId(), movimentacao.getResponsavelId(), movimentacao.getTipo(),
+            MovimentacaoEstoque salva = new MovimentacaoEstoque(proximaMovimentacaoId++, movimentacao.getEpi(),
+                    movimentacao.getLote(), movimentacao.getResponsavel(), movimentacao.getTipo(),
                     movimentacao.getQuantidade(), movimentacao.getDataHora(), movimentacao.getMotivo());
             movimentacoes.add(salva);
             return salva;

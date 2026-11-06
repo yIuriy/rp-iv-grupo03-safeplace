@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
+import br.edu.safeplace.backend.domain.epi.Epi;
+
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
 import java.time.LocalDateTime;
@@ -44,7 +46,7 @@ public class TarefaEntity {
     @JoinTable(name = "tarefas_epis", joinColumns = @JoinColumn(name = "tarefa_id"),
             inverseJoinColumns = @JoinColumn(name = "epi_id"))
     @org.hibernate.annotations.BatchSize(size = 50)
-    private List<EpiEntity> epis = new ArrayList<>();
+    private List<Epi> epis = new ArrayList<>();
 
     public TarefaEntity() {
     }
@@ -61,7 +63,7 @@ public class TarefaEntity {
 
     public TarefaEntity(Integer id, String descricao, String nivelPerigo, LocalDateTime dataClassificacao,
             GestorDeSeguranca responsavelClassificacao, AreaRisco areaRisco, List<Setor> setores,
-            List<EpiEntity> epis) {
+            List<Epi> epis) {
         this.id = id;
         this.descricao = descricao;
         this.nivelPerigo = nivelPerigo;
@@ -100,7 +102,7 @@ public class TarefaEntity {
         return setores;
     }
 
-    public List<EpiEntity> getEpis() {
+    public List<Epi> getEpis() {
         return epis;
     }
 }

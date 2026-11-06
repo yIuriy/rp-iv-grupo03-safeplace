@@ -65,12 +65,6 @@ class TarefaJpaAdapterTest {
                 LocalDate.now().plusYears(1), 365, null, null);
     }
 
-    private static EpiEntity epiEntity(Integer id, String nome) {
-        LoteEpiEntity lote = new LoteEpiEntity(id, null, null, null, null, 10,
-                new ModeloEpiEntity(id, id, null, LocalDate.now().plusYears(1)));
-        return new EpiEntity(id, nome, 10, 2, "DISPONIVEL", 365, "Descrição", null, null, lote);
-    }
-
     @Test
     @DisplayName("Deve salvar tarefa com EPIs vinculados chamando repositório de EPIs")
     void deveSalvarTarefaComEpis() {
@@ -81,7 +75,7 @@ class TarefaJpaAdapterTest {
         GestorDeSeguranca gestorEntidade = new GestorDeSeguranca(
                 1, "49216091040", "Mariana", LocalDate.of(1988, 7, 20), "mariana@empresa.com", "hash",
                 true, LocalDateTime.now(), LocalDateTime.now());
-        EpiEntity cintoEntity = epiEntity(10, "Cinto Paraquedista");
+        Epi cintoEntity = epi(10, "Cinto Paraquedista");
 
         when(usuarioRepository.findById(1)).thenReturn(Optional.of(gestorEntidade));
         when(epiRepository.findAllById(List.of(10))).thenReturn(List.of(cintoEntity));
@@ -104,7 +98,7 @@ class TarefaJpaAdapterTest {
     @Test
     @DisplayName("Deve buscar tarefa por id e reconstituir lista de EPIs")
     void deveBuscarPorIdComEpis() {
-        EpiEntity capaceteEntity = epiEntity(20, "Capacete de Segurança");
+        Epi capaceteEntity = epi(20, "Capacete de Segurança");
         TarefaEntity entity = new TarefaEntity(
                 3, "Inspeção de tubulação", "MEDIO", LocalDateTime.now(), null, null, List.of(), List.of(capaceteEntity));
 
@@ -122,7 +116,7 @@ class TarefaJpaAdapterTest {
     @Test
     @DisplayName("Deve listar todas as tarefas mantendo EPIs obrigatórios")
     void deveListarTodasComEpis() {
-        EpiEntity luvaEntity = epiEntity(30, "Luva de Raspa");
+        Epi luvaEntity = epi(30, "Luva de Raspa");
         TarefaEntity entity = new TarefaEntity(
                 1, "Solda", "ALTO", LocalDateTime.now(), null, null, List.of(), List.of(luvaEntity));
 

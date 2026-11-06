@@ -1,9 +1,14 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
 
-public interface MovimentacaoEstoqueJpaRepository extends JpaRepository<MovimentacaoEstoqueEntity, Integer> {
-    List<MovimentacaoEstoqueEntity> findByEpiIdOrderByDataHoraDesc(Integer epiId);
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
+
+public interface MovimentacaoEstoqueJpaRepository extends JpaRepository<MovimentacaoEstoque, Integer> {
+    @Query("SELECT m FROM MovimentacaoEstoque m WHERE m.epi.codigoEPI = :epiId ORDER BY m.dataHora DESC")
+    List<MovimentacaoEstoque> findByEpiIdOrderByDataHoraDesc(@Param("epiId") Integer epiId);
 }

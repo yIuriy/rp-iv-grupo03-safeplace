@@ -309,9 +309,9 @@ class EpiServiceTest {
             Integer id = movimentacao.getId() != null ? movimentacao.getId() : nextMovId++;
             MovimentacaoEstoque salvo = new MovimentacaoEstoque(
                     id,
-                    movimentacao.getEpiId(),
-                    movimentacao.getLoteId(),
-                    movimentacao.getResponsavelId(),
+                    movimentacao.getEpi(),
+                    movimentacao.getLote(),
+                    movimentacao.getResponsavel(),
                     movimentacao.getTipo(),
                     movimentacao.getQuantidade(),
                     movimentacao.getDataHora(),

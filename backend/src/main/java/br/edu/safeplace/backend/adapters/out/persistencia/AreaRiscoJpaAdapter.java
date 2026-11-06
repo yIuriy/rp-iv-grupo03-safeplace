@@ -70,9 +70,7 @@ public class AreaRiscoJpaAdapter implements AreaRiscoRepository {
             area.definirEpisObrigatorios(List.of());
             return area;
         }
-        List<Epi> epis = epiRepository.findAllById(ids).stream()
-                .map(EpiEntityMapper::toDomain)
-                .toList();
+        List<Epi> epis = epiRepository.findAllById(ids);
         area.definirEpisObrigatorios(epis);
         return area;
     }

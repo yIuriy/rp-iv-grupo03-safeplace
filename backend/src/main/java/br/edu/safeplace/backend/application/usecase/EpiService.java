@@ -9,6 +9,7 @@ import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.epi.Epi;
+import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
 import br.edu.safeplace.backend.domain.epi.LoteEPI;
 import br.edu.safeplace.backend.domain.epi.ModeloEPI;
@@ -139,14 +140,14 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
         Epi epi = repository.buscarPorIdComLock(epiId)
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId));
         // O e-mail vindo do controller tem precedência; sem ele, vale o operador autenticado (#236).
-        Integer responsavelId = buscarResponsavelId(
+        Colaborador responsavel = buscarResponsavel(
                 operadorAtual.emailInformadoOuAutenticado(responsavelEmail).orElse(null));
 
         MovimentacaoEstoque movimentacao;
         if (tipo == TipoMovimentacao.ENTRADA) {
-            movimentacao = epi.adicionarEstoque(quantidade, motivo, responsavelId);
+            movimentacao = epi.adicionarEstoque(quantidade, motivo, responsavel);
         } else if (tipo == TipoMovimentacao.SAIDA) {
-            movimentacao = epi.removerEstoque(quantidade, motivo, responsavelId);
+            movimentacao = epi.removerEstoque(quantidade, motivo, responsavel);
         } else {
             throw new IllegalArgumentException("Tipo de movimentação inválido: " + tipo);
         }
@@ -186,7 +187,7 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
     }
 
     /** US03: o responsável pela movimentação é o usuário autenticado e é obrigatório. */
-    private Integer buscarResponsavelId(String responsavelEmail) {
+    private Colaborador buscarResponsavel(String responsavelEmail) {
         if (responsavelEmail == null || responsavelEmail.isBlank()) {
             throw new IllegalArgumentException(
                     "Responsável pela movimentação é obrigatório: nenhum usuário autenticado.");
@@ -195,7 +196,6 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
             throw new IllegalStateException("Consulta de usuários indisponível para identificar o responsável.");
         }
         return usuarioRepositorio.buscarPorEmail(responsavelEmail.toLowerCase())
-                .map(usuario -> usuario.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Responsável autenticado não encontrado."));
     }
 

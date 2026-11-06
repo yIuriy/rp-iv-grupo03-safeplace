@@ -416,8 +416,8 @@ class EmprestimoServiceTest {
 
         @Override
         public MovimentacaoEstoque salvarMovimentacao(MovimentacaoEstoque movimentacao) {
-            MovimentacaoEstoque salva = new MovimentacaoEstoque(proximaMovimentacao++, movimentacao.getEpiId(),
-                    movimentacao.getLoteId(), movimentacao.getResponsavelId(), movimentacao.getTipo(),
+            MovimentacaoEstoque salva = new MovimentacaoEstoque(proximaMovimentacao++, movimentacao.getEpi(),
+                    movimentacao.getLote(), movimentacao.getResponsavel(), movimentacao.getTipo(),
                     movimentacao.getQuantidade(), movimentacao.getDataHora(), movimentacao.getMotivo());
             movimentacoes.add(salva);
             return salva;

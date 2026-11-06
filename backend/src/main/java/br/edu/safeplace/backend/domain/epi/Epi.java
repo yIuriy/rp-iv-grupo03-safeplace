@@ -5,23 +5,73 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import br.edu.safeplace.backend.domain.epi.exception.CertificadoAprovacaoVencidoException;
 import br.edu.safeplace.backend.domain.epi.exception.EpiIndisponivelParaManutencaoException;
 import br.edu.safeplace.backend.domain.epi.exception.SaldoInsuficienteException;
 import br.edu.safeplace.backend.domain.epi.exception.TransicaoStatusEpiInvalidaException;
+import br.edu.safeplace.backend.domain.usuario.Colaborador;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
+/**
+ * Saldo de um lote de EPI (decisão #124) e entidade JPA da tabela epis (#258). CA e validade do CA vêm
+ * apenas do modelo do lote.
+ */
+@Entity
+@Table(name = "epis")
 public class Epi {
-    private final Integer codigoEPI;
-    private final String localizacao;
-    private final String nome;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Integer codigoEPI;
+
+    @Column(columnDefinition = "text")
+    private String localizacao;
+
+    @Column(nullable = false, length = 160)
+    private String nome;
+
+    @Column(nullable = false)
     private int quantidade;
+
+    @Embedded
     private EspecificacaoEPI especificacao;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
     private StatusEpi status;
-    private final Integer vidaUtilDias;
-    private final LoteEPI lote;
+
+    @Column(name = "vida_util_dias")
+    private Integer vidaUtilDias;
+
+    @ManyToOne(cascade = CascadeType.ALL, optional = false)
+    @JoinColumn(name = "lote_id", nullable = false)
+    private LoteEPI lote;
+
+    /** O histórico é gravado pela manutenção (ManutencaoEpi ainda não é entidade, #259). */
+    @Transient
     private final List<ManutencaoEpi> historicoManutencao = new ArrayList<>();
+
+    /** Sem persistência: pela decisão #124, o registro tem um único lote. */
+    @Transient
     private final List<LoteEPI> lotesAdicionais = new ArrayList<>();
+
+    /** Exclusivo do JPA (decisão #254). */
+    protected Epi() {
+    }
 
     /**
      * Mantém compatibilidade com o adaptador de persistência existente.
@@ -195,7 +245,7 @@ public class Epi {
         return adicionarEstoque(qtd, motivo, null);
     }
 
-    public MovimentacaoEstoque adicionarEstoque(int qtd, String motivo, Integer responsavelId) {
+    public MovimentacaoEstoque adicionarEstoque(int qtd, String motivo, Colaborador responsavel) {
         if (qtd <= 0) {
             throw new IllegalArgumentException(
                     "Quantidade a adicionar deve ser maior que zero.");
@@ -214,9 +264,9 @@ public class Epi {
 
         MovimentacaoEstoque movimentacao = new MovimentacaoEstoque(
                 null,
-                this.codigoEPI,
-                this.lote.getId(),
-                responsavelId,
+                this,
+                this.lote,
+                responsavel,
                 TipoMovimentacao.ENTRADA,
                 qtd,
                 LocalDateTime.now(),
@@ -238,7 +288,7 @@ public class Epi {
         return removerEstoque(qtd, motivo, null);
     }
 
-    public MovimentacaoEstoque removerEstoque(int qtd, String motivo, Integer responsavelId) {
+    public MovimentacaoEstoque removerEstoque(int qtd, String motivo, Colaborador responsavel) {
         if (qtd <= 0) {
             throw new IllegalArgumentException(
                     "Quantidade a retirar deve ser maior que zero.");
@@ -260,9 +310,9 @@ public class Epi {
 
         MovimentacaoEstoque movimentacao = new MovimentacaoEstoque(
                 null,
-                this.codigoEPI,
-                this.lote.getId(),
-                responsavelId,
+                this,
+                this.lote,
+                responsavel,
                 TipoMovimentacao.SAIDA,
                 qtd,
                 LocalDateTime.now(),
@@ -505,5 +555,22 @@ public class Epi {
     private static LoteEPI loteLegado(String numeroCa, LocalDate dataValidadeCa, int quantidade) {
         return new LoteEPI(null, null, null, null, quantidade,
                 ModeloEPI.deCadastroLegado(numeroCa, dataValidadeCa));
+    }
+
+    /** Identidade pelo id gerado (decisão #254, seção 2.3); sem id, só o próprio objeto é igual. */
+    @Override
+    public boolean equals(Object outro) {
+        if (this == outro) {
+            return true;
+        }
+        if (!(outro instanceof Epi epi)) {
+            return false;
+        }
+        return getId() != null && getId().equals(epi.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
     }
 }

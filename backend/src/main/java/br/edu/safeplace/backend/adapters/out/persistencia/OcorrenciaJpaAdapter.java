@@ -253,9 +253,7 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
         }
         Set<Integer> ids = area.getEpisObrigatoriosIds();
         if (ids != null && !ids.isEmpty() && area.getEpisObrigatorios().isEmpty()) {
-            List<Epi> epis = epiRepository.findAllById(ids).stream()
-                    .map(EpiEntityMapper::toDomain)
-                    .toList();
+            List<Epi> epis = epiRepository.findAllById(ids);
             area.definirEpisObrigatorios(epis);
         }
         return area;
