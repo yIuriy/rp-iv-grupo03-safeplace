@@ -115,6 +115,19 @@ public class Emprestimo {
                 null, null, null, ClassificacaoEmprestimo.INDISPONIVEL);
     }
 
+    private Emprestimo(Builder builder) {
+        // Os dados da entrega e a coerência com a devolução são validados por EmprestimoValidador
+        // antes do repository (issue #265); o Builder não valida (#226).
+        this.epi = builder.epi;
+        this.colaborador = builder.beneficiario;
+        this.responsavelEntrega = builder.responsavelEntrega;
+        this.dataRetirada = builder.dataRetirada;
+        this.dataDevolucaoPrevista = builder.dataDevolucaoPrevista;
+        this.termoCautela = builder.termoCautela != null ? builder.termoCautela.trim() : null;
+        this.justificativaSubstituicao = builder.justificativaSubstituicao;
+        this.status = ClassificacaoEmprestimo.INDISPONIVEL;
+    }
+
     /** Cenário alternativo I do UC12: encerra o empréstimo e guarda o estado do item devolvido. */
     public void devolver(EstadoDevolucao estado, Colaborador responsavelDevolucao, LocalDateTime dataHora) {
         if (!estaAtivo()) {
@@ -232,5 +245,60 @@ public class Emprestimo {
     @Override
     public int hashCode() {
         return Objects.hashCode(getId());
+    }
+
+    /**
+     * Builder (GoF, #226) da entrega do UC12, passo 6: cada dado tem nome, então EPI, beneficiário e responsável
+     * não se confundem como os {@code Integer} posicionais de antes. O empréstimo nasce ativo
+     * ({@code INDISPONIVEL}); devolução, id e situação gravada vêm do fluxo de devolução e do JPA.
+     */
+    public static final class Builder {
+        private Epi epi;
+        private Colaborador beneficiario;
+        private Colaborador responsavelEntrega;
+        private LocalDateTime dataRetirada;
+        private LocalDate dataDevolucaoPrevista;
+        private String termoCautela;
+        private String justificativaSubstituicao;
+
+        public Builder epi(Epi epi) {
+            this.epi = epi;
+            return this;
+        }
+
+        public Builder beneficiario(Colaborador beneficiario) {
+            this.beneficiario = beneficiario;
+            return this;
+        }
+
+        public Builder responsavelEntrega(Colaborador responsavelEntrega) {
+            this.responsavelEntrega = responsavelEntrega;
+            return this;
+        }
+
+        public Builder retiradaEm(LocalDateTime dataRetirada) {
+            this.dataRetirada = dataRetirada;
+            return this;
+        }
+
+        public Builder devolucaoPrevistaPara(LocalDate dataDevolucaoPrevista) {
+            this.dataDevolucaoPrevista = dataDevolucaoPrevista;
+            return this;
+        }
+
+        public Builder termoCautela(String termoCautela) {
+            this.termoCautela = termoCautela;
+            return this;
+        }
+
+        /** Exigida só quando o colaborador já tem posse do mesmo tipo de EPI (UC12, cenário alternativo II). */
+        public Builder justificativaSubstituicao(String justificativaSubstituicao) {
+            this.justificativaSubstituicao = justificativaSubstituicao;
+            return this;
+        }
+
+        public Emprestimo build() {
+            return new Emprestimo(this);
+        }
     }
 }
