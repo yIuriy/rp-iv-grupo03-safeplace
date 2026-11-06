@@ -2,6 +2,12 @@ package br.edu.safeplace.backend.application.usecase;
 
 import java.util.ArrayList;
 import java.util.List;
+import br.edu.safeplace.backend.validacao.epi.NumeroCaValidador;
+import br.edu.safeplace.backend.validacao.epi.MovimentacaoEstoqueValidador;
+import br.edu.safeplace.backend.validacao.epi.ModeloEpiValidador;
+import br.edu.safeplace.backend.validacao.epi.EpiValidador;
+import br.edu.safeplace.backend.domain.epi.FabricaEpiPadrao;
+import br.edu.safeplace.backend.domain.epi.FabricaEpi;
 import br.edu.safeplace.backend.domain.epi.EspecificacaoEPI;
 import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
@@ -82,6 +88,29 @@ class EpiServiceTest {
 
         assertEquals(10, useCase.consultarSaldoDisponivel(epi.id()));
         assertThat(repository.movimentacoes).isEmpty();
+    }
+
+    @Test
+    void cadastroCriaOEpiPelaFabricaInjetada() {
+        UsuarioRepository usuarios = mock(UsuarioRepository.class);
+        List<EspecificacaoEPI> recebidas = new ArrayList<>();
+        FabricaEpi fabricaEspia = (nome, especificacao, lote, quantidade, vidaUtilDias, localizacao) -> {
+            recebidas.add(especificacao);
+            return new FabricaEpiPadrao().criar(nome, especificacao, lote, quantidade, vidaUtilDias, localizacao);
+        };
+        EpiService comFabrica = new EpiService(repository, usuarios, auditoria, new NumeroCaValidador(),
+                new ModeloEpiValidador(), new EpiValidador(), new MovimentacaoEstoqueValidador(),
+                operador.operadorAtual(usuarios), fabricaEspia);
+
+        comFabrica.cadastrarEpi(new CadastrarEpiInputDTO("Luva", "CA-303", 10, 2, LocalDate.now().plusYears(1),
+                365, "Vaqueta", ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES));
+
+        assertThat(recebidas).singleElement().satisfies(especificacao -> {
+            assertThat(especificacao.getDescricao()).isEqualTo("Vaqueta");
+            assertThat(especificacao.getQuantidadeMinima()).isEqualTo(2);
+            assertThat(especificacao.getClassificacao()).isEqualTo(ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES);
+        });
+        assertThat(repository.ultimoCadastrado.getNome()).isEqualTo("Luva");
     }
 
     @Test
