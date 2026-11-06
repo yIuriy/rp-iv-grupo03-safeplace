@@ -21,7 +21,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [Strategy](#strategy--mensagens-de-falha-http) | GoF, comportamental | Frontend: mensagens de falha HTTP | [#232](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/232) | Aplicado |
 | [Adapter](#adapter--porta-de-operador-autenticado) | GoF, estrutural | Backend: operador autenticado | [#222](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/222), [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236) | Aplicado (2/2: #222, #236) |
 | [Facade](#facade--registrador-de-auditoria) | GoF, estrutural | Backend: registro de auditoria (`RegistradorAuditoria`) | [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237), [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) | Pendente |
-| [State (Backend)](#state--transicoes-de-statusepi) | GoF, comportamental | Backend: transições de `StatusEpi` | [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) | Pendente |
+| [State (Backend)](#state--transicoes-de-statusepi) | GoF, comportamental | Backend: transições de `StatusEpi` | [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) | Aplicado |
 | [Factory Method](#factory-method--criacao-de-epi-e-ocorrencia) | GoF, criacional | Backend: criação de `Epi` e `Acidente`/`Incidente` (`Ocorrencia` `sealed`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225), [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Pendente |
 | [Builder (Test Data Builder)](#builder--test-data-builders-de-epi-tarefa-e-ocorrencia) | GoF, criacional | Backend (`src/test`): builders de `Epi`, `Tarefa` e `Ocorrencia` | [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) | Pendente |
 | [Null Object](#null-object--adaptador-nulo-de-notificacao-e-dependencias-opcionais) | Woolf / PLoPD 3 | Backend: `NotificadorOcorrenciaNulo` e dependências opcionais | [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227), [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) | Aplicado (2/2: #227, #241) |
@@ -863,33 +863,225 @@ Suíte com a integração ativada (`SAFEPLACE_TEST_DATASOURCE_URL` apontando par
 
 **Intenção:** concentrar as regras de transição do ciclo de vida do `Epi` nas constantes de `StatusEpi` (`podeTransicaoPara`), delegando a mudança de estado a `Epi.transicionarPara(StatusEpi)`.
 
-**Issue:** [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224).
+**Issue:** [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224), aplicada. Usa a mesma variante de `StatusOcorrencia` e `StatusPlanoDeAcao`: cada constante do enum declara as próprias transições.
 
 ### Problema (antes)
 
-*A preencher na issue [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, R4).*
+`StatusEpi` era um enum sem comportamento. As regras de mudança de situação estavam espalhadas em condicionais, cada uma atribuindo `this.status` por conta própria:
+
+| Ponto | Regra embutida |
+| --- | --- |
+| `Epi.adicionarEstoque` | `ESGOTADO` vira `DISPONIVEL` |
+| `Epi.removerEstoque` | `DISPONIVEL` com saldo zero vira `ESGOTADO` |
+| `Epi.atualizarQuantidade` | as duas regras anteriores, repetidas |
+| `Epi.enviarParaManutencao` | exige `DISPONIVEL` e vai para `EM_MANUTENCAO` |
+| `Epi.concluirManutencao` | exige `EM_MANUTENCAO`; aprovada volta a `DISPONIVEL` |
+| `Epi.registrarDevolucaoManutencao` | saldo zero vai para `EM_MANUTENCAO`, **sem guarda** |
+| `Epi.registrarDevolucaoDescarte` | saldo zero vai para `DESCARTADO`, sem guarda |
+| `ControlarManutencaoEpiService.concluirManutencao` | a aplicação decidia: `if (status == DISPONIVEL) enviarParaManutencao(...)` |
+
+Incoerências reais: `enviarParaManutencao` exigia `DISPONIVEL`, mas `registrarDevolucaoManutencao` levava a `EM_MANUTENCAO` de qualquer situação, inclusive `DESCARTADO`, que deveria ser definitiva. E `EM_USO` nunca era atribuído.
+
+### Por que State
+
+O que é permitido depende da situação atual. Com o State, cada constante diz para onde pode ir (`podeTransicaoPara`) e como reage à mudança de saldo (`aposMudancaDeSaldo`), e o `Epi` muda de situação por um único ponto (`transicionarPara`), que recusa o destino proibido com `TransicaoStatusEpiInvalidaException` (HTTP 400, "Transição de Status Inválida").
+
+Descartado: o State clássico, com uma classe por estado. É exagero para 5 estados sem dados próprios.
+
+**Tabela de transições** (conferida com UC01, UC06, UC12 e a decisão #124):
+
+| De \ Para | `DISPONIVEL` | `EM_USO` | `EM_MANUTENCAO` | `ESGOTADO` | `DESCARTADO` |
+| --- | :---: | :---: | :---: | :---: | :---: |
+| `DISPONIVEL` | | | UC01 envio | UC06 saldo zero | UC12 descarte |
+| `EM_USO` (só registros antigos) | sim | | sim | sim | sim |
+| `EM_MANUTENCAO` | #124 aprovada | | | | UC12 descarte |
+| `ESGOTADO` | UC06 entrada | | UC12 devolução | | UC12 descarte |
+| `DESCARTADO` (terminal) | | | | | |
+
+**`EM_USO`.** Pela decisão #124, a situação vale para o registro inteiro, e o empréstimo debita o saldo (UC12) em vez de marcar o registro como em uso. Por isso nenhuma situação leva a `EM_USO`; a constante continua no enum (sem migração de banco) e um registro antigo nessa situação pode sair para qualquer situação ativa.
+
+**Saldo.** Só `DISPONIVEL` e `ESGOTADO` acompanham o saldo (`aposMudancaDeSaldo`). Um EPI em manutenção que recebe entrada de estoque continua em manutenção, como antes.
+
+**Pré-condições das operações.** `enviarParaManutencao` continua exigindo `DISPONIVEL` e `concluirManutencao` continua exigindo `EM_MANUTENCAO`, com a mesma `EpiIndisponivelParaManutencaoException` e a mesma mensagem de antes. São regras da operação, mais restritas que a tabela: um EPI esgotado chega à manutenção pela devolução (UC12), não pelo envio manual.
 
 ### Papéis do padrão
 
 | Papel no padrão | Elemento no código | Responsabilidade |
 | --- | --- | --- |
-| Context | `Epi` | Manter o `StatusEpi` atual e validar mudanças via `transicionarPara(StatusEpi)` |
-| State | `StatusEpi` | Declarar `podeTransicaoPara(StatusEpi)` para o ciclo de vida do EPI |
-| ConcreteState | `DISPONIVEL`, `EM_MANUTENCAO`, `ESGOTADO`, `EM_USO`, `DESCARTADO` | Definir as transições permitidas a partir de cada estado |
+| Context | `Epi` | Manter o `StatusEpi` atual e mudá-lo só por `transicionarPara(StatusEpi)` |
+| State | `StatusEpi` | Declarar `podeTransicaoPara(StatusEpi)` e `aposMudancaDeSaldo(int)` |
+| ConcreteState | `DISPONIVEL`, `EM_MANUTENCAO`, `ESGOTADO`, `EM_USO`, `DESCARTADO` | Definir os destinos permitidos (`destinos()`) e a reação ao saldo de cada situação |
+| Client | `ControlarManutencaoEpiService`, `EmprestimoService`, `EpiService` | Chamar operações de negócio do `Epi` (`registrarManutencao`, `removerEstoque`...) sem decidir a situação |
 
 ### Diagramas
 
-*Diagramas PlantUML antes e depois a preencher na issue [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224).*
+**Antes.** O enum só lista valores; as regras ficam nos métodos do `Epi` e no caso de uso.
+
+```mermaid
+classDiagram
+  direction LR
+  class StatusEpi {
+    <<enumeration>>
+    DISPONIVEL
+    EM_USO
+    EM_MANUTENCAO
+    ESGOTADO
+    DESCARTADO
+  }
+  class Epi {
+    -status StatusEpi
+    +adicionarEstoque() status = DISPONIVEL
+    +removerEstoque() status = ESGOTADO
+    +atualizarQuantidade() status = ...
+    +enviarParaManutencao() status = EM_MANUTENCAO
+    +concluirManutencao() status = DISPONIVEL
+    +registrarDevolucaoManutencao() status = EM_MANUTENCAO
+    +registrarDevolucaoDescarte() status = DESCARTADO
+  }
+  class ControlarManutencaoEpiService {
+    if status == DISPONIVEL: enviarParaManutencao
+  }
+  Epi --> StatusEpi
+  ControlarManutencaoEpiService ..> Epi : decide a situação
+```
+
+**Depois.** Cada situação declara os destinos; o `Epi` muda de situação por um único ponto.
+
+```mermaid
+classDiagram
+  direction LR
+  class StatusEpi {
+    <<State>>
+    ~destinos() Set~StatusEpi~
+    +podeTransicaoPara(StatusEpi) boolean
+    +aposMudancaDeSaldo(int) StatusEpi
+  }
+  class DISPONIVEL {
+    <<ConcreteState>>
+    ESGOTADO, EM_MANUTENCAO, DESCARTADO
+  }
+  class ESGOTADO {
+    <<ConcreteState>>
+    DISPONIVEL, EM_MANUTENCAO, DESCARTADO
+  }
+  class EM_MANUTENCAO {
+    <<ConcreteState>>
+    DISPONIVEL, DESCARTADO
+  }
+  class EM_USO {
+    <<ConcreteState>>
+    só registros antigos
+  }
+  class DESCARTADO {
+    <<ConcreteState>>
+    terminal
+  }
+  class Epi {
+    <<Context>>
+    -status StatusEpi
+    ~transicionarPara(StatusEpi)
+    -acompanharSaldo()
+    +registrarManutencao(ManutencaoEpi, LocalDate)
+  }
+  class ControlarManutencaoEpiService {
+    <<Client>>
+  }
+  StatusEpi <|-- DISPONIVEL
+  StatusEpi <|-- ESGOTADO
+  StatusEpi <|-- EM_MANUTENCAO
+  StatusEpi <|-- EM_USO
+  StatusEpi <|-- DESCARTADO
+  Epi --> StatusEpi : pergunta podeTransicaoPara
+  ControlarManutencaoEpiService ..> Epi : registrarManutencao
+```
+
+### Código antes × depois
+
+Antes (`Epi`):
+
+```java
+// removerEstoque
+if (novoSaldo == 0 && this.status == StatusEpi.DISPONIVEL) {
+    this.status = StatusEpi.ESGOTADO;
+}
+// registrarDevolucaoManutencao: sem guarda, inclusive a partir de DESCARTADO
+if (this.quantidade == 0) {
+    this.status = StatusEpi.EM_MANUTENCAO;
+}
+```
+
+Depois (`StatusEpi` e `Epi`):
+
+```java
+ESGOTADO {
+    @Override
+    Set<StatusEpi> destinos() {
+        return EnumSet.of(DISPONIVEL, EM_MANUTENCAO, DESCARTADO);
+    }
+
+    @Override
+    public StatusEpi aposMudancaDeSaldo(int saldo) {
+        return saldo > 0 ? DISPONIVEL : this;
+    }
+},
+...
+void transicionarPara(StatusEpi novoStatus) {
+    if (novoStatus == this.status) {
+        return;
+    }
+    if (this.status != null && !this.status.podeTransicaoPara(novoStatus)) {
+        throw new TransicaoStatusEpiInvalidaException(this.codigoEPI, this.status, novoStatus);
+    }
+    this.status = novoStatus;
+}
+
+private void acompanharSaldo() {
+    if (this.status != null) {
+        transicionarPara(this.status.aposMudancaDeSaldo(this.quantidade));
+    }
+}
+```
+
+Caso de uso, antes e depois (`ControlarManutencaoEpiService.concluirManutencao`):
+
+```java
+// antes: a aplicação decidia a situação
+if (epi.getStatus() == StatusEpi.DISPONIVEL) {
+    epi.enviarParaManutencao(dataReferencia);
+}
+...
+epi.concluirManutencao(manutencao);
+
+// depois: o Epi decide
+epi.registrarManutencao(manutencao, dataReferencia);
+```
+
+### Benefício
+
+As regras de situação do EPI estão numa tabela só, que se lê de uma vez e que os testes percorrem por inteiro (25 pares). Uma situação nova ou uma transição nova muda uma constante do enum, e não meia dúzia de `if` espalhados. Ficou mais seguro: um EPI descartado não volta mais à manutenção por uma devolução, e qualquer transição não prevista é recusada com uma mensagem clara em vez de gravada em silêncio. O caso de uso de manutenção deixou de conhecer as situações do EPI.
 
 ### Métricas locais
 
-| Métrica | Antes (v1.0.0) | Depois |
-| --- | --- | --- |
-| Métodos com regras de transição de `StatusEpi` espalhadas | 8 | *A medir* |
+| Métrica | Antes | Depois |
+| --- | ---: | ---: |
+| Atribuições a `status` no `Epi` fora do construtor | 8 | 1 (`transicionarPara`) |
+| Métodos com regras de transição de `StatusEpi` espalhadas | 8 | 0 |
+| Casos de uso que decidem a situação do EPI | 1 | 0 |
+| Transições sem guarda | 2 | 0 |
+| Valores do enum / migrações novas | 5 / — | 5 / 0 |
+
+A única outra atribuição é a do construtor, que define a situação inicial (não é uma transição). Medição por busca no código de `backend/src/main`.
 
 ### Evidências
 
-*A preencher na issue [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224).*
+Testes novos:
+
+1. `StatusEpiTest` (papéis State e ConcreteState; 44 casos): todos os 25 pares origem × destino conferidos com a tabela acima; nenhuma situação vai para `null` nem para `EM_USO`; `DESCARTADO` é terminal; `aposMudancaDeSaldo` para cada situação; a situação depois do saldo é sempre uma transição permitida.
+2. `EpiTransicaoStatusTest` (papel Context; 13 casos): transição permitida muda a situação; proibida lança `TransicaoStatusEpiInvalidaException` e não muda nada; pedir a mesma situação não muda nada; devolução para manutenção de EPI descartado é recusada; devolução com saldo zero leva a manutenção ou a descarte; entrada de estoque não tira o EPI da manutenção; `registrarManutencao` de EPI disponível passa por manutenção e volta se aprovada, e fica em manutenção se reprovada.
+
+Os testes existentes de `EpiTest`, `ControlarManutencaoEpiServiceTest`, `EmprestimoServiceTest` e `EpiServiceTest` passam sem alteração, o que confirma as transições que já existiam.
+
+Suíte existente (`./mvnw clean test` com PostgreSQL externo novo): **1186 testes, 0 falhas, 10 erros**, todos o problema anterior de limpeza entre classes de integração (`DELETE FROM epis` bloqueado por `projecoes_substituicao`), igual à `dev` sem esta mudança.
 
 ---
 
