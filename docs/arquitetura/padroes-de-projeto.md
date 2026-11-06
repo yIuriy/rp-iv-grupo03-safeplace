@@ -19,7 +19,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | Padrão | Catálogo | Onde | Issue | Situação |
 | --- | --- | --- | --- | --- |
 | [Strategy](#strategy--mensagens-de-falha-http) | GoF, comportamental | Frontend: mensagens de falha HTTP | [#232](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/232) | Aplicado |
-| [Adapter](#adapter--porta-de-operador-autenticado) | GoF, estrutural | Backend: operador autenticado | Parte 1 ([#222](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/222); preparação para [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236)) | Aplicado |
+| [Adapter](#adapter--porta-de-operador-autenticado) | GoF, estrutural | Backend: operador autenticado | [#222](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/222), [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236) | Aplicado (2/2: #222, #236) |
 | [Facade](#facade--registrador-de-auditoria) | GoF, estrutural | Backend: registro de auditoria (`RegistradorAuditoria`) | [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237), [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) | Pendente |
 | [State (Backend)](#state--transicoes-de-statusepi) | GoF, comportamental | Backend: transições de `StatusEpi` | [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) | Pendente |
 | [Factory Method](#factory-method--criacao-de-epi-e-ocorrencia) | GoF, criacional | Backend: criação de `Epi` e `Acidente`/`Incidente` (`Ocorrencia` `sealed`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225), [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Pendente |
@@ -339,7 +339,7 @@ Dois exemplos mostram que a estratégia `usarMensagemDaApi` funciona dentro do C
 
 **Intenção:** converter a interface de uma classe na interface esperada pelos clientes. O Adapter permite que classes com interfaces incompatíveis trabalhem juntas, desacoplando o núcleo da aplicação dos detalhes e classes estáticas do framework de segurança.
 
-**Issue:** Parte 1 de 2 (a parte 2 é [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236)).
+**Issues:** [#222](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/222) (parte 1, aplicada: porta, adaptador e fachada `OperadorAtual`) e [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236) (parte 2, aplicada: os 8 clientes passam a ler o operador pela fachada).
 
 ### Problema (antes)
 
@@ -356,6 +356,21 @@ Além do acoplamento ao Spring Security, havia dois problemas de consistência:
 
 1. **Defeito no descarte de `"anonymousUser"`:** o adaptador não filtrava o usuário anônimo fornecido pelo Spring Security quando não autenticado, retornando `Optional.of("anonymousUser")`. Apenas 4 locais (`OcorrenciaService`, `TarefaService`, `InspecaoService` e `PlanoDeAcaoJpaAdapter`) descartavam esse valor manualmente; nos demais fluxos, a auditoria podia gravar `responsavel = "anonymousUser"` em vez de `SISTEMA`.
 2. **Regra divergente para recuperação do Gestor:** a busca do Gestor de Segurança pelo e-mail autenticado possuía comportamentos diferentes no sistema. `TarefaService` e `InspecaoService` lançavam `AccessDeniedException` quando não havia gestor autenticado, enquanto `PlanoDeAcaoService` devolvia `null`.
+
+**Parte 2 ([#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236)).** A parte 1 criou a porta e a fachada, mas os 8 clientes ainda tinham a sua própria leitura do `SecurityContextHolder`, cada uma com uma regra:
+
+| Cliente | Helper local | Filtrava `anonymousUser` | Sem operador | Gestor ausente |
+| --- | --- | :---: | --- | --- |
+| `CadastrarCapacitacaoService` | `resolverOperador()`, com `catch (Exception)` | não | `SISTEMA` | (não busca) |
+| `ControlarManutencaoEpiService` | `resolverOperador(explicito)` | não | `SISTEMA` | (não busca) |
+| `EpiService` | `emailDoUsuarioAutenticado(explicito)` e `resolverOperador` | não | `null` ou `SISTEMA` | (não busca) |
+| `InspecaoService` | `resolverGestorAutenticado()` e `semGestor()` | sim | exceção | `AccessDeniedException` |
+| `OcorrenciaService` | `emailAutenticado()` e `resolverOperador()`, mais a leitura dos papéis na visibilidade | sim | `SISTEMA` | (não busca) |
+| `PlanoDeAcaoService` | `gestorAutenticado()` | não | `null` | `null` |
+| `TarefaService` | `emailAutenticado()`, `resolverOperador()` e `resolverResponsavelTecnico()` | sim | `SISTEMA` | `AccessDeniedException` |
+| `PlanoDeAcaoJpaAdapter` | `emailAutenticado()` e `resolverOperador(plano)` | sim | Gestor do plano ou `SISTEMA` | (não busca) |
+
+Eram 14 helpers privados e 9 leituras diretas do `SecurityContextHolder` (8 helpers e a leitura dos papéis em `OcorrenciaService`), em 8 arquivos; 7 deles na camada de aplicação, que importava o Spring Security. `TarefaService` e `InspecaoService` lançavam a `AccessDeniedException` do framework a partir de um caso de uso. Os testes unitários desses casos de uso montavam e limpavam o `SecurityContextHolder` (estado estático por thread) em 8 classes.
 
 ### Por que Adapter
 
@@ -376,7 +391,8 @@ O padrão Adapter permite:
 | **Adapter** | `SpringSecurityOperadorAutenticadoAdapter` | `backend/src/main/java/br/edu/safeplace/backend/adapters/out/seguranca/SpringSecurityOperadorAutenticadoAdapter.java` |
 | **Adaptee** | `SecurityContextHolder` / `Authentication` | `org.springframework.security.core` |
 | **Fachada de uso** | `OperadorAtual` | `backend/src/main/java/br/edu/safeplace/backend/application/usecase/OperadorAtual.java` |
-| **Client** | `UsuarioService` (e os demais use cases na Parte 2) | `backend/src/main/java/br/edu/safeplace/backend/application/usecase/*` |
+| **Client** | `UsuarioService` (parte 1) e, na parte 2, `CadastrarCapacitacaoService`, `ControlarManutencaoEpiService`, `EpiService`, `InspecaoService`, `OcorrenciaService`, `PlanoDeAcaoService`, `TarefaService` e `PlanoDeAcaoJpaAdapter` | `backend/src/main/java/br/edu/safeplace/backend/application/usecase/*` e `adapters/out/persistencia/PlanoDeAcaoJpaAdapter.java` |
+| **Dublê do Target (testes)** | `OperadorAutenticadoFixo` (#236) | `backend/src/test/java/br/edu/safeplace/backend/suporte/OperadorAutenticadoFixo.java` |
 
 ### Diagramas
 
@@ -473,6 +489,90 @@ sequenceDiagram
   Facade-->>Cliente: "SISTEMA"
 ```
 
+**Antes da parte 2 (#236).** Só `UsuarioService` usava o Target; os outros 8 clientes liam o Adaptee diretamente, cada um com a sua regra.
+
+```mermaid
+classDiagram
+  direction LR
+  class SecurityContextHolder {
+    <<Adaptee / Framework>>
+  }
+  class OperadorAtual {
+    <<Fachada de uso>>
+  }
+  class UsuarioService {
+    <<Client>>
+  }
+  class CasosDeUsoDaParte2 {
+    <<Client sem a porta>>
+    CadastrarCapacitacaoService
+    ControlarManutencaoEpiService
+    EpiService
+    InspecaoService
+    OcorrenciaService
+    PlanoDeAcaoService
+    TarefaService
+    -resolverOperador()
+    -emailAutenticado()
+    -gestorAutenticado()
+  }
+  class PlanoDeAcaoJpaAdapter {
+    <<Client sem a porta>>
+    -emailAutenticado()
+  }
+  UsuarioService --> OperadorAtual : usa
+  CasosDeUsoDaParte2 --> SecurityContextHolder : lê diretamente (7 imports do Spring Security)
+  PlanoDeAcaoJpaAdapter --> SecurityContextHolder : lê diretamente
+```
+
+**Depois da parte 2 (#236).** Os 8 clientes recebem `OperadorAtual` no construtor, como dependência obrigatória. Só o Adapter lê o Adaptee, e os testes trocam o Adapter pelo dublê `OperadorAutenticadoFixo`.
+
+```mermaid
+classDiagram
+  direction LR
+  class SecurityContextHolder {
+    <<Adaptee / Framework>>
+  }
+  class OperadorAutenticado {
+    <<Target / Interface>>
+    +obterIdentificadorOperador() Optional~String~
+    +possuiPapel(papel) boolean
+  }
+  class SpringSecurityOperadorAutenticadoAdapter {
+    <<Adapter>>
+  }
+  class OperadorAutenticadoFixo {
+    <<Dublê do Target, src/test>>
+  }
+  class OperadorAtual {
+    <<Fachada de uso>>
+    +emailOuSistema() String
+    +obterIdentificadorOperador() Optional~String~
+    +buscarGestor() Optional~GestorDeSeguranca~
+    +gestorObrigatorio(mensagem) GestorDeSeguranca
+    +emailInformadoOuAutenticado(informado) Optional~String~
+    +emailInformadoOuSistema(informado) String
+    +possuiPapel(papel) boolean
+  }
+  class Clientes {
+    <<Client>>
+    UsuarioService
+    CadastrarCapacitacaoService
+    ControlarManutencaoEpiService
+    EpiService
+    InspecaoService
+    OcorrenciaService
+    PlanoDeAcaoService
+    TarefaService
+    PlanoDeAcaoJpaAdapter
+  }
+  OperadorAutenticado <|.. SpringSecurityOperadorAutenticadoAdapter : implementa
+  OperadorAutenticado <|.. OperadorAutenticadoFixo : implementa nos testes
+  SpringSecurityOperadorAutenticadoAdapter --> SecurityContextHolder : único leitor
+  OperadorAtual --> OperadorAutenticado : usa Target
+  Clientes --> OperadorAtual : recebe no construtor
+```
+
 ### Código antes × depois
 
 **Adaptador (`SpringSecurityOperadorAutenticadoAdapter.java`):**
@@ -553,9 +653,142 @@ public class OperadorAtual {
 }
 ```
 
+**Parte 2 (#236): cliente `TarefaService`.**
+
+Antes:
+
+```java
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+public TarefaService(TarefaRepository repository, LogAuditoriaRepository logAuditoriaRepository,
+        UsuarioRepository usuarioRepositorio, Validador<Tarefa> validador, EpiRepository epiRepository) { ... }
+
+private GestorDeSeguranca resolverResponsavelTecnico() {
+    String email = emailAutenticado();
+    if (email != null) {
+        GestorDeSeguranca gestor = usuarioRepositorio.buscarPorEmail(email)
+                .filter(GestorDeSeguranca.class::isInstance)
+                .map(GestorDeSeguranca.class::cast)
+                .orElse(null);
+        if (gestor != null) {
+            return gestor;
+        }
+    }
+    throw new AccessDeniedException(
+            "A classificação de periculosidade exige um Gestor de Segurança autenticado como responsável técnico.");
+}
+
+private String resolverOperador() {
+    String email = emailAutenticado();
+    return email != null ? email : "SISTEMA";
+}
+
+private String emailAutenticado() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
+        String email = auth.getName().trim();
+        return "anonymousUser".equals(email) ? null : email;
+    }
+    return null;
+}
+```
+
+Depois (sem import do Spring Security; o `OperadorAtual` ocupa o lugar do `UsuarioRepository`, que só servia para achar o operador):
+
+```java
+public TarefaService(TarefaRepository repository, LogAuditoriaRepository logAuditoriaRepository,
+        OperadorAtual operadorAtual, Validador<Tarefa> validador, EpiRepository epiRepository) {
+    ...
+    this.operadorAtual = Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
+}
+
+RegistroClassificacaoTarefa registro = tarefa.classificar(
+        nivelPerigo, operadorAtual.gestorObrigatorio(SEM_RESPONSAVEL_TECNICO));
+
+registrarLog(LogAuditoria.registrarCadastro(
+        operadorAtual.emailOuSistema(), ENTIDADE, salva.getId(), "Cadastro de Tarefa: " + salva.getDescricao()));
+```
+
+**Parte 2 (#236): testes do cliente.**
+
+Antes, cada teste montava e limpava o estado estático do framework:
+
+```java
+@BeforeEach
+void setUp() {
+    useCase = new TarefaService(repository, auditoria, usuarios, null, null, epiRepository);
+    SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(EMAIL_GESTOR, null));
+}
+
+@AfterEach
+void limparAutenticacao() {
+    SecurityContextHolder.clearContext();
+}
+```
+
+Depois, o teste injeta um dublê do Target:
+
+```java
+private final OperadorAutenticadoFixo operador = OperadorAutenticadoFixo.semSessao();
+
+@BeforeEach
+void setUp() {
+    useCase = new TarefaService(repository, auditoria, operador.operadorAtual(usuarios), null, null, epiRepository);
+    operador.autenticar(EMAIL_GESTOR);
+}
+```
+
+Os demais clientes seguem o mesmo modelo. Em `EpiService` e `ControlarManutencaoEpiService`, o e-mail que o controller lê do token continua tendo precedência. Essa regra estava copiada em 3 helpers dos dois serviços e passou para a fachada, em `emailInformadoOuAutenticado(informado)` e `emailInformadoOuSistema(informado)`:
+
+```java
+// Antes (EpiService e ControlarManutencaoEpiService, cada um com a sua cópia)
+private String resolverOperador(String explicit) {
+    if (explicit != null && !explicit.isBlank()) {
+        return explicit.trim();
+    }
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
+        return auth.getName().trim();
+    }
+    return "SISTEMA";
+}
+
+// Depois (OperadorAtual), usado pelos dois serviços
+public Optional<String> emailInformadoOuAutenticado(String informado) {
+    if (informado != null && !informado.isBlank()) {
+        return Optional.of(informado.trim());
+    }
+    return obterIdentificadorOperador();
+}
+```
+
+No `PlanoDeAcaoJpaAdapter`, a ordem continua sendo operador autenticado, Gestor do plano e `SISTEMA`.
+
 ### Benefício
 
 A identificação do operador autenticado e o descarte de `"anonymousUser"` passaram a existir **em um ponto único e testado**. A auditoria fica protegida contra a gravação de `"anonymousUser"` como responsável, e a busca por Gestor de Segurança foi padronizada: fluxos que exigem gestor usam `gestorObrigatorio()` (lançando `AcessoNegadoException`), enquanto fluxos opcionais usam `buscarGestor()`. A camada de aplicação permanece desacoplada do Spring Security, simplificando os testes unitários.
+
+**Parte 2 (#236).** A pergunta "quem está operando?" passou a ter uma resposta só no backend. Ficou mais simples porque os 8 clientes perderam 13 dos 14 helpers privados (82 linhas a menos no código de produção, já contando os dois métodos novos da fachada) e cada um diz só o que precisa: `emailOuSistema()` para a auditoria, `buscarGestor()` quando o Gestor é opcional (plano de ação) e `gestorObrigatorio(mensagem)` quando é exigido (tarefa e inspeção). Ficou mais seguro porque o descarte de `anonymousUser` deixou de depender de cada cliente lembrar dele: capacitação, manutenção e EPI, que não o filtravam, passam a cair em `SISTEMA` como os demais. E ficou mais fácil de testar e de mudar: os testes injetam um dublê da porta em vez de manipular estado estático por thread, e trocar o mecanismo de autenticação afeta só o Adapter.
+
+### Métricas locais
+
+| Métrica | Antes (`dev`, `e338bc0`) | Depois da #236 |
+| --- | ---: | ---: |
+| `violacoes_camadas.application_importa_spring_security` (coletor) | 7 | **0** |
+| `contagens.security_context_holder` (coletor, código de produção) | 27 | 10 |
+| Arquivos fora de `adapters/` e `config/` com `SecurityContextHolder` | 7 | 0 |
+| Pontos que filtram `anonymousUser` | 5 | 1 (o Adapter) |
+| Helpers privados de resolução do operador nos clientes | 14 | 1 |
+| Classes de teste unitário que montam o `SecurityContextHolder` | 8 | 0 |
+| Linhas de produção, 8 clientes e `OperadorAtual` (diff) | base | 82 a menos (131 inseridas, 213 removidas) |
+| `duplicacao.percentual` (coletor) | 10,45% | 10,43% |
+| `requireNonNull` (coletor) | 31 | 38 |
+
+As 10 ocorrências restantes de `SecurityContextHolder` ficam em `adapters/out/seguranca` (o Adapter e o filtro JWT) e em `adapters/in/web` (dois controllers que leem o e-mail do token). O único helper que sobrou é o `resolverOperador(plano)` do `PlanoDeAcaoJpaAdapter`: ele delega à fachada e guarda uma regra que só existe ali, o recurso ao Gestor do plano quando não há sessão; a auditoria inteira sai desse adaptador na #238. O `requireNonNull` sobe porque o `OperadorAtual` passou a ser dependência obrigatória nos 8 clientes (Null Object, #241).
+
+**Contrato HTTP.** A recusa por falta de Gestor em tarefa e inspeção continua respondendo **403** com `error: "Acesso Proibido"`. Antes, a `AccessDeniedException` subia até o `AccessDeniedHandler` do Spring Security, que trocava a mensagem do caso de uso por "Seu perfil não possui permissão para acessar este recurso." e acrescentava `path`. Agora a `AcessoNegadoException` do domínio é tratada pelo advice de usuários (`UsuarioExceptionHandler`), que devolve a mensagem do caso de uso, como nos outros 403 do domínio. Esse caminho só ocorre com um token de Gestor cujo e-mail não corresponde mais a um Gestor cadastrado, porque a regra de acesso já barra os outros perfis antes do caso de uso. Os demais fluxos não mudam de resposta.
 
 ### Evidências
 
@@ -567,6 +800,23 @@ A identificação do operador autenticado e o descarte de `"anonymousUser"` pass
 **Suíte de testes existente:**
 - Execução de `./mvnw test` concluída com sucesso: **1094 testes executados, 0 falhas, 0 erros**.
 - Cobertura mantida em conformidade com as metas do projeto.
+
+**Parte 2 (#236).**
+
+Testes novos (22):
+
+1. `OperadorAtualClientesTest` (10 testes): cada um dos 8 clientes recusa `OperadorAtual` nulo com a mensagem "Operador atual é obrigatório."; um teste varre `application/` e falha se algum arquivo importar `org.springframework.security`; outro varre o código de produção e falha se `SecurityContextHolder` aparecer fora de `adapters/` e `config/`. Os dois últimos protegem os critérios da issue contra regressões.
+2. `CadastrarCapacitacaoServiceTest` e `ControlarManutencaoEpiServiceTest` (2 testes cada): a auditoria grava o e-mail lido pela porta e, sem sessão, `SISTEMA`. Antes, esses dois clientes não descartavam `anonymousUser`.
+3. `PlanoDeAcaoServiceTest` (2 testes): o Gestor autenticado lido pela porta fica registrado no plano; sem Gestor, o plano é cadastrado sem gestor (fluxo opcional, `buscarGestor()`).
+4. `PlanoDeAcaoJpaAdapterTest` (2 testes): a auditoria grava o operador autenticado e, sem sessão nem Gestor no plano, `SISTEMA`.
+5. `InspecaoControllerTest` (1 teste): a `AcessoNegadoException` do caso de uso responde 403 com `error` "Acesso Proibido" e a mensagem do caso de uso.
+6. `OperadorAtualTest` (3 testes): o e-mail informado pelo controller tem precedência (e a porta nem é consultada); informado ausente ou em branco usa o operador autenticado; sem nenhum dos dois, vazio ou `SISTEMA`.
+
+Testes ajustados: as 8 classes que montavam o `SecurityContextHolder` (`EpiServiceTest`, `EstoqueCriticoConsultaUseCaseTest`, `InspecaoServiceTest`, `OcorrenciaConsultaUseCaseTest`, `OcorrenciaServiceTest`, `OcorrenciaUseCaseAuditoriaTest`, `TarefaServiceTest` e `AuditoriaEvidenciaIntegracaoTest`) passaram a usar o dublê `OperadorAutenticadoFixo`. As asserções de comportamento não mudaram; em `InspecaoServiceTest` e `TarefaServiceTest` a exceção esperada passou de `AccessDeniedException` para `AcessoNegadoException`, agora com a mensagem conferida. `TarefaControllerTest` simula a mesma exceção do domínio e confere o corpo do 403. As demais classes só receberam a nova dependência no construtor. Os 4 testes de integração com PostgreSQL que autenticam pelo `SecurityContextHolder` continuam assim, porque sobem o contexto Spring e exercitam o Adapter real.
+
+Suíte do backend (`./mvnw test`): antes, 1174 testes, 0 falhas, 131 ignorados; depois, **1196 testes, 0 falhas, 0 erros**, os mesmos 131 ignorados (integração com PostgreSQL, ver #248).
+
+Suíte com a integração ativada (`SAFEPLACE_TEST_DATASOURCE_URL` apontando para um PostgreSQL 16 descartável, o contorno descrito em #248): os 131 testes de integração rodaram, nenhum ignorado. Os que atravessam a cadeia inteira (Adapter real, `OperadorAtual` e caso de uso, autenticando pelo `SecurityContextHolder`) passaram: `BackendApplicationTests` (contexto Spring completo), `SegurancaRbacIntegrationTest`, `AreaRiscoTarefaPersistenciaTest`, `OcorrenciaConsultaPersistenciaIntegracaoTest`, `OcorrenciaPersistenciaIntegracaoTest` e `PlanoDeAcaoPersistenciaIntegracaoTest`. Os únicos erros foram 4, em `SetorAreaRiscoPersistenciaIntegracaoTest`: a limpeza do teste apaga `epis` enquanto `projecoes_substituicao` ainda referencia um EPI de outra classe. Na mesma condição, a base sem a #236 (`3aaf10e`) dá os mesmos 4 erros (1174 testes); é o problema de ordem nas limpezas registrado em #248, sem relação com esta issue. O backend de desenvolvimento (`docker-compose.dev.yml`) também subiu com o código novo.
 
 ---
 
