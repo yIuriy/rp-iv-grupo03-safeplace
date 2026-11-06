@@ -64,15 +64,21 @@ class OcorrenciaJpaAdapterTest {
         Colaborador colaborador = new Colaborador(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
         GestorDeSeguranca gestor = new GestorDeSeguranca(3, "98765432100", "Maria Gestora", LocalDate.of(1985, 5, 5), "maria@email.com", "hash", true, LocalDateTime.now(), LocalDateTime.now());
 
-        Acidente acidente = Acidente.novo(
+        Acidente acidente = new Acidente(
+                null,
                 "Acidente com prensa",
                 LocalDateTime.of(2026, 9, 10, 14, 0),
-                area,
+                LocalDateTime.now(),
+                StatusOcorrencia.ABERTA,
                 colaborador,
+                area,
                 gestor,
+                null,
+                null,
                 CausaRaizAcidente.FALHA_EPI,
                 "Esmagamento",
                 "Lesão na mão",
+                null,
                 "Hospital",
                 NivelPerigo.CRITICO
         );
@@ -129,8 +135,19 @@ class OcorrenciaJpaAdapterTest {
 
         when(ocorrenciaRepository.save(any(Incidente.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Incidente salvo = adapter.salvarIncidente(Incidente.novo("Quase queda", LocalDateTime.of(2026, 9, 10, 10, 0),
-                area, colaborador, supervisor, "Piso oleoso", "Queda de mesmo nível"));
+        Incidente salvo = adapter.salvarIncidente(new Incidente(
+                null,
+                "Quase queda",
+                LocalDateTime.of(2026, 9, 10, 10, 0),
+                LocalDateTime.now(),
+                StatusOcorrencia.ABERTA,
+                colaborador,
+                area,
+                supervisor,
+                null,
+                null,
+                "Piso oleoso",
+                "Queda de mesmo nível"));
 
         assertThat(salvo.getRelator()).isInstanceOf(Supervisor.class);
         assertThat(salvo.getRelator().getId()).isEqualTo(4);
@@ -142,11 +159,16 @@ class OcorrenciaJpaAdapterTest {
         AreaRisco area = new AreaRisco(1, "AR-01", "Prensa", "Setor Prensa", NivelPerigo.MEDIO, SETOR_10, List.of(), "Galpão", List.of());
         Colaborador colaborador = new Colaborador(2, "12345678901", "João Silva", LocalDate.of(1990, 1, 1), "joao@email.com", true, LocalDateTime.now(), LocalDateTime.now());
 
-        Incidente incidente = Incidente.novo(
+        Incidente incidente = new Incidente(
+                null,
                 "Quase queda",
                 LocalDateTime.of(2026, 9, 10, 10, 0),
-                area,
+                LocalDateTime.now(),
+                StatusOcorrencia.ABERTA,
                 colaborador,
+                area,
+                null,
+                null,
                 null,
                 "Piso oleoso",
                 "Queda de mesmo nível"

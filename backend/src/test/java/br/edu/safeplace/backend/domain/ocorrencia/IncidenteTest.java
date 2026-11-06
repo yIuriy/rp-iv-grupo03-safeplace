@@ -1,6 +1,5 @@
 package br.edu.safeplace.backend.domain.ocorrencia;
 
-import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,6 +13,7 @@ import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,6 +54,7 @@ class IncidenteTest {
         );
 
         assertThat(incidente.getId()).isEqualTo(2);
+        assertThat(incidente.getTipoOcorrencia()).isEqualTo(TipoOcorrencia.INCIDENTE);
         assertThat(incidente.getDescricao()).isEqualTo("Palete instável quase desabou sobre corredor");
         assertThat(incidente.getSituacaoRisco()).isEqualTo("Paletes empilhados além da altura máxima permitida");
         assertThat(incidente.getPotencialDano()).isEqualTo("Esmagamento e fraturas múltiplas");
@@ -62,8 +63,8 @@ class IncidenteTest {
     }
 
     @Test
-    @DisplayName("Fábrica cria incidente aberto sem texto livre de local")
-    void deveCriarIncidentePelaFabrica() {
+    @DisplayName("Incidente aberto sem texto livre de local expõe tipo e dados")
+    void deveCriarIncidenteAbertoSemTextoLivre() {
         AreaRisco area = AreaRisco.cadastrar("EST-01", "Estacionamento", "Circulação de veículos", NivelPerigo.MEDIO,
                 List.of(EpiDeTeste.umEpi()
                         .comId(3)
@@ -77,10 +78,15 @@ class IncidenteTest {
                         .comDescricao("Colete")
                         .build()));
 
-        Incidente incidente = Incidente.novo(
+        Incidente incidente = new Incidente(
+                null,
                 "Quase atropelamento por empilhadeira",
                 LocalDateTime.of(2026, 9, 8, 11, 0),
+                LocalDateTime.now(),
+                StatusOcorrencia.ABERTA,
+                null,
                 area,
+                null,
                 null,
                 null,
                 "Falta de sinalização no cruzamento",
@@ -88,6 +94,7 @@ class IncidenteTest {
         );
 
         assertThat(incidente.getId()).isNull();
+        assertThat(incidente.getTipoOcorrencia()).isEqualTo(TipoOcorrencia.INCIDENTE);
         assertThat(incidente.getStatusOcorrencia()).isEqualTo(StatusOcorrencia.ABERTA);
         assertThat(incidente.getLocalInformado()).isNull();
         assertThat(incidente.getLocal()).isEqualTo("Estacionamento");

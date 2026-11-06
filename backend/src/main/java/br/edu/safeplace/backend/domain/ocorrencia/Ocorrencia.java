@@ -27,7 +27,7 @@ import jakarta.persistence.Transient;
 @Entity
 @Table(name = "ocorrencias")
 @Inheritance(strategy = InheritanceType.JOINED)
-public abstract class Ocorrencia {
+public abstract sealed class Ocorrencia permits Acidente, Incidente {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -144,6 +144,9 @@ public abstract class Ocorrencia {
     public boolean isGrave() {
         return false;
     }
+
+    /** Devolve o tipo específico de ocorrência no domínio (#239). */
+    public abstract TipoOcorrencia getTipoOcorrencia();
 
     public Integer getId() {
         return idOcorrencia;

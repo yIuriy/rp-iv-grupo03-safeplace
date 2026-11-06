@@ -13,7 +13,7 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "incidentes")
-public class Incidente extends Ocorrencia {
+public non-sealed class Incidente extends Ocorrencia {
 
     @Column(name = "situacao_risco")
     private String situacaoRisco;
@@ -46,28 +46,9 @@ public class Incidente extends Ocorrencia {
         this.potencialDano = potencialDano != null ? potencialDano.trim() : null;
     }
 
-    public static Incidente novo(
-            String descricao,
-            LocalDateTime dataOcorrencia,
-            AreaRisco area,
-            Colaborador colaborador,
-            Colaborador relator,
-            String situacaoRisco,
-            String potencialDano) {
-        return new Incidente(
-                null,
-                descricao,
-                dataOcorrencia,
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                colaborador,
-                area,
-                relator,
-                null,
-                null,
-                situacaoRisco,
-                potencialDano
-        );
+    @Override
+    public TipoOcorrencia getTipoOcorrencia() {
+        return TipoOcorrencia.INCIDENTE;
     }
 
     public String getSituacaoRisco() {
