@@ -6,6 +6,7 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.application.assembler.OcorrenciaOutputAssembler;
 import br.edu.safeplace.backend.application.dto.input.AtualizarOcorrenciaInputDTO;
 import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
@@ -57,6 +58,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
     private final Validador<Ocorrencia> validador;
     private final Validador<Acidente> protocoloValidador;
     private final OperadorAtual operadorAtual;
+    private final OcorrenciaOutputAssembler assembler = new OcorrenciaOutputAssembler();
 
     @org.springframework.beans.factory.annotation.Autowired
     public OcorrenciaService(
@@ -144,7 +146,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
 
         notificadorOcorrencia.notificarGestor(salvo);
 
-        return OcorrenciaOutputDTO.deDominio(salvo);
+        return assembler.montar(salvo);
     }
 
     @Override
@@ -183,7 +185,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
 
         notificadorOcorrencia.notificarGestor(salvo);
 
-        return OcorrenciaOutputDTO.deDominio(salvo);
+        return assembler.montar(salvo);
     }
 
     /**
@@ -235,7 +237,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         Predicate<Ocorrencia> visivel = visibilidadeDoUsuarioAtual();
         return repository.listar(filtro != null ? filtro : FiltroOcorrenciasDTO.SEM_FILTRO).stream()
                 .filter(visivel)
-                .map(OcorrenciaOutputDTO::deDominio)
+                .map(assembler::montar)
                 .toList();
     }
 
@@ -260,7 +262,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         Ocorrencia ocorrencia = repository.buscarPorId(idOcorrencia)
                 .filter(visibilidadeDoUsuarioAtual())
                 .orElseThrow(() -> new OcorrenciaNaoEncontradaException(idOcorrencia));
-        return OcorrenciaOutputDTO.deDominio(ocorrencia);
+        return assembler.montar(ocorrencia);
     }
 
     @Override
@@ -272,7 +274,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         Ocorrencia ocorrencia = repository.buscarPorProtocolo(protocolo.trim())
                 .filter(visibilidadeDoUsuarioAtual())
                 .orElseThrow(() -> new OcorrenciaNaoEncontradaException("Ocorrência não encontrada com o protocolo " + protocolo.trim() + "."));
-        return OcorrenciaOutputDTO.deDominio(ocorrencia);
+        return assembler.montar(ocorrencia);
     }
 
     /**
@@ -349,7 +351,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
                 salva.getId(),
                 "Atualização de ocorrência. Campos alterados: " + descreverAlteracoes(atual, salva)));
 
-        return OcorrenciaOutputDTO.deDominio(salva);
+        return assembler.montar(salva);
     }
 
     private static String descreverAlteracoes(Ocorrencia antes, Ocorrencia depois) {
@@ -398,7 +400,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         );
         logAuditoriaRepository.salvar(log);
 
-        return OcorrenciaOutputDTO.deDominio(salva);
+        return assembler.montar(salva);
     }
 
     @Override
@@ -419,7 +421,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         );
         logAuditoriaRepository.salvar(log);
 
-        return OcorrenciaOutputDTO.deDominio(salva);
+        return assembler.montar(salva);
     }
 
     @Override
@@ -447,7 +449,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         );
         logAuditoriaRepository.salvar(log);
 
-        return OcorrenciaOutputDTO.deDominio(salvo);
+        return assembler.montar(salvo);
     }
 
     private Ocorrencia salvarOcorrencia(Ocorrencia ocorrencia) {
