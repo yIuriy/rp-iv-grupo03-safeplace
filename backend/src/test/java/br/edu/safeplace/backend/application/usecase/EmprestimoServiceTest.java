@@ -6,6 +6,9 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import org.springframework.test.util.ReflectionTestUtils;
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoa;
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -84,7 +87,18 @@ class EmprestimoServiceTest {
     /** Id 0 marca "não salvo": com id, o domínio reconstrói o EPI mesmo com CA vencido, como faz o adaptador JPA. */
     private static Epi epi(String nome, int quantidade, StatusEpi status, LocalDate validadeCa,
                            ClassificacaoEPI classificacao) {
-        return new Epi(0, nome, "1234", quantidade, 1, status, validadeCa, 365, nome, classificacao);
+        return EpiDeTeste.umEpi()
+                .comId(0)
+                .comNome(nome)
+                .comCa("1234")
+                .comQuantidade(quantidade)
+                .comEstoqueMinimo(1)
+                .comStatus(status)
+                .comValidadeCa(validadeCa)
+                .comVidaUtilDias(365)
+                .comDescricao(nome)
+                .comClassificacao(classificacao)
+                .build();
     }
 
     private RegistrarEntregaInputDTO entregaDe(Integer epiId) {
@@ -247,8 +261,17 @@ class EmprestimoServiceTest {
     @Test
     @DisplayName("Duplicidade de posse é verificada por fallback de ID quando EPI não possui classificação")
     void duplicidadeMesmoSemClassificacaoVerificaPorId() {
-        Integer epiSemClassificacaoId = epis.salvar(new Epi(0, "Óculos Simples", "12345", 5, 1,
-                StatusEpi.DISPONIVEL, LocalDate.now().plusYears(1), 365, "Sem spec", null, null)).getId();
+        Integer epiSemClassificacaoId = epis.salvar(EpiDeTeste.umEpi()
+                .comId(0)
+                .comNome("Óculos Simples")
+                .comCa("12345")
+                .comQuantidade(5)
+                .comEstoqueMinimo(1)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.now().plusYears(1))
+                .comVidaUtilDias(365)
+                .comDescricao("Sem spec")
+                .build()).getId();
 
         useCase.registrarEntrega(
                 new RegistrarEntregaInputDTO(epiSemClassificacaoId, colaboradorId, PREVISTA, false, null), EMAIL_SUPERVISOR);
@@ -298,8 +321,14 @@ class EmprestimoServiceTest {
     @DisplayName("Consulta identifica pendências e atrasos: empréstimo vencido aparece como DEVOLUCAO_ATRASADA")
     void consultaDePendentesEAtrasados() {
         useCase.registrarEntrega(entregaDe(capaceteId), EMAIL_SUPERVISOR);
-        emprestimos.salvar(Emprestimo.registrarEntrega(capaceteId, colaboradorId, supervisorId,
-                LocalDateTime.now().minusDays(10), LocalDate.now().minusDays(3), "Termo antigo", null));
+        emprestimos.salvar(new Emprestimo.Builder()
+                .epi(epis.buscarPorId(capaceteId).orElseThrow())
+                .beneficiario(pessoa(colaboradorId))
+                .responsavelEntrega(pessoa(supervisorId))
+                .retiradaEm(LocalDateTime.now().minusDays(10))
+                .devolucaoPrevistaPara(LocalDate.now().minusDays(3))
+                .termoCautela("Termo antigo")
+                .build());
 
         List<EmprestimoOutputDTO> pendentes = useCase.listar(Situacao.PENDENTES, null);
         List<EmprestimoOutputDTO> atrasados = useCase.listar(Situacao.ATRASADOS, null);
@@ -342,14 +371,12 @@ class EmprestimoServiceTest {
 
         @Override
         public Emprestimo salvar(Emprestimo emprestimo) {
-            Integer id = emprestimo.getId() != null ? emprestimo.getId() : proximoId++;
-            Emprestimo salvo = new Emprestimo(id, emprestimo.getEpiId(), emprestimo.getColaboradorId(),
-                    emprestimo.getResponsavelEntregaId(), emprestimo.getDataRetirada(),
-                    emprestimo.getDataDevolucaoPrevista(), emprestimo.getTermoCautela(),
-                    emprestimo.getJustificativaSubstituicao(), emprestimo.getDataDevolucaoReal(),
-                    emprestimo.getResponsavelDevolucaoId(), emprestimo.getEstadoDevolucao(), emprestimo.getStatus());
-            registros.put(id, salvo);
-            return salvo;
+            // Como o JPA, o banco em memória atribui o id gerado à própria entidade.
+            if (emprestimo.getId() == null) {
+                ReflectionTestUtils.setField(emprestimo, "id", proximoId++);
+            }
+            registros.put(emprestimo.getId(), emprestimo);
+            return emprestimo;
         }
 
         @Override
@@ -387,9 +414,18 @@ class EmprestimoServiceTest {
         @Override
         public Epi salvar(Epi epi) {
             Integer id = epi.getId() != null && epi.getId() > 0 ? epi.getId() : proximoId++;
-            Epi salvo = new Epi(id, epi.getNome(), epi.getNumeroCa(), epi.getQuantidade(), epi.getEstoqueMinimo(),
-                    epi.getStatus(), epi.getDataValidadeCa(), epi.getVidaUtilDias(),
-                    epi.getEspecificacao().getDescricao(), epi.getEspecificacao().getClassificacao());
+            Epi salvo = EpiDeTeste.umEpi()
+                    .comId(id)
+                    .comNome(epi.getNome())
+                    .comCa(epi.getNumeroCa())
+                    .comQuantidade(epi.getQuantidade())
+                    .comEstoqueMinimo(epi.getEstoqueMinimo())
+                    .comStatus(epi.getStatus())
+                    .comValidadeCa(epi.getDataValidadeCa())
+                    .comVidaUtilDias(epi.getVidaUtilDias())
+                    .comDescricao(epi.getEspecificacao().getDescricao())
+                    .comClassificacao(epi.getEspecificacao().getClassificacao())
+                    .build();
             registros.put(id, salvo);
             return salvo;
         }
@@ -416,8 +452,8 @@ class EmprestimoServiceTest {
 
         @Override
         public MovimentacaoEstoque salvarMovimentacao(MovimentacaoEstoque movimentacao) {
-            MovimentacaoEstoque salva = new MovimentacaoEstoque(proximaMovimentacao++, movimentacao.getEpiId(),
-                    movimentacao.getLoteId(), movimentacao.getResponsavelId(), movimentacao.getTipo(),
+            MovimentacaoEstoque salva = new MovimentacaoEstoque(proximaMovimentacao++, movimentacao.getEpi(),
+                    movimentacao.getLote(), movimentacao.getResponsavel(), movimentacao.getTipo(),
                     movimentacao.getQuantidade(), movimentacao.getDataHora(), movimentacao.getMotivo());
             movimentacoes.add(salva);
             return salva;

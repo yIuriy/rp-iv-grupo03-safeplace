@@ -1,5 +1,5 @@
 /*
- * Adaptador JPA da trilha de auditoria: converte LogAuditoria em entidade, grava, lista por entidade,
+ * Adaptador JPA da trilha de auditoria: grava o LogAuditoria, que é a própria entidade (#256), lista por entidade,
  * localiza ids registrados por um responsável, filtrando pelo tipo de entidade, e lista as ações
  * recentes de um responsável.
  */
@@ -25,15 +25,12 @@ public class LogAuditoriaJpaAdapter implements LogAuditoriaRepository {
 
     @Override
     public LogAuditoria salvar(LogAuditoria log) {
-        LogAuditoriaEntity salvo = jpaRepository.save(LogAuditoriaEntity.deDominio(log));
-        return salvo.paraDominio();
+        return jpaRepository.save(log);
     }
 
     @Override
     public List<LogAuditoria> listarPorEntidade(String entidade, Integer entidadeId) {
-        return jpaRepository.findByEntidadeAndEntidadeIdOrderByDataHoraDesc(entidade, entidadeId).stream()
-                .map(LogAuditoriaEntity::paraDominio)
-                .toList();
+        return jpaRepository.findByEntidadeAndEntidadeIdOrderByDataHoraDesc(entidade, entidadeId);
     }
 
     @Override
@@ -50,9 +47,6 @@ public class LogAuditoriaJpaAdapter implements LogAuditoriaRepository {
         if (responsavel == null || responsavel.isBlank() || limite < 1) {
             return List.of();
         }
-        return jpaRepository.findByResponsavelOrderByDataHoraDescIdDesc(responsavel, PageRequest.of(0, limite))
-                .stream()
-                .map(LogAuditoriaEntity::paraDominio)
-                .toList();
+        return jpaRepository.findByResponsavelOrderByDataHoraDescIdDesc(responsavel, PageRequest.of(0, limite));
     }
 }

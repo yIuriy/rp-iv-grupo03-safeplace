@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
+import br.edu.safeplace.backend.domain.usuario.Colaborador;
+
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import jakarta.persistence.*;
 
@@ -35,12 +37,12 @@ public abstract class OcorrenciaEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "colaborador_id", nullable = false)
-    private ColaboradorEntidade colaborador;
+    private Colaborador colaborador;
 
     /** Gestor de Segurança ou Supervisor que registrou o relato (issue #195). */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "relator_id")
-    private ColaboradorEntidade relator;
+    private Colaborador relator;
 
     /**
      * Plano embutido no relato antigo (decisão 2.8 da correspondência do plano de ação), só para leitura.
@@ -59,8 +61,8 @@ public abstract class OcorrenciaEntity {
             LocalDateTime dataRegistro,
             String statusOcorrencia,
             AreaRisco area,
-            ColaboradorEntidade colaborador,
-            ColaboradorEntidade relator,
+            Colaborador colaborador,
+            Colaborador relator,
             String local,
             String descricao,
             PlanoDeAcaoEntity planoDeAcao) {
@@ -96,11 +98,11 @@ public abstract class OcorrenciaEntity {
         return area;
     }
 
-    public ColaboradorEntidade getColaborador() {
+    public Colaborador getColaborador() {
         return colaborador;
     }
 
-    public ColaboradorEntidade getRelator() {
+    public Colaborador getRelator() {
         return relator;
     }
 

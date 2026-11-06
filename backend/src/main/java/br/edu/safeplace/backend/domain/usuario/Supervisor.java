@@ -8,8 +8,19 @@ package br.edu.safeplace.backend.domain.usuario;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+
+@Entity
+@DiscriminatorValue("SUPERVISOR")
 public class Supervisor extends Colaborador {
-    private final String senha;
+    @Column
+    private String senha;
+
+    /** Exclusivo do JPA (decisão #254). */
+    protected Supervisor() {
+    }
 
     public Supervisor(Integer id, String cpf, String nome, LocalDate dataNascimento,
                       String email, String senha, boolean ativo,

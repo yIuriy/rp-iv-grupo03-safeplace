@@ -20,15 +20,15 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | --- | --- | --- | --- | --- |
 | [Strategy](#strategy--mensagens-de-falha-http) | GoF, comportamental | Frontend: mensagens de falha HTTP | [#232](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/232) | Aplicado |
 | [Adapter](#adapter--porta-de-operador-autenticado) | GoF, estrutural | Backend: operador autenticado | [#222](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/222), [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236) | Aplicado (2/2: #222, #236) |
-| [Facade](#facade--registrador-de-auditoria) | GoF, estrutural | Backend: registro de auditoria (`RegistradorAuditoria`) | [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237), [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) | Pendente |
-| [State (Backend)](#state--transicoes-de-statusepi) | GoF, comportamental | Backend: transições de `StatusEpi` | [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) | Pendente |
-| [Factory Method](#factory-method--criacao-de-epi-e-ocorrencia) | GoF, criacional | Backend: criação de `Epi` e `Acidente`/`Incidente` (`Ocorrencia` `sealed`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225), [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Pendente |
-| [Builder (Test Data Builder)](#builder--test-data-builders-de-epi-tarefa-e-ocorrencia) | GoF, criacional | Backend (`src/test`): builders de `Epi`, `Tarefa` e `Ocorrencia` | [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) | Pendente |
+| [Facade](#facade--registrador-de-auditoria) | GoF, estrutural | Backend: registro de auditoria (`RegistradorAuditoria`) | [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237), [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) | Aplicado (1/3: #223) |
+| [State (Backend)](#state--transicoes-de-statusepi) | GoF, comportamental | Backend: transições de `StatusEpi` | [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) | Aplicado |
+| [Factory Method](#factory-method--criacao-de-epi-e-ocorrencia) | GoF, criacional | Backend: criação de `Epi` e `Acidente`/`Incidente` (`Ocorrencia` `sealed`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225), [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Aplicado (1/2: #225) |
+| [Builder](#builder--emprestimobuilder-e-builders-de-teste) | GoF, criacional | Backend: `Emprestimo.Builder` em produção; builders de teste `EpiDeTeste` e `EmprestimoDeTeste` | [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) | Aplicado (1/2: #226) |
 | [Null Object](#null-object--adaptador-nulo-de-notificacao-e-dependencias-opcionais) | Woolf / PLoPD 3 | Backend: `NotificadorOcorrenciaNulo` e dependências opcionais | [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227), [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) | Aplicado (2/2: #227, #241) |
 | [Chain of Responsibility](#chain-of-responsibility--camada-de-validação) | GoF, comportamental | Backend: camada `validacao` (aptidão do colaborador e tarefa) | [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228); continua em [#263](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/263) a [#267](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/267) | Aplicado (6/6: #228, #267, #263, #264, #265, #266) |
 | [Data Mapper](#data-mapper--mapeadores-de-persistencia) | Fowler / PoEAA | Backend: `EpiEntityMapper`, `AreaRiscoEntityMapper` e `PlanoDeAcaoEntityMapper` | [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229), [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242) | Pendente |
 | [Value Object](#value-object--protocolo-cat-em-acidente) | Fowler / DDD | Backend: `NumeroProtocoloCAT` dentro de `Acidente` | [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230) | Aplicado |
-| [DTO Assembler](#dto-assembler--ocorrenciaoutputdto) | Fowler / PoEAA | Backend: `OcorrenciaOutputAssembler` sem expor `PlanoDeAcao` | [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245) | Pendente |
+| [DTO Assembler](#dto-assembler--ocorrenciaoutputdto) | Fowler / PoEAA | Backend: `OcorrenciaOutputAssembler` sem expor `PlanoDeAcao` | [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245) | Aplicado |
 | [Strategy (Backend)](#strategy--fonte-de-tempo-clock) | GoF, comportamental | Backend: injeção de `java.time.Clock` nas regras de vencimento | [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247) | Pendente |
 | [Adapter (Frontend)](#adapter--leitura-da-api-e-contrato-de-epi) | GoF, estrutural | Frontend: primitivas de leitura da API e unificação de `Epi` | [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244), [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) | Aplicado (2/2: #244, #231) |
 | [Template Method (hook)](#template-method-hook--envio-de-formulario) | GoF, comportamental | Frontend: submissão de formulários (`useEnvioFormulario`) | [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233), [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243) | Aplicado (2/2: #233, #243) |
@@ -826,34 +826,211 @@ Suíte com a integração ativada (`SAFEPLACE_TEST_DATASOURCE_URL` apontando par
 
 **Intenção:** fornecer uma interface simplificada (`RegistradorAuditoria`) para a montagem e gravação de registros de auditoria (`LogAuditoria`), ocultando a resolução do operador e os detalhes do repositório.
 
-**Issues:** [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237) e [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238).
+**Issues:** [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223) (parte 1, aplicada: Facade e migração de ocorrências, usuários e tarefas), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237) (parte 2: demais casos de uso) e [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) (parte 3: auditoria do `PlanoDeAcaoJpaAdapter`).
 
 ### Problema (antes)
 
-*A preencher nas issues [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237) e [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, R2).*
+A auditoria (RNF05) era montada à mão em cada caso de uso: criar o `LogAuditoria` com uma das fábricas estáticas (`registrarCadastro`, `registrarAlteracao`, `registrarRemocao`) ou com o construtor de 7 argumentos, resolver o operador e chamar `logAuditoriaRepository.salvar(...)`. Na `dev` antes desta issue eram **32 blocos em 12 classes** (11 casos de uso e o `PlanoDeAcaoJpaAdapter`), com 4 a 7 linhas cada.
+
+Nos três casos de uso desta parte:
+
+| Caso de uso | Blocos | Como o operador era resolvido |
+| --- | ---: | --- |
+| `OcorrenciaService` | 6 | `operadorAtual.emailOuSistema()`, repetido em cada bloco; `salva instanceof Acidente ? "Acidente" : "Incidente"` repetido 3 vezes |
+| `UsuarioService` | 4 | helper privado `resolverOperador(operador)`, que duplicava `OperadorAtual.emailInformadoOuSistema` |
+| `TarefaService` | 4 | `operador != null ? operador : operadorAtual.emailOuSistema()` e os helpers `registrarLog` e `registrarClassificacao`, este com o construtor de 7 argumentos |
+
+### Por que Facade
+
+Gravar uma auditoria envolve várias peças: a fábrica do `LogAuditoria`, o operador (`OperadorAtual`), o nome da entidade e a porta de persistência (`LogAuditoriaRepository`). A Facade expõe só `cadastro(...)`, `alteracao(...)` e `remocao(...)` e esconde essas peças. Os dois casos que fogem do padrão (operador informado pela borda e instante fixado pela classificação da tarefa) ficam em `por(operador)` e `em(instante)`, que devolvem uma `Autoria` com os mesmos três métodos. Assim nenhum método tem quatro `String` seguidas que poderiam ser trocadas de posição.
+
+Alternativas descartadas:
+
+- **AOP ou Decorator:** a justificativa depende de dados do fluxo (estado anterior, protocolo CAT, campos alterados), que um aspecto não conhece.
+- **Observer:** a especificação arquitetural veta o barramento de eventos no MVP.
+
+**Leitura continua na porta.** A Facade só grava. `OcorrenciaService` (visibilidade do Supervisor) e `TarefaService` (histórico da tarefa) continuam lendo pela `LogAuditoriaRepository`.
+
+**Texto idêntico.** Entidade, tipo de operação, justificativa e responsável de cada registro são os mesmos de antes. A única diferença de comportamento é em `TarefaService.atualizarTarefa`: um operador informado só com espaços agora cai no operador autenticado, como já acontecia em `UsuarioService`, em vez de chegar ao `LogAuditoria` e ser recusado.
+
+**`instanceof`.** A #239 (`getTipo()`) ainda não está na `dev`, então as três repetições de `instanceof Acidente ? "Acidente" : "Incidente"` viraram um único método privado (`entidadeAuditada`), que sai na #237.
 
 ### Papéis do padrão
 
 | Papel no padrão | Elemento no código | Responsabilidade |
 | --- | --- | --- |
-| Facade | `RegistradorAuditoria` | Expor `cadastro(...)`, `alteracao(...)` e `remocao(...)` para os casos de uso |
+| Facade | `RegistradorAuditoria` (e a `Autoria` devolvida por `por`/`em`) | Expor `cadastro(...)`, `alteracao(...)` e `remocao(...)` para os casos de uso |
 | Subsystem | `LogAuditoria`, `LogAuditoriaRepository`, `OperadorAtual` | Entidade de domínio, porta de persistência do log e identificação do operador |
-| Client | Casos de uso da camada `application` | Registrar eventos de auditoria em uma única chamada |
+| Client | `OcorrenciaService`, `UsuarioService`, `TarefaService` (parte 1); demais casos de uso na #237 | Registrar eventos de auditoria em uma única chamada |
 
 ### Diagramas
 
-*Diagramas PlantUML antes e depois a preencher nas issues [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223)–[#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238).*
+**Antes.** Cada caso de uso conhece as três peças da auditoria.
+
+```mermaid
+classDiagram
+  direction LR
+  class OcorrenciaService
+  class UsuarioService {
+    -resolverOperador(String) String
+  }
+  class TarefaService {
+    -registrarLog(LogAuditoria)
+    -registrarClassificacao(registro)
+  }
+  class LogAuditoria {
+    <<Entity>>
+    +registrarCadastro(...)$
+    +registrarAlteracao(...)$
+    +LogAuditoria(7 argumentos)
+  }
+  class LogAuditoriaRepository {
+    <<port>>
+    +salvar(LogAuditoria)
+  }
+  class OperadorAtual {
+    +emailOuSistema()
+    +emailInformadoOuSistema(String)
+  }
+  OcorrenciaService ..> LogAuditoria : monta
+  OcorrenciaService ..> LogAuditoriaRepository : salva
+  OcorrenciaService ..> OperadorAtual
+  UsuarioService ..> LogAuditoria : monta
+  UsuarioService ..> LogAuditoriaRepository : salva
+  TarefaService ..> LogAuditoria : monta
+  TarefaService ..> LogAuditoriaRepository : salva
+  TarefaService ..> OperadorAtual
+```
+
+**Depois.** Os casos de uso falam só com a Facade; ela coordena o subsistema.
+
+```mermaid
+classDiagram
+  direction LR
+  class RegistradorAuditoria {
+    <<Facade>>
+    +cadastro(entidade, id, justificativa)
+    +alteracao(entidade, id, justificativa)
+    +remocao(entidade, id, justificativa)
+    +por(operadorInformado) Autoria
+  }
+  class Autoria {
+    +em(LocalDateTime) Autoria
+    +cadastro(...)
+    +alteracao(...)
+    +remocao(...)
+  }
+  class LogAuditoria {
+    <<Subsystem>>
+  }
+  class LogAuditoriaRepository {
+    <<Subsystem / port>>
+  }
+  class OperadorAtual {
+    <<Subsystem>>
+  }
+  class OcorrenciaService {
+    <<Client>>
+  }
+  class UsuarioService {
+    <<Client>>
+  }
+  class TarefaService {
+    <<Client>>
+  }
+  RegistradorAuditoria ..> Autoria : cria
+  Autoria ..> LogAuditoria : monta
+  Autoria ..> LogAuditoriaRepository : salvar
+  RegistradorAuditoria ..> OperadorAtual : resolve o operador
+  OcorrenciaService --> RegistradorAuditoria
+  UsuarioService --> RegistradorAuditoria
+  TarefaService --> RegistradorAuditoria
+```
+
+### Código antes × depois
+
+`OcorrenciaService.arquivar`, antes:
+
+```java
+LogAuditoria log = LogAuditoria.registrarAlteracao(
+        operadorAtual.emailOuSistema(),
+        salva instanceof Acidente ? "Acidente" : "Incidente",
+        salva.getId(),
+        "Arquivamento de ocorrência"
+);
+logAuditoriaRepository.salvar(log);
+```
+
+Depois:
+
+```java
+auditoria.alteracao(entidadeAuditada(salva), salva.getId(), "Arquivamento de ocorrência");
+```
+
+`TarefaService`, classificação com responsável técnico e instante da classificação, antes:
+
+```java
+registrarLog(new LogAuditoria(
+        null,
+        "ALTERACAO",
+        registro.dataHora(),
+        registro.responsavel().getEmail(),
+        String.format("Classificação de periculosidade da tarefa: ...", ...),
+        ENTIDADE,
+        registro.idTarefa()));
+```
+
+Depois:
+
+```java
+auditoria.por(registro.responsavel().getEmail()).em(registro.dataHora()).alteracao(
+        ENTIDADE,
+        registro.idTarefa(),
+        String.format("Classificação de periculosidade da tarefa: ...", ...));
+```
+
+`UsuarioService`, com o operador informado pelo controller, antes e depois:
+
+```java
+// antes
+LogAuditoria log = LogAuditoria.registrarCadastro(
+        resolverOperador(operador), "Colaborador", salvo.getId(), "Cadastro de Colaborador");
+logAuditoriaRepository.salvar(log);
+// depois
+auditoria.por(operador).cadastro("Colaborador", salvo.getId(), "Cadastro de Colaborador");
+```
+
+### Benefício
+
+Registrar uma auditoria virou uma linha que diz o que aconteceu (cadastro, alteração ou remoção), sobre qual entidade e por quê. Quem escreve um caso de uso novo não precisa saber como o operador é resolvido nem qual fábrica do `LogAuditoria` usar, então não há como esquecer o `salvar` ou gravar sem responsável. Mudar a forma de gravar a trilha (por exemplo, acrescentar o IP ou gravar em outro lugar) passa a mexer em uma classe, e não em 32 blocos espalhados. O helper `resolverOperador` de `UsuarioService`, que duplicava o `OperadorAtual`, deixou de existir.
 
 ### Métricas locais
 
-| Métrica | Antes (v1.0.0) | Depois |
-| --- | --- | --- |
-| Classes que montam `LogAuditoria` manualmente | 11 | *A medir* |
-| Blocos de construção manual de `LogAuditoria` | ~25 | *A medir* |
+| Métrica | `dev` antes (`a529667`) | Depois da #223 |
+| --- | ---: | ---: |
+| Blocos de construção manual de `LogAuditoria` (`registrar*` / `new`) em `application` e no `PlanoDeAcaoJpaAdapter` | 32 | 18 |
+| Classes que montam `LogAuditoria` manualmente | 12 | 9 |
+| Blocos nos três clientes desta parte (`OcorrenciaService`, `UsuarioService`, `TarefaService`) | 14 | 0 |
+| Helpers privados que gravam a auditoria por conta própria | 4 | 2 (`EmprestimoService.auditar`, `CadastrarCapacitacaoService.registrarAuditoria`, ambos da #237) |
+| Repetições de `instanceof Acidente ? "Acidente" : "Incidente"` | 3 | 1 |
+
+Os 18 blocos restantes são os da #237 (8 casos de uso, 13 blocos) e da #238 (`PlanoDeAcaoJpaAdapter`, 5 blocos). Medição por `git grep "LogAuditoria\.registrar\|new LogAuditoria("` em `backend/src/main`, sem contar a própria Facade.
 
 ### Evidências
 
-*A preencher nas issues [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223)–[#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238).*
+Teste novo: `RegistradorAuditoriaTest` (7 testes; papéis Facade e Subsystem, com a `TrilhaAuditoriaEmMemoria` e o `OperadorAutenticadoFixo` no lugar da porta e da sessão):
+
+1. `cadastro` grava tipo, entidade, id, justificativa e o operador autenticado;
+2. `alteracao` e `remocao` gravam os tipos correspondentes;
+3. sem sessão, o responsável é `SISTEMA`;
+4. o operador informado pela borda tem precedência, sem espaços nas pontas;
+5. operador informado em branco cai no autenticado;
+6. o instante informado em `em(...)` é o gravado;
+7. dependências nulas são recusadas com as mensagens de RNF05 e do operador.
+
+Clientes: os testes de auditoria que já existiam (`OcorrenciaUseCaseAuditoriaTest`, `UsuarioServiceAuditoriaTest`, `AuditoriaEvidenciaIntegracaoTest`, `TarefaServiceTest`, `HistoricoAreaRiscoTarefaUseCaseTest` e `DependenciasObrigatoriasCasosDeUsoTest`) passam sem mudança nas asserções, o que confirma que entidade, tipo, responsável e justificativa de cada registro não mudaram e que o histórico exibido continua o mesmo. Só `OcorrenciaServiceConsolidacaoCATTest`, que usa o construtor completo do `OcorrenciaService`, passou a informar o `RegistradorAuditoria`.
+
+Suíte existente (`./mvnw clean test` com PostgreSQL externo novo): **1193 testes, 0 falhas, 10 erros**, todos o problema anterior de limpeza entre classes de integração (`DELETE FROM epis` bloqueado por `projecoes_substituicao`).
 
 ---
 
@@ -863,109 +1040,564 @@ Suíte com a integração ativada (`SAFEPLACE_TEST_DATASOURCE_URL` apontando par
 
 **Intenção:** concentrar as regras de transição do ciclo de vida do `Epi` nas constantes de `StatusEpi` (`podeTransicaoPara`), delegando a mudança de estado a `Epi.transicionarPara(StatusEpi)`.
 
-**Issue:** [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224).
+**Issue:** [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224), aplicada. Usa a mesma variante de `StatusOcorrencia` e `StatusPlanoDeAcao`: cada constante do enum declara as próprias transições.
 
 ### Problema (antes)
 
-*A preencher na issue [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, R4).*
+`StatusEpi` era um enum sem comportamento. As regras de mudança de situação estavam espalhadas em condicionais, cada uma atribuindo `this.status` por conta própria:
+
+| Ponto | Regra embutida |
+| --- | --- |
+| `Epi.adicionarEstoque` | `ESGOTADO` vira `DISPONIVEL` |
+| `Epi.removerEstoque` | `DISPONIVEL` com saldo zero vira `ESGOTADO` |
+| `Epi.atualizarQuantidade` | as duas regras anteriores, repetidas |
+| `Epi.enviarParaManutencao` | exige `DISPONIVEL` e vai para `EM_MANUTENCAO` |
+| `Epi.concluirManutencao` | exige `EM_MANUTENCAO`; aprovada volta a `DISPONIVEL` |
+| `Epi.registrarDevolucaoManutencao` | saldo zero vai para `EM_MANUTENCAO`, **sem guarda** |
+| `Epi.registrarDevolucaoDescarte` | saldo zero vai para `DESCARTADO`, sem guarda |
+| `ControlarManutencaoEpiService.concluirManutencao` | a aplicação decidia: `if (status == DISPONIVEL) enviarParaManutencao(...)` |
+
+Incoerências reais: `enviarParaManutencao` exigia `DISPONIVEL`, mas `registrarDevolucaoManutencao` levava a `EM_MANUTENCAO` de qualquer situação, inclusive `DESCARTADO`, que deveria ser definitiva. E `EM_USO` nunca era atribuído.
+
+### Por que State
+
+O que é permitido depende da situação atual. Com o State, cada constante diz para onde pode ir (`podeTransicaoPara`) e como reage à mudança de saldo (`aposMudancaDeSaldo`), e o `Epi` muda de situação por um único ponto (`transicionarPara`), que recusa o destino proibido com `TransicaoStatusEpiInvalidaException` (HTTP 400, "Transição de Status Inválida").
+
+Descartado: o State clássico, com uma classe por estado. É exagero para 5 estados sem dados próprios.
+
+**Tabela de transições** (conferida com UC01, UC06, UC12 e a decisão #124):
+
+| De \ Para | `DISPONIVEL` | `EM_USO` | `EM_MANUTENCAO` | `ESGOTADO` | `DESCARTADO` |
+| --- | :---: | :---: | :---: | :---: | :---: |
+| `DISPONIVEL` | | | UC01 envio | UC06 saldo zero | UC12 descarte |
+| `EM_USO` (só registros antigos) | sim | | sim | sim | sim |
+| `EM_MANUTENCAO` | #124 aprovada | | | | UC12 descarte |
+| `ESGOTADO` | UC06 entrada | | UC12 devolução | | UC12 descarte |
+| `DESCARTADO` (terminal) | | | | | |
+
+**`EM_USO`.** Pela decisão #124, a situação vale para o registro inteiro, e o empréstimo debita o saldo (UC12) em vez de marcar o registro como em uso. Por isso nenhuma situação leva a `EM_USO`; a constante continua no enum (sem migração de banco) e um registro antigo nessa situação pode sair para qualquer situação ativa.
+
+**Saldo.** Só `DISPONIVEL` e `ESGOTADO` acompanham o saldo (`aposMudancaDeSaldo`). Um EPI em manutenção que recebe entrada de estoque continua em manutenção, como antes.
+
+**Pré-condições das operações.** `enviarParaManutencao` continua exigindo `DISPONIVEL` e `concluirManutencao` continua exigindo `EM_MANUTENCAO`, com a mesma `EpiIndisponivelParaManutencaoException` e a mesma mensagem de antes. São regras da operação, mais restritas que a tabela: um EPI esgotado chega à manutenção pela devolução (UC12), não pelo envio manual.
 
 ### Papéis do padrão
 
 | Papel no padrão | Elemento no código | Responsabilidade |
 | --- | --- | --- |
-| Context | `Epi` | Manter o `StatusEpi` atual e validar mudanças via `transicionarPara(StatusEpi)` |
-| State | `StatusEpi` | Declarar `podeTransicaoPara(StatusEpi)` para o ciclo de vida do EPI |
-| ConcreteState | `DISPONIVEL`, `EM_MANUTENCAO`, `ESGOTADO`, `EM_USO`, `DESCARTADO` | Definir as transições permitidas a partir de cada estado |
+| Context | `Epi` | Manter o `StatusEpi` atual e mudá-lo só por `transicionarPara(StatusEpi)` |
+| State | `StatusEpi` | Declarar `podeTransicaoPara(StatusEpi)` e `aposMudancaDeSaldo(int)` |
+| ConcreteState | `DISPONIVEL`, `EM_MANUTENCAO`, `ESGOTADO`, `EM_USO`, `DESCARTADO` | Definir os destinos permitidos (`destinos()`) e a reação ao saldo de cada situação |
+| Client | `ControlarManutencaoEpiService`, `EmprestimoService`, `EpiService` | Chamar operações de negócio do `Epi` (`registrarManutencao`, `removerEstoque`...) sem decidir a situação |
 
 ### Diagramas
 
-*Diagramas PlantUML antes e depois a preencher na issue [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224).*
+**Antes.** O enum só lista valores; as regras ficam nos métodos do `Epi` e no caso de uso.
+
+```mermaid
+classDiagram
+  direction LR
+  class StatusEpi {
+    <<enumeration>>
+    DISPONIVEL
+    EM_USO
+    EM_MANUTENCAO
+    ESGOTADO
+    DESCARTADO
+  }
+  class Epi {
+    -status StatusEpi
+    +adicionarEstoque() status = DISPONIVEL
+    +removerEstoque() status = ESGOTADO
+    +atualizarQuantidade() status = ...
+    +enviarParaManutencao() status = EM_MANUTENCAO
+    +concluirManutencao() status = DISPONIVEL
+    +registrarDevolucaoManutencao() status = EM_MANUTENCAO
+    +registrarDevolucaoDescarte() status = DESCARTADO
+  }
+  class ControlarManutencaoEpiService {
+    if status == DISPONIVEL: enviarParaManutencao
+  }
+  Epi --> StatusEpi
+  ControlarManutencaoEpiService ..> Epi : decide a situação
+```
+
+**Depois.** Cada situação declara os destinos; o `Epi` muda de situação por um único ponto.
+
+```mermaid
+classDiagram
+  direction LR
+  class StatusEpi {
+    <<State>>
+    ~destinos() Set~StatusEpi~
+    +podeTransicaoPara(StatusEpi) boolean
+    +aposMudancaDeSaldo(int) StatusEpi
+  }
+  class DISPONIVEL {
+    <<ConcreteState>>
+    ESGOTADO, EM_MANUTENCAO, DESCARTADO
+  }
+  class ESGOTADO {
+    <<ConcreteState>>
+    DISPONIVEL, EM_MANUTENCAO, DESCARTADO
+  }
+  class EM_MANUTENCAO {
+    <<ConcreteState>>
+    DISPONIVEL, DESCARTADO
+  }
+  class EM_USO {
+    <<ConcreteState>>
+    só registros antigos
+  }
+  class DESCARTADO {
+    <<ConcreteState>>
+    terminal
+  }
+  class Epi {
+    <<Context>>
+    -status StatusEpi
+    ~transicionarPara(StatusEpi)
+    -acompanharSaldo()
+    +registrarManutencao(ManutencaoEpi, LocalDate)
+  }
+  class ControlarManutencaoEpiService {
+    <<Client>>
+  }
+  StatusEpi <|-- DISPONIVEL
+  StatusEpi <|-- ESGOTADO
+  StatusEpi <|-- EM_MANUTENCAO
+  StatusEpi <|-- EM_USO
+  StatusEpi <|-- DESCARTADO
+  Epi --> StatusEpi : pergunta podeTransicaoPara
+  ControlarManutencaoEpiService ..> Epi : registrarManutencao
+```
+
+### Código antes × depois
+
+Antes (`Epi`):
+
+```java
+// removerEstoque
+if (novoSaldo == 0 && this.status == StatusEpi.DISPONIVEL) {
+    this.status = StatusEpi.ESGOTADO;
+}
+// registrarDevolucaoManutencao: sem guarda, inclusive a partir de DESCARTADO
+if (this.quantidade == 0) {
+    this.status = StatusEpi.EM_MANUTENCAO;
+}
+```
+
+Depois (`StatusEpi` e `Epi`):
+
+```java
+ESGOTADO {
+    @Override
+    Set<StatusEpi> destinos() {
+        return EnumSet.of(DISPONIVEL, EM_MANUTENCAO, DESCARTADO);
+    }
+
+    @Override
+    public StatusEpi aposMudancaDeSaldo(int saldo) {
+        return saldo > 0 ? DISPONIVEL : this;
+    }
+},
+...
+void transicionarPara(StatusEpi novoStatus) {
+    if (novoStatus == this.status) {
+        return;
+    }
+    if (this.status != null && !this.status.podeTransicaoPara(novoStatus)) {
+        throw new TransicaoStatusEpiInvalidaException(this.codigoEPI, this.status, novoStatus);
+    }
+    this.status = novoStatus;
+}
+
+private void acompanharSaldo() {
+    if (this.status != null) {
+        transicionarPara(this.status.aposMudancaDeSaldo(this.quantidade));
+    }
+}
+```
+
+Caso de uso, antes e depois (`ControlarManutencaoEpiService.concluirManutencao`):
+
+```java
+// antes: a aplicação decidia a situação
+if (epi.getStatus() == StatusEpi.DISPONIVEL) {
+    epi.enviarParaManutencao(dataReferencia);
+}
+...
+epi.concluirManutencao(manutencao);
+
+// depois: o Epi decide
+epi.registrarManutencao(manutencao, dataReferencia);
+```
+
+### Benefício
+
+As regras de situação do EPI estão numa tabela só, que se lê de uma vez e que os testes percorrem por inteiro (25 pares). Uma situação nova ou uma transição nova muda uma constante do enum, e não meia dúzia de `if` espalhados. Ficou mais seguro: um EPI descartado não volta mais à manutenção por uma devolução, e qualquer transição não prevista é recusada com uma mensagem clara em vez de gravada em silêncio. O caso de uso de manutenção deixou de conhecer as situações do EPI.
 
 ### Métricas locais
 
-| Métrica | Antes (v1.0.0) | Depois |
-| --- | --- | --- |
-| Métodos com regras de transição de `StatusEpi` espalhadas | 8 | *A medir* |
+| Métrica | Antes | Depois |
+| --- | ---: | ---: |
+| Atribuições a `status` no `Epi` fora do construtor | 8 | 1 (`transicionarPara`) |
+| Métodos com regras de transição de `StatusEpi` espalhadas | 8 | 0 |
+| Casos de uso que decidem a situação do EPI | 1 | 0 |
+| Transições sem guarda | 2 | 0 |
+| Valores do enum / migrações novas | 5 / — | 5 / 0 |
+
+A única outra atribuição é a do construtor, que define a situação inicial (não é uma transição). Medição por busca no código de `backend/src/main`.
 
 ### Evidências
 
-*A preencher na issue [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224).*
+Testes novos:
+
+1. `StatusEpiTest` (papéis State e ConcreteState; 44 casos): todos os 25 pares origem × destino conferidos com a tabela acima; nenhuma situação vai para `null` nem para `EM_USO`; `DESCARTADO` é terminal; `aposMudancaDeSaldo` para cada situação; a situação depois do saldo é sempre uma transição permitida.
+2. `EpiTransicaoStatusTest` (papel Context; 13 casos): transição permitida muda a situação; proibida lança `TransicaoStatusEpiInvalidaException` e não muda nada; pedir a mesma situação não muda nada; devolução para manutenção de EPI descartado é recusada; devolução com saldo zero leva a manutenção ou a descarte; entrada de estoque não tira o EPI da manutenção; `registrarManutencao` de EPI disponível passa por manutenção e volta se aprovada, e fica em manutenção se reprovada.
+
+Os testes existentes de `EpiTest`, `ControlarManutencaoEpiServiceTest`, `EmprestimoServiceTest` e `EpiServiceTest` passam sem alteração, o que confirma as transições que já existiam.
+
+Suíte existente (`./mvnw clean test` com PostgreSQL externo novo): **1186 testes, 0 falhas, 10 erros**, todos o problema anterior de limpeza entre classes de integração (`DELETE FROM epis` bloqueado por `projecoes_substituicao`), igual à `dev` sem esta mudança.
 
 ---
 
 ## Factory Method — criação de `Epi` e `Ocorrencia`
 
-**Catálogo:** GoF, criacional (fábricas nomeadas + polimorfismo com hierarquia `sealed`).
+**Catálogo:** GoF, criacional, exposto por interface.
 
-**Intenção:** consolidar a criação de `Epi` em fábricas nomeadas (`Epi.novo`, `Epi.reconstituir`) e a criação de `Acidente`/`Incidente` por fábrica com `Ocorrencia` `sealed` (`permits Acidente, Incidente`).
+**Intenção:** criar um `Epi` novo por uma única porta, a interface `FabricaEpi` injetada pelo Spring, que recebe a `EspecificacaoEPI` inteira em vez de campos soltos. A criação de `Acidente`/`Incidente` por fábrica, com `Ocorrencia` `sealed`, é a parte 2 ([#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239)).
 
-**Issues:** [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) e [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239).
+**Issues:** [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) (parte 1, aplicada: `Epi`) e [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) (parte 2: ocorrência).
+
+**Revisão após a avaliação do professor.** A versão anterior da #225 consolidava a criação em métodos **estáticos** (`Epi.novo`, `Epi.reconstituir`). O professor criticou a criação estática com parâmetros soltos, pediu programação orientada a interface e pediu para tirar a validação da criação do objeto. Com o `Epi` como entidade JPA ([#258](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/258)), quem reconstitui o EPI lido do banco é o próprio JPA, então a distinção "novo × reconstituído" desaparece e só a criação de um EPI novo precisa de fábrica.
 
 ### Problema (antes)
 
-*A preencher nas issues [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) e [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, R5 e R6, e `docs/arquitetura/correspondencia-classes-epi.md`).*
+O `Epi` tinha **10 formas de ser criado**: 4 construtores públicos, 5 sobrecargas estáticas de `novo` e 1 `reconstituir`.
+
+- **Semântica escondida:** o mesmo construtor público servia para criar (sem id) e para reconstruir (com id), e o comentário dizia que só o primeiro caso exigia CA válido.
+- **Dados inventados:** o construtor reduzido `Epi(int codigoEPI, String localizacao, int quantidade, StatusEpi status)` criava o nome `"EPI-" + id`, o CA `"1"` e a validade de hoje + 1 ano.
+- **Parâmetros soltos:** as sobrecargas de `novo` recebiam descrição, estoque mínimo e classificação um a um (até 10 argumentos), embora a `EspecificacaoEPI` já agrupasse esses dados.
+- **Criação estática:** o caso de uso chamava `Epi.novo(...)` diretamente, sem poder trocar a forma de criar.
 
 ### Papéis do padrão
 
 | Papel no padrão | Elemento no código | Responsabilidade |
 | --- | --- | --- |
-| Creator / Factory Methods | `Epi.novo(...)`, `Epi.reconstituir(...)`, fábrica de `Ocorrencia` por `TipoOcorrencia` | Distinguir criação inicial de reconstituição e instanciar o subtipo correto de `Ocorrencia` |
-| Product | `Epi`, `Ocorrencia` (`sealed`) | Entidades de domínio com invariantes protegidas e `getTipo()` polimórfico |
-| ConcreteProduct | `Acidente`, `Incidente` | Subtipos permitidos pela hierarquia selada de `Ocorrencia` |
-| Parameter Object | `EspecificacaoEPI` | Agrupar os dados descritivos na criação do `Epi` |
+| Creator | interface `FabricaEpi` (`domain/epi`) | Declarar a única operação de criação: `criar(nome, especificacao, lote, quantidade, vidaUtilDias, localizacao)` |
+| ConcreteCreator | `FabricaEpiPadrao`, registrada como `@Bean` em `ServicosDominioConfig` | Montar o `Epi` novo, sem id, com a situação inicial definida pelo saldo; não valida |
+| Product | `Epi` | Entidade com o construtor `protected` do JPA e um construtor de pacote usado só pela fábrica |
+| Parameter Object | `EspecificacaoEPI` | Agrupar descrição, estoque mínimo e classificação |
+| Client | `EpiService.cadastrarEpi` | Receber a `FabricaEpi` por injeção e validar o EPI criado antes do repository |
+
+**A fábrica não valida.** CA, nome, quantidades e status são verificados pelo `EpiValidador` (Chain of Responsibility, #264), que o caso de uso chama antes de `repository.salvar`. A fábrica aceita até um CA vencido, e é o validador que o recusa.
+
+**Testes.** Os testes criavam EPIs pelos construtores posicionais, inclusive em situações de registro já gravado (com id e status). Eles passaram a usar o `EpiDeTeste` (Test Data Builder em `src/test/.../suporte`), que cria o EPI pela `FabricaEpiPadrao`, como a produção, e só simula o id e a situação de um registro lido do banco por reflexão, que em produção são preenchidos pelo JPA.
 
 ### Diagramas
 
-*Diagramas PlantUML antes e depois a preencher nas issues [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) e [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239).*
+**Antes.** Dez portas de entrada, todas públicas e estáticas ou construtores.
+
+```mermaid
+classDiagram
+  direction LR
+  class Epi {
+    +Epi(id, nome, numeroCa, qtd, minimo, status, validade, vida)
+    +Epi(... , descricao, classificacao)
+    +Epi(... , descricao, classificacao, localizacao)
+    +Epi(codigo, localizacao, qtd, status) dados inventados
+    +novo(...)$ x5
+    +reconstituir(...)$
+  }
+  class EpiService
+  class EpiEntityMapper {
+    +toDomain(EpiEntity)$
+  }
+  EpiService ..> Epi : Epi.novo(10 argumentos)
+  EpiEntityMapper ..> Epi : Epi.reconstituir(...)
+```
+
+**Depois.** Uma interface de criação injetada; a leitura do banco é do JPA.
+
+```mermaid
+classDiagram
+  direction LR
+  class FabricaEpi {
+    <<interface / Creator>>
+    +criar(nome, especificacao, lote, quantidade, vidaUtilDias, localizacao) Epi
+  }
+  class FabricaEpiPadrao {
+    <<ConcreteCreator>>
+    +criar(...) Epi
+  }
+  class Epi {
+    <<Product / Entity>>
+    #Epi() JPA
+    ~Epi(nome, especificacao, lote, quantidade, status, vida, localizacao)
+  }
+  class EspecificacaoEPI {
+    <<Parameter Object / Embeddable>>
+    descricao
+    quantidadeMinima
+    classificacao
+  }
+  class EpiService {
+    <<Client>>
+  }
+  class ServicosDominioConfig {
+    +fabricaEpi() FabricaEpi
+  }
+  class EpiValidador {
+    <<Chain of Responsibility>>
+  }
+  FabricaEpi <|.. FabricaEpiPadrao
+  FabricaEpiPadrao ..> Epi : cria
+  FabricaEpi ..> EspecificacaoEPI : recebe inteira
+  EpiService --> FabricaEpi : injetada
+  EpiService ..> EpiValidador : valida antes do repository
+  ServicosDominioConfig ..> FabricaEpiPadrao : registra o bean
+```
+
+### Código antes × depois
+
+`EpiService.cadastrarEpi`, antes:
+
+```java
+Epi novoEpi = Epi.novo(
+        inputDTO.nome(),
+        lote,
+        inputDTO.quantidade(),
+        inputDTO.estoqueMinimo(),
+        inputDTO.vidaUtilDias(),
+        inputDTO.descricao(),
+        inputDTO.classificacao(), inputDTO.localizacao());
+```
+
+Depois:
+
+```java
+EspecificacaoEPI especificacao = new EspecificacaoEPI(
+        inputDTO.descricao(), inputDTO.estoqueMinimo(), inputDTO.classificacao());
+Epi novoEpi = fabricaEpi.criar(inputDTO.nome(), especificacao, lote, inputDTO.quantidade(),
+        inputDTO.vidaUtilDias(), inputDTO.localizacao());
+epiValidador.validar(novoEpi);
+Epi salvo = repository.salvar(novoEpi);
+```
+
+A fábrica:
+
+```java
+public class FabricaEpiPadrao implements FabricaEpi {
+    @Override
+    public Epi criar(String nome, EspecificacaoEPI especificacao, LoteEPI lote, int quantidade,
+            Integer vidaUtilDias, String localizacao) {
+        StatusEpi situacaoInicial = quantidade > 0 ? StatusEpi.DISPONIVEL : StatusEpi.ESGOTADO;
+        return new Epi(nome, especificacao, lote, quantidade, situacaoInicial, vidaUtilDias, localizacao);
+    }
+}
+```
+
+Um teste, antes e depois:
+
+```java
+// antes
+Epi epi = new Epi(6, "Bota", "CA-600", 5, 1, StatusEpi.EM_USO, LocalDate.of(2030, 1, 1), 365);
+// depois
+Epi epi = EpiDeTeste.umEpi()
+        .comId(6)
+        .comNome("Bota")
+        .comCa("CA-600")
+        .comQuantidade(5)
+        .comEstoqueMinimo(1)
+        .comStatus(StatusEpi.EM_USO)
+        .comValidadeCa(LocalDate.of(2030, 1, 1))
+        .comVidaUtilDias(365)
+        .build();
+```
+
+### Benefício
+
+Há uma única forma de criar um EPI novo, e ela diz o que é: o caso de uso pede à fábrica, e a fábrica não esconde regra de validação nem inventa dados. Como o caso de uso depende da interface `FabricaEpi`, trocar a forma de criar (por exemplo, para registrar o lote com outra política) é trocar o bean, sem mexer no `EpiService`. Não há mais a ambiguidade "com id reconstrói, sem id cria": ler um EPI gravado é do JPA. Nos testes, cada cenário diz só o que importa (`comStatus(EM_USO)`), em vez de oito argumentos posicionais em que um `int` trocado de lugar não dava erro de compilação.
 
 ### Métricas locais
 
-| Métrica | Antes (v1.0.0) | Depois |
-| --- | --- | --- |
-| Portas de entrada de construção em `Epi` | 10 | 2 |
-| Métodos legados sem uso em `Epi` | 8 | 0 |
-| Checagens `instanceof Acidente` em `domain/` e `application/` | 5 | *A medir* |
+| Métrica | Antes (`dev` antes da #225) | Depois |
+| --- | ---: | ---: |
+| Formas de criar um `Epi` (construtores públicos + métodos estáticos) | 10 | 1 (`FabricaEpi.criar`) |
+| Construtores públicos de `Epi` | 4 | 0 (fica o `protected` do JPA e um de pacote para a fábrica) |
+| Métodos estáticos de criação em `Epi` | 6 | 0 |
+| Construtor com dados inventados | 1 | 0 |
+| Maior número de argumentos para criar um `Epi` | 10 | 6 |
+| Linhas de teste que criavam `Epi` por construtor ou método estático | 98 | 0 (95 usos de `EpiDeTeste`) |
+
+Medição por busca no código de `backend/src`.
 
 ### Evidências
 
-*A preencher nas issues [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) e [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239).*
+Testes novos:
+
+1. `FabricaEpiPadraoTest` (4 testes; papéis Creator, ConcreteCreator, Product e Parameter Object): a fábrica cria um EPI novo, sem id, guardando a própria instância da `EspecificacaoEPI` e do lote; a situação inicial acompanha o saldo (`DISPONIVEL` ou `ESGOTADO`); a fábrica não valida (CA vencido e mínimo negativo passam, para o validador recusar); o `Epi` não tem construtor público nem método estático que devolva `Epi`.
+2. `EpiServiceTest.cadastroCriaOEpiPelaFabricaInjetada` (papel Client): o cadastro usa a fábrica injetada e entrega a ela a especificação montada a partir do `InputDTO`.
+
+Testes ajustados: 31 classes passaram a criar EPIs pelo `EpiDeTeste`. Em `EpiTest` saíram os 4 testes do que deixou de existir (as duas sobrecargas de `novo`, que agora estão em `FabricaEpiPadraoTest`, o construtor público sem id e o construtor reduzido com dados inventados). Os dois testes do `EpiValidadorTest` que recusam status ausente usam `semStatus()`, porque a fábrica nunca cria um EPI sem situação.
+
+Suíte existente (`./mvnw clean test` com PostgreSQL externo novo): **1199 testes, 0 falhas, 10 erros**, todos o problema anterior de limpeza entre classes de integração (`DELETE FROM epis` bloqueado por `projecoes_substituicao`).
 
 ---
 
-## Builder — Test Data Builders de `Epi`, `Tarefa` e `Ocorrencia`
+## Builder — `Emprestimo.Builder` e builders de teste
 
-**Catálogo:** GoF, criacional (aplicado como Test Data Builder em `src/test`).
+**Catálogo:** GoF, criacional.
 
-**Intenção:** separar a construção de objetos de domínio complexos nos testes por meio de builders fluentes com valores padrão válidos, eliminando chamadas a construtores posicionais longos na suíte de testes.
+**Intenção:** separar a construção do `Emprestimo` da sua representação. A entrega do UC12 é montada pelo `Emprestimo.Builder`, em código de produção, com cada dado nomeado, no lugar do método estático `registrarEntrega` de 7 parâmetros e do construtor de 12.
 
-**Issues:** [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226) e [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240).
+**Issues:** [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226) (parte 1, aplicada: `Emprestimo`) e [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) (parte 2: `Tarefa` e ocorrências).
+
+**Revisão após a avaliação do professor.** A versão anterior da #226 criava só um *Test Data Builder* de `Epi` em `src/test`. O professor pediu para avaliar o Builder **no código de produção** e apontou `Emprestimo.java:70`: parâmetros demais, que deveriam ser encapsulados num objeto. Os testes de EPI já tinham deixado de depender de construtores posicionais com a fábrica da [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) (`EpiDeTeste`). Esta parte usa as associações por objeto da [#260](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/260).
 
 ### Problema (antes)
 
-*A preencher nas issues [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226) e [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, R5).*
+- `Emprestimo.registrarEntrega(...)`: método **estático** com **7 parâmetros**. Até a #260 eram três `Integer` seguidos (EPI, beneficiário e responsável) e duas datas, que podiam ser trocados de posição sem erro de compilação.
+- Ele repassava para um **construtor público de 12 parâmetros**, preenchendo 4 com `null` (devolução, responsável pela devolução, estado e id).
+- Os testes montavam empréstimos já devolvidos chamando o mesmo construtor de 12 parâmetros, inclusive com combinações incoerentes para testar a validação.
+
+A validação que estava no construtor já tinha ido para o `EmprestimoValidador` na [#265](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/265).
 
 ### Papéis do padrão
 
 | Papel no padrão | Elemento no código | Responsabilidade |
 | --- | --- | --- |
-| Builder | `EpiBuilder`, `TarefaBuilder`, `AcidenteBuilder`, `IncidenteBuilder` (`src/test`) | Configurar apenas os atributos relevantes para cada cenário de teste |
-| Product | `Epi`, `Tarefa`, `Acidente`, `Incidente` | Entidades de domínio construídas pelas fábricas de produção |
-| Director | Classes de teste (`*Test`) | Descrever o cenário de teste de forma fluente |
+| Builder | `Emprestimo.Builder` (`src/main`, classe aninhada) | Receber cada dado da entrega por um método nomeado (`epi`, `beneficiario`, `responsavelEntrega`, `retiradaEm`, `devolucaoPrevistaPara`, `termoCautela`, `justificativaSubstituicao`) e montar o produto em `build()` |
+| Director | `EmprestimoService.registrarEntrega` | Montar o empréstimo a partir do `RegistrarEntregaInputDTO`, do EPI, do beneficiário e do operador já carregados, e validar antes do repository |
+| Product | `Emprestimo` | Entidade com o construtor `protected` do JPA e um construtor privado que recebe o Builder; nasce ativo (`INDISPONIVEL`) |
+| Test Data Builder | `EmprestimoDeTeste` (`src/test/.../suporte`) | Reaproveitar o `Emprestimo.Builder` nos testes e só simular o que vem do banco (id, devolução e situação) |
+
+**O Builder não valida.** EPI, beneficiário, responsável, datas e termo são conferidos pelo `EmprestimoValidador`, que o Director chama antes de `emprestimos.salvar`.
+
+**Por que o Builder só monta a entrega.** Um empréstimo novo é sempre uma entrega ativa. Devolução, id e situação gravada não são dados de criação: a devolução vem de `Emprestimo.devolver(...)`, e o id e a situação de um registro lido vêm do JPA. Por isso não estão no Builder de produção. Nos testes, o `EmprestimoDeTeste` os preenche por reflexão, inclusive em registros incoerentes que a validação precisa recusar, como já faz o `EpiDeTeste`.
 
 ### Diagramas
 
-*Diagramas PlantUML antes e depois a preencher nas issues [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226) e [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240).*
+**Antes.**
+
+```mermaid
+classDiagram
+  direction LR
+  class Emprestimo {
+    +Emprestimo(id, epi, colaborador, responsavelEntrega, retirada, prevista, termo, justificativa, devolucaoReal, responsavelDevolucao, estado, status)
+    +registrarEntrega(epi, colaborador, responsavel, retirada, prevista, termo, justificativa)$ Emprestimo
+  }
+  class EmprestimoService
+  EmprestimoService ..> Emprestimo : registrarEntrega(7 argumentos posicionais)
+```
+
+**Depois.**
+
+```mermaid
+classDiagram
+  direction LR
+  class Emprestimo {
+    <<Product / Entity>>
+    #Emprestimo() JPA
+    -Emprestimo(Builder)
+    +devolver(estado, responsavel, dataHora)
+  }
+  class Builder {
+    <<Builder>>
+    +epi(Epi) Builder
+    +beneficiario(Colaborador) Builder
+    +responsavelEntrega(Colaborador) Builder
+    +retiradaEm(LocalDateTime) Builder
+    +devolucaoPrevistaPara(LocalDate) Builder
+    +termoCautela(String) Builder
+    +justificativaSubstituicao(String) Builder
+    +build() Emprestimo
+  }
+  class EmprestimoService {
+    <<Director>>
+    +registrarEntrega(RegistrarEntregaInputDTO, operadorEmail)
+  }
+  class EmprestimoValidador {
+    <<Chain of Responsibility>>
+  }
+  class EmprestimoDeTeste {
+    <<Test Data Builder>>
+  }
+  Emprestimo +-- Builder
+  Builder ..> Emprestimo : build()
+  EmprestimoService ..> Builder : monta a entrega
+  EmprestimoService ..> EmprestimoValidador : valida antes do repository
+  EmprestimoDeTeste ..> Builder : reaproveita
+```
+
+### Código antes × depois
+
+`EmprestimoService.registrarEntrega`, antes:
+
+```java
+Emprestimo emprestimo = Emprestimo.registrarEntrega(epi, beneficiario, operador,
+        agora, entrada.dataDevolucaoPrevista(), termo, entrada.justificativaSubstituicao());
+```
+
+Depois:
+
+```java
+Emprestimo emprestimo = new Emprestimo.Builder()
+        .epi(epi)
+        .beneficiario(beneficiario)
+        .responsavelEntrega(operador)
+        .retiradaEm(agora)
+        .devolucaoPrevistaPara(entrada.dataDevolucaoPrevista())
+        .termoCautela(termo)
+        .justificativaSubstituicao(entrada.justificativaSubstituicao())
+        .build();
+emprestimoValidador.validar(emprestimo);
+```
+
+Um teste de validação com registro devolvido, antes e depois:
+
+```java
+// antes
+new Emprestimo(1, epi(10), pessoa(3), pessoa(2), RETIRADA, PREVISTA, "termo", null,
+        RETIRADA.plusDays(1), pessoa(5), null, ClassificacaoEmprestimo.DISPONIVEL)
+// depois
+EmprestimoDeTeste.umEmprestimo()
+        .comId(1)
+        .comEpi(epi(10))
+        .comBeneficiario(pessoa(3))
+        .comResponsavelEntrega(pessoa(2))
+        .retiradoEm(RETIRADA)
+        .comDevolucaoPrevistaPara(PREVISTA)
+        .comTermoCautela("termo")
+        .devolvidoEm(RETIRADA.plusDays(1), pessoa(5), null)
+        .comStatus(ClassificacaoEmprestimo.DISPONIVEL)
+        .build()
+```
+
+### Benefício
+
+Cada dado da entrega tem nome no ponto em que é informado, então trocar o beneficiário pelo responsável ou a data de retirada pela prevista deixou de ser um erro silencioso. A justificativa, opcional, só aparece quando existe, em vez de um `null` posicional. A criação deixou de ser estática, e o `Emprestimo` não tem mais construtor público: há uma forma de criar um empréstimo novo, e ela não valida nem inventa a devolução. Os testes leem como o cenário que descrevem e reaproveitam o mesmo Builder da produção.
 
 ### Métricas locais
 
-| Métrica | Antes (v1.0.0) | Depois |
-| --- | --- | --- |
-| `classes_3_ou_mais_construtores` | 8 | *A medir* |
-| `construtores` | 218 | *A medir* |
+| Métrica | Antes (`dev` antes da #226) | Depois |
+| --- | ---: | ---: |
+| Maior número de argumentos posicionais para criar um `Emprestimo` | 12 | 0 (cada dado por método nomeado; nenhum método com mais de 1 argumento) |
+| Métodos estáticos de criação em `Emprestimo` | 1 | 0 |
+| Construtores públicos de `Emprestimo` | 1 | 0 (fica o `protected` do JPA e um privado que recebe o Builder) |
+| `null` posicionais na criação de um empréstimo novo | 4 | 0 |
+| Linhas de teste que criavam `Emprestimo` por construtor ou método estático | 16 | 0 |
+
+Medição por busca no código de `backend/src`.
 
 ### Evidências
 
-*A preencher nas issues [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226) e [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240).*
+Teste novo: `EmprestimoBuilderTest` (5 testes; papéis Builder e Product): a entrega é montada com cada dado nomeado e o termo sem espaços nas pontas; o empréstimo nasce ativo (`INDISPONIVEL`) e sem devolução; o Builder não valida (um empréstimo incompleto é montado para o validador recusar); cada `build()` cria um empréstimo novo; o `Emprestimo` não tem construtor público nem método estático de criação.
+
+Papel Director: `EmprestimoServiceTest` (entrega, duplicidade de posse, devolução) e `EmprestimoPersistenciaIntegracaoTest` (entrega e devolução gravadas no PostgreSQL) passam sem mudança nas asserções. Testes ajustados para o Builder: `EmprestimoTest`, `EmprestimoValidadorTest`, `ProjecaoValidadorTest`, `SubstituicaoInteligenteServiceTest`, `PlanejarSubstituicaoUseCaseTest` e `EmprestimoServiceTest`, cujo repositório em memória passou a atribuir o id à própria entidade, como o JPA.
+
+Suíte existente (`./mvnw clean test` com PostgreSQL externo novo): **1203 testes, 0 falhas, 10 erros**, todos o problema anterior de limpeza entre classes de integração (`DELETE FROM epis` bloqueado por `projecoes_substituicao`).
 
 ---
 
@@ -2214,33 +2846,198 @@ Suíte existente (`TESTCONTAINERS_RYUK_DISABLED=true ./mvnw clean test -Dapi.ver
 
 **Intenção:** montar `OcorrenciaOutputDTO` por meio de um Assembler dedicado (`OcorrenciaOutputAssembler`) usando `PlanoDeAcaoOutputDTO` em vez de expor a entidade de domínio `PlanoDeAcao`.
 
-**Issue:** [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245).
+**Issue:** [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245), aplicada.
 
 ### Problema (antes)
 
-*A preencher na issue [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, §5).*
+- **Entidade de domínio na fronteira.** `OcorrenciaOutputDTO` tinha o campo `PlanoDeAcao planoDeAcao`. O DTO, que deveria só carregar dados, carregava a entidade inteira, e quem convertia o plano para a resposta HTTP era o adaptador web (`PlanoDeAcaoResponse.fromDomain(dto.planoDeAcao())`). Uma mudança no domínio do plano chegava à camada `adapters/in/web`.
+- **Montagem repetida.** O método estático `OcorrenciaOutputDTO.deDominio` tinha dois `new OcorrenciaOutputDTO(...)` de 24 argumentos, um para `Acidente` e outro para `Incidente`, repetindo os 15 campos comuns e preenchendo à mão com `null` os campos do outro tipo. Na v1.0.0: complexidade 15 e 63 linhas.
+- **DTO com regra de montagem.** O próprio record conhecia `Acidente`, `Incidente`, `PlanoDeAcao` e `Colaborador`, ou seja, o pacote `application/dto/output` dependia do domínio.
+
+### Por que DTO + Assembler
+
+O DTO só transporta dados para a fronteira. Quem sabe montá-lo a partir do domínio é um único objeto, o Assembler:
+
+- a parte comum (id, datas, status, área, colaborador, relator, plano) é montada uma vez;
+- a parte de acidente e a de incidente vêm de métodos separados (`deAcidente`, `deIncidente`), que devolvem um record privado só com os campos de cada tipo;
+- o plano de ação sai como `PlanoDeAcaoOutputDTO`, montado pelo `deDominio` que o próprio plano já tinha.
+
+O Assembler é uma classe de instância, guardada como campo do caso de uso, e não um método estático no DTO. Ele não tem estado nem dependências, então não precisou entrar no construtor do `OcorrenciaService`.
+
+**Contrato preservado.** `OcorrenciaResponse` continua com os mesmos campos. A conversão do plano passou de `PlanoDeAcaoResponse.fromDomain(plano)` para `PlanoDeAcaoResponse.fromOutputDTO(dto)`, e `fromDomain` já fazia exatamente `fromOutputDTO(PlanoDeAcaoOutputDTO.deDominio(plano))`. O JSON não muda. Com isso, `fromDomain` ficou sem uso e foi removido, e o adaptador web deixou de importar `PlanoDeAcao`.
 
 ### Papéis do padrão
 
 | Papel no padrão | Elemento no código | Responsabilidade |
 | --- | --- | --- |
 | DTO | `OcorrenciaOutputDTO`, `PlanoDeAcaoOutputDTO` | Transportar dados para a camada web sem expor entidades de domínio |
-| Assembler | `OcorrenciaOutputAssembler` | Concentrar a montagem dos campos comuns e específicos de `Acidente` e `Incidente` |
+| Assembler | `OcorrenciaOutputAssembler` (`application/assembler`) | Montar a parte comum uma vez e a específica de `Acidente` e `Incidente` em métodos separados |
 | Domain | `Ocorrencia`, `Acidente`, `Incidente`, `PlanoDeAcao` | Modelo de domínio isolado da serialização HTTP |
+| Client | `OcorrenciaService` | Pedir ao Assembler o DTO de cada ocorrência devolvida |
 
 ### Diagramas
 
-*Diagramas PlantUML antes e depois a preencher na issue [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245).*
+**Antes.** O DTO guarda a entidade e se monta sozinho; o adaptador web converte o plano a partir do domínio.
+
+```mermaid
+classDiagram
+  direction LR
+  class OcorrenciaOutputDTO {
+    <<DTO>>
+    +planoDeAcao PlanoDeAcao
+    +deDominio(Ocorrencia)$ OcorrenciaOutputDTO
+  }
+  class OcorrenciaService
+  class OcorrenciaResponse
+  class PlanoDeAcaoResponse {
+    +fromDomain(PlanoDeAcao)$
+    +fromOutputDTO(PlanoDeAcaoOutputDTO)$
+  }
+  class PlanoDeAcao {
+    <<Entity>>
+  }
+  class Acidente {
+    <<Entity>>
+  }
+  class Incidente {
+    <<Entity>>
+  }
+  OcorrenciaService ..> OcorrenciaOutputDTO : deDominio
+  OcorrenciaOutputDTO --> PlanoDeAcao : campo de domínio
+  OcorrenciaOutputDTO ..> Acidente : 24 argumentos
+  OcorrenciaOutputDTO ..> Incidente : 24 argumentos
+  OcorrenciaResponse ..> PlanoDeAcaoResponse : fromDomain
+  PlanoDeAcaoResponse ..> PlanoDeAcao
+```
+
+**Depois.** O Assembler é o único que conhece o domínio; DTO e resposta só trocam dados.
+
+```mermaid
+classDiagram
+  direction LR
+  class OcorrenciaOutputAssembler {
+    <<Assembler>>
+    +montar(Ocorrencia) OcorrenciaOutputDTO
+    -deAcidente(Acidente) DadosDoTipo
+    -deIncidente(Incidente) DadosDoTipo
+  }
+  class OcorrenciaOutputDTO {
+    <<DTO>>
+    +planoDeAcao PlanoDeAcaoOutputDTO
+  }
+  class PlanoDeAcaoOutputDTO {
+    <<DTO>>
+  }
+  class OcorrenciaService {
+    <<Client>>
+  }
+  class OcorrenciaResponse
+  class PlanoDeAcaoResponse {
+    +fromOutputDTO(PlanoDeAcaoOutputDTO)$
+  }
+  class Ocorrencia {
+    <<Domain>>
+  }
+  class Acidente {
+    <<Domain>>
+  }
+  class Incidente {
+    <<Domain>>
+  }
+  OcorrenciaService --> OcorrenciaOutputAssembler : montar
+  OcorrenciaOutputAssembler ..> Ocorrencia : parte comum
+  OcorrenciaOutputAssembler ..> Acidente : parte de acidente
+  OcorrenciaOutputAssembler ..> Incidente : parte de incidente
+  OcorrenciaOutputAssembler ..> OcorrenciaOutputDTO : cria
+  OcorrenciaOutputDTO --> PlanoDeAcaoOutputDTO
+  OcorrenciaResponse ..> PlanoDeAcaoResponse : fromOutputDTO
+```
+
+### Código antes × depois
+
+Antes (`OcorrenciaOutputDTO`, trecho de acidente; o de incidente repetia os mesmos campos comuns):
+
+```java
+public record OcorrenciaOutputDTO(..., PlanoDeAcao planoDeAcao, ...) {
+    public static OcorrenciaOutputDTO deDominio(Ocorrencia ocorrencia) {
+        Integer areaId = ocorrencia.getArea() != null ? ocorrencia.getArea().getId() : null;
+        ...
+        if (ocorrencia instanceof Acidente a) {
+            return new OcorrenciaOutputDTO(
+                    a.getIdOcorrencia(), "ACIDENTE", a.getDataOcorrencia(), a.getDataRegistro(),
+                    a.getStatusOcorrencia() != null ? a.getStatusOcorrencia().name() : null,
+                    a.getLocal(), a.getDescricao(), a.getPlanoDeAcao(),
+                    a.getCausaRaiz() != null ? a.getCausaRaiz().name() : null,
+                    ..., null, null, ..., areaId, areaNome, colaboradorId, ...);
+        } else if (ocorrencia instanceof Incidente i) {
+            return new OcorrenciaOutputDTO(i.getIdOcorrencia(), "INCIDENTE", ..., null, null, null, ...);
+        }
+        throw new IllegalArgumentException("Tipo de ocorrência não suportado");
+    }
+}
+```
+
+Depois (`OcorrenciaOutputAssembler`):
+
+```java
+public OcorrenciaOutputDTO montar(Ocorrencia ocorrencia) {
+    DadosDoTipo tipo = dadosDoTipo(ocorrencia);
+    Colaborador relator = ocorrencia.getRelator();
+    return new OcorrenciaOutputDTO(
+            ocorrencia.getIdOcorrencia(),
+            tipo.tipoOcorrencia(),
+            ...
+            PlanoDeAcaoOutputDTO.deDominio(ocorrencia.getPlanoDeAcao()),
+            tipo.causaRaiz(),
+            ...
+            se(relator, r -> se(r.getPerfil(), Enum::name)));
+}
+
+private static DadosDoTipo deIncidente(Incidente incidente) {
+    return new DadosDoTipo("INCIDENTE", null, null, null, null, null,
+            incidente.getSituacaoRisco(), incidente.getPotencialDano(), null);
+}
+```
+
+E o caso de uso (`OcorrenciaService`, 9 pontos):
+
+```java
+// antes
+return OcorrenciaOutputDTO.deDominio(salvo);
+// depois
+return assembler.montar(salvo);
+```
+
+### Benefício
+
+A API deixou de depender do formato interno do plano de ação: o que sai da aplicação são só DTOs, e o adaptador web não importa mais nenhuma classe de `domain/ocorrencia`. A montagem ficou num único lugar, sem a lista de 24 argumentos repetida: um campo novo comum às duas ocorrências entra em uma linha, e um campo novo de acidente só toca `deAcidente`. Quando a #239 tornar `Ocorrencia` `sealed`, a escolha entre `deAcidente` e `deIncidente` pode virar um `switch` exaustivo sem mexer no DTO.
 
 ### Métricas locais
 
 | Métrica | Antes (v1.0.0) | Depois |
-| --- | --- | --- |
-| Complexidade ciclomática de `OcorrenciaOutputDTO.deDominio` | 15 | *A medir* |
+| --- | ---: | ---: |
+| Tipos de `domain/` nos campos de `OcorrenciaOutputDTO` | 1 (`PlanoDeAcao`) | 0 |
+| Imports de `domain/` em `OcorrenciaOutputDTO` | 5 | 0 |
+| Chamadas `new OcorrenciaOutputDTO(...)` em produção | 2 | 1 |
+| Complexidade ciclomática do método de montagem | 15 (`deDominio`) | 1 (`montar`) + 3 (`dadosDoTipo`) |
+| Linhas do método de montagem | 63 (`deDominio`) | 28 (`montar`) |
+| Classes de `adapters/in/web` que importam `PlanoDeAcao` | 1 (`PlanoDeAcaoResponse`) | 0 |
+
+Complexidade contada por decisões (`if`, `?:`, `&&`) no corpo do método; as lambdas de `se(...)` não contam no método. Medição por leitura do código de `backend/src/main`.
 
 ### Evidências
 
-*A preencher na issue [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245).*
+Testes novos: `OcorrenciaOutputAssemblerTest` (5 testes; papéis DTO e Assembler):
+
+1. nenhum componente do record `OcorrenciaOutputDTO` é um tipo de `domain/`;
+2. o acidente sai com a parte comum, os campos de acidente, os de incidente nulos e o plano como `PlanoDeAcaoOutputDTO`;
+3. o incidente sai com situação de risco e potencial de dano, sem campos de acidente e sem plano;
+4. área, colaborador e relator ausentes viram `null`, sem `NullPointerException`;
+5. um subtipo desconhecido de `Ocorrencia` é recusado com a mesma mensagem de antes.
+
+Contrato HTTP: `OcorrenciaControllerTest` (22 testes) e `SegurancaOcorrenciaPlanoRbacTest` passam sem mudança nas asserções de JSON; só o tipo do campo `planoDeAcao` nos DTOs montados à mão mudou de `PlanoDeAcao` para `PlanoDeAcaoOutputDTO` (eles passam `null`, então nada foi alterado). `OcorrenciaPersistenciaIntegracaoTest` registra e lê acidentes e incidentes no PostgreSQL pelo caso de uso, passando pelo Assembler.
+
+Suíte existente (`./mvnw clean test` com PostgreSQL externo novo, `-Dsafeplace.test.datasource.url`): **1129 testes, 0 falhas, 10 erros**. Os 10 erros são o problema anterior de limpeza entre classes de integração (`DELETE FROM epis` bloqueado por `projecoes_substituicao`), o mesmo da `dev` sem esta mudança (`a529667`: 1121 testes, só erros desse tipo, cuja quantidade e classe variam com a ordem de execução).
 
 ---
 

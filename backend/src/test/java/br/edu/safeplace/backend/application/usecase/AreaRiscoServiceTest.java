@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
 
 import java.time.LocalDate;
@@ -49,8 +50,16 @@ class AreaRiscoServiceTest {
     }
 
     private static Epi epi(Integer id, String nome) {
-        return new Epi(id, nome, "CA-" + (1000 + id), 10, 2, StatusEpi.DISPONIVEL,
-                LocalDate.now().plusYears(1), 365, null, null);
+        return EpiDeTeste.umEpi()
+                .comId(id)
+                .comNome(nome)
+                .comCa("CA-" + (1000 + id))
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.now().plusYears(1))
+                .comVidaUtilDias(365)
+                .build();
     }
 
     private static CadastrarAreaRiscoInputDTO input(String codigo, NivelPerigo nivel, List<Integer> epis) {

@@ -99,7 +99,7 @@ class OperadorAtualClientesTest {
     @Test
     @DisplayName("TarefaService recusa OperadorAtual null")
     void tarefaRecusaOperadorNulo() {
-        assertThatThrownBy(() -> new TarefaService(mock(TarefaRepository.class), auditoria, null, null, null,
+        assertThatThrownBy(() -> new TarefaService(mock(TarefaRepository.class), auditoria, null, mock(AreaRiscoRepository.class), mock(SetorRepository.class),
                 mock(EpiRepository.class)))
                 .isInstanceOf(NullPointerException.class).hasMessage(MENSAGEM);
     }

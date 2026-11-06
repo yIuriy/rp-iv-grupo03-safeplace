@@ -2,12 +2,33 @@ package br.edu.safeplace.backend.domain.epi;
 
 import java.time.LocalDate;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+/** Modelo certificado de EPI, fonte única do CA (decisão #124); entidade JPA da tabela modelos_epi (#258). */
+@Entity
+@Table(name = "modelos_epi")
 public class ModeloEPI {
 
-    private final Integer id;
-    private final int ca;
-    private final String marca;
-    private final LocalDate validadeCA;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(nullable = false)
+    private int ca;
+
+    private String marca;
+
+    @Column(name = "validade_ca", nullable = false)
+    private LocalDate validadeCA;
+
+    /** Exclusivo do JPA (decisão #254). */
+    protected ModeloEPI() {
+    }
 
     public ModeloEPI(int ca, String marca, LocalDate validadeCA) {
         this(null, ca, marca, validadeCA);
@@ -58,7 +79,8 @@ public class ModeloEPI {
     /**
      * O CA tem fonte única no modelo (decisão #124): um novo cadastro com o mesmo CA reutiliza este
      * modelo. Validade ou marca divergentes contradizem o registro existente e são recusadas; a marca
-     * ausente no modelo existente é completada pela informada.
+     * ausente no modelo existente é completada pela informada. Devolve este mesmo modelo, já gravado,
+     * para que o lote novo o referencie em vez de uma cópia (#258).
      */
     public ModeloEPI reutilizarPara(ModeloEPI informado) {
         if (informado == null || informado.ca != ca) {
@@ -72,7 +94,10 @@ public class ModeloEPI {
             throw new IllegalArgumentException("CA " + ca + " já cadastrado com a marca " + marca
                     + "; informe a mesma marca do modelo.");
         }
-        return new ModeloEPI(id, ca, marca != null ? marca : informado.marca, validadeCA);
+        if (marca == null) {
+            marca = informado.marca;
+        }
+        return this;
     }
 
     private static String normalizarMarca(String marca) {

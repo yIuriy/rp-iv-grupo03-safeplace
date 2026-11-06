@@ -18,7 +18,6 @@ import br.edu.safeplace.backend.application.port.out.CodificadorSenha;
 import br.edu.safeplace.backend.application.port.out.GeradorSenha;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
-import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.Cpf;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
@@ -40,7 +39,7 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
     private final UsuarioRepository repositorioPorta;
     private final CodificadorSenha codificadorSenha;
     private final GeradorSenha geradorSenha;
-    private final LogAuditoriaRepository logAuditoriaRepository;
+    private final RegistradorAuditoria auditoria;
     private final OperadorAutenticado operadorAutenticado;
     private final Validador<Colaborador> validador;
     private final Validador<String> cpfValidador;
@@ -51,15 +50,22 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
                             GeradorSenha geradorSenha,
                             LogAuditoriaRepository logAuditoriaRepository,
                             OperadorAutenticado operadorAutenticado) {
-        this(repositorioPorta, codificadorSenha, geradorSenha, logAuditoriaRepository, operadorAutenticado,
+        this(repositorioPorta, codificadorSenha, geradorSenha,
+                registrador(logAuditoriaRepository, operadorAutenticado, repositorioPorta), operadorAutenticado,
                 new ColaboradorValidador(repositorioPorta, new CpfValidador()), new CpfValidador());
+    }
+
+    private static RegistradorAuditoria registrador(LogAuditoriaRepository trilha, OperadorAutenticado operador,
+                                                    UsuarioRepository usuarios) {
+        java.util.Objects.requireNonNull(operador, "Porta do operador autenticado é obrigatória.");
+        return new RegistradorAuditoria(trilha, new OperadorAtual(operador, usuarios));
     }
 
     @org.springframework.beans.factory.annotation.Autowired
     public UsuarioService(UsuarioRepository repositorioPorta,
                             CodificadorSenha codificadorSenha,
                             GeradorSenha geradorSenha,
-                            LogAuditoriaRepository logAuditoriaRepository,
+                            RegistradorAuditoria auditoria,
                             OperadorAutenticado operadorAutenticado,
                             Validador<Colaborador> validador,
                             @org.springframework.beans.factory.annotation.Qualifier("cpfValidador") Validador<String> cpfValidador) {
@@ -69,8 +75,8 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
         this.codificadorSenha = codificadorSenha;
         this.geradorSenha = geradorSenha;
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
-        this.logAuditoriaRepository = java.util.Objects.requireNonNull(
-                logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
+        // Facade (#223): a trilha é gravada numa chamada, em nome do operador informado pela borda.
+        this.auditoria = java.util.Objects.requireNonNull(auditoria, "Registrador de auditoria é obrigatório.");
         // Null Object (#241): sem sessão, quem monta o serviço passa OperadorAutenticadoNulo, não null.
         this.operadorAutenticado = java.util.Objects.requireNonNull(
                 operadorAutenticado, "Porta do operador autenticado é obrigatória.");
@@ -105,13 +111,10 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
         validador.validar(novoUsuario);
         Colaborador salvo = repositorioPorta.salvar(novoUsuario);
 
-        LogAuditoria log = LogAuditoria.registrarCadastro(
-                resolverOperador(operador),
+        auditoria.por(operador).cadastro(
                 salvo.getPerfil() != null ? salvo.getPerfil().name() : "Usuario",
                 salvo.getId(),
-                "Cadastro de " + nomeDoPerfil(salvo.getPerfil())
-        );
-        logAuditoriaRepository.salvar(log);
+                "Cadastro de " + nomeDoPerfil(salvo.getPerfil()));
 
         return UsuarioOutputDTO.deDominio(salvo).comSenhaInicial(senhaInicial);
     }
@@ -137,13 +140,7 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
         validador.validar(novoSupervisor);
         Colaborador salvo = repositorioPorta.salvar(novoSupervisor);
 
-        LogAuditoria log = LogAuditoria.registrarCadastro(
-                resolverOperador(operador),
-                "Supervisor",
-                salvo.getId(),
-                "Cadastro de Supervisor"
-        );
-        logAuditoriaRepository.salvar(log);
+        auditoria.por(operador).cadastro("Supervisor", salvo.getId(), "Cadastro de Supervisor");
 
         return UsuarioOutputDTO.deDominio(salvo).comSenhaInicial(senhaInicial);
     }
@@ -165,13 +162,7 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
         validador.validar(novoColaborador);
         Colaborador salvo = repositorioPorta.salvar(novoColaborador);
 
-        LogAuditoria log = LogAuditoria.registrarCadastro(
-                resolverOperador(operador),
-                "Colaborador",
-                salvo.getId(),
-                "Cadastro de Colaborador"
-        );
-        logAuditoriaRepository.salvar(log);
+        auditoria.por(operador).cadastro("Colaborador", salvo.getId(), "Cadastro de Colaborador");
 
         // Sem senha inicial: o Colaborador não possui conta de acesso.
         return UsuarioOutputDTO.deDominio(salvo);
@@ -216,13 +207,10 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
         validador.validar(atualizado);
         Colaborador salvo = repositorioPorta.salvar(atualizado);
 
-        LogAuditoria log = LogAuditoria.registrarAlteracao(
-                resolverOperador(operador),
+        auditoria.por(operador).alteracao(
                 nomeDoPerfil(perfilEsperado),
                 salvo.getId(),
-                "Atualização cadastral de " + nomeDoPerfil(perfilEsperado) + ": " + descreverAlteracoes(atual, salvo)
-        );
-        logAuditoriaRepository.salvar(log);
+                "Atualização cadastral de " + nomeDoPerfil(perfilEsperado) + ": " + descreverAlteracoes(atual, salvo));
 
         return UsuarioOutputDTO.deDominio(salvo);
     }
@@ -244,14 +232,6 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
             mudancas.add(campo + " de " + (anterior != null ? anterior : "não informado")
                     + " para " + (atual != null ? atual : "não informado"));
         }
-    }
-
-    private String resolverOperador(String operador) {
-        if (operador != null && !operador.isBlank()) {
-            return operador.trim();
-        }
-        return operadorAutenticado.obterIdentificadorOperador()
-                .orElse("SISTEMA");
     }
 
     private static String nomeDoPerfil(Perfil perfil) {

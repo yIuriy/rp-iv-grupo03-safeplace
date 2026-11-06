@@ -31,8 +31,7 @@ class LogAuditoriaHistoricoProprioTest {
     @DisplayName("Consulta a primeira página do responsável com o limite e converte para o domínio")
     void consultaPrimeiraPagina() {
         LocalDateTime quando = LocalDateTime.of(2026, 10, 5, 20, 53);
-        LogAuditoriaEntity entidade = LogAuditoriaEntity.deDominio(
-                new LogAuditoria(7, "CADASTRO", quando, "gestor@safeplace.com", "Registro", "Incidente", 4));
+        LogAuditoria entidade = new LogAuditoria(7, "CADASTRO", quando, "gestor@safeplace.com", "Registro", "Incidente", 4);
         when(repositorio.findByResponsavelOrderByDataHoraDescIdDesc("gestor@safeplace.com", PageRequest.of(0, 20)))
                 .thenReturn(List.of(entidade));
 

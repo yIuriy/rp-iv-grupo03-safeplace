@@ -11,7 +11,6 @@ import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.ManutencaoEpi;
-import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,10 +100,6 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
                 : LocalDate.now();
         epi.validarCaValido(dataReferencia);
 
-        if (epi.getStatus() == StatusEpi.DISPONIVEL) {
-            epi.enviarParaManutencao(dataReferencia);
-        }
-
         ManutencaoEpi manutencao = ManutencaoEpi.novo(
                 epi.getId(),
                 inputDTO.dataManutencao(),
@@ -117,7 +112,8 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
         // Chain of Responsibility (#264): valida antes de concluir a manutenção e de gravar.
         manutencaoValidador.validar(manutencao);
 
-        epi.concluirManutencao(manutencao);
+        // State (#224): o próprio Epi decide se passa por EM_MANUTENCAO antes de concluir.
+        epi.registrarManutencao(manutencao, dataReferencia);
         epiRepository.salvar(epi);
 
         ManutencaoEpi salva = manutencaoEpiRepository.salvar(manutencao);

@@ -29,7 +29,7 @@ import br.edu.safeplace.backend.application.port.in.GerenciarOcorrenciaUseCase;
 import br.edu.safeplace.backend.application.port.in.RegistrarOcorrenciaUseCase;
 import br.edu.safeplace.backend.config.SecurityConfig;
 
-@WebMvcTest({OcorrenciaController.class, OcorrenciaExceptionHandler.class})
+@WebMvcTest({OcorrenciaController.class, ApiExceptionHandler.class})
 @Import(SecurityConfig.class)
 class OcorrenciaConsultaControllerTest {
 

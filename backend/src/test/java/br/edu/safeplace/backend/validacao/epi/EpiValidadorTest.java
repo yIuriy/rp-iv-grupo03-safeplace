@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.validacao.epi;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -33,60 +34,116 @@ class EpiValidadorTest {
     @Test
     @DisplayName("Aceita EPI novo com CA vigente e EPI gravado com CA já vencido")
     void aceitaEpiValido() {
-        assertThatCode(() -> validador.validar(Epi.novo("Capacete", "CA-1234", 10, 2,
-                VALIDADE_CA, 365, DATA_CADASTRO, null, null))).doesNotThrowAnyException();
-        assertThatCode(() -> validador.validar(new Epi(1, "Capacete", "CA-1234", 10, 2,
-                StatusEpi.DISPONIVEL, DATA_CADASTRO.minusYears(1), 365, null, null))).doesNotThrowAnyException();
+        assertThatCode(() -> validador.validar(EpiDeTeste.umEpi()
+                .comNome("Capacete")
+                .comCa("CA-1234")
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comValidadeCa(VALIDADE_CA)
+                .comVidaUtilDias(365)
+                .build())).doesNotThrowAnyException();
+        assertThatCode(() -> validador.validar(EpiDeTeste.umEpi()
+                .comId(1)
+                .comNome("Capacete")
+                .comCa("CA-1234")
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(DATA_CADASTRO.minusYears(1))
+                .comVidaUtilDias(365)
+                .build())).doesNotThrowAnyException();
     }
 
     @Test
     void deveImpedirCadastroComCaVencidoPeloConstrutorPublico() {
         EpiValidador comHoje = new EpiValidador();
-        assertThatThrownBy(() -> comHoje.validar(new Epi(
-                null, "Capacete", "CA-1234", 10, 2,
-                StatusEpi.DISPONIVEL, LocalDate.MIN, 365, null, null)))
+        assertThatThrownBy(() -> comHoje.validar(EpiDeTeste.umEpi()
+                .comNome("Capacete")
+                .comCa("CA-1234")
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.MIN)
+                .comVidaUtilDias(365)
+                .build()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Não é permitido cadastrar EPI com CA vencido.");
     }
 
     @Test
     void deveRejeitarCadastroComCaVencido() {
-        assertThatThrownBy(() -> validador.validar(Epi.novo(
-                "Capacete", "CA-1234", 10, 2,
-                DATA_CADASTRO.minusDays(1), 365, DATA_CADASTRO, null, null)))
+        assertThatThrownBy(() -> validador.validar(EpiDeTeste.umEpi()
+                .comNome("Capacete")
+                .comCa("CA-1234")
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comValidadeCa(DATA_CADASTRO.minusDays(1))
+                .comVidaUtilDias(365)
+                .build()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Não é permitido cadastrar EPI com CA vencido.");
     }
 
     @Test
     void deveRejeitarCadastroSemValidadeDoCa() {
-        assertThatThrownBy(() -> validador.validar(Epi.novo(
-                "Capacete", "CA-1234", 10, 2,
-                null, 365, DATA_CADASTRO, null, null)))
+        assertThatThrownBy(() -> validador.validar(EpiDeTeste.umEpi()
+                .comNome("Capacete")
+                .comCa("CA-1234")
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comValidadeCa(null)
+                .comVidaUtilDias(365)
+                .build()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Data de validade do CA é obrigatória.");
     }
 
     @Test
     void deveRejeitarMinimoNegativoNaCriacaoDoEpi() {
-        assertThatThrownBy(() -> validador.validar(Epi.novo(
-                "Óculos", "1234", 10, -1, VALIDADE_CA, 365, DATA_CADASTRO, null, null)))
+        assertThatThrownBy(() -> validador.validar(EpiDeTeste.umEpi()
+                .comNome("Óculos")
+                .comCa("1234")
+                .comQuantidade(10)
+                .comEstoqueMinimo(-1)
+                .comValidadeCa(VALIDADE_CA)
+                .comVidaUtilDias(365)
+                .build()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Quantidade mínima não pode ser negativa.");
     }
 
     @Test
     void deveRejeitarNomeNulo() {
-        assertThatThrownBy(() -> validador.validar(new Epi(1, null, "1234", 10, 2, StatusEpi.DISPONIVEL,
-                VALIDADE_CA, 365, "Capacete de segurança", ClassificacaoEPI.PROTECAO_DE_CABECA)))
+        assertThatThrownBy(() -> validador.validar(EpiDeTeste.umEpi()
+                .comId(1)
+                .comNome(null)
+                .comCa("1234")
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(VALIDADE_CA)
+                .comVidaUtilDias(365)
+                .comDescricao("Capacete de segurança")
+                .comClassificacao(ClassificacaoEPI.PROTECAO_DE_CABECA)
+                .build()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Nome do EPI é obrigatório.");
     }
 
     @Test
     void deveRejeitarStatusNulo() {
-        assertThatThrownBy(() -> validador.validar(new Epi(1, "Capacete", "1234", 10, 2, null,
-                VALIDADE_CA, 365, "Capacete de segurança", ClassificacaoEPI.PROTECAO_DE_CABECA)))
+        assertThatThrownBy(() -> validador.validar(EpiDeTeste.umEpi()
+                .comId(1)
+                .comNome("Capacete")
+                .comCa("1234")
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comValidadeCa(VALIDADE_CA)
+                .comVidaUtilDias(365)
+                .comDescricao("Capacete de segurança")
+                .comClassificacao(ClassificacaoEPI.PROTECAO_DE_CABECA)
+                .semStatus()
+                .build()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Status do EPI é obrigatório.");
     }
@@ -94,19 +151,55 @@ class EpiValidadorTest {
     @Test
     void deveValidarCamposObrigatoriosNaConstrucao() {
         assertThrows(IllegalArgumentException.class, () -> validador.validar(
-                new Epi(1, "", "CA-111", 5, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null, null, null)));
+                EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("")
+                        .comCa("CA-111")
+                        .comQuantidade(5)
+                        .comEstoqueMinimo(1)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(null)
+                        .build()));
         assertThrows(IllegalArgumentException.class, () -> validador.validar(
-                new Epi(1, "Luva", null, 5, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null, null, null)));
+                EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Luva")
+                        .comCa(null)
+                        .comQuantidade(5)
+                        .comEstoqueMinimo(1)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(null)
+                        .build()));
         assertThrows(IllegalArgumentException.class, () -> validador.validar(
-                new Epi(1, "Luva", "CA-111", -1, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, null, null, null)));
+                EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Luva")
+                        .comCa("CA-111")
+                        .comQuantidade(-1)
+                        .comEstoqueMinimo(1)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(null)
+                        .build()));
     }
 
     @ParameterizedTest
     @ValueSource(ints = {-1, Integer.MIN_VALUE})
     @DisplayName("Quantidade mínima negativa (regra que estava em EspecificacaoEPI)")
     void deveRejeitarQuantidadeMinimaNegativa(int quantidadeMinima) {
-        assertThatThrownBy(() -> validador.validar(Epi.reconstituir(1, "Capacete", lote(), 10, quantidadeMinima,
-                StatusEpi.DISPONIVEL, 365, "Capacete", ClassificacaoEPI.PROTECAO_DE_CABECA, null)))
+        assertThatThrownBy(() -> validador.validar(EpiDeTeste.umEpi()
+                .comId(1)
+                .comNome("Capacete")
+                .comLote(lote())
+                .comQuantidade(10)
+                .comEstoqueMinimo(quantidadeMinima)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comVidaUtilDias(365)
+                .comDescricao("Capacete")
+                .comClassificacao(ClassificacaoEPI.PROTECAO_DE_CABECA)
+                .build()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Quantidade mínima não pode ser negativa.");
     }
@@ -116,8 +209,15 @@ class EpiValidadorTest {
     void deveRejeitarLoteSemModelo() {
         LoteEPI semModelo = new LoteEPI("LOTE-001", "NF-123", LocalDate.of(2026, 1, 1), LocalDate.of(2027, 1, 1), 20, null);
 
-        assertThatThrownBy(() -> validador.validar(Epi.reconstituir(1, "Capacete", semModelo, 10, 2,
-                StatusEpi.DISPONIVEL, 365, null, null, null)))
+        assertThatThrownBy(() -> validador.validar(EpiDeTeste.umEpi()
+                .comId(1)
+                .comNome("Capacete")
+                .comLote(semModelo)
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comVidaUtilDias(365)
+                .build()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Modelo do EPI é obrigatório para o lote.");
     }
@@ -125,7 +225,14 @@ class EpiValidadorTest {
     @Test
     @DisplayName("Lista os problemas na ordem antiga: modelo, especificação, campos do EPI e CA vigente")
     void listaProblemasNaOrdemDosElos() {
-        Epi epi = Epi.reconstituir(null, " ", lote(), -1, -2, null, null, null, null, null);
+        Epi epi = EpiDeTeste.umEpi()
+                .comNome(" ")
+                .comLote(lote())
+                .comQuantidade(-1)
+                .comEstoqueMinimo(-2)
+                .comVidaUtilDias(null)
+                .semStatus()
+                .build();
 
         assertThat(validador.verificar(epi).mensagens()).containsExactly(
                 "Quantidade mínima não pode ser negativa.",

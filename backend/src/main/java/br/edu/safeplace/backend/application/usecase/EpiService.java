@@ -9,6 +9,10 @@ import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.epi.Epi;
+import br.edu.safeplace.backend.domain.epi.EspecificacaoEPI;
+import br.edu.safeplace.backend.domain.epi.FabricaEpi;
+import br.edu.safeplace.backend.domain.epi.FabricaEpiPadrao;
+import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
 import br.edu.safeplace.backend.domain.epi.LoteEPI;
 import br.edu.safeplace.backend.domain.epi.ModeloEPI;
@@ -39,6 +43,7 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
     private final UsuarioRepository usuarioRepositorio;
     private final LogAuditoriaRepository logAuditoriaRepository;
     private final OperadorAtual operadorAtual;
+    private final FabricaEpi fabricaEpi;
 
     @Autowired
     public EpiService(
@@ -49,7 +54,8 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
             Validador<ModeloEPI> modeloValidador,
             Validador<Epi> epiValidador,
             Validador<MovimentacaoEstoque> movimentacaoValidador,
-            OperadorAtual operadorAtual) {
+            OperadorAtual operadorAtual,
+            FabricaEpi fabricaEpi) {
         this.repository = repository;
         this.usuarioRepositorio = usuarioRepositorio;
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
@@ -61,6 +67,8 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
         this.movimentacaoValidador = movimentacaoValidador;
         // Adapter (#236): o operador vem da porta OperadorAutenticado.
         this.operadorAtual = java.util.Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
+        // Factory Method (#225): o EPI novo é criado pela fábrica injetada, por interface.
+        this.fabricaEpi = java.util.Objects.requireNonNull(fabricaEpi, "Fábrica de EPI é obrigatória.");
     }
 
     /** Monta os validadores padrão; usado pelos testes sem contexto Spring. */
@@ -70,7 +78,8 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
             LogAuditoriaRepository logAuditoriaRepository,
             OperadorAtual operadorAtual) {
         this(repository, usuarioRepositorio, logAuditoriaRepository, new NumeroCaValidador(),
-                new ModeloEpiValidador(), new EpiValidador(), new MovimentacaoEstoqueValidador(), operadorAtual);
+                new ModeloEpiValidador(), new EpiValidador(), new MovimentacaoEstoqueValidador(), operadorAtual,
+                new FabricaEpiPadrao());
     }
 
     @Override
@@ -87,14 +96,10 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
                 .orElse(informado);
         LoteEPI lote = new LoteEPI(null, inputDTO.numeroLote(), inputDTO.notaFiscal(),
                 inputDTO.dataFabricacao(), inputDTO.validadeLote(), inputDTO.quantidade(), modelo);
-        Epi novoEpi = Epi.novo(
-                inputDTO.nome(),
-                lote,
-                inputDTO.quantidade(),
-                inputDTO.estoqueMinimo(),
-                inputDTO.vidaUtilDias(),
-                inputDTO.descricao(),
-                inputDTO.classificacao(), inputDTO.localizacao());
+        EspecificacaoEPI especificacao = new EspecificacaoEPI(
+                inputDTO.descricao(), inputDTO.estoqueMinimo(), inputDTO.classificacao());
+        Epi novoEpi = fabricaEpi.criar(inputDTO.nome(), especificacao, lote, inputDTO.quantidade(),
+                inputDTO.vidaUtilDias(), inputDTO.localizacao());
         epiValidador.validar(novoEpi);
         Epi salvo = repository.salvar(novoEpi);
 
@@ -139,14 +144,14 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
         Epi epi = repository.buscarPorIdComLock(epiId)
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId));
         // O e-mail vindo do controller tem precedência; sem ele, vale o operador autenticado (#236).
-        Integer responsavelId = buscarResponsavelId(
+        Colaborador responsavel = buscarResponsavel(
                 operadorAtual.emailInformadoOuAutenticado(responsavelEmail).orElse(null));
 
         MovimentacaoEstoque movimentacao;
         if (tipo == TipoMovimentacao.ENTRADA) {
-            movimentacao = epi.adicionarEstoque(quantidade, motivo, responsavelId);
+            movimentacao = epi.adicionarEstoque(quantidade, motivo, responsavel);
         } else if (tipo == TipoMovimentacao.SAIDA) {
-            movimentacao = epi.removerEstoque(quantidade, motivo, responsavelId);
+            movimentacao = epi.removerEstoque(quantidade, motivo, responsavel);
         } else {
             throw new IllegalArgumentException("Tipo de movimentação inválido: " + tipo);
         }
@@ -186,7 +191,7 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
     }
 
     /** US03: o responsável pela movimentação é o usuário autenticado e é obrigatório. */
-    private Integer buscarResponsavelId(String responsavelEmail) {
+    private Colaborador buscarResponsavel(String responsavelEmail) {
         if (responsavelEmail == null || responsavelEmail.isBlank()) {
             throw new IllegalArgumentException(
                     "Responsável pela movimentação é obrigatório: nenhum usuário autenticado.");
@@ -195,7 +200,6 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
             throw new IllegalStateException("Consulta de usuários indisponível para identificar o responsável.");
         }
         return usuarioRepositorio.buscarPorEmail(responsavelEmail.toLowerCase())
-                .map(usuario -> usuario.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Responsável autenticado não encontrado."));
     }
 

@@ -41,7 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Issue #122: rotas de atualização por papel, permissões e recusa de campos fora do contrato.
  */
-@WebMvcTest({UsuarioController.class, UsuarioExceptionHandler.class})
+@WebMvcTest({UsuarioController.class, ApiExceptionHandler.class})
 @Import(SecurityConfig.class)
 class UsuarioControllerAtualizacaoTest {
 

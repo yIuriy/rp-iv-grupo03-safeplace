@@ -1,5 +1,9 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import static org.mockito.Mockito.mock;
+import br.edu.safeplace.backend.application.port.out.SetorRepository;
+import br.edu.safeplace.backend.application.port.out.AreaRiscoRepository;
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -58,7 +62,7 @@ class TarefaServiceTest {
                         "hash", true, LocalDateTime.now(), LocalDateTime.now()),
                 new Supervisor(8, "87455877074", "Paulo", LocalDate.of(1990, 1, 10), EMAIL_SUPERVISOR,
                         "hash", true, LocalDateTime.now(), LocalDateTime.now())));
-        useCase = new TarefaService(repository, auditoria, operador.operadorAtual(usuarios), null, null, epiRepository);
+        useCase = new TarefaService(repository, auditoria, operador.operadorAtual(usuarios), mock(AreaRiscoRepository.class), mock(SetorRepository.class), epiRepository);
         autenticarComo(EMAIL_GESTOR);
     }
 
@@ -200,8 +204,16 @@ class TarefaServiceTest {
     }
 
     private static Epi epi(Integer id, String nome) {
-        return new Epi(id, nome, "CA-" + id, 10, 2, StatusEpi.DISPONIVEL,
-                LocalDate.now().plusYears(1), 365, null, null);
+        return EpiDeTeste.umEpi()
+                .comId(id)
+                .comNome(nome)
+                .comCa("CA-" + id)
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.now().plusYears(1))
+                .comVidaUtilDias(365)
+                .build();
     }
 
     @Test
@@ -318,7 +330,7 @@ class TarefaServiceTest {
             Integer id = tarefa.getId() != null ? tarefa.getId() : nextId++;
             Tarefa salva = new Tarefa(id, tarefa.getDescricao(), tarefa.getNivelPerigo(),
                     tarefa.getDataClassificacao(), tarefa.getResponsavelClassificacao(),
-                    tarefa.getAreaRiscoId(), tarefa.getSetoresIds(), tarefa.getEpisObrigatorios());
+                    tarefa.getAreaRisco(), tarefa.getSetores(), tarefa.getEpisObrigatorios());
             storage.put(id, salva);
             return salva;
         }

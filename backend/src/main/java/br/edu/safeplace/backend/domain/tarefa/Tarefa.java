@@ -1,12 +1,29 @@
 package br.edu.safeplace.backend.domain.tarefa;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
+import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 /**
  * Atividade classificada pela matriz de periculosidade (RF06 / UC11).
@@ -25,17 +42,49 @@ import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
  * <p>O vínculo entre tarefa e EPIs ({@code associarEPIs} e {@code verificarEPIsObrigatoriosTarefa}
  * no diagrama de classes) atende ao RF12 e UC08 (backlog), vinculando os equipamentos
  * obrigatórios para a execução da atividade, separado dos EPIs de acesso à área (UC03).</p>
+ *
+ * <p>É a entidade JPA da tabela tarefas (#260): área de risco, setores e EPIs são associações por objeto.</p>
  */
+@Entity
+@Table(name = "tarefas")
 public class Tarefa {
 
-    private final Integer id;
-    private final String descricao;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(nullable = false, columnDefinition = "text")
+    private String descricao;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "nivel_perigo", length = 20)
     private NivelPerigo nivelPerigo;
+
+    @Column(name = "data_classificacao")
     private LocalDateTime dataClassificacao;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "responsavel_classificacao_id")
     private GestorDeSeguranca responsavelClassificacao;
-    private final Integer areaRiscoId;
-    private final List<Integer> setoresIds;
-    private List<Epi> episObrigatorios;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "area_risco_id")
+    private AreaRisco areaRisco;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "tarefas_setores", joinColumns = @JoinColumn(name = "tarefa_id"),
+            inverseJoinColumns = @JoinColumn(name = "setor_id"))
+    private List<Setor> setores = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "tarefas_epis", joinColumns = @JoinColumn(name = "tarefa_id"),
+            inverseJoinColumns = @JoinColumn(name = "epi_id"))
+    @org.hibernate.annotations.BatchSize(size = 50)
+    private List<Epi> episObrigatorios = new ArrayList<>();
+
+    /** Exclusivo do JPA (decisão #254). */
+    protected Tarefa() {
+    }
 
     /**
      * Reconstitui uma tarefa gravada. {@code responsavelClassificacao} é nulo em classificações
@@ -47,12 +96,12 @@ public class Tarefa {
     }
 
     public Tarefa(Integer id, String descricao, NivelPerigo nivelPerigo, LocalDateTime dataClassificacao,
-            GestorDeSeguranca responsavelClassificacao, Integer areaRiscoId, List<Integer> setoresIds) {
-        this(id, descricao, nivelPerigo, dataClassificacao, responsavelClassificacao, areaRiscoId, setoresIds, List.of());
+            GestorDeSeguranca responsavelClassificacao, AreaRisco areaRisco, List<Setor> setores) {
+        this(id, descricao, nivelPerigo, dataClassificacao, responsavelClassificacao, areaRisco, setores, List.of());
     }
 
     public Tarefa(Integer id, String descricao, NivelPerigo nivelPerigo, LocalDateTime dataClassificacao,
-            GestorDeSeguranca responsavelClassificacao, Integer areaRiscoId, List<Integer> setoresIds,
+            GestorDeSeguranca responsavelClassificacao, AreaRisco areaRisco, List<Setor> setores,
             List<Epi> episObrigatorios) {
         // A descrição é validada em TarefaValidador, antes do repository (issue #228).
         this.id = id;
@@ -62,9 +111,9 @@ public class Tarefa {
                 ? LocalDateTime.now()
                 : dataClassificacao;
         this.responsavelClassificacao = nivelPerigo != null ? responsavelClassificacao : null;
-        this.areaRiscoId = areaRiscoId;
-        this.setoresIds = setoresIds == null ? List.of() : setoresIds.stream().distinct().toList();
-        this.episObrigatorios = episObrigatorios != null ? List.copyOf(episObrigatorios) : List.of();
+        this.areaRisco = areaRisco;
+        this.setores = setores == null ? new ArrayList<>() : new ArrayList<>(setores.stream().distinct().toList());
+        this.episObrigatorios = episObrigatorios != null ? new ArrayList<>(episObrigatorios) : new ArrayList<>();
     }
 
     public Tarefa(Integer id, String descricao, NivelPerigo nivelPerigo, LocalDateTime dataClassificacao) {
@@ -79,19 +128,19 @@ public class Tarefa {
         return new Tarefa(null, descricao, null, null, null);
     }
 
-    public static Tarefa cadastrarComRelacoes(String descricao, Integer areaRiscoId, List<Integer> setoresIds) {
-        return new Tarefa(null, descricao, null, null, null, areaRiscoId, setoresIds);
+    public static Tarefa cadastrarComRelacoes(String descricao, AreaRisco areaRisco, List<Setor> setores) {
+        return new Tarefa(null, descricao, null, null, null, areaRisco, setores);
     }
 
-    public Tarefa atualizar(String novaDescricao, Integer novaAreaRiscoId, List<Integer> novosSetoresIds) {
+    public Tarefa atualizar(String novaDescricao, AreaRisco novaAreaRisco, List<Setor> novosSetores) {
         return new Tarefa(
                 this.id,
                 novaDescricao,
                 this.nivelPerigo,
                 this.dataClassificacao,
                 this.responsavelClassificacao,
-                novaAreaRiscoId,
-                novosSetoresIds,
+                novaAreaRisco,
+                novosSetores,
                 this.episObrigatorios);
     }
 
@@ -152,12 +201,20 @@ public class Tarefa {
         return responsavelClassificacao;
     }
 
+    public AreaRisco getAreaRisco() {
+        return areaRisco;
+    }
+
+    public List<Setor> getSetores() {
+        return Collections.unmodifiableList(setores);
+    }
+
     public Integer getAreaRiscoId() {
-        return areaRiscoId;
+        return areaRisco != null ? areaRisco.getId() : null;
     }
 
     public List<Integer> getSetoresIds() {
-        return setoresIds;
+        return setores.stream().map(Setor::getId).toList();
     }
 
     /**
@@ -165,7 +222,7 @@ public class Tarefa {
      * Vincula a lista de EPIs obrigatórios para a realização da tarefa.
      */
     public boolean associarEpis(List<Epi> novosEpis) {
-        this.episObrigatorios = novosEpis != null ? List.copyOf(novosEpis) : List.of();
+        this.episObrigatorios = novosEpis != null ? new ArrayList<>(novosEpis) : new ArrayList<>();
         return true;
     }
 
@@ -197,5 +254,22 @@ public class Tarefa {
             return false;
         }
         return episObrigatorios.stream().anyMatch(epi -> epiId.equals(epi.getId()));
+    }
+
+    /** Identidade pelo id gerado (decisão #254, seção 2.3); sem id, só o próprio objeto é igual. */
+    @Override
+    public boolean equals(Object outro) {
+        if (this == outro) {
+            return true;
+        }
+        if (!(outro instanceof Tarefa tarefa)) {
+            return false;
+        }
+        return getId() != null && getId().equals(tarefa.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
     }
 }

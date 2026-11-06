@@ -1,5 +1,9 @@
 package br.edu.safeplace.backend.validacao.projecao;
 
+import br.edu.safeplace.backend.suporte.EmprestimoDeTeste;
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoa;
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.epi;
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -168,15 +172,35 @@ class ProjecaoValidadorTest {
 
     private Epi criarEpi(Integer id, String nome, Integer vidaUtilDias, LocalDate validadeCa,
                          int quantidade, int estoqueMinimo) {
-        return new Epi(id, nome, "12345", quantidade, estoqueMinimo, StatusEpi.DISPONIVEL,
-                validadeCa, vidaUtilDias, "Descrição", ClassificacaoEPI.PROTECAO_DE_CABECA, "Setor A");
+        return EpiDeTeste.umEpi()
+                .comId(id)
+                .comNome(nome)
+                .comCa("12345")
+                .comQuantidade(quantidade)
+                .comEstoqueMinimo(estoqueMinimo)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(validadeCa)
+                .comVidaUtilDias(vidaUtilDias)
+                .comDescricao("Descrição")
+                .comClassificacao(ClassificacaoEPI.PROTECAO_DE_CABECA)
+                .comLocalizacao("Setor A")
+                .build();
     }
 
     private Emprestimo criarEmprestimo(Integer id, Integer epiId, LocalDateTime retirada, LocalDateTime devolucao) {
         ClassificacaoEmprestimo status = devolucao != null ? ClassificacaoEmprestimo.DISPONIVEL : ClassificacaoEmprestimo.INDISPONIVEL;
         EstadoDevolucao estadoDev = devolucao != null ? EstadoDevolucao.APTO : null;
         Integer respDev = devolucao != null ? 1 : null;
-        return new Emprestimo(id, epiId, 10, 1, retirada,
-                retirada.toLocalDate().plusDays(15), "Termo #1", null, devolucao, respDev, estadoDev, status);
+        return EmprestimoDeTeste.umEmprestimo()
+                .comId(id)
+                .comEpi(epi(epiId))
+                .comBeneficiario(pessoa(10))
+                .comResponsavelEntrega(pessoa(1))
+                .retiradoEm(retirada)
+                .comDevolucaoPrevistaPara(retirada.toLocalDate().plusDays(15))
+                .comTermoCautela("Termo #1")
+                .devolvidoEm(devolucao, pessoa(respDev), estadoDev)
+                .comStatus(status)
+                .build();
     }
 }

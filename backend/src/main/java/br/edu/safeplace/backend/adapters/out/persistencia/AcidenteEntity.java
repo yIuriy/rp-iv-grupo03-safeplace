@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
+import br.edu.safeplace.backend.domain.usuario.Colaborador;
+
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -39,8 +41,8 @@ public class AcidenteEntity extends OcorrenciaEntity {
             LocalDateTime dataRegistro,
             String statusOcorrencia,
             AreaRisco area,
-            ColaboradorEntidade colaborador,
-            ColaboradorEntidade relator,
+            Colaborador colaborador,
+            Colaborador relator,
             String local,
             String descricao,
             PlanoDeAcaoEntity planoDeAcao,

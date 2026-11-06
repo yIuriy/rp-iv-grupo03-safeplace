@@ -3,7 +3,7 @@ package br.edu.safeplace.backend.config;
 import br.edu.safeplace.backend.adapters.in.web.AutenticacaoController;
 import br.edu.safeplace.backend.adapters.in.web.HealthController;
 import br.edu.safeplace.backend.adapters.in.web.UsuarioController;
-import br.edu.safeplace.backend.adapters.in.web.UsuarioExceptionHandler;
+import br.edu.safeplace.backend.adapters.in.web.ApiExceptionHandler;
 import br.edu.safeplace.backend.adapters.out.seguranca.JwtTokenAdapter;
 import br.edu.safeplace.backend.application.dto.output.UsuarioOutputDTO;
 import br.edu.safeplace.backend.application.port.in.AutenticarUsuarioUseCase;
@@ -37,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         HealthController.class,
         UsuarioController.class,
         AutenticacaoController.class,
-        UsuarioExceptionHandler.class
+        ApiExceptionHandler.class
 })
 @Import({
         SecurityConfig.class,

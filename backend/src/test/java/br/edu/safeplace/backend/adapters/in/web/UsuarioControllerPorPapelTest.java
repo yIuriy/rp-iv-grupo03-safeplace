@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Endpoints por papel de RF23 (issue #40): permissões, validação de entrada e não exposição de
  * credenciais.
  */
-@WebMvcTest({UsuarioController.class, UsuarioExceptionHandler.class})
+@WebMvcTest({UsuarioController.class, ApiExceptionHandler.class})
 @Import(SecurityConfig.class)
 class UsuarioControllerPorPapelTest {
 

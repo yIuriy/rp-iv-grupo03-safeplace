@@ -1,5 +1,15 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import java.util.ArrayList;
+import java.util.List;
+import br.edu.safeplace.backend.validacao.epi.NumeroCaValidador;
+import br.edu.safeplace.backend.validacao.epi.MovimentacaoEstoqueValidador;
+import br.edu.safeplace.backend.validacao.epi.ModeloEpiValidador;
+import br.edu.safeplace.backend.validacao.epi.EpiValidador;
+import br.edu.safeplace.backend.domain.epi.FabricaEpiPadrao;
+import br.edu.safeplace.backend.domain.epi.FabricaEpi;
+import br.edu.safeplace.backend.domain.epi.EspecificacaoEPI;
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
 
@@ -78,6 +88,29 @@ class EpiServiceTest {
 
         assertEquals(10, useCase.consultarSaldoDisponivel(epi.id()));
         assertThat(repository.movimentacoes).isEmpty();
+    }
+
+    @Test
+    void cadastroCriaOEpiPelaFabricaInjetada() {
+        UsuarioRepository usuarios = mock(UsuarioRepository.class);
+        List<EspecificacaoEPI> recebidas = new ArrayList<>();
+        FabricaEpi fabricaEspia = (nome, especificacao, lote, quantidade, vidaUtilDias, localizacao) -> {
+            recebidas.add(especificacao);
+            return new FabricaEpiPadrao().criar(nome, especificacao, lote, quantidade, vidaUtilDias, localizacao);
+        };
+        EpiService comFabrica = new EpiService(repository, usuarios, auditoria, new NumeroCaValidador(),
+                new ModeloEpiValidador(), new EpiValidador(), new MovimentacaoEstoqueValidador(),
+                operador.operadorAtual(usuarios), fabricaEspia);
+
+        comFabrica.cadastrarEpi(new CadastrarEpiInputDTO("Luva", "CA-303", 10, 2, LocalDate.now().plusYears(1),
+                365, "Vaqueta", ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES));
+
+        assertThat(recebidas).singleElement().satisfies(especificacao -> {
+            assertThat(especificacao.getDescricao()).isEqualTo("Vaqueta");
+            assertThat(especificacao.getQuantidadeMinima()).isEqualTo(2);
+            assertThat(especificacao.getClassificacao()).isEqualTo(ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES);
+        });
+        assertThat(repository.ultimoCadastrado.getNome()).isEqualTo("Luva");
     }
 
     @Test
@@ -284,17 +317,18 @@ class EpiServiceTest {
                 ultimoCadastrado = epi;
             }
             Integer id = epi.getId() != null ? epi.getId() : nextEpiId++;
-            Epi salvo = new Epi(
-                    id,
-                    epi.getNome(),
-                    epi.getNumeroCa(),
-                    epi.getQuantidade(),
-                    epi.getEstoqueMinimo(),
-                    epi.getStatus(),
-                    epi.getDataValidadeCa(),
-                    epi.getVidaUtilDias(),
-                    epi.getEspecificacao().getDescricao(),
-                    epi.getEspecificacao().getClassificacao());
+            Epi salvo = EpiDeTeste.umEpi()
+                    .comId(id)
+                    .comNome(epi.getNome())
+                    .comCa(epi.getNumeroCa())
+                    .comQuantidade(epi.getQuantidade())
+                    .comEstoqueMinimo(epi.getEstoqueMinimo())
+                    .comStatus(epi.getStatus())
+                    .comValidadeCa(epi.getDataValidadeCa())
+                    .comVidaUtilDias(epi.getVidaUtilDias())
+                    .comDescricao(epi.getEspecificacao().getDescricao())
+                    .comClassificacao(epi.getEspecificacao().getClassificacao())
+                    .build();
             storage.put(id, salvo);
             return salvo;
         }
@@ -309,9 +343,9 @@ class EpiServiceTest {
             Integer id = movimentacao.getId() != null ? movimentacao.getId() : nextMovId++;
             MovimentacaoEstoque salvo = new MovimentacaoEstoque(
                     id,
-                    movimentacao.getEpiId(),
-                    movimentacao.getLoteId(),
-                    movimentacao.getResponsavelId(),
+                    movimentacao.getEpi(),
+                    movimentacao.getLote(),
+                    movimentacao.getResponsavel(),
                     movimentacao.getTipo(),
                     movimentacao.getQuantidade(),
                     movimentacao.getDataHora(),

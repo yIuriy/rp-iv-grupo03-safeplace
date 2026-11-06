@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -104,8 +105,14 @@ class AreaRiscoTarefaPersistenciaTest {
     }
 
     private Integer novoEpi(String nome, String numeroCa) {
-        Epi salvo = epiRepository.salvar(Epi.novo(nome, numeroCa, 10, 2,
-                LocalDate.now().plusYears(2), 365, null, null));
+        Epi salvo = epiRepository.salvar(EpiDeTeste.umEpi()
+                .comNome(nome)
+                .comCa(numeroCa)
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comValidadeCa(LocalDate.now().plusYears(2))
+                .comVidaUtilDias(365)
+                .build());
         return salvo.getId();
     }
 

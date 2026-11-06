@@ -1,10 +1,11 @@
 /*
  * Tratamento de erros do controlador de inspeções (issue #134): registro que a US09 recusa responde
- * 400 com a mensagem do domínio. Área inexistente segue o tratador de áreas de risco (404).
+ * 400 com a mensagem do domínio. Área inexistente segue o tratador global (404).
  */
 package br.edu.safeplace.backend.adapters.in.web;
 
-import java.time.LocalDateTime;
+import static br.edu.safeplace.backend.adapters.in.web.CorpoErro.corpo;
+
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -19,10 +20,6 @@ public class InspecaoExceptionHandler {
 
     @ExceptionHandler(InspecaoInvalidaException.class)
     public ResponseEntity<Map<String, Object>> handleInspecaoInvalida(InspecaoInvalidaException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", HttpStatus.BAD_REQUEST.value(),
-                "error", "Inspeção Inválida",
-                "message", ex.getMessage()));
+        return corpo(HttpStatus.BAD_REQUEST, "Inspeção Inválida", ex.getMessage());
     }
 }

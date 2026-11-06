@@ -5,6 +5,7 @@
  */
 package br.edu.safeplace.backend.adapters.in.web;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -134,8 +135,14 @@ class AreaRiscoTarefaApiIntegracaoTest {
     }
 
     private Integer novoEpi(String nome, String numeroCa) {
-        return epiRepository.salvar(Epi.novo(nome, numeroCa, 10, 2,
-                LocalDate.now().plusYears(2), 365, null, null)).getId();
+        return epiRepository.salvar(EpiDeTeste.umEpi()
+                .comNome(nome)
+                .comCa(numeroCa)
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comValidadeCa(LocalDate.now().plusYears(2))
+                .comVidaUtilDias(365)
+                .build()).getId();
     }
 
     private static RequestPostProcessor gestor() {

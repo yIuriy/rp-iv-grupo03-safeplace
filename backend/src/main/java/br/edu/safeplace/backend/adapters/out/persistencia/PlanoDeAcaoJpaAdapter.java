@@ -276,9 +276,7 @@ public class PlanoDeAcaoJpaAdapter implements PlanoDeAcaoRepository {
         if (usuarioRepository == null || id == null) {
             return null;
         }
-        return usuarioRepository.findById(id)
-                .map(ColaboradorEntidade::paraDominio)
-                .orElse(null);
+        return usuarioRepository.findById(id).orElse(null);
     }
 
     private Setor carregarSetor(Integer id) {
@@ -293,9 +291,8 @@ public class PlanoDeAcaoJpaAdapter implements PlanoDeAcaoRepository {
             return null;
         }
         return usuarioRepository.findById(id)
-                .filter(GestorDeSegurancaEntidade.class::isInstance)
-                .map(GestorDeSegurancaEntidade.class::cast)
-                .map(GestorDeSegurancaEntidade::paraDominio)
+                .filter(GestorDeSeguranca.class::isInstance)
+                .map(GestorDeSeguranca.class::cast)
                 .orElse(null);
     }
 

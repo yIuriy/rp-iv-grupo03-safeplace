@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import br.edu.safeplace.backend.domain.epi.CalculoProjecaoSubstituicao;
+import br.edu.safeplace.backend.domain.epi.FabricaEpi;
+import br.edu.safeplace.backend.domain.epi.FabricaEpiPadrao;
 import br.edu.safeplace.backend.domain.epi.SubstituicaoInteligenteService;
 
 @Configuration
@@ -16,5 +18,10 @@ public class ServicosDominioConfig {
     @Bean
     public CalculoProjecaoSubstituicao calculoProjecaoSubstituicao() {
         return new SubstituicaoInteligenteService();
+    }
+
+    @Bean
+    public FabricaEpi fabricaEpi() {
+        return new FabricaEpiPadrao();
     }
 }

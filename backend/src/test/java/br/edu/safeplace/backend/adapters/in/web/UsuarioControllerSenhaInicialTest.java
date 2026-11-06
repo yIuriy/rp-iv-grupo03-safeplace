@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Issue #91: a senha inicial do Supervisor aparece apenas na resposta 201 do cadastro.
  */
-@WebMvcTest({UsuarioController.class, UsuarioExceptionHandler.class})
+@WebMvcTest({UsuarioController.class, ApiExceptionHandler.class})
 @Import(SecurityConfig.class)
 @WithMockUser(roles = "GESTOR_SEGURANCA")
 class UsuarioControllerSenhaInicialTest {

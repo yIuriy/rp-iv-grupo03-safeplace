@@ -7,6 +7,8 @@
  */
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
+import br.edu.safeplace.backend.domain.comum.LogAuditoria;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -15,15 +17,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
-public interface LogAuditoriaJpaRepository extends Repository<LogAuditoriaEntity, Integer> {
-    LogAuditoriaEntity save(LogAuditoriaEntity log);
+public interface LogAuditoriaJpaRepository extends Repository<LogAuditoria, Integer> {
+    LogAuditoria save(LogAuditoria log);
 
-    List<LogAuditoriaEntity> findByEntidadeAndEntidadeIdOrderByDataHoraDesc(String entidade, Integer entidadeId);
+    List<LogAuditoria> findByEntidadeAndEntidadeIdOrderByDataHoraDesc(String entidade, Integer entidadeId);
 
-    @Query("SELECT l.entidadeId FROM LogAuditoriaEntity l WHERE l.responsavel = :responsavel"
+    @Query("SELECT l.entidadeId FROM LogAuditoria l WHERE l.responsavel = :responsavel"
             + " AND l.tipoOperacao = :tipoOperacao AND l.entidade IN :entidades")
     List<Integer> buscarIdsPorResponsavelETipoOperacao(@Param("responsavel") String responsavel,
             @Param("tipoOperacao") String tipoOperacao, @Param("entidades") Collection<String> entidades);
 
-    List<LogAuditoriaEntity> findByResponsavelOrderByDataHoraDescIdDesc(String responsavel, Pageable pagina);
+    List<LogAuditoria> findByResponsavelOrderByDataHoraDescIdDesc(String responsavel, Pageable pagina);
 }

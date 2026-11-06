@@ -1,0 +1,96 @@
+package br.edu.safeplace.backend.application.assembler;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.lang.reflect.RecordComponent;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+
+import org.junit.jupiter.api.Test;
+
+import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
+import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
+import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
+import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
+import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
+import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
+import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
+
+class OcorrenciaOutputAssemblerTest {
+
+    private static final LocalDateTime DATA = LocalDateTime.of(2026, 11, 2, 9, 30);
+
+    private final OcorrenciaOutputAssembler assembler = new OcorrenciaOutputAssembler();
+
+    @Test
+    void dtoNaoExpoeTiposDoDominio() {
+        assertThat(Arrays.stream(OcorrenciaOutputDTO.class.getRecordComponents()).map(RecordComponent::getType))
+                .noneMatch(tipo -> tipo.getPackageName().startsWith("br.edu.safeplace.backend.domain"));
+    }
+
+    @Test
+    void montaAcidenteComAParteComumEAEspecifica() {
+        PlanoDeAcao plano = new PlanoDeAcao(7, "Isolar a área", LocalDate.of(2026, 12, 1), "PENDENTE", "Treinar");
+        Acidente acidente = new Acidente(10, "Queda", DATA, DATA, StatusOcorrencia.ABERTA, null, null, null,
+                "Galpão", plano, CausaRaizAcidente.values()[0], "Queda", "Fratura",
+                NumeroProtocoloCAT.de("CAT-2026-11-0001"), "Hospital", NivelPerigo.ALTO);
+
+        OcorrenciaOutputDTO dto = assembler.montar(acidente);
+
+        assertThat(dto.idOcorrencia()).isEqualTo(10);
+        assertThat(dto.tipoOcorrencia()).isEqualTo("ACIDENTE");
+        assertThat(dto.statusOcorrencia()).isEqualTo("ABERTA");
+        assertThat(dto.local()).isEqualTo("Galpão");
+        assertThat(dto.causaRaiz()).isEqualTo(CausaRaizAcidente.values()[0].name());
+        assertThat(dto.gravidade()).isEqualTo("ALTO");
+        assertThat(dto.numeroProtocolo()).isEqualTo(dto.numeroProtocoloCAT()).isEqualTo("CAT-2026-11-0001");
+        assertThat(dto.destino()).isEqualTo("Hospital");
+        assertThat(dto.situacaoRisco()).isNull();
+        assertThat(dto.potencialDano()).isNull();
+        assertThat(dto.planoDeAcao().id()).isEqualTo(7);
+        assertThat(dto.planoDeAcao().medidasCorretivas()).isEqualTo("Isolar a área");
+    }
+
+    @Test
+    void montaIncidenteSemCamposDeAcidente() {
+        Incidente incidente = new Incidente(11, "Quase queda", DATA, DATA, StatusOcorrencia.ABERTA, null, null,
+                null, "Pátio", null, "Piso molhado", "Queda");
+
+        OcorrenciaOutputDTO dto = assembler.montar(incidente);
+
+        assertThat(dto.tipoOcorrencia()).isEqualTo("INCIDENTE");
+        assertThat(dto.situacaoRisco()).isEqualTo("Piso molhado");
+        assertThat(dto.potencialDano()).isEqualTo("Queda");
+        assertThat(dto.causaRaiz()).isNull();
+        assertThat(dto.numeroProtocoloCAT()).isNull();
+        assertThat(dto.gravidade()).isNull();
+        assertThat(dto.planoDeAcao()).isNull();
+    }
+
+    @Test
+    void associacoesAusentesViramNulas() {
+        Incidente incidente = new Incidente(12, "Relato", DATA, DATA, null, null, null, null, null, null,
+                "Risco", "Dano");
+
+        OcorrenciaOutputDTO dto = assembler.montar(incidente);
+
+        assertThat(dto.areaId()).isNull();
+        assertThat(dto.colaboradorNome()).isNull();
+        assertThat(dto.relatorPerfil()).isNull();
+    }
+
+    @Test
+    void recusaTipoDeOcorrenciaDesconhecido() {
+        Ocorrencia desconhecida = new Ocorrencia(13, "Outro", DATA, DATA, StatusOcorrencia.ABERTA, null, null,
+                null, null, null) {
+        };
+
+        assertThatThrownBy(() -> assembler.montar(desconhecida))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Tipo de ocorrência não suportado");
+    }
+}

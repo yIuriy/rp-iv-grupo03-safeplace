@@ -19,11 +19,9 @@ import java.util.stream.Collectors;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import jakarta.persistence.AttributeConverter;
-import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Converter;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -31,10 +29,12 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 
 /**
  * Delimitação de perigo vinculada a um Setor físico da planta (RF05 / UC03).
@@ -75,14 +75,12 @@ public class AreaRisco {
     @Column(name = "limites", columnDefinition = "text")
     private String limites;
 
-    /** Ponte transicional para a tabela de junção até que Epi seja anotada com @Entity (#258). */
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "areas_risco_epis", joinColumns = @JoinColumn(name = "area_risco_id"))
-    @Column(name = "epi_id", nullable = false)
-    private Set<Integer> episObrigatoriosIds = new LinkedHashSet<>();
-
-    @Transient
-    private List<Epi> episObrigatorios = Collections.emptyList();
+    /** EPIs obrigatórios de acesso (UC03), pela tabela de junção areas_risco_epis (#258). */
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "areas_risco_epis", joinColumns = @JoinColumn(name = "area_risco_id"),
+            inverseJoinColumns = @JoinColumn(name = "epi_id"))
+    @OrderBy("codigoEPI ASC")
+    private Set<Epi> episObrigatorios = new LinkedHashSet<>();
 
     protected AreaRisco() {
     }
@@ -215,49 +213,39 @@ public class AreaRisco {
     }
 
     private Set<Integer> idsDosEpis() {
-        if (episObrigatorios != null && !episObrigatorios.isEmpty()) {
-            return episObrigatorios.stream().map(Epi::getId).filter(Objects::nonNull)
-                    .collect(Collectors.toCollection(TreeSet::new));
-        }
-        return episObrigatoriosIds != null ? new TreeSet<>(episObrigatoriosIds) : Collections.emptySet();
+        return episObrigatorios.stream().map(Epi::getId).filter(Objects::nonNull)
+                .collect(Collectors.toCollection(TreeSet::new));
     }
 
     private String nomesDosEpis() {
-        return episObrigatorios == null || episObrigatorios.isEmpty() ? null
+        return episObrigatorios.isEmpty() ? null
                 : episObrigatorios.stream().map(Epi::getNome).collect(Collectors.joining(", "));
     }
 
-    /**
-     * Hidrata a lista de objetos {@link Epi} após leitura JPA, sincronizando os identificadores
-     * quando os objetos possuem ID (ponte transicional até a issue #258).
-     */
+    /** Substitui os EPIs obrigatórios de acesso, na ordem informada. */
     public void definirEpisObrigatorios(List<Epi> epis) {
-        this.episObrigatorios = epis != null ? List.copyOf(epis) : Collections.emptyList();
-        this.episObrigatoriosIds = this.episObrigatorios.stream()
-                .map(Epi::getId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+        this.episObrigatorios = epis != null
+                ? epis.stream().filter(Objects::nonNull).collect(Collectors.toCollection(LinkedHashSet::new))
+                : new LinkedHashSet<>();
     }
 
     public Set<Integer> getEpisObrigatoriosIds() {
-        return episObrigatoriosIds != null ? Collections.unmodifiableSet(episObrigatoriosIds) : Collections.emptySet();
+        return episObrigatorios.stream().map(Epi::getId).filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     /**
      * Operação {@code verificarEPIsObrigatoriosArea()} do diagrama de classes.
      */
     public List<Epi> verificarEpisObrigatoriosArea() {
-        return episObrigatorios != null ? episObrigatorios : Collections.emptyList();
+        return List.copyOf(episObrigatorios);
     }
 
     public boolean exigeEpi(Integer epiId) {
         if (epiId == null) {
             return false;
         }
-        if (episObrigatorios != null && !episObrigatorios.isEmpty()) {
-            return episObrigatorios.stream().anyMatch(epi -> epiId.equals(epi.getId()));
-        }
-        return episObrigatoriosIds != null && episObrigatoriosIds.contains(epiId);
+        return episObrigatorios.stream().anyMatch(epi -> epiId.equals(epi.getId()));
     }
 
     public boolean isCadastrada() {
@@ -297,7 +285,7 @@ public class AreaRisco {
     }
 
     public List<Epi> getEpisObrigatorios() {
-        return episObrigatorios != null ? episObrigatorios : Collections.emptyList();
+        return List.copyOf(episObrigatorios);
     }
 
     @Override

@@ -95,7 +95,7 @@ class AlocarColaboradorTarefaUseCaseTest {
         when(capacitacaoRepository.buscarTreinamentosPorColaborador(colaborador.getId())).thenReturn(List.of());
         when(capacitacaoRepository.buscarExigenciasPorAlvo(ExigenciaCapacitacao.TipoAlvo.TAREFA, 10)).thenReturn(List.of());
 
-        AlocacaoTarefa salva = new AlocacaoTarefa(1, 10, colaborador.getId(), LocalDateTime.now(), gestor.getId(), "Turno 1");
+        AlocacaoTarefa salva = new AlocacaoTarefa(1, tarefa, colaborador, LocalDateTime.now(), gestor, "Turno 1");
         when(alocacaoTarefaRepository.salvar(any())).thenReturn(salva);
 
         AlocacaoTarefaOutputDTO resultado = useCase.alocar(10,

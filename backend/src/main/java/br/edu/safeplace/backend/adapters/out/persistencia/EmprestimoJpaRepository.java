@@ -1,5 +1,5 @@
 /*
- * Repositório Spring Data da tabela emprestimos.
+ * Repositório Spring Data da tabela emprestimos, sobre a própria entidade de domínio (#260).
  */
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
@@ -12,17 +12,24 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface EmprestimoJpaRepository extends JpaRepository<EmprestimoEntity, Integer> {
+import br.edu.safeplace.backend.domain.emprestimo.ClassificacaoEmprestimo;
+import br.edu.safeplace.backend.domain.emprestimo.Emprestimo;
+
+public interface EmprestimoJpaRepository extends JpaRepository<Emprestimo, Integer> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT e FROM EmprestimoEntity e WHERE e.id = :id")
-    Optional<EmprestimoEntity> findByIdWithLock(@Param("id") Integer id);
+    @Query("SELECT e FROM Emprestimo e WHERE e.id = :id")
+    Optional<Emprestimo> findByIdWithLock(@Param("id") Integer id);
 
-    List<EmprestimoEntity> findByColaboradorIdOrderByDataRetiradaDesc(Integer colaboradorId);
+    @Query("SELECT e FROM Emprestimo e WHERE e.colaborador.id = :colaboradorId ORDER BY e.dataRetirada DESC")
+    List<Emprestimo> listarPorColaborador(@Param("colaboradorId") Integer colaboradorId);
 
-    List<EmprestimoEntity> findByColaboradorIdAndStatus(Integer colaboradorId, String status);
+    @Query("SELECT e FROM Emprestimo e WHERE e.colaborador.id = :colaboradorId AND e.status = :status")
+    List<Emprestimo> listarPorColaboradorEStatus(@Param("colaboradorId") Integer colaboradorId,
+            @Param("status") ClassificacaoEmprestimo status);
 
-    List<EmprestimoEntity> findByEpiIdOrderByDataRetiradaDesc(Integer epiId);
+    @Query("SELECT e FROM Emprestimo e WHERE e.epi.codigoEPI = :epiId ORDER BY e.dataRetirada DESC")
+    List<Emprestimo> listarPorEpi(@Param("epiId") Integer epiId);
 
-    List<EmprestimoEntity> findAllByOrderByDataRetiradaDesc();
+    List<Emprestimo> findAllByOrderByDataRetiradaDesc();
 }

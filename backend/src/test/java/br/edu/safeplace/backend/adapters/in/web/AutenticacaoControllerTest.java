@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest({AutenticacaoController.class, UsuarioExceptionHandler.class})
+@WebMvcTest({AutenticacaoController.class, ApiExceptionHandler.class})
 @Import(SecurityConfig.class)
 class AutenticacaoControllerTest {
 

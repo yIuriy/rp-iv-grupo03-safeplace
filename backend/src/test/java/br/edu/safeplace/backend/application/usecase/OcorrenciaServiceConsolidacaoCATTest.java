@@ -61,9 +61,11 @@ class OcorrenciaServiceConsolidacaoCATTest {
 
     private OcorrenciaService servico(ValidadorEmCadeia<Acidente> protocoloValidador) {
         UsuarioRepository usuarios = mock(UsuarioRepository.class);
+        TrilhaAuditoriaEmMemoria trilha = new TrilhaAuditoriaEmMemoria();
+        OperadorAtual operadorAtual = OperadorAutenticadoFixo.semSessao().operadorAtual(usuarios);
         return new OcorrenciaService(repository, mock(AreaRiscoRepository.class), usuarios,
-                new TrilhaAuditoriaEmMemoria(), new NotificadorOcorrenciaNulo(), new OcorrenciaValidador(),
-                protocoloValidador, OperadorAutenticadoFixo.semSessao().operadorAtual(usuarios));
+                trilha, new NotificadorOcorrenciaNulo(), new OcorrenciaValidador(),
+                protocoloValidador, operadorAtual, new RegistradorAuditoria(trilha, operadorAtual));
     }
 
     @Test

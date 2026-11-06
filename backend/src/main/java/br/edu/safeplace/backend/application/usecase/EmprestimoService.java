@@ -111,13 +111,21 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
 
         LocalDateTime agora = LocalDateTime.now();
         String termo = termoDeCautela(epi, beneficiario, operador, agora, entrada.dataDevolucaoPrevista());
-        Emprestimo emprestimo = Emprestimo.registrarEntrega(epi.getId(), beneficiario.getId(), operador.getId(),
-                agora, entrada.dataDevolucaoPrevista(), termo, entrada.justificativaSubstituicao());
+        // Builder (#226): o caso de uso é o Director, que monta a entrega a partir da entrada.
+        Emprestimo emprestimo = new Emprestimo.Builder()
+                .epi(epi)
+                .beneficiario(beneficiario)
+                .responsavelEntrega(operador)
+                .retiradaEm(agora)
+                .devolucaoPrevistaPara(entrada.dataDevolucaoPrevista())
+                .termoCautela(termo)
+                .justificativaSubstituicao(entrada.justificativaSubstituicao())
+                .build();
         // Chain of Responsibility (#265): valida antes de baixar o estoque e de gravar.
         emprestimoValidador.validar(emprestimo);
 
         MovimentacaoEstoque saida = epi.removerEstoque(Emprestimo.QUANTIDADE_POR_EMPRESTIMO,
-                "Empréstimo ao colaborador " + beneficiario.getNome(), operador.getId());
+                "Empréstimo ao colaborador " + beneficiario.getNome(), operador);
         movimentacaoValidador.validar(saida);
         epis.atualizarSaldo(epi);
         epis.salvarMovimentacao(saida);
@@ -143,11 +151,11 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
         Colaborador beneficiario = usuarios.buscarPorId(emprestimo.getColaboradorId()).orElse(null);
 
         EstadoDevolucao estado = entrada.estado();
-        emprestimo.devolver(estado, operador.getId(), LocalDateTime.now());
+        emprestimo.devolver(estado, operador, LocalDateTime.now());
 
         if (estado.retornaAoEstoque()) {
             MovimentacaoEstoque retorno = epi.adicionarEstoque(Emprestimo.QUANTIDADE_POR_EMPRESTIMO,
-                    "Devolução do empréstimo " + emprestimoId + " (item apto)", operador.getId());
+                    "Devolução do empréstimo " + emprestimoId + " (item apto)", operador);
             movimentacaoValidador.validar(retorno);
             epis.atualizarSaldo(epi);
             epis.salvarMovimentacao(retorno);
@@ -168,9 +176,9 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
         } else if (estado == EstadoDevolucao.DESCARTE) {
             MovimentacaoEstoque baixaDescarte = new MovimentacaoEstoque(
                     null,
-                    epi.getId(),
-                    epi.getLote() != null ? epi.getLote().getId() : null,
-                    operador.getId(),
+                    epi,
+                    epi.getLote(),
+                    operador,
                     TipoMovimentacao.SAIDA,
                     Emprestimo.QUANTIDADE_POR_EMPRESTIMO,
                     LocalDateTime.now(),

@@ -105,6 +105,8 @@ class ModeloEPITest {
 
         ModeloEPI reutilizado = existente.reutilizarPara(new ModeloEPI(1234, "Protege", REFERENCIA));
 
+        // O lote novo referencia o próprio modelo gravado, e não uma cópia destacada (#258).
+        assertThat(reutilizado).isSameAs(existente);
         assertThat(reutilizado.getId()).isEqualTo(9);
         assertThat(reutilizado.getMarca()).isEqualTo("Protege");
         assertThat(reutilizado.getValidadeCA()).isEqualTo(REFERENCIA);

@@ -46,7 +46,7 @@ public record OcorrenciaResponse(
                 dto.statusOcorrencia(),
                 dto.local(),
                 dto.descricao(),
-                dto.planoDeAcao() != null ? PlanoDeAcaoResponse.fromDomain(dto.planoDeAcao()) : null,
+                PlanoDeAcaoResponse.fromOutputDTO(dto.planoDeAcao()),
                 dto.causaRaiz(),
                 dto.tipo(),
                 dto.dano(),

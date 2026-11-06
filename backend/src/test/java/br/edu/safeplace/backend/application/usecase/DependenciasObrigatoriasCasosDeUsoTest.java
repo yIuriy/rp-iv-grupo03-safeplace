@@ -5,6 +5,7 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.application.port.out.AreaRiscoRepository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -92,7 +93,7 @@ class DependenciasObrigatoriasCasosDeUsoTest {
     @DisplayName("TarefaService recusa repositório de EPIs null")
     void tarefaServiceRecusaEpisNulo() {
         assertThatThrownBy(() -> new TarefaService(mock(TarefaRepository.class), auditoria,
-                operadorAtual(), null, null, null))
+                operadorAtual(), mock(AreaRiscoRepository.class), mock(SetorRepository.class), null))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage("Repositório de EPIs é obrigatório.");
     }
