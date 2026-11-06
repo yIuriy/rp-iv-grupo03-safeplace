@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import br.edu.safeplace.backend.adapters.out.persistencia.NotificacaoOcorrenciaEntity;
 import br.edu.safeplace.backend.adapters.out.persistencia.NotificacaoOcorrenciaJpaRepository;
 import br.edu.safeplace.backend.application.port.out.NotificadorOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoOcorrencia;
@@ -18,9 +17,8 @@ import br.edu.safeplace.backend.validacao.ocorrencia.NotificacaoOcorrenciaValida
 
 /**
  * Adaptador de notificação interna para alertar o Gestor de Segurança sobre novos relatos
- * de acidentes e incidentes (UC09, DS09, Issue #99), sem presumir canais externos como e-mail ou SMS.
- * A notificação é gravada em {@code notificacoes_ocorrencia}, na mesma transação do relato, e pode
- * ser consultada em {@code GET /api/notificacoes} (issue #195).
+ * de acidentes e incidentes (UC09, DS09, Issue #99, #261).
+ * A notificação é gravada diretamente como entidade JPA de domínio (#254, #261).
  */
 @Component
 public class NotificacaoOcorrenciaInternaAdapter implements NotificadorOcorrencia {
@@ -51,15 +49,13 @@ public class NotificacaoOcorrenciaInternaAdapter implements NotificadorOcorrenci
         // Chain of Responsibility (#266): valida antes de montar e gravar a notificação.
         validador.validar(ocorrencia);
         NotificacaoOcorrencia notificacao = NotificacaoOcorrencia.deNovoRelato(ocorrencia);
-        repository.save(NotificacaoOcorrenciaEntity.deDominio(notificacao));
+        repository.save(notificacao);
 
         log.info("[NOTIFICAÇÃO GESTOR] {} ID={}", notificacao.mensagem(), notificacao.ocorrenciaId());
     }
 
     @Override
     public List<NotificacaoOcorrencia> listar() {
-        return repository.findAllByOrderByCriadaEmDescIdDesc().stream()
-                .map(NotificacaoOcorrenciaEntity::paraDominio)
-                .toList();
+        return repository.findAllByOrderByCriadaEmDescIdDesc();
     }
 }
