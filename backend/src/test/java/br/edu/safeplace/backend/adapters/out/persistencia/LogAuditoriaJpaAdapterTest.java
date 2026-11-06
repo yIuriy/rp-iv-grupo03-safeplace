@@ -19,7 +19,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Testes de Unidade - LogAuditoriaJpaAdapter e LogAuditoriaEntity")
+@DisplayName("Testes de Unidade - LogAuditoriaJpaAdapter e LogAuditoria")
 class LogAuditoriaJpaAdapterTest {
 
     @Mock
@@ -33,10 +33,10 @@ class LogAuditoriaJpaAdapterTest {
     }
 
     @Test
-    @DisplayName("Entidade LogAuditoriaEntity deve possuir anotacao @Immutable do Hibernate")
+    @DisplayName("Entidade LogAuditoria deve possuir anotacao @Immutable do Hibernate")
     void entidadeDeveSerAnotadaComImmutable() {
-        assertThat(LogAuditoriaEntity.class.isAnnotationPresent(Immutable.class))
-                .as("LogAuditoriaEntity deve ser imutável no Hibernate")
+        assertThat(LogAuditoria.class.isAnnotationPresent(Immutable.class))
+                .as("LogAuditoria deve ser imutável no Hibernate")
                 .isTrue();
     }
 
@@ -54,7 +54,7 @@ class LogAuditoriaJpaAdapterTest {
                 1
         );
 
-        LogAuditoriaEntity entitySalva = new LogAuditoriaEntity(
+        LogAuditoria entitySalva = new LogAuditoria(
                 100,
                 "CADASTRO",
                 agora,
@@ -64,14 +64,14 @@ class LogAuditoriaJpaAdapterTest {
                 1
         );
 
-        when(jpaRepository.save(any(LogAuditoriaEntity.class))).thenReturn(entitySalva);
+        when(jpaRepository.save(any(LogAuditoria.class))).thenReturn(entitySalva);
 
         LogAuditoria resultado = adapter.salvar(logDominio);
 
-        ArgumentCaptor<LogAuditoriaEntity> captor = ArgumentCaptor.forClass(LogAuditoriaEntity.class);
+        ArgumentCaptor<LogAuditoria> captor = ArgumentCaptor.forClass(LogAuditoria.class);
         verify(jpaRepository).save(captor.capture());
 
-        LogAuditoriaEntity entityEnviada = captor.getValue();
+        LogAuditoria entityEnviada = captor.getValue();
         assertThat(entityEnviada.getTipoOperacao()).isEqualTo("CADASTRO");
         assertThat(entityEnviada.getResponsavel()).isEqualTo("gestor@safeplace.com");
         assertThat(entityEnviada.getJustificativa()).isEqualTo("Novo EPI");
@@ -89,8 +89,8 @@ class LogAuditoriaJpaAdapterTest {
     @DisplayName("Deve listar logs por entidade e id ordenados por data decrescente")
     void deveListarLogsPorEntidade() {
         LocalDateTime agora = LocalDateTime.now();
-        LogAuditoriaEntity entity1 = new LogAuditoriaEntity(1, "CADASTRO", agora.minusHours(1), "gestor@safeplace.com", null, "AreaRisco", 10);
-        LogAuditoriaEntity entity2 = new LogAuditoriaEntity(2, "ALTERACAO", agora, "supervisor@safeplace.com", "Ajuste de limite", "AreaRisco", 10);
+        LogAuditoria entity1 = new LogAuditoria(1, "CADASTRO", agora.minusHours(1), "gestor@safeplace.com", null, "AreaRisco", 10);
+        LogAuditoria entity2 = new LogAuditoria(2, "ALTERACAO", agora, "supervisor@safeplace.com", "Ajuste de limite", "AreaRisco", 10);
 
         when(jpaRepository.findByEntidadeAndEntidadeIdOrderByDataHoraDesc("AreaRisco", 10))
                 .thenReturn(List.of(entity2, entity1));
