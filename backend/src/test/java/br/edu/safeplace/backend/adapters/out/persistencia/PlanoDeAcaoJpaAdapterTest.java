@@ -14,6 +14,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
+import br.edu.safeplace.backend.application.usecase.OperadorAtual;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
@@ -23,10 +25,12 @@ import br.edu.safeplace.backend.domain.ocorrencia.StatusPlanoDeAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PrazoAcaoInvalidoException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
+import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -49,6 +53,9 @@ class PlanoDeAcaoJpaAdapterTest {
     @Mock
     private LogAuditoriaRepository auditoriaRepository;
 
+    /** Dublê da porta do operador (#236): começa sem sessão. */
+    private final OperadorAutenticadoFixo operador = OperadorAutenticadoFixo.semSessao();
+
     private PlanoDeAcaoJpaAdapter adapter;
     private final LocalDate hoje = LocalDate.of(2026, 9, 20);
 
@@ -59,7 +66,8 @@ class PlanoDeAcaoJpaAdapterTest {
                 prorrogacaoRepository,
                 usuarioRepository,
                 setorRepository,
-                auditoriaRepository
+                auditoriaRepository,
+                operador.operadorAtual(mock(UsuarioRepository.class))
         );
     }
 
@@ -242,6 +250,36 @@ class PlanoDeAcaoJpaAdapterTest {
         ArgumentCaptor<LogAuditoria> captor = ArgumentCaptor.forClass(LogAuditoria.class);
         verify(auditoriaRepository).salvar(captor.capture());
         assertThat(captor.getValue().getJustificativa()).isEqualTo("Alteração de situação da ação: de ABERTA para CONCLUIDA");
+    }
+
+    /** Conclui uma ação de plano sem Gestor e devolve o responsável gravado na auditoria. */
+    private String responsavelDaAuditoriaDeConclusao() {
+        when(planoRepository.findById(100)).thenReturn(Optional.of(new PlanoDeAcaoEntity(
+                100, 10, "Medida", hoje.plusDays(5), "ABERTA", null, 1, null, null, false, null)));
+        when(planoRepository.save(any(PlanoDeAcaoEntity.class))).thenReturn(new PlanoDeAcaoEntity(
+                100, 10, "Medida", hoje.plusDays(5), "CONCLUIDA", null, 1, null, null, false, null));
+        when(usuarioRepository.findById(1)).thenReturn(Optional.of(colaboradorEntidade(1)));
+
+        adapter.salvar(new PlanoDeAcao(
+                100, 10, "Medida", null, hoje.plusDays(5), "CONCLUIDA", colaborador(1), null, false, null, null));
+
+        ArgumentCaptor<LogAuditoria> captor = ArgumentCaptor.forClass(LogAuditoria.class);
+        verify(auditoriaRepository).salvar(captor.capture());
+        return captor.getValue().getResponsavel();
+    }
+
+    @Test
+    @DisplayName("Adapter (#236): a auditoria registra o operador autenticado lido pela porta")
+    void auditoriaRegistraOperadorDaPorta() {
+        operador.autenticar("gestora@safeplace.com", "GESTOR_SEGURANCA");
+
+        assertThat(responsavelDaAuditoriaDeConclusao()).isEqualTo("gestora@safeplace.com");
+    }
+
+    @Test
+    @DisplayName("Adapter (#236): sem sessão e sem Gestor no plano, a auditoria registra SISTEMA")
+    void semSessaoNemGestorAuditoriaRegistraSistema() {
+        assertThat(responsavelDaAuditoriaDeConclusao()).isEqualTo(OperadorAtual.SISTEMA);
     }
 
     @Test

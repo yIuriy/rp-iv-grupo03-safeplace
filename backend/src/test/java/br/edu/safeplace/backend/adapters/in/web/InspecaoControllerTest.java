@@ -23,6 +23,7 @@ import br.edu.safeplace.backend.application.port.in.GerenciarInspecaoUseCase;
 import br.edu.safeplace.backend.config.SecurityConfig;
 import br.edu.safeplace.backend.domain.area_risco.exception.AreaRiscoNaoEncontradaException;
 import br.edu.safeplace.backend.domain.inspecao.exception.InspecaoInvalidaException;
+import br.edu.safeplace.backend.domain.usuario.exception.AcessoNegadoException;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -35,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest({InspecaoController.class, InspecaoExceptionHandler.class, AreaRiscoExceptionHandler.class,
-        EpiExceptionHandler.class})
+        EpiExceptionHandler.class, UsuarioExceptionHandler.class})
 @Import(SecurityConfig.class)
 class InspecaoControllerTest {
 
@@ -98,6 +99,19 @@ class InspecaoControllerTest {
         mockMvc.perform(post("/api/areas-risco/4/inspecoes").contentType(MediaType.APPLICATION_JSON).content(CORPO_VALIDO))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("A data da inspeção não pode ser posterior a hoje."));
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTOR_SEGURANCA")
+    @DisplayName("Adapter (#236): sem Gestor identificável pela porta do operador, o registro responde 403")
+    void semGestorIdentificavelResponde403() throws Exception {
+        String mensagem = "O registro de inspeção exige um Gestor de Segurança autenticado como responsável.";
+        when(useCase.registrar(eq(4), any(RegistrarInspecaoInputDTO.class))).thenThrow(new AcessoNegadoException(mensagem));
+
+        mockMvc.perform(post("/api/areas-risco/4/inspecoes").contentType(MediaType.APPLICATION_JSON).content(CORPO_VALIDO))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").value("Acesso Proibido"))
+                .andExpect(jsonPath("$.message").value(mensagem));
     }
 
     @Test

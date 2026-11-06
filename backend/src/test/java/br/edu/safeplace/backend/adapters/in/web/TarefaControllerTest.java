@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -27,6 +26,7 @@ import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 import br.edu.safeplace.backend.domain.tarefa.exception.TarefaNaoEncontradaException;
+import br.edu.safeplace.backend.domain.usuario.exception.AcessoNegadoException;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -40,7 +40,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest({TarefaController.class, TarefaExceptionHandler.class})
+@WebMvcTest({TarefaController.class, TarefaExceptionHandler.class, UsuarioExceptionHandler.class})
 @Import(SecurityConfig.class)
 class TarefaControllerTest {
 
@@ -180,13 +180,17 @@ class TarefaControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("#112: classificação sem responsável técnico identificável responde 403")
     void classificacaoSemResponsavelRespondeProibido() throws Exception {
-        when(useCase.classificar(1, NivelPerigo.ALTO))
-                .thenThrow(new AccessDeniedException("sem Gestor de Segurança responsável"));
+        // Adapter (#236): o caso de uso recusa pela fachada OperadorAtual, com a exceção do domínio.
+        String mensagem =
+                "A classificação de periculosidade exige um Gestor de Segurança autenticado como responsável técnico.";
+        when(useCase.classificar(1, NivelPerigo.ALTO)).thenThrow(new AcessoNegadoException(mensagem));
 
         mockMvc.perform(patch("/api/tarefas/1/classificacao")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nivelPerigo\": \"ALTO\"}"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").value("Acesso Proibido"))
+                .andExpect(jsonPath("$.message").value(mensagem));
     }
 
     @Test
