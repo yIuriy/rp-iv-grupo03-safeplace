@@ -24,7 +24,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 
 /**
  * O diagrama de classes liga {@code Inspecao} a {@code AreaRisco} e a exatamente um
@@ -46,11 +45,8 @@ public class Inspecao {
     @Column(name = "data_inspecao", nullable = false)
     private LocalDate dataInspecao;
 
-    /** Ponte transicional para a chave estrangeira até que GestorDeSeguranca seja @Entity (#256). */
-    @Column(name = "gestor_id", nullable = false)
-    private Integer gestorId;
-
-    @Transient
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "gestor_id", nullable = false)
     private GestorDeSeguranca responsavel;
 
     @OneToMany(mappedBy = "inspecao", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
@@ -68,7 +64,7 @@ public class Inspecao {
         this.id = id;
         this.areaRisco = areaRisco;
         this.dataInspecao = dataInspecao;
-        definirResponsavel(responsavel);
+        this.responsavel = responsavel;
         this.itens = new ArrayList<>();
         if (itens != null) {
             for (ItemVerificado item : itens) {
@@ -87,16 +83,6 @@ public class Inspecao {
     public static Inspecao registrar(AreaRisco areaRisco, LocalDate dataInspecao, GestorDeSeguranca responsavel,
             List<ItemVerificado> itens) {
         return new Inspecao(null, areaRisco, dataInspecao, responsavel, itens);
-    }
-
-    /** Hidrata o responsável técnico após leitura JPA (ponte transicional até a issue #256). */
-    public void definirResponsavel(GestorDeSeguranca responsavel) {
-        this.responsavel = responsavel;
-        this.gestorId = responsavel != null ? responsavel.getId() : null;
-    }
-
-    public Integer getGestorId() {
-        return gestorId;
     }
 
     public long contarNaoConformidades() {
