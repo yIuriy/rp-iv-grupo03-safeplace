@@ -28,7 +28,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [Chain of Responsibility](#chain-of-responsibility--camada-de-validação) | GoF, comportamental | Backend: camada `validacao` (aptidão do colaborador e tarefa) | [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228); continua em [#263](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/263) a [#267](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/267) | Aplicado (6/6: #228, #267, #263, #264, #265, #266) |
 | [Data Mapper](#data-mapper--mapeadores-de-persistencia) | Fowler / PoEAA | Backend: `EpiEntityMapper`, `AreaRiscoEntityMapper` e `PlanoDeAcaoEntityMapper` | [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229), [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242) | Pendente |
 | [Value Object](#value-object--protocolo-cat-em-acidente) | Fowler / DDD | Backend: `NumeroProtocoloCAT` dentro de `Acidente` | [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230) | Aplicado |
-| [DTO Assembler](#dto-assembler--ocorrenciaoutputdto) | Fowler / PoEAA | Backend: `OcorrenciaOutputAssembler` sem expor `PlanoDeAcao` | [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245) | Pendente |
+| [DTO Assembler](#dto-assembler--ocorrenciaoutputdto) | Fowler / PoEAA | Backend: `OcorrenciaOutputAssembler` sem expor `PlanoDeAcao` | [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245) | Aplicado |
 | [Strategy (Backend)](#strategy--fonte-de-tempo-clock) | GoF, comportamental | Backend: injeção de `java.time.Clock` nas regras de vencimento | [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247) | Pendente |
 | [Adapter (Frontend)](#adapter--leitura-da-api-e-contrato-de-epi) | GoF, estrutural | Frontend: primitivas de leitura da API e unificação de `Epi` | [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244), [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) | Aplicado (2/2: #244, #231) |
 | [Template Method (hook)](#template-method-hook--envio-de-formulario) | GoF, comportamental | Frontend: submissão de formulários (`useEnvioFormulario`) | [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233), [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243) | Aplicado (2/2: #233, #243) |
@@ -2214,33 +2214,198 @@ Suíte existente (`TESTCONTAINERS_RYUK_DISABLED=true ./mvnw clean test -Dapi.ver
 
 **Intenção:** montar `OcorrenciaOutputDTO` por meio de um Assembler dedicado (`OcorrenciaOutputAssembler`) usando `PlanoDeAcaoOutputDTO` em vez de expor a entidade de domínio `PlanoDeAcao`.
 
-**Issue:** [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245).
+**Issue:** [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245), aplicada.
 
 ### Problema (antes)
 
-*A preencher na issue [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, §5).*
+- **Entidade de domínio na fronteira.** `OcorrenciaOutputDTO` tinha o campo `PlanoDeAcao planoDeAcao`. O DTO, que deveria só carregar dados, carregava a entidade inteira, e quem convertia o plano para a resposta HTTP era o adaptador web (`PlanoDeAcaoResponse.fromDomain(dto.planoDeAcao())`). Uma mudança no domínio do plano chegava à camada `adapters/in/web`.
+- **Montagem repetida.** O método estático `OcorrenciaOutputDTO.deDominio` tinha dois `new OcorrenciaOutputDTO(...)` de 24 argumentos, um para `Acidente` e outro para `Incidente`, repetindo os 15 campos comuns e preenchendo à mão com `null` os campos do outro tipo. Na v1.0.0: complexidade 15 e 63 linhas.
+- **DTO com regra de montagem.** O próprio record conhecia `Acidente`, `Incidente`, `PlanoDeAcao` e `Colaborador`, ou seja, o pacote `application/dto/output` dependia do domínio.
+
+### Por que DTO + Assembler
+
+O DTO só transporta dados para a fronteira. Quem sabe montá-lo a partir do domínio é um único objeto, o Assembler:
+
+- a parte comum (id, datas, status, área, colaborador, relator, plano) é montada uma vez;
+- a parte de acidente e a de incidente vêm de métodos separados (`deAcidente`, `deIncidente`), que devolvem um record privado só com os campos de cada tipo;
+- o plano de ação sai como `PlanoDeAcaoOutputDTO`, montado pelo `deDominio` que o próprio plano já tinha.
+
+O Assembler é uma classe de instância, guardada como campo do caso de uso, e não um método estático no DTO. Ele não tem estado nem dependências, então não precisou entrar no construtor do `OcorrenciaService`.
+
+**Contrato preservado.** `OcorrenciaResponse` continua com os mesmos campos. A conversão do plano passou de `PlanoDeAcaoResponse.fromDomain(plano)` para `PlanoDeAcaoResponse.fromOutputDTO(dto)`, e `fromDomain` já fazia exatamente `fromOutputDTO(PlanoDeAcaoOutputDTO.deDominio(plano))`. O JSON não muda. Com isso, `fromDomain` ficou sem uso e foi removido, e o adaptador web deixou de importar `PlanoDeAcao`.
 
 ### Papéis do padrão
 
 | Papel no padrão | Elemento no código | Responsabilidade |
 | --- | --- | --- |
 | DTO | `OcorrenciaOutputDTO`, `PlanoDeAcaoOutputDTO` | Transportar dados para a camada web sem expor entidades de domínio |
-| Assembler | `OcorrenciaOutputAssembler` | Concentrar a montagem dos campos comuns e específicos de `Acidente` e `Incidente` |
+| Assembler | `OcorrenciaOutputAssembler` (`application/assembler`) | Montar a parte comum uma vez e a específica de `Acidente` e `Incidente` em métodos separados |
 | Domain | `Ocorrencia`, `Acidente`, `Incidente`, `PlanoDeAcao` | Modelo de domínio isolado da serialização HTTP |
+| Client | `OcorrenciaService` | Pedir ao Assembler o DTO de cada ocorrência devolvida |
 
 ### Diagramas
 
-*Diagramas PlantUML antes e depois a preencher na issue [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245).*
+**Antes.** O DTO guarda a entidade e se monta sozinho; o adaptador web converte o plano a partir do domínio.
+
+```mermaid
+classDiagram
+  direction LR
+  class OcorrenciaOutputDTO {
+    <<DTO>>
+    +planoDeAcao PlanoDeAcao
+    +deDominio(Ocorrencia)$ OcorrenciaOutputDTO
+  }
+  class OcorrenciaService
+  class OcorrenciaResponse
+  class PlanoDeAcaoResponse {
+    +fromDomain(PlanoDeAcao)$
+    +fromOutputDTO(PlanoDeAcaoOutputDTO)$
+  }
+  class PlanoDeAcao {
+    <<Entity>>
+  }
+  class Acidente {
+    <<Entity>>
+  }
+  class Incidente {
+    <<Entity>>
+  }
+  OcorrenciaService ..> OcorrenciaOutputDTO : deDominio
+  OcorrenciaOutputDTO --> PlanoDeAcao : campo de domínio
+  OcorrenciaOutputDTO ..> Acidente : 24 argumentos
+  OcorrenciaOutputDTO ..> Incidente : 24 argumentos
+  OcorrenciaResponse ..> PlanoDeAcaoResponse : fromDomain
+  PlanoDeAcaoResponse ..> PlanoDeAcao
+```
+
+**Depois.** O Assembler é o único que conhece o domínio; DTO e resposta só trocam dados.
+
+```mermaid
+classDiagram
+  direction LR
+  class OcorrenciaOutputAssembler {
+    <<Assembler>>
+    +montar(Ocorrencia) OcorrenciaOutputDTO
+    -deAcidente(Acidente) DadosDoTipo
+    -deIncidente(Incidente) DadosDoTipo
+  }
+  class OcorrenciaOutputDTO {
+    <<DTO>>
+    +planoDeAcao PlanoDeAcaoOutputDTO
+  }
+  class PlanoDeAcaoOutputDTO {
+    <<DTO>>
+  }
+  class OcorrenciaService {
+    <<Client>>
+  }
+  class OcorrenciaResponse
+  class PlanoDeAcaoResponse {
+    +fromOutputDTO(PlanoDeAcaoOutputDTO)$
+  }
+  class Ocorrencia {
+    <<Domain>>
+  }
+  class Acidente {
+    <<Domain>>
+  }
+  class Incidente {
+    <<Domain>>
+  }
+  OcorrenciaService --> OcorrenciaOutputAssembler : montar
+  OcorrenciaOutputAssembler ..> Ocorrencia : parte comum
+  OcorrenciaOutputAssembler ..> Acidente : parte de acidente
+  OcorrenciaOutputAssembler ..> Incidente : parte de incidente
+  OcorrenciaOutputAssembler ..> OcorrenciaOutputDTO : cria
+  OcorrenciaOutputDTO --> PlanoDeAcaoOutputDTO
+  OcorrenciaResponse ..> PlanoDeAcaoResponse : fromOutputDTO
+```
+
+### Código antes × depois
+
+Antes (`OcorrenciaOutputDTO`, trecho de acidente; o de incidente repetia os mesmos campos comuns):
+
+```java
+public record OcorrenciaOutputDTO(..., PlanoDeAcao planoDeAcao, ...) {
+    public static OcorrenciaOutputDTO deDominio(Ocorrencia ocorrencia) {
+        Integer areaId = ocorrencia.getArea() != null ? ocorrencia.getArea().getId() : null;
+        ...
+        if (ocorrencia instanceof Acidente a) {
+            return new OcorrenciaOutputDTO(
+                    a.getIdOcorrencia(), "ACIDENTE", a.getDataOcorrencia(), a.getDataRegistro(),
+                    a.getStatusOcorrencia() != null ? a.getStatusOcorrencia().name() : null,
+                    a.getLocal(), a.getDescricao(), a.getPlanoDeAcao(),
+                    a.getCausaRaiz() != null ? a.getCausaRaiz().name() : null,
+                    ..., null, null, ..., areaId, areaNome, colaboradorId, ...);
+        } else if (ocorrencia instanceof Incidente i) {
+            return new OcorrenciaOutputDTO(i.getIdOcorrencia(), "INCIDENTE", ..., null, null, null, ...);
+        }
+        throw new IllegalArgumentException("Tipo de ocorrência não suportado");
+    }
+}
+```
+
+Depois (`OcorrenciaOutputAssembler`):
+
+```java
+public OcorrenciaOutputDTO montar(Ocorrencia ocorrencia) {
+    DadosDoTipo tipo = dadosDoTipo(ocorrencia);
+    Colaborador relator = ocorrencia.getRelator();
+    return new OcorrenciaOutputDTO(
+            ocorrencia.getIdOcorrencia(),
+            tipo.tipoOcorrencia(),
+            ...
+            PlanoDeAcaoOutputDTO.deDominio(ocorrencia.getPlanoDeAcao()),
+            tipo.causaRaiz(),
+            ...
+            se(relator, r -> se(r.getPerfil(), Enum::name)));
+}
+
+private static DadosDoTipo deIncidente(Incidente incidente) {
+    return new DadosDoTipo("INCIDENTE", null, null, null, null, null,
+            incidente.getSituacaoRisco(), incidente.getPotencialDano(), null);
+}
+```
+
+E o caso de uso (`OcorrenciaService`, 9 pontos):
+
+```java
+// antes
+return OcorrenciaOutputDTO.deDominio(salvo);
+// depois
+return assembler.montar(salvo);
+```
+
+### Benefício
+
+A API deixou de depender do formato interno do plano de ação: o que sai da aplicação são só DTOs, e o adaptador web não importa mais nenhuma classe de `domain/ocorrencia`. A montagem ficou num único lugar, sem a lista de 24 argumentos repetida: um campo novo comum às duas ocorrências entra em uma linha, e um campo novo de acidente só toca `deAcidente`. Quando a #239 tornar `Ocorrencia` `sealed`, a escolha entre `deAcidente` e `deIncidente` pode virar um `switch` exaustivo sem mexer no DTO.
 
 ### Métricas locais
 
 | Métrica | Antes (v1.0.0) | Depois |
-| --- | --- | --- |
-| Complexidade ciclomática de `OcorrenciaOutputDTO.deDominio` | 15 | *A medir* |
+| --- | ---: | ---: |
+| Tipos de `domain/` nos campos de `OcorrenciaOutputDTO` | 1 (`PlanoDeAcao`) | 0 |
+| Imports de `domain/` em `OcorrenciaOutputDTO` | 5 | 0 |
+| Chamadas `new OcorrenciaOutputDTO(...)` em produção | 2 | 1 |
+| Complexidade ciclomática do método de montagem | 15 (`deDominio`) | 1 (`montar`) + 3 (`dadosDoTipo`) |
+| Linhas do método de montagem | 63 (`deDominio`) | 28 (`montar`) |
+| Classes de `adapters/in/web` que importam `PlanoDeAcao` | 1 (`PlanoDeAcaoResponse`) | 0 |
+
+Complexidade contada por decisões (`if`, `?:`, `&&`) no corpo do método; as lambdas de `se(...)` não contam no método. Medição por leitura do código de `backend/src/main`.
 
 ### Evidências
 
-*A preencher na issue [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245).*
+Testes novos: `OcorrenciaOutputAssemblerTest` (5 testes; papéis DTO e Assembler):
+
+1. nenhum componente do record `OcorrenciaOutputDTO` é um tipo de `domain/`;
+2. o acidente sai com a parte comum, os campos de acidente, os de incidente nulos e o plano como `PlanoDeAcaoOutputDTO`;
+3. o incidente sai com situação de risco e potencial de dano, sem campos de acidente e sem plano;
+4. área, colaborador e relator ausentes viram `null`, sem `NullPointerException`;
+5. um subtipo desconhecido de `Ocorrencia` é recusado com a mesma mensagem de antes.
+
+Contrato HTTP: `OcorrenciaControllerTest` (22 testes) e `SegurancaOcorrenciaPlanoRbacTest` passam sem mudança nas asserções de JSON; só o tipo do campo `planoDeAcao` nos DTOs montados à mão mudou de `PlanoDeAcao` para `PlanoDeAcaoOutputDTO` (eles passam `null`, então nada foi alterado). `OcorrenciaPersistenciaIntegracaoTest` registra e lê acidentes e incidentes no PostgreSQL pelo caso de uso, passando pelo Assembler.
+
+Suíte existente (`./mvnw clean test` com PostgreSQL externo novo, `-Dsafeplace.test.datasource.url`): **1129 testes, 0 falhas, 10 erros**. Os 10 erros são o problema anterior de limpeza entre classes de integração (`DELETE FROM epis` bloqueado por `projecoes_substituicao`), o mesmo da `dev` sem esta mudança (`a529667`: 1121 testes, só erros desse tipo, cuja quantidade e classe variam com a ordem de execução).
 
 ---
 
