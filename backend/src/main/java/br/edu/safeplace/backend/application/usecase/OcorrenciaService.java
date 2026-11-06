@@ -20,7 +20,6 @@ import br.edu.safeplace.backend.application.port.out.NotificadorOcorrencia;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepository;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
-import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
@@ -58,6 +57,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
     private final Validador<Ocorrencia> validador;
     private final Validador<Acidente> protocoloValidador;
     private final OperadorAtual operadorAtual;
+    private final RegistradorAuditoria auditoria;
     private final OcorrenciaOutputAssembler assembler = new OcorrenciaOutputAssembler();
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -69,7 +69,8 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
             NotificadorOcorrencia notificadorOcorrencia,
             @Qualifier("ocorrenciaValidador") Validador<Ocorrencia> validador,
             @Qualifier("protocoloCATValidador") Validador<Acidente> protocoloValidador,
-            OperadorAtual operadorAtual) {
+            OperadorAtual operadorAtual,
+            RegistradorAuditoria auditoria) {
         this.validador = java.util.Objects.requireNonNull(validador, "Validador da ocorrência é obrigatório.");
         this.protocoloValidador = java.util.Objects.requireNonNull(
                 protocoloValidador, "Validador do protocolo CAT é obrigatório.");
@@ -84,6 +85,8 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
                 notificadorOcorrencia, "Notificador de ocorrência é obrigatório.");
         // Adapter (#236): relator, auditoria e visibilidade leem o operador pela porta.
         this.operadorAtual = java.util.Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
+        // Facade (#223): a trilha é gravada numa chamada, sem montar o LogAuditoria aqui.
+        this.auditoria = java.util.Objects.requireNonNull(auditoria, "Registrador de auditoria é obrigatório.");
     }
 
     /** Usa o validador padrão; usado pelos testes sem contexto Spring. */
@@ -95,7 +98,8 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
             NotificadorOcorrencia notificadorOcorrencia,
             OperadorAtual operadorAtual) {
         this(repository, areaRiscoRepository, usuarioRepository, logAuditoriaRepository, notificadorOcorrencia,
-                new OcorrenciaValidador(), new ProtocoloCATValidador(), operadorAtual);
+                new OcorrenciaValidador(), new ProtocoloCATValidador(), operadorAtual,
+                new RegistradorAuditoria(logAuditoriaRepository, operadorAtual));
     }
 
     @Override
@@ -136,13 +140,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         validador.validar(acidente);
         Acidente salvo = repository.salvarAcidente(acidente);
 
-        LogAuditoria log = LogAuditoria.registrarCadastro(
-                operadorAtual.emailOuSistema(),
-                "Acidente",
-                salvo.getId(),
-                "Registro de Acidente de Trabalho"
-        );
-        logAuditoriaRepository.salvar(log);
+        auditoria.cadastro("Acidente", salvo.getId(), "Registro de Acidente de Trabalho");
 
         notificadorOcorrencia.notificarGestor(salvo);
 
@@ -175,13 +173,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         validador.validar(incidente);
         Incidente salvo = repository.salvarIncidente(incidente);
 
-        LogAuditoria log = LogAuditoria.registrarCadastro(
-                operadorAtual.emailOuSistema(),
-                "Incidente",
-                salvo.getId(),
-                "Registro de Incidente"
-        );
-        logAuditoriaRepository.salvar(log);
+        auditoria.cadastro("Incidente", salvo.getId(), "Registro de Incidente");
 
         notificadorOcorrencia.notificarGestor(salvo);
 
@@ -345,11 +337,8 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
             throw new IllegalStateException("Tipo de ocorrência não suportado.");
         }
 
-        logAuditoriaRepository.salvar(LogAuditoria.registrarAlteracao(
-                operadorAtual.emailOuSistema(),
-                salva instanceof Acidente ? "Acidente" : "Incidente",
-                salva.getId(),
-                "Atualização de ocorrência. Campos alterados: " + descreverAlteracoes(atual, salva)));
+        auditoria.alteracao(entidadeAuditada(salva), salva.getId(),
+                "Atualização de ocorrência. Campos alterados: " + descreverAlteracoes(atual, salva));
 
         return assembler.montar(salva);
     }
@@ -374,6 +363,11 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         return campos.isEmpty() ? "nenhum" : String.join(", ", campos);
     }
 
+    // O instanceof sai em #237, com o getTipo() da fábrica de ocorrências (#239).
+    private static String entidadeAuditada(Ocorrencia ocorrencia) {
+        return ocorrencia instanceof Acidente ? "Acidente" : "Incidente";
+    }
+
     private static Integer idDaArea(Ocorrencia ocorrencia) {
         return ocorrencia.getArea() != null ? ocorrencia.getArea().getId() : null;
     }
@@ -392,13 +386,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
 
         Ocorrencia salva = salvarOcorrencia(ocorrencia);
 
-        LogAuditoria log = LogAuditoria.registrarAlteracao(
-                operadorAtual.emailOuSistema(),
-                salva instanceof Acidente ? "Acidente" : "Incidente",
-                salva.getId(),
-                "Envio de ocorrência para triagem"
-        );
-        logAuditoriaRepository.salvar(log);
+        auditoria.alteracao(entidadeAuditada(salva), salva.getId(), "Envio de ocorrência para triagem");
 
         return assembler.montar(salva);
     }
@@ -413,13 +401,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
 
         Ocorrencia salva = salvarOcorrencia(ocorrencia);
 
-        LogAuditoria log = LogAuditoria.registrarAlteracao(
-                operadorAtual.emailOuSistema(),
-                salva instanceof Acidente ? "Acidente" : "Incidente",
-                salva.getId(),
-                "Arquivamento de ocorrência"
-        );
-        logAuditoriaRepository.salvar(log);
+        auditoria.alteracao(entidadeAuditada(salva), salva.getId(), "Arquivamento de ocorrência");
 
         return assembler.montar(salva);
     }
@@ -441,13 +423,8 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         protocoloValidador.validar(consolidado);
         Acidente salvo = repository.salvarAcidente(consolidado);
 
-        LogAuditoria log = LogAuditoria.registrarAlteracao(
-                operadorAtual.emailOuSistema(),
-                "Acidente",
-                salvo.getId(),
-                "Consolidação de CAT com protocolo " + salvo.getNumeroProtocolo()
-        );
-        logAuditoriaRepository.salvar(log);
+        auditoria.alteracao("Acidente", salvo.getId(),
+                "Consolidação de CAT com protocolo " + salvo.getNumeroProtocolo());
 
         return assembler.montar(salvo);
     }
