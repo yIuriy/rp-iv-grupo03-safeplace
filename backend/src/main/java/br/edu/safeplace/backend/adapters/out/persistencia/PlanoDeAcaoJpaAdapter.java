@@ -5,13 +5,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.application.port.out.PlanoDeAcaoRepository;
+import br.edu.safeplace.backend.application.usecase.OperadorAtual;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
@@ -32,13 +31,15 @@ public class PlanoDeAcaoJpaAdapter implements PlanoDeAcaoRepository {
     private final UsuarioJpaRepository usuarioRepository;
     private final SetorJpaRepository setorRepository;
     private final LogAuditoriaRepository auditoriaRepository;
+    private final OperadorAtual operadorAtual;
 
     public PlanoDeAcaoJpaAdapter(
             PlanoDeAcaoJpaRepository planoRepository,
             ProrrogacaoPrazoJpaRepository prorrogacaoRepository,
             UsuarioJpaRepository usuarioRepository,
             SetorJpaRepository setorRepository,
-            LogAuditoriaRepository auditoriaRepository) {
+            LogAuditoriaRepository auditoriaRepository,
+            OperadorAtual operadorAtual) {
         this.planoRepository = planoRepository;
         this.prorrogacaoRepository = prorrogacaoRepository;
         this.usuarioRepository = usuarioRepository;
@@ -46,6 +47,8 @@ public class PlanoDeAcaoJpaAdapter implements PlanoDeAcaoRepository {
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.auditoriaRepository = Objects.requireNonNull(
                 auditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
+        // Adapter (#236): o operador da auditoria vem da porta OperadorAutenticado.
+        this.operadorAtual = Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
     }
 
     /** Cópia dos campos auditados antes da gravação. */
@@ -296,23 +299,15 @@ public class PlanoDeAcaoJpaAdapter implements PlanoDeAcaoRepository {
                 .orElse(null);
     }
 
+    /** Operador autenticado; sem sessão, o Gestor do plano; sem nenhum dos dois, SISTEMA. */
     private String resolverOperador(PlanoDeAcao plano) {
-        String authUser = emailAutenticado();
-        if (authUser != null) {
-            return authUser;
+        Optional<String> autenticado = operadorAtual.obterIdentificadorOperador();
+        if (autenticado.isPresent()) {
+            return autenticado.get();
         }
         if (plano != null && plano.getGestor() != null && plano.getGestor().getEmail() != null) {
             return plano.getGestor().getEmail();
         }
-        return "SISTEMA";
-    }
-
-    private String emailAutenticado() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
-            String email = auth.getName().trim();
-            return "anonymousUser".equals(email) ? null : email;
-        }
-        return null;
+        return OperadorAtual.SISTEMA;
     }
 }
