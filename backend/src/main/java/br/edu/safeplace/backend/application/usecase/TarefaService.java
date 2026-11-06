@@ -24,7 +24,6 @@ import br.edu.safeplace.backend.application.port.out.SetorRepository;
 import br.edu.safeplace.backend.application.port.out.TarefaRepository;
 import br.edu.safeplace.backend.validacao.Validador;
 import br.edu.safeplace.backend.validacao.tarefa.TarefaValidador;
-import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
@@ -56,18 +55,22 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
     private final TarefaRepository repository;
     private final LogAuditoriaRepository logAuditoriaRepository;
     private final OperadorAtual operadorAtual;
+    private final RegistradorAuditoria auditoria;
     private final Validador<Tarefa> validador;
     private final EpiRepository epiRepository;
 
     @Autowired
-    public TarefaService(TarefaRepository repository, LogAuditoriaRepository logAuditoriaRepository,
-            OperadorAtual operadorAtual, Validador<Tarefa> validador, EpiRepository epiRepository) {
+    public TarefaService(TarefaRepository repository, RegistradorAuditoria auditoria,
+            LogAuditoriaRepository logAuditoriaRepository, OperadorAtual operadorAtual, Validador<Tarefa> validador,
+            EpiRepository epiRepository) {
         this.repository = repository;
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.logAuditoriaRepository = java.util.Objects.requireNonNull(
                 logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
         // Adapter (#236): operador e Gestor responsável vêm da porta OperadorAutenticado.
         this.operadorAtual = java.util.Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
+        // Facade (#223): a trilha é gravada numa chamada, sem montar o LogAuditoria aqui.
+        this.auditoria = java.util.Objects.requireNonNull(auditoria, "Registrador de auditoria é obrigatório.");
         // #241: portas obrigatórias, sem construtores que repassam null.
         this.validador = java.util.Objects.requireNonNull(validador, "Validador da tarefa é obrigatório.");
         this.epiRepository = java.util.Objects.requireNonNull(epiRepository, "Repositório de EPIs é obrigatório.");
@@ -77,7 +80,8 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
     public TarefaService(TarefaRepository repository, LogAuditoriaRepository logAuditoriaRepository,
             OperadorAtual operadorAtual, AreaRiscoRepository areaRiscoRepository,
             SetorRepository setorRepository, EpiRepository epiRepository) {
-        this(repository, logAuditoriaRepository, operadorAtual,
+        this(repository, new RegistradorAuditoria(logAuditoriaRepository, operadorAtual),
+                logAuditoriaRepository, operadorAtual,
                 new TarefaValidador(areaRiscoRepository, setorRepository), epiRepository);
     }
 
@@ -95,8 +99,7 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
         }
         Tarefa salva = repository.salvar(novaTarefa);
 
-        registrarLog(LogAuditoria.registrarCadastro(
-                operadorAtual.emailOuSistema(), ENTIDADE, salva.getId(), "Cadastro de Tarefa: " + salva.getDescricao()));
+        auditoria.cadastro(ENTIDADE, salva.getId(), "Cadastro de Tarefa: " + salva.getDescricao());
         if (salva.estaClassificada()) {
             registrarClassificacao(new RegistroClassificacaoTarefa(
                     salva.getId(), null, salva.getNivelPerigo(), responsavel, salva.getDataClassificacao()));
@@ -118,9 +121,7 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
         validador.validar(atualizada);
 
         Tarefa salva = repository.salvar(atualizada);
-        String op = operador != null ? operador : operadorAtual.emailOuSistema();
-        registrarLog(LogAuditoria.registrarAlteracao(
-                op, ENTIDADE, salva.getId(), "Atualização de Tarefa: " + salva.getDescricao()));
+        auditoria.por(operador).alteracao(ENTIDADE, salva.getId(), "Atualização de Tarefa: " + salva.getDescricao());
 
         return TarefaOutputDTO.deDominio(salva);
     }
@@ -182,10 +183,9 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
         Tarefa salva = repository.salvar(tarefa);
 
         // RNF05: o vínculo registra operador e o dado alterado (EPIs anteriores e novos).
-        registrarLog(LogAuditoria.registrarAlteracao(
-                operadorAtual.emailOuSistema(), ENTIDADE, salva.getId(),
+        auditoria.alteracao(ENTIDADE, salva.getId(),
                 "EPIs obrigatórios da tarefa: de " + anteriores + " para "
-                        + descreverEpis(salva.verificarEpisObrigatoriosTarefa())));
+                        + descreverEpis(salva.verificarEpisObrigatoriosTarefa()));
         return TarefaOutputDTO.deDominio(salva);
     }
 
@@ -223,20 +223,12 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
 
     private void registrarClassificacao(RegistroClassificacaoTarefa registro) {
         String anterior = registro.nivelAnterior() != null ? registro.nivelAnterior().name() : "sem classificação";
-        registrarLog(new LogAuditoria(
-                null,
-                "ALTERACAO",
-                registro.dataHora(),
-                registro.responsavel().getEmail(),
+        auditoria.por(registro.responsavel().getEmail()).em(registro.dataHora()).alteracao(
+                ENTIDADE,
+                registro.idTarefa(),
                 String.format("Classificação de periculosidade da tarefa: de %s para %s; responsável técnico: %s (id %d)",
                         anterior, registro.nivelNovo().name(), registro.responsavel().getNome(),
-                        registro.responsavel().getId()),
-                ENTIDADE,
-                registro.idTarefa()));
-    }
-
-    private void registrarLog(LogAuditoria log) {
-        logAuditoriaRepository.salvar(log);
+                        registro.responsavel().getId()));
     }
 
     private Tarefa buscarTarefa(Integer id) {
