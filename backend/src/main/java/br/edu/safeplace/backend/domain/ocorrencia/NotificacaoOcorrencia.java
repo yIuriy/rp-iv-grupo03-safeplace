@@ -73,27 +73,6 @@ public class NotificacaoOcorrencia {
         this.criadaEm = criadaEm != null ? criadaEm : LocalDateTime.now();
     }
 
-    public static NotificacaoOcorrencia deNovoRelato(Ocorrencia ocorrencia) {
-        // A ocorrência é validada por NotificacaoOcorrenciaValidador no adaptador (#266).
-        TipoOcorrencia tipo = ocorrencia instanceof Acidente ? TipoOcorrencia.ACIDENTE : TipoOcorrencia.INCIDENTE;
-        // Value Object (#230): usa o protocolo guardado no acidente, sem recriar nem revalidar.
-        NumeroProtocoloCAT protocolo = ocorrencia instanceof Acidente acidente ? acidente.getProtocoloCAT() : null;
-        String area = ocorrencia.getArea() != null ? ocorrencia.getArea().getNome() : null;
-
-        StringBuilder mensagem = new StringBuilder(tipo == TipoOcorrencia.ACIDENTE ? "Novo acidente" : "Novo incidente")
-                .append(" registrado");
-        if (protocolo != null) {
-            mensagem.append(" (protocolo ").append(protocolo).append(")");
-        }
-        if (area != null) {
-            mensagem.append(" na área ").append(area);
-        }
-        mensagem.append(". Aguarda triagem.");
-
-        return new NotificacaoOcorrencia(null, ocorrencia.getId(), tipo, protocolo, area, mensagem.toString(),
-                LocalDateTime.now());
-    }
-
     public Integer id() {
         return id;
     }

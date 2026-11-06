@@ -83,7 +83,7 @@ class AcidenteProtocoloCATTest {
     void notificacaoUsaOMesmoValueObject() {
         Acidente acidente = acidente(7, NumeroProtocoloCAT.de("CAT-2026-09-0003"));
 
-        NotificacaoOcorrencia notificacao = NotificacaoOcorrencia.deNovoRelato(acidente);
+        NotificacaoOcorrencia notificacao = new FabricaRelatoAcidente().criarNotificacao(acidente);
 
         assertThat(notificacao.numeroProtocoloCAT()).isSameAs(acidente.getProtocoloCAT());
         assertThat(notificacao.mensagem()).contains("(protocolo CAT-2026-09-0003)");

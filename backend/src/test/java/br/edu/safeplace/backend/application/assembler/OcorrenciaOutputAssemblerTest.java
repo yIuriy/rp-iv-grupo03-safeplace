@@ -1,13 +1,13 @@
 package br.edu.safeplace.backend.application.assembler;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.lang.reflect.RecordComponent;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
@@ -84,13 +84,10 @@ class OcorrenciaOutputAssemblerTest {
     }
 
     @Test
-    void recusaTipoDeOcorrenciaDesconhecido() {
-        Ocorrencia desconhecida = new Ocorrencia(13, "Outro", DATA, DATA, StatusOcorrencia.ABERTA, null, null,
-                null, null, null) {
-        };
-
-        assertThatThrownBy(() -> assembler.montar(desconhecida))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Tipo de ocorrência não suportado");
+    @DisplayName("Hierarquia de Ocorrencia é sealed permitindo apenas Acidente e Incidente (#239)")
+    void hierarquiaDeOcorrenciaEhSealed() {
+        assertThat(Ocorrencia.class.isSealed()).isTrue();
+        assertThat(Ocorrencia.class.getPermittedSubclasses())
+                .containsExactlyInAnyOrder(Acidente.class, Incidente.class);
     }
 }

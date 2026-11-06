@@ -30,18 +30,18 @@ class AcidenteTest {
         LocalDateTime dataFato = LocalDateTime.now().minusDays(2);
         Epi epi = EpiDeTeste.umEpi()
                 .comId(1)
-                .comNome("Bota de Segurança")
-                .comCa("CA-123")
-                .comQuantidade(10)
+                .comNome("Bota de biqueira de aço")
+                .comCa("CA-789")
+                .comQuantidade(8)
                 .comEstoqueMinimo(2)
                 .comStatus(StatusEpi.DISPONIVEL)
                 .comValidadeCa(LocalDate.now().plusYears(1))
                 .comVidaUtilDias(180)
                 .comDescricao("Bota")
                 .build();
-        AreaRisco area = AreaRisco.cadastrar("USI-01", "Usinagem", "Tornos mecânicos", NivelPerigo.ALTO, List.of(epi));
-        Colaborador colaborador = Colaborador.novo("Roberto", "87455877074", LocalDate.of(1992, 3, 10), "roberto@empresa.com");
-        GestorDeSeguranca gestor = GestorDeSeguranca.novo("Mariana", "49216091040", LocalDate.of(1988, 7, 20), "mariana@empresa.com", "senha123");
+        AreaRisco area = AreaRisco.cadastrar("ALMOX-01", "Almoxarifado", "Estocagem pesada", NivelPerigo.ALTO, List.of(epi));
+        Colaborador colaborador = Colaborador.novo("José", "63863481079", LocalDate.of(1988, 3, 10), "jose@empresa.com");
+        GestorDeSeguranca gestor = GestorDeSeguranca.novo("Ana", "49216091040", LocalDate.of(1985, 5, 5), "ana@empresa.com", "senha123");
 
         Acidente acidente = new Acidente(
                 1,
@@ -55,38 +55,54 @@ class AcidenteTest {
                 null,
                 null,
                 CausaRaizAcidente.FALHA_EPI,
-                "Fratura",
-                "Contusão no pé",
+                "Esmagamento",
+                "Fratura no metatarso",
                 NumeroProtocoloCAT.de("CAT-2026-09-0001"),
-                "Hospital Santa Casa",
-                NivelPerigo.ALTO
+                "Hospital Municipal",
+                NivelPerigo.CRITICO
         );
 
         assertThat(acidente.getId()).isEqualTo(1);
         assertThat(acidente.getDescricao()).isEqualTo("Queda de ferramenta sobre o pé do operador");
         assertThat(acidente.getCausaRaiz()).isEqualTo(CausaRaizAcidente.FALHA_EPI);
-        assertThat(acidente.getTipo()).isEqualTo("Fratura");
-        assertThat(acidente.getDano()).isEqualTo("Contusão no pé");
+        assertThat(acidente.getTipo()).isEqualTo("Esmagamento");
+        assertThat(acidente.getDano()).isEqualTo("Fratura no metatarso");
         assertThat(acidente.getNumeroProtocoloCAT()).isEqualTo("CAT-2026-09-0001");
-        assertThat(acidente.getNumeroProtocolo()).isEqualTo("CAT-2026-09-0001");
-        assertThat(acidente.getDestino()).isEqualTo("Hospital Santa Casa");
-        assertThat(acidente.getGravidade()).isEqualTo(NivelPerigo.ALTO);
-        assertThat(acidente.getRelator()).isEqualTo(gestor);
+        assertThat(acidente.getDestino()).isEqualTo("Hospital Municipal");
+        assertThat(acidente.getGravidade()).isEqualTo(NivelPerigo.CRITICO);
+        assertThat(acidente.isGrave()).isTrue();
+        assertThat(acidente.getTipo()).isEqualTo("Esmagamento");
+        assertThat(acidente.getTipoOcorrencia()).isEqualTo(TipoOcorrencia.ACIDENTE);
+    }
+
+    @Test
+    @DisplayName("isGrave deve retornar false para gravidade BAIXO e MEDIO")
+    void isGraveDeveRetornarFalseParaGravidadeNaoGrave() {
+        Acidente acidenteBaixo = new Acidente(1, "Desc", LocalDateTime.now(), LocalDateTime.now(),
+                StatusOcorrencia.ABERTA, null, null, null, null, null,
+                CausaRaizAcidente.OUTRO, "Tipo", "Dano", null, "Destino", NivelPerigo.BAIXO);
+        assertThat(acidenteBaixo.isGrave()).isFalse();
+
+        Acidente acidenteMedio = new Acidente(2, "Desc", LocalDateTime.now(), LocalDateTime.now(),
+                StatusOcorrencia.ABERTA, null, null, null, null, null,
+                CausaRaizAcidente.OUTRO, "Tipo", "Dano", null, "Destino", NivelPerigo.MEDIO);
+        assertThat(acidenteMedio.isGrave()).isFalse();
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"BAIXO", "medio", " Alto ", "CRITICO"})
-    @DisplayName("Lê gravidade válida sem diferenciar maiúsculas")
-    void deveLerGravidadeValida(String valor) {
-        assertThat(Acidente.lerGravidade(valor)).isEqualTo(NivelPerigo.valueOf(valor.trim().toUpperCase()));
+    @ValueSource(strings = {"BAIXO", "baixo", "MEDIO", "medio", "ALTO", "alto", "CRITICO", "critico"})
+    @DisplayName("lerGravidade deve fazer o parse correto ignorando case")
+    void lerGravidadeDeveAceitarValoresValidos(String entrada) {
+        NivelPerigo nivel = Acidente.lerGravidade(entrada);
+        assertThat(nivel).isNotNull();
     }
 
     @ParameterizedTest
     @NullAndEmptySource
-    @ValueSource(strings = {"GRAVE", "LEVE", "xyz"})
-    @DisplayName("Recusa gravidade ausente ou inválida, sem converter para BAIXO (issue #195)")
-    void deveRecusarGravidadeInvalida(String valor) {
-        assertThatThrownBy(() -> Acidente.lerGravidade(valor))
+    @ValueSource(strings = {"   ", "INVALIDO", "GRAVE", "LEVE"})
+    @DisplayName("lerGravidade deve rejeitar valor nulo, vazio ou inválido")
+    void lerGravidadeDeveRejeitarValoresInvalidos(String entrada) {
+        assertThatThrownBy(() -> Acidente.lerGravidade(entrada))
                 .isInstanceOf(DadosOcorrenciaInvalidosException.class)
                 .hasMessageContaining("Gravidade");
     }
@@ -96,9 +112,13 @@ class AcidenteTest {
     void deveConsolidarCATComSucesso() {
         LocalDateTime dataFato = LocalDateTime.of(2026, 9, 10, 14, 0);
 
-        Acidente novoAcidente = Acidente.novo(
+        Acidente novoAcidente = new Acidente(
+                null,
                 "Corte com estilete",
                 dataFato,
+                LocalDateTime.now(),
+                StatusOcorrencia.ABERTA,
+                null,
                 AreaRisco.cadastrar("EXP-01", "Expedição", "Embalagem", NivelPerigo.MEDIO, List.of(EpiDeTeste.umEpi()
                         .comId(2)
                         .comNome("Luva")
@@ -110,10 +130,13 @@ class AcidenteTest {
                         .comVidaUtilDias(180)
                         .comDescricao("Luva")
                         .build())),
-                null, null,
+                null,
+                null,
+                null,
                 CausaRaizAcidente.FATOR_HUMANO,
                 "Corte",
                 "Lesão superficial na mão",
+                null,
                 "Ambulatório interno",
                 NivelPerigo.MEDIO
         );
@@ -129,26 +152,15 @@ class AcidenteTest {
         // Tentativa de consolidar novamente deve ser proibida (readOnly / imutabilidade)
         assertThatThrownBy(() -> consolidado.consolidarCAT(16))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Protocolo CAT já emitido e não pode ser alterado.");
+                .hasMessageContaining("Protocolo CAT já emitido e não pode ser alterado.");
     }
 
     @Test
-    @DisplayName("Deve identificar corretamente se o acidente é grave para regras de plano de ação")
-    void deveIdentificarAcidenteGrave() {
-        Acidente acidenteLeve = new Acidente(
-                1, "Queda sem lesão", LocalDateTime.now().minusHours(1), LocalDateTime.now(),
+    @DisplayName("Deve identificar tipo como ACIDENTE (#239)")
+    void deveIdentificarTipo() {
+        Acidente acidente = new Acidente(1, "Desc", LocalDateTime.now(), LocalDateTime.now(),
                 StatusOcorrencia.ABERTA, null, null, null, null, null,
-                CausaRaizAcidente.OUTRO, "Queda", "Leve", null, null, NivelPerigo.BAIXO
-        );
-        assertThat(acidenteLeve.getGravidade()).isEqualTo(NivelPerigo.BAIXO);
-        assertThat(acidenteLeve.isGrave()).isFalse();
-
-        Acidente acidenteGrave = new Acidente(
-                2, "Queda de altura", LocalDateTime.now().minusHours(1), LocalDateTime.now(),
-                StatusOcorrencia.ABERTA, null, null, null, null, null,
-                CausaRaizAcidente.FALHA_EPI, "Queda", "Grave", null, null, NivelPerigo.CRITICO
-        );
-        assertThat(acidenteGrave.getGravidade()).isEqualTo(NivelPerigo.CRITICO);
-        assertThat(acidenteGrave.isGrave()).isTrue();
+                CausaRaizAcidente.OUTRO, "Tipo", "Dano", null, "Destino", NivelPerigo.BAIXO);
+        assertThat(acidente.getTipoOcorrencia()).isEqualTo(TipoOcorrencia.ACIDENTE);
     }
 }

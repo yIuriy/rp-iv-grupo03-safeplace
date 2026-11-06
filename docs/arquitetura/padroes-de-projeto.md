@@ -22,7 +22,8 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [Adapter](#adapter--porta-de-operador-autenticado) | GoF, estrutural | Backend: operador autenticado | [#222](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/222), [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236) | Aplicado (2/2: #222, #236) |
 | [Facade](#facade--registrador-de-auditoria) | GoF, estrutural | Backend: registro de auditoria (`RegistradorAuditoria`) | [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237), [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) | Aplicado (1/3: #223) |
 | [State (Backend)](#state--transicoes-de-statusepi) | GoF, comportamental | Backend: transições de `StatusEpi` | [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) | Aplicado |
-| [Factory Method](#factory-method--criacao-de-epi-e-ocorrencia) | GoF, criacional | Backend: criação de `Epi` e `Acidente`/`Incidente` (`Ocorrencia` `sealed`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225), [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Aplicado (1/2: #225) |
+| [Factory Method](#factory-method--criação-de-epi) | GoF, criacional | Backend: criação de `Epi` (`FabricaEpi`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) | Aplicado |
+| [Abstract Factory](#abstract-factory--família-de-relato-de-ocorrências) | GoF, criacional | Backend: família de relato de ocorrências (Acidente/Incidente, notificação e auditoria; `Ocorrencia` `sealed`) | [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Aplicado |
 | [Builder](#builder--emprestimobuilder-e-builders-de-teste) | GoF, criacional | Backend: `Emprestimo.Builder` em produção; builders de teste `EpiDeTeste` e `EmprestimoDeTeste` | [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) | Aplicado (1/2: #226) |
 | [Null Object](#null-object--adaptador-nulo-de-notificacao-e-dependencias-opcionais) | Woolf / PLoPD 3 | Backend: `NotificadorOcorrenciaNulo` e dependências opcionais | [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227), [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) | Aplicado (2/2: #227, #241) |
 | [Chain of Responsibility](#chain-of-responsibility--camada-de-validação) | GoF, comportamental | Backend: camada `validacao` (aptidão do colaborador e tarefa) | [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228); continua em [#263](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/263) a [#267](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/267) | Aplicado (6/6: #228, #267, #263, #264, #265, #266) |
@@ -1262,13 +1263,13 @@ Suíte existente (`./mvnw clean test` com PostgreSQL externo novo): **1186 teste
 
 ---
 
-## Factory Method — criação de `Epi` e `Ocorrencia`
+## Factory Method — criação de `Epi`
 
 **Catálogo:** GoF, criacional, exposto por interface.
 
-**Intenção:** criar um `Epi` novo por uma única porta, a interface `FabricaEpi` injetada pelo Spring, que recebe a `EspecificacaoEPI` inteira em vez de campos soltos. A criação de `Acidente`/`Incidente` por fábrica, com `Ocorrencia` `sealed`, é a parte 2 ([#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239)).
+**Intenção:** criar um `Epi` novo por uma única porta, a interface `FabricaEpi` injetada pelo Spring, que recebe a `EspecificacaoEPI` inteira em vez de campos soltos. A criação da família de relato de ocorrências (`Acidente`/`Incidente`, notificação e auditoria), exigida como Abstract Factory pelo professor, fica na seção [Abstract Factory](#abstract-factory--família-de-relato-de-ocorrências) ([#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239)).
 
-**Issues:** [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) (parte 1, aplicada: `Epi`) e [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) (parte 2: ocorrência).
+**Issue:** [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225).
 
 **Revisão após a avaliação do professor.** A versão anterior da #225 consolidava a criação em métodos **estáticos** (`Epi.novo`, `Epi.reconstituir`). O professor criticou a criação estática com parâmetros soltos, pediu programação orientada a interface e pediu para tirar a validação da criação do objeto. Com o `Epi` como entidade JPA ([#258](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/258)), quem reconstitui o EPI lido do banco é o próprio JPA, então a distinção "novo × reconstituído" desaparece e só a criação de um EPI novo precisa de fábrica.
 
@@ -1443,6 +1444,185 @@ Testes novos:
 Testes ajustados: 31 classes passaram a criar EPIs pelo `EpiDeTeste`. Em `EpiTest` saíram os 4 testes do que deixou de existir (as duas sobrecargas de `novo`, que agora estão em `FabricaEpiPadraoTest`, o construtor público sem id e o construtor reduzido com dados inventados). Os dois testes do `EpiValidadorTest` que recusam status ausente usam `semStatus()`, porque a fábrica nunca cria um EPI sem situação.
 
 Suíte existente (`./mvnw clean test` com PostgreSQL externo novo): **1199 testes, 0 falhas, 10 erros**, todos o problema anterior de limpeza entre classes de integração (`DELETE FROM epis` bloqueado por `projecoes_substituicao`).
+
+---
+
+## Abstract Factory — família de relato de ocorrências
+
+**Catálogo:** GoF, criacional, exposto por interface.
+
+**Intenção:** fornecer uma interface para criar famílias de objetos relacionados ou dependentes (a entidade de ocorrência, a notificação correspondente ao gestor e a descrição para auditoria) sem especificar suas classes concretas.
+
+**Issue:** [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239).
+
+**Revisão após a avaliação do professor.** A versão anterior do projeto utilizava métodos estáticos e cogitava Factory Method simples. O professor questionou diretamente `Acidente.java:64-92`: *"Singleton? Por que é estático?"*. Resposta registrada: o trecho não era um Singleton, mas sim uma fábrica estática (`Acidente.novo`) com 10 parâmetros soltos que repassava para um construtor de 16 parâmetros. O professor exigiu **Abstract Factory** (um dos dois padrões obrigatórios), orientado a interfaces, com a passagem do objeto de entrada inteiro (`InputDTO`) e sem validações de negócio no construtor de domínio.
+
+### Problema (antes)
+
+Antes da aplicação do padrão:
+- `Acidente.novo(...)` e `Incidente.novo(...)`: métodos estáticos com até 10 parâmetros soltos.
+- A decisão de família entre `Acidente` e `Incidente` estava fragmentada e repetida:
+  - No registro: `OcorrenciaService.registrarAcidente` e `registrarIncidente` montavam objetos manualmente;
+  - Na notificação: `NotificacaoOcorrencia.deNovoRelato` continha `instanceof Acidente` para decidir se incluía ou não o protocolo CAT;
+  - Na auditoria: `instanceof` para decidir a entidade e a descrição de cadastro;
+  - No assembler e no filtro: checagens manuais de tipo.
+- Não havia garantia em tempo de compilação de que a ocorrência, a notificação com/sem CAT e a descrição de auditoria combinavam entre si.
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| AbstractFactory | interface `FabricaRelatoOcorrencia<I, O>` (`domain/ocorrencia`) | Declarar a criação da família: `criarOcorrencia`, `criarNotificacao`, `descricaoAuditoria` e `entidadeAuditoria` |
+| ConcreteFactory (Acidente) | `FabricaRelatoAcidente` (`domain/ocorrencia`) | Instanciar `Acidente` (com CAT), `NotificacaoOcorrencia` (com protocolo) e descritor de auditoria de acidente |
+| ConcreteFactory (Incidente) | `FabricaRelatoIncidente` (`domain/ocorrencia`) | Instanciar `Incidente` (sem CAT), `NotificacaoOcorrencia` (sem CAT) e descritor de auditoria de incidente |
+| AbstractProduct A | `Ocorrencia` (`public abstract sealed class ... permits Acidente, Incidente`) | Raiz fechada da hierarquia de ocorrências |
+| ConcreteProduct A1 | `Acidente` (`public non-sealed class Acidente extends Ocorrencia`) | Produto concreto com gravidade, causa raiz e protocolo CAT |
+| ConcreteProduct A2 | `Incidente` (`public non-sealed class Incidente extends Ocorrencia`) | Produto concreto com situação de risco e potencial de dano |
+| AbstractProduct B | `NotificacaoOcorrencia` | Alerta interno ao Gestor de Segurança |
+| AbstractProduct C | Descrição e nome de entidade de auditoria (`String`) | Trilha de auditoria (RNF05) consistente por tipo |
+| Client | `OcorrenciaService` (`application/usecase`) | Receber as fábricas injetadas via interface/mapa e delegar a criação da família sem `instanceof` |
+
+### Diagramas
+
+**Antes.** Métodos estáticos com múltiplos parâmetros e `instanceof` espalhado.
+
+```mermaid
+classDiagram
+  direction LR
+  class Acidente {
+    +novo(10 parâmetros)$
+  }
+  class Incidente {
+    +novo(7 parâmetros)$
+  }
+  class NotificacaoOcorrencia {
+    +deNovoRelato(ocorrencia)$ instanceof
+  }
+  class OcorrenciaService {
+    +registrarAcidente()
+    +registrarIncidente()
+  }
+  OcorrenciaService ..> Acidente : Acidente.novo(...)
+  OcorrenciaService ..> Incidente : Incidente.novo(...)
+  OcorrenciaService ..> NotificacaoOcorrencia : deNovoRelato(ocorrencia)
+```
+
+**Depois.** Abstract Factory orientada a interface produzindo a família completa de produtos.
+
+```mermaid
+classDiagram
+  direction TB
+  class FabricaRelatoOcorrencia~I, O~ {
+    <<interface / AbstractFactory>>
+    +getTipo() TipoOcorrencia
+    +criarOcorrencia(input, area, colaborador, relator, protocolo) O
+    +criarNotificacao(ocorrencia) NotificacaoOcorrencia
+    +descricaoAuditoria() String
+    +entidadeAuditoria() String
+  }
+  class FabricaRelatoAcidente {
+    <<ConcreteFactory>>
+    +criarOcorrencia(...) Acidente
+    +criarNotificacao(...) NotificacaoOcorrencia
+  }
+  class FabricaRelatoIncidente {
+    <<ConcreteFactory>>
+    +criarOcorrencia(...) Incidente
+    +criarNotificacao(...) NotificacaoOcorrencia
+  }
+  class Ocorrencia {
+    <<abstract sealed / AbstractProduct>>
+    +getTipoOcorrencia()* TipoOcorrencia
+    +getGravidade() NivelPerigo
+  }
+  class Acidente {
+    <<ConcreteProduct>>
+  }
+  class Incidente {
+    <<ConcreteProduct>>
+  }
+  class NotificacaoOcorrencia {
+    <<Product>>
+  }
+  class OcorrenciaService {
+    <<Client>>
+    -Map~TipoOcorrencia, FabricaRelatoOcorrencia~ fabricas
+  }
+  FabricaRelatoOcorrencia <|.. FabricaRelatoAcidente
+  FabricaRelatoOcorrencia <|.. FabricaRelatoIncidente
+  Ocorrencia <|-- Acidente
+  Ocorrencia <|-- Incidente
+  FabricaRelatoAcidente ..> Acidente : cria
+  FabricaRelatoAcidente ..> NotificacaoOcorrencia : cria com CAT
+  FabricaRelatoIncidente ..> Incidente : cria
+  FabricaRelatoIncidente ..> NotificacaoOcorrencia : cria sem CAT
+  OcorrenciaService --> FabricaRelatoOcorrencia : injetada via mapa
+```
+
+### Código antes × depois
+
+Criação no caso de uso, antes:
+
+```java
+// antes: criação acoplada com parâmetros soltos e auditoria manual
+Acidente acidente = new Acidente(null, inputDTO.descricao(), ... , 16 argumentos);
+auditoria.cadastro("Acidente", salvo.getId(), "Registro de Acidente de Trabalho");
+notificadorOcorrencia.notificarGestor(salvo); // NotificacaoOcorrencia.deNovoRelato usava instanceof
+```
+
+Depois:
+
+```java
+// depois: família criada pela fábrica concreta sem instanceof
+FabricaRelatoOcorrencia<RegistrarAcidenteInputDTO, Acidente> fabrica =
+        (FabricaRelatoOcorrencia<RegistrarAcidenteInputDTO, Acidente>) fabricas.get(TipoOcorrencia.ACIDENTE);
+
+Acidente acidente = fabrica.criarOcorrencia(inputDTO, area, colaborador, relatorAutenticado(), numeroProtocolo);
+validador.validar(acidente);
+Acidente salvo = repository.salvarAcidente(acidente);
+
+auditoria.cadastro(fabrica.entidadeAuditoria(), salvo.getId(), fabrica.descricaoAuditoria());
+notificadorOcorrencia.notificarGestor(salvo);
+```
+
+Criação da notificação, antes:
+
+```java
+// antes: NotificacaoOcorrencia inspecionava com instanceof
+TipoOcorrencia tipo = ocorrencia instanceof Acidente ? TipoOcorrencia.ACIDENTE : TipoOcorrencia.INCIDENTE;
+NumeroProtocoloCAT protocolo = ocorrencia instanceof Acidente acidente ? acidente.getProtocoloCAT() : null;
+```
+
+Depois:
+
+```java
+// depois: delegada à fábrica correspondente ao tipo de ocorrência
+FabricaRelatoOcorrencia<?, ?> fabrica = fabricas.get(ocorrencia.getTipoOcorrencia());
+NotificacaoOcorrencia notificacao = fabrica.criarNotificacao(ocorrencia);
+```
+
+### Benefício
+
+A criação de um relato agora produz uma família garantidamente consistente de objetos (entidade de domínio, notificação interna e texto de auditoria), eliminando métodos estáticos com dezenas de parâmetros soltos e extinguindo todo `instanceof` de `Acidente` e `Incidente` nas camadas de domínio e aplicação. Adicionar ou modificar regras de um novo tipo de relato exige apenas implementar uma nova fábrica concreta, sem tocar nas rotinas de auditoria, notificação ou orquestração do caso de uso. O uso de `sealed class` em `Ocorrencia` garante exaustividade em tempo de compilação.
+
+### Métricas locais
+
+| Métrica | Antes | Depois |
+| --- | ---: | ---: |
+| `instanceof Acidente` em `domain/` e `application/` | 8 | 0 |
+| `instanceof Incidente` em `domain/` e `application/` | 5 | 0 |
+| Métodos estáticos de criação em `domain/ocorrencia` | 3 (`Acidente.novo`, `Incidente.novo`, `NotificacaoOcorrencia.deNovoRelato`) | 0 |
+| Maior quantidade de parâmetros soltos na criação de ocorrência | 16 | 5 (objeto `InputDTO` inteiro + associações obrigatórias) |
+| Hierarquia de `Ocorrencia` | `abstract class` aberta | `public abstract sealed class` (`permits Acidente, Incidente`) |
+
+### Evidências
+
+Testes novos:
+1. `FabricaRelatoAcidenteTest` (5 testes): valida a criação de `Acidente` a partir do `InputDTO` inteiro, emissão de `NotificacaoOcorrencia` com número CAT e strings de auditoria da família.
+2. `FabricaRelatoIncidenteTest` (5 testes): valida a criação de `Incidente`, notificação sem CAT e strings de auditoria correspondentes.
+
+Suíte do backend:
+- `1304 testes, 0 falhas, 0 erros` (`./mvnw test`).
 
 ---
 

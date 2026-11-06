@@ -49,13 +49,10 @@ public class OcorrenciaOutputAssembler {
     }
 
     private static DadosDoTipo dadosDoTipo(Ocorrencia ocorrencia) {
-        if (ocorrencia instanceof Acidente acidente) {
-            return deAcidente(acidente);
-        }
-        if (ocorrencia instanceof Incidente incidente) {
-            return deIncidente(incidente);
-        }
-        throw new IllegalArgumentException("Tipo de ocorrência não suportado");
+        return switch (ocorrencia) {
+            case Acidente acidente -> deAcidente(acidente);
+            case Incidente incidente -> deIncidente(incidente);
+        };
     }
 
     private static DadosDoTipo deAcidente(Acidente acidente) {

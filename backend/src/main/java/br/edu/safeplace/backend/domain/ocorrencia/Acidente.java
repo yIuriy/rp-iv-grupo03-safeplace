@@ -21,7 +21,7 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "acidentes")
-public class Acidente extends Ocorrencia {
+public non-sealed class Acidente extends Ocorrencia {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "causa_raiz")
@@ -83,35 +83,9 @@ public class Acidente extends Ocorrencia {
         this.gravidade = gravidade;
     }
 
-    public static Acidente novo(
-            String descricao,
-            LocalDateTime dataOcorrencia,
-            AreaRisco area,
-            Colaborador colaborador,
-            Colaborador relator,
-            CausaRaizAcidente causaRaiz,
-            String tipo,
-            String dano,
-            String destino,
-            NivelPerigo gravidade) {
-        return new Acidente(
-                null,
-                descricao,
-                dataOcorrencia,
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                colaborador,
-                area,
-                relator,
-                null,
-                null,
-                causaRaiz,
-                tipo,
-                dano,
-                null,
-                destino,
-                gravidade
-        );
+    @Override
+    public TipoOcorrencia getTipoOcorrencia() {
+        return TipoOcorrencia.ACIDENTE;
     }
 
     /**

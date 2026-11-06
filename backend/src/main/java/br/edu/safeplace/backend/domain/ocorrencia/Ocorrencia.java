@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,7 +28,7 @@ import jakarta.persistence.Transient;
 @Entity
 @Table(name = "ocorrencias")
 @Inheritance(strategy = InheritanceType.JOINED)
-public abstract class Ocorrencia {
+public abstract sealed class Ocorrencia permits Acidente, Incidente {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -143,6 +144,17 @@ public abstract class Ocorrencia {
      */
     public boolean isGrave() {
         return false;
+    }
+
+    /** Devolve o tipo específico de ocorrência no domínio (#239). */
+    public abstract TipoOcorrencia getTipoOcorrencia();
+
+    /**
+     * Nível de perigo da ocorrência quando aplicável (subclasses com gravidade, como {@link Acidente}).
+     * Devolve {@code null} quando o tipo não possui gravidade estruturada (#239).
+     */
+    public NivelPerigo getGravidade() {
+        return null;
     }
 
     public Integer getId() {

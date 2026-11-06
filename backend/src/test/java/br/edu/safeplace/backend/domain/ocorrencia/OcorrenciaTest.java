@@ -1,6 +1,5 @@
 package br.edu.safeplace.backend.domain.ocorrencia;
 
-import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,27 +15,38 @@ import br.edu.safeplace.backend.domain.ocorrencia.exception.TransicaoStatusInval
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import br.edu.safeplace.backend.domain.usuario.Supervisor;
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OcorrenciaTest {
 
-    private static class OcorrenciaConcreta extends Ocorrencia {
-        public OcorrenciaConcreta(
-                Integer idOcorrencia,
-                String descricao,
-                LocalDateTime dataOcorrencia,
-                LocalDateTime dataRegistro,
-                StatusOcorrencia statusOcorrencia,
-                Colaborador colaborador,
-                AreaRisco area,
-                Colaborador relator,
-                String local,
-                PlanoDeAcao planoDeAcao) {
-            super(idOcorrencia, descricao, dataOcorrencia, dataRegistro, statusOcorrencia,
-                    colaborador, area, relator, local, planoDeAcao);
-        }
+    private static Incidente criarOcorrencia(
+            Integer idOcorrencia,
+            String descricao,
+            LocalDateTime dataOcorrencia,
+            LocalDateTime dataRegistro,
+            StatusOcorrencia statusOcorrencia,
+            Colaborador colaborador,
+            AreaRisco area,
+            Colaborador relator,
+            String local,
+            PlanoDeAcao planoDeAcao) {
+        return new Incidente(
+                idOcorrencia,
+                descricao,
+                dataOcorrencia,
+                dataRegistro,
+                statusOcorrencia,
+                colaborador,
+                area,
+                relator,
+                local,
+                planoDeAcao,
+                "Risco",
+                "Dano"
+        );
     }
 
     @Test
@@ -59,7 +69,7 @@ class OcorrenciaTest {
         Colaborador colaborador = Colaborador.novo("Carlos", "87455877074", LocalDate.of(1990, 1, 1), "carlos@empresa.com");
         GestorDeSeguranca gestor = GestorDeSeguranca.novo("Ana", "49216091040", LocalDate.of(1985, 5, 5), "ana@empresa.com", "senha123");
 
-        Ocorrencia ocorrencia = new OcorrenciaConcreta(
+        Ocorrencia ocorrencia = criarOcorrencia(
                 1,
                 "Vazamento de vapor detectado",
                 dataFato,
@@ -86,7 +96,7 @@ class OcorrenciaTest {
     @Test
     @DisplayName("Deve transicionar status de ABERTA para EM_TRIAGEM e depois para ARQUIVADA")
     void deveTransicionarStatusComSucesso() {
-        Ocorrencia ocorrencia = new OcorrenciaConcreta(
+        Ocorrencia ocorrencia = criarOcorrencia(
                 1,
                 "Descricao",
                 LocalDateTime.now().minusDays(1),
@@ -107,7 +117,7 @@ class OcorrenciaTest {
     @Test
     @DisplayName("Deve rejeitar transição inválida de ABERTA direto para ARQUIVADA")
     void deveRejeitarTransicaoInvalidaDeAbertaParaArquivada() {
-        Ocorrencia ocorrencia = new OcorrenciaConcreta(
+        Ocorrencia ocorrencia = criarOcorrencia(
                 1,
                 "Descricao",
                 LocalDateTime.now().minusDays(1),
@@ -126,7 +136,7 @@ class OcorrenciaTest {
         Supervisor supervisor = Supervisor.novo("Bruno", "52998224725", LocalDate.of(1988, 3, 3),
                 "bruno@empresa.com", "senha123");
 
-        Ocorrencia ocorrencia = new OcorrenciaConcreta(
+        Ocorrencia ocorrencia = criarOcorrencia(
                 1,
                 "Descricao",
                 LocalDateTime.now().minusDays(1),
@@ -141,7 +151,7 @@ class OcorrenciaTest {
     @Test
     @DisplayName("Texto livre de local não vira área de risco fictícia")
     void naoDeveDerivarAreaFicticiaDoTextoLocal() {
-        Ocorrencia ocorrencia = new OcorrenciaConcreta(
+        Ocorrencia ocorrencia = criarOcorrencia(
                 7,
                 "Tropeço em cabo solto no pátio",
                 LocalDateTime.now().minusHours(2),
@@ -175,7 +185,7 @@ class OcorrenciaTest {
                 .build();
         AreaRisco area = AreaRisco.cadastrar("CALD-01", "Caldeiras", "Alta pressão", NivelPerigo.ALTO, List.of(epi));
 
-        Ocorrencia ocorrencia = new OcorrenciaConcreta(
+        Ocorrencia ocorrencia = criarOcorrencia(
                 8,
                 "Vazamento de vapor",
                 LocalDateTime.now().minusHours(3),

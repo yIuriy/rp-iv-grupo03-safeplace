@@ -3,8 +3,21 @@
  * consulta por critérios, id e protocolo CAT respeitando o perfil (issue #128) e conduz triagem,
  * arquivamento e consolidação da CAT. O relato é validado aqui, sem depender do frontend: área,
  * colaborador, gravidade e causa raiz obrigatórias, protocolo e relator definidos pelo servidor (#195).
+ * A criação da família de objetos do relato utiliza o padrão Abstract Factory (#239).
  */
 package br.edu.safeplace.backend.application.usecase;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Predicate;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.edu.safeplace.backend.application.assembler.OcorrenciaOutputAssembler;
 import br.edu.safeplace.backend.application.dto.input.AtualizarOcorrenciaInputDTO;
@@ -23,23 +36,17 @@ import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
+import br.edu.safeplace.backend.domain.ocorrencia.FabricaRelatoAcidente;
+import br.edu.safeplace.backend.domain.ocorrencia.FabricaRelatoIncidente;
+import br.edu.safeplace.backend.domain.ocorrencia.FabricaRelatoOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
 import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
+import br.edu.safeplace.backend.domain.ocorrencia.TipoOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.DadosOcorrenciaInvalidosException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Predicate;
-import org.springframework.beans.factory.annotation.Qualifier;
 import br.edu.safeplace.backend.validacao.Validador;
 import br.edu.safeplace.backend.validacao.ocorrencia.OcorrenciaValidador;
 import br.edu.safeplace.backend.validacao.ocorrencia.ProtocoloCATValidador;
@@ -58,6 +65,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
     private final Validador<Acidente> protocoloValidador;
     private final OperadorAtual operadorAtual;
     private final RegistradorAuditoria auditoria;
+    private final Map<TipoOcorrencia, FabricaRelatoOcorrencia<?, ?>> fabricas;
     private final OcorrenciaOutputAssembler assembler = new OcorrenciaOutputAssembler();
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -70,7 +78,9 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
             @Qualifier("ocorrenciaValidador") Validador<Ocorrencia> validador,
             @Qualifier("protocoloCATValidador") Validador<Acidente> protocoloValidador,
             OperadorAtual operadorAtual,
-            RegistradorAuditoria auditoria) {
+            RegistradorAuditoria auditoria,
+            FabricaRelatoAcidente fabricaRelatoAcidente,
+            FabricaRelatoIncidente fabricaRelatoIncidente) {
         this.validador = java.util.Objects.requireNonNull(validador, "Validador da ocorrência é obrigatório.");
         this.protocoloValidador = java.util.Objects.requireNonNull(
                 protocoloValidador, "Validador do protocolo CAT é obrigatório.");
@@ -87,9 +97,30 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         this.operadorAtual = java.util.Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
         // Facade (#223): a trilha é gravada numa chamada, sem montar o LogAuditoria aqui.
         this.auditoria = java.util.Objects.requireNonNull(auditoria, "Registrador de auditoria é obrigatório.");
+        // Abstract Factory (#239): família de criação parametrizada por tipo de relato.
+        this.fabricas = Map.of(
+                TipoOcorrencia.ACIDENTE, java.util.Objects.requireNonNull(fabricaRelatoAcidente, "Fábrica de relato de acidente é obrigatória."),
+                TipoOcorrencia.INCIDENTE, java.util.Objects.requireNonNull(fabricaRelatoIncidente, "Fábrica de relato de incidente é obrigatória.")
+        );
     }
 
-    /** Usa o validador padrão; usado pelos testes sem contexto Spring. */
+    /** Construtor para testes sem injeção explícita das fábricas (#239). */
+    public OcorrenciaService(
+            OcorrenciaRepository repository,
+            AreaRiscoRepository areaRiscoRepository,
+            UsuarioRepository usuarioRepository,
+            LogAuditoriaRepository logAuditoriaRepository,
+            NotificadorOcorrencia notificadorOcorrencia,
+            Validador<Ocorrencia> validador,
+            Validador<Acidente> protocoloValidador,
+            OperadorAtual operadorAtual,
+            RegistradorAuditoria auditoria) {
+        this(repository, areaRiscoRepository, usuarioRepository, logAuditoriaRepository, notificadorOcorrencia,
+                validador, protocoloValidador, operadorAtual, auditoria,
+                new FabricaRelatoAcidente(), new FabricaRelatoIncidente());
+    }
+
+    /** Usa o validador e fábricas padrão; usado pelos testes sem contexto Spring. */
     public OcorrenciaService(
             OcorrenciaRepository repository,
             AreaRiscoRepository areaRiscoRepository,
@@ -99,7 +130,8 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
             OperadorAtual operadorAtual) {
         this(repository, areaRiscoRepository, usuarioRepository, logAuditoriaRepository, notificadorOcorrencia,
                 new OcorrenciaValidador(), new ProtocoloCATValidador(), operadorAtual,
-                new RegistradorAuditoria(logAuditoriaRepository, operadorAtual));
+                new RegistradorAuditoria(logAuditoriaRepository, operadorAtual),
+                new FabricaRelatoAcidente(), new FabricaRelatoIncidente());
     }
 
     @Override
@@ -110,37 +142,22 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         }
         AreaRisco area = resolverAreaObrigatoria(inputDTO.areaId());
         Colaborador colaborador = resolverColaboradorObrigatorio(inputDTO.colaboradorId());
-        CausaRaizAcidente causaRaiz = CausaRaizAcidente.de(inputDTO.causaRaiz());
-        NivelPerigo gravidade = Acidente.lerGravidade(inputDTO.gravidade());
 
         // US13: o protocolo do acidente é sempre gerado pelo servidor, nunca informado pelo cliente.
         LocalDateTime dataRef = inputDTO.dataOcorrencia() != null ? inputDTO.dataOcorrencia() : LocalDateTime.now();
         long sequencial = repository.proximoSequencialCAT(dataRef.getYear(), dataRef.getMonthValue());
         NumeroProtocoloCAT numeroProtocolo = NumeroProtocoloCAT.gerar(dataRef, sequencial);
 
-        Acidente acidente = new Acidente(
-                null,
-                inputDTO.descricao(),
-                inputDTO.dataOcorrencia(),
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                colaborador,
-                area,
-                relatorAutenticado(),
-                null,
-                null,
-                causaRaiz,
-                inputDTO.tipo(),
-                inputDTO.dano(),
-                numeroProtocolo,
-                inputDTO.destino(),
-                gravidade
-        );
+        @SuppressWarnings("unchecked")
+        FabricaRelatoOcorrencia<RegistrarAcidenteInputDTO, Acidente> fabrica =
+                (FabricaRelatoOcorrencia<RegistrarAcidenteInputDTO, Acidente>) fabricas.get(TipoOcorrencia.ACIDENTE);
+
+        Acidente acidente = fabrica.criarOcorrencia(inputDTO, area, colaborador, relatorAutenticado(), numeroProtocolo);
         // Chain of Responsibility (#266): valida antes do repository.
         validador.validar(acidente);
         Acidente salvo = repository.salvarAcidente(acidente);
 
-        auditoria.cadastro("Acidente", salvo.getId(), "Registro de Acidente de Trabalho");
+        auditoria.cadastro(fabrica.entidadeAuditoria(), salvo.getId(), fabrica.descricaoAuditoria());
 
         notificadorOcorrencia.notificarGestor(salvo);
 
@@ -156,24 +173,15 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         AreaRisco area = resolverAreaObrigatoria(inputDTO.areaId());
         Colaborador colaborador = resolverColaboradorObrigatorio(inputDTO.colaboradorId());
 
-        Incidente incidente = new Incidente(
-                null,
-                inputDTO.descricao(),
-                inputDTO.dataOcorrencia(),
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                colaborador,
-                area,
-                relatorAutenticado(),
-                null,
-                null,
-                inputDTO.situacaoRisco(),
-                inputDTO.potencialDano()
-        );
+        @SuppressWarnings("unchecked")
+        FabricaRelatoOcorrencia<RegistrarIncidenteInputDTO, Incidente> fabrica =
+                (FabricaRelatoOcorrencia<RegistrarIncidenteInputDTO, Incidente>) fabricas.get(TipoOcorrencia.INCIDENTE);
+
+        Incidente incidente = fabrica.criarOcorrencia(inputDTO, area, colaborador, relatorAutenticado(), null);
         validador.validar(incidente);
         Incidente salvo = repository.salvarIncidente(incidente);
 
-        auditoria.cadastro("Incidente", salvo.getId(), "Registro de Incidente");
+        auditoria.cadastro(fabrica.entidadeAuditoria(), salvo.getId(), fabrica.descricaoAuditoria());
 
         notificadorOcorrencia.notificarGestor(salvo);
 
@@ -289,53 +297,52 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         AreaRisco area = resolverAreaObrigatoria(inputDTO.areaId());
         Colaborador colaborador = resolverColaboradorObrigatorio(inputDTO.colaboradorId());
 
-        Ocorrencia salva;
-        if (atual instanceof Acidente acidente) {
-            // Campo em branco mantém o valor atual; valor desconhecido é recusado (issue #195).
-            NivelPerigo gravidade = inputDTO.gravidade() == null || inputDTO.gravidade().isBlank()
-                    ? acidente.getGravidade()
-                    : Acidente.lerGravidade(inputDTO.gravidade());
-            CausaRaizAcidente causaRaiz = inputDTO.causaRaiz() == null || inputDTO.causaRaiz().isBlank()
-                    ? acidente.getCausaRaiz()
-                    : CausaRaizAcidente.de(inputDTO.causaRaiz());
-            Acidente atualizado = new Acidente(
-                    acidente.getIdOcorrencia(),
-                    inputDTO.descricao(),
-                    inputDTO.dataOcorrencia(),
-                    acidente.getDataRegistro(),
-                    acidente.getStatusOcorrencia(),
-                    colaborador,
-                    area,
-                    acidente.getRelator(),
-                    acidente.getLocalInformado(),
-                    acidente.getPlanoDeAcao(),
-                    causaRaiz,
-                    inputDTO.tipo(),
-                    inputDTO.dano(),
-                    acidente.getProtocoloCAT(),
-                    inputDTO.destino(),
-                    gravidade);
-            validador.validar(atualizado);
-            salva = repository.salvarAcidente(atualizado);
-        } else if (atual instanceof Incidente incidente) {
-            Incidente atualizado = new Incidente(
-                    incidente.getIdOcorrencia(),
-                    inputDTO.descricao(),
-                    inputDTO.dataOcorrencia(),
-                    incidente.getDataRegistro(),
-                    incidente.getStatusOcorrencia(),
-                    colaborador,
-                    area,
-                    incidente.getRelator(),
-                    incidente.getLocalInformado(),
-                    incidente.getPlanoDeAcao(),
-                    inputDTO.situacaoRisco(),
-                    inputDTO.potencialDano());
-            validador.validar(atualizado);
-            salva = repository.salvarIncidente(atualizado);
-        } else {
-            throw new IllegalStateException("Tipo de ocorrência não suportado.");
-        }
+        Ocorrencia salva = switch (atual) {
+            case Acidente acidente -> {
+                NivelPerigo gravidade = inputDTO.gravidade() == null || inputDTO.gravidade().isBlank()
+                        ? acidente.getGravidade()
+                        : Acidente.lerGravidade(inputDTO.gravidade());
+                CausaRaizAcidente causaRaiz = inputDTO.causaRaiz() == null || inputDTO.causaRaiz().isBlank()
+                        ? acidente.getCausaRaiz()
+                        : CausaRaizAcidente.de(inputDTO.causaRaiz());
+                Acidente atualizado = new Acidente(
+                        acidente.getIdOcorrencia(),
+                        inputDTO.descricao(),
+                        inputDTO.dataOcorrencia(),
+                        acidente.getDataRegistro(),
+                        acidente.getStatusOcorrencia(),
+                        colaborador,
+                        area,
+                        acidente.getRelator(),
+                        acidente.getLocalInformado(),
+                        acidente.getPlanoDeAcao(),
+                        causaRaiz,
+                        inputDTO.tipo(),
+                        inputDTO.dano(),
+                        acidente.getProtocoloCAT(),
+                        inputDTO.destino(),
+                        gravidade);
+                validador.validar(atualizado);
+                yield repository.salvarAcidente(atualizado);
+            }
+            case Incidente incidente -> {
+                Incidente atualizado = new Incidente(
+                        incidente.getIdOcorrencia(),
+                        inputDTO.descricao(),
+                        inputDTO.dataOcorrencia(),
+                        incidente.getDataRegistro(),
+                        incidente.getStatusOcorrencia(),
+                        colaborador,
+                        area,
+                        incidente.getRelator(),
+                        incidente.getLocalInformado(),
+                        incidente.getPlanoDeAcao(),
+                        inputDTO.situacaoRisco(),
+                        inputDTO.potencialDano());
+                validador.validar(atualizado);
+                yield repository.salvarIncidente(atualizado);
+            }
+        };
 
         auditoria.alteracao(entidadeAuditada(salva), salva.getId(),
                 "Atualização de ocorrência. Campos alterados: " + descreverAlteracoes(atual, salva));
@@ -349,23 +356,27 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         if (!Objects.equals(antes.getDescricao(), depois.getDescricao())) campos.add("descricao");
         if (!Objects.equals(idDaArea(antes), idDaArea(depois))) campos.add("area");
         if (!Objects.equals(idDoColaborador(antes), idDoColaborador(depois))) campos.add("colaborador");
-        if (antes instanceof Acidente a && depois instanceof Acidente d) {
+        if (antes.getTipoOcorrencia() == TipoOcorrencia.ACIDENTE && depois.getTipoOcorrencia() == TipoOcorrencia.ACIDENTE) {
+            Acidente a = (Acidente) antes;
+            Acidente d = (Acidente) depois;
             if (a.getCausaRaiz() != d.getCausaRaiz()) campos.add("causaRaiz");
             if (a.getGravidade() != d.getGravidade()) campos.add("gravidade");
             if (!Objects.equals(a.getTipo(), d.getTipo())) campos.add("tipo");
             if (!Objects.equals(a.getDano(), d.getDano())) campos.add("dano");
             if (!Objects.equals(a.getDestino(), d.getDestino())) campos.add("destino");
         }
-        if (antes instanceof Incidente a && depois instanceof Incidente d) {
+        if (antes.getTipoOcorrencia() == TipoOcorrencia.INCIDENTE && depois.getTipoOcorrencia() == TipoOcorrencia.INCIDENTE) {
+            Incidente a = (Incidente) antes;
+            Incidente d = (Incidente) depois;
             if (!Objects.equals(a.getSituacaoRisco(), d.getSituacaoRisco())) campos.add("situacaoRisco");
             if (!Objects.equals(a.getPotencialDano(), d.getPotencialDano())) campos.add("potencialDano");
         }
         return campos.isEmpty() ? "nenhum" : String.join(", ", campos);
     }
 
-    // O instanceof sai em #237, com o getTipo() da fábrica de ocorrências (#239).
-    private static String entidadeAuditada(Ocorrencia ocorrencia) {
-        return ocorrencia instanceof Acidente ? "Acidente" : "Incidente";
+    private String entidadeAuditada(Ocorrencia ocorrencia) {
+        FabricaRelatoOcorrencia<?, ?> fabrica = fabricas.get(ocorrencia.getTipoOcorrencia());
+        return fabrica != null ? fabrica.entidadeAuditoria() : ocorrencia.getTipoOcorrencia().name();
     }
 
     private static Integer idDaArea(Ocorrencia ocorrencia) {
@@ -430,11 +441,9 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
     }
 
     private Ocorrencia salvarOcorrencia(Ocorrencia ocorrencia) {
-        if (ocorrencia instanceof Acidente acidente) {
-            return repository.salvarAcidente(acidente);
-        } else if (ocorrencia instanceof Incidente incidente) {
-            return repository.salvarIncidente(incidente);
-        }
-        throw new IllegalStateException("Tipo de ocorrência não suportado para persistência.");
+        return switch (ocorrencia) {
+            case Acidente acidente -> repository.salvarAcidente(acidente);
+            case Incidente incidente -> repository.salvarIncidente(incidente);
+        };
     }
 }
