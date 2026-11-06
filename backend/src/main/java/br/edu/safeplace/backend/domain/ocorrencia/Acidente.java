@@ -7,20 +7,47 @@ import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.DadosOcorrenciaInvalidosException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
 
 /**
- * Acidente de trabalho (RF01, RF02, RF13). Causa raiz e gravidade são obrigatórias e nunca assumem
- * valor padrão (issue #195). {@code tipo}, {@code dano} e {@code destino} são complementos textuais
- * opcionais herdados da modelagem anterior, fora do recorte mínimo do relato (DS09, seção 2.9).
+ * Acidente de trabalho (RF01, RF02, RF13). É a subclasse JOINED da tabela {@code acidentes} (#261).
+ * Causa raiz e gravidade são obrigatórias e nunca assumem valor padrão (issue #195).
  */
+@Entity
+@Table(name = "acidentes")
 public class Acidente extends Ocorrencia {
-    private final CausaRaizAcidente causaRaiz;
-    private final String tipo;
-    private final String dano;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "causa_raiz")
+    private CausaRaizAcidente causaRaiz;
+
+    @Column
+    private String tipo;
+
+    @Column
+    private String dano;
+
     /** Value Object guardado como atributo (issue #230); {@code null} enquanto a CAT não é emitida. */
-    private final NumeroProtocoloCAT numeroProtocoloCAT;
-    private final String destino;
-    private final NivelPerigo gravidade;
+    @Embedded
+    @AttributeOverride(name = "valor", column = @Column(name = "numero_protocolo", length = 80))
+    private NumeroProtocoloCAT numeroProtocoloCAT;
+
+    @Column
+    private String destino;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gravidade", nullable = false, length = 20)
+    private NivelPerigo gravidade;
+
+    /** Exclusivo do JPA (decisão #254). */
+    protected Acidente() {
+    }
 
     public Acidente(
             Integer idOcorrencia,

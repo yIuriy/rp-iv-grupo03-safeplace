@@ -4,10 +4,26 @@ import java.time.LocalDateTime;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
+/**
+ * Incidente de trabalho (quase-acidente). É a subclasse JOINED da tabela {@code incidentes} (#261).
+ */
+@Entity
+@Table(name = "incidentes")
 public class Incidente extends Ocorrencia {
-    private final String situacaoRisco;
-    private final String potencialDano;
+
+    @Column(name = "situacao_risco")
+    private String situacaoRisco;
+
+    @Column(name = "potencial_dano")
+    private String potencialDano;
+
+    /** Exclusivo do JPA (decisão #254). */
+    protected Incidente() {
+    }
 
     public Incidente(
             Integer idOcorrencia,
