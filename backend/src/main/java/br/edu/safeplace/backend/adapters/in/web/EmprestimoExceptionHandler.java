@@ -5,8 +5,8 @@
  */
 package br.edu.safeplace.backend.adapters.in.web;
 
-import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
+import static br.edu.safeplace.backend.adapters.in.web.CorpoErro.corpo;
+
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -47,14 +47,5 @@ public class EmprestimoExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> dadosInvalidos(IllegalArgumentException ex) {
         return corpo(HttpStatus.BAD_REQUEST, "Requisição Inválida", ex.getMessage());
-    }
-
-    private static ResponseEntity<Map<String, Object>> corpo(HttpStatus status, String erro, String mensagem) {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", status.value());
-        body.put("error", erro);
-        body.put("message", mensagem);
-        return ResponseEntity.status(status).body(body);
     }
 }
