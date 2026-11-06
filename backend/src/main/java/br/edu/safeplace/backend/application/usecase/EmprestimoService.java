@@ -111,8 +111,16 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
 
         LocalDateTime agora = LocalDateTime.now();
         String termo = termoDeCautela(epi, beneficiario, operador, agora, entrada.dataDevolucaoPrevista());
-        Emprestimo emprestimo = Emprestimo.registrarEntrega(epi, beneficiario, operador,
-                agora, entrada.dataDevolucaoPrevista(), termo, entrada.justificativaSubstituicao());
+        // Builder (#226): o caso de uso é o Director, que monta a entrega a partir da entrada.
+        Emprestimo emprestimo = new Emprestimo.Builder()
+                .epi(epi)
+                .beneficiario(beneficiario)
+                .responsavelEntrega(operador)
+                .retiradaEm(agora)
+                .devolucaoPrevistaPara(entrada.dataDevolucaoPrevista())
+                .termoCautela(termo)
+                .justificativaSubstituicao(entrada.justificativaSubstituicao())
+                .build();
         // Chain of Responsibility (#265): valida antes de baixar o estoque e de gravar.
         emprestimoValidador.validar(emprestimo);
 
