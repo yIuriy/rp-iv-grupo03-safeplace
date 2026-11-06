@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.validacao.emprestimo;
 
+import br.edu.safeplace.backend.suporte.EmprestimoDeTeste;
 import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoa;
 import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.epi;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,29 +30,87 @@ class EmprestimoValidadorTest {
     @Test
     @DisplayName("Construção exige EPI, colaborador, responsável, datas coerentes e termo de cautela")
     void construcaoValidaObrigatorios() {
-        assertThatThrownBy(() -> emprestimo.validar(Emprestimo.registrarEntrega(epi(null), pessoa(3), pessoa(2), RETIRADA, PREVISTA, "termo", null)))
+        assertThatThrownBy(() -> emprestimo.validar(new Emprestimo.Builder()
+                .beneficiario(pessoa(3))
+                .responsavelEntrega(pessoa(2))
+                .retiradaEm(RETIRADA)
+                .devolucaoPrevistaPara(PREVISTA)
+                .termoCautela("termo")
+                .build()))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("EPI");
-        assertThatThrownBy(() -> emprestimo.validar(Emprestimo.registrarEntrega(epi(10), pessoa(null), pessoa(2), RETIRADA, PREVISTA, "termo", null)))
+        assertThatThrownBy(() -> emprestimo.validar(new Emprestimo.Builder()
+                .epi(epi(10))
+                .responsavelEntrega(pessoa(2))
+                .retiradaEm(RETIRADA)
+                .devolucaoPrevistaPara(PREVISTA)
+                .termoCautela("termo")
+                .build()))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Colaborador");
-        assertThatThrownBy(() -> emprestimo.validar(Emprestimo.registrarEntrega(epi(10), pessoa(3), pessoa(null), RETIRADA, PREVISTA, "termo", null)))
+        assertThatThrownBy(() -> emprestimo.validar(new Emprestimo.Builder()
+                .epi(epi(10))
+                .beneficiario(pessoa(3))
+                .retiradaEm(RETIRADA)
+                .devolucaoPrevistaPara(PREVISTA)
+                .termoCautela("termo")
+                .build()))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Responsável");
-        assertThatThrownBy(() -> emprestimo.validar(Emprestimo.registrarEntrega(epi(10), pessoa(3), pessoa(2), RETIRADA, RETIRADA.toLocalDate().minusDays(1), "termo", null)))
+        assertThatThrownBy(() -> emprestimo.validar(new Emprestimo.Builder()
+                .epi(epi(10))
+                .beneficiario(pessoa(3))
+                .responsavelEntrega(pessoa(2))
+                .retiradaEm(RETIRADA)
+                .devolucaoPrevistaPara(RETIRADA.toLocalDate().minusDays(1))
+                .termoCautela("termo")
+                .build()))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("anterior");
-        assertThatThrownBy(() -> emprestimo.validar(Emprestimo.registrarEntrega(epi(10), pessoa(3), pessoa(2), RETIRADA, PREVISTA, " ", null)))
+        assertThatThrownBy(() -> emprestimo.validar(new Emprestimo.Builder()
+                .epi(epi(10))
+                .beneficiario(pessoa(3))
+                .responsavelEntrega(pessoa(2))
+                .retiradaEm(RETIRADA)
+                .devolucaoPrevistaPara(PREVISTA)
+                .termoCautela(" ")
+                .build()))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Termo");
     }
 
     @Test
     @DisplayName("Reconstrução exige coerência entre status e devolução")
     void reconstrucaoExigeCoerencia() {
-        assertThatThrownBy(() -> emprestimo.validar(new Emprestimo(1, epi(10), pessoa(3), pessoa(2), RETIRADA, PREVISTA, "termo", null,
-                RETIRADA.plusDays(1), pessoa(5), EstadoDevolucao.APTO, ClassificacaoEmprestimo.INDISPONIVEL)))
+        assertThatThrownBy(() -> emprestimo.validar(EmprestimoDeTeste.umEmprestimo()
+                .comId(1)
+                .comEpi(epi(10))
+                .comBeneficiario(pessoa(3))
+                .comResponsavelEntrega(pessoa(2))
+                .retiradoEm(RETIRADA)
+                .comDevolucaoPrevistaPara(PREVISTA)
+                .comTermoCautela("termo")
+                .devolvidoEm(RETIRADA.plusDays(1), pessoa(5), EstadoDevolucao.APTO)
+                .comStatus(ClassificacaoEmprestimo.INDISPONIVEL)
+                .build()))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> emprestimo.validar(new Emprestimo(1, epi(10), pessoa(3), pessoa(2), RETIRADA, PREVISTA, "termo", null,
-                null, pessoa(null), null, ClassificacaoEmprestimo.DISPONIVEL)))
+        assertThatThrownBy(() -> emprestimo.validar(EmprestimoDeTeste.umEmprestimo()
+                .comId(1)
+                .comEpi(epi(10))
+                .comBeneficiario(pessoa(3))
+                .comResponsavelEntrega(pessoa(2))
+                .retiradoEm(RETIRADA)
+                .comDevolucaoPrevistaPara(PREVISTA)
+                .comTermoCautela("termo")
+                .comStatus(ClassificacaoEmprestimo.DISPONIVEL)
+                .build()))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> emprestimo.validar(new Emprestimo(1, epi(10), pessoa(3), pessoa(2), RETIRADA, PREVISTA, "termo", null,
-                RETIRADA.plusDays(1), pessoa(5), null, ClassificacaoEmprestimo.DISPONIVEL)))
+        assertThatThrownBy(() -> emprestimo.validar(EmprestimoDeTeste.umEmprestimo()
+                .comId(1)
+                .comEpi(epi(10))
+                .comBeneficiario(pessoa(3))
+                .comResponsavelEntrega(pessoa(2))
+                .retiradoEm(RETIRADA)
+                .comDevolucaoPrevistaPara(PREVISTA)
+                .comTermoCautela("termo")
+                .devolvidoEm(RETIRADA.plusDays(1), pessoa(5), null)
+                .comStatus(ClassificacaoEmprestimo.DISPONIVEL)
+                .build()))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

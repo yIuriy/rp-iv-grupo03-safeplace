@@ -6,6 +6,7 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import org.springframework.test.util.ReflectionTestUtils;
 import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoa;
 import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
@@ -320,8 +321,14 @@ class EmprestimoServiceTest {
     @DisplayName("Consulta identifica pendências e atrasos: empréstimo vencido aparece como DEVOLUCAO_ATRASADA")
     void consultaDePendentesEAtrasados() {
         useCase.registrarEntrega(entregaDe(capaceteId), EMAIL_SUPERVISOR);
-        emprestimos.salvar(Emprestimo.registrarEntrega(epis.buscarPorId(capaceteId).orElseThrow(), pessoa(colaboradorId), pessoa(supervisorId),
-                LocalDateTime.now().minusDays(10), LocalDate.now().minusDays(3), "Termo antigo", null));
+        emprestimos.salvar(new Emprestimo.Builder()
+                .epi(epis.buscarPorId(capaceteId).orElseThrow())
+                .beneficiario(pessoa(colaboradorId))
+                .responsavelEntrega(pessoa(supervisorId))
+                .retiradaEm(LocalDateTime.now().minusDays(10))
+                .devolucaoPrevistaPara(LocalDate.now().minusDays(3))
+                .termoCautela("Termo antigo")
+                .build());
 
         List<EmprestimoOutputDTO> pendentes = useCase.listar(Situacao.PENDENTES, null);
         List<EmprestimoOutputDTO> atrasados = useCase.listar(Situacao.ATRASADOS, null);
@@ -364,14 +371,12 @@ class EmprestimoServiceTest {
 
         @Override
         public Emprestimo salvar(Emprestimo emprestimo) {
-            Integer id = emprestimo.getId() != null ? emprestimo.getId() : proximoId++;
-            Emprestimo salvo = new Emprestimo(id, emprestimo.getEpi(), emprestimo.getColaborador(),
-                    emprestimo.getResponsavelEntrega(), emprestimo.getDataRetirada(),
-                    emprestimo.getDataDevolucaoPrevista(), emprestimo.getTermoCautela(),
-                    emprestimo.getJustificativaSubstituicao(), emprestimo.getDataDevolucaoReal(),
-                    emprestimo.getResponsavelDevolucao(), emprestimo.getEstadoDevolucao(), emprestimo.getStatus());
-            registros.put(id, salvo);
-            return salvo;
+            // Como o JPA, o banco em memória atribui o id gerado à própria entidade.
+            if (emprestimo.getId() == null) {
+                ReflectionTestUtils.setField(emprestimo, "id", proximoId++);
+            }
+            registros.put(emprestimo.getId(), emprestimo);
+            return emprestimo;
         }
 
         @Override

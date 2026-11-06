@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.EmprestimoDeTeste;
 import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoa;
 import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.epi;
 import br.edu.safeplace.backend.suporte.EpiDeTeste;
@@ -84,9 +85,17 @@ class PlanejarSubstituicaoUseCaseTest {
 
         Setor setor = new Setor(10, "Setor Usinagem", "Usinagem pesada", "Galpão 1", NivelPerigo.ALTO);
 
-        Emprestimo emp = new Emprestimo(1, epi(1), pessoa(100), pessoa(2), hoje.minusDays(30).atStartOfDay(),
-                hoje.plusDays(10), "Termo #10", null, hoje.minusDays(5).atStartOfDay(),
-                pessoa(2), EstadoDevolucao.APTO, ClassificacaoEmprestimo.DISPONIVEL);
+        Emprestimo emp = EmprestimoDeTeste.umEmprestimo()
+                .comId(1)
+                .comEpi(epi(1))
+                .comBeneficiario(pessoa(100))
+                .comResponsavelEntrega(pessoa(2))
+                .retiradoEm(hoje.minusDays(30).atStartOfDay())
+                .comDevolucaoPrevistaPara(hoje.plusDays(10))
+                .comTermoCautela("Termo #10")
+                .devolvidoEm(hoje.minusDays(5).atStartOfDay(), pessoa(2), EstadoDevolucao.APTO)
+                .comStatus(ClassificacaoEmprestimo.DISPONIVEL)
+                .build();
 
         when(epiRepository.listarTodos()).thenReturn(List.of(epi));
         when(setorRepository.buscarPorNome("Setor Usinagem")).thenReturn(Optional.of(setor));
@@ -140,9 +149,17 @@ class PlanejarSubstituicaoUseCaseTest {
 
         Setor setor = new Setor(20, "Pintura", "Cabine de pintura", "Galpão 2", NivelPerigo.MEDIO);
 
-        Emprestimo empValido = new Emprestimo(2, epi(2), pessoa(100), pessoa(2), hoje.minusDays(20).atStartOfDay(),
-                hoje.plusDays(10), "Termo #11", null, hoje.minusDays(2).atStartOfDay(),
-                pessoa(2), EstadoDevolucao.APTO, ClassificacaoEmprestimo.DISPONIVEL);
+        Emprestimo empValido = EmprestimoDeTeste.umEmprestimo()
+                .comId(2)
+                .comEpi(epi(2))
+                .comBeneficiario(pessoa(100))
+                .comResponsavelEntrega(pessoa(2))
+                .retiradoEm(hoje.minusDays(20).atStartOfDay())
+                .comDevolucaoPrevistaPara(hoje.plusDays(10))
+                .comTermoCautela("Termo #11")
+                .devolvidoEm(hoje.minusDays(2).atStartOfDay(), pessoa(2), EstadoDevolucao.APTO)
+                .comStatus(ClassificacaoEmprestimo.DISPONIVEL)
+                .build();
 
         when(epiRepository.listarTodos()).thenReturn(List.of(epiSemHistorico, epiValido));
         when(setorRepository.buscarPorNome("Pintura")).thenReturn(Optional.of(setor));

@@ -25,7 +25,14 @@ class EmprestimoTest {
     private static final LocalDate PREVISTA = LocalDate.of(2026, 9, 28);
 
     private Emprestimo entregaPadrao() {
-        return Emprestimo.registrarEntrega(epi(10), pessoa(3), pessoa(2), RETIRADA, PREVISTA, "Termo de cautela de teste", null);
+        return new Emprestimo.Builder()
+                .epi(epi(10))
+                .beneficiario(pessoa(3))
+                .responsavelEntrega(pessoa(2))
+                .retiradaEm(RETIRADA)
+                .devolucaoPrevistaPara(PREVISTA)
+                .termoCautela("Termo de cautela de teste")
+                .build();
     }
 
     @Test

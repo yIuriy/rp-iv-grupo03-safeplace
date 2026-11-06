@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.domain.epi;
 
+import br.edu.safeplace.backend.suporte.EmprestimoDeTeste;
 import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoa;
 import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.epi;
 import br.edu.safeplace.backend.suporte.EpiDeTeste;
@@ -126,10 +127,17 @@ class SubstituicaoInteligenteServiceTest {
         // CA distante: 8 dias de uso em 90 projetam ~1530 dias, abaixo do teto do CA
         Epi epi = criarEpi(9, "Luva de Alta Tensão", 180, hoje.plusYears(10), 10, 2);
         LocalDateTime retirada = hoje.minusDays(10).atStartOfDay();
-        Emprestimo emprestimoAvariado = new Emprestimo(
-                100, epi(9), pessoa(10), pessoa(1), retirada,
-                retirada.toLocalDate().plusDays(15), "Termo", null,
-                hoje.minusDays(2).atStartOfDay(), pessoa(1), EstadoDevolucao.DESCARTE, ClassificacaoEmprestimo.DISPONIVEL);
+        Emprestimo emprestimoAvariado = EmprestimoDeTeste.umEmprestimo()
+                .comId(100)
+                .comEpi(epi(9))
+                .comBeneficiario(pessoa(10))
+                .comResponsavelEntrega(pessoa(1))
+                .retiradoEm(retirada)
+                .comDevolucaoPrevistaPara(retirada.toLocalDate().plusDays(15))
+                .comTermoCautela("Termo")
+                .devolvidoEm(hoje.minusDays(2).atStartOfDay(), pessoa(1), EstadoDevolucao.DESCARTE)
+                .comStatus(ClassificacaoEmprestimo.DISPONIVEL)
+                .build();
 
         ProjecaoSubstituicao projecao = service.calcularProjecao(new ContextoProjecao(epi, NivelPerigo.MEDIO, List.of(emprestimoAvariado), hoje, 90));
 
@@ -213,7 +221,16 @@ class SubstituicaoInteligenteServiceTest {
         ClassificacaoEmprestimo status = devolucao != null ? ClassificacaoEmprestimo.DISPONIVEL : ClassificacaoEmprestimo.INDISPONIVEL;
         EstadoDevolucao estadoDev = devolucao != null ? EstadoDevolucao.APTO : null;
         Integer respDev = devolucao != null ? 1 : null;
-        return new Emprestimo(id, epi(epiId), pessoa(10), pessoa(1), retirada,
-                retirada.toLocalDate().plusDays(15), "Termo #1", null, devolucao, pessoa(respDev), estadoDev, status);
+        return EmprestimoDeTeste.umEmprestimo()
+                .comId(id)
+                .comEpi(epi(epiId))
+                .comBeneficiario(pessoa(10))
+                .comResponsavelEntrega(pessoa(1))
+                .retiradoEm(retirada)
+                .comDevolucaoPrevistaPara(retirada.toLocalDate().plusDays(15))
+                .comTermoCautela("Termo #1")
+                .devolvidoEm(devolucao, pessoa(respDev), estadoDev)
+                .comStatus(status)
+                .build();
     }
 }

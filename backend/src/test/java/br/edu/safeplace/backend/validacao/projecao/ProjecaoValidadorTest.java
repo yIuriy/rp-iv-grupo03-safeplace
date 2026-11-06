@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.validacao.projecao;
 
+import br.edu.safeplace.backend.suporte.EmprestimoDeTeste;
 import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoa;
 import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.epi;
 import br.edu.safeplace.backend.suporte.EpiDeTeste;
@@ -190,7 +191,16 @@ class ProjecaoValidadorTest {
         ClassificacaoEmprestimo status = devolucao != null ? ClassificacaoEmprestimo.DISPONIVEL : ClassificacaoEmprestimo.INDISPONIVEL;
         EstadoDevolucao estadoDev = devolucao != null ? EstadoDevolucao.APTO : null;
         Integer respDev = devolucao != null ? 1 : null;
-        return new Emprestimo(id, epi(epiId), pessoa(10), pessoa(1), retirada,
-                retirada.toLocalDate().plusDays(15), "Termo #1", null, devolucao, pessoa(respDev), estadoDev, status);
+        return EmprestimoDeTeste.umEmprestimo()
+                .comId(id)
+                .comEpi(epi(epiId))
+                .comBeneficiario(pessoa(10))
+                .comResponsavelEntrega(pessoa(1))
+                .retiradoEm(retirada)
+                .comDevolucaoPrevistaPara(retirada.toLocalDate().plusDays(15))
+                .comTermoCautela("Termo #1")
+                .devolvidoEm(devolucao, pessoa(respDev), estadoDev)
+                .comStatus(status)
+                .build();
     }
 }
