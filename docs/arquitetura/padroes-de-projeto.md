@@ -22,7 +22,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [Adapter](#adapter--porta-de-operador-autenticado) | GoF, estrutural | Backend: operador autenticado | [#222](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/222), [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236) | Aplicado (2/2: #222, #236) |
 | [Facade](#facade--registrador-de-auditoria) | GoF, estrutural | Backend: registro de auditoria (`RegistradorAuditoria`) | [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237), [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) | Aplicado (1/3: #223) |
 | [State (Backend)](#state--transicoes-de-statusepi) | GoF, comportamental | Backend: transições de `StatusEpi` | [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) | Aplicado |
-| [Factory Method](#factory-method--criacao-de-epi-e-ocorrencia) | GoF, criacional | Backend: criação de `Epi` e `Acidente`/`Incidente` (`Ocorrencia` `sealed`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225), [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Pendente |
+| [Factory Method](#factory-method--criacao-de-epi-e-ocorrencia) | GoF, criacional | Backend: criação de `Epi` e `Acidente`/`Incidente` (`Ocorrencia` `sealed`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225), [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Aplicado (1/2: #225) |
 | [Builder (Test Data Builder)](#builder--test-data-builders-de-epi-tarefa-e-ocorrencia) | GoF, criacional | Backend (`src/test`): builders de `Epi`, `Tarefa` e `Ocorrencia` | [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) | Pendente |
 | [Null Object](#null-object--adaptador-nulo-de-notificacao-e-dependencias-opcionais) | Woolf / PLoPD 3 | Backend: `NotificadorOcorrenciaNulo` e dependências opcionais | [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227), [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) | Aplicado (2/2: #227, #241) |
 | [Chain of Responsibility](#chain-of-responsibility--camada-de-validação) | GoF, comportamental | Backend: camada `validacao` (aptidão do colaborador e tarefa) | [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228); continua em [#263](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/263) a [#267](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/267) | Aplicado (6/6: #228, #267, #263, #264, #265, #266) |
@@ -1264,40 +1264,185 @@ Suíte existente (`./mvnw clean test` com PostgreSQL externo novo): **1186 teste
 
 ## Factory Method — criação de `Epi` e `Ocorrencia`
 
-**Catálogo:** GoF, criacional (fábricas nomeadas + polimorfismo com hierarquia `sealed`).
+**Catálogo:** GoF, criacional, exposto por interface.
 
-**Intenção:** consolidar a criação de `Epi` em fábricas nomeadas (`Epi.novo`, `Epi.reconstituir`) e a criação de `Acidente`/`Incidente` por fábrica com `Ocorrencia` `sealed` (`permits Acidente, Incidente`).
+**Intenção:** criar um `Epi` novo por uma única porta, a interface `FabricaEpi` injetada pelo Spring, que recebe a `EspecificacaoEPI` inteira em vez de campos soltos. A criação de `Acidente`/`Incidente` por fábrica, com `Ocorrencia` `sealed`, é a parte 2 ([#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239)).
 
-**Issues:** [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) e [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239).
+**Issues:** [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) (parte 1, aplicada: `Epi`) e [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) (parte 2: ocorrência).
+
+**Revisão após a avaliação do professor.** A versão anterior da #225 consolidava a criação em métodos **estáticos** (`Epi.novo`, `Epi.reconstituir`). O professor criticou a criação estática com parâmetros soltos, pediu programação orientada a interface e pediu para tirar a validação da criação do objeto. Com o `Epi` como entidade JPA ([#258](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/258)), quem reconstitui o EPI lido do banco é o próprio JPA, então a distinção "novo × reconstituído" desaparece e só a criação de um EPI novo precisa de fábrica.
 
 ### Problema (antes)
 
-*A preencher nas issues [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) e [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, R5 e R6, e `docs/arquitetura/correspondencia-classes-epi.md`).*
+O `Epi` tinha **10 formas de ser criado**: 4 construtores públicos, 5 sobrecargas estáticas de `novo` e 1 `reconstituir`.
+
+- **Semântica escondida:** o mesmo construtor público servia para criar (sem id) e para reconstruir (com id), e o comentário dizia que só o primeiro caso exigia CA válido.
+- **Dados inventados:** o construtor reduzido `Epi(int codigoEPI, String localizacao, int quantidade, StatusEpi status)` criava o nome `"EPI-" + id`, o CA `"1"` e a validade de hoje + 1 ano.
+- **Parâmetros soltos:** as sobrecargas de `novo` recebiam descrição, estoque mínimo e classificação um a um (até 10 argumentos), embora a `EspecificacaoEPI` já agrupasse esses dados.
+- **Criação estática:** o caso de uso chamava `Epi.novo(...)` diretamente, sem poder trocar a forma de criar.
 
 ### Papéis do padrão
 
 | Papel no padrão | Elemento no código | Responsabilidade |
 | --- | --- | --- |
-| Creator / Factory Methods | `Epi.novo(...)`, `Epi.reconstituir(...)`, fábrica de `Ocorrencia` por `TipoOcorrencia` | Distinguir criação inicial de reconstituição e instanciar o subtipo correto de `Ocorrencia` |
-| Product | `Epi`, `Ocorrencia` (`sealed`) | Entidades de domínio com invariantes protegidas e `getTipo()` polimórfico |
-| ConcreteProduct | `Acidente`, `Incidente` | Subtipos permitidos pela hierarquia selada de `Ocorrencia` |
-| Parameter Object | `EspecificacaoEPI` | Agrupar os dados descritivos na criação do `Epi` |
+| Creator | interface `FabricaEpi` (`domain/epi`) | Declarar a única operação de criação: `criar(nome, especificacao, lote, quantidade, vidaUtilDias, localizacao)` |
+| ConcreteCreator | `FabricaEpiPadrao`, registrada como `@Bean` em `ServicosDominioConfig` | Montar o `Epi` novo, sem id, com a situação inicial definida pelo saldo; não valida |
+| Product | `Epi` | Entidade com o construtor `protected` do JPA e um construtor de pacote usado só pela fábrica |
+| Parameter Object | `EspecificacaoEPI` | Agrupar descrição, estoque mínimo e classificação |
+| Client | `EpiService.cadastrarEpi` | Receber a `FabricaEpi` por injeção e validar o EPI criado antes do repository |
+
+**A fábrica não valida.** CA, nome, quantidades e status são verificados pelo `EpiValidador` (Chain of Responsibility, #264), que o caso de uso chama antes de `repository.salvar`. A fábrica aceita até um CA vencido, e é o validador que o recusa.
+
+**Testes.** Os testes criavam EPIs pelos construtores posicionais, inclusive em situações de registro já gravado (com id e status). Eles passaram a usar o `EpiDeTeste` (Test Data Builder em `src/test/.../suporte`), que cria o EPI pela `FabricaEpiPadrao`, como a produção, e só simula o id e a situação de um registro lido do banco por reflexão, que em produção são preenchidos pelo JPA.
 
 ### Diagramas
 
-*Diagramas PlantUML antes e depois a preencher nas issues [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) e [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239).*
+**Antes.** Dez portas de entrada, todas públicas e estáticas ou construtores.
+
+```mermaid
+classDiagram
+  direction LR
+  class Epi {
+    +Epi(id, nome, numeroCa, qtd, minimo, status, validade, vida)
+    +Epi(... , descricao, classificacao)
+    +Epi(... , descricao, classificacao, localizacao)
+    +Epi(codigo, localizacao, qtd, status) dados inventados
+    +novo(...)$ x5
+    +reconstituir(...)$
+  }
+  class EpiService
+  class EpiEntityMapper {
+    +toDomain(EpiEntity)$
+  }
+  EpiService ..> Epi : Epi.novo(10 argumentos)
+  EpiEntityMapper ..> Epi : Epi.reconstituir(...)
+```
+
+**Depois.** Uma interface de criação injetada; a leitura do banco é do JPA.
+
+```mermaid
+classDiagram
+  direction LR
+  class FabricaEpi {
+    <<interface / Creator>>
+    +criar(nome, especificacao, lote, quantidade, vidaUtilDias, localizacao) Epi
+  }
+  class FabricaEpiPadrao {
+    <<ConcreteCreator>>
+    +criar(...) Epi
+  }
+  class Epi {
+    <<Product / Entity>>
+    #Epi() JPA
+    ~Epi(nome, especificacao, lote, quantidade, status, vida, localizacao)
+  }
+  class EspecificacaoEPI {
+    <<Parameter Object / Embeddable>>
+    descricao
+    quantidadeMinima
+    classificacao
+  }
+  class EpiService {
+    <<Client>>
+  }
+  class ServicosDominioConfig {
+    +fabricaEpi() FabricaEpi
+  }
+  class EpiValidador {
+    <<Chain of Responsibility>>
+  }
+  FabricaEpi <|.. FabricaEpiPadrao
+  FabricaEpiPadrao ..> Epi : cria
+  FabricaEpi ..> EspecificacaoEPI : recebe inteira
+  EpiService --> FabricaEpi : injetada
+  EpiService ..> EpiValidador : valida antes do repository
+  ServicosDominioConfig ..> FabricaEpiPadrao : registra o bean
+```
+
+### Código antes × depois
+
+`EpiService.cadastrarEpi`, antes:
+
+```java
+Epi novoEpi = Epi.novo(
+        inputDTO.nome(),
+        lote,
+        inputDTO.quantidade(),
+        inputDTO.estoqueMinimo(),
+        inputDTO.vidaUtilDias(),
+        inputDTO.descricao(),
+        inputDTO.classificacao(), inputDTO.localizacao());
+```
+
+Depois:
+
+```java
+EspecificacaoEPI especificacao = new EspecificacaoEPI(
+        inputDTO.descricao(), inputDTO.estoqueMinimo(), inputDTO.classificacao());
+Epi novoEpi = fabricaEpi.criar(inputDTO.nome(), especificacao, lote, inputDTO.quantidade(),
+        inputDTO.vidaUtilDias(), inputDTO.localizacao());
+epiValidador.validar(novoEpi);
+Epi salvo = repository.salvar(novoEpi);
+```
+
+A fábrica:
+
+```java
+public class FabricaEpiPadrao implements FabricaEpi {
+    @Override
+    public Epi criar(String nome, EspecificacaoEPI especificacao, LoteEPI lote, int quantidade,
+            Integer vidaUtilDias, String localizacao) {
+        StatusEpi situacaoInicial = quantidade > 0 ? StatusEpi.DISPONIVEL : StatusEpi.ESGOTADO;
+        return new Epi(nome, especificacao, lote, quantidade, situacaoInicial, vidaUtilDias, localizacao);
+    }
+}
+```
+
+Um teste, antes e depois:
+
+```java
+// antes
+Epi epi = new Epi(6, "Bota", "CA-600", 5, 1, StatusEpi.EM_USO, LocalDate.of(2030, 1, 1), 365);
+// depois
+Epi epi = EpiDeTeste.umEpi()
+        .comId(6)
+        .comNome("Bota")
+        .comCa("CA-600")
+        .comQuantidade(5)
+        .comEstoqueMinimo(1)
+        .comStatus(StatusEpi.EM_USO)
+        .comValidadeCa(LocalDate.of(2030, 1, 1))
+        .comVidaUtilDias(365)
+        .build();
+```
+
+### Benefício
+
+Há uma única forma de criar um EPI novo, e ela diz o que é: o caso de uso pede à fábrica, e a fábrica não esconde regra de validação nem inventa dados. Como o caso de uso depende da interface `FabricaEpi`, trocar a forma de criar (por exemplo, para registrar o lote com outra política) é trocar o bean, sem mexer no `EpiService`. Não há mais a ambiguidade "com id reconstrói, sem id cria": ler um EPI gravado é do JPA. Nos testes, cada cenário diz só o que importa (`comStatus(EM_USO)`), em vez de oito argumentos posicionais em que um `int` trocado de lugar não dava erro de compilação.
 
 ### Métricas locais
 
-| Métrica | Antes (v1.0.0) | Depois |
-| --- | --- | --- |
-| Portas de entrada de construção em `Epi` | 10 | 2 |
-| Métodos legados sem uso em `Epi` | 8 | 0 |
-| Checagens `instanceof Acidente` em `domain/` e `application/` | 5 | *A medir* |
+| Métrica | Antes (`dev` antes da #225) | Depois |
+| --- | ---: | ---: |
+| Formas de criar um `Epi` (construtores públicos + métodos estáticos) | 10 | 1 (`FabricaEpi.criar`) |
+| Construtores públicos de `Epi` | 4 | 0 (fica o `protected` do JPA e um de pacote para a fábrica) |
+| Métodos estáticos de criação em `Epi` | 6 | 0 |
+| Construtor com dados inventados | 1 | 0 |
+| Maior número de argumentos para criar um `Epi` | 10 | 6 |
+| Linhas de teste que criavam `Epi` por construtor ou método estático | 98 | 0 (95 usos de `EpiDeTeste`) |
+
+Medição por busca no código de `backend/src`.
 
 ### Evidências
 
-*A preencher nas issues [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) e [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239).*
+Testes novos:
+
+1. `FabricaEpiPadraoTest` (4 testes; papéis Creator, ConcreteCreator, Product e Parameter Object): a fábrica cria um EPI novo, sem id, guardando a própria instância da `EspecificacaoEPI` e do lote; a situação inicial acompanha o saldo (`DISPONIVEL` ou `ESGOTADO`); a fábrica não valida (CA vencido e mínimo negativo passam, para o validador recusar); o `Epi` não tem construtor público nem método estático que devolva `Epi`.
+2. `EpiServiceTest.cadastroCriaOEpiPelaFabricaInjetada` (papel Client): o cadastro usa a fábrica injetada e entrega a ela a especificação montada a partir do `InputDTO`.
+
+Testes ajustados: 31 classes passaram a criar EPIs pelo `EpiDeTeste`. Em `EpiTest` saíram os 4 testes do que deixou de existir (as duas sobrecargas de `novo`, que agora estão em `FabricaEpiPadraoTest`, o construtor público sem id e o construtor reduzido com dados inventados). Os dois testes do `EpiValidadorTest` que recusam status ausente usam `semStatus()`, porque a fábrica nunca cria um EPI sem situação.
+
+Suíte existente (`./mvnw clean test` com PostgreSQL externo novo): **1199 testes, 0 falhas, 10 erros**, todos o problema anterior de limpeza entre classes de integração (`DELETE FROM epis` bloqueado por `projecoes_substituicao`).
 
 ---
 
