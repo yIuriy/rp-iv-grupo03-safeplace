@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.domain.epi;
 
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoa;
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.epi;
 import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -125,9 +127,9 @@ class SubstituicaoInteligenteServiceTest {
         Epi epi = criarEpi(9, "Luva de Alta Tensão", 180, hoje.plusYears(10), 10, 2);
         LocalDateTime retirada = hoje.minusDays(10).atStartOfDay();
         Emprestimo emprestimoAvariado = new Emprestimo(
-                100, 9, 10, 1, retirada,
+                100, epi(9), pessoa(10), pessoa(1), retirada,
                 retirada.toLocalDate().plusDays(15), "Termo", null,
-                hoje.minusDays(2).atStartOfDay(), 1, EstadoDevolucao.DESCARTE, ClassificacaoEmprestimo.DISPONIVEL);
+                hoje.minusDays(2).atStartOfDay(), pessoa(1), EstadoDevolucao.DESCARTE, ClassificacaoEmprestimo.DISPONIVEL);
 
         ProjecaoSubstituicao projecao = service.calcularProjecao(new ContextoProjecao(epi, NivelPerigo.MEDIO, List.of(emprestimoAvariado), hoje, 90));
 
@@ -211,7 +213,7 @@ class SubstituicaoInteligenteServiceTest {
         ClassificacaoEmprestimo status = devolucao != null ? ClassificacaoEmprestimo.DISPONIVEL : ClassificacaoEmprestimo.INDISPONIVEL;
         EstadoDevolucao estadoDev = devolucao != null ? EstadoDevolucao.APTO : null;
         Integer respDev = devolucao != null ? 1 : null;
-        return new Emprestimo(id, epiId, 10, 1, retirada,
-                retirada.toLocalDate().plusDays(15), "Termo #1", null, devolucao, respDev, estadoDev, status);
+        return new Emprestimo(id, epi(epiId), pessoa(10), pessoa(1), retirada,
+                retirada.toLocalDate().plusDays(15), "Termo #1", null, devolucao, pessoa(respDev), estadoDev, status);
     }
 }

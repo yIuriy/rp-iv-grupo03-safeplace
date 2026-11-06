@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.validacao.projecao;
 
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoa;
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.epi;
 import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -188,7 +190,7 @@ class ProjecaoValidadorTest {
         ClassificacaoEmprestimo status = devolucao != null ? ClassificacaoEmprestimo.DISPONIVEL : ClassificacaoEmprestimo.INDISPONIVEL;
         EstadoDevolucao estadoDev = devolucao != null ? EstadoDevolucao.APTO : null;
         Integer respDev = devolucao != null ? 1 : null;
-        return new Emprestimo(id, epiId, 10, 1, retirada,
-                retirada.toLocalDate().plusDays(15), "Termo #1", null, devolucao, respDev, estadoDev, status);
+        return new Emprestimo(id, epi(epiId), pessoa(10), pessoa(1), retirada,
+                retirada.toLocalDate().plusDays(15), "Termo #1", null, devolucao, pessoa(respDev), estadoDev, status);
     }
 }

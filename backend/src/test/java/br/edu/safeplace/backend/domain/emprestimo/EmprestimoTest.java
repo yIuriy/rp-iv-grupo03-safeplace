@@ -4,6 +4,8 @@
  */
 package br.edu.safeplace.backend.domain.emprestimo;
 
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoa;
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.epi;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -23,7 +25,7 @@ class EmprestimoTest {
     private static final LocalDate PREVISTA = LocalDate.of(2026, 9, 28);
 
     private Emprestimo entregaPadrao() {
-        return Emprestimo.registrarEntrega(10, 3, 2, RETIRADA, PREVISTA, "Termo de cautela de teste", null);
+        return Emprestimo.registrarEntrega(epi(10), pessoa(3), pessoa(2), RETIRADA, PREVISTA, "Termo de cautela de teste", null);
     }
 
     @Test
@@ -60,7 +62,7 @@ class EmprestimoTest {
         Emprestimo emprestimo = entregaPadrao();
         LocalDateTime devolucao = RETIRADA.plusDays(3);
 
-        emprestimo.devolver(estado, 5, devolucao);
+        emprestimo.devolver(estado, pessoa(5), devolucao);
 
         assertThat(emprestimo.getStatus()).isEqualTo(ClassificacaoEmprestimo.DISPONIVEL);
         assertThat(emprestimo.estaAtivo()).isFalse();
@@ -83,9 +85,9 @@ class EmprestimoTest {
     @DisplayName("Segunda devolução do mesmo empréstimo é rejeitada")
     void naoDevolveDuasVezes() {
         Emprestimo emprestimo = entregaPadrao();
-        emprestimo.devolver(EstadoDevolucao.APTO, 5, RETIRADA.plusDays(1));
+        emprestimo.devolver(EstadoDevolucao.APTO, pessoa(5), RETIRADA.plusDays(1));
 
-        assertThatThrownBy(() -> emprestimo.devolver(EstadoDevolucao.APTO, 5, RETIRADA.plusDays(2)))
+        assertThatThrownBy(() -> emprestimo.devolver(EstadoDevolucao.APTO, pessoa(5), RETIRADA.plusDays(2)))
                 .isInstanceOf(EmprestimoJaEncerradoException.class);
     }
 
@@ -94,9 +96,9 @@ class EmprestimoTest {
     void devolucaoInvalidaNaoAltera() {
         Emprestimo emprestimo = entregaPadrao();
 
-        assertThatThrownBy(() -> emprestimo.devolver(EstadoDevolucao.APTO, 5, RETIRADA.minusMinutes(1)))
+        assertThatThrownBy(() -> emprestimo.devolver(EstadoDevolucao.APTO, pessoa(5), RETIRADA.minusMinutes(1)))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> emprestimo.devolver(null, 5, RETIRADA.plusDays(1)))
+        assertThatThrownBy(() -> emprestimo.devolver(null, pessoa(5), RETIRADA.plusDays(1)))
                 .isInstanceOf(IllegalArgumentException.class);
 
         assertThat(emprestimo.estaAtivo()).isTrue();

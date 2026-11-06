@@ -6,6 +6,7 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoa;
 import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
 
@@ -319,7 +320,7 @@ class EmprestimoServiceTest {
     @DisplayName("Consulta identifica pendências e atrasos: empréstimo vencido aparece como DEVOLUCAO_ATRASADA")
     void consultaDePendentesEAtrasados() {
         useCase.registrarEntrega(entregaDe(capaceteId), EMAIL_SUPERVISOR);
-        emprestimos.salvar(Emprestimo.registrarEntrega(capaceteId, colaboradorId, supervisorId,
+        emprestimos.salvar(Emprestimo.registrarEntrega(epis.buscarPorId(capaceteId).orElseThrow(), pessoa(colaboradorId), pessoa(supervisorId),
                 LocalDateTime.now().minusDays(10), LocalDate.now().minusDays(3), "Termo antigo", null));
 
         List<EmprestimoOutputDTO> pendentes = useCase.listar(Situacao.PENDENTES, null);
@@ -364,11 +365,11 @@ class EmprestimoServiceTest {
         @Override
         public Emprestimo salvar(Emprestimo emprestimo) {
             Integer id = emprestimo.getId() != null ? emprestimo.getId() : proximoId++;
-            Emprestimo salvo = new Emprestimo(id, emprestimo.getEpiId(), emprestimo.getColaboradorId(),
-                    emprestimo.getResponsavelEntregaId(), emprestimo.getDataRetirada(),
+            Emprestimo salvo = new Emprestimo(id, emprestimo.getEpi(), emprestimo.getColaborador(),
+                    emprestimo.getResponsavelEntrega(), emprestimo.getDataRetirada(),
                     emprestimo.getDataDevolucaoPrevista(), emprestimo.getTermoCautela(),
                     emprestimo.getJustificativaSubstituicao(), emprestimo.getDataDevolucaoReal(),
-                    emprestimo.getResponsavelDevolucaoId(), emprestimo.getEstadoDevolucao(), emprestimo.getStatus());
+                    emprestimo.getResponsavelDevolucao(), emprestimo.getEstadoDevolucao(), emprestimo.getStatus());
             registros.put(id, salvo);
             return salvo;
         }

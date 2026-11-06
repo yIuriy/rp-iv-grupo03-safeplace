@@ -111,7 +111,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
 
         LocalDateTime agora = LocalDateTime.now();
         String termo = termoDeCautela(epi, beneficiario, operador, agora, entrada.dataDevolucaoPrevista());
-        Emprestimo emprestimo = Emprestimo.registrarEntrega(epi.getId(), beneficiario.getId(), operador.getId(),
+        Emprestimo emprestimo = Emprestimo.registrarEntrega(epi, beneficiario, operador,
                 agora, entrada.dataDevolucaoPrevista(), termo, entrada.justificativaSubstituicao());
         // Chain of Responsibility (#265): valida antes de baixar o estoque e de gravar.
         emprestimoValidador.validar(emprestimo);
@@ -143,7 +143,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
         Colaborador beneficiario = usuarios.buscarPorId(emprestimo.getColaboradorId()).orElse(null);
 
         EstadoDevolucao estado = entrada.estado();
-        emprestimo.devolver(estado, operador.getId(), LocalDateTime.now());
+        emprestimo.devolver(estado, operador, LocalDateTime.now());
 
         if (estado.retornaAoEstoque()) {
             MovimentacaoEstoque retorno = epi.adicionarEstoque(Emprestimo.QUANTIDADE_POR_EMPRESTIMO,

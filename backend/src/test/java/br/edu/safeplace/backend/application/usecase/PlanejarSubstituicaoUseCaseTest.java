@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoa;
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.epi;
 import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -82,9 +84,9 @@ class PlanejarSubstituicaoUseCaseTest {
 
         Setor setor = new Setor(10, "Setor Usinagem", "Usinagem pesada", "Galpão 1", NivelPerigo.ALTO);
 
-        Emprestimo emp = new Emprestimo(1, 1, 100, 2, hoje.minusDays(30).atStartOfDay(),
+        Emprestimo emp = new Emprestimo(1, epi(1), pessoa(100), pessoa(2), hoje.minusDays(30).atStartOfDay(),
                 hoje.plusDays(10), "Termo #10", null, hoje.minusDays(5).atStartOfDay(),
-                2, EstadoDevolucao.APTO, ClassificacaoEmprestimo.DISPONIVEL);
+                pessoa(2), EstadoDevolucao.APTO, ClassificacaoEmprestimo.DISPONIVEL);
 
         when(epiRepository.listarTodos()).thenReturn(List.of(epi));
         when(setorRepository.buscarPorNome("Setor Usinagem")).thenReturn(Optional.of(setor));
@@ -138,9 +140,9 @@ class PlanejarSubstituicaoUseCaseTest {
 
         Setor setor = new Setor(20, "Pintura", "Cabine de pintura", "Galpão 2", NivelPerigo.MEDIO);
 
-        Emprestimo empValido = new Emprestimo(2, 2, 100, 2, hoje.minusDays(20).atStartOfDay(),
+        Emprestimo empValido = new Emprestimo(2, epi(2), pessoa(100), pessoa(2), hoje.minusDays(20).atStartOfDay(),
                 hoje.plusDays(10), "Termo #11", null, hoje.minusDays(2).atStartOfDay(),
-                2, EstadoDevolucao.APTO, ClassificacaoEmprestimo.DISPONIVEL);
+                pessoa(2), EstadoDevolucao.APTO, ClassificacaoEmprestimo.DISPONIVEL);
 
         when(epiRepository.listarTodos()).thenReturn(List.of(epiSemHistorico, epiValido));
         when(setorRepository.buscarPorNome("Pintura")).thenReturn(Optional.of(setor));
