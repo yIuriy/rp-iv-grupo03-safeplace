@@ -4,6 +4,7 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import br.edu.safeplace.backend.adapters.out.seguranca.OperadorAutenticadoNulo;
 import br.edu.safeplace.backend.application.dto.input.AtualizarAreaRiscoInputDTO;
 import br.edu.safeplace.backend.application.dto.input.AtualizarPessoaInputDTO;
@@ -109,7 +110,14 @@ class AuditoriaEvidenciaIntegracaoTest {
     @Test
     @DisplayName("Deve realizar alteração de Área de Risco seguida de consulta e verificação de evidência")
     void alteracaoAreaRiscoSeguidaDeConsultaDeEvidencia() {
-        Epi epi = new Epi(50, "Capacete", 10, StatusEpi.DISPONIVEL);
+        Epi epi = EpiDeTeste.umEpi()
+                .comId(50)
+                .comLocalizacao("Capacete")
+                .comQuantidade(10)
+                .comEstoqueMinimo(0)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comVidaUtilDias(null)
+                .build();
         when(epiRepository.buscarPorId(50)).thenReturn(Optional.of(epi));
 
         AreaRiscoService areaRiscoService = new AreaRiscoService(
@@ -190,7 +198,14 @@ class AuditoriaEvidenciaIntegracaoTest {
                 epiRepository, usuarioRepository, logAuditoriaRepository, operadorAtual()
         );
 
-        Epi epi = new Epi(50, "Capacete de Segurança", 100, StatusEpi.DISPONIVEL);
+        Epi epi = EpiDeTeste.umEpi()
+                .comId(50)
+                .comLocalizacao("Capacete de Segurança")
+                .comQuantidade(100)
+                .comEstoqueMinimo(0)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comVidaUtilDias(null)
+                .build();
         when(epiRepository.buscarPorIdComLock(50)).thenReturn(Optional.of(epi));
         when(epiRepository.salvarMovimentacao(any(MovimentacaoEstoque.class))).thenAnswer(i -> i.getArgument(0));
 

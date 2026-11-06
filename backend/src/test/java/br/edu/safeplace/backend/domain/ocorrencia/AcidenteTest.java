@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.domain.ocorrencia;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,7 +28,17 @@ class AcidenteTest {
     @DisplayName("Deve criar Acidente completo com campos de ocorrência e específicos de acidente")
     void deveCriarAcidenteCompleto() {
         LocalDateTime dataFato = LocalDateTime.now().minusDays(2);
-        Epi epi = new Epi(1, "Bota de Segurança", "CA-123", 10, 2, StatusEpi.DISPONIVEL, LocalDate.now().plusYears(1), 180, "Bota", null);
+        Epi epi = EpiDeTeste.umEpi()
+                .comId(1)
+                .comNome("Bota de Segurança")
+                .comCa("CA-123")
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.now().plusYears(1))
+                .comVidaUtilDias(180)
+                .comDescricao("Bota")
+                .build();
         AreaRisco area = AreaRisco.cadastrar("USI-01", "Usinagem", "Tornos mecânicos", NivelPerigo.ALTO, List.of(epi));
         Colaborador colaborador = Colaborador.novo("Roberto", "87455877074", LocalDate.of(1992, 3, 10), "roberto@empresa.com");
         GestorDeSeguranca gestor = GestorDeSeguranca.novo("Mariana", "49216091040", LocalDate.of(1988, 7, 20), "mariana@empresa.com", "senha123");
@@ -88,7 +99,17 @@ class AcidenteTest {
         Acidente novoAcidente = Acidente.novo(
                 "Corte com estilete",
                 dataFato,
-                AreaRisco.cadastrar("EXP-01", "Expedição", "Embalagem", NivelPerigo.MEDIO, List.of(new Epi(2, "Luva", "CA-456", 5, 1, StatusEpi.DISPONIVEL, LocalDate.now().plusYears(1), 180, "Luva", null))),
+                AreaRisco.cadastrar("EXP-01", "Expedição", "Embalagem", NivelPerigo.MEDIO, List.of(EpiDeTeste.umEpi()
+                        .comId(2)
+                        .comNome("Luva")
+                        .comCa("CA-456")
+                        .comQuantidade(5)
+                        .comEstoqueMinimo(1)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(LocalDate.now().plusYears(1))
+                        .comVidaUtilDias(180)
+                        .comDescricao("Luva")
+                        .build())),
                 null, null,
                 CausaRaizAcidente.FATOR_HUMANO,
                 "Corte",

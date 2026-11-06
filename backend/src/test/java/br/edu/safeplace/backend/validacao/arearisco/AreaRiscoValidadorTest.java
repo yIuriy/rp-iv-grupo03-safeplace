@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.validacao.arearisco;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -38,8 +39,16 @@ class AreaRiscoValidadorTest {
     private final AreaRiscoValidador validador = new AreaRiscoValidador(null, null);
 
     private static Epi epi(Integer id, String nome) {
-        return new Epi(id, nome, "CA-" + id, 10, 2, StatusEpi.DISPONIVEL,
-                LocalDate.now().plusYears(1), 365, null, null);
+        return EpiDeTeste.umEpi()
+                .comId(id)
+                .comNome(nome)
+                .comCa("CA-" + id)
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.now().plusYears(1))
+                .comVidaUtilDias(365)
+                .build();
     }
 
     private static AreaRisco area(Integer id, String codigo, String nome) {

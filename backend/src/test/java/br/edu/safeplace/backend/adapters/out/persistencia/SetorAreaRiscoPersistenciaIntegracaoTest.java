@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -70,10 +71,26 @@ class SetorAreaRiscoPersistenciaIntegracaoTest {
         jdbcTemplate.execute("DELETE FROM movimentacoes_estoque");
         jdbcTemplate.execute("DELETE FROM epis");
 
-        Epi epi1 = new Epi(null, "Capacete H-700", "CA-12345", 20, 5,
-                StatusEpi.DISPONIVEL, LocalDate.now().plusYears(2), 180, "Capacete", null, null);
-        Epi epi2 = new Epi(null, "Óculos de Proteção", "CA-54321", 15, 3,
-                StatusEpi.DISPONIVEL, LocalDate.now().plusYears(2), 180, "Óculos", null, null);
+        Epi epi1 = EpiDeTeste.umEpi()
+                .comNome("Capacete H-700")
+                .comCa("CA-12345")
+                .comQuantidade(20)
+                .comEstoqueMinimo(5)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.now().plusYears(2))
+                .comVidaUtilDias(180)
+                .comDescricao("Capacete")
+                .build();
+        Epi epi2 = EpiDeTeste.umEpi()
+                .comNome("Óculos de Proteção")
+                .comCa("CA-54321")
+                .comQuantidade(15)
+                .comEstoqueMinimo(3)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.now().plusYears(2))
+                .comVidaUtilDias(180)
+                .comDescricao("Óculos")
+                .build();
 
         epiId1 = epiRepository.salvar(epi1).getId();
         epiId2 = epiRepository.salvar(epi2).getId();

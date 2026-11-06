@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.domain.ocorrencia;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,7 +44,17 @@ class OcorrenciaTest {
     void deveInstanciarOcorrenciaComDadosValidos() {
         LocalDateTime dataFato = LocalDateTime.now().minusDays(1);
         LocalDateTime dataRegistro = LocalDateTime.now();
-        Epi epi = new Epi(1, "Óculos", "CA-123", 10, 2, StatusEpi.DISPONIVEL, LocalDate.now().plusYears(1), 180, "Óculos", null);
+        Epi epi = EpiDeTeste.umEpi()
+                .comId(1)
+                .comNome("Óculos")
+                .comCa("CA-123")
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.now().plusYears(1))
+                .comVidaUtilDias(180)
+                .comDescricao("Óculos")
+                .build();
         AreaRisco area = AreaRisco.cadastrar("CALD-01", "Caldeiras", "Alta pressão", NivelPerigo.ALTO, List.of(epi));
         Colaborador colaborador = Colaborador.novo("Carlos", "87455877074", LocalDate.of(1990, 1, 1), "carlos@empresa.com");
         GestorDeSeguranca gestor = GestorDeSeguranca.novo("Ana", "49216091040", LocalDate.of(1985, 5, 5), "ana@empresa.com", "senha123");
@@ -151,8 +162,17 @@ class OcorrenciaTest {
     @Test
     @DisplayName("Área de risco associada prevalece sobre o texto livre de local")
     void areaAssociadaPrevaleceSobreTextoLivre() {
-        Epi epi = new Epi(1, "Óculos", "CA-123", 10, 2, StatusEpi.DISPONIVEL,
-                LocalDate.now().plusYears(1), 180, "Óculos", null);
+        Epi epi = EpiDeTeste.umEpi()
+                .comId(1)
+                .comNome("Óculos")
+                .comCa("CA-123")
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.now().plusYears(1))
+                .comVidaUtilDias(180)
+                .comDescricao("Óculos")
+                .build();
         AreaRisco area = AreaRisco.cadastrar("CALD-01", "Caldeiras", "Alta pressão", NivelPerigo.ALTO, List.of(epi));
 
         Ocorrencia ocorrencia = new OcorrenciaConcreta(

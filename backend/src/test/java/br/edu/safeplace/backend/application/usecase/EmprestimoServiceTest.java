@@ -6,6 +6,7 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -84,7 +85,18 @@ class EmprestimoServiceTest {
     /** Id 0 marca "não salvo": com id, o domínio reconstrói o EPI mesmo com CA vencido, como faz o adaptador JPA. */
     private static Epi epi(String nome, int quantidade, StatusEpi status, LocalDate validadeCa,
                            ClassificacaoEPI classificacao) {
-        return new Epi(0, nome, "1234", quantidade, 1, status, validadeCa, 365, nome, classificacao);
+        return EpiDeTeste.umEpi()
+                .comId(0)
+                .comNome(nome)
+                .comCa("1234")
+                .comQuantidade(quantidade)
+                .comEstoqueMinimo(1)
+                .comStatus(status)
+                .comValidadeCa(validadeCa)
+                .comVidaUtilDias(365)
+                .comDescricao(nome)
+                .comClassificacao(classificacao)
+                .build();
     }
 
     private RegistrarEntregaInputDTO entregaDe(Integer epiId) {
@@ -247,8 +259,17 @@ class EmprestimoServiceTest {
     @Test
     @DisplayName("Duplicidade de posse é verificada por fallback de ID quando EPI não possui classificação")
     void duplicidadeMesmoSemClassificacaoVerificaPorId() {
-        Integer epiSemClassificacaoId = epis.salvar(new Epi(0, "Óculos Simples", "12345", 5, 1,
-                StatusEpi.DISPONIVEL, LocalDate.now().plusYears(1), 365, "Sem spec", null, null)).getId();
+        Integer epiSemClassificacaoId = epis.salvar(EpiDeTeste.umEpi()
+                .comId(0)
+                .comNome("Óculos Simples")
+                .comCa("12345")
+                .comQuantidade(5)
+                .comEstoqueMinimo(1)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.now().plusYears(1))
+                .comVidaUtilDias(365)
+                .comDescricao("Sem spec")
+                .build()).getId();
 
         useCase.registrarEntrega(
                 new RegistrarEntregaInputDTO(epiSemClassificacaoId, colaboradorId, PREVISTA, false, null), EMAIL_SUPERVISOR);
@@ -387,9 +408,18 @@ class EmprestimoServiceTest {
         @Override
         public Epi salvar(Epi epi) {
             Integer id = epi.getId() != null && epi.getId() > 0 ? epi.getId() : proximoId++;
-            Epi salvo = new Epi(id, epi.getNome(), epi.getNumeroCa(), epi.getQuantidade(), epi.getEstoqueMinimo(),
-                    epi.getStatus(), epi.getDataValidadeCa(), epi.getVidaUtilDias(),
-                    epi.getEspecificacao().getDescricao(), epi.getEspecificacao().getClassificacao());
+            Epi salvo = EpiDeTeste.umEpi()
+                    .comId(id)
+                    .comNome(epi.getNome())
+                    .comCa(epi.getNumeroCa())
+                    .comQuantidade(epi.getQuantidade())
+                    .comEstoqueMinimo(epi.getEstoqueMinimo())
+                    .comStatus(epi.getStatus())
+                    .comValidadeCa(epi.getDataValidadeCa())
+                    .comVidaUtilDias(epi.getVidaUtilDias())
+                    .comDescricao(epi.getEspecificacao().getDescricao())
+                    .comClassificacao(epi.getEspecificacao().getClassificacao())
+                    .build();
             registros.put(id, salvo);
             return salvo;
         }

@@ -4,6 +4,7 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -77,8 +78,16 @@ class HistoricoAreaRiscoTarefaUseCaseTest {
     }
 
     private static Epi epi(Integer id, String nome) {
-        return new Epi(id, nome, "CA-" + id, 10, 2, StatusEpi.DISPONIVEL,
-                LocalDate.now().plusYears(1), 365, null, null);
+        return EpiDeTeste.umEpi()
+                .comId(id)
+                .comNome(nome)
+                .comCa("CA-" + id)
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.now().plusYears(1))
+                .comVidaUtilDias(365)
+                .build();
     }
 
     private LogAuditoria logGravado() {

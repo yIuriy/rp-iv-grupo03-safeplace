@@ -1,5 +1,9 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import java.util.ArrayList;
+import java.util.List;
+import br.edu.safeplace.backend.domain.epi.EspecificacaoEPI;
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
 
@@ -284,17 +288,18 @@ class EpiServiceTest {
                 ultimoCadastrado = epi;
             }
             Integer id = epi.getId() != null ? epi.getId() : nextEpiId++;
-            Epi salvo = new Epi(
-                    id,
-                    epi.getNome(),
-                    epi.getNumeroCa(),
-                    epi.getQuantidade(),
-                    epi.getEstoqueMinimo(),
-                    epi.getStatus(),
-                    epi.getDataValidadeCa(),
-                    epi.getVidaUtilDias(),
-                    epi.getEspecificacao().getDescricao(),
-                    epi.getEspecificacao().getClassificacao());
+            Epi salvo = EpiDeTeste.umEpi()
+                    .comId(id)
+                    .comNome(epi.getNome())
+                    .comCa(epi.getNumeroCa())
+                    .comQuantidade(epi.getQuantidade())
+                    .comEstoqueMinimo(epi.getEstoqueMinimo())
+                    .comStatus(epi.getStatus())
+                    .comValidadeCa(epi.getDataValidadeCa())
+                    .comVidaUtilDias(epi.getVidaUtilDias())
+                    .comDescricao(epi.getEspecificacao().getDescricao())
+                    .comClassificacao(epi.getEspecificacao().getClassificacao())
+                    .build();
             storage.put(id, salvo);
             return salvo;
         }

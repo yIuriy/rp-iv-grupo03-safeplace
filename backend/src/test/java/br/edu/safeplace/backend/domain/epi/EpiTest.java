@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.domain.epi;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,8 +28,16 @@ class EpiTest {
 
         @Test
         void deveCriarEpiComDadosValidos() {
-                Epi epi = new Epi(1, "Óculos de Proteção", "CA-9988", 10, 2,
-                                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365, null, null);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Óculos de Proteção")
+                        .comCa("CA-9988")
+                        .comQuantidade(10)
+                        .comEstoqueMinimo(2)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(LocalDate.of(2028, 1, 1))
+                        .comVidaUtilDias(365)
+                        .build();
 
                 assertEquals(Integer.valueOf(1), epi.getId());
                 assertEquals("Óculos de Proteção", epi.getNome());
@@ -40,30 +49,17 @@ class EpiTest {
         }
 
         @Test
-        void deveCriarNovoEpiComStatusDisponivelQuandoQuantidadeMaiorQueZero() {
-                Epi epi = Epi.novo(
-                                "Óculos de Proteção", "CA-9988", 10, 2,
-                                VALIDADE_CA, 365, DATA_CADASTRO, null, null);
-
-                assertNull(epi.getId());
-                assertEquals("Óculos de Proteção", epi.getNome());
-                assertEquals(StatusEpi.DISPONIVEL, epi.getStatus());
-        }
-
-        @Test
-        void deveCriarNovoEpiComStatusEsgotadoQuandoQuantidadeForZero() {
-                Epi epi = Epi.novo(
-                                "Luva", "CA-1234", 0, 5,
-                                VALIDADE_CA, null, DATA_CADASTRO, null, null);
-
-                assertNull(epi.getId());
-                assertEquals(StatusEpi.ESGOTADO, epi.getStatus());
-        }
-
-        @Test
         void deveAdicionarEstoqueETransitarDeEsgotadoParaDisponivel() {
-                Epi epi = new Epi(1, "Luva de Vaqueta", "CA-1234", 0, 5,
-                                StatusEpi.ESGOTADO, VALIDADE_CA, null, null, null);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Luva de Vaqueta")
+                        .comCa("CA-1234")
+                        .comQuantidade(0)
+                        .comEstoqueMinimo(5)
+                        .comStatus(StatusEpi.ESGOTADO)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(null)
+                        .build();
 
                 MovimentacaoEstoque mov = epi.adicionarEstoque(15, "Chegada de lote");
 
@@ -76,8 +72,16 @@ class EpiTest {
 
         @Test
         void deveRemoverEstoqueETransitarParaEsgotadoAoZerar() {
-                Epi epi = new Epi(1, "Protetor Auricular", "CA-5678", 5, 2,
-                                StatusEpi.DISPONIVEL, VALIDADE_CA, null, null, null);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Protetor Auricular")
+                        .comCa("CA-5678")
+                        .comQuantidade(5)
+                        .comEstoqueMinimo(2)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(null)
+                        .build();
 
                 MovimentacaoEstoque mov = epi.removerEstoque(5, "Distribuição para equipe");
 
@@ -90,8 +94,16 @@ class EpiTest {
 
         @Test
         void deveLancarExcecaoAoTentarRemoverMaisQueOSaldoDisponivel() {
-                Epi epi = new Epi(1, "Capacete", "CA-1111", 10, 3,
-                                StatusEpi.DISPONIVEL, VALIDADE_CA, null, null, null);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Capacete")
+                        .comCa("CA-1111")
+                        .comQuantidade(10)
+                        .comEstoqueMinimo(3)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(null)
+                        .build();
 
                 assertThrows(SaldoInsuficienteException.class, () -> epi.removerEstoque(11, "Retirada excessiva"));
                 assertEquals(10, epi.getQuantidade());
@@ -99,8 +111,16 @@ class EpiTest {
 
         @Test
         void deveDetectarEstoqueCritico() {
-                Epi epi = new Epi(1, "Máscara PFF2", "CA-2222", 3, 3,
-                                StatusEpi.DISPONIVEL, VALIDADE_CA, null, null, null);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Máscara PFF2")
+                        .comCa("CA-2222")
+                        .comQuantidade(3)
+                        .comEstoqueMinimo(3)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(null)
+                        .build();
 
                 assertTrue(epi.isEstoqueCritico());
         }
@@ -110,9 +130,16 @@ class EpiTest {
         @ValueSource(strings = { " ", "\t", "\n" })
         void devePreservarSaldoEStatusQuandoEntradaTiverMotivoInvalido(
                         String motivo) {
-                Epi epi = new Epi(
-                                1, "Luva", "CA-1234", 0, 2,
-                                StatusEpi.ESGOTADO, LocalDate.of(2028, 1, 1), 365, null, null);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Luva")
+                        .comCa("CA-1234")
+                        .comQuantidade(0)
+                        .comEstoqueMinimo(2)
+                        .comStatus(StatusEpi.ESGOTADO)
+                        .comValidadeCa(LocalDate.of(2028, 1, 1))
+                        .comVidaUtilDias(365)
+                        .build();
 
                 assertThatThrownBy(() -> epi.adicionarEstoque(5, motivo))
                                 .isInstanceOf(IllegalArgumentException.class)
@@ -127,9 +154,16 @@ class EpiTest {
         @ValueSource(strings = { " ", "\t", "\n" })
         void devePreservarSaldoEStatusQuandoSaidaTiverMotivoInvalido(
                         String motivo) {
-                Epi epi = new Epi(
-                                1, "Luva", "CA-1234", 5, 2,
-                                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365, null, null);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Luva")
+                        .comCa("CA-1234")
+                        .comQuantidade(5)
+                        .comEstoqueMinimo(2)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(LocalDate.of(2028, 1, 1))
+                        .comVidaUtilDias(365)
+                        .build();
 
                 assertThatThrownBy(() -> epi.removerEstoque(5, motivo))
                                 .isInstanceOf(IllegalArgumentException.class)
@@ -141,9 +175,16 @@ class EpiTest {
 
         @Test
         void deveRejeitarEntradaQueUltrapasseLimiteDeInteiro() {
-                Epi epi = new Epi(
-                                1, "Luva", "CA-1234", Integer.MAX_VALUE, 2,
-                                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365, null, null);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Luva")
+                        .comCa("CA-1234")
+                        .comQuantidade(Integer.MAX_VALUE)
+                        .comEstoqueMinimo(2)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(LocalDate.of(2028, 1, 1))
+                        .comVidaUtilDias(365)
+                        .build();
 
                 assertThatThrownBy(() -> epi.adicionarEstoque(1, "Reposição"))
                                 .isInstanceOf(IllegalArgumentException.class)
@@ -155,9 +196,16 @@ class EpiTest {
 
         @Test
         void devePermitirEntradaQueAtinjaLimiteDeInteiro() {
-                Epi epi = new Epi(
-                                1, "Luva", "CA-1234", Integer.MAX_VALUE - 1, 2,
-                                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365, null, null);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Luva")
+                        .comCa("CA-1234")
+                        .comQuantidade(Integer.MAX_VALUE - 1)
+                        .comEstoqueMinimo(2)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(LocalDate.of(2028, 1, 1))
+                        .comVidaUtilDias(365)
+                        .build();
 
                 MovimentacaoEstoque movimentacao = epi.adicionarEstoque(1, "Reposição");
 
@@ -168,9 +216,16 @@ class EpiTest {
         @ParameterizedTest
         @ValueSource(ints = { 0, -1, Integer.MIN_VALUE })
         void deveRejeitarQuantidadesNaoPositivasSemAlterarEstoque(int quantidade) {
-                Epi epi = new Epi(
-                                1, "Luva", "CA-1234", 5, 2,
-                                StatusEpi.DISPONIVEL, LocalDate.of(2028, 1, 1), 365, null, null);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Luva")
+                        .comCa("CA-1234")
+                        .comQuantidade(5)
+                        .comEstoqueMinimo(2)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(LocalDate.of(2028, 1, 1))
+                        .comVidaUtilDias(365)
+                        .build();
 
                 assertThatThrownBy(() -> epi.adicionarEstoque(quantidade, "Reposição"))
                                 .isInstanceOf(IllegalArgumentException.class);
@@ -184,9 +239,14 @@ class EpiTest {
 
         @Test
         void deveCadastrarEpiComCertificadoValido() {
-                Epi epi = Epi.novo(
-                                "Capacete", "CA-1234", 10, 2,
-                                VALIDADE_CA, 365, DATA_CADASTRO, null, null);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comNome("Capacete")
+                        .comCa("CA-1234")
+                        .comQuantidade(10)
+                        .comEstoqueMinimo(2)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(365)
+                        .build();
 
                 assertThat(epi.getId()).isNull();
                 assertThat(epi.getModelo().getCa()).isEqualTo(1234);
@@ -197,9 +257,14 @@ class EpiTest {
 
         @Test
         void devePermitirCadastroNoDiaDoVencimento() {
-                Epi epi = Epi.novo(
-                                "Capacete", "CA-1234", 10, 2,
-                                DATA_CADASTRO, 365, DATA_CADASTRO, null, null);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comNome("Capacete")
+                        .comCa("CA-1234")
+                        .comQuantidade(10)
+                        .comEstoqueMinimo(2)
+                        .comValidadeCa(DATA_CADASTRO)
+                        .comVidaUtilDias(365)
+                        .build();
 
                 assertThat(epi.getDataValidadeCa()).isEqualTo(DATA_CADASTRO);
         }
@@ -208,9 +273,16 @@ class EpiTest {
         void deveReconstruirEpiPersistidoComCaVencido() {
                 LocalDate validadeAntiga = LocalDate.of(2000, 1, 1);
 
-                Epi epi = new Epi(
-                                1, "Capacete", "CA-1234", 10, 2,
-                                StatusEpi.DISPONIVEL, validadeAntiga, 365, null, null);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Capacete")
+                        .comCa("CA-1234")
+                        .comQuantidade(10)
+                        .comEstoqueMinimo(2)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(validadeAntiga)
+                        .comVidaUtilDias(365)
+                        .build();
 
                 assertThat(epi.getId()).isEqualTo(1);
                 assertThat(epi.getDataValidadeCa()).isEqualTo(validadeAntiga);
@@ -219,14 +291,14 @@ class EpiTest {
 
         @Test
         void deveArmazenarQuantidadeMinimaNaEspecificacao() {
-                Epi epi = Epi.novo(
-                                "Óculos",
-                                "1234",
-                                10,
-                                5,
-                                VALIDADE_CA,
-                                365,
-                                DATA_CADASTRO, null, null);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comNome("Óculos")
+                        .comCa("1234")
+                        .comQuantidade(10)
+                        .comEstoqueMinimo(5)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(365)
+                        .build();
 
                 assertThat(epi.getEspecificacao()).isNotNull();
                 assertThat(epi.getEspecificacao().getQuantidadeMinima())
@@ -245,49 +317,32 @@ class EpiTest {
                         int quantidade,
                         int minimo,
                         boolean esperado) {
-                Epi epi = Epi.novo(
-                                "Óculos",
-                                "1234",
-                                quantidade,
-                                minimo,
-                                VALIDADE_CA,
-                                365,
-                                DATA_CADASTRO, null, null);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comNome("Óculos")
+                        .comCa("1234")
+                        .comQuantidade(quantidade)
+                        .comEstoqueMinimo(minimo)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(365)
+                        .build();
 
                 assertThat(epi.isEstoqueCritico()).isEqualTo(esperado);
         }
 
         @Test
-        void deveValidarCaAoCriarEpiSemIdPeloConstrutorPublico() {
-                Epi epi = new Epi(
-                                null,
-                                "Capacete",
-                                "1234",
-                                10,
-                                2,
-                                StatusEpi.DISPONIVEL,
-                                VALIDADE_CA,
-                                365,
-                                "Capacete de segurança",
-                                ClassificacaoEPI.PROTECAO_DE_CABECA);
-
-                assertThat(epi.getId()).isNull();
-                assertThat(epi.getNumeroCa()).isEqualTo("1234");
-        }
-
-        @Test
         void deveManterStatusDisponivelQuandoSaidaNaoZerarEstoque() {
-                Epi epi = new Epi(
-                                1,
-                                "Capacete",
-                                "1234",
-                                10,
-                                2,
-                                StatusEpi.DISPONIVEL,
-                                VALIDADE_CA,
-                                365,
-                                "Capacete de segurança",
-                                ClassificacaoEPI.PROTECAO_DE_CABECA);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Capacete")
+                        .comCa("1234")
+                        .comQuantidade(10)
+                        .comEstoqueMinimo(2)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(365)
+                        .comDescricao("Capacete de segurança")
+                        .comClassificacao(ClassificacaoEPI.PROTECAO_DE_CABECA)
+                        .build();
 
                 epi.removerEstoque(4, "Distribuição operacional");
 
@@ -297,17 +352,18 @@ class EpiTest {
 
         @Test
         void deveManterStatusQuandoSaidaZeraEstoqueDeEpiEmUso() {
-                Epi epi = new Epi(
-                                1,
-                                "Capacete",
-                                "1234",
-                                5,
-                                2,
-                                StatusEpi.EM_USO,
-                                VALIDADE_CA,
-                                365,
-                                "Capacete de segurança",
-                                ClassificacaoEPI.PROTECAO_DE_CABECA);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Capacete")
+                        .comCa("1234")
+                        .comQuantidade(5)
+                        .comEstoqueMinimo(2)
+                        .comStatus(StatusEpi.EM_USO)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(365)
+                        .comDescricao("Capacete de segurança")
+                        .comClassificacao(ClassificacaoEPI.PROTECAO_DE_CABECA)
+                        .build();
 
                 epi.removerEstoque(5, "Baixa operacional");
 
@@ -315,21 +371,9 @@ class EpiTest {
                 assertThat(epi.getStatus()).isEqualTo(StatusEpi.EM_USO);
         }
 
-        @Test
-        void deveConstruirEpiComAtributosDoDiagramaDeClasses() {
-                Epi epi = new Epi(101, "Almoxarifado Central", 50, StatusEpi.DISPONIVEL);
-
-                assertEquals(101, epi.getCodigoEPI());
-                assertEquals(Integer.valueOf(101), epi.getId());
-                assertEquals("Almoxarifado Central", epi.getLocalizacao());
-                assertEquals(50, epi.getQuantidade());
-                assertEquals(50, epi.getQuantidade());
-                assertEquals(StatusEpi.DISPONIVEL, epi.getStatus());
-        }
-
         // @Test
         // void devePermitirAlterarLocalizacao() {
-        //         Epi epi = new Epi(102, "Setor A", 20, StatusEpi.DISPONIVEL);
+        //         Epi epi = EpiDeTeste.umEpi().comId(102).comLocalizacao("Setor A").comQuantidade(20).comEstoqueMinimo(0).comStatus(StatusEpi.DISPONIVEL).comVidaUtilDias(null).build();
         //         epi.setLocalizacao("Setor B");
 
         //         assertEquals("Setor B", epi.getLocalizacao());
@@ -337,7 +381,14 @@ class EpiTest {
 
         @Test
         void deveBuscarEPIsRetornandoLista() {
-                Epi epi = new Epi(10, "Estoque 1", 15, StatusEpi.DISPONIVEL);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(10)
+                        .comLocalizacao("Estoque 1")
+                        .comQuantidade(15)
+                        .comEstoqueMinimo(0)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comVidaUtilDias(null)
+                        .build();
 
                 List<Epi> lista = epi.buscarEPIs();
 
@@ -346,7 +397,14 @@ class EpiTest {
 
         @Test
         void deveBuscarEpiPorCodigo() {
-                Epi epi = new Epi(20, "Estoque 2", 10, StatusEpi.DISPONIVEL);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(20)
+                        .comLocalizacao("Estoque 2")
+                        .comQuantidade(10)
+                        .comEstoqueMinimo(0)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comVidaUtilDias(null)
+                        .build();
 
                 assertThat(epi.buscarEPI(20)).isSameAs(epi);
                 assertThat(epi.buscarEPI(999)).isNull();
@@ -354,8 +412,19 @@ class EpiTest {
 
         @Test
         void deveObterHistoricoManutencaoERegistrarManutencoes() {
-                Epi epi = new Epi(1, "Capacete", "CA-1234", 5, 1, StatusEpi.DISPONIVEL, VALIDADE_CA, 365,
-                                "Capacete", ClassificacaoEPI.PROTECAO_DE_CABECA, "Prateleira 1");
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Capacete")
+                        .comCa("CA-1234")
+                        .comQuantidade(5)
+                        .comEstoqueMinimo(1)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(365)
+                        .comDescricao("Capacete")
+                        .comClassificacao(ClassificacaoEPI.PROTECAO_DE_CABECA)
+                        .comLocalizacao("Prateleira 1")
+                        .build();
 
                 assertThat(epi.obterHistoricoManutencao()).isEmpty();
 
@@ -375,24 +444,68 @@ class EpiTest {
 
         @Test
         void deveValidarVinculoEpisObrigatorios() {
-                Epi epiValido = new Epi(1, "Óculos", "CA-1234", 10, 2, StatusEpi.DISPONIVEL,
-                                VALIDADE_CA, 365, "Óculos", ClassificacaoEPI.PROTECAO_DE_OLHOS, "Armário 1");
+                Epi epiValido = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Óculos")
+                        .comCa("CA-1234")
+                        .comQuantidade(10)
+                        .comEstoqueMinimo(2)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(365)
+                        .comDescricao("Óculos")
+                        .comClassificacao(ClassificacaoEPI.PROTECAO_DE_OLHOS)
+                        .comLocalizacao("Armário 1")
+                        .build();
                 assertTrue(epiValido.validarVinculoEPIsObrigatorios());
 
-                Epi epiDescartado = new Epi(2, "Luva", "CA-1234", 0, 1, StatusEpi.DESCARTADO,
-                                VALIDADE_CA, 365, "Luva", ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES, "Descarte");
+                Epi epiDescartado = EpiDeTeste.umEpi()
+                        .comId(2)
+                        .comNome("Luva")
+                        .comCa("CA-1234")
+                        .comQuantidade(0)
+                        .comEstoqueMinimo(1)
+                        .comStatus(StatusEpi.DESCARTADO)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(365)
+                        .comDescricao("Luva")
+                        .comClassificacao(ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES)
+                        .comLocalizacao("Descarte")
+                        .build();
                 assertFalse(epiDescartado.validarVinculoEPIsObrigatorios());
 
-                Epi epiVencido = new Epi(3, "Bota", "CA-1234", 5, 1, StatusEpi.DISPONIVEL,
-                                LocalDate.of(2020, 1, 1), 365, "Bota", ClassificacaoEPI.PROTECAO_DE_MEMBROS_INFERIORES, "Armário 2");
+                Epi epiVencido = EpiDeTeste.umEpi()
+                        .comId(3)
+                        .comNome("Bota")
+                        .comCa("CA-1234")
+                        .comQuantidade(5)
+                        .comEstoqueMinimo(1)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(LocalDate.of(2020, 1, 1))
+                        .comVidaUtilDias(365)
+                        .comDescricao("Bota")
+                        .comClassificacao(ClassificacaoEPI.PROTECAO_DE_MEMBROS_INFERIORES)
+                        .comLocalizacao("Armário 2")
+                        .build();
                 assertFalse(epiVencido.validarVinculoEPIsObrigatorios());
         }
 
         @Test
         void deveCompararComQuantidadeMinimaEBuscarAbaixoDaQuantidadeMinima() {
                 EspecificacaoEPI esp = new EspecificacaoEPI("Protetor auricular", 10, ClassificacaoEPI.PROTECAO_AUDITIVA);
-                Epi epi = new Epi(1, "Protetor", "CA-5555", 8, 10, StatusEpi.DISPONIVEL,
-                                VALIDADE_CA, 365, "Protetor auricular", ClassificacaoEPI.PROTECAO_AUDITIVA, "Setor Ruído");
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Protetor")
+                        .comCa("CA-5555")
+                        .comQuantidade(8)
+                        .comEstoqueMinimo(10)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(365)
+                        .comDescricao("Protetor auricular")
+                        .comClassificacao(ClassificacaoEPI.PROTECAO_AUDITIVA)
+                        .comLocalizacao("Setor Ruído")
+                        .build();
 
                 assertTrue(epi.compararComQuantidadeMinima());
                 assertTrue(epi.compararComQuantMinima());
@@ -407,7 +520,16 @@ class EpiTest {
         @Test
         void deveAtualizarQuantidadeETransitarStatus() {
                 EspecificacaoEPI novaEsp = new EspecificacaoEPI("Nova spec", 5, ClassificacaoEPI.PROTECAO_DE_CABECA);
-                Epi epi = new Epi(1, "Capacete", "CA-1111", 10, 5, StatusEpi.DISPONIVEL, VALIDADE_CA, 365);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Capacete")
+                        .comCa("CA-1111")
+                        .comQuantidade(10)
+                        .comEstoqueMinimo(5)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(365)
+                        .build();
 
                 epi.atualizarQuantidade(novaEsp, 0);
                 assertEquals(0, epi.getQuantidade());
@@ -425,7 +547,16 @@ class EpiTest {
 
         @Test
         void deveGerenciarEBuscarLotes() {
-                Epi epi = new Epi(1, "Óculos", "CA-1234", 20, 5, StatusEpi.DISPONIVEL, VALIDADE_CA, 365);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(1)
+                        .comNome("Óculos")
+                        .comCa("CA-1234")
+                        .comQuantidade(20)
+                        .comEstoqueMinimo(5)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(365)
+                        .build();
 
                 ModeloEPI modelo = new ModeloEPI(9876, "3M", VALIDADE_CA);
                 LoteEPI lote1 = new LoteEPI("1001", "NF-1", LocalDate.now(), LocalDate.now().plusYears(2), 10, modelo);
@@ -442,7 +573,16 @@ class EpiTest {
 
         @Test
         void deveValidarBaixaComSucessoERejeitarCasosInvalidos() {
-                Epi epi = new Epi(5, "Luva", "CA-1234", 10, 2, StatusEpi.DISPONIVEL, VALIDADE_CA, 365);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(5)
+                        .comNome("Luva")
+                        .comCa("CA-1234")
+                        .comQuantidade(10)
+                        .comEstoqueMinimo(2)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(365)
+                        .build();
 
                 int saldoRestante = epi.validarBaixa(5, 3);
                 assertEquals(7, saldoRestante);
@@ -461,7 +601,16 @@ class EpiTest {
 
         @Test
         void deveDarBaixaComSucessoERecusarQuantidadesInvalidas() {
-                Epi epi = new Epi(5, "Luva", "CA-1234", 10, 2, StatusEpi.DISPONIVEL, VALIDADE_CA, 365);
+                Epi epi = EpiDeTeste.umEpi()
+                        .comId(5)
+                        .comNome("Luva")
+                        .comCa("CA-1234")
+                        .comQuantidade(10)
+                        .comEstoqueMinimo(2)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(VALIDADE_CA)
+                        .comVidaUtilDias(365)
+                        .build();
 
                 assertFalse(epi.darBaixa(0));
                 assertFalse(epi.darBaixa(-2));

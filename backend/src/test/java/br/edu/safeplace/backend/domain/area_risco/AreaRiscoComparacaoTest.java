@@ -4,6 +4,7 @@
  */
 package br.edu.safeplace.backend.domain.area_risco;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -27,8 +28,16 @@ class AreaRiscoComparacaoTest {
     private static final Setor CALDEIRARIA = new Setor(2, "Caldeiraria", null, "Bloco 2", NivelPerigo.ALTO);
 
     private static Epi epi(Integer id, String nome) {
-        return new Epi(id, nome, "CA-" + id, 10, 2, StatusEpi.DISPONIVEL,
-                LocalDate.now().plusYears(1), 365, null, null);
+        return EpiDeTeste.umEpi()
+                .comId(id)
+                .comNome(nome)
+                .comCa("CA-" + id)
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.now().plusYears(1))
+                .comVidaUtilDias(365)
+                .build();
     }
 
     private static AreaRisco original() {

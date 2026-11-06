@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.adapters.in.web;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
 import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
 import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
@@ -33,17 +34,16 @@ class EpiEspecificacaoMapeamentoTest {
         assertThat(input.classificacao()).isEqualTo(request.classificacao());
         assertThat(input.localizacao()).isNull();
 
-        Epi epi = Epi.novo(
-                input.nome(),
-                input.numeroCa(),
-                input.quantidade(),
-                input.estoqueMinimo(),
-                input.dataValidadeCa(),
-                input.vidaUtilDias(),
-                cadastro,
-                input.descricao(),
-                input.classificacao()
-        );
+        Epi epi = EpiDeTeste.umEpi()
+                .comNome(input.nome())
+                .comCa(input.numeroCa())
+                .comQuantidade(input.quantidade())
+                .comEstoqueMinimo(input.estoqueMinimo())
+                .comValidadeCa(input.dataValidadeCa())
+                .comVidaUtilDias(input.vidaUtilDias())
+                .comDescricao(input.descricao())
+                .comClassificacao(input.classificacao())
+                .build();
 
         EpiResponse resposta = EpiResponse.fromOutputDTO(
                 EpiOutputDTO.deDominio(epi)

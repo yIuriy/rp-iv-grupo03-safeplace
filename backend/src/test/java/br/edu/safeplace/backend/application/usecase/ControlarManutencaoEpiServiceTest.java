@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
 
@@ -48,7 +49,16 @@ class ControlarManutencaoEpiServiceTest {
 
     @Test
     void adapterAuditoriaDoEnvioRegistraOperadorDaPorta() {
-        epiRepository.salvar(new Epi(1, "Capacete", "CA-100", 10, 2, StatusEpi.DISPONIVEL, LocalDate.of(2030, 1, 1), 365));
+        epiRepository.salvar(EpiDeTeste.umEpi()
+                .comId(1)
+                .comNome("Capacete")
+                .comCa("CA-100")
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.of(2030, 1, 1))
+                .comVidaUtilDias(365)
+                .build());
         operador.autenticar("gestora@safeplace.com", "GESTOR_SEGURANCA");
 
         service.enviarParaManutencao(1);
@@ -58,7 +68,16 @@ class ControlarManutencaoEpiServiceTest {
 
     @Test
     void adapterSemOperadorAutenticadoAuditoriaRegistraSistema() {
-        epiRepository.salvar(new Epi(1, "Capacete", "CA-100", 10, 2, StatusEpi.DISPONIVEL, LocalDate.of(2030, 1, 1), 365));
+        epiRepository.salvar(EpiDeTeste.umEpi()
+                .comId(1)
+                .comNome("Capacete")
+                .comCa("CA-100")
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.of(2030, 1, 1))
+                .comVidaUtilDias(365)
+                .build());
 
         service.enviarParaManutencao(1);
 
@@ -67,7 +86,16 @@ class ControlarManutencaoEpiServiceTest {
 
     @Test
     void deveEnviarEpiParaManutencaoComSucesso() {
-        Epi epi = new Epi(1, "Capacete", "CA-100", 10, 2, StatusEpi.DISPONIVEL, LocalDate.of(2030, 1, 1), 365);
+        Epi epi = EpiDeTeste.umEpi()
+                .comId(1)
+                .comNome("Capacete")
+                .comCa("CA-100")
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.of(2030, 1, 1))
+                .comVidaUtilDias(365)
+                .build();
         epiRepository.salvar(epi);
 
         EpiOutputDTO dto = service.enviarParaManutencao(1);
@@ -78,7 +106,16 @@ class ControlarManutencaoEpiServiceTest {
 
     @Test
     void deveBloquearEnvioParaManutencaoQuandoCaEstiverVencido() {
-        Epi epi = new Epi(2, "Luva", "CA-200", 5, 1, StatusEpi.DISPONIVEL, LocalDate.of(2020, 1, 1), 365);
+        Epi epi = EpiDeTeste.umEpi()
+                .comId(2)
+                .comNome("Luva")
+                .comCa("CA-200")
+                .comQuantidade(5)
+                .comEstoqueMinimo(1)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.of(2020, 1, 1))
+                .comVidaUtilDias(365)
+                .build();
         epiRepository.salvar(epi);
 
         assertThrows(CertificadoAprovacaoVencidoException.class, () -> service.enviarParaManutencao(2));
@@ -91,7 +128,16 @@ class ControlarManutencaoEpiServiceTest {
 
     @Test
     void deveConcluirManutencaoAprovadaEAtualizarEpiParaDisponivel() {
-        Epi epi = new Epi(3, "Óculos", "CA-300", 4, 1, StatusEpi.EM_MANUTENCAO, LocalDate.of(2030, 1, 1), 365);
+        Epi epi = EpiDeTeste.umEpi()
+                .comId(3)
+                .comNome("Óculos")
+                .comCa("CA-300")
+                .comQuantidade(4)
+                .comEstoqueMinimo(1)
+                .comStatus(StatusEpi.EM_MANUTENCAO)
+                .comValidadeCa(LocalDate.of(2030, 1, 1))
+                .comVidaUtilDias(365)
+                .build();
         epiRepository.salvar(epi);
 
         LocalDateTime dataManutencao = LocalDateTime.of(2026, 9, 11, 10, 0);
@@ -111,7 +157,16 @@ class ControlarManutencaoEpiServiceTest {
 
     @Test
     void deveConcluirManutencaoReprovadaSemExecutarDescarteDefinitivo() {
-        Epi epi = new Epi(4, "Cinto", "CA-400", 2, 1, StatusEpi.EM_MANUTENCAO, LocalDate.of(2030, 1, 1), 365);
+        Epi epi = EpiDeTeste.umEpi()
+                .comId(4)
+                .comNome("Cinto")
+                .comCa("CA-400")
+                .comQuantidade(2)
+                .comEstoqueMinimo(1)
+                .comStatus(StatusEpi.EM_MANUTENCAO)
+                .comValidadeCa(LocalDate.of(2030, 1, 1))
+                .comVidaUtilDias(365)
+                .build();
         epiRepository.salvar(epi);
 
         LocalDateTime dataManutencao = LocalDateTime.of(2026, 9, 11, 11, 0);
@@ -130,7 +185,16 @@ class ControlarManutencaoEpiServiceTest {
 
     @Test
     void deveBloquearConclusaoDeManutencaoQuandoCaEstiverVencido() {
-        Epi epi = new Epi(5, "Máscara", "CA-500", 5, 1, StatusEpi.EM_MANUTENCAO, LocalDate.of(2024, 1, 1), 365);
+        Epi epi = EpiDeTeste.umEpi()
+                .comId(5)
+                .comNome("Máscara")
+                .comCa("CA-500")
+                .comQuantidade(5)
+                .comEstoqueMinimo(1)
+                .comStatus(StatusEpi.EM_MANUTENCAO)
+                .comValidadeCa(LocalDate.of(2024, 1, 1))
+                .comVidaUtilDias(365)
+                .build();
         epiRepository.salvar(epi);
 
         ConcluirManutencaoInputDTO input = new ConcluirManutencaoInputDTO(
@@ -143,7 +207,16 @@ class ControlarManutencaoEpiServiceTest {
 
     @Test
     void deveLancarExcecaoAoConcluirManutencaoDeEpiEmUso() {
-        Epi epi = new Epi(6, "Bota", "CA-600", 5, 1, StatusEpi.EM_USO, LocalDate.of(2030, 1, 1), 365);
+        Epi epi = EpiDeTeste.umEpi()
+                .comId(6)
+                .comNome("Bota")
+                .comCa("CA-600")
+                .comQuantidade(5)
+                .comEstoqueMinimo(1)
+                .comStatus(StatusEpi.EM_USO)
+                .comValidadeCa(LocalDate.of(2030, 1, 1))
+                .comVidaUtilDias(365)
+                .build();
         epiRepository.salvar(epi);
 
         ConcluirManutencaoInputDTO input = new ConcluirManutencaoInputDTO(
@@ -156,7 +229,16 @@ class ControlarManutencaoEpiServiceTest {
 
     @Test
     void deveListarHistoricoDeManutencoesDoEpi() {
-        Epi epi = new Epi(7, "Protetor", "CA-700", 3, 1, StatusEpi.EM_MANUTENCAO, LocalDate.of(2030, 1, 1), 365);
+        Epi epi = EpiDeTeste.umEpi()
+                .comId(7)
+                .comNome("Protetor")
+                .comCa("CA-700")
+                .comQuantidade(3)
+                .comEstoqueMinimo(1)
+                .comStatus(StatusEpi.EM_MANUTENCAO)
+                .comValidadeCa(LocalDate.of(2030, 1, 1))
+                .comVidaUtilDias(365)
+                .build();
         epiRepository.salvar(epi);
 
         service.concluirManutencao(new ConcluirManutencaoInputDTO(
@@ -187,16 +269,16 @@ class ControlarManutencaoEpiServiceTest {
         @Override
         public Epi salvar(Epi epi) {
             Integer id = epi.getId() != null ? epi.getId() : nextId++;
-            Epi salvo = new Epi(
-                    id,
-                    epi.getNome(),
-                    epi.getNumeroCa(),
-                    epi.getQuantidade(),
-                    epi.getEstoqueMinimo(),
-                    epi.getStatus(),
-                    epi.getDataValidadeCa(),
-                    epi.getVidaUtilDias()
-            );
+            Epi salvo = EpiDeTeste.umEpi()
+                    .comId(id)
+                    .comNome(epi.getNome())
+                    .comCa(epi.getNumeroCa())
+                    .comQuantidade(epi.getQuantidade())
+                    .comEstoqueMinimo(epi.getEstoqueMinimo())
+                    .comStatus(epi.getStatus())
+                    .comValidadeCa(epi.getDataValidadeCa())
+                    .comVidaUtilDias(epi.getVidaUtilDias())
+                    .build();
             storage.put(id, salvo);
             return salvo;
         }

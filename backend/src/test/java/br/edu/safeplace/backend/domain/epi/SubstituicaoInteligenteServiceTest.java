@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.domain.epi;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -191,8 +192,19 @@ class SubstituicaoInteligenteServiceTest {
     // Métodos auxiliares de criação de fixtures
     private Epi criarEpi(Integer id, String nome, Integer vidaUtilDias, LocalDate validadeCa,
                          int quantidade, int estoqueMinimo) {
-        return new Epi(id, nome, "12345", quantidade, estoqueMinimo, StatusEpi.DISPONIVEL,
-                validadeCa, vidaUtilDias, "Descrição", ClassificacaoEPI.PROTECAO_DE_CABECA, "Setor A");
+        return EpiDeTeste.umEpi()
+                .comId(id)
+                .comNome(nome)
+                .comCa("12345")
+                .comQuantidade(quantidade)
+                .comEstoqueMinimo(estoqueMinimo)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(validadeCa)
+                .comVidaUtilDias(vidaUtilDias)
+                .comDescricao("Descrição")
+                .comClassificacao(ClassificacaoEPI.PROTECAO_DE_CABECA)
+                .comLocalizacao("Setor A")
+                .build();
     }
 
     private Emprestimo criarEmprestimo(Integer id, Integer epiId, LocalDateTime retirada, LocalDateTime devolucao) {

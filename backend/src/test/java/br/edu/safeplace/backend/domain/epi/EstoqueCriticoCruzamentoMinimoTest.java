@@ -5,6 +5,7 @@
  */
 package br.edu.safeplace.backend.domain.epi;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -21,9 +22,18 @@ class EstoqueCriticoCruzamentoMinimoTest {
     private static final int MINIMO = 5;
 
     private Epi epiComSaldoDez() {
-        return new Epi(1, "Luva nitrílica", "12345", SALDO_INICIAL, MINIMO,
-                StatusEpi.DISPONIVEL, LocalDate.now().plusYears(1), 180,
-                "Luva de proteção química", ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES);
+        return EpiDeTeste.umEpi()
+                .comId(1)
+                .comNome("Luva nitrílica")
+                .comCa("12345")
+                .comQuantidade(SALDO_INICIAL)
+                .comEstoqueMinimo(MINIMO)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.now().plusYears(1))
+                .comVidaUtilDias(180)
+                .comDescricao("Luva de proteção química")
+                .comClassificacao(ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES)
+                .build();
     }
 
     @Test
@@ -102,9 +112,17 @@ class EstoqueCriticoCruzamentoMinimoTest {
     @Test
     @DisplayName("Mínimo zero: só o saldo zerado é crítico")
     void minimoZeroSoEhCriticoComSaldoZero() {
-        Epi epi = new Epi(2, "Protetor auricular", "777", 1, 0,
-                StatusEpi.DISPONIVEL, LocalDate.now().plusYears(1), null,
-                null, ClassificacaoEPI.PROTECAO_AUDITIVA);
+        Epi epi = EpiDeTeste.umEpi()
+                .comId(2)
+                .comNome("Protetor auricular")
+                .comCa("777")
+                .comQuantidade(1)
+                .comEstoqueMinimo(0)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.now().plusYears(1))
+                .comVidaUtilDias(null)
+                .comClassificacao(ClassificacaoEPI.PROTECAO_AUDITIVA)
+                .build();
 
         assertThat(epi.isEstoqueCritico()).isFalse();
 

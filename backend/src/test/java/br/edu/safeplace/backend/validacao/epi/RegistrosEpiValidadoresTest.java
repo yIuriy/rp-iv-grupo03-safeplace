@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.validacao.epi;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -31,8 +32,16 @@ import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
 @DisplayName("Validadores de movimentação, manutenção, projeção e alerta (Chain of Responsibility)")
 class RegistrosEpiValidadoresTest {
 
-    private static final Epi EPI = new Epi(1, "Luva", "12345", 10, 1, StatusEpi.DISPONIVEL,
-            LocalDate.of(2030, 1, 1), 365);
+    private static final Epi EPI = EpiDeTeste.umEpi()
+            .comId(1)
+            .comNome("Luva")
+            .comCa("12345")
+            .comQuantidade(10)
+            .comEstoqueMinimo(1)
+            .comStatus(StatusEpi.DISPONIVEL)
+            .comValidadeCa(LocalDate.of(2030, 1, 1))
+            .comVidaUtilDias(365)
+            .build();
 
     private static final LocalDateTime DATA_HORA = LocalDateTime.of(2026, 9, 11, 10, 0);
     private final LocalDate hoje = LocalDate.of(2026, 9, 24);

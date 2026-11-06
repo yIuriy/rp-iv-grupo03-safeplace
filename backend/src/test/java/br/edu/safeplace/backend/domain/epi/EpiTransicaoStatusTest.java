@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.domain.epi;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -18,7 +19,16 @@ class EpiTransicaoStatusTest {
     private static final LocalDate HOJE = LocalDate.of(2026, 11, 6);
 
     private static Epi epi(StatusEpi status, int quantidade) {
-        return new Epi(1, "Luva", "12345", quantidade, 1, status, HOJE.plusYears(1), 365);
+        return EpiDeTeste.umEpi()
+                .comId(1)
+                .comNome("Luva")
+                .comCa("12345")
+                .comQuantidade(quantidade)
+                .comEstoqueMinimo(1)
+                .comStatus(status)
+                .comValidadeCa(HOJE.plusYears(1))
+                .comVidaUtilDias(365)
+                .build();
     }
 
     private static ManutencaoEpi manutencao(ResultadoManutencao resultado) {

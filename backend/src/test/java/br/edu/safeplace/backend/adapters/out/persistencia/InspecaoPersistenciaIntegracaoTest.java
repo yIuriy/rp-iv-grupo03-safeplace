@@ -5,6 +5,7 @@
  */
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -78,8 +79,14 @@ class InspecaoPersistenciaIntegracaoTest {
         limpar();
         gestorId = usuarioRepositorio.salvar(GestorDeSeguranca.novo(
                 "Gestor Inspeções 134", CPF_GESTOR, LocalDate.of(1986, 5, 20), EMAIL_GESTOR, "hash-de-teste")).getId();
-        Integer epiId = epiRepository.salvar(Epi.novo(NOME_EPI, "13401", 10, 2,
-                LocalDate.now().plusYears(2), 365, null, null)).getId();
+        Integer epiId = epiRepository.salvar(EpiDeTeste.umEpi()
+                .comNome(NOME_EPI)
+                .comCa("13401")
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comValidadeCa(LocalDate.now().plusYears(2))
+                .comVidaUtilDias(365)
+                .build()).getId();
         mockMvc.perform(post("/api/areas-risco").with(gestor())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""

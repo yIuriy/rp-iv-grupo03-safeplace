@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.domain.ocorrencia;
 
+import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,7 +23,17 @@ class IncidenteTest {
     @DisplayName("Deve criar Incidente completo com situação de risco e potencial de dano")
     void deveCriarIncidenteCompleto() {
         LocalDateTime dataFato = LocalDateTime.now().minusHours(3);
-        Epi epi = new Epi(1, "Capacete", "CA-123", 10, 2, StatusEpi.DISPONIVEL, LocalDate.now().plusYears(1), 180, "Capacete", null);
+        Epi epi = EpiDeTeste.umEpi()
+                .comId(1)
+                .comNome("Capacete")
+                .comCa("CA-123")
+                .comQuantidade(10)
+                .comEstoqueMinimo(2)
+                .comStatus(StatusEpi.DISPONIVEL)
+                .comValidadeCa(LocalDate.now().plusYears(1))
+                .comVidaUtilDias(180)
+                .comDescricao("Capacete")
+                .build();
         AreaRisco area = AreaRisco.cadastrar("ALM-01", "Almoxarifado", "Estocagem vertical", NivelPerigo.MEDIO, List.of(epi));
         Colaborador colaborador = Colaborador.novo("Juliana", "87455877074", LocalDate.of(1995, 12, 1), "juliana@empresa.com");
         GestorDeSeguranca gestor = GestorDeSeguranca.novo("Fernando", "49216091040", LocalDate.of(1982, 8, 14), "fernando@empresa.com", "senha123");
@@ -54,7 +65,17 @@ class IncidenteTest {
     @DisplayName("Fábrica cria incidente aberto sem texto livre de local")
     void deveCriarIncidentePelaFabrica() {
         AreaRisco area = AreaRisco.cadastrar("EST-01", "Estacionamento", "Circulação de veículos", NivelPerigo.MEDIO,
-                List.of(new Epi(3, "Colete", "CA-789", 5, 1, StatusEpi.DISPONIVEL, LocalDate.now().plusYears(1), 180, "Colete", null)));
+                List.of(EpiDeTeste.umEpi()
+                        .comId(3)
+                        .comNome("Colete")
+                        .comCa("CA-789")
+                        .comQuantidade(5)
+                        .comEstoqueMinimo(1)
+                        .comStatus(StatusEpi.DISPONIVEL)
+                        .comValidadeCa(LocalDate.now().plusYears(1))
+                        .comVidaUtilDias(180)
+                        .comDescricao("Colete")
+                        .build()));
 
         Incidente incidente = Incidente.novo(
                 "Quase atropelamento por empilhadeira",
