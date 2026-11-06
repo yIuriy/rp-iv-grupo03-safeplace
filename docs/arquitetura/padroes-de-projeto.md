@@ -23,7 +23,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [Facade](#facade--registrador-de-auditoria) | GoF, estrutural | Backend: registro de auditoria (`RegistradorAuditoria`) | [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237), [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) | Aplicado (1/3: #223) |
 | [State (Backend)](#state--transicoes-de-statusepi) | GoF, comportamental | Backend: transições de `StatusEpi` | [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) | Aplicado |
 | [Factory Method](#factory-method--criacao-de-epi-e-ocorrencia) | GoF, criacional | Backend: criação de `Epi` e `Acidente`/`Incidente` (`Ocorrencia` `sealed`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225), [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Aplicado (1/2: #225) |
-| [Builder (Test Data Builder)](#builder--test-data-builders-de-epi-tarefa-e-ocorrencia) | GoF, criacional | Backend (`src/test`): builders de `Epi`, `Tarefa` e `Ocorrencia` | [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) | Pendente |
+| [Builder](#builder--emprestimobuilder-e-builders-de-teste) | GoF, criacional | Backend: `Emprestimo.Builder` em produção; builders de teste `EpiDeTeste` e `EmprestimoDeTeste` | [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) | Aplicado (1/2: #226) |
 | [Null Object](#null-object--adaptador-nulo-de-notificacao-e-dependencias-opcionais) | Woolf / PLoPD 3 | Backend: `NotificadorOcorrenciaNulo` e dependências opcionais | [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227), [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) | Aplicado (2/2: #227, #241) |
 | [Chain of Responsibility](#chain-of-responsibility--camada-de-validação) | GoF, comportamental | Backend: camada `validacao` (aptidão do colaborador e tarefa) | [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228); continua em [#263](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/263) a [#267](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/267) | Aplicado (6/6: #228, #267, #263, #264, #265, #266) |
 | [Data Mapper](#data-mapper--mapeadores-de-persistencia) | Fowler / PoEAA | Backend: `EpiEntityMapper`, `AreaRiscoEntityMapper` e `PlanoDeAcaoEntityMapper` | [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229), [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242) | Pendente |
@@ -1446,40 +1446,158 @@ Suíte existente (`./mvnw clean test` com PostgreSQL externo novo): **1199 teste
 
 ---
 
-## Builder — Test Data Builders de `Epi`, `Tarefa` e `Ocorrencia`
+## Builder — `Emprestimo.Builder` e builders de teste
 
-**Catálogo:** GoF, criacional (aplicado como Test Data Builder em `src/test`).
+**Catálogo:** GoF, criacional.
 
-**Intenção:** separar a construção de objetos de domínio complexos nos testes por meio de builders fluentes com valores padrão válidos, eliminando chamadas a construtores posicionais longos na suíte de testes.
+**Intenção:** separar a construção do `Emprestimo` da sua representação. A entrega do UC12 é montada pelo `Emprestimo.Builder`, em código de produção, com cada dado nomeado, no lugar do método estático `registrarEntrega` de 7 parâmetros e do construtor de 12.
 
-**Issues:** [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226) e [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240).
+**Issues:** [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226) (parte 1, aplicada: `Emprestimo`) e [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) (parte 2: `Tarefa` e ocorrências).
+
+**Revisão após a avaliação do professor.** A versão anterior da #226 criava só um *Test Data Builder* de `Epi` em `src/test`. O professor pediu para avaliar o Builder **no código de produção** e apontou `Emprestimo.java:70`: parâmetros demais, que deveriam ser encapsulados num objeto. Os testes de EPI já tinham deixado de depender de construtores posicionais com a fábrica da [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) (`EpiDeTeste`). Esta parte usa as associações por objeto da [#260](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/260).
 
 ### Problema (antes)
 
-*A preencher nas issues [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226) e [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, R5).*
+- `Emprestimo.registrarEntrega(...)`: método **estático** com **7 parâmetros**. Até a #260 eram três `Integer` seguidos (EPI, beneficiário e responsável) e duas datas, que podiam ser trocados de posição sem erro de compilação.
+- Ele repassava para um **construtor público de 12 parâmetros**, preenchendo 4 com `null` (devolução, responsável pela devolução, estado e id).
+- Os testes montavam empréstimos já devolvidos chamando o mesmo construtor de 12 parâmetros, inclusive com combinações incoerentes para testar a validação.
+
+A validação que estava no construtor já tinha ido para o `EmprestimoValidador` na [#265](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/265).
 
 ### Papéis do padrão
 
 | Papel no padrão | Elemento no código | Responsabilidade |
 | --- | --- | --- |
-| Builder | `EpiBuilder`, `TarefaBuilder`, `AcidenteBuilder`, `IncidenteBuilder` (`src/test`) | Configurar apenas os atributos relevantes para cada cenário de teste |
-| Product | `Epi`, `Tarefa`, `Acidente`, `Incidente` | Entidades de domínio construídas pelas fábricas de produção |
-| Director | Classes de teste (`*Test`) | Descrever o cenário de teste de forma fluente |
+| Builder | `Emprestimo.Builder` (`src/main`, classe aninhada) | Receber cada dado da entrega por um método nomeado (`epi`, `beneficiario`, `responsavelEntrega`, `retiradaEm`, `devolucaoPrevistaPara`, `termoCautela`, `justificativaSubstituicao`) e montar o produto em `build()` |
+| Director | `EmprestimoService.registrarEntrega` | Montar o empréstimo a partir do `RegistrarEntregaInputDTO`, do EPI, do beneficiário e do operador já carregados, e validar antes do repository |
+| Product | `Emprestimo` | Entidade com o construtor `protected` do JPA e um construtor privado que recebe o Builder; nasce ativo (`INDISPONIVEL`) |
+| Test Data Builder | `EmprestimoDeTeste` (`src/test/.../suporte`) | Reaproveitar o `Emprestimo.Builder` nos testes e só simular o que vem do banco (id, devolução e situação) |
+
+**O Builder não valida.** EPI, beneficiário, responsável, datas e termo são conferidos pelo `EmprestimoValidador`, que o Director chama antes de `emprestimos.salvar`.
+
+**Por que o Builder só monta a entrega.** Um empréstimo novo é sempre uma entrega ativa. Devolução, id e situação gravada não são dados de criação: a devolução vem de `Emprestimo.devolver(...)`, e o id e a situação de um registro lido vêm do JPA. Por isso não estão no Builder de produção. Nos testes, o `EmprestimoDeTeste` os preenche por reflexão, inclusive em registros incoerentes que a validação precisa recusar, como já faz o `EpiDeTeste`.
 
 ### Diagramas
 
-*Diagramas PlantUML antes e depois a preencher nas issues [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226) e [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240).*
+**Antes.**
+
+```mermaid
+classDiagram
+  direction LR
+  class Emprestimo {
+    +Emprestimo(id, epi, colaborador, responsavelEntrega, retirada, prevista, termo, justificativa, devolucaoReal, responsavelDevolucao, estado, status)
+    +registrarEntrega(epi, colaborador, responsavel, retirada, prevista, termo, justificativa)$ Emprestimo
+  }
+  class EmprestimoService
+  EmprestimoService ..> Emprestimo : registrarEntrega(7 argumentos posicionais)
+```
+
+**Depois.**
+
+```mermaid
+classDiagram
+  direction LR
+  class Emprestimo {
+    <<Product / Entity>>
+    #Emprestimo() JPA
+    -Emprestimo(Builder)
+    +devolver(estado, responsavel, dataHora)
+  }
+  class Builder {
+    <<Builder>>
+    +epi(Epi) Builder
+    +beneficiario(Colaborador) Builder
+    +responsavelEntrega(Colaborador) Builder
+    +retiradaEm(LocalDateTime) Builder
+    +devolucaoPrevistaPara(LocalDate) Builder
+    +termoCautela(String) Builder
+    +justificativaSubstituicao(String) Builder
+    +build() Emprestimo
+  }
+  class EmprestimoService {
+    <<Director>>
+    +registrarEntrega(RegistrarEntregaInputDTO, operadorEmail)
+  }
+  class EmprestimoValidador {
+    <<Chain of Responsibility>>
+  }
+  class EmprestimoDeTeste {
+    <<Test Data Builder>>
+  }
+  Emprestimo +-- Builder
+  Builder ..> Emprestimo : build()
+  EmprestimoService ..> Builder : monta a entrega
+  EmprestimoService ..> EmprestimoValidador : valida antes do repository
+  EmprestimoDeTeste ..> Builder : reaproveita
+```
+
+### Código antes × depois
+
+`EmprestimoService.registrarEntrega`, antes:
+
+```java
+Emprestimo emprestimo = Emprestimo.registrarEntrega(epi, beneficiario, operador,
+        agora, entrada.dataDevolucaoPrevista(), termo, entrada.justificativaSubstituicao());
+```
+
+Depois:
+
+```java
+Emprestimo emprestimo = new Emprestimo.Builder()
+        .epi(epi)
+        .beneficiario(beneficiario)
+        .responsavelEntrega(operador)
+        .retiradaEm(agora)
+        .devolucaoPrevistaPara(entrada.dataDevolucaoPrevista())
+        .termoCautela(termo)
+        .justificativaSubstituicao(entrada.justificativaSubstituicao())
+        .build();
+emprestimoValidador.validar(emprestimo);
+```
+
+Um teste de validação com registro devolvido, antes e depois:
+
+```java
+// antes
+new Emprestimo(1, epi(10), pessoa(3), pessoa(2), RETIRADA, PREVISTA, "termo", null,
+        RETIRADA.plusDays(1), pessoa(5), null, ClassificacaoEmprestimo.DISPONIVEL)
+// depois
+EmprestimoDeTeste.umEmprestimo()
+        .comId(1)
+        .comEpi(epi(10))
+        .comBeneficiario(pessoa(3))
+        .comResponsavelEntrega(pessoa(2))
+        .retiradoEm(RETIRADA)
+        .comDevolucaoPrevistaPara(PREVISTA)
+        .comTermoCautela("termo")
+        .devolvidoEm(RETIRADA.plusDays(1), pessoa(5), null)
+        .comStatus(ClassificacaoEmprestimo.DISPONIVEL)
+        .build()
+```
+
+### Benefício
+
+Cada dado da entrega tem nome no ponto em que é informado, então trocar o beneficiário pelo responsável ou a data de retirada pela prevista deixou de ser um erro silencioso. A justificativa, opcional, só aparece quando existe, em vez de um `null` posicional. A criação deixou de ser estática, e o `Emprestimo` não tem mais construtor público: há uma forma de criar um empréstimo novo, e ela não valida nem inventa a devolução. Os testes leem como o cenário que descrevem e reaproveitam o mesmo Builder da produção.
 
 ### Métricas locais
 
-| Métrica | Antes (v1.0.0) | Depois |
-| --- | --- | --- |
-| `classes_3_ou_mais_construtores` | 8 | *A medir* |
-| `construtores` | 218 | *A medir* |
+| Métrica | Antes (`dev` antes da #226) | Depois |
+| --- | ---: | ---: |
+| Maior número de argumentos posicionais para criar um `Emprestimo` | 12 | 0 (cada dado por método nomeado; nenhum método com mais de 1 argumento) |
+| Métodos estáticos de criação em `Emprestimo` | 1 | 0 |
+| Construtores públicos de `Emprestimo` | 1 | 0 (fica o `protected` do JPA e um privado que recebe o Builder) |
+| `null` posicionais na criação de um empréstimo novo | 4 | 0 |
+| Linhas de teste que criavam `Emprestimo` por construtor ou método estático | 16 | 0 |
+
+Medição por busca no código de `backend/src`.
 
 ### Evidências
 
-*A preencher nas issues [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226) e [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240).*
+Teste novo: `EmprestimoBuilderTest` (5 testes; papéis Builder e Product): a entrega é montada com cada dado nomeado e o termo sem espaços nas pontas; o empréstimo nasce ativo (`INDISPONIVEL`) e sem devolução; o Builder não valida (um empréstimo incompleto é montado para o validador recusar); cada `build()` cria um empréstimo novo; o `Emprestimo` não tem construtor público nem método estático de criação.
+
+Papel Director: `EmprestimoServiceTest` (entrega, duplicidade de posse, devolução) e `EmprestimoPersistenciaIntegracaoTest` (entrega e devolução gravadas no PostgreSQL) passam sem mudança nas asserções. Testes ajustados para o Builder: `EmprestimoTest`, `EmprestimoValidadorTest`, `ProjecaoValidadorTest`, `SubstituicaoInteligenteServiceTest`, `PlanejarSubstituicaoUseCaseTest` e `EmprestimoServiceTest`, cujo repositório em memória passou a atribuir o id à própria entidade, como o JPA.
+
+Suíte existente (`./mvnw clean test` com PostgreSQL externo novo): **1203 testes, 0 falhas, 10 erros**, todos o problema anterior de limpeza entre classes de integração (`DELETE FROM epis` bloqueado por `projecoes_substituicao`).
 
 ---
 
