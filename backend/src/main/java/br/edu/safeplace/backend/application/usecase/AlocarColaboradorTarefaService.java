@@ -90,7 +90,7 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
         validadorAptidao.validar(new AptidaoParaTarefa(
                 colaborador, tarefa, certificacoes, treinamentos, exigencias, LocalDate.now()));
 
-        AlocacaoTarefa alocacao = AlocacaoTarefa.nova(tarefa.getId(), colaborador.getId(), operador.getId(), entrada.observacao());
+        AlocacaoTarefa alocacao = AlocacaoTarefa.nova(tarefa, colaborador, operador, entrada.observacao());
         validadorAlocacao.validar(alocacao);
         AlocacaoTarefa salva = alocacaoTarefaRepository.salvar(alocacao);
 

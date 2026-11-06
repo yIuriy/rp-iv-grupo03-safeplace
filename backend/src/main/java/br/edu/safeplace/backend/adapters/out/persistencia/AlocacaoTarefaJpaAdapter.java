@@ -7,9 +7,9 @@ import org.springframework.stereotype.Component;
 import br.edu.safeplace.backend.application.port.out.AlocacaoTarefaRepository;
 import br.edu.safeplace.backend.domain.tarefa.AlocacaoTarefa;
 
+/** Delega ao repositório JPA da própria AlocacaoTarefa, sem classe espelhada (#260). */
 @Component
 public class AlocacaoTarefaJpaAdapter implements AlocacaoTarefaRepository {
-
     private final AlocacaoTarefaJpaRepository repository;
 
     public AlocacaoTarefaJpaAdapter(AlocacaoTarefaJpaRepository repository) {
@@ -18,47 +18,16 @@ public class AlocacaoTarefaJpaAdapter implements AlocacaoTarefaRepository {
 
     @Override
     public AlocacaoTarefa salvar(AlocacaoTarefa alocacao) {
-        AlocacaoTarefaEntity entity = new AlocacaoTarefaEntity(
-                alocacao.getId(),
-                alocacao.getTarefaId(),
-                alocacao.getColaboradorId(),
-                alocacao.getDataAlocacao(),
-                alocacao.getResponsavelAlocacaoId(),
-                alocacao.getObservacao()
-        );
-        AlocacaoTarefaEntity salva = repository.save(entity);
-        return new AlocacaoTarefa(
-                salva.getId(),
-                salva.getTarefaId(),
-                salva.getColaboradorId(),
-                salva.getDataAlocacao(),
-                salva.getResponsavelAlocacaoId(),
-                salva.getObservacao()
-        );
+        return repository.save(alocacao);
     }
 
     @Override
     public List<AlocacaoTarefa> listarPorTarefa(Integer tarefaId) {
-        return repository.findByTarefaIdOrderByDataAlocacaoDesc(tarefaId).stream()
-                .map(this::deEntidade)
-                .toList();
+        return repository.findByTarefa_IdOrderByDataAlocacaoDesc(tarefaId);
     }
 
     @Override
     public List<AlocacaoTarefa> listarPorColaborador(Integer colaboradorId) {
-        return repository.findByColaboradorIdOrderByDataAlocacaoDesc(colaboradorId).stream()
-                .map(this::deEntidade)
-                .toList();
-    }
-
-    private AlocacaoTarefa deEntidade(AlocacaoTarefaEntity entity) {
-        return new AlocacaoTarefa(
-                entity.getId(),
-                entity.getTarefaId(),
-                entity.getColaboradorId(),
-                entity.getDataAlocacao(),
-                entity.getResponsavelAlocacaoId(),
-                entity.getObservacao()
-        );
+        return repository.findByColaborador_IdOrderByDataAlocacaoDesc(colaboradorId);
     }
 }
