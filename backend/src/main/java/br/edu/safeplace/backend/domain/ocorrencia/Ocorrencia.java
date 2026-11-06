@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
+import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -147,6 +148,14 @@ public abstract sealed class Ocorrencia permits Acidente, Incidente {
 
     /** Devolve o tipo específico de ocorrência no domínio (#239). */
     public abstract TipoOcorrencia getTipoOcorrencia();
+
+    /**
+     * Nível de perigo da ocorrência quando aplicável (subclasses com gravidade, como {@link Acidente}).
+     * Devolve {@code null} quando o tipo não possui gravidade estruturada (#239).
+     */
+    public NivelPerigo getGravidade() {
+        return null;
+    }
 
     public Integer getId() {
         return idOcorrencia;

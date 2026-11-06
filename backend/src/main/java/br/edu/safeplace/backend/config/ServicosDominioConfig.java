@@ -11,6 +11,8 @@ import br.edu.safeplace.backend.domain.epi.CalculoProjecaoSubstituicao;
 import br.edu.safeplace.backend.domain.epi.FabricaEpi;
 import br.edu.safeplace.backend.domain.epi.FabricaEpiPadrao;
 import br.edu.safeplace.backend.domain.epi.SubstituicaoInteligenteService;
+import br.edu.safeplace.backend.domain.ocorrencia.FabricaRelatoAcidente;
+import br.edu.safeplace.backend.domain.ocorrencia.FabricaRelatoIncidente;
 
 @Configuration
 public class ServicosDominioConfig {
@@ -23,5 +25,15 @@ public class ServicosDominioConfig {
     @Bean
     public FabricaEpi fabricaEpi() {
         return new FabricaEpiPadrao();
+    }
+
+    @Bean
+    public FabricaRelatoAcidente fabricaRelatoAcidente() {
+        return new FabricaRelatoAcidente();
+    }
+
+    @Bean
+    public FabricaRelatoIncidente fabricaRelatoIncidente() {
+        return new FabricaRelatoIncidente();
     }
 }

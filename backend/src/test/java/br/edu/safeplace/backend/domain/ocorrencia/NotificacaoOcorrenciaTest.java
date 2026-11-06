@@ -30,7 +30,7 @@ class NotificacaoOcorrenciaTest {
         Acidente acidente = new Acidente(7, "Queimadura", FATO, FATO, StatusOcorrencia.ABERTA, null, area(), null,
                 null, null, CausaRaizAcidente.FALHA_EPI, null, null, NumeroProtocoloCAT.de("CAT-2026-09-0003"), null, NivelPerigo.ALTO);
 
-        NotificacaoOcorrencia notificacao = NotificacaoOcorrencia.deNovoRelato(acidente);
+        NotificacaoOcorrencia notificacao = new FabricaRelatoAcidente().criarNotificacao(acidente);
 
         assertThat(notificacao.ocorrenciaId()).isEqualTo(7);
         assertThat(notificacao.tipoOcorrencia()).isEqualTo(TipoOcorrencia.ACIDENTE);
@@ -47,7 +47,7 @@ class NotificacaoOcorrenciaTest {
         Incidente incidente = new Incidente(8, "Piso molhado", FATO, FATO, StatusOcorrencia.ABERTA, null, area(), null,
                 null, null, "Vazamento", "Queda");
 
-        NotificacaoOcorrencia notificacao = NotificacaoOcorrencia.deNovoRelato(incidente);
+        NotificacaoOcorrencia notificacao = new FabricaRelatoIncidente().criarNotificacao(incidente);
 
         assertThat(notificacao.tipoOcorrencia()).isEqualTo(TipoOcorrencia.INCIDENTE);
         assertThat(notificacao.numeroProtocoloCAT()).isNull();
