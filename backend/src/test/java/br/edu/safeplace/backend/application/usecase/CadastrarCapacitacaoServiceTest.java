@@ -2,6 +2,7 @@ package br.edu.safeplace.backend.application.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -21,23 +22,49 @@ import br.edu.safeplace.backend.application.dto.input.CadastrarCertificacaoInput
 import br.edu.safeplace.backend.application.dto.input.CadastrarTreinamentoInputDTO;
 import br.edu.safeplace.backend.application.dto.input.DefinirExigenciaInputDTO;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepository;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
+import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 
 class CadastrarCapacitacaoServiceTest {
 
     private FakeCapacitacaoRepository repositorio;
     private FakeLogAuditoriaRepository auditoria;
     private CadastrarCapacitacaoService service;
+    /** Dublê da porta do operador (#236): começa sem sessão. */
+    private final OperadorAutenticadoFixo operador = OperadorAutenticadoFixo.semSessao();
 
     @BeforeEach
     void setUp() {
         repositorio = new FakeCapacitacaoRepository();
         auditoria = new FakeLogAuditoriaRepository();
-        service = new CadastrarCapacitacaoService(repositorio, auditoria);
+        service = new CadastrarCapacitacaoService(repositorio, auditoria,
+                operador.operadorAtual(mock(UsuarioRepository.class)));
+    }
+
+    @Test
+    @DisplayName("Adapter (#236): a auditoria registra o operador lido pela porta")
+    void auditoriaRegistraOperadorDaPorta() {
+        operador.autenticar("gestora@safeplace.com", "GESTOR_SEGURANCA");
+        LocalDate hoje = LocalDate.now();
+
+        service.cadastrarCertificacao(new CadastrarCertificacaoInputDTO("NR-10", hoje.plusYears(1), hoje.minusDays(1), 10));
+
+        assertThat(auditoria.logs.get(0).getResponsavel()).isEqualTo("gestora@safeplace.com");
+    }
+
+    @Test
+    @DisplayName("Adapter (#236): sem operador autenticado, a auditoria registra SISTEMA")
+    void semOperadorAuditoriaRegistraSistema() {
+        LocalDate hoje = LocalDate.now();
+
+        service.cadastrarCertificacao(new CadastrarCertificacaoInputDTO("NR-10", hoje.plusYears(1), hoje.minusDays(1), 10));
+
+        assertThat(auditoria.logs.get(0).getResponsavel()).isEqualTo(OperadorAtual.SISTEMA);
     }
 
     @Test

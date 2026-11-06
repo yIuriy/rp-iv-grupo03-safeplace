@@ -27,7 +27,6 @@ import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
 import br.edu.safeplace.backend.domain.tarefa.Tarefa;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,8 +34,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
+import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -101,14 +99,11 @@ class AuditoriaEvidenciaIntegracaoTest {
                     .toList();
         });
 
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("gestor.auditor@safeplace.com", "senha")
-        );
     }
 
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
+    /** Dublê da porta do operador (#236), no lugar do SecurityContext do Spring. */
+    private OperadorAtual operadorAtual() {
+        return OperadorAutenticadoFixo.autenticado("gestor.auditor@safeplace.com").operadorAtual(usuarioRepository);
     }
 
     @Test
@@ -192,7 +187,7 @@ class AuditoriaEvidenciaIntegracaoTest {
         when(usuarioRepository.buscarPorEmail("gestor.auditor@safeplace.com")).thenReturn(Optional.of(operador));
 
         EpiService epiService = new EpiService(
-                epiRepository, usuarioRepository, logAuditoriaRepository
+                epiRepository, usuarioRepository, logAuditoriaRepository, operadorAtual()
         );
 
         Epi epi = new Epi(50, "Capacete de Segurança", 100, StatusEpi.DISPONIVEL);
@@ -217,7 +212,7 @@ class AuditoriaEvidenciaIntegracaoTest {
     @DisplayName("Deve realizar classificação de Tarefa seguida de consulta de evidência")
     void classificacaoTarefaSeguidaDeConsultaDeEvidencia() {
         TarefaService tarefaService = new TarefaService(
-                tarefaRepository, logAuditoriaRepository, usuarioRepository, null, null, mock(EpiRepository.class)
+                tarefaRepository, logAuditoriaRepository, operadorAtual(), null, null, mock(EpiRepository.class)
         );
 
         GestorDeSeguranca auditor = new GestorDeSeguranca(3, "49216091040", "Gestor Auditor",

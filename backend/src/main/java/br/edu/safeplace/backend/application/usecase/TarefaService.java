@@ -7,9 +7,6 @@ package br.edu.safeplace.backend.application.usecase;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,7 +22,6 @@ import br.edu.safeplace.backend.application.port.out.EpiRepository;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.application.port.out.SetorRepository;
 import br.edu.safeplace.backend.application.port.out.TarefaRepository;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.validacao.Validador;
 import br.edu.safeplace.backend.validacao.tarefa.TarefaValidador;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
@@ -49,32 +45,39 @@ import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTarefaUseCase {
 
     private static final String ENTIDADE = "Tarefa";
+    /**
+     * UC11: o responsável técnico é o Gestor de Segurança autenticado. A regra de acesso já restringe
+     * as alterações ao Gestor; sem um Gestor identificável, a classificação é recusada em vez de ser
+     * gravada sem autoria.
+     */
+    private static final String SEM_RESPONSAVEL_TECNICO =
+            "A classificação de periculosidade exige um Gestor de Segurança autenticado como responsável técnico.";
 
     private final TarefaRepository repository;
     private final LogAuditoriaRepository logAuditoriaRepository;
-    private final UsuarioRepository usuarioRepositorio;
+    private final OperadorAtual operadorAtual;
     private final Validador<Tarefa> validador;
     private final EpiRepository epiRepository;
 
     @Autowired
     public TarefaService(TarefaRepository repository, LogAuditoriaRepository logAuditoriaRepository,
-            UsuarioRepository usuarioRepositorio, Validador<Tarefa> validador, EpiRepository epiRepository) {
+            OperadorAtual operadorAtual, Validador<Tarefa> validador, EpiRepository epiRepository) {
         this.repository = repository;
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.logAuditoriaRepository = java.util.Objects.requireNonNull(
                 logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
+        // Adapter (#236): operador e Gestor responsável vêm da porta OperadorAutenticado.
+        this.operadorAtual = java.util.Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
         // #241: portas obrigatórias, sem construtores que repassam null.
-        this.usuarioRepositorio = java.util.Objects.requireNonNull(
-                usuarioRepositorio, "Repositório de usuários é obrigatório.");
         this.validador = java.util.Objects.requireNonNull(validador, "Validador da tarefa é obrigatório.");
         this.epiRepository = java.util.Objects.requireNonNull(epiRepository, "Repositório de EPIs é obrigatório.");
     }
 
     /** Monta o validador com as portas informadas; usado pelos testes sem contexto Spring. */
     public TarefaService(TarefaRepository repository, LogAuditoriaRepository logAuditoriaRepository,
-            UsuarioRepository usuarioRepositorio, AreaRiscoRepository areaRiscoRepository,
+            OperadorAtual operadorAtual, AreaRiscoRepository areaRiscoRepository,
             SetorRepository setorRepository, EpiRepository epiRepository) {
-        this(repository, logAuditoriaRepository, usuarioRepositorio,
+        this(repository, logAuditoriaRepository, operadorAtual,
                 new TarefaValidador(areaRiscoRepository, setorRepository), epiRepository);
     }
 
@@ -87,13 +90,13 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
         validador.validar(novaTarefa);
         GestorDeSeguranca responsavel = null;
         if (inputDTO.nivelPerigo() != null) {
-            responsavel = resolverResponsavelTecnico();
+            responsavel = operadorAtual.gestorObrigatorio(SEM_RESPONSAVEL_TECNICO);
             novaTarefa.classificar(inputDTO.nivelPerigo(), responsavel);
         }
         Tarefa salva = repository.salvar(novaTarefa);
 
         registrarLog(LogAuditoria.registrarCadastro(
-                resolverOperador(), ENTIDADE, salva.getId(), "Cadastro de Tarefa: " + salva.getDescricao()));
+                operadorAtual.emailOuSistema(), ENTIDADE, salva.getId(), "Cadastro de Tarefa: " + salva.getDescricao()));
         if (salva.estaClassificada()) {
             registrarClassificacao(new RegistroClassificacaoTarefa(
                     salva.getId(), null, salva.getNivelPerigo(), responsavel, salva.getDataClassificacao()));
@@ -115,7 +118,7 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
         validador.validar(atualizada);
 
         Tarefa salva = repository.salvar(atualizada);
-        String op = operador != null ? operador : resolverOperador();
+        String op = operador != null ? operador : operadorAtual.emailOuSistema();
         registrarLog(LogAuditoria.registrarAlteracao(
                 op, ENTIDADE, salva.getId(), "Atualização de Tarefa: " + salva.getDescricao()));
 
@@ -151,7 +154,8 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
     @Transactional
     public TarefaOutputDTO classificar(Integer id, NivelPerigo nivelPerigo) {
         Tarefa tarefa = buscarTarefa(id);
-        RegistroClassificacaoTarefa registro = tarefa.classificar(nivelPerigo, resolverResponsavelTecnico());
+        RegistroClassificacaoTarefa registro = tarefa.classificar(
+                nivelPerigo, operadorAtual.gestorObrigatorio(SEM_RESPONSAVEL_TECNICO));
         Tarefa salva = repository.salvar(tarefa);
 
         registrarClassificacao(registro);
@@ -179,7 +183,7 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
 
         // RNF05: o vínculo registra operador e o dado alterado (EPIs anteriores e novos).
         registrarLog(LogAuditoria.registrarAlteracao(
-                resolverOperador(), ENTIDADE, salva.getId(),
+                operadorAtual.emailOuSistema(), ENTIDADE, salva.getId(),
                 "EPIs obrigatórios da tarefa: de " + anteriores + " para "
                         + descreverEpis(salva.verificarEpisObrigatoriosTarefa())));
         return TarefaOutputDTO.deDominio(salva);
@@ -233,40 +237,6 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
 
     private void registrarLog(LogAuditoria log) {
         logAuditoriaRepository.salvar(log);
-    }
-
-    /**
-     * O responsável técnico é o Gestor de Segurança autenticado (UC11, ator principal). A regra de
-     * acesso já restringe as alterações ao Gestor; sem um Gestor identificável, a classificação é
-     * recusada em vez de ser gravada sem autoria.
-     */
-    private GestorDeSeguranca resolverResponsavelTecnico() {
-        String email = emailAutenticado();
-        if (email != null) {
-            GestorDeSeguranca gestor = usuarioRepositorio.buscarPorEmail(email)
-                    .filter(GestorDeSeguranca.class::isInstance)
-                    .map(GestorDeSeguranca.class::cast)
-                    .orElse(null);
-            if (gestor != null) {
-                return gestor;
-            }
-        }
-        throw new AccessDeniedException(
-                "A classificação de periculosidade exige um Gestor de Segurança autenticado como responsável técnico.");
-    }
-
-    private String resolverOperador() {
-        String email = emailAutenticado();
-        return email != null ? email : "SISTEMA";
-    }
-
-    private String emailAutenticado() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
-            String email = auth.getName().trim();
-            return "anonymousUser".equals(email) ? null : email;
-        }
-        return null;
     }
 
     private Tarefa buscarTarefa(Integer id) {

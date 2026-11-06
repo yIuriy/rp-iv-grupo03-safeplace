@@ -9,9 +9,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +18,6 @@ import br.edu.safeplace.backend.application.port.in.GerenciarInspecaoUseCase;
 import br.edu.safeplace.backend.application.port.out.AreaRiscoRepository;
 import br.edu.safeplace.backend.application.port.out.InspecaoRepository;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.area_risco.exception.AreaRiscoNaoEncontradaException;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
@@ -37,36 +33,43 @@ public class InspecaoService implements GerenciarInspecaoUseCase {
 
     private static final String ENTIDADE_LOG = "Inspecao";
     private static final DateTimeFormatter DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    /**
+     * O responsável é o Gestor de Segurança autenticado (associação GestorDeSeguranca 1 para Inspecao).
+     * Sem um Gestor identificável, o registro é recusado em vez de ser gravado sem autoria.
+     */
+    private static final String SEM_GESTOR =
+            "O registro de inspeção exige um Gestor de Segurança autenticado como responsável.";
 
     private final InspecaoRepository inspecaoRepository;
     private final AreaRiscoRepository areaRiscoRepository;
-    private final UsuarioRepository usuarioRepositorio;
+    private final OperadorAtual operadorAtual;
     private final LogAuditoriaRepository logAuditoria;
     private final Validador<Inspecao> validador;
 
     @Autowired
     public InspecaoService(InspecaoRepository inspecaoRepository,
-            AreaRiscoRepository areaRiscoRepository, UsuarioRepository usuarioRepositorio,
+            AreaRiscoRepository areaRiscoRepository, OperadorAtual operadorAtual,
             LogAuditoriaRepository logAuditoria, Validador<Inspecao> validador) {
         this.inspecaoRepository = inspecaoRepository;
         this.areaRiscoRepository = areaRiscoRepository;
-        this.usuarioRepositorio = usuarioRepositorio;
+        // Adapter (#236): o Gestor responsável vem da porta OperadorAutenticado.
+        this.operadorAtual = java.util.Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
         this.logAuditoria = logAuditoria;
         this.validador = validador;
     }
 
     /** Usa o validador padrão, com a data de hoje; usado pelos testes sem contexto Spring. */
     public InspecaoService(InspecaoRepository inspecaoRepository,
-            AreaRiscoRepository areaRiscoRepository, UsuarioRepository usuarioRepositorio,
+            AreaRiscoRepository areaRiscoRepository, OperadorAtual operadorAtual,
             LogAuditoriaRepository logAuditoria) {
-        this(inspecaoRepository, areaRiscoRepository, usuarioRepositorio, logAuditoria, new InspecaoValidador());
+        this(inspecaoRepository, areaRiscoRepository, operadorAtual, logAuditoria, new InspecaoValidador());
     }
 
     @Override
     @Transactional
     public InspecaoOutputDTO registrar(Integer areaRiscoId, RegistrarInspecaoInputDTO inputDTO) {
         AreaRisco area = exigirArea(areaRiscoId);
-        GestorDeSeguranca responsavel = resolverGestorAutenticado();
+        GestorDeSeguranca responsavel = operadorAtual.gestorObrigatorio(SEM_GESTOR);
         Inspecao inspecao = Inspecao.registrar(
                 area, inputDTO.dataInspecao(), responsavel, converterItens(inputDTO.itens()));
         // Chain of Responsibility (#263): itens, área, responsável e data, antes do repository.
@@ -112,26 +115,5 @@ public class InspecaoService implements GerenciarInspecaoUseCase {
                     return ItemVerificado.novo(item.descricao(), item.conformidade(), item.observacoes());
                 })
                 .toList();
-    }
-
-    /**
-     * O responsável é o Gestor de Segurança autenticado (associação GestorDeSeguranca 1 para Inspecao).
-     * Sem um Gestor identificável, o registro é recusado em vez de ser gravado sem autoria.
-     */
-    private GestorDeSeguranca resolverGestorAutenticado() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth != null ? auth.getName() : null;
-        if (email != null && !email.isBlank() && !"anonymousUser".equals(email)) {
-            return usuarioRepositorio.buscarPorEmail(email.trim())
-                    .filter(GestorDeSeguranca.class::isInstance)
-                    .map(GestorDeSeguranca.class::cast)
-                    .orElseThrow(InspecaoService::semGestor);
-        }
-        throw semGestor();
-    }
-
-    private static AccessDeniedException semGestor() {
-        return new AccessDeniedException(
-                "O registro de inspeção exige um Gestor de Segurança autenticado como responsável.");
     }
 }

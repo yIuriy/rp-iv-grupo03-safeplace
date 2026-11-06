@@ -64,6 +64,30 @@ class OperadorAtualTest {
     }
 
     @Test
+    void emailInformadoPeloControllerTemPrecedenciaSobreOOperador() {
+        assertEquals(Optional.of("controller@empresa.com"),
+                operadorAtual.emailInformadoOuAutenticado("  controller@empresa.com "));
+        assertEquals("controller@empresa.com", operadorAtual.emailInformadoOuSistema("controller@empresa.com"));
+        verifyNoInteractions(operadorPorta);
+    }
+
+    @Test
+    void emailInformadoAusenteOuEmBrancoUsaOOperadorAutenticado() {
+        when(operadorPorta.obterIdentificadorOperador()).thenReturn(Optional.of("token@empresa.com"));
+
+        assertEquals(Optional.of("token@empresa.com"), operadorAtual.emailInformadoOuAutenticado("   "));
+        assertEquals("token@empresa.com", operadorAtual.emailInformadoOuSistema(null));
+    }
+
+    @Test
+    void semEmailInformadoNemOperadorDevolveVazioOuSistema() {
+        when(operadorPorta.obterIdentificadorOperador()).thenReturn(Optional.empty());
+
+        assertEquals(Optional.empty(), operadorAtual.emailInformadoOuAutenticado(null));
+        assertEquals("SISTEMA", operadorAtual.emailInformadoOuSistema(""));
+    }
+
+    @Test
     void buscarGestorDeveRetornarVazioQuandoOperadorNaoAutenticado() {
         when(operadorPorta.obterIdentificadorOperador()).thenReturn(Optional.empty());
 

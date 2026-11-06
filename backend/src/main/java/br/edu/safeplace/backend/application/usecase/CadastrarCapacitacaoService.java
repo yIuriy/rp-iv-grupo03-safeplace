@@ -1,7 +1,5 @@
 package br.edu.safeplace.backend.application.usecase;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +28,7 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
 
     private final CapacitacaoRepository capacitacaoRepository;
     private final LogAuditoriaRepository logAuditoriaRepository;
+    private final OperadorAtual operadorAtual;
     private final Validador<Certificacao> certificacaoValidador;
     private final Validador<Treinamento> treinamentoValidador;
     private final Validador<ExigenciaCapacitacao> exigenciaValidador;
@@ -37,9 +36,10 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
     /** Usa os validadores padrão; usado pelos testes sem contexto Spring. */
     public CadastrarCapacitacaoService(
             CapacitacaoRepository capacitacaoRepository,
-            LogAuditoriaRepository logAuditoriaRepository) {
+            LogAuditoriaRepository logAuditoriaRepository,
+            OperadorAtual operadorAtual) {
         this(capacitacaoRepository, logAuditoriaRepository, new CertificacaoValidador(),
-                new TreinamentoValidador(), new ExigenciaCapacitacaoValidador());
+                new TreinamentoValidador(), new ExigenciaCapacitacaoValidador(), operadorAtual);
     }
 
     @Autowired
@@ -48,7 +48,8 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
             LogAuditoriaRepository logAuditoriaRepository,
             Validador<Certificacao> certificacaoValidador,
             Validador<Treinamento> treinamentoValidador,
-            Validador<ExigenciaCapacitacao> exigenciaValidador) {
+            Validador<ExigenciaCapacitacao> exigenciaValidador,
+            OperadorAtual operadorAtual) {
         this.certificacaoValidador = certificacaoValidador;
         this.treinamentoValidador = treinamentoValidador;
         this.exigenciaValidador = exigenciaValidador;
@@ -56,6 +57,8 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.logAuditoriaRepository = java.util.Objects.requireNonNull(
                 logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
+        // Adapter (#236): o operador vem da porta OperadorAutenticado.
+        this.operadorAtual = java.util.Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
     }
 
     @Override
@@ -93,19 +96,8 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
     }
 
     private void registrarAuditoria(String entidade, Integer entidadeId, String justificativa) {
-        String responsavel = resolverOperador();
-        LogAuditoria log = LogAuditoria.registrarCadastro(responsavel, entidade, entidadeId, justificativa);
+        LogAuditoria log = LogAuditoria.registrarCadastro(
+                operadorAtual.emailOuSistema(), entidade, entidadeId, justificativa);
         logAuditoriaRepository.salvar(log);
-    }
-
-    private String resolverOperador() {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
-                return auth.getName();
-            }
-        } catch (Exception ignored) {
-        }
-        return "SISTEMA";
     }
 }

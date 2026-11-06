@@ -29,6 +29,8 @@ import br.edu.safeplace.backend.domain.ocorrencia.exception.AcaoPreventivaObriga
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PlanoDeAcaoInvalidoException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PrazoAcaoInvalidoException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
+import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
+import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -80,10 +82,13 @@ class PlanoDeAcaoServiceTest {
     private Acidente ocorrenciaGrave;
     private Acidente ocorrenciaLeve;
 
+    /** Dublê da porta do operador (#236): começa sem sessão. */
+    private final OperadorAutenticadoFixo operador = OperadorAutenticadoFixo.semSessao();
+
     @BeforeEach
     void setUp() {
         useCase = new PlanoDeAcaoService(planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository,
-                notificadorAcao, consultaOcorrencia);
+                notificadorAcao, consultaOcorrencia, operador.operadorAtual(usuarioRepository));
 
         colaborador = new Colaborador(10, "11122233344", "Carlos", LocalDate.of(1990, 1, 1), "carlos@safeplace.com", true, LocalDateTime.now(), LocalDateTime.now());
         setor = new Setor(20, "Manutenção", "Setor de Manutenção", "Bloco M", NivelPerigo.MEDIO);
@@ -130,6 +135,42 @@ class PlanoDeAcaoServiceTest {
         assertThat(output.medidasCorretivas()).isEqualTo("Instalar protecao na esteira");
         assertThat(output.responsavelTipo()).isEqualTo("COLABORADOR");
         assertThat(output.responsavelId()).isEqualTo(10);
+    }
+
+    private PlanoDeAcao cadastrarAcaoSimplesECapturarPlano() {
+        when(ocorrenciaRepository.buscarPorId(2)).thenReturn(Optional.of(ocorrenciaLeve));
+        when(usuarioRepository.buscarPorId(10)).thenReturn(Optional.of(colaborador));
+        when(planoDeAcaoRepository.listarPorOcorrencia(2)).thenReturn(List.of());
+        when(planoDeAcaoRepository.salvar(any(PlanoDeAcao.class))).thenAnswer(inv -> {
+            PlanoDeAcao p = inv.getArgument(0);
+            return new PlanoDeAcao(100, p.getIdOcorrencia(), p.getMedidasCorretivas(), p.getMedidasPreventivas(),
+                    p.getPrazo(), p.getStatus(), p.getResponsavelColaborador(), p.getResponsavelSetor(),
+                    p.isAlertaAtivo(), p.getAntecedenciaAlertaDias(), p.getGestor());
+        });
+
+        useCase.cadastrarAcao(2, new CriarAcaoPlanoInputDTO(
+                "Instalar protecao na esteira", null, LocalDate.now().plusDays(10), 10, null, false, null));
+
+        ArgumentCaptor<PlanoDeAcao> plano = ArgumentCaptor.forClass(PlanoDeAcao.class);
+        verify(planoDeAcaoRepository).salvar(plano.capture());
+        return plano.getValue();
+    }
+
+    @Test
+    @DisplayName("Adapter (#236): o Gestor autenticado, lido pela porta, fica registrado no plano")
+    void gestorAutenticadoFicaRegistradoNoPlano() {
+        GestorDeSeguranca gestora = new GestorDeSeguranca(7, "52998224725", "Gestora Ana", LocalDate.of(1985, 1, 15),
+                "gestora@safeplace.com", "hash", true, LocalDateTime.now(), LocalDateTime.now());
+        operador.autenticar("gestora@safeplace.com", "GESTOR_SEGURANCA");
+        when(usuarioRepository.buscarPorEmail("gestora@safeplace.com")).thenReturn(Optional.of(gestora));
+
+        assertThat(cadastrarAcaoSimplesECapturarPlano().getGestor()).isSameAs(gestora);
+    }
+
+    @Test
+    @DisplayName("Adapter (#236): sem Gestor autenticado, o plano é cadastrado sem gestor (fluxo opcional)")
+    void semGestorAutenticadoPlanoFicaSemGestor() {
+        assertThat(cadastrarAcaoSimplesECapturarPlano().getGestor()).isNull();
     }
 
     @Test
@@ -348,7 +389,8 @@ class PlanoDeAcaoServiceTest {
         when(consulta.buscarPorId(9)).thenThrow(
                 new br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException(9));
         PlanoDeAcaoService comVisibilidade = new PlanoDeAcaoService(
-                planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository, notificadorAcao, consulta);
+                planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository, notificadorAcao, consulta,
+                operador.operadorAtual(usuarioRepository));
 
         assertThatThrownBy(() -> comVisibilidade.listarPorOcorrencia(9))
                 .isInstanceOf(br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException.class);
