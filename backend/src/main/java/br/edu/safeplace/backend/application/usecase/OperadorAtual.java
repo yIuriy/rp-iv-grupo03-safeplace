@@ -46,6 +46,30 @@ public class OperadorAtual {
     }
 
     /**
+     * E-mail informado pela borda (o controller o lê do token) tem precedência; sem ele, vale o
+     * operador autenticado (issue #236).
+     *
+     * @param informado e-mail recebido do controller, opcional.
+     * @return Optional com o e-mail informado (sem espaços nas pontas), o do operador ou vazio.
+     */
+    public Optional<String> emailInformadoOuAutenticado(String informado) {
+        if (informado != null && !informado.isBlank()) {
+            return Optional.of(informado.trim());
+        }
+        return obterIdentificadorOperador();
+    }
+
+    /**
+     * Como {@link #emailInformadoOuAutenticado(String)}, com "SISTEMA" quando não há nenhum dos dois.
+     *
+     * @param informado e-mail recebido do controller, opcional.
+     * @return e-mail informado, e-mail do operador ou "SISTEMA".
+     */
+    public String emailInformadoOuSistema(String informado) {
+        return emailInformadoOuAutenticado(informado).orElse(SISTEMA);
+    }
+
+    /**
      * Busca o Gestor de Segurança autenticado, caso exista e possua perfil compatível.
      *
      * @return Optional com o Gestor de Segurança autenticado ou vazio.

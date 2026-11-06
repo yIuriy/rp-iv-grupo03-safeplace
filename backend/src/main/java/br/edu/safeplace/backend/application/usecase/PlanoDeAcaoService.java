@@ -25,8 +25,6 @@ import br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontr
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +49,7 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
     private final GerenciarOcorrenciaUseCase consultaOcorrencia;
     private final Validador<AcaoDoPlano> acaoValidador;
     private final Validador<PlanoDaOcorrencia> planoValidador;
+    private final OperadorAtual operadorAtual;
 
     @Autowired
     public PlanoDeAcaoService(
@@ -61,7 +60,8 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
             NotificadorAcao notificadorAcao,
             GerenciarOcorrenciaUseCase consultaOcorrencia,
             Validador<AcaoDoPlano> acaoValidador,
-            Validador<PlanoDaOcorrencia> planoValidador) {
+            Validador<PlanoDaOcorrencia> planoValidador,
+            OperadorAtual operadorAtual) {
         this.acaoValidador = acaoValidador;
         this.planoValidador = planoValidador;
         this.planoDeAcaoRepository = planoDeAcaoRepository;
@@ -74,6 +74,8 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
                 notificadorAcao, "Porta de notificação das ações é obrigatória (UC07).");
         this.consultaOcorrencia = Objects.requireNonNull(
                 consultaOcorrencia, "Consulta de ocorrências é obrigatória (visibilidade do plano, issue #100).");
+        // Adapter (#236): o Gestor que define o plano vem da porta do operador.
+        this.operadorAtual = Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
     }
 
     /** Usa os validadores padrão; usado pelos testes sem contexto Spring. */
@@ -83,9 +85,10 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
             UsuarioRepository usuarioRepository,
             SetorRepository setorRepository,
             NotificadorAcao notificadorAcao,
-            GerenciarOcorrenciaUseCase consultaOcorrencia) {
+            GerenciarOcorrenciaUseCase consultaOcorrencia,
+            OperadorAtual operadorAtual) {
         this(planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository, notificadorAcao,
-                consultaOcorrencia, new AcaoPlanoValidador(), new PlanoValidador());
+                consultaOcorrencia, new AcaoPlanoValidador(), new PlanoValidador(), operadorAtual);
     }
 
     /** Ação inexistente responde como não encontrada (404), não como dado inválido (issue #196). */
@@ -121,7 +124,8 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
                     .orElseThrow(() -> new IllegalArgumentException("Setor não encontrado para o ID: " + inputDTO.responsavelSetorId()));
         }
 
-        GestorDeSeguranca gestor = gestorAutenticado();
+        // O plano registra o Gestor quando há um; sem ele, o plano fica sem gestor (fluxo opcional).
+        GestorDeSeguranca gestor = operadorAtual.buscarGestor().orElse(null);
         LocalDate hoje = LocalDate.now();
 
         PlanoDeAcao acao = PlanoDeAcao.definir(
@@ -258,20 +262,5 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
         acao.configurarAlerta(inputDTO.ativo(), inputDTO.antecedenciaDias());
         PlanoDeAcao salvo = planoDeAcaoRepository.salvar(acao);
         return PlanoDeAcaoOutputDTO.deDominio(salvo);
-    }
-
-    private GestorDeSeguranca gestorAutenticado() {
-        if (usuarioRepository == null) {
-            return null;
-        }
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || auth.getName() == null || auth.getName().isBlank()) {
-            return null;
-        }
-        String email = auth.getName().trim();
-        return usuarioRepository.buscarPorEmail(email)
-                .filter(GestorDeSeguranca.class::isInstance)
-                .map(GestorDeSeguranca.class::cast)
-                .orElse(null);
     }
 }

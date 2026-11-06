@@ -14,8 +14,6 @@ import br.edu.safeplace.backend.domain.epi.LoteEPI;
 import br.edu.safeplace.backend.domain.epi.ModeloEPI;
 import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +38,7 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
     private final EpiRepository repository;
     private final UsuarioRepository usuarioRepositorio;
     private final LogAuditoriaRepository logAuditoriaRepository;
+    private final OperadorAtual operadorAtual;
 
     @Autowired
     public EpiService(
@@ -49,7 +48,8 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
             @Qualifier("numeroCaValidador") Validador<String> numeroCaValidador,
             Validador<ModeloEPI> modeloValidador,
             Validador<Epi> epiValidador,
-            Validador<MovimentacaoEstoque> movimentacaoValidador) {
+            Validador<MovimentacaoEstoque> movimentacaoValidador,
+            OperadorAtual operadorAtual) {
         this.repository = repository;
         this.usuarioRepositorio = usuarioRepositorio;
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
@@ -59,15 +59,18 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
         this.modeloValidador = modeloValidador;
         this.epiValidador = epiValidador;
         this.movimentacaoValidador = movimentacaoValidador;
+        // Adapter (#236): o operador vem da porta OperadorAutenticado.
+        this.operadorAtual = java.util.Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
     }
 
     /** Monta os validadores padrão; usado pelos testes sem contexto Spring. */
     public EpiService(
             EpiRepository repository,
             UsuarioRepository usuarioRepositorio,
-            LogAuditoriaRepository logAuditoriaRepository) {
+            LogAuditoriaRepository logAuditoriaRepository,
+            OperadorAtual operadorAtual) {
         this(repository, usuarioRepositorio, logAuditoriaRepository, new NumeroCaValidador(),
-                new ModeloEpiValidador(), new EpiValidador(), new MovimentacaoEstoqueValidador());
+                new ModeloEpiValidador(), new EpiValidador(), new MovimentacaoEstoqueValidador(), operadorAtual);
     }
 
     @Override
@@ -96,7 +99,7 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
         Epi salvo = repository.salvar(novoEpi);
 
         LogAuditoria log = LogAuditoria.registrarCadastro(
-                resolverOperador(null),
+                operadorAtual.emailOuSistema(),
                 "Epi",
                 salvo.getId(),
                 "Cadastro de EPI: " + salvo.getNome()
@@ -135,7 +138,9 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
             String motivo, String responsavelEmail) {
         Epi epi = repository.buscarPorIdComLock(epiId)
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId));
-        Integer responsavelId = buscarResponsavelId(emailDoUsuarioAutenticado(responsavelEmail));
+        // O e-mail vindo do controller tem precedência; sem ele, vale o operador autenticado (#236).
+        Integer responsavelId = buscarResponsavelId(
+                operadorAtual.emailInformadoOuAutenticado(responsavelEmail).orElse(null));
 
         MovimentacaoEstoque movimentacao;
         if (tipo == TipoMovimentacao.ENTRADA) {
@@ -151,7 +156,7 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
         MovimentacaoEstoque salvo = repository.salvarMovimentacao(movimentacao);
 
         LogAuditoria log = LogAuditoria.registrarAlteracao(
-                resolverOperador(responsavelEmail),
+                operadorAtual.emailInformadoOuSistema(responsavelEmail),
                 "Epi",
                 epi.getId(),
                 "Movimentação de estoque: " + tipo + " (" + quantidade + " un). Motivo: " + motivo
@@ -159,22 +164,6 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
         logAuditoriaRepository.salvar(log);
 
         return MovimentacaoEstoqueOutputDTO.deDominio(salvo, epi.getQuantidade());
-    }
-
-    private String resolverOperador(String explicit) {
-        String email = emailDoUsuarioAutenticado(explicit);
-        return email != null ? email : "SISTEMA";
-    }
-
-    private static String emailDoUsuarioAutenticado(String explicit) {
-        if (explicit != null && !explicit.isBlank()) {
-            return explicit.trim();
-        }
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
-            return auth.getName().trim();
-        }
-        return null;
     }
 
     @Override

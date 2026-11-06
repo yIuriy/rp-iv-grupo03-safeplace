@@ -30,8 +30,6 @@ import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.DadosOcorrenciaInvalidosException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +37,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import br.edu.safeplace.backend.validacao.Validador;
@@ -57,6 +56,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
     private final NotificadorOcorrencia notificadorOcorrencia;
     private final Validador<Ocorrencia> validador;
     private final Validador<Acidente> protocoloValidador;
+    private final OperadorAtual operadorAtual;
 
     @org.springframework.beans.factory.annotation.Autowired
     public OcorrenciaService(
@@ -66,7 +66,8 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
             LogAuditoriaRepository logAuditoriaRepository,
             NotificadorOcorrencia notificadorOcorrencia,
             @Qualifier("ocorrenciaValidador") Validador<Ocorrencia> validador,
-            @Qualifier("protocoloCATValidador") Validador<Acidente> protocoloValidador) {
+            @Qualifier("protocoloCATValidador") Validador<Acidente> protocoloValidador,
+            OperadorAtual operadorAtual) {
         this.validador = java.util.Objects.requireNonNull(validador, "Validador da ocorrência é obrigatório.");
         this.protocoloValidador = java.util.Objects.requireNonNull(
                 protocoloValidador, "Validador do protocolo CAT é obrigatório.");
@@ -79,6 +80,8 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         // Null Object (#227): a porta é obrigatória; sem notificação, injeta-se NotificadorOcorrenciaNulo.
         this.notificadorOcorrencia = java.util.Objects.requireNonNull(
                 notificadorOcorrencia, "Notificador de ocorrência é obrigatório.");
+        // Adapter (#236): relator, auditoria e visibilidade leem o operador pela porta.
+        this.operadorAtual = java.util.Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
     }
 
     /** Usa o validador padrão; usado pelos testes sem contexto Spring. */
@@ -87,9 +90,10 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
             AreaRiscoRepository areaRiscoRepository,
             UsuarioRepository usuarioRepository,
             LogAuditoriaRepository logAuditoriaRepository,
-            NotificadorOcorrencia notificadorOcorrencia) {
+            NotificadorOcorrencia notificadorOcorrencia,
+            OperadorAtual operadorAtual) {
         this(repository, areaRiscoRepository, usuarioRepository, logAuditoriaRepository, notificadorOcorrencia,
-                new OcorrenciaValidador(), new ProtocoloCATValidador());
+                new OcorrenciaValidador(), new ProtocoloCATValidador(), operadorAtual);
     }
 
     @Override
@@ -131,7 +135,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         Acidente salvo = repository.salvarAcidente(acidente);
 
         LogAuditoria log = LogAuditoria.registrarCadastro(
-                resolverOperador(),
+                operadorAtual.emailOuSistema(),
                 "Acidente",
                 salvo.getId(),
                 "Registro de Acidente de Trabalho"
@@ -170,7 +174,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         Incidente salvo = repository.salvarIncidente(incidente);
 
         LogAuditoria log = LogAuditoria.registrarCadastro(
-                resolverOperador(),
+                operadorAtual.emailOuSistema(),
                 "Incidente",
                 salvo.getId(),
                 "Registro de Incidente"
@@ -209,11 +213,9 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
      * {@code SISTEMA}.
      */
     private Colaborador relatorAutenticado() {
-        String email = emailAutenticado();
-        if (email == null) {
-            return null;
-        }
-        return usuarioRepository.buscarPorEmail(email).orElse(null);
+        return operadorAtual.obterIdentificadorOperador()
+                .flatMap(usuarioRepository::buscarPorEmail)
+                .orElse(null);
     }
 
     /**
@@ -243,15 +245,12 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
      * esconde. Sem sessão, a consulta não é restringida.
      */
     private Predicate<Ocorrencia> visibilidadeDoUsuarioAtual() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        boolean isSupervisor = auth != null && auth.getAuthorities().stream()
-                .anyMatch(a -> "ROLE_SUPERVISOR".equals(a.getAuthority()));
-        String email = emailAutenticado();
-        if (!isSupervisor || email == null) {
+        Optional<String> email = operadorAtual.obterIdentificadorOperador();
+        if (!operadorAtual.possuiPapel("ROLE_SUPERVISOR") || email.isEmpty()) {
             return ocorrencia -> true;
         }
         List<Integer> idsRelatados = logAuditoriaRepository
-                .buscarIdsPorResponsavelETipoOperacao(email, "CADASTRO", ENTIDADES_DE_RELATO);
+                .buscarIdsPorResponsavelETipoOperacao(email.get(), "CADASTRO", ENTIDADES_DE_RELATO);
         return ocorrencia -> idsRelatados.contains(ocorrencia.getIdOcorrencia());
     }
 
@@ -345,7 +344,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         }
 
         logAuditoriaRepository.salvar(LogAuditoria.registrarAlteracao(
-                resolverOperador(),
+                operadorAtual.emailOuSistema(),
                 salva instanceof Acidente ? "Acidente" : "Incidente",
                 salva.getId(),
                 "Atualização de ocorrência. Campos alterados: " + descreverAlteracoes(atual, salva)));
@@ -392,7 +391,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         Ocorrencia salva = salvarOcorrencia(ocorrencia);
 
         LogAuditoria log = LogAuditoria.registrarAlteracao(
-                resolverOperador(),
+                operadorAtual.emailOuSistema(),
                 salva instanceof Acidente ? "Acidente" : "Incidente",
                 salva.getId(),
                 "Envio de ocorrência para triagem"
@@ -413,7 +412,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         Ocorrencia salva = salvarOcorrencia(ocorrencia);
 
         LogAuditoria log = LogAuditoria.registrarAlteracao(
-                resolverOperador(),
+                operadorAtual.emailOuSistema(),
                 salva instanceof Acidente ? "Acidente" : "Incidente",
                 salva.getId(),
                 "Arquivamento de ocorrência"
@@ -441,7 +440,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         Acidente salvo = repository.salvarAcidente(consolidado);
 
         LogAuditoria log = LogAuditoria.registrarAlteracao(
-                resolverOperador(),
+                operadorAtual.emailOuSistema(),
                 "Acidente",
                 salvo.getId(),
                 "Consolidação de CAT com protocolo " + salvo.getNumeroProtocolo()
@@ -449,20 +448,6 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         logAuditoriaRepository.salvar(log);
 
         return OcorrenciaOutputDTO.deDominio(salvo);
-    }
-
-    private String resolverOperador() {
-        String email = emailAutenticado();
-        return email != null ? email : "SISTEMA";
-    }
-
-    private String emailAutenticado() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
-            String email = auth.getName().trim();
-            return "anonymousUser".equals(email) ? null : email;
-        }
-        return null;
     }
 
     private Ocorrencia salvarOcorrencia(Ocorrencia ocorrencia) {

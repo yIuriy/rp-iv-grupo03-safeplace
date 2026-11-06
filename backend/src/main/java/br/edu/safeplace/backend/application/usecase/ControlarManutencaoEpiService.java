@@ -13,8 +13,6 @@ import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.ManutencaoEpi;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,14 +29,16 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
     private final UsuarioRepository usuarioRepository;
     private final LogAuditoriaRepository logAuditoriaRepository;
     private final Validador<ManutencaoEpi> manutencaoValidador;
+    private final OperadorAtual operadorAtual;
 
     /** Usa o validador padrão; usado pelos testes sem contexto Spring. */
     public ControlarManutencaoEpiService(EpiRepository epiRepository,
                                          ManutencaoEpiRepository manutencaoEpiRepository,
                                          UsuarioRepository usuarioRepository,
-                                         LogAuditoriaRepository logAuditoriaRepository) {
+                                         LogAuditoriaRepository logAuditoriaRepository,
+                                         OperadorAtual operadorAtual) {
         this(epiRepository, manutencaoEpiRepository, usuarioRepository, logAuditoriaRepository,
-                new ManutencaoEpiValidador());
+                new ManutencaoEpiValidador(), operadorAtual);
     }
 
     @Autowired
@@ -46,7 +46,8 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
                                          ManutencaoEpiRepository manutencaoEpiRepository,
                                          UsuarioRepository usuarioRepository,
                                          LogAuditoriaRepository logAuditoriaRepository,
-                                         Validador<ManutencaoEpi> manutencaoValidador) {
+                                         Validador<ManutencaoEpi> manutencaoValidador,
+                                         OperadorAtual operadorAtual) {
         this.manutencaoValidador = manutencaoValidador;
         this.epiRepository = epiRepository;
         this.manutencaoEpiRepository = manutencaoEpiRepository;
@@ -54,6 +55,8 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.logAuditoriaRepository = java.util.Objects.requireNonNull(
                 logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
+        // Adapter (#236): o operador vem da porta OperadorAutenticado.
+        this.operadorAtual = java.util.Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
     }
 
     @Override
@@ -66,7 +69,7 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
         Epi salvo = epiRepository.salvar(epi);
 
         LogAuditoria log = LogAuditoria.registrarAlteracao(
-                resolverOperador(null),
+                operadorAtual.emailOuSistema(),
                 "Epi",
                 salvo.getId(),
                 "EPI enviado para manutenção"
@@ -120,7 +123,7 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
         ManutencaoEpi salva = manutencaoEpiRepository.salvar(manutencao);
 
         LogAuditoria log = LogAuditoria.registrarAlteracao(
-                resolverOperador(responsavelEmail),
+                operadorAtual.emailInformadoOuSistema(responsavelEmail),
                 "ManutencaoEpi",
                 salva.getId(),
                 "Manutenção de EPI concluída com resultado: " + inputDTO.resultado()
@@ -128,17 +131,6 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
         logAuditoriaRepository.salvar(log);
 
         return ManutencaoEpiOutputDTO.deDominio(salva, epi.getStatus());
-    }
-
-    private String resolverOperador(String explicit) {
-        if (explicit != null && !explicit.isBlank()) {
-            return explicit.trim();
-        }
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
-            return auth.getName().trim();
-        }
-        return "SISTEMA";
     }
 
     private Integer buscarResponsavelId(String responsavelEmail) {
