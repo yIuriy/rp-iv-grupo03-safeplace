@@ -1,5 +1,8 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import static org.mockito.Mockito.mock;
+import br.edu.safeplace.backend.application.port.out.SetorRepository;
+import br.edu.safeplace.backend.application.port.out.AreaRiscoRepository;
 import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -59,7 +62,7 @@ class TarefaServiceTest {
                         "hash", true, LocalDateTime.now(), LocalDateTime.now()),
                 new Supervisor(8, "87455877074", "Paulo", LocalDate.of(1990, 1, 10), EMAIL_SUPERVISOR,
                         "hash", true, LocalDateTime.now(), LocalDateTime.now())));
-        useCase = new TarefaService(repository, auditoria, operador.operadorAtual(usuarios), null, null, epiRepository);
+        useCase = new TarefaService(repository, auditoria, operador.operadorAtual(usuarios), mock(AreaRiscoRepository.class), mock(SetorRepository.class), epiRepository);
         autenticarComo(EMAIL_GESTOR);
     }
 
@@ -327,7 +330,7 @@ class TarefaServiceTest {
             Integer id = tarefa.getId() != null ? tarefa.getId() : nextId++;
             Tarefa salva = new Tarefa(id, tarefa.getDescricao(), tarefa.getNivelPerigo(),
                     tarefa.getDataClassificacao(), tarefa.getResponsavelClassificacao(),
-                    tarefa.getAreaRiscoId(), tarefa.getSetoresIds(), tarefa.getEpisObrigatorios());
+                    tarefa.getAreaRisco(), tarefa.getSetores(), tarefa.getEpisObrigatorios());
             storage.put(id, salva);
             return salva;
         }

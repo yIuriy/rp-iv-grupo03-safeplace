@@ -6,16 +6,19 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface TarefaJpaRepository extends JpaRepository<TarefaEntity, Integer> {
+import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.tarefa.Tarefa;
+
+public interface TarefaJpaRepository extends JpaRepository<Tarefa, Integer> {
 
     @Override
     @EntityGraph(attributePaths = {"responsavelClassificacao", "areaRisco", "setores"})
-    Optional<TarefaEntity> findById(Integer id);
+    Optional<Tarefa> findById(Integer id);
 
     @Override
     @EntityGraph(attributePaths = {"responsavelClassificacao", "areaRisco", "setores"})
-    List<TarefaEntity> findAll();
+    List<Tarefa> findAll();
 
     @EntityGraph(attributePaths = {"responsavelClassificacao", "areaRisco", "setores"})
-    List<TarefaEntity> findByNivelPerigo(String nivelPerigo);
+    List<Tarefa> findByNivelPerigo(NivelPerigo nivelPerigo);
 }

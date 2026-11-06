@@ -4,6 +4,8 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import static org.mockito.Mockito.mock;
+import br.edu.safeplace.backend.application.port.out.SetorRepository;
 import br.edu.safeplace.backend.suporte.EpiDeTeste;
 import br.edu.safeplace.backend.adapters.out.seguranca.OperadorAutenticadoNulo;
 import br.edu.safeplace.backend.application.dto.input.AtualizarAreaRiscoInputDTO;
@@ -227,7 +229,7 @@ class AuditoriaEvidenciaIntegracaoTest {
     @DisplayName("Deve realizar classificação de Tarefa seguida de consulta de evidência")
     void classificacaoTarefaSeguidaDeConsultaDeEvidencia() {
         TarefaService tarefaService = new TarefaService(
-                tarefaRepository, logAuditoriaRepository, operadorAtual(), null, null, mock(EpiRepository.class)
+                tarefaRepository, logAuditoriaRepository, operadorAtual(), mock(AreaRiscoRepository.class), mock(SetorRepository.class), mock(EpiRepository.class)
         );
 
         GestorDeSeguranca auditor = new GestorDeSeguranca(3, "49216091040", "Gestor Auditor",

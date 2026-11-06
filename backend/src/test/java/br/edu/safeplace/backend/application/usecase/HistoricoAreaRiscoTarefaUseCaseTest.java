@@ -74,7 +74,7 @@ class HistoricoAreaRiscoTarefaUseCaseTest {
 
         areaUseCase = new AreaRiscoService(areas, epis, setores, auditoria);
         tarefaService = new TarefaService(tarefas, auditoria,
-                OperadorAutenticadoFixo.semSessao().operadorAtual(mock(UsuarioRepository.class)), null, null, epis);
+                OperadorAutenticadoFixo.semSessao().operadorAtual(mock(UsuarioRepository.class)), mock(AreaRiscoRepository.class), mock(SetorRepository.class), epis);
     }
 
     private static Epi epi(Integer id, String nome) {
