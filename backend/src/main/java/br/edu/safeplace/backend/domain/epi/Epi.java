@@ -241,6 +241,18 @@ public class Epi {
                 status, vidaUtilDias, localizacao);
     }
 
+    /** Usado só pela {@link FabricaEpiPadrao}: criar um EPI novo passa pela {@link FabricaEpi} (#225). */
+    Epi(String nome, EspecificacaoEPI especificacao, LoteEPI lote, int quantidade, StatusEpi status,
+            Integer vidaUtilDias, String localizacao) {
+        this.nome = nome;
+        this.especificacao = especificacao;
+        this.lote = lote;
+        this.quantidade = quantidade;
+        this.status = status;
+        this.vidaUtilDias = vidaUtilDias;
+        this.localizacao = localizacao;
+    }
+
     public MovimentacaoEstoque adicionarEstoque(int qtd, String motivo) {
         return adicionarEstoque(qtd, motivo, null);
     }
