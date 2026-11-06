@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
+import org.hibernate.Hibernate;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -75,13 +77,13 @@ public class TarefaJpaAdapter implements TarefaRepository {
         return ids.isEmpty() ? List.of() : epiRepository.findAllById(ids);
     }
 
-    private GestorDeSegurancaEntidade carregarGestor(GestorDeSeguranca gestor) {
+    private GestorDeSeguranca carregarGestor(GestorDeSeguranca gestor) {
         if (gestor == null || gestor.getId() == null) {
             return null;
         }
         return usuarioRepository.findById(gestor.getId())
-                .filter(GestorDeSegurancaEntidade.class::isInstance)
-                .map(GestorDeSegurancaEntidade.class::cast)
+                .filter(GestorDeSeguranca.class::isInstance)
+                .map(GestorDeSeguranca.class::cast)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Responsável técnico não encontrado entre os gestores de segurança: " + gestor.getId()));
     }
@@ -109,7 +111,8 @@ public class TarefaJpaAdapter implements TarefaRepository {
                 entity.getDescricao(),
                 entity.getNivelPerigo() == null ? null : NivelPerigo.valueOf(entity.getNivelPerigo()),
                 entity.getDataClassificacao(),
-                entity.getResponsavelClassificacao() == null ? null : entity.getResponsavelClassificacao().paraDominio(),
+                entity.getResponsavelClassificacao() == null ? null
+                        : (GestorDeSeguranca) Hibernate.unproxy(entity.getResponsavelClassificacao()),
                 entity.getAreaRisco() == null ? null : entity.getAreaRisco().getId(),
                 entity.getSetores().stream().map(Setor::getId).toList(),
                 entity.getEpis().stream().map(EpiEntityMapper::toDomain).toList());

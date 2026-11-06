@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
+import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +29,7 @@ public class TarefaEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "responsavel_classificacao_id")
-    private GestorDeSegurancaEntidade responsavelClassificacao;
+    private GestorDeSeguranca responsavelClassificacao;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "area_risco_id")
@@ -48,17 +50,17 @@ public class TarefaEntity {
     }
 
     public TarefaEntity(Integer id, String descricao, String nivelPerigo, LocalDateTime dataClassificacao,
-            GestorDeSegurancaEntidade responsavelClassificacao) {
+            GestorDeSeguranca responsavelClassificacao) {
         this(id, descricao, nivelPerigo, dataClassificacao, responsavelClassificacao, null, List.of(), List.of());
     }
 
     public TarefaEntity(Integer id, String descricao, String nivelPerigo, LocalDateTime dataClassificacao,
-            GestorDeSegurancaEntidade responsavelClassificacao, AreaRisco areaRisco, List<Setor> setores) {
+            GestorDeSeguranca responsavelClassificacao, AreaRisco areaRisco, List<Setor> setores) {
         this(id, descricao, nivelPerigo, dataClassificacao, responsavelClassificacao, areaRisco, setores, List.of());
     }
 
     public TarefaEntity(Integer id, String descricao, String nivelPerigo, LocalDateTime dataClassificacao,
-            GestorDeSegurancaEntidade responsavelClassificacao, AreaRisco areaRisco, List<Setor> setores,
+            GestorDeSeguranca responsavelClassificacao, AreaRisco areaRisco, List<Setor> setores,
             List<EpiEntity> epis) {
         this.id = id;
         this.descricao = descricao;
@@ -86,7 +88,7 @@ public class TarefaEntity {
         return dataClassificacao;
     }
 
-    public GestorDeSegurancaEntidade getResponsavelClassificacao() {
+    public GestorDeSeguranca getResponsavelClassificacao() {
         return responsavelClassificacao;
     }
 

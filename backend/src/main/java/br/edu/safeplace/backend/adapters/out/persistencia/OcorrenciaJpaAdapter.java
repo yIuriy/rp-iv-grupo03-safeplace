@@ -4,6 +4,8 @@
  */
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
+import org.hibernate.Hibernate;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -106,8 +108,8 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
 
     private AcidenteEntity toEntity(Acidente acidente) {
         AreaRisco area = carregarArea(acidente.getArea());
-        ColaboradorEntidade colaboradorEntity = carregarColaborador(acidente.getColaborador());
-        ColaboradorEntidade relatorEntity = carregarColaborador(acidente.getRelator());
+        Colaborador colaboradorEntity = carregarColaborador(acidente.getColaborador());
+        Colaborador relatorEntity = carregarColaborador(acidente.getRelator());
 
         return new AcidenteEntity(
                 acidente.getIdOcorrencia(),
@@ -130,8 +132,8 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
 
     private IncidenteEntity toEntity(Incidente incidente) {
         AreaRisco area = carregarArea(incidente.getArea());
-        ColaboradorEntidade colaboradorEntity = carregarColaborador(incidente.getColaborador());
-        ColaboradorEntidade relatorEntity = carregarColaborador(incidente.getRelator());
+        Colaborador colaboradorEntity = carregarColaborador(incidente.getColaborador());
+        Colaborador relatorEntity = carregarColaborador(incidente.getRelator());
 
         return new IncidenteEntity(
                 incidente.getIdOcorrencia(),
@@ -155,11 +157,19 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
         return areaRiscoRepository.findById(area.getId()).orElse(null);
     }
 
-    private ColaboradorEntidade carregarColaborador(Colaborador colaborador) {
+    private Colaborador carregarColaborador(Colaborador colaborador) {
         if (colaborador == null || colaborador.getId() == null || usuarioRepository == null) {
             return null;
         }
         return usuarioRepository.findById(colaborador.getId()).orElse(null);
+    }
+
+    /**
+     * Colaborador e relator são associações LAZY: devolve o objeto real (Supervisor ou Gestor), e não o proxy da
+     * superclasse, para que o perfil e os testes de tipo valham fora da sessão (open-in-view desligado).
+     */
+    private static Colaborador semProxy(Colaborador colaborador) {
+        return colaborador == null ? null : (Colaborador) Hibernate.unproxy(colaborador);
     }
 
     private PlanoDeAcaoEntity toEntity(PlanoDeAcao plano) {
@@ -185,8 +195,8 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
 
     private Acidente toDomain(AcidenteEntity entity) {
         AreaRisco area = hidratarEpisDaArea(entity.getArea());
-        Colaborador colaborador = entity.getColaborador() != null ? entity.getColaborador().paraDominio() : null;
-        Colaborador relator = entity.getRelator() != null ? entity.getRelator().paraDominio() : null;
+        Colaborador colaborador = semProxy(entity.getColaborador());
+        Colaborador relator = semProxy(entity.getRelator());
         StatusOcorrencia status = entity.getStatusOcorrencia() != null
                 ? StatusOcorrencia.valueOf(entity.getStatusOcorrencia())
                 : StatusOcorrencia.ABERTA;
@@ -216,8 +226,8 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
 
     private Incidente toDomain(IncidenteEntity entity) {
         AreaRisco area = hidratarEpisDaArea(entity.getArea());
-        Colaborador colaborador = entity.getColaborador() != null ? entity.getColaborador().paraDominio() : null;
-        Colaborador relator = entity.getRelator() != null ? entity.getRelator().paraDominio() : null;
+        Colaborador colaborador = semProxy(entity.getColaborador());
+        Colaborador relator = semProxy(entity.getRelator());
         StatusOcorrencia status = entity.getStatusOcorrencia() != null
                 ? StatusOcorrencia.valueOf(entity.getStatusOcorrencia())
                 : StatusOcorrencia.ABERTA;

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/** Implementa a porta de usuários delegando ao repositório JPA da própria hierarquia de domínio (#256). */
 @Repository
 public class UsuarioJpaAdapter implements UsuarioRepository {
     private final UsuarioJpaRepository jpaRepositorio;
@@ -17,35 +18,31 @@ public class UsuarioJpaAdapter implements UsuarioRepository {
 
     @Override
     public Colaborador salvar(Colaborador colaborador) {
-        ColaboradorEntidade entidade = ColaboradorEntidade.deDominio(colaborador);
-        ColaboradorEntidade salvo = jpaRepositorio.save(entidade);
-        return salvo.paraDominio();
+        return jpaRepositorio.save(colaborador);
     }
 
     @Override
     public Optional<Colaborador> buscarPorId(Integer id) {
-        return jpaRepositorio.findById(id).map(ColaboradorEntidade::paraDominio);
+        return jpaRepositorio.findById(id);
     }
 
     @Override
     public Optional<Colaborador> buscarPorCpf(String cpf) {
-        return jpaRepositorio.findByCpf(cpf).map(ColaboradorEntidade::paraDominio);
+        return jpaRepositorio.findByCpf(cpf);
     }
 
     @Override
     public Optional<Colaborador> buscarPorEmail(String email) {
-        return jpaRepositorio.findByEmail(email).map(ColaboradorEntidade::paraDominio);
+        return jpaRepositorio.findByEmail(email);
     }
 
     @Override
     public List<Colaborador> listarTodos() {
-        return jpaRepositorio.findAll().stream().map(ColaboradorEntidade::paraDominio).toList();
+        return jpaRepositorio.findAll();
     }
 
     @Override
     public List<Colaborador> listarColaboradores(String nome, String cpf) {
-        return jpaRepositorio.buscarColaboradores(nome, cpf).stream()
-                .map(ColaboradorEntidade::paraDominio)
-                .toList();
+        return jpaRepositorio.buscarColaboradores(nome, cpf);
     }
 }

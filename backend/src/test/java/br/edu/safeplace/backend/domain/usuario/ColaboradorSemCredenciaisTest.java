@@ -31,7 +31,10 @@ class ColaboradorSemCredenciaisTest {
 
     @Test
     void colaboradorNaoDeveDeclararMetodoRelacionadoACredencial() {
-        List<String> metodos = Arrays.stream(Colaborador.class.getDeclaredMethods()).map(Method::getName).toList();
+        // equals e hashCode são o contrato de identidade da entidade JPA (#256), não credencial.
+        List<String> metodos = Arrays.stream(Colaborador.class.getDeclaredMethods()).map(Method::getName)
+                .filter(nome -> !nome.equals("hashCode") && !nome.equals("equals"))
+                .toList();
 
         for (String termo : TERMOS_DE_CREDENCIAL) {
             assertTrue(metodos.stream().noneMatch(m -> m.toLowerCase(Locale.ROOT).contains(termo)),

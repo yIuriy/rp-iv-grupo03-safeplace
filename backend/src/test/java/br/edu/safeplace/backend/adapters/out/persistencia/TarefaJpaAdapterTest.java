@@ -78,7 +78,7 @@ class TarefaJpaAdapterTest {
         Epi cinto = epi(10, "Cinto Paraquedista");
         tarefa.associarEpis(List.of(cinto));
 
-        GestorDeSegurancaEntidade gestorEntidade = new GestorDeSegurancaEntidade(
+        GestorDeSeguranca gestorEntidade = new GestorDeSeguranca(
                 1, "49216091040", "Mariana", LocalDate.of(1988, 7, 20), "mariana@empresa.com", "hash",
                 true, LocalDateTime.now(), LocalDateTime.now());
         EpiEntity cintoEntity = epiEntity(10, "Cinto Paraquedista");

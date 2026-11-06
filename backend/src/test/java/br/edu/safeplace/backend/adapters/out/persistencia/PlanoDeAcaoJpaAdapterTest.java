@@ -76,11 +76,6 @@ class PlanoDeAcaoJpaAdapterTest {
                 "roberto@empresa.com", true, LocalDateTime.now(), LocalDateTime.now());
     }
 
-    private ColaboradorEntidade colaboradorEntidade(Integer id) {
-        return new ColaboradorEntidade(id, "87455877074", "Roberto", LocalDate.of(1992, 3, 10),
-                "roberto@empresa.com", true, LocalDateTime.now(), LocalDateTime.now());
-    }
-
     private Setor setor(Integer id) {
         return Setor.reconstituir(id, "Usinagem", "Setor de usinagem", "Bloco B", NivelPerigo.ALTO);
     }
@@ -117,7 +112,7 @@ class PlanoDeAcaoJpaAdapterTest {
         );
 
         when(planoRepository.save(any(PlanoDeAcaoEntity.class))).thenReturn(salva);
-        when(usuarioRepository.findById(1)).thenReturn(Optional.of(colaboradorEntidade(1)));
+        when(usuarioRepository.findById(1)).thenReturn(Optional.of(colaborador(1)));
 
         PlanoDeAcao resultado = adapter.salvar(plano);
 
@@ -239,7 +234,7 @@ class PlanoDeAcaoJpaAdapterTest {
 
         when(planoRepository.findById(100)).thenReturn(Optional.of(existente));
         when(planoRepository.save(any(PlanoDeAcaoEntity.class))).thenReturn(atualizada);
-        when(usuarioRepository.findById(1)).thenReturn(Optional.of(colaboradorEntidade(1)));
+        when(usuarioRepository.findById(1)).thenReturn(Optional.of(colaborador(1)));
 
         PlanoDeAcao plano = new PlanoDeAcao(
                 100, 10, "Medida", null, hoje.plusDays(5), "CONCLUIDA", colaborador(1), null, false, null, null
@@ -258,7 +253,7 @@ class PlanoDeAcaoJpaAdapterTest {
                 100, 10, "Medida", hoje.plusDays(5), "ABERTA", null, 1, null, null, false, null)));
         when(planoRepository.save(any(PlanoDeAcaoEntity.class))).thenReturn(new PlanoDeAcaoEntity(
                 100, 10, "Medida", hoje.plusDays(5), "CONCLUIDA", null, 1, null, null, false, null));
-        when(usuarioRepository.findById(1)).thenReturn(Optional.of(colaboradorEntidade(1)));
+        when(usuarioRepository.findById(1)).thenReturn(Optional.of(colaborador(1)));
 
         adapter.salvar(new PlanoDeAcao(
                 100, 10, "Medida", null, hoje.plusDays(5), "CONCLUIDA", colaborador(1), null, false, null, null));

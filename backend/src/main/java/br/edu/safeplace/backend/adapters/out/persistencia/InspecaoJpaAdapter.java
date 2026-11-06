@@ -48,9 +48,8 @@ public class InspecaoJpaAdapter implements InspecaoRepository {
 
     private GestorDeSeguranca carregarGestor(Integer gestorId) {
         return usuarioRepository.findById(gestorId)
-                .filter(GestorDeSegurancaEntidade.class::isInstance)
-                .map(GestorDeSegurancaEntidade.class::cast)
-                .map(GestorDeSegurancaEntidade::paraDominio)
+                .filter(GestorDeSeguranca.class::isInstance)
+                .map(GestorDeSeguranca.class::cast)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Responsável pela inspeção não encontrado entre os gestores de segurança: " + gestorId));
     }
