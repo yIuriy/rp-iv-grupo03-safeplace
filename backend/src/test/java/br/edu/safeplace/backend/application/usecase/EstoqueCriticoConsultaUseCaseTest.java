@@ -6,6 +6,7 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,12 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
 import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
@@ -51,11 +49,8 @@ class EstoqueCriticoConsultaUseCaseTest {
     private EpiRepositoryEmMemoria repositorio;
     private EpiService useCase;
     private Integer epiId;
-
-    @AfterEach
-    void limparAutenticacao() {
-        SecurityContextHolder.clearContext();
-    }
+    /** Dublê da porta do operador (#236), no lugar do SecurityContext do Spring. */
+    private final OperadorAutenticadoFixo operador = OperadorAutenticadoFixo.autenticado(EMAIL_GESTOR);
 
     @BeforeEach
     void cadastrarEpiComSaldoDezEMinimoCinco() {
@@ -65,9 +60,7 @@ class EstoqueCriticoConsultaUseCaseTest {
         when(usuarios.buscarPorEmail(EMAIL_GESTOR)).thenReturn(Optional.of(new GestorDeSeguranca(
                 7, "49216091040", "Mariana", LocalDate.of(1988, 7, 20), EMAIL_GESTOR, "hash", true,
                 LocalDateTime.now(), LocalDateTime.now())));
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(EMAIL_GESTOR, null, List.of()));
-        useCase = new EpiService(repositorio, usuarios, auditoria);
+        useCase = new EpiService(repositorio, usuarios, auditoria, operador.operadorAtual(usuarios));
         EpiOutputDTO salvo = useCase.cadastrarEpi(new CadastrarEpiInputDTO(
                 "Luva nitrílica", "12345", 10, 5, LocalDate.now().plusYears(1), 180,
                 "Luva de proteção química", ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES));

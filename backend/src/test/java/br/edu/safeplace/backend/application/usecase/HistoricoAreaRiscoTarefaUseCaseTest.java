@@ -22,6 +22,7 @@ import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.application.port.out.SetorRepository;
 import br.edu.safeplace.backend.application.port.out.TarefaRepository;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
+import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 import br.edu.safeplace.backend.domain.area_risco.AlteracaoAreaRisco;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
@@ -71,7 +72,8 @@ class HistoricoAreaRiscoTarefaUseCaseTest {
         when(areas.atualizar(any(AreaRisco.class))).thenAnswer(chamada -> chamada.getArgument(0));
 
         areaUseCase = new AreaRiscoService(areas, epis, setores, auditoria);
-        tarefaService = new TarefaService(tarefas, auditoria, mock(UsuarioRepository.class), null, null, epis);
+        tarefaService = new TarefaService(tarefas, auditoria,
+                OperadorAutenticadoFixo.semSessao().operadorAtual(mock(UsuarioRepository.class)), null, null, epis);
     }
 
     private static Epi epi(Integer id, String nome) {

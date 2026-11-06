@@ -35,6 +35,7 @@ import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
+import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
 
 @DisplayName("OcorrenciaService com a porta de notificação obrigatória (Null Object)")
@@ -64,7 +65,8 @@ class OcorrenciaServiceNotificadorTest {
     }
 
     private OcorrenciaService servicoCom(NotificadorOcorrencia notificador) {
-        return new OcorrenciaService(repository, areaRepo, usuarioRepo, new TrilhaAuditoriaEmMemoria(), notificador);
+        return new OcorrenciaService(repository, areaRepo, usuarioRepo, new TrilhaAuditoriaEmMemoria(), notificador,
+                OperadorAutenticadoFixo.semSessao().operadorAtual(usuarioRepo));
     }
 
     private static RegistrarIncidenteInputDTO relato() {

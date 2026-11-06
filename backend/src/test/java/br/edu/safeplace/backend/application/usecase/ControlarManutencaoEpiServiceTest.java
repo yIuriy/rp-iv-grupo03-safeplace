@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
 
 import br.edu.safeplace.backend.adapters.out.persistencia.InMemoryManutencaoEpiRepository;
@@ -7,6 +8,7 @@ import br.edu.safeplace.backend.application.dto.input.ConcluirManutencaoInputDTO
 import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
 import br.edu.safeplace.backend.application.dto.output.ManutencaoEpiOutputDTO;
 import br.edu.safeplace.backend.application.port.out.EpiRepository;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.MovimentacaoEstoque;
 import br.edu.safeplace.backend.domain.epi.ResultadoManutencao;
@@ -23,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 class ControlarManutencaoEpiServiceTest {
 
@@ -32,12 +35,34 @@ class ControlarManutencaoEpiServiceTest {
     private EpiRepositoryFake epiRepository;
     private InMemoryManutencaoEpiRepository manutencaoRepository;
     private ControlarManutencaoEpiService service;
+    /** Dublê da porta do operador (#236): começa sem sessão. */
+    private final OperadorAutenticadoFixo operador = OperadorAutenticadoFixo.semSessao();
 
     @BeforeEach
     void setUp() {
         epiRepository = new EpiRepositoryFake();
         manutencaoRepository = new InMemoryManutencaoEpiRepository();
-        service = new ControlarManutencaoEpiService(epiRepository, manutencaoRepository, null, auditoria);
+        service = new ControlarManutencaoEpiService(epiRepository, manutencaoRepository, null, auditoria,
+                operador.operadorAtual(mock(UsuarioRepository.class)));
+    }
+
+    @Test
+    void adapterAuditoriaDoEnvioRegistraOperadorDaPorta() {
+        epiRepository.salvar(new Epi(1, "Capacete", "CA-100", 10, 2, StatusEpi.DISPONIVEL, LocalDate.of(2030, 1, 1), 365));
+        operador.autenticar("gestora@safeplace.com", "GESTOR_SEGURANCA");
+
+        service.enviarParaManutencao(1);
+
+        assertEquals("gestora@safeplace.com", auditoria.registros().get(0).getResponsavel());
+    }
+
+    @Test
+    void adapterSemOperadorAutenticadoAuditoriaRegistraSistema() {
+        epiRepository.salvar(new Epi(1, "Capacete", "CA-100", 10, 2, StatusEpi.DISPONIVEL, LocalDate.of(2030, 1, 1), 365));
+
+        service.enviarParaManutencao(1);
+
+        assertEquals(OperadorAtual.SISTEMA, auditoria.registros().get(0).getResponsavel());
     }
 
     @Test

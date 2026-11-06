@@ -16,19 +16,16 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import br.edu.safeplace.backend.adapters.out.notificacao.NotificadorOcorrenciaNulo;
 import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepository;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
@@ -37,6 +34,7 @@ import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException;
+import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 
 class OcorrenciaConsultaUseCaseTest {
 
@@ -49,6 +47,8 @@ class OcorrenciaConsultaUseCaseTest {
 
     private LogAuditoriaRepository auditoria;
     private OcorrenciaService useCase;
+    /** Dublê da porta do operador (#236), no lugar do SecurityContext do Spring. Começa sem sessão. */
+    private final OperadorAutenticadoFixo operador = OperadorAutenticadoFixo.semSessao();
 
     @BeforeEach
     void preparar() {
@@ -56,17 +56,11 @@ class OcorrenciaConsultaUseCaseTest {
         when(auditoria.buscarIdsPorResponsavelETipoOperacao(SUPERVISOR, "CADASTRO", OcorrenciaService.ENTIDADES_DE_RELATO))
                 .thenReturn(List.of(1, 3));
         useCase = new OcorrenciaService(new RepositorioFixo(List.of(proprio, alheio, proprioAntigo)), null, null, auditoria,
-                new NotificadorOcorrenciaNulo());
+                new NotificadorOcorrenciaNulo(), operador.operadorAtual(mock(UsuarioRepository.class)));
     }
 
-    @AfterEach
-    void limparSessao() {
-        SecurityContextHolder.clearContext();
-    }
-
-    private static void autenticar(String email, String papel) {
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
-                email, "senha", List.of(new SimpleGrantedAuthority(papel))));
+    private void autenticar(String email, String papel) {
+        operador.autenticar(email, papel);
     }
 
     @Test

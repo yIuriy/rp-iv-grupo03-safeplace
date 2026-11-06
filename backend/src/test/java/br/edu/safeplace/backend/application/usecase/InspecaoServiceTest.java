@@ -10,14 +10,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import br.edu.safeplace.backend.application.dto.input.RegistrarInspecaoInputDTO;
 import br.edu.safeplace.backend.application.dto.output.InspecaoOutputDTO;
@@ -34,6 +30,8 @@ import br.edu.safeplace.backend.domain.inspecao.ItemVerificado;
 import br.edu.safeplace.backend.domain.inspecao.exception.InspecaoInvalidaException;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import br.edu.safeplace.backend.domain.usuario.Supervisor;
+import br.edu.safeplace.backend.domain.usuario.exception.AcessoNegadoException;
+import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -55,6 +53,8 @@ class InspecaoServiceTest {
     private AreaRiscoRepository areas;
     private LogAuditoriaRepository logs;
     private InspecaoService useCase;
+    /** Dublê da porta do operador (#236), no lugar do SecurityContext do Spring. */
+    private final OperadorAutenticadoFixo operador = OperadorAutenticadoFixo.semSessao();
 
     @BeforeEach
     void setUp() {
@@ -72,17 +72,8 @@ class InspecaoServiceTest {
             Inspecao nova = chamada.getArgument(0);
             return new Inspecao(10, nova.getAreaRisco(), nova.getDataInspecao(), nova.getResponsavel(), nova.getItens());
         });
-        useCase = new InspecaoService(inspecoes, areas, usuarios, logs);
-        autenticarComo(EMAIL_GESTOR);
-    }
-
-    @AfterEach
-    void limparAutenticacao() {
-        SecurityContextHolder.clearContext();
-    }
-
-    private static void autenticarComo(String email) {
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(email, null));
+        useCase = new InspecaoService(inspecoes, areas, operador.operadorAtual(usuarios), logs);
+        operador.autenticar(EMAIL_GESTOR, "GESTOR_SEGURANCA");
     }
 
     private static RegistrarInspecaoInputDTO registro(LocalDate data) {
@@ -122,13 +113,16 @@ class InspecaoServiceTest {
     @Test
     @DisplayName("Sem Gestor identificável, o registro é recusado e nada é gravado")
     void recusaSemGestor() {
-        autenticarComo(EMAIL_SUPERVISOR);
+        String mensagem = "O registro de inspeção exige um Gestor de Segurança autenticado como responsável.";
+        operador.autenticar(EMAIL_SUPERVISOR, "SUPERVISOR");
         assertThatThrownBy(() -> useCase.registrar(4, registro(LocalDate.now())))
-                .isInstanceOf(AccessDeniedException.class);
+                .isInstanceOf(AcessoNegadoException.class)
+                .hasMessage(mensagem);
 
-        SecurityContextHolder.clearContext();
+        operador.encerrarSessao();
         assertThatThrownBy(() -> useCase.registrar(4, registro(LocalDate.now())))
-                .isInstanceOf(AccessDeniedException.class);
+                .isInstanceOf(AcessoNegadoException.class)
+                .hasMessage(mensagem);
         verify(inspecoes, never()).salvar(any());
         verify(logs, never()).salvar(any());
     }

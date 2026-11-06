@@ -32,6 +32,7 @@ import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.ProtocoloCATInvalidoException;
+import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
 import br.edu.safeplace.backend.validacao.RegraElo;
 import br.edu.safeplace.backend.validacao.ValidadorEmCadeia;
@@ -59,9 +60,10 @@ class OcorrenciaServiceConsolidacaoCATTest {
     }
 
     private OcorrenciaService servico(ValidadorEmCadeia<Acidente> protocoloValidador) {
-        return new OcorrenciaService(repository, mock(AreaRiscoRepository.class), mock(UsuarioRepository.class),
+        UsuarioRepository usuarios = mock(UsuarioRepository.class);
+        return new OcorrenciaService(repository, mock(AreaRiscoRepository.class), usuarios,
                 new TrilhaAuditoriaEmMemoria(), new NotificadorOcorrenciaNulo(), new OcorrenciaValidador(),
-                protocoloValidador);
+                protocoloValidador, OperadorAutenticadoFixo.semSessao().operadorAtual(usuarios));
     }
 
     @Test

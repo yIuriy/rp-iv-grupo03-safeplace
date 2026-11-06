@@ -42,6 +42,11 @@ class DependenciasObrigatoriasCasosDeUsoTest {
 
     private final LogAuditoriaRepository auditoria = new TrilhaAuditoriaEmMemoria();
 
+    /** Sem sessão: a fachada sobre o Null Object da porta (#236). */
+    private static OperadorAtual operadorAtual() {
+        return new OperadorAtual(new OperadorAutenticadoNulo(), mock(UsuarioRepository.class));
+    }
+
     @Test
     @DisplayName("UsuarioService recusa operador null: a ausência é OperadorAutenticadoNulo")
     void usuarioServiceRecusaOperadorNulo() {
@@ -87,7 +92,7 @@ class DependenciasObrigatoriasCasosDeUsoTest {
     @DisplayName("TarefaService recusa repositório de EPIs null")
     void tarefaServiceRecusaEpisNulo() {
         assertThatThrownBy(() -> new TarefaService(mock(TarefaRepository.class), auditoria,
-                mock(UsuarioRepository.class), null, null, null))
+                operadorAtual(), null, null, null))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage("Repositório de EPIs é obrigatório.");
     }
@@ -97,7 +102,7 @@ class DependenciasObrigatoriasCasosDeUsoTest {
     void planoDeAcaoServiceRecusaConsultaNula() {
         assertThatThrownBy(() -> new PlanoDeAcaoService(mock(PlanoDeAcaoRepository.class),
                 mock(OcorrenciaRepository.class), mock(UsuarioRepository.class), mock(SetorRepository.class),
-                mock(NotificadorAcao.class), null))
+                mock(NotificadorAcao.class), null, operadorAtual()))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage("Consulta de ocorrências é obrigatória (visibilidade do plano, issue #100).");
     }
@@ -107,7 +112,7 @@ class DependenciasObrigatoriasCasosDeUsoTest {
     void planoDeAcaoServiceMontaComPortas() {
         assertThat(new PlanoDeAcaoService(mock(PlanoDeAcaoRepository.class), mock(OcorrenciaRepository.class),
                 mock(UsuarioRepository.class), mock(SetorRepository.class), mock(NotificadorAcao.class),
-                mock(GerenciarOcorrenciaUseCase.class))).isNotNull();
+                mock(GerenciarOcorrenciaUseCase.class), operadorAtual())).isNotNull();
     }
 
     private static UsuarioService usuarioServiceCom(LogAuditoriaRepository trilha, OperadorAutenticado operador) {

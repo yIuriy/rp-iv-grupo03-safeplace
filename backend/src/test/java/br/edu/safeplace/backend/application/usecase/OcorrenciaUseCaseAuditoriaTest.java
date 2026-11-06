@@ -1,6 +1,7 @@
 package br.edu.safeplace.backend.application.usecase;
 
 import br.edu.safeplace.backend.adapters.out.notificacao.NotificadorOcorrenciaNulo;
+import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 import br.edu.safeplace.backend.application.dto.input.RegistrarAcidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.input.RegistrarIncidenteInputDTO;
 import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
@@ -18,7 +19,6 @@ import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.OcorrenciaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,8 +26,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -70,16 +68,10 @@ class OcorrenciaUseCaseAuditoriaTest {
 
     @BeforeEach
     void setUp() {
+        // Dublê da porta do operador (#236), no lugar do SecurityContext do Spring.
+        OperadorAutenticadoFixo operador = OperadorAutenticadoFixo.autenticado("gestor@safeplace.com");
         useCase = new OcorrenciaService(repository, areaRiscoRepository, usuarioRepository, logAuditoriaRepository,
-                new NotificadorOcorrenciaNulo());
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("gestor@safeplace.com", "senha")
-        );
-    }
-
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
+                new NotificadorOcorrenciaNulo(), operador.operadorAtual(usuarioRepository));
     }
 
     @Test

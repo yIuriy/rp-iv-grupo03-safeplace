@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
@@ -16,11 +17,8 @@ import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
 import br.edu.safeplace.backend.domain.epi.exception.SaldoInsuficienteException;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -44,6 +42,8 @@ class EpiServiceTest {
 
     private EpiRepositoryFake repository;
     private EpiService useCase;
+    /** Dublê da porta do operador (#236), no lugar do SecurityContext do Spring. */
+    private final OperadorAutenticadoFixo operador = OperadorAutenticadoFixo.autenticado(EMAIL_GESTOR);
 
     @BeforeEach
     void setUp() {
@@ -52,14 +52,7 @@ class EpiServiceTest {
         when(usuarios.buscarPorEmail(EMAIL_GESTOR)).thenReturn(Optional.of(new GestorDeSeguranca(
                 ID_GESTOR, "49216091040", "Mariana", LocalDate.of(1988, 7, 20), EMAIL_GESTOR, "hash", true,
                 LocalDateTime.now(), LocalDateTime.now())));
-        useCase = new EpiService(repository, usuarios, auditoria);
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(EMAIL_GESTOR, null, List.of()));
-    }
-
-    @AfterEach
-    void limparAutenticacao() {
-        SecurityContextHolder.clearContext();
+        useCase = new EpiService(repository, usuarios, auditoria, operador.operadorAtual(usuarios));
     }
 
     @Test
@@ -77,7 +70,7 @@ class EpiServiceTest {
     void deveRecusarMovimentacaoSemUsuarioAutenticadoSemAlterarSaldo() {
         EpiOutputDTO epi = useCase.cadastrarEpi(new CadastrarEpiInputDTO("Luva", "CA-302", 10, 2,
                 LocalDate.now().plusYears(1), null, null, null));
-        SecurityContextHolder.clearContext();
+        operador.encerrarSessao();
 
         assertThatThrownBy(() -> useCase.registrarMovimentacao(epi.id(), TipoMovimentacao.ENTRADA, 3, "Recebimento"))
                 .isInstanceOf(IllegalArgumentException.class)

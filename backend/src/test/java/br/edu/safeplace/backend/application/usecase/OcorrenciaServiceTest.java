@@ -5,6 +5,7 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
 
 import br.edu.safeplace.backend.application.dto.input.AtualizarOcorrenciaInputDTO;
@@ -32,16 +33,12 @@ import br.edu.safeplace.backend.domain.ocorrencia.exception.TransicaoStatusInval
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import br.edu.safeplace.backend.domain.usuario.Supervisor;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -78,6 +75,8 @@ class OcorrenciaServiceTest {
     private UsuarioRepository usuarioRepo;
     private NotificadorOcorrencia notificacaoPort;
     private OcorrenciaService useCase;
+    /** Dublê da porta do operador (#236), no lugar do SecurityContext do Spring. Começa sem sessão. */
+    private final OperadorAutenticadoFixo operador = OperadorAutenticadoFixo.semSessao();
 
     @BeforeEach
     void configurar() {
@@ -94,18 +93,13 @@ class OcorrenciaServiceTest {
         useCase = novoUseCase(new TrilhaAuditoriaEmMemoria());
     }
 
-    @AfterEach
-    void limparSessao() {
-        SecurityContextHolder.clearContext();
-    }
-
     private OcorrenciaService novoUseCase(LogAuditoriaRepository auditoria) {
-        return new OcorrenciaService(repository, areaRepo, usuarioRepo, auditoria, notificacaoPort);
+        return new OcorrenciaService(repository, areaRepo, usuarioRepo, auditoria, notificacaoPort,
+                operador.operadorAtual(usuarioRepo));
     }
 
-    private static void autenticar(String email, String papel) {
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
-                email, "senha", List.of(new SimpleGrantedAuthority(papel))));
+    private void autenticar(String email, String papel) {
+        operador.autenticar(email, papel);
     }
 
     private static RegistrarAcidenteInputDTO acidente(String causaRaiz, String gravidade) {
@@ -559,8 +553,7 @@ class OcorrenciaServiceTest {
         OcorrenciaService useCaseComLog = novoUseCase(logRepo);
         OcorrenciaOutputDTO cadastrado = useCaseComLog.registrarIncidente(incidente("Oleo no piso"));
 
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("gestor@safeplace.com", "senha"));
+        operador.autenticar("gestor@safeplace.com");
         useCaseComLog.atualizar(cadastrado.idOcorrencia(), new AtualizarOcorrenciaInputDTO(
                 LocalDateTime.of(2026, 9, 10, 10, 0), "Oleo no piso da doca", AREA_ID, COLABORADOR_ID,
                 null, null, null, null, null, "Piso escorregadio", "Queda grave"));

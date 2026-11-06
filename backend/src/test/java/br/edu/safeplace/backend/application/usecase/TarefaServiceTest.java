@@ -8,13 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarTarefaInputDTO;
 import br.edu.safeplace.backend.application.dto.output.EpiOutputDTO;
@@ -34,6 +30,8 @@ import br.edu.safeplace.backend.domain.tarefa.exception.TarefaNaoEncontradaExcep
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import br.edu.safeplace.backend.domain.usuario.Supervisor;
+import br.edu.safeplace.backend.domain.usuario.exception.AcessoNegadoException;
+import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,6 +45,8 @@ class TarefaServiceTest {
     private LogAuditoriaFake auditoria;
     private EpiRepositoryFake epiRepository;
     private TarefaService useCase;
+    /** Dublê da porta do operador (#236), no lugar do SecurityContext do Spring. */
+    private final OperadorAutenticadoFixo operador = OperadorAutenticadoFixo.semSessao();
 
     @BeforeEach
     void setUp() {
@@ -58,17 +58,12 @@ class TarefaServiceTest {
                         "hash", true, LocalDateTime.now(), LocalDateTime.now()),
                 new Supervisor(8, "87455877074", "Paulo", LocalDate.of(1990, 1, 10), EMAIL_SUPERVISOR,
                         "hash", true, LocalDateTime.now(), LocalDateTime.now())));
-        useCase = new TarefaService(repository, auditoria, usuarios, null, null, epiRepository);
+        useCase = new TarefaService(repository, auditoria, operador.operadorAtual(usuarios), null, null, epiRepository);
         autenticarComo(EMAIL_GESTOR);
     }
 
-    @AfterEach
-    void limparAutenticacao() {
-        SecurityContextHolder.clearContext();
-    }
-
-    private static void autenticarComo(String email) {
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(email, null));
+    private void autenticarComo(String email) {
+        operador.autenticar(email);
     }
 
     private List<LogAuditoria> classificacoesRegistradas(Integer idTarefa) {
@@ -101,7 +96,7 @@ class TarefaServiceTest {
     @Test
     @DisplayName("UC11: deve cadastrar tarefa sem classificação prévia, sem exigir responsável")
     void deveCadastrarTarefaSemClassificacao() {
-        SecurityContextHolder.clearContext();
+        operador.encerrarSessao();
 
         TarefaOutputDTO salva = useCase.cadastrarTarefa(
                 new CadastrarTarefaInputDTO("Inspeção visual", null));
@@ -151,15 +146,19 @@ class TarefaServiceTest {
     void classificacaoSemGestorERecusada() {
         Integer id = useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Inspeção visual", null)).id();
 
+        String mensagem =
+                "A classificação de periculosidade exige um Gestor de Segurança autenticado como responsável técnico.";
         autenticarComo(EMAIL_SUPERVISOR);
         assertThatThrownBy(() -> useCase.classificar(id, NivelPerigo.ALTO))
-                .isInstanceOf(AccessDeniedException.class);
+                .isInstanceOf(AcessoNegadoException.class)
+                .hasMessage(mensagem);
 
-        SecurityContextHolder.clearContext();
+        operador.encerrarSessao();
         assertThatThrownBy(() -> useCase.classificar(id, NivelPerigo.ALTO))
-                .isInstanceOf(AccessDeniedException.class);
+                .isInstanceOf(AcessoNegadoException.class)
+                .hasMessage(mensagem);
         assertThatThrownBy(() -> useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Solda", NivelPerigo.ALTO)))
-                .isInstanceOf(AccessDeniedException.class);
+                .isInstanceOf(AcessoNegadoException.class);
 
         assertThat(useCase.buscarPorId(id).classificada()).isFalse();
         assertThat(classificacoesRegistradas(id)).isEmpty();
