@@ -43,9 +43,4 @@ public class EmprestimoExceptionHandler {
     public ResponseEntity<Map<String, Object>> jaEncerrado(EmprestimoJaEncerradoException ex) {
         return corpo(HttpStatus.CONFLICT, "Empréstimo Encerrado", ex.getMessage());
     }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, Object>> dadosInvalidos(IllegalArgumentException ex) {
-        return corpo(HttpStatus.BAD_REQUEST, "Requisição Inválida", ex.getMessage());
-    }
 }

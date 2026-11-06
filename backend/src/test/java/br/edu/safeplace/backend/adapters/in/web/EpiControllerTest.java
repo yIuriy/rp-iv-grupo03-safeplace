@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.springframework.security.test.context.support.WithMockUser;
 
-@WebMvcTest({EpiController.class, EpiExceptionHandler.class})
+@WebMvcTest({EpiController.class, ApiExceptionHandler.class})
 @Import(SecurityConfig.class)
 @WithMockUser(roles = "GESTOR_SEGURANCA")
 class EpiControllerTest {

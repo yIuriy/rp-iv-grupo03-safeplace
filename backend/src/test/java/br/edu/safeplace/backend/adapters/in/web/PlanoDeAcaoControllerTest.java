@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest({PlanoDeAcaoController.class, PlanoDeAcaoExceptionHandler.class})
+@WebMvcTest({PlanoDeAcaoController.class, ApiExceptionHandler.class})
 @Import(SecurityConfig.class)
 class PlanoDeAcaoControllerTest {
 

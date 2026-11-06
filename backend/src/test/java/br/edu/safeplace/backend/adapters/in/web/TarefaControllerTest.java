@@ -40,7 +40,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest({TarefaController.class, TarefaExceptionHandler.class, UsuarioExceptionHandler.class})
+@WebMvcTest({TarefaController.class, ApiExceptionHandler.class})
 @Import(SecurityConfig.class)
 class TarefaControllerTest {
 

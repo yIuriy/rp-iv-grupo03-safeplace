@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest({AreaRiscoController.class, TarefaController.class,
-        AreaRiscoExceptionHandler.class, TarefaExceptionHandler.class})
+        ApiExceptionHandler.class})
 @Import(SecurityConfig.class)
 class HistoricoControllerTest {
 
