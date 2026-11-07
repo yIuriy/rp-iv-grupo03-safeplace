@@ -8,11 +8,8 @@ import java.util.Optional;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.application.port.out.PlanoDeAcaoRepository;
-import br.edu.safeplace.backend.application.usecase.OperadorAtual;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
-import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.ProrrogacaoPrazo;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusPlanoDeAcao;
@@ -21,7 +18,9 @@ import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
 /**
- * Adaptador JPA de persistência de planos de ação (RF07, RNF05, UC07, US07, Issue #98).
+ * Adaptador JPA de persistência de planos de ação (RF07, UC07, US07, Issue #98).
+ * A auditoria é de responsabilidade da camada de aplicação (Facade #238), mantendo o adaptador
+ * exclusivamente focado na persistência.
  */
 @Component
 public class PlanoDeAcaoJpaAdapter implements PlanoDeAcaoRepository {
@@ -30,41 +29,16 @@ public class PlanoDeAcaoJpaAdapter implements PlanoDeAcaoRepository {
     private final ProrrogacaoPrazoJpaRepository prorrogacaoRepository;
     private final UsuarioJpaRepository usuarioRepository;
     private final SetorJpaRepository setorRepository;
-    private final LogAuditoriaRepository auditoriaRepository;
-    private final OperadorAtual operadorAtual;
 
     public PlanoDeAcaoJpaAdapter(
             PlanoDeAcaoJpaRepository planoRepository,
             ProrrogacaoPrazoJpaRepository prorrogacaoRepository,
             UsuarioJpaRepository usuarioRepository,
-            SetorJpaRepository setorRepository,
-            LogAuditoriaRepository auditoriaRepository,
-            OperadorAtual operadorAtual) {
-        this.planoRepository = planoRepository;
-        this.prorrogacaoRepository = prorrogacaoRepository;
-        this.usuarioRepository = usuarioRepository;
-        this.setorRepository = setorRepository;
-        // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
-        this.auditoriaRepository = Objects.requireNonNull(
-                auditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
-        // Adapter (#236): o operador da auditoria vem da porta OperadorAutenticado.
-        this.operadorAtual = Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
-    }
-
-    /** Cópia dos campos auditados antes da gravação. */
-    private record EstadoAnterior(Integer colaboradorId, Integer setorId, String status,
-                                  boolean alertaAtivo, Integer antecedenciaAlertaDias) {
-        static EstadoAnterior de(PlanoDeAcaoEntity entidade) {
-            return new EstadoAnterior(entidade.getColaboradorId(), entidade.getSetorId(),
-                    entidade.getStatus(), entidade.isAlertaAtivo(), entidade.getAntecedenciaAlertaDias());
-        }
-    }
-
-    private static String descreverResponsavel(Integer colaboradorId, Integer setorId) {
-        if (colaboradorId != null) {
-            return "colaborador id " + colaboradorId;
-        }
-        return setorId != null ? "setor id " + setorId : "nenhum responsável";
+            SetorJpaRepository setorRepository) {
+        this.planoRepository = Objects.requireNonNull(planoRepository, "Repositório de planos é obrigatório.");
+        this.prorrogacaoRepository = Objects.requireNonNull(prorrogacaoRepository, "Repositório de prorrogações é obrigatório.");
+        this.usuarioRepository = Objects.requireNonNull(usuarioRepository, "Repositório de usuários é obrigatório.");
+        this.setorRepository = Objects.requireNonNull(setorRepository, "Repositório de setores é obrigatório.");
     }
 
     @Override
@@ -77,65 +51,8 @@ public class PlanoDeAcaoJpaAdapter implements PlanoDeAcaoRepository {
             throw new PrazoAcaoInvalidoException("O prazo da ação é obrigatório.");
         }
 
-        // Valores anteriores copiados antes do save: o merge atualiza a própria instância gerenciada
-        // devolvida por findById, e a comparação feita depois não veria a mudança.
-        EstadoAnterior anterior = plano.getId() != null
-                ? planoRepository.findById(plano.getId()).map(EstadoAnterior::de).orElse(null)
-                : null;
-
         PlanoDeAcaoEntity paraSalvar = toEntity(plano);
         PlanoDeAcaoEntity salvo = planoRepository.save(paraSalvar);
-
-        if (anterior == null) {
-            LogAuditoria log = LogAuditoria.registrarCadastro(
-                    resolverOperador(plano),
-                    "PlanoDeAcao",
-                    salvo.getId(),
-                    "Criação de ação vinculada à ocorrência " + salvo.getOcorrenciaId()
-            );
-            auditoriaRepository.salvar(log);
-        } else {
-            boolean colaboradorMudou = !Objects.equals(anterior.colaboradorId(), salvo.getColaboradorId());
-            boolean setorMudou = !Objects.equals(anterior.setorId(), salvo.getSetorId());
-            if (colaboradorMudou || setorMudou) {
-                // RNF05 / contrato UC07 §2.6: a reatribuição guarda o responsável anterior e o novo.
-                LogAuditoria log = LogAuditoria.registrarAlteracao(
-                        resolverOperador(plano),
-                        "PlanoDeAcao",
-                        salvo.getId(),
-                        "Reatribuição de responsável da ação: de "
-                                + descreverResponsavel(anterior.colaboradorId(), anterior.setorId())
-                                + " para " + descreverResponsavel(salvo.getColaboradorId(), salvo.getSetorId())
-                );
-                auditoriaRepository.salvar(log);
-            }
-
-            if (!Objects.equals(anterior.status(), salvo.getStatus())) {
-                LogAuditoria log = LogAuditoria.registrarAlteracao(
-                        resolverOperador(plano),
-                        "PlanoDeAcao",
-                        salvo.getId(),
-                        "Alteração de situação da ação: de " + anterior.status() + " para " + salvo.getStatus()
-                );
-                auditoriaRepository.salvar(log);
-            }
-
-            boolean alertaMudou = anterior.alertaAtivo() != salvo.isAlertaAtivo()
-                    || !Objects.equals(anterior.antecedenciaAlertaDias(), salvo.getAntecedenciaAlertaDias());
-            if (alertaMudou) {
-                LogAuditoria log = LogAuditoria.registrarAlteracao(
-                        resolverOperador(plano),
-                        "PlanoDeAcao",
-                        salvo.getId(),
-                        "Configuração de alerta da ação: de ativo=" + anterior.alertaAtivo()
-                                + ", antecedencia=" + anterior.antecedenciaAlertaDias() + " dias"
-                                + " para ativo=" + salvo.isAlertaAtivo()
-                                + ", antecedencia=" + salvo.getAntecedenciaAlertaDias() + " dias"
-                );
-                auditoriaRepository.salvar(log);
-            }
-        }
-
         return toDomain(salvo);
     }
 
@@ -174,18 +91,6 @@ public class PlanoDeAcaoJpaAdapter implements PlanoDeAcaoRepository {
                 LocalDateTime.now()
         );
         prorrogacaoRepository.save(entity);
-
-        LogAuditoria log = new LogAuditoria(
-                null,
-                "PRORROGAR_PRAZO",
-                LocalDateTime.now(),
-                resolverOperador(null),
-                prorrogacao.justificativa(),
-                "PlanoDeAcao",
-                prorrogacao.idAcao()
-        );
-        auditoriaRepository.salvar(log);
-
         return prorrogacao;
     }
 
@@ -294,17 +199,5 @@ public class PlanoDeAcaoJpaAdapter implements PlanoDeAcaoRepository {
                 .filter(GestorDeSeguranca.class::isInstance)
                 .map(GestorDeSeguranca.class::cast)
                 .orElse(null);
-    }
-
-    /** Operador autenticado; sem sessão, o Gestor do plano; sem nenhum dos dois, SISTEMA. */
-    private String resolverOperador(PlanoDeAcao plano) {
-        Optional<String> autenticado = operadorAtual.obterIdentificadorOperador();
-        if (autenticado.isPresent()) {
-            return autenticado.get();
-        }
-        if (plano != null && plano.getGestor() != null && plano.getGestor().getEmail() != null) {
-            return plano.getGestor().getEmail();
-        }
-        return OperadorAtual.SISTEMA;
     }
 }

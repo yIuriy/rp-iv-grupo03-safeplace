@@ -105,15 +105,6 @@ class OperadorAtualClientesTest {
     }
 
     @Test
-    @DisplayName("PlanoDeAcaoJpaAdapter recusa OperadorAtual null")
-    void adaptadorDoPlanoRecusaOperadorNulo() {
-        assertThatThrownBy(() -> new PlanoDeAcaoJpaAdapter(mock(PlanoDeAcaoJpaRepository.class),
-                mock(ProrrogacaoPrazoJpaRepository.class), mock(UsuarioJpaRepository.class),
-                mock(SetorJpaRepository.class), auditoria, null))
-                .isInstanceOf(NullPointerException.class).hasMessage(MENSAGEM);
-    }
-
-    @Test
     @DisplayName("Nenhuma classe de application importa o Spring Security (application_importa_spring_security = 0)")
     void aplicacaoNaoImportaSpringSecurity() throws IOException {
         List<Path> violacoes = arquivosJava(CODIGO.resolve("application"))

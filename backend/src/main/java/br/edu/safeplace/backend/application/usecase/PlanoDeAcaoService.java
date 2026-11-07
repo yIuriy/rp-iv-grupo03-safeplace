@@ -50,6 +50,7 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
     private final Validador<AcaoDoPlano> acaoValidador;
     private final Validador<PlanoDaOcorrencia> planoValidador;
     private final OperadorAtual operadorAtual;
+    private final RegistradorAuditoria auditoria;
 
     @Autowired
     public PlanoDeAcaoService(
@@ -61,7 +62,8 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
             GerenciarOcorrenciaUseCase consultaOcorrencia,
             Validador<AcaoDoPlano> acaoValidador,
             Validador<PlanoDaOcorrencia> planoValidador,
-            OperadorAtual operadorAtual) {
+            OperadorAtual operadorAtual,
+            RegistradorAuditoria auditoria) {
         this.acaoValidador = acaoValidador;
         this.planoValidador = planoValidador;
         this.planoDeAcaoRepository = planoDeAcaoRepository;
@@ -76,6 +78,8 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
                 consultaOcorrencia, "Consulta de ocorrências é obrigatória (visibilidade do plano, issue #100).");
         // Adapter (#236): o Gestor que define o plano vem da porta do operador.
         this.operadorAtual = Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
+        // Facade (#238): auditoria única pela fachada da camada de aplicação.
+        this.auditoria = Objects.requireNonNull(auditoria, "Registrador de auditoria é obrigatório.");
     }
 
     /** Usa os validadores padrão; usado pelos testes sem contexto Spring. */
@@ -86,9 +90,29 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
             SetorRepository setorRepository,
             NotificadorAcao notificadorAcao,
             GerenciarOcorrenciaUseCase consultaOcorrencia,
+            OperadorAtual operadorAtual,
+            RegistradorAuditoria auditoria) {
+        this(planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository, notificadorAcao,
+                consultaOcorrencia, new AcaoPlanoValidador(), new PlanoValidador(), operadorAtual, auditoria);
+    }
+
+    /** Construtor para testes que não passam o RegistradorAuditoria explicitamente. */
+    public PlanoDeAcaoService(
+            PlanoDeAcaoRepository planoDeAcaoRepository,
+            OcorrenciaRepository ocorrenciaRepository,
+            UsuarioRepository usuarioRepository,
+            SetorRepository setorRepository,
+            NotificadorAcao notificadorAcao,
+            GerenciarOcorrenciaUseCase consultaOcorrencia,
             OperadorAtual operadorAtual) {
         this(planoDeAcaoRepository, ocorrenciaRepository, usuarioRepository, setorRepository, notificadorAcao,
-                consultaOcorrencia, new AcaoPlanoValidador(), new PlanoValidador(), operadorAtual);
+                consultaOcorrencia, operadorAtual,
+                new RegistradorAuditoria(new br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository() {
+                    @Override public br.edu.safeplace.backend.domain.comum.LogAuditoria salvar(br.edu.safeplace.backend.domain.comum.LogAuditoria log) { return log; }
+                    @Override public List<br.edu.safeplace.backend.domain.comum.LogAuditoria> buscarPorPeriodo(java.time.LocalDateTime i, java.time.LocalDateTime f) { return List.of(); }
+                    @Override public List<br.edu.safeplace.backend.domain.comum.LogAuditoria> buscarPorResponsavel(String r) { return List.of(); }
+                    @Override public List<Integer> buscarIdsPorResponsavelETipoOperacao(String r, String t, java.util.Set<String> e) { return List.of(); }
+                }, operadorAtual));
     }
 
     /** Ação inexistente responde como não encontrada (404), não como dado inválido (issue #196). */
@@ -149,6 +173,11 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
         planoValidador.validar(new PlanoDaOcorrencia(ocorrencia, todasAcoes));
 
         PlanoDeAcao salvo = planoDeAcaoRepository.salvar(acao);
+        auditoria.por(resolverOperador(salvo)).cadastro(
+                "PlanoDeAcao",
+                salvo.getId(),
+                "Criação de ação vinculada à ocorrência " + salvo.getIdOcorrencia()
+        );
         return PlanoDeAcaoOutputDTO.deDominio(salvo);
     }
 
@@ -188,8 +217,16 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
             throw new IllegalArgumentException("Status inválido para o plano de ação: " + inputDTO.status());
         }
 
+        String statusAnterior = acao.getStatus();
         acao.atualizarStatus(novoStatus);
         PlanoDeAcao salvo = planoDeAcaoRepository.salvar(acao);
+        if (!Objects.equals(statusAnterior, salvo.getStatus())) {
+            auditoria.por(resolverOperador(salvo)).alteracao(
+                    "PlanoDeAcao",
+                    salvo.getId(),
+                    "Alteração de situação da ação: de " + statusAnterior + " para " + salvo.getStatus()
+            );
+        }
         return PlanoDeAcaoOutputDTO.deDominio(salvo);
     }
 
@@ -205,6 +242,13 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
         ProrrogacaoPrazo prorrogacao = acao.prorrogarPrazo(inputDTO.novoPrazo(), inputDTO.justificativa(), LocalDate.now());
         planoDeAcaoRepository.salvarProrrogacao(prorrogacao);
         planoDeAcaoRepository.salvar(acao);
+
+        auditoria.por(resolverOperador(acao)).operacao(
+                "PRORROGAR_PRAZO",
+                "PlanoDeAcao",
+                prorrogacao.idAcao(),
+                prorrogacao.justificativa()
+        );
 
         return ProrrogacaoPrazoOutputDTO.deDominio(prorrogacao);
     }
@@ -231,6 +275,9 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
             throw new IllegalArgumentException("Dados do novo responsável não podem ser nulos.");
         }
 
+        Integer colabAnterior = acao.getResponsavelColaborador() != null ? acao.getResponsavelColaborador().getId() : null;
+        Integer setorAnterior = acao.getResponsavelSetor() != null ? acao.getResponsavelSetor().getId() : null;
+
         AvisoAcao aviso;
         if (inputDTO.colaboradorId() != null) {
             Colaborador colaborador = usuarioRepository.buscarPorId(inputDTO.colaboradorId())
@@ -247,6 +294,19 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
         PlanoDeAcao salvo = planoDeAcaoRepository.salvar(acao);
         // UC07, alternativo II: o aviso ao novo encarregado era descartado; agora é entregue (issue #196).
         notificadorAcao.notificar(aviso);
+
+        Integer colabNovo = salvo.getResponsavelColaborador() != null ? salvo.getResponsavelColaborador().getId() : null;
+        Integer setorNovo = salvo.getResponsavelSetor() != null ? salvo.getResponsavelSetor().getId() : null;
+        if (!Objects.equals(colabAnterior, colabNovo) || !Objects.equals(setorAnterior, setorNovo)) {
+            auditoria.por(resolverOperador(salvo)).alteracao(
+                    "PlanoDeAcao",
+                    salvo.getId(),
+                    "Reatribuição de responsável da ação: de "
+                            + descreverResponsavel(colabAnterior, setorAnterior)
+                            + " para " + descreverResponsavel(colabNovo, setorNovo)
+            );
+        }
+
         return PlanoDeAcaoOutputDTO.deDominio(salvo);
     }
 
@@ -259,8 +319,38 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
             throw new IllegalArgumentException("Configuração de alerta não pode ser nula.");
         }
 
+        boolean alertaAtivoAnterior = acao.isAlertaAtivo();
+        Integer antecedenciaAnterior = acao.getAntecedenciaAlertaDias();
+
         acao.configurarAlerta(inputDTO.ativo(), inputDTO.antecedenciaDias());
         PlanoDeAcao salvo = planoDeAcaoRepository.salvar(acao);
+
+        boolean alertaMudou = alertaAtivoAnterior != salvo.isAlertaAtivo()
+                || !Objects.equals(antecedenciaAnterior, salvo.getAntecedenciaAlertaDias());
+        if (alertaMudou) {
+            auditoria.por(resolverOperador(salvo)).alteracao(
+                    "PlanoDeAcao",
+                    salvo.getId(),
+                    "Configuração de alerta da ação: de ativo=" + alertaAtivoAnterior
+                            + ", antecedencia=" + antecedenciaAnterior + " dias"
+                            + " para ativo=" + salvo.isAlertaAtivo()
+                            + ", antecedencia=" + salvo.getAntecedenciaAlertaDias() + " dias"
+            );
+        }
+
         return PlanoDeAcaoOutputDTO.deDominio(salvo);
+    }
+
+    private String resolverOperador(PlanoDeAcao plano) {
+        return operadorAtual.obterIdentificadorOperador()
+                .or(() -> java.util.Optional.ofNullable(plano).map(PlanoDeAcao::getGestor).map(GestorDeSeguranca::getEmail))
+                .orElse(OperadorAtual.SISTEMA);
+    }
+
+    private static String descreverResponsavel(Integer colaboradorId, Integer setorId) {
+        if (colaboradorId != null) {
+            return "colaborador id " + colaboradorId;
+        }
+        return setorId != null ? "setor id " + setorId : "nenhum responsável";
     }
 }

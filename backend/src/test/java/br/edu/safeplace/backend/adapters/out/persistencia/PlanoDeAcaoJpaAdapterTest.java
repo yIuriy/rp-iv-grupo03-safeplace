@@ -9,23 +9,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
-import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
-import br.edu.safeplace.backend.application.usecase.OperadorAtual;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
-import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.ProrrogacaoPrazo;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusPlanoDeAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PrazoAcaoInvalidoException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
-import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
-import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -50,12 +43,6 @@ class PlanoDeAcaoJpaAdapterTest {
     @Mock
     private SetorJpaRepository setorRepository;
 
-    @Mock
-    private LogAuditoriaRepository auditoriaRepository;
-
-    /** Dublê da porta do operador (#236): começa sem sessão. */
-    private final OperadorAutenticadoFixo operador = OperadorAutenticadoFixo.semSessao();
-
     private PlanoDeAcaoJpaAdapter adapter;
     private final LocalDate hoje = LocalDate.of(2026, 9, 20);
 
@@ -65,9 +52,7 @@ class PlanoDeAcaoJpaAdapterTest {
                 planoRepository,
                 prorrogacaoRepository,
                 usuarioRepository,
-                setorRepository,
-                auditoriaRepository,
-                operador.operadorAtual(mock(UsuarioRepository.class))
+                setorRepository
         );
     }
 
@@ -125,12 +110,6 @@ class PlanoDeAcaoJpaAdapterTest {
         assertThat(resultado.getAntecedenciaAlertaDias()).isEqualTo(3);
         assertThat(resultado.getResponsavelColaborador()).isNotNull();
         assertThat(resultado.getResponsavelColaborador().getId()).isEqualTo(1);
-
-        ArgumentCaptor<LogAuditoria> auditCaptor = ArgumentCaptor.forClass(LogAuditoria.class);
-        verify(auditoriaRepository).salvar(auditCaptor.capture());
-        assertThat(auditCaptor.getValue().getTipoOperacao()).isEqualTo("CADASTRO");
-        assertThat(auditCaptor.getValue().getEntidade()).isEqualTo("PlanoDeAcao");
-        assertThat(auditCaptor.getValue().getEntidadeId()).isEqualTo(100);
     }
 
     @Test
@@ -198,87 +177,7 @@ class PlanoDeAcaoJpaAdapterTest {
     }
 
     @Test
-    @DisplayName("Deve registrar auditoria de reatribuição ao mudar responsável")
-    void deveAuditarReatribuicao() {
-        PlanoDeAcaoEntity existente = new PlanoDeAcaoEntity(
-                100, 10, "Medida", hoje.plusDays(5), "ABERTA", null, 1, null, null, false, null
-        );
-        PlanoDeAcaoEntity atualizada = new PlanoDeAcaoEntity(
-                100, 10, "Medida", hoje.plusDays(5), "ABERTA", null, null, 5, null, false, null
-        );
-
-        when(planoRepository.findById(100)).thenReturn(Optional.of(existente));
-        when(planoRepository.save(any(PlanoDeAcaoEntity.class))).thenReturn(atualizada);
-        when(setorRepository.findById(5)).thenReturn(Optional.of(setor(5)));
-
-        PlanoDeAcao plano = new PlanoDeAcao(
-                100, 10, "Medida", null, hoje.plusDays(5), "ABERTA", null, setor(5), false, null, null
-        );
-
-        adapter.salvar(plano);
-
-        ArgumentCaptor<LogAuditoria> captor = ArgumentCaptor.forClass(LogAuditoria.class);
-        verify(auditoriaRepository).salvar(captor.capture());
-        assertThat(captor.getValue().getJustificativa()).isEqualTo("Reatribuição de responsável da ação: de colaborador id 1 para setor id 5");
-    }
-
-    @Test
-    @DisplayName("Deve registrar auditoria de alteração de situação ao concluir ação")
-    void deveAuditarConclusao() {
-        PlanoDeAcaoEntity existente = new PlanoDeAcaoEntity(
-                100, 10, "Medida", hoje.plusDays(5), "ABERTA", null, 1, null, null, false, null
-        );
-        PlanoDeAcaoEntity atualizada = new PlanoDeAcaoEntity(
-                100, 10, "Medida", hoje.plusDays(5), "CONCLUIDA", null, 1, null, null, false, null
-        );
-
-        when(planoRepository.findById(100)).thenReturn(Optional.of(existente));
-        when(planoRepository.save(any(PlanoDeAcaoEntity.class))).thenReturn(atualizada);
-        when(usuarioRepository.findById(1)).thenReturn(Optional.of(colaborador(1)));
-
-        PlanoDeAcao plano = new PlanoDeAcao(
-                100, 10, "Medida", null, hoje.plusDays(5), "CONCLUIDA", colaborador(1), null, false, null, null
-        );
-
-        adapter.salvar(plano);
-
-        ArgumentCaptor<LogAuditoria> captor = ArgumentCaptor.forClass(LogAuditoria.class);
-        verify(auditoriaRepository).salvar(captor.capture());
-        assertThat(captor.getValue().getJustificativa()).isEqualTo("Alteração de situação da ação: de ABERTA para CONCLUIDA");
-    }
-
-    /** Conclui uma ação de plano sem Gestor e devolve o responsável gravado na auditoria. */
-    private String responsavelDaAuditoriaDeConclusao() {
-        when(planoRepository.findById(100)).thenReturn(Optional.of(new PlanoDeAcaoEntity(
-                100, 10, "Medida", hoje.plusDays(5), "ABERTA", null, 1, null, null, false, null)));
-        when(planoRepository.save(any(PlanoDeAcaoEntity.class))).thenReturn(new PlanoDeAcaoEntity(
-                100, 10, "Medida", hoje.plusDays(5), "CONCLUIDA", null, 1, null, null, false, null));
-        when(usuarioRepository.findById(1)).thenReturn(Optional.of(colaborador(1)));
-
-        adapter.salvar(new PlanoDeAcao(
-                100, 10, "Medida", null, hoje.plusDays(5), "CONCLUIDA", colaborador(1), null, false, null, null));
-
-        ArgumentCaptor<LogAuditoria> captor = ArgumentCaptor.forClass(LogAuditoria.class);
-        verify(auditoriaRepository).salvar(captor.capture());
-        return captor.getValue().getResponsavel();
-    }
-
-    @Test
-    @DisplayName("Adapter (#236): a auditoria registra o operador autenticado lido pela porta")
-    void auditoriaRegistraOperadorDaPorta() {
-        operador.autenticar("gestora@safeplace.com", "GESTOR_SEGURANCA");
-
-        assertThat(responsavelDaAuditoriaDeConclusao()).isEqualTo("gestora@safeplace.com");
-    }
-
-    @Test
-    @DisplayName("Adapter (#236): sem sessão e sem Gestor no plano, a auditoria registra SISTEMA")
-    void semSessaoNemGestorAuditoriaRegistraSistema() {
-        assertThat(responsavelDaAuditoriaDeConclusao()).isEqualTo(OperadorAtual.SISTEMA);
-    }
-
-    @Test
-    @DisplayName("Deve salvar prorrogação com justificativa e registrar em log de auditoria")
+    @DisplayName("Deve salvar prorrogação persistindo no repositório de prorrogações")
     void deveSalvarProrrogacao() {
         ProrrogacaoPrazo prorrogacao = new ProrrogacaoPrazo(
                 100,
@@ -291,12 +190,6 @@ class PlanoDeAcaoJpaAdapterTest {
 
         assertThat(resultado).isEqualTo(prorrogacao);
         verify(prorrogacaoRepository).save(any(ProrrogacaoPrazoEntity.class));
-
-        ArgumentCaptor<LogAuditoria> captor = ArgumentCaptor.forClass(LogAuditoria.class);
-        verify(auditoriaRepository).salvar(captor.capture());
-        assertThat(captor.getValue().getTipoOperacao()).isEqualTo("PRORROGAR_PRAZO");
-        assertThat(captor.getValue().getJustificativa()).isEqualTo("Atraso na entrega de peças");
-        assertThat(captor.getValue().getEntidadeId()).isEqualTo(100);
     }
 
     @Test
