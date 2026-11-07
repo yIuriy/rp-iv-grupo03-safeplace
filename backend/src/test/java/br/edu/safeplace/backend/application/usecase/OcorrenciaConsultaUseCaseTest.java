@@ -113,14 +113,29 @@ class OcorrenciaConsultaUseCaseTest {
     }
 
     private static Acidente acidente(int id, LocalDateTime fato, String protocolo) {
-        return new Acidente(id, "Corte na mão", fato, fato.plusHours(1), StatusOcorrencia.ABERTA, null, null,
-                null, "Linha 1", null, CausaRaizAcidente.OUTRO, null, null, NumeroProtocoloCAT.de(protocolo), null,
-                NivelPerigo.BAIXO);
+        return Acidente.builder()
+                .idOcorrencia(id)
+                .descricao("Corte na mão")
+                .dataOcorrencia(fato)
+                .dataRegistro(fato.plusHours(1))
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .localInformado("Linha 1")
+                .causaRaiz(CausaRaizAcidente.OUTRO)
+                .numeroProtocoloCAT(NumeroProtocoloCAT.de(protocolo))
+                .gravidade(NivelPerigo.BAIXO)
+                .build();
     }
 
     private static Incidente incidente(int id, LocalDateTime fato) {
-        return new Incidente(id, "Piso escorregadio", fato, fato.plusHours(1), StatusOcorrencia.ABERTA, null, null,
-                null, null, null, "Óleo no corredor", "Queda");
+        return Incidente.builder()
+                .idOcorrencia(id)
+                .descricao("Piso escorregadio")
+                .dataOcorrencia(fato)
+                .dataRegistro(fato.plusHours(1))
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .situacaoRisco("Óleo no corredor")
+                .potencialDano("Queda")
+                .build();
     }
 
     /** Repositório somente leitura: a consulta filtrada usa a implementação padrão da porta. */

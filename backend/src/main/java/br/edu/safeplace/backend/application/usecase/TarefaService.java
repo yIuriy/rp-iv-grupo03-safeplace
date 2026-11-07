@@ -31,6 +31,7 @@ import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 import br.edu.safeplace.backend.domain.tarefa.RegistroClassificacaoTarefa;
 import br.edu.safeplace.backend.domain.tarefa.Tarefa;
+import br.edu.safeplace.backend.domain.tarefa.TarefaBuilder;
 import br.edu.safeplace.backend.domain.tarefa.exception.TarefaNaoEncontradaException;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 
@@ -96,8 +97,12 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
     @Override
     @Transactional
     public TarefaOutputDTO cadastrarTarefa(CadastrarTarefaInputDTO inputDTO) {
-        Tarefa novaTarefa = Tarefa.cadastrarComRelacoes(
-                inputDTO.descricao(), resolverArea(inputDTO.areaRiscoId()), resolverSetores(inputDTO.setoresIds()));
+        // Builder (#240): constrói a tarefa nomeando os dados da criação
+        Tarefa novaTarefa = new TarefaBuilder()
+                .descricao(inputDTO.descricao())
+                .areaRisco(resolverArea(inputDTO.areaRiscoId()))
+                .setores(resolverSetores(inputDTO.setoresIds()))
+                .build();
         // Chain of Responsibility (#228): valida antes de classificar e de chamar o repository.
         validador.validar(novaTarefa);
         GestorDeSeguranca responsavel = null;

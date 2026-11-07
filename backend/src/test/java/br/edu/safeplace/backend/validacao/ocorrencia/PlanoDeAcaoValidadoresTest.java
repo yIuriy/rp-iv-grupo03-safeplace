@@ -48,9 +48,17 @@ class PlanoDeAcaoValidadoresTest {
     }
 
     private static Acidente acidente(NivelPerigo gravidade, LocalDateTime dataFato) {
-        return new Acidente(10, "Corte na mão", dataFato, dataFato, StatusOcorrencia.ABERTA,
-                null, null, null, null, null,
-                CausaRaizAcidente.FATOR_HUMANO, "Corte", "Lesão leve", null, null, gravidade);
+        return Acidente.builder()
+                .idOcorrencia(10)
+                .descricao("Corte na mão")
+                .dataOcorrencia(dataFato)
+                .dataRegistro(dataFato)
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .causaRaiz(CausaRaizAcidente.FATOR_HUMANO)
+                .tipo("Corte")
+                .dano("Lesão leve")
+                .gravidade(gravidade)
+                .build();
     }
 
     private static Acidente acidente(NivelPerigo gravidade) {
@@ -59,8 +67,15 @@ class PlanoDeAcaoValidadoresTest {
 
     private static Incidente incidente() {
         LocalDateTime fato = LocalDateTime.of(2026, 9, 18, 10, 0);
-        return new Incidente(11, "Caixas acima do limite", fato, fato, StatusOcorrencia.ABERTA,
-                null, null, null, null, null, "Empilhamento irregular", "Queda de material");
+        return Incidente.builder()
+                .idOcorrencia(11)
+                .descricao("Caixas acima do limite")
+                .dataOcorrencia(fato)
+                .dataRegistro(fato)
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .situacaoRisco("Empilhamento irregular")
+                .potencialDano("Queda de material")
+                .build();
     }
 
     private static PlanoDeAcao acaoCorretiva(Ocorrencia ocorrencia, LocalDate prazo) {
@@ -107,9 +122,14 @@ class PlanoDeAcaoValidadoresTest {
         @Test
         @DisplayName("Deve exigir ocorrência registrada e ao menos uma medida")
         void deveExigirOcorrenciaEMedida() {
-            Acidente naoRegistrado = new Acidente(null, "Corte", LocalDateTime.of(2026, 9, 18, 10, 0), null,
-                    StatusOcorrencia.ABERTA, null, null, null, null, null,
-                    CausaRaizAcidente.OUTRO, null, null, null, null, NivelPerigo.BAIXO);
+            Acidente naoRegistrado = Acidente.builder()
+                    .descricao("Corte")
+                    .dataOcorrencia(LocalDateTime.of(2026, 9, 18, 10, 0))
+                    .dataRegistro(null)
+                    .statusOcorrencia(StatusOcorrencia.ABERTA)
+                    .causaRaiz(CausaRaizAcidente.OUTRO)
+                    .gravidade(NivelPerigo.BAIXO)
+                    .build();
 
             assertThatThrownBy(() -> definirEValidar(naoRegistrado, "Isolar máquina", null, HOJE,
                     colaborador(1), null, false, null, HOJE))

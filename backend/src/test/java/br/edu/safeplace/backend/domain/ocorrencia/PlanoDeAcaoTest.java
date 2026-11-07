@@ -30,9 +30,17 @@ class PlanoDeAcaoTest {
     }
 
     private static Acidente acidente(NivelPerigo gravidade, LocalDateTime dataFato) {
-        return new Acidente(10, "Corte na mão", dataFato, dataFato, StatusOcorrencia.ABERTA,
-                null, null, null, null, null,
-                CausaRaizAcidente.FATOR_HUMANO, "Corte", "Lesão leve", null, null, gravidade);
+        return Acidente.builder()
+                .idOcorrencia(10)
+                .descricao("Corte na mão")
+                .dataOcorrencia(dataFato)
+                .dataRegistro(dataFato)
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .causaRaiz(CausaRaizAcidente.FATOR_HUMANO)
+                .tipo("Corte")
+                .dano("Lesão leve")
+                .gravidade(gravidade)
+                .build();
     }
 
     private static Acidente acidente(NivelPerigo gravidade) {
@@ -41,8 +49,15 @@ class PlanoDeAcaoTest {
 
     private static Incidente incidente() {
         LocalDateTime fato = LocalDateTime.of(2026, 9, 18, 10, 0);
-        return new Incidente(11, "Caixas acima do limite", fato, fato, StatusOcorrencia.ABERTA,
-                null, null, null, null, null, "Empilhamento irregular", "Queda de material");
+        return Incidente.builder()
+                .idOcorrencia(11)
+                .descricao("Caixas acima do limite")
+                .dataOcorrencia(fato)
+                .dataRegistro(fato)
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .situacaoRisco("Empilhamento irregular")
+                .potencialDano("Queda de material")
+                .build();
     }
 
     private static PlanoDeAcao acaoCorretiva(Ocorrencia ocorrencia, LocalDate prazo) {

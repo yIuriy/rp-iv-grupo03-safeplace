@@ -25,25 +25,22 @@ public non-sealed class Incidente extends Ocorrencia {
     protected Incidente() {
     }
 
-    public Incidente(
-            Integer idOcorrencia,
-            String descricao,
-            LocalDateTime dataOcorrencia,
-            LocalDateTime dataRegistro,
-            StatusOcorrencia statusOcorrencia,
-            Colaborador colaborador,
-            AreaRisco area,
-            Colaborador relator,
-            String local,
-            PlanoDeAcao planoDeAcao,
-            String situacaoRisco,
-            String potencialDano) {
-        super(idOcorrencia, descricao, dataOcorrencia, dataRegistro, statusOcorrencia,
-                colaborador, area, relator, local, planoDeAcao);
+    /** Construtor a partir do Builder (GoF, criacional, #240). */
+    public Incidente(IncidenteBuilder builder) {
+        super(builder.getIdOcorrencia(), builder.getDescricao(), builder.getDataOcorrencia(),
+                builder.getDataRegistro() != null ? builder.getDataRegistro() : LocalDateTime.now(),
+                builder.getStatusOcorrencia() != null ? builder.getStatusOcorrencia() : StatusOcorrencia.ABERTA,
+                builder.getColaborador(), builder.getArea(), builder.getRelator(),
+                builder.getLocalInformado(), builder.getPlanoDeAcao());
+        this.situacaoRisco = builder.getSituacaoRisco() != null ? builder.getSituacaoRisco().trim() : null;
+        this.potencialDano = builder.getPotencialDano() != null ? builder.getPotencialDano().trim() : null;
+    }
 
-        // Situação de risco e potencial de dano: OcorrenciaValidador (issue #266).
-        this.situacaoRisco = situacaoRisco != null ? situacaoRisco.trim() : null;
-        this.potencialDano = potencialDano != null ? potencialDano.trim() : null;
+    public static IncidenteBuilder builder() {
+        return new IncidenteBuilder();
+    }
+
+    public static class Builder extends IncidenteBuilder {
     }
 
     @Override

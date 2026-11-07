@@ -90,24 +90,20 @@ class OcorrenciaUseCaseAuditoriaTest {
                 20
         );
 
-        Acidente salvo = new Acidente(
-                1,
-                "Queda de nível",
-                LocalDateTime.of(2026, 9, 20, 10, 0),
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                colaborador,
-                area,
-                null,
-                null,
-                null,
-                CausaRaizAcidente.FALHA_EPI,
-                "Fratura",
-                "Fratura no braço",
-                null,
-                "Hospital",
-                NivelPerigo.ALTO
-        );
+        Acidente salvo = Acidente.builder()
+                .idOcorrencia(1)
+                .descricao("Queda de nível")
+                .dataOcorrencia(LocalDateTime.of(2026, 9, 20, 10, 0))
+                .dataRegistro(LocalDateTime.now())
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .colaborador(colaborador)
+                .area(area)
+                .causaRaiz(CausaRaizAcidente.FALHA_EPI)
+                .tipo("Fratura")
+                .dano("Fratura no braço")
+                .destino("Hospital")
+                .gravidade(NivelPerigo.ALTO)
+                .build();
         when(repository.salvarAcidente(any(Acidente.class))).thenReturn(salvo);
         when(repository.proximoSequencialCAT(anyInt(), anyInt())).thenReturn(1L);
 
@@ -138,20 +134,17 @@ class OcorrenciaUseCaseAuditoriaTest {
                 20
         );
 
-        Incidente salvo = new Incidente(
-                2,
-                "Quase acidente por fagulha",
-                LocalDateTime.of(2026, 9, 20, 11, 0),
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                colaborador,
-                area,
-                null,
-                null,
-                null,
-                "Vazamento de faíscas",
-                "Incêndio"
-        );
+        Incidente salvo = Incidente.builder()
+                .idOcorrencia(2)
+                .descricao("Quase acidente por fagulha")
+                .dataOcorrencia(LocalDateTime.of(2026, 9, 20, 11, 0))
+                .dataRegistro(LocalDateTime.now())
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .colaborador(colaborador)
+                .area(area)
+                .situacaoRisco("Vazamento de faíscas")
+                .potencialDano("Incêndio")
+                .build();
         when(repository.salvarIncidente(any(Incidente.class))).thenReturn(salvo);
 
         OcorrenciaOutputDTO dto = useCase.registrarIncidente(input);
@@ -171,11 +164,17 @@ class OcorrenciaUseCaseAuditoriaTest {
     @Test
     @DisplayName("Deve registrar log de auditoria ao enviar ocorrencia para triagem")
     void deveRegistrarAuditoriaAoEnviarParaTriagem() {
-        Acidente acidente = new Acidente(
-                3, "Descricao", LocalDateTime.now(), LocalDateTime.now(),
-                StatusOcorrencia.ABERTA, colaborador, area, null,
-                null, null, CausaRaizAcidente.OUTRO, null, null, null, null, NivelPerigo.BAIXO
-        );
+        Acidente acidente = Acidente.builder()
+                .idOcorrencia(3)
+                .descricao("Descricao")
+                .dataOcorrencia(LocalDateTime.now())
+                .dataRegistro(LocalDateTime.now())
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .colaborador(colaborador)
+                .area(area)
+                .causaRaiz(CausaRaizAcidente.OUTRO)
+                .gravidade(NivelPerigo.BAIXO)
+                .build();
         when(repository.buscarPorId(3)).thenReturn(Optional.of(acidente));
         when(repository.salvarAcidente(any(Acidente.class))).thenReturn(acidente);
 
@@ -195,11 +194,17 @@ class OcorrenciaUseCaseAuditoriaTest {
     @Test
     @DisplayName("Deve registrar log de auditoria ao arquivar ocorrencia")
     void deveRegistrarAuditoriaAoArquivar() {
-        Acidente acidente = new Acidente(
-                4, "Descricao", LocalDateTime.now(), LocalDateTime.now(),
-                StatusOcorrencia.EM_TRIAGEM, colaborador, area, null,
-                null, null, CausaRaizAcidente.OUTRO, null, null, null, null, NivelPerigo.BAIXO
-        );
+        Acidente acidente = Acidente.builder()
+                .idOcorrencia(4)
+                .descricao("Descricao")
+                .dataOcorrencia(LocalDateTime.now())
+                .dataRegistro(LocalDateTime.now())
+                .statusOcorrencia(StatusOcorrencia.EM_TRIAGEM)
+                .colaborador(colaborador)
+                .area(area)
+                .causaRaiz(CausaRaizAcidente.OUTRO)
+                .gravidade(NivelPerigo.BAIXO)
+                .build();
         when(repository.buscarPorId(4)).thenReturn(Optional.of(acidente));
         when(repository.salvarAcidente(any(Acidente.class))).thenReturn(acidente);
 
@@ -219,11 +224,17 @@ class OcorrenciaUseCaseAuditoriaTest {
     @Test
     @DisplayName("Deve registrar log de auditoria ao consolidar CAT")
     void deveRegistrarAuditoriaAoConsolidarCAT() {
-        Acidente acidente = new Acidente(
-                5, "Descricao", LocalDateTime.now(), LocalDateTime.now(),
-                StatusOcorrencia.ABERTA, colaborador, area, null,
-                null, null, CausaRaizAcidente.OUTRO, null, null, null, null, NivelPerigo.BAIXO
-        );
+        Acidente acidente = Acidente.builder()
+                .idOcorrencia(5)
+                .descricao("Descricao")
+                .dataOcorrencia(LocalDateTime.now())
+                .dataRegistro(LocalDateTime.now())
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .colaborador(colaborador)
+                .area(area)
+                .causaRaiz(CausaRaizAcidente.OUTRO)
+                .gravidade(NivelPerigo.BAIXO)
+                .build();
         when(repository.buscarAcidentePorId(5)).thenReturn(Optional.of(acidente));
         when(repository.proximoSequencialCAT(anyInt(), anyInt())).thenReturn(1L);
         when(repository.salvarAcidente(any(Acidente.class))).thenAnswer(invocation -> invocation.getArgument(0));

@@ -40,9 +40,17 @@ class FiltroOcorrenciasDTOTest {
             null, true, null, null);
 
     private static Ocorrencia incidente(LocalDateTime dataFato, AreaRisco area, Colaborador colaborador) {
-        return new Incidente(1, "Piso escorregadio", dataFato, LocalDateTime.of(2026, 10, 1, 8, 0),
-                StatusOcorrencia.ABERTA, colaborador, area, null, null, null,
-                "Óleo no corredor", "Queda");
+        return Incidente.builder()
+                .idOcorrencia(1)
+                .descricao("Piso escorregadio")
+                .dataOcorrencia(dataFato)
+                .dataRegistro(LocalDateTime.of(2026, 10, 1, 8, 0))
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .colaborador(colaborador)
+                .area(area)
+                .situacaoRisco("Óleo no corredor")
+                .potencialDano("Queda")
+                .build();
     }
 
     @Test
@@ -103,8 +111,17 @@ class FiltroOcorrenciasDTOTest {
 
     private static Ocorrencia acidente(NivelPerigo gravidade) {
         LocalDateTime fato = LocalDateTime.of(2026, 9, 10, 9, 0);
-        return new Acidente(2, "Corte na mão", fato, fato, StatusOcorrencia.ABERTA, JOAO, AREA_DO_SETOR_3, null,
-                null, null, CausaRaizAcidente.FATOR_HUMANO, null, null, null, null, gravidade);
+        return Acidente.builder()
+                .idOcorrencia(2)
+                .descricao("Corte na mão")
+                .dataOcorrencia(fato)
+                .dataRegistro(fato)
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .colaborador(JOAO)
+                .area(AREA_DO_SETOR_3)
+                .causaRaiz(CausaRaizAcidente.FATOR_HUMANO)
+                .gravidade(gravidade)
+                .build();
     }
 
     @Test

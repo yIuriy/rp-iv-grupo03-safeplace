@@ -86,34 +86,39 @@ public class Tarefa {
     protected Tarefa() {
     }
 
+    /** Construtor a partir do Builder (GoF, criacional, #240). */
+    public Tarefa(TarefaBuilder builder) {
+        this.id = builder.getId();
+        this.descricao = builder.getDescricao() != null ? builder.getDescricao().trim() : null;
+        this.nivelPerigo = builder.getNivelPerigo();
+        this.dataClassificacao = builder.getNivelPerigo() != null && builder.getDataClassificacao() == null
+                ? LocalDateTime.now()
+                : builder.getDataClassificacao();
+        this.responsavelClassificacao = builder.getNivelPerigo() != null ? builder.getResponsavelClassificacao() : null;
+        this.areaRisco = builder.getAreaRisco();
+        this.setores = builder.getSetores() == null ? new ArrayList<>() : new ArrayList<>(builder.getSetores().stream().distinct().toList());
+        this.episObrigatorios = builder.getEpisObrigatorios() != null ? new ArrayList<>(builder.getEpisObrigatorios()) : new ArrayList<>();
+    }
+
+    public static TarefaBuilder builder() {
+        return new TarefaBuilder();
+    }
+
+    public static class Builder extends TarefaBuilder {
+    }
+
     /**
      * Reconstitui uma tarefa gravada. {@code responsavelClassificacao} é nulo em classificações
      * anteriores ao registro de autoria (#112), que não recebem autor inventado.
      */
     public Tarefa(Integer id, String descricao, NivelPerigo nivelPerigo, LocalDateTime dataClassificacao,
             GestorDeSeguranca responsavelClassificacao) {
-        this(id, descricao, nivelPerigo, dataClassificacao, responsavelClassificacao, null, List.of(), List.of());
-    }
-
-    public Tarefa(Integer id, String descricao, NivelPerigo nivelPerigo, LocalDateTime dataClassificacao,
-            GestorDeSeguranca responsavelClassificacao, AreaRisco areaRisco, List<Setor> setores) {
-        this(id, descricao, nivelPerigo, dataClassificacao, responsavelClassificacao, areaRisco, setores, List.of());
-    }
-
-    public Tarefa(Integer id, String descricao, NivelPerigo nivelPerigo, LocalDateTime dataClassificacao,
-            GestorDeSeguranca responsavelClassificacao, AreaRisco areaRisco, List<Setor> setores,
-            List<Epi> episObrigatorios) {
-        // A descrição é validada em TarefaValidador, antes do repository (issue #228).
-        this.id = id;
-        this.descricao = descricao != null ? descricao.trim() : null;
-        this.nivelPerigo = nivelPerigo;
-        this.dataClassificacao = nivelPerigo != null && dataClassificacao == null
-                ? LocalDateTime.now()
-                : dataClassificacao;
-        this.responsavelClassificacao = nivelPerigo != null ? responsavelClassificacao : null;
-        this.areaRisco = areaRisco;
-        this.setores = setores == null ? new ArrayList<>() : new ArrayList<>(setores.stream().distinct().toList());
-        this.episObrigatorios = episObrigatorios != null ? new ArrayList<>(episObrigatorios) : new ArrayList<>();
+        this(new TarefaBuilder()
+                .id(id)
+                .descricao(descricao)
+                .nivelPerigo(nivelPerigo)
+                .dataClassificacao(dataClassificacao)
+                .responsavelClassificacao(responsavelClassificacao));
     }
 
     public Tarefa(Integer id, String descricao, NivelPerigo nivelPerigo, LocalDateTime dataClassificacao) {
@@ -125,23 +130,24 @@ public class Tarefa {
      * conforme o cenário principal do UC11.
      */
     public static Tarefa cadastrar(String descricao) {
-        return new Tarefa(null, descricao, null, null, null);
+        return new TarefaBuilder().descricao(descricao).build();
     }
 
     public static Tarefa cadastrarComRelacoes(String descricao, AreaRisco areaRisco, List<Setor> setores) {
-        return new Tarefa(null, descricao, null, null, null, areaRisco, setores);
+        return new TarefaBuilder().descricao(descricao).areaRisco(areaRisco).setores(setores).build();
     }
 
     public Tarefa atualizar(String novaDescricao, AreaRisco novaAreaRisco, List<Setor> novosSetores) {
-        return new Tarefa(
-                this.id,
-                novaDescricao,
-                this.nivelPerigo,
-                this.dataClassificacao,
-                this.responsavelClassificacao,
-                novaAreaRisco,
-                novosSetores,
-                this.episObrigatorios);
+        return new TarefaBuilder()
+                .id(this.id)
+                .descricao(novaDescricao)
+                .nivelPerigo(this.nivelPerigo)
+                .dataClassificacao(this.dataClassificacao)
+                .responsavelClassificacao(this.responsavelClassificacao)
+                .areaRisco(novaAreaRisco)
+                .setores(novosSetores)
+                .episObrigatorios(this.episObrigatorios)
+                .build();
     }
 
     /**
@@ -226,20 +232,12 @@ public class Tarefa {
         return true;
     }
 
-    public boolean associarEPIs(List<Epi> novosEpis) {
-        return associarEpis(novosEpis);
-    }
-
     /**
      * Operação {@code verificarEPIsObrigatoriosTarefa()} do diagrama de classes (RF12 / UC08).
      * Retorna a lista de EPIs obrigatórios vinculados a esta tarefa.
      */
     public List<Epi> verificarEpisObrigatoriosTarefa() {
         return Collections.unmodifiableList(episObrigatorios);
-    }
-
-    public List<Epi> verificarEPIsObrigatoriosTarefa() {
-        return verificarEpisObrigatoriosTarefa();
     }
 
     public List<Epi> getEpisObrigatorios() {

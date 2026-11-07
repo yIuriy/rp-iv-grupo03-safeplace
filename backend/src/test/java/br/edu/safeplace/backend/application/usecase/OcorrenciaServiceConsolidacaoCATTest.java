@@ -45,9 +45,15 @@ class OcorrenciaServiceConsolidacaoCATTest {
     private static final LocalDateTime FATO = LocalDateTime.of(2026, 9, 12, 9, 0);
 
     /** Acidente antigo, sem protocolo e sem causa raiz (o banco aceita causa_raiz nula, V32). */
-    private final Acidente legadoSemCausaRaiz = new Acidente(5, "Queimadura leve por respingo", FATO, FATO,
-            StatusOcorrencia.EM_TRIAGEM, null, null, null, "Posto antigo", null,
-            null, null, null, null, null, NivelPerigo.MEDIO);
+    private final Acidente legadoSemCausaRaiz = Acidente.builder()
+            .idOcorrencia(5)
+            .descricao("Queimadura leve por respingo")
+            .dataOcorrencia(FATO)
+            .dataRegistro(FATO)
+            .statusOcorrencia(StatusOcorrencia.EM_TRIAGEM)
+            .localInformado("Posto antigo")
+            .gravidade(NivelPerigo.MEDIO)
+            .build();
 
     private OcorrenciaRepository repository;
 

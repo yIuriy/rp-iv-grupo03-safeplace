@@ -27,6 +27,21 @@ public class RegistradorAuditoria {
         this.operadorAtual = Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
     }
 
+    /** Construtor para testes sem OperadorAtual explícito (assume Null Object OperadorAutenticadoNulo). */
+    public RegistradorAuditoria(LogAuditoriaRepository repository) {
+        this(repository, new OperadorAtual(
+                new br.edu.safeplace.backend.adapters.out.seguranca.OperadorAutenticadoNulo(),
+                new br.edu.safeplace.backend.application.port.out.UsuarioRepository() {
+                    @Override public java.util.Optional<br.edu.safeplace.backend.domain.usuario.Colaborador> buscarPorEmail(String email) { return java.util.Optional.empty(); }
+                    @Override public java.util.Optional<br.edu.safeplace.backend.domain.usuario.Colaborador> buscarPorId(Integer id) { return java.util.Optional.empty(); }
+                    @Override public java.util.Optional<br.edu.safeplace.backend.domain.usuario.Colaborador> buscarPorCpf(String cpf) { return java.util.Optional.empty(); }
+                    @Override public java.util.List<br.edu.safeplace.backend.domain.usuario.Colaborador> listarTodos() { return java.util.List.of(); }
+                    @Override public java.util.List<br.edu.safeplace.backend.domain.usuario.Colaborador> listarColaboradores(String nome, String cpf) { return java.util.List.of(); }
+                    @Override public br.edu.safeplace.backend.domain.usuario.Colaborador salvar(br.edu.safeplace.backend.domain.usuario.Colaborador colaborador) { return colaborador; }
+                }
+        ));
+    }
+
     public void cadastro(String entidade, Integer entidadeId, String justificativa) {
         doOperadorAtual().cadastro(entidade, entidadeId, justificativa);
     }

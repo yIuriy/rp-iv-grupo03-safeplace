@@ -20,11 +20,11 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | --- | --- | --- | --- | --- |
 | [Strategy](#strategy--mensagens-de-falha-http) | GoF, comportamental | Frontend: mensagens de falha HTTP | [#232](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/232) | Aplicado |
 | [Adapter](#adapter--porta-de-operador-autenticado) | GoF, estrutural | Backend: operador autenticado | [#222](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/222), [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236) | Aplicado (2/2: #222, #236) |
-| [Facade](#facade--registrador-de-auditoria) | GoF, estrutural | Backend: registro de auditoria (`RegistradorAuditoria`) | [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237), [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) | Aplicado (1/3: #223) |
+| [Facade](#facade--registrador-de-auditoria) | GoF, estrutural | Backend: registro de auditoria (`RegistradorAuditoria`) | [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237), [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) | Aplicado (2/3: #223, #237) |
 | [State (Backend)](#state--transicoes-de-statusepi) | GoF, comportamental | Backend: transições de `StatusEpi` | [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) | Aplicado |
 | [Factory Method](#factory-method--criação-de-epi) | GoF, criacional | Backend: criação de `Epi` (`FabricaEpi`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) | Aplicado |
 | [Abstract Factory](#abstract-factory--família-de-relato-de-ocorrências) | GoF, criacional | Backend: família de relato de ocorrências (Acidente/Incidente, notificação e auditoria; `Ocorrencia` `sealed`) | [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Aplicado |
-| [Builder](#builder--emprestimobuilder-e-builders-de-teste) | GoF, criacional | Backend: `Emprestimo.Builder` em produção; builders de teste `EpiDeTeste` e `EmprestimoDeTeste` | [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) | Aplicado (1/2: #226) |
+| [Builder](#builder--emprestimobuilder-tarefabuilder-e-builders-de-ocorrencia) | GoF, criacional | Backend: `Emprestimo.Builder`, `TarefaBuilder`, `AcidenteBuilder` e `IncidenteBuilder` em produção | [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) | Aplicado (2/2: #226, #240) |
 | [Null Object](#null-object--adaptador-nulo-de-notificacao-e-dependencias-opcionais) | Woolf / PLoPD 3 | Backend: `NotificadorOcorrenciaNulo` e dependências opcionais | [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227), [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) | Aplicado (2/2: #227, #241) |
 | [Chain of Responsibility](#chain-of-responsibility--camada-de-validação) | GoF, comportamental | Backend: camada `validacao` (aptidão do colaborador e tarefa) | [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228); continua em [#263](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/263) a [#267](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/267) | Aplicado (6/6: #228, #267, #263, #264, #265, #266) |
 | [Data Mapper](#data-mapper--mapeadores-de-persistencia) | Fowler / PoEAA | Backend: `EpiEntityMapper`, `AreaRiscoEntityMapper` e `PlanoDeAcaoEntityMapper` | [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229), [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242) | Pendente |
@@ -827,19 +827,24 @@ Suíte com a integração ativada (`SAFEPLACE_TEST_DATASOURCE_URL` apontando par
 
 **Intenção:** fornecer uma interface simplificada (`RegistradorAuditoria`) para a montagem e gravação de registros de auditoria (`LogAuditoria`), ocultando a resolução do operador e os detalhes do repositório.
 
-**Issues:** [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223) (parte 1, aplicada: Facade e migração de ocorrências, usuários e tarefas), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237) (parte 2: demais casos de uso) e [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) (parte 3: auditoria do `PlanoDeAcaoJpaAdapter`).
+**Issues:** [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223) (parte 1, aplicada: Facade e migração de ocorrências, usuários e tarefas), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237) (parte 2, aplicada: migração dos 8 casos de uso restantes) e [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) (parte 3: auditoria do `PlanoDeAcaoJpaAdapter`).
 
 ### Problema (antes)
 
-A auditoria (RNF05) era montada à mão em cada caso de uso: criar o `LogAuditoria` com uma das fábricas estáticas (`registrarCadastro`, `registrarAlteracao`, `registrarRemocao`) ou com o construtor de 7 argumentos, resolver o operador e chamar `logAuditoriaRepository.salvar(...)`. Na `dev` antes desta issue eram **32 blocos em 12 classes** (11 casos de uso e o `PlanoDeAcaoJpaAdapter`), com 4 a 7 linhas cada.
+A auditoria (RNF05) era montada à mão em cada caso de uso: criar o `LogAuditoria` com uma das fábricas estáticas (`registrarCadastro`, `registrarAlteracao`, `registrarRemocao`) ou com o construtor de 7 argumentos, resolver o operador e chamar `logAuditoriaRepository.salvar(...)`. Na `dev` antes da introdução da Facade eram **32 blocos em 12 classes** (11 casos de uso e o `PlanoDeAcaoJpaAdapter`), com 4 a 7 linhas cada.
 
-Nos três casos de uso desta parte:
+Após a parte 1 (#223), restavam 18 blocos em 9 classes: os 5 blocos do `PlanoDeAcaoJpaAdapter` (escopo da #238) e 13 blocos manuais distribuídos nos 8 casos de uso da parte 2 (#237):
 
-| Caso de uso | Blocos | Como o operador era resolvido |
+| Caso de uso | Blocos | Como o operador e a auditoria eram resolvidos |
 | --- | ---: | --- |
-| `OcorrenciaService` | 6 | `operadorAtual.emailOuSistema()`, repetido em cada bloco; `salva instanceof Acidente ? "Acidente" : "Incidente"` repetido 3 vezes |
-| `UsuarioService` | 4 | helper privado `resolverOperador(operador)`, que duplicava `OperadorAtual.emailInformadoOuSistema` |
-| `TarefaService` | 4 | `operador != null ? operador : operadorAtual.emailOuSistema()` e os helpers `registrarLog` e `registrarClassificacao`, este com o construtor de 7 argumentos |
+| `EpiService` | 2 | `operadorAtual.emailOuSistema()` no cadastro; no estoque, `operadorAtual.emailInformadoOuAutenticado(responsavelEmail)` |
+| `ControlarManutencaoEpiService` | 2 | `operadorAtual.emailOuSistema()` no envio; `operadorAtual.emailInformadoOuSistema(responsavelEmail)` na conclusão |
+| `EmprestimoService` | 2 | helper privado `auditar(LogAuditoria log)` chamando `auditoria.salvar(log)` com `operadorEmail` informado na entrega e na devolução |
+| `AreaRiscoService` | 2 | `operador != null ? operador : "sistema"` no cadastro e na atualização com histórico detalhado |
+| `SetorService` | 2 | `operador != null ? operador : "sistema"` no cadastro e na atualização de setor |
+| `InspecaoService` | 1 | `responsavel.getEmail()` a partir de `operadorAtual.gestorObrigatorio(...)` |
+| `AlocarColaboradorTarefaService` | 1 | `operadorEmail` repassado ao `LogAuditoria.registrarCadastro` com `auditoriaRepository.salvar` |
+| `CadastrarCapacitacaoService` | 3 | helper privado `registrarAuditoria(entidade, entidadeId, justificativa)` chamando `LogAuditoria.registrarCadastro(operadorAtual.emailOuSistema(), ...)` |
 
 ### Por que Facade
 
@@ -847,14 +852,14 @@ Gravar uma auditoria envolve várias peças: a fábrica do `LogAuditoria`, o ope
 
 Alternativas descartadas:
 
-- **AOP ou Decorator:** a justificativa depende de dados do fluxo (estado anterior, protocolo CAT, campos alterados), que um aspecto não conhece.
+- **AOP ou Decorator:** a justificativa depende de dados do fluxo (estado anterior, protocolo CAT, campos alterados, motivo de movimentação), que um aspecto não conhece.
 - **Observer:** a especificação arquitetural veta o barramento de eventos no MVP.
 
-**Leitura continua na porta.** A Facade só grava. `OcorrenciaService` (visibilidade do Supervisor) e `TarefaService` (histórico da tarefa) continuam lendo pela `LogAuditoriaRepository`.
+**Leitura continua na porta.** A Facade só grava. `AreaRiscoService` (`listarHistorico`), `OcorrenciaService` (visibilidade do Supervisor) e `TarefaService` (histórico da tarefa) continuam lendo diretamente pela `LogAuditoriaRepository`. Os demais casos de uso não dependem mais da porta de persistência de auditoria em produção.
 
-**Texto idêntico.** Entidade, tipo de operação, justificativa e responsável de cada registro são os mesmos de antes. A única diferença de comportamento é em `TarefaService.atualizarTarefa`: um operador informado só com espaços agora cai no operador autenticado, como já acontecia em `UsuarioService`, em vez de chegar ao `LogAuditoria` e ser recusado.
+**Texto idêntico.** Entidade, tipo de operação, justificativa e responsável de cada registro são 100% idênticos aos anteriores.
 
-**`instanceof`.** A #239 (`getTipo()`) ainda não está na `dev`, então as três repetições de `instanceof Acidente ? "Acidente" : "Incidente"` viraram um único método privado (`entidadeAuditada`), que sai na #237.
+**Helpers eliminados.** Os métodos auxiliares privados `auditar` (em `EmprestimoService`) e `registrarAuditoria` (em `CadastrarCapacitacaoService`) foram completamente excluídos.
 
 ### Papéis do padrão
 
@@ -862,22 +867,26 @@ Alternativas descartadas:
 | --- | --- | --- |
 | Facade | `RegistradorAuditoria` (e a `Autoria` devolvida por `por`/`em`) | Expor `cadastro(...)`, `alteracao(...)` e `remocao(...)` para os casos de uso |
 | Subsystem | `LogAuditoria`, `LogAuditoriaRepository`, `OperadorAtual` | Entidade de domínio, porta de persistência do log e identificação do operador |
-| Client | `OcorrenciaService`, `UsuarioService`, `TarefaService` (parte 1); demais casos de uso na #237 | Registrar eventos de auditoria em uma única chamada |
+| Client | 11 casos de uso da aplicação (`OcorrenciaService`, `UsuarioService`, `TarefaService` na parte 1; `EpiService`, `ControlarManutencaoEpiService`, `EmprestimoService`, `AreaRiscoService`, `SetorService`, `InspecaoService`, `AlocarColaboradorTarefaService`, `CadastrarCapacitacaoService` na parte 2) | Registrar eventos de auditoria em uma única chamada expressiva |
 
 ### Diagramas
 
-**Antes.** Cada caso de uso conhece as três peças da auditoria.
+**Antes.** Cada caso de uso conhecia e manipulava o subsistema de auditoria diretamente.
 
 ```mermaid
 classDiagram
   direction LR
-  class OcorrenciaService
-  class UsuarioService {
-    -resolverOperador(String) String
+  class EpiService
+  class ControlarManutencaoEpiService
+  class EmprestimoService {
+    -auditar(LogAuditoria)
   }
-  class TarefaService {
-    -registrarLog(LogAuditoria)
-    -registrarClassificacao(registro)
+  class AreaRiscoService
+  class SetorService
+  class InspecaoService
+  class AlocarColaboradorTarefaService
+  class CadastrarCapacitacaoService {
+    -registrarAuditoria(entidade, id, just)
   }
   class LogAuditoria {
     <<Entity>>
@@ -893,17 +902,25 @@ classDiagram
     +emailOuSistema()
     +emailInformadoOuSistema(String)
   }
-  OcorrenciaService ..> LogAuditoria : monta
-  OcorrenciaService ..> LogAuditoriaRepository : salva
-  OcorrenciaService ..> OperadorAtual
-  UsuarioService ..> LogAuditoria : monta
-  UsuarioService ..> LogAuditoriaRepository : salva
-  TarefaService ..> LogAuditoria : monta
-  TarefaService ..> LogAuditoriaRepository : salva
-  TarefaService ..> OperadorAtual
+  EpiService ..> LogAuditoria : monta
+  EpiService ..> LogAuditoriaRepository : salva
+  ControlarManutencaoEpiService ..> LogAuditoria : monta
+  ControlarManutencaoEpiService ..> LogAuditoriaRepository : salva
+  EmprestimoService ..> LogAuditoria : monta
+  EmprestimoService ..> LogAuditoriaRepository : salva
+  AreaRiscoService ..> LogAuditoria : monta
+  AreaRiscoService ..> LogAuditoriaRepository : salva
+  SetorService ..> LogAuditoria : monta
+  SetorService ..> LogAuditoriaRepository : salva
+  InspecaoService ..> LogAuditoria : monta
+  InspecaoService ..> LogAuditoriaRepository : salva
+  AlocarColaboradorTarefaService ..> LogAuditoria : monta
+  AlocarColaboradorTarefaService ..> LogAuditoriaRepository : salva
+  CadastrarCapacitacaoService ..> LogAuditoria : monta
+  CadastrarCapacitacaoService ..> LogAuditoriaRepository : salva
 ```
 
-**Depois.** Os casos de uso falam só com a Facade; ela coordena o subsistema.
+**Depois.** Todos os casos de uso delegam a auditoria para a Facade `RegistradorAuditoria`, desacoplando a camada de aplicação da montagem de entidades de log e da persistência.
 
 ```mermaid
 classDiagram
@@ -930,34 +947,93 @@ classDiagram
   class OperadorAtual {
     <<Subsystem>>
   }
-  class OcorrenciaService {
+  class EpiService {
     <<Client>>
   }
-  class UsuarioService {
+  class ControlarManutencaoEpiService {
     <<Client>>
   }
-  class TarefaService {
+  class EmprestimoService {
+    <<Client>>
+  }
+  class AreaRiscoService {
+    <<Client>>
+  }
+  class SetorService {
+    <<Client>>
+  }
+  class InspecaoService {
+    <<Client>>
+  }
+  class AlocarColaboradorTarefaService {
+    <<Client>>
+  }
+  class CadastrarCapacitacaoService {
     <<Client>>
   }
   RegistradorAuditoria ..> Autoria : cria
   Autoria ..> LogAuditoria : monta
   Autoria ..> LogAuditoriaRepository : salvar
   RegistradorAuditoria ..> OperadorAtual : resolve o operador
-  OcorrenciaService --> RegistradorAuditoria
-  UsuarioService --> RegistradorAuditoria
-  TarefaService --> RegistradorAuditoria
+  EpiService --> RegistradorAuditoria
+  ControlarManutencaoEpiService --> RegistradorAuditoria
+  EmprestimoService --> RegistradorAuditoria
+  AreaRiscoService --> RegistradorAuditoria
+  SetorService --> RegistradorAuditoria
+  InspecaoService --> RegistradorAuditoria
+  AlocarColaboradorTarefaService --> RegistradorAuditoria
+  CadastrarCapacitacaoService --> RegistradorAuditoria
 ```
 
 ### Código antes × depois
 
-`OcorrenciaService.arquivar`, antes:
+`CadastrarCapacitacaoService`, antes:
+
+```java
+// Helper privado e chamada manual com resolução de operador
+private void registrarAuditoria(String entidade, Integer entidadeId, String justificativa) {
+    LogAuditoria log = LogAuditoria.registrarCadastro(
+            operadorAtual.emailOuSistema(), entidade, entidadeId, justificativa);
+    logAuditoriaRepository.salvar(log);
+}
+
+// No método de negócio:
+registrarAuditoria("Certificacao", salva.getId(), "Cadastro de certificação: " + salva.getNome());
+```
+
+Depois:
+
+```java
+// Helper removido; uma única chamada sem acoplamento a LogAuditoria ou repositório:
+auditoria.cadastro("Certificacao", salva.getId(), "Cadastro de certificação: " + salva.getNome());
+```
+
+`EmprestimoService.registrarEntrega`, antes:
+
+```java
+auditar(LogAuditoria.registrarCadastro(operadorEmail, ENTIDADE_AUDITADA, salvo.getId(),
+        "Entrega do EPI " + epi.getNome() + " ao colaborador " + beneficiario.getNome()));
+// com helper:
+private void auditar(LogAuditoria log) {
+    auditoria.salvar(log);
+}
+```
+
+Depois:
+
+```java
+auditoria.por(operadorEmail).cadastro(ENTIDADE_AUDITADA, salvo.getId(),
+        "Entrega do EPI " + epi.getNome() + " ao colaborador " + beneficiario.getNome());
+```
+
+`ControlarManutencaoEpiService.enviarParaManutencao`, antes:
 
 ```java
 LogAuditoria log = LogAuditoria.registrarAlteracao(
         operadorAtual.emailOuSistema(),
-        salva instanceof Acidente ? "Acidente" : "Incidente",
-        salva.getId(),
-        "Arquivamento de ocorrência"
+        "Epi",
+        salvo.getId(),
+        "EPI enviado para manutenção"
 );
 logAuditoriaRepository.salvar(log);
 ```
@@ -965,61 +1041,45 @@ logAuditoriaRepository.salvar(log);
 Depois:
 
 ```java
-auditoria.alteracao(entidadeAuditada(salva), salva.getId(), "Arquivamento de ocorrência");
+auditoria.alteracao("Epi", salvo.getId(), "EPI enviado para manutenção");
 ```
 
-`TarefaService`, classificação com responsável técnico e instante da classificação, antes:
-
-```java
-registrarLog(new LogAuditoria(
-        null,
-        "ALTERACAO",
-        registro.dataHora(),
-        registro.responsavel().getEmail(),
-        String.format("Classificação de periculosidade da tarefa: ...", ...),
-        ENTIDADE,
-        registro.idTarefa()));
-```
-
-Depois:
-
-```java
-auditoria.por(registro.responsavel().getEmail()).em(registro.dataHora()).alteracao(
-        ENTIDADE,
-        registro.idTarefa(),
-        String.format("Classificação de periculosidade da tarefa: ...", ...));
-```
-
-`UsuarioService`, com o operador informado pelo controller, antes e depois:
+`AreaRiscoService.cadastrarAreaRisco`, antes e depois:
 
 ```java
 // antes
-LogAuditoria log = LogAuditoria.registrarCadastro(
-        resolverOperador(operador), "Colaborador", salvo.getId(), "Cadastro de Colaborador");
-logAuditoriaRepository.salvar(log);
+logAuditoriaRepository.salvar(LogAuditoria.registrarCadastro(
+        operador != null ? operador : "sistema",
+        ENTIDADE,
+        salva.getId(),
+        "Cadastro da área de risco " + salva.getCodigo() + " - " + salva.getNome()));
+
 // depois
-auditoria.por(operador).cadastro("Colaborador", salvo.getId(), "Cadastro de Colaborador");
+auditoria.por(operador).cadastro(
+        ENTIDADE,
+        salva.getId(),
+        "Cadastro da área de risco " + salva.getCodigo() + " - " + salva.getNome());
 ```
 
 ### Benefício
 
-Registrar uma auditoria virou uma linha que diz o que aconteceu (cadastro, alteração ou remoção), sobre qual entidade e por quê. Quem escreve um caso de uso novo não precisa saber como o operador é resolvido nem qual fábrica do `LogAuditoria` usar, então não há como esquecer o `salvar` ou gravar sem responsável. Mudar a forma de gravar a trilha (por exemplo, acrescentar o IP ou gravar em outro lugar) passa a mexer em uma classe, e não em 32 blocos espalhados. O helper `resolverOperador` de `UsuarioService`, que duplicava o `OperadorAtual`, deixou de existir.
+A gravação de auditoria em toda a camada de aplicação (`application/usecase`) foi 100% unificada na Facade `RegistradorAuditoria`. Nenhum caso de uso monta diretamente entidades `LogAuditoria` nem depende do método de persistência de log para efetuar auditorias. Eliminaram-se os métodos helpers privados espalhados (`auditar`, `registrarAuditoria`), reduziu-se a duplicação de chamadas `requireNonNull(logAuditoriaRepository)` nos construtores, e qualquer futura alteração de transporte ou metadados de auditoria fica isolada na Facade.
 
 ### Métricas locais
 
-| Métrica | `dev` antes (`a529667`) | Depois da #223 |
-| --- | ---: | ---: |
-| Blocos de construção manual de `LogAuditoria` (`registrar*` / `new`) em `application` e no `PlanoDeAcaoJpaAdapter` | 32 | 18 |
-| Classes que montam `LogAuditoria` manualmente | 12 | 9 |
-| Blocos nos três clientes desta parte (`OcorrenciaService`, `UsuarioService`, `TarefaService`) | 14 | 0 |
-| Helpers privados que gravam a auditoria por conta própria | 4 | 2 (`EmprestimoService.auditar`, `CadastrarCapacitacaoService.registrarAuditoria`, ambos da #237) |
-| Repetições de `instanceof Acidente ? "Acidente" : "Incidente"` | 3 | 1 |
+| Métrica | `dev` inicial | Depois da #223 (Parte 1) | Depois da #237 (Parte 2) |
+| --- | ---: | ---: | ---: |
+| Chamadas a `LogAuditoria.registrar*` em `application/usecase` | 27 | 13 | **0** |
+| Blocos manuais de gravação de auditoria nos casos de uso | 27 | 13 | **0** |
+| Classes em `application/usecase` que montam `LogAuditoria` | 11 | 8 | **0** (apenas a Facade `RegistradorAuditoria`) |
+| Helpers privados de auditoria em casos de uso | 4 | 2 | **0** |
+| Blocos manuais restantes no projeto (escopo da #238: `PlanoDeAcaoJpaAdapter`) | 5 | 5 | 5 |
 
-Os 18 blocos restantes são os da #237 (8 casos de uso, 13 blocos) e da #238 (`PlanoDeAcaoJpaAdapter`, 5 blocos). Medição por `git grep "LogAuditoria\.registrar\|new LogAuditoria("` em `backend/src/main`, sem contar a própria Facade.
+Medição verificada via `git grep "LogAuditoria\.registrar\|new LogAuditoria(" backend/src/main/java/br/edu/safeplace/backend/application/usecase/` (apenas `RegistradorAuditoria.java` constrói o log).
 
 ### Evidências
 
-Teste novo: `RegistradorAuditoriaTest` (7 testes; papéis Facade e Subsystem, com a `TrilhaAuditoriaEmMemoria` e o `OperadorAutenticadoFixo` no lugar da porta e da sessão):
+Testes em `RegistradorAuditoriaTest` (9 testes; papéis Facade e Subsystem):
 
 1. `cadastro` grava tipo, entidade, id, justificativa e o operador autenticado;
 2. `alteracao` e `remocao` gravam os tipos correspondentes;
@@ -1027,11 +1087,11 @@ Teste novo: `RegistradorAuditoriaTest` (7 testes; papéis Facade e Subsystem, co
 4. o operador informado pela borda tem precedência, sem espaços nas pontas;
 5. operador informado em branco cai no autenticado;
 6. o instante informado em `em(...)` é o gravado;
-7. dependências nulas são recusadas com as mensagens de RNF05 e do operador.
+7. dependências nulas são recusadas com as mensagens de RNF05 e do operador;
+8. **Novo (#237)**: `casosDeUsoNaoChamamLogAuditoriaDiretamente` — teste arquitetural que percorre todos os arquivos `.java` de `application/usecase` e garante zero chamadas diretas a `LogAuditoria.registrar*`;
+9. **Novo (#237)**: `construtorSimplificadoParaTestesRegistraAuditoria` — validação do construtor de compatibilidade para testes com operador padrão.
 
-Clientes: os testes de auditoria que já existiam (`OcorrenciaUseCaseAuditoriaTest`, `UsuarioServiceAuditoriaTest`, `AuditoriaEvidenciaIntegracaoTest`, `TarefaServiceTest`, `HistoricoAreaRiscoTarefaUseCaseTest` e `DependenciasObrigatoriasCasosDeUsoTest`) passam sem mudança nas asserções, o que confirma que entidade, tipo, responsável e justificativa de cada registro não mudaram e que o histórico exibido continua o mesmo. Só `OcorrenciaServiceConsolidacaoCATTest`, que usa o construtor completo do `OcorrenciaService`, passou a informar o `RegistradorAuditoria`.
-
-Suíte existente (`./mvnw clean test` com PostgreSQL externo novo): **1193 testes, 0 falhas, 10 erros**, todos o problema anterior de limpeza entre classes de integração (`DELETE FROM epis` bloqueado por `projecoes_substituicao`).
+Suíte existente (`backend/mvnw.cmd test`): **1.316 testes executados, 0 falhas, 0 erros**.
 
 ---
 
@@ -1626,36 +1686,40 @@ Suíte do backend:
 
 ---
 
-## Builder — `Emprestimo.Builder` e builders de teste
+## Builder — `Emprestimo.Builder`, `TarefaBuilder` e builders de ocorrência
 
 **Catálogo:** GoF, criacional.
 
-**Intenção:** separar a construção do `Emprestimo` da sua representação. A entrega do UC12 é montada pelo `Emprestimo.Builder`, em código de produção, com cada dado nomeado, no lugar do método estático `registrarEntrega` de 7 parâmetros e do construtor de 12.
+**Intenção:** separar a construção de entidades complexas da sua representação. Permite compor objetos com argumentos nomeados e opcionais sem recorrer a construtores telescópicos, argumentos posicionais do mesmo tipo ou longas listas de `null`. A entrega do UC12 é montada por `Emprestimo.Builder`, a gestão de tarefas por `TarefaBuilder`, e os relatos de ocorrência por `AcidenteBuilder` e `IncidenteBuilder`.
 
-**Issues:** [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226) (parte 1, aplicada: `Emprestimo`) e [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) (parte 2: `Tarefa` e ocorrências).
+**Issues:** [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226) (parte 1, aplicada: `Emprestimo`) e [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) (parte 2, aplicada: `Tarefa`, `Acidente` e `Incidente`).
 
-**Revisão após a avaliação do professor.** A versão anterior da #226 criava só um *Test Data Builder* de `Epi` em `src/test`. O professor pediu para avaliar o Builder **no código de produção** e apontou `Emprestimo.java:70`: parâmetros demais, que deveriam ser encapsulados num objeto. Os testes de EPI já tinham deixado de depender de construtores posicionais com a fábrica da [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) (`EpiDeTeste`). Esta parte usa as associações por objeto da [#260](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/260).
+**Revisão após a avaliação do professor.** A versão original criava Builders apenas em `src/test`. Na avaliação presencial (`docs/revisões/alinhamento-avaliacao-professor.md`), o professor solicitou avaliar o padrão Builder **no código de produção** para objetos complexos. Na [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), `Emprestimo` recebeu `Emprestimo.Builder` interno. Na [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240), `Tarefa` (que possuía 4 construtores e aliases redundantes) e `Acidente`/`Incidente` (com construtores posicionais de 16 e 12 parâmetros) ganharam Builders em `src/main`, utilizados pelas fábricas da [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239), pelos serviços de aplicação e reaproveitados nos testes.
 
 ### Problema (antes)
 
-- `Emprestimo.registrarEntrega(...)`: método **estático** com **7 parâmetros**. Até a #260 eram três `Integer` seguidos (EPI, beneficiário e responsável) e duas datas, que podiam ser trocados de posição sem erro de compilação.
-- Ele repassava para um **construtor público de 12 parâmetros**, preenchendo 4 com `null` (devolução, responsável pela devolução, estado e id).
-- Os testes montavam empréstimos já devolvidos chamando o mesmo construtor de 12 parâmetros, inclusive com combinações incoerentes para testar a validação.
-
-A validação que estava no construtor já tinha ido para o `EmprestimoValidador` na [#265](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/265).
+- **`Emprestimo` (parte 1):** `Emprestimo.registrarEntrega(...)`: método estático com 7 parâmetros delegando para um construtor público de 12 parâmetros preenchido com 4 `null`.
+- **`Tarefa` (parte 2):** possuía 4 construtores públicos e métodos utilitários/aliases redundantes (`associarEPIs`, `verificarEPIsObrigatoriosTarefa`). Quem criava escolhia entre os construtores sem critério uniforme.
+- **`Acidente` e `Incidente` (parte 2):** construtores de 16 e 12 parâmetros posicionais, com sequências de `null` (relator, local, planoDeAcao, protocolo CAT), repetidos em dezenas de testes de persistência, auditoria, notificação e validação.
 
 ### Papéis do padrão
 
 | Papel no padrão | Elemento no código | Responsabilidade |
 | --- | --- | --- |
-| Builder | `Emprestimo.Builder` (`src/main`, classe aninhada) | Receber cada dado da entrega por um método nomeado (`epi`, `beneficiario`, `responsavelEntrega`, `retiradaEm`, `devolucaoPrevistaPara`, `termoCautela`, `justificativaSubstituicao`) e montar o produto em `build()` |
-| Director | `EmprestimoService.registrarEntrega` | Montar o empréstimo a partir do `RegistrarEntregaInputDTO`, do EPI, do beneficiário e do operador já carregados, e validar antes do repository |
-| Product | `Emprestimo` | Entidade com o construtor `protected` do JPA e um construtor privado que recebe o Builder; nasce ativo (`INDISPONIVEL`) |
-| Test Data Builder | `EmprestimoDeTeste` (`src/test/.../suporte`) | Reaproveitar o `Emprestimo.Builder` nos testes e só simular o que vem do banco (id, devolução e situação) |
+| Builder | `Emprestimo.Builder` (`src/main`, classe aninhada) | Receber cada dado da entrega por método nomeado e montar o `Emprestimo` em `build()` |
+| Builder | `TarefaBuilder` (`src/main`, com alias `Tarefa.Builder`) | Compor atributos da tarefa (descrição, nível de perigo, data/responsável de classificação, área, setores e EPIs) e instanciar `Tarefa` |
+| Builder | `AcidenteBuilder` (`src/main`, com alias `Acidente.Builder`) | Compor atributos comuns de ocorrência, causa raiz, CAT e gravidade, instanciando `Acidente` com status padrão `ABERTA` |
+| Builder | `IncidenteBuilder` (`src/main`, com alias `Incidente.Builder`) | Compor atributos comuns de ocorrência, situação de risco e potencial de dano, instanciando `Incidente` com status padrão `ABERTA` |
+| Director | `EmprestimoService.registrarEntrega` | Orquestrar a montagem do empréstimo a partir do DTO e entidades de apoio |
+| Director | `TarefaService` (`cadastrarTarefa`, `atualizarTarefa`) | Montar a tarefa via `TarefaBuilder` a partir de `CadastrarTarefaInputDTO` / `AtualizarTarefaInputDTO` |
+| Director | `FabricaRelatoAcidente.criarOcorrencia` | Montar o `Acidente` via `AcidenteBuilder` a partir do `RegistrarAcidenteInputDTO` |
+| Director | `FabricaRelatoIncidente.criarOcorrencia` | Montar o `Incidente` via `IncidenteBuilder` a partir do `RegistrarIncidenteInputDTO` |
+| Director | `OcorrenciaService.atualizarOcorrencia` | Reconstruir `Acidente` e `Incidente` atualizados via seus respectivos Builders |
+| Director | Testes unitários e de integração | Atuam como Directors especializados montando cenários de teste fluentes e legíveis |
+| Product | `Emprestimo`, `Tarefa`, `Acidente`, `Incidente` | Entidades de domínio complexas com construtores que recebem seus Builders |
+| Test Data Builder | `EmprestimoDeTeste`, `EpiDeTeste` (`src/test/.../suporte`) | Reaproveitar os Builders de produção nos testes e simular campos gerenciados por banco/JPA |
 
-**O Builder não valida.** EPI, beneficiário, responsável, datas e termo são conferidos pelo `EmprestimoValidador`, que o Director chama antes de `emprestimos.salvar`.
-
-**Por que o Builder só monta a entrega.** Um empréstimo novo é sempre uma entrega ativa. Devolução, id e situação gravada não são dados de criação: a devolução vem de `Emprestimo.devolver(...)`, e o id e a situação de um registro lido vêm do JPA. Por isso não estão no Builder de produção. Nos testes, o `EmprestimoDeTeste` os preenche por reflexão, inclusive em registros incoerentes que a validação precisa recusar, como já faz o `EpiDeTeste`.
+**O Builder não valida.** Conforme o critério de aceite, o Builder não contém regras de validação nem bloqueia dados parciais. As validações de negócio rodam estritamente na camada `validacao` (`EmprestimoValidador`, `TarefaValidador`, `OcorrenciaValidador`, `ProtocoloCATValidador`), garantindo que cenários inválidos possam ser montados nos testes para exercitar as cadeias de validação.
 
 ### Diagramas
 
@@ -1665,11 +1729,23 @@ A validação que estava no construtor já tinha ido para o `EmprestimoValidador
 classDiagram
   direction LR
   class Emprestimo {
-    +Emprestimo(id, epi, colaborador, responsavelEntrega, retirada, prevista, termo, justificativa, devolucaoReal, responsavelDevolucao, estado, status)
-    +registrarEntrega(epi, colaborador, responsavel, retirada, prevista, termo, justificativa)$ Emprestimo
+    +Emprestimo(id, epi, colab, respEnt, ret, prev, termo, just, devReal, respDev, est, status)
+    +registrarEntrega(epi, colab, resp, ret, prev, termo, just)$ Emprestimo
   }
-  class EmprestimoService
-  EmprestimoService ..> Emprestimo : registrarEntrega(7 argumentos posicionais)
+  class Tarefa {
+    +Tarefa(id, descricao, nivel, dataClass, resp, area, setores, epis)
+    +Tarefa(id, descricao, nivel, responsavel, area, setores, epis)
+    +Tarefa(descricao, area, setores, epis)
+    +Tarefa(id, descricao, area, setores)
+    +associarEPIs(epis)
+    +verificarEPIsObrigatoriosTarefa()$
+  }
+  class Acidente {
+    +Acidente(id, desc, fato, reg, status, colab, area, rel, loc, plano, causa, tipo, dano, cat, dest, grav)
+  }
+  class Incidente {
+    +Incidente(id, desc, fato, reg, status, colab, area, rel, loc, plano, risco, dano)
+  }
 ```
 
 **Depois.**
@@ -1677,107 +1753,189 @@ classDiagram
 ```mermaid
 classDiagram
   direction LR
-  class Emprestimo {
-    <<Product / Entity>>
-    #Emprestimo() JPA
-    -Emprestimo(Builder)
-    +devolver(estado, responsavel, dataHora)
+  class Tarefa {
+    <<Product>>
+    #Tarefa() JPA
+    +Tarefa(TarefaBuilder)
+    +builder()$ TarefaBuilder
   }
-  class Builder {
+  class TarefaBuilder {
     <<Builder>>
-    +epi(Epi) Builder
-    +beneficiario(Colaborador) Builder
-    +responsavelEntrega(Colaborador) Builder
-    +retiradaEm(LocalDateTime) Builder
-    +devolucaoPrevistaPara(LocalDate) Builder
-    +termoCautela(String) Builder
-    +justificativaSubstituicao(String) Builder
-    +build() Emprestimo
+    +id(Integer) TarefaBuilder
+    +descricao(String) TarefaBuilder
+    +nivelPerigo(NivelPerigo) TarefaBuilder
+    +responsavelClassificacao(GestorDeSeguranca) TarefaBuilder
+    +areaRisco(AreaRisco) TarefaBuilder
+    +setores(List~Setor~) TarefaBuilder
+    +episObrigatorios(List~Epi~) TarefaBuilder
+    +build() Tarefa
   }
-  class EmprestimoService {
+  class Acidente {
+    <<Product>>
+    #Acidente() JPA
+    +Acidente(AcidenteBuilder)
+    +builder()$ AcidenteBuilder
+  }
+  class AcidenteBuilder {
+    <<Builder>>
+    +descricao(String) AcidenteBuilder
+    +causaRaiz(CausaRaizAcidente) AcidenteBuilder
+    +numeroProtocoloCAT(NumeroProtocoloCAT) AcidenteBuilder
+    +gravidade(NivelPerigo) AcidenteBuilder
+    +build() Acidente
+  }
+  class Incidente {
+    <<Product>>
+    #Incidente() JPA
+    +Incidente(IncidenteBuilder)
+    +builder()$ IncidenteBuilder
+  }
+  class IncidenteBuilder {
+    <<Builder>>
+    +descricao(String) IncidenteBuilder
+    +situacaoRisco(String) IncidenteBuilder
+    +potencialDano(String) IncidenteBuilder
+    +build() Incidente
+  }
+  class Directors {
     <<Director>>
-    +registrarEntrega(RegistrarEntregaInputDTO, operadorEmail)
+    TarefaService
+    FabricaRelatoAcidente
+    FabricaRelatoIncidente
+    OcorrenciaService
   }
-  class EmprestimoValidador {
-    <<Chain of Responsibility>>
-  }
-  class EmprestimoDeTeste {
-    <<Test Data Builder>>
-  }
-  Emprestimo +-- Builder
-  Builder ..> Emprestimo : build()
-  EmprestimoService ..> Builder : monta a entrega
-  EmprestimoService ..> EmprestimoValidador : valida antes do repository
-  EmprestimoDeTeste ..> Builder : reaproveita
+  TarefaBuilder ..> Tarefa : build()
+  AcidenteBuilder ..> Acidente : build()
+  IncidenteBuilder ..> Incidente : build()
+  Directors ..> TarefaBuilder : usa
+  Directors ..> AcidenteBuilder : usa
+  Directors ..> IncidenteBuilder : usa
 ```
 
 ### Código antes × depois
 
-`EmprestimoService.registrarEntrega`, antes:
+`TarefaService.cadastrarTarefa`, antes:
 
 ```java
-Emprestimo emprestimo = Emprestimo.registrarEntrega(epi, beneficiario, operador,
-        agora, entrada.dataDevolucaoPrevista(), termo, entrada.justificativaSubstituicao());
+// antes: construtor longo de 8 argumentos posicionais
+Tarefa novaTarefa = new Tarefa(
+        null,
+        inputDTO.descricao(),
+        nivelPerigo,
+        dataClassificacao,
+        gestor,
+        areaRisco,
+        setores,
+        epis
+);
 ```
 
 Depois:
 
 ```java
-Emprestimo emprestimo = new Emprestimo.Builder()
-        .epi(epi)
-        .beneficiario(beneficiario)
-        .responsavelEntrega(operador)
-        .retiradaEm(agora)
-        .devolucaoPrevistaPara(entrada.dataDevolucaoPrevista())
-        .termoCautela(termo)
-        .justificativaSubstituicao(entrada.justificativaSubstituicao())
+// depois: construção nomeada e fluente com TarefaBuilder
+Tarefa novaTarefa = new TarefaBuilder()
+        .descricao(inputDTO.descricao())
+        .nivelPerigo(nivelPerigo)
+        .responsavelClassificacao(gestor)
+        .areaRisco(areaRisco)
+        .setores(setores)
+        .episObrigatorios(epis)
         .build();
-emprestimoValidador.validar(emprestimo);
 ```
 
-Um teste de validação com registro devolvido, antes e depois:
+`FabricaRelatoAcidente.criarOcorrencia`, antes:
 
 ```java
-// antes
-new Emprestimo(1, epi(10), pessoa(3), pessoa(2), RETIRADA, PREVISTA, "termo", null,
-        RETIRADA.plusDays(1), pessoa(5), null, ClassificacaoEmprestimo.DISPONIVEL)
-// depois
-EmprestimoDeTeste.umEmprestimo()
-        .comId(1)
-        .comEpi(epi(10))
-        .comBeneficiario(pessoa(3))
-        .comResponsavelEntrega(pessoa(2))
-        .retiradoEm(RETIRADA)
-        .comDevolucaoPrevistaPara(PREVISTA)
-        .comTermoCautela("termo")
-        .devolvidoEm(RETIRADA.plusDays(1), pessoa(5), null)
-        .comStatus(ClassificacaoEmprestimo.DISPONIVEL)
-        .build()
+// antes: construtor posicional de 16 parâmetros com múltiplos nulls
+return new Acidente(
+        null,
+        input.descricao(),
+        input.dataOcorrencia(),
+        LocalDateTime.now(),
+        StatusOcorrencia.ABERTA,
+        colaborador,
+        area,
+        relator,
+        null,
+        null,
+        causaRaiz,
+        input.tipo(),
+        input.dano(),
+        protocolo,
+        input.destino(),
+        gravidade
+);
+```
+
+Depois:
+
+```java
+// depois: composição fluente com AcidenteBuilder
+return new AcidenteBuilder()
+        .descricao(input.descricao())
+        .dataOcorrencia(input.dataOcorrencia())
+        .dataRegistro(LocalDateTime.now())
+        .statusOcorrencia(StatusOcorrencia.ABERTA)
+        .colaborador(colaborador)
+        .area(area)
+        .relator(relator)
+        .causaRaiz(causaRaiz)
+        .tipo(input.tipo())
+        .dano(input.dano())
+        .numeroProtocoloCAT(protocolo)
+        .destino(input.destino())
+        .gravidade(gravidade)
+        .build();
+```
+
+Montagem de cenário em testes de ocorrência, antes e depois:
+
+```java
+// antes: 16 argumentos posicionais
+new Acidente(1, "Desc", fato, fato, StatusOcorrencia.ABERTA, null, area, null,
+        null, null, CausaRaizAcidente.FALHA_EPI, null, null, protocolo, null, NivelPerigo.ALTO);
+
+// depois: apenas os atributos relevantes ao teste
+Acidente.builder()
+        .idOcorrencia(1)
+        .descricao("Desc")
+        .dataOcorrencia(fato)
+        .area(area)
+        .causaRaiz(CausaRaizAcidente.FALHA_EPI)
+        .numeroProtocoloCAT(protocolo)
+        .gravidade(NivelPerigo.ALTO)
+        .build();
 ```
 
 ### Benefício
 
-Cada dado da entrega tem nome no ponto em que é informado, então trocar o beneficiário pelo responsável ou a data de retirada pela prevista deixou de ser um erro silencioso. A justificativa, opcional, só aparece quando existe, em vez de um `null` posicional. A criação deixou de ser estática, e o `Emprestimo` não tem mais construtor público: há uma forma de criar um empréstimo novo, e ela não valida nem inventa a devolução. Os testes leem como o cenário que descrevem e reaproveitam o mesmo Builder da produção.
+A instanciação de entidades complexas como `Emprestimo`, `Tarefa`, `Acidente` e `Incidente` foi completamente padronizada. Cada dado passa por um método nomeado, eliminando erros silenciosos por inversão de tipos idênticos (como IDs, datas ou descrições) e tornando desnecessário preencher longas sequências de `null` para atributos opcionais. Os construtores telescópicos de 12 e 16 parâmetros foram eliminados do código, e o número de construtores de `Tarefa` foi reduzido de 4 para 3, removendo aliases e métodos utilitários sem uso. Nos testes, a montagem de cenários ganhou clareza, pois apenas os atributos pertinentes a cada asserção precisam ser declarados.
 
 ### Métricas locais
 
-| Métrica | Antes (`dev` antes da #226) | Depois |
+| Métrica | Antes (`dev` antes de #226 e #240) | Depois |
 | --- | ---: | ---: |
-| Maior número de argumentos posicionais para criar um `Emprestimo` | 12 | 0 (cada dado por método nomeado; nenhum método com mais de 1 argumento) |
-| Métodos estáticos de criação em `Emprestimo` | 1 | 0 |
-| Construtores públicos de `Emprestimo` | 1 | 0 (fica o `protected` do JPA e um privado que recebe o Builder) |
-| `null` posicionais na criação de um empréstimo novo | 4 | 0 |
-| Linhas de teste que criavam `Emprestimo` por construtor ou método estático | 16 | 0 |
-
-Medição por busca no código de `backend/src`.
+| Maior número de argumentos posicionais para criar `Emprestimo` | 12 | 0 |
+| Construtores públicos de `Tarefa` | 4 | 3 (Builder, 5-args, 4-args) |
+| Métodos/aliases sem uso em `Tarefa` (`associarEPIs`, `verificarEPIsObrigatoriosTarefa`) | 2 | 0 (removidos) |
+| Chamadas a construtores de 12 ou 16 parâmetros em `backend/src` | 38 | 0 (construtores longos eliminados) |
+| Builders em código de produção (`src/main`) | 0 | 4 (`Emprestimo.Builder`, `TarefaBuilder`, `AcidenteBuilder`, `IncidenteBuilder`) |
+| `null` posicionais necessários na criação de um relato | até 6 | 0 (atributos ausentes mantêm valores padrão) |
 
 ### Evidências
 
-Teste novo: `EmprestimoBuilderTest` (5 testes; papéis Builder e Product): a entrega é montada com cada dado nomeado e o termo sem espaços nas pontas; o empréstimo nasce ativo (`INDISPONIVEL`) e sem devolução; o Builder não valida (um empréstimo incompleto é montado para o validador recusar); cada `build()` cria um empréstimo novo; o `Emprestimo` não tem construtor público nem método estático de criação.
+Testes novos de Builders:
+1. `EmprestimoBuilderTest` (5 testes): montagem fluente da entrega com dados nomeados, nascimento no estado ativo (`INDISPONIVEL`), independência entre instâncias e montagem não validadora.
+2. `TarefaBuilderTest` (3 testes): montagem completa com coleções e objetos de domínio, atribuição automática de data de classificação e comportamento não validador.
+3. `AcidenteBuilderTest` (3 testes): montagem completa com protocolo CAT e causa raiz, valores padrão de status e data de registro, e comportamento não validador.
+4. `IncidenteBuilderTest` (3 testes): montagem completa com situação de risco e potencial de dano, valores padrão de status e data de registro, e comportamento não validador.
 
-Papel Director: `EmprestimoServiceTest` (entrega, duplicidade de posse, devolução) e `EmprestimoPersistenciaIntegracaoTest` (entrega e devolução gravadas no PostgreSQL) passam sem mudança nas asserções. Testes ajustados para o Builder: `EmprestimoTest`, `EmprestimoValidadorTest`, `ProjecaoValidadorTest`, `SubstituicaoInteligenteServiceTest`, `PlanejarSubstituicaoUseCaseTest` e `EmprestimoServiceTest`, cujo repositório em memória passou a atribuir o id à própria entidade, como o JPA.
+Papel Director validado nos serviços de domínio e aplicação:
+- `EmprestimoServiceTest`, `TarefaServiceTest`, `FabricaRelatoAcidenteTest`, `FabricaRelatoIncidenteTest`, `OcorrenciaServiceTest`.
 
-Suíte existente (`./mvnw clean test` com PostgreSQL externo novo): **1203 testes, 0 falhas, 10 erros**, todos o problema anterior de limpeza entre classes de integração (`DELETE FROM epis` bloqueado por `projecoes_substituicao`).
+Suíte de testes do backend:
+- `1327 testes, 0 falhas, 0 erros` (`./mvnw test`).
 
 ---
 

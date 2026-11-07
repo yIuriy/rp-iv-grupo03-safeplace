@@ -35,9 +35,21 @@ class OcorrenciaOutputAssemblerTest {
     @Test
     void montaAcidenteComAParteComumEAEspecifica() {
         PlanoDeAcao plano = new PlanoDeAcao(7, "Isolar a área", LocalDate.of(2026, 12, 1), "PENDENTE", "Treinar");
-        Acidente acidente = new Acidente(10, "Queda", DATA, DATA, StatusOcorrencia.ABERTA, null, null, null,
-                "Galpão", plano, CausaRaizAcidente.values()[0], "Queda", "Fratura",
-                NumeroProtocoloCAT.de("CAT-2026-11-0001"), "Hospital", NivelPerigo.ALTO);
+        Acidente acidente = Acidente.builder()
+                .idOcorrencia(10)
+                .descricao("Queda")
+                .dataOcorrencia(DATA)
+                .dataRegistro(DATA)
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .localInformado("Galpão")
+                .planoDeAcao(plano)
+                .causaRaiz(CausaRaizAcidente.values()[0])
+                .tipo("Queda")
+                .dano("Fratura")
+                .numeroProtocoloCAT(NumeroProtocoloCAT.de("CAT-2026-11-0001"))
+                .destino("Hospital")
+                .gravidade(NivelPerigo.ALTO)
+                .build();
 
         OcorrenciaOutputDTO dto = assembler.montar(acidente);
 
@@ -57,8 +69,16 @@ class OcorrenciaOutputAssemblerTest {
 
     @Test
     void montaIncidenteSemCamposDeAcidente() {
-        Incidente incidente = new Incidente(11, "Quase queda", DATA, DATA, StatusOcorrencia.ABERTA, null, null,
-                null, "Pátio", null, "Piso molhado", "Queda");
+        Incidente incidente = Incidente.builder()
+                .idOcorrencia(11)
+                .descricao("Quase queda")
+                .dataOcorrencia(DATA)
+                .dataRegistro(DATA)
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .localInformado("Pátio")
+                .situacaoRisco("Piso molhado")
+                .potencialDano("Queda")
+                .build();
 
         OcorrenciaOutputDTO dto = assembler.montar(incidente);
 
@@ -73,8 +93,15 @@ class OcorrenciaOutputAssemblerTest {
 
     @Test
     void associacoesAusentesViramNulas() {
-        Incidente incidente = new Incidente(12, "Relato", DATA, DATA, null, null, null, null, null, null,
-                "Risco", "Dano");
+        Incidente incidente = Incidente.builder()
+                .idOcorrencia(12)
+                .descricao("Relato")
+                .dataOcorrencia(DATA)
+                .dataRegistro(DATA)
+                .statusOcorrencia(null)
+                .situacaoRisco("Risco")
+                .potencialDano("Dano")
+                .build();
 
         OcorrenciaOutputDTO dto = assembler.montar(incidente);
 

@@ -20,7 +20,6 @@ import br.edu.safeplace.backend.application.port.out.InspecaoRepository;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.area_risco.exception.AreaRiscoNaoEncontradaException;
-import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.inspecao.Inspecao;
 import br.edu.safeplace.backend.domain.inspecao.ItemVerificado;
 import br.edu.safeplace.backend.domain.inspecao.exception.InspecaoInvalidaException;
@@ -43,18 +42,19 @@ public class InspecaoService implements GerenciarInspecaoUseCase {
     private final InspecaoRepository inspecaoRepository;
     private final AreaRiscoRepository areaRiscoRepository;
     private final OperadorAtual operadorAtual;
-    private final LogAuditoriaRepository logAuditoria;
+    private final RegistradorAuditoria auditoria;
     private final Validador<Inspecao> validador;
 
     @Autowired
     public InspecaoService(InspecaoRepository inspecaoRepository,
             AreaRiscoRepository areaRiscoRepository, OperadorAtual operadorAtual,
-            LogAuditoriaRepository logAuditoria, Validador<Inspecao> validador) {
+            RegistradorAuditoria auditoria, Validador<Inspecao> validador) {
         this.inspecaoRepository = inspecaoRepository;
         this.areaRiscoRepository = areaRiscoRepository;
         // Adapter (#236): o Gestor responsável vem da porta OperadorAutenticado.
         this.operadorAtual = java.util.Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
-        this.logAuditoria = logAuditoria;
+        // Facade (#223, #237): auditoria simplificada sem manipular LogAuditoria diretamente.
+        this.auditoria = java.util.Objects.requireNonNull(auditoria, "Registrador de auditoria é obrigatório.");
         this.validador = validador;
     }
 
@@ -62,7 +62,8 @@ public class InspecaoService implements GerenciarInspecaoUseCase {
     public InspecaoService(InspecaoRepository inspecaoRepository,
             AreaRiscoRepository areaRiscoRepository, OperadorAtual operadorAtual,
             LogAuditoriaRepository logAuditoria) {
-        this(inspecaoRepository, areaRiscoRepository, operadorAtual, logAuditoria, new InspecaoValidador());
+        this(inspecaoRepository, areaRiscoRepository, operadorAtual,
+                new RegistradorAuditoria(logAuditoria, operadorAtual), new InspecaoValidador());
     }
 
     @Override
@@ -75,8 +76,7 @@ public class InspecaoService implements GerenciarInspecaoUseCase {
         // Chain of Responsibility (#263): itens, área, responsável e data, antes do repository.
         validador.validar(inspecao);
         InspecaoOutputDTO salva = InspecaoOutputDTO.deDominio(inspecaoRepository.salvar(inspecao));
-        logAuditoria.salvar(LogAuditoria.registrarCadastro(
-                responsavel.getEmail(), ENTIDADE_LOG, salva.id(), descreverCadastro(area, salva)));
+        auditoria.por(responsavel.getEmail()).cadastro(ENTIDADE_LOG, salva.id(), descreverCadastro(area, salva));
         return salva;
     }
 

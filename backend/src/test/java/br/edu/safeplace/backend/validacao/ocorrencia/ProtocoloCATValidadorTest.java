@@ -28,9 +28,16 @@ class ProtocoloCATValidadorTest {
     private final ProtocoloCATValidador validador = new ProtocoloCATValidador();
 
     private static Acidente acidente(CausaRaizAcidente causa, String descricao, NumeroProtocoloCAT protocolo) {
-        return new Acidente(1, descricao, LocalDateTime.of(2026, 9, 10, 8, 0), LocalDateTime.now(),
-                StatusOcorrencia.ABERTA, null, null, null, null, null, causa, null, null, protocolo, null,
-                NivelPerigo.BAIXO);
+        return Acidente.builder()
+                .idOcorrencia(1)
+                .descricao(descricao)
+                .dataOcorrencia(LocalDateTime.of(2026, 9, 10, 8, 0))
+                .dataRegistro(LocalDateTime.now())
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .causaRaiz(causa)
+                .numeroProtocoloCAT(protocolo)
+                .gravidade(NivelPerigo.BAIXO)
+                .build();
     }
 
     @Test

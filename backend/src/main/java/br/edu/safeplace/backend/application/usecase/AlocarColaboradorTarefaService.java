@@ -20,7 +20,6 @@ import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepo
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
-import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.tarefa.AlocacaoTarefa;
 import br.edu.safeplace.backend.domain.tarefa.Tarefa;
 import br.edu.safeplace.backend.domain.tarefa.exception.TarefaNaoEncontradaException;
@@ -39,7 +38,7 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
     private final UsuarioRepository usuarioRepository;
     private final CapacitacaoRepository capacitacaoRepository;
     private final AlocacaoTarefaRepository alocacaoTarefaRepository;
-    private final LogAuditoriaRepository auditoriaRepository;
+    private final RegistradorAuditoria auditoria;
     private final Validador<AptidaoParaTarefa> validadorAptidao;
     private final Validador<AlocacaoTarefa> validadorAlocacao;
     private final Clock clock;
@@ -53,7 +52,7 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
             LogAuditoriaRepository auditoriaRepository,
             Validador<AptidaoParaTarefa> validadorAptidao) {
         this(tarefaRepository, usuarioRepository, capacitacaoRepository, alocacaoTarefaRepository,
-                auditoriaRepository, validadorAptidao, new AlocacaoTarefaValidador(), Clock.systemDefaultZone());
+                new RegistradorAuditoria(auditoriaRepository), validadorAptidao, new AlocacaoTarefaValidador(), Clock.systemDefaultZone());
     }
 
     public AlocarColaboradorTarefaService(
@@ -65,7 +64,7 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
             Validador<AptidaoParaTarefa> validadorAptidao,
             Validador<AlocacaoTarefa> validadorAlocacao) {
         this(tarefaRepository, usuarioRepository, capacitacaoRepository, alocacaoTarefaRepository,
-                auditoriaRepository, validadorAptidao, validadorAlocacao, Clock.systemDefaultZone());
+                new RegistradorAuditoria(auditoriaRepository), validadorAptidao, validadorAlocacao, Clock.systemDefaultZone());
     }
 
     @Autowired
@@ -74,7 +73,7 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
             UsuarioRepository usuarioRepository,
             CapacitacaoRepository capacitacaoRepository,
             AlocacaoTarefaRepository alocacaoTarefaRepository,
-            LogAuditoriaRepository auditoriaRepository,
+            RegistradorAuditoria auditoria,
             Validador<AptidaoParaTarefa> validadorAptidao,
             Validador<AlocacaoTarefa> validadorAlocacao,
             Clock clock) {
@@ -83,7 +82,8 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
         this.usuarioRepository = usuarioRepository;
         this.capacitacaoRepository = capacitacaoRepository;
         this.alocacaoTarefaRepository = alocacaoTarefaRepository;
-        this.auditoriaRepository = auditoriaRepository;
+        // Facade (#223, #237): auditoria simplificada sem manipular LogAuditoria diretamente.
+        this.auditoria = java.util.Objects.requireNonNull(auditoria, "Registrador de auditoria é obrigatório.");
         this.validadorAptidao = validadorAptidao;
         this.clock = java.util.Objects.requireNonNull(clock, "Clock é obrigatório.");
     }
@@ -110,13 +110,12 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
         validadorAlocacao.validar(alocacao);
         AlocacaoTarefa salva = alocacaoTarefaRepository.salvar(alocacao);
 
-        auditoriaRepository.salvar(LogAuditoria.registrarCadastro(
-                operadorEmail,
+        auditoria.por(operadorEmail).cadastro(
                 ENTIDADE_AUDITADA,
                 salva.getId(),
                 "Alocação do colaborador " + colaborador.getNome() + " (ID " + colaborador.getId()
                         + ") na tarefa " + tarefa.getDescricao() + " (ID " + tarefa.getId() + ")"
-        ));
+        );
 
         return AlocacaoTarefaOutputDTO.deDominio(salva, tarefa.getDescricao(), colaborador.getNome(), operador.getNome());
     }

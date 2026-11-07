@@ -14,7 +14,6 @@ import br.edu.safeplace.backend.application.port.in.GerenciarSetorUseCase;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.application.port.out.SetorRepository;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
-import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.validacao.Validador;
 import br.edu.safeplace.backend.validacao.setor.SetorValidador;
 
@@ -24,22 +23,21 @@ public class SetorService implements GerenciarSetorUseCase {
     private static final String ENTIDADE = "Setor";
 
     private final SetorRepository setorRepository;
-    private final LogAuditoriaRepository logAuditoriaRepository;
+    private final RegistradorAuditoria auditoria;
     private final Validador<Setor> validador;
 
     @Autowired
-    public SetorService(SetorRepository setorRepository, LogAuditoriaRepository logAuditoriaRepository,
+    public SetorService(SetorRepository setorRepository, RegistradorAuditoria auditoria,
             Validador<Setor> validador) {
         this.setorRepository = setorRepository;
-        // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
-        this.logAuditoriaRepository = Objects.requireNonNull(
-                logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
+        // Facade (#223, #237): auditoria simplificada sem manipular LogAuditoria diretamente.
+        this.auditoria = Objects.requireNonNull(auditoria, "Registrador de auditoria é obrigatório.");
         this.validador = Objects.requireNonNull(validador, "Validador do setor é obrigatório.");
     }
 
     /** Usa o validador padrão; usado pelos testes sem contexto Spring. */
     public SetorService(SetorRepository setorRepository, LogAuditoriaRepository logAuditoriaRepository) {
-        this(setorRepository, logAuditoriaRepository, new SetorValidador());
+        this(setorRepository, new RegistradorAuditoria(logAuditoriaRepository), new SetorValidador());
     }
 
     @Override
@@ -54,11 +52,10 @@ public class SetorService implements GerenciarSetorUseCase {
         // Chain of Responsibility (#263): valida antes do repository.
         validador.validar(setor);
         Setor salvo = setorRepository.salvar(setor);
-        logAuditoriaRepository.salvar(LogAuditoria.registrarCadastro(
-                operador != null ? operador : "sistema",
+        auditoria.por(operador).cadastro(
                 ENTIDADE,
                 salvo.getId(),
-                "Cadastro do setor " + salvo.getNome()));
+                "Cadastro do setor " + salvo.getNome());
         return SetorOutputDTO.deDominio(salvo);
     }
 
@@ -77,11 +74,10 @@ public class SetorService implements GerenciarSetorUseCase {
 
         validador.validar(atualizado);
         Setor salvo = setorRepository.salvar(atualizado);
-        logAuditoriaRepository.salvar(LogAuditoria.registrarAlteracao(
-                operador != null ? operador : "sistema",
+        auditoria.por(operador).alteracao(
                 ENTIDADE,
                 salvo.getId(),
-                "Atualização do setor " + salvo.getNome() + " (status: " + salvo.getStatus() + ")"));
+                "Atualização do setor " + salvo.getNome() + " (status: " + salvo.getStatus() + ")");
         return SetorOutputDTO.deDominio(salvo);
     }
 

@@ -7,7 +7,6 @@ import br.edu.safeplace.backend.application.port.in.GerenciarEpiUseCase;
 import br.edu.safeplace.backend.application.port.out.EpiRepository;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
-import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.EspecificacaoEPI;
 import br.edu.safeplace.backend.domain.epi.FabricaEpi;
@@ -41,7 +40,7 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
     private final Validador<MovimentacaoEstoque> movimentacaoValidador;
     private final EpiRepository repository;
     private final UsuarioRepository usuarioRepositorio;
-    private final LogAuditoriaRepository logAuditoriaRepository;
+    private final RegistradorAuditoria auditoria;
     private final OperadorAtual operadorAtual;
     private final FabricaEpi fabricaEpi;
 
@@ -49,7 +48,7 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
     public EpiService(
             EpiRepository repository,
             UsuarioRepository usuarioRepositorio,
-            LogAuditoriaRepository logAuditoriaRepository,
+            RegistradorAuditoria auditoria,
             @Qualifier("numeroCaValidador") Validador<String> numeroCaValidador,
             Validador<ModeloEPI> modeloValidador,
             Validador<Epi> epiValidador,
@@ -58,9 +57,8 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
             FabricaEpi fabricaEpi) {
         this.repository = repository;
         this.usuarioRepositorio = usuarioRepositorio;
-        // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
-        this.logAuditoriaRepository = java.util.Objects.requireNonNull(
-                logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
+        // Facade (#223, #237): auditoria simplificada sem manipular LogAuditoria diretamente.
+        this.auditoria = java.util.Objects.requireNonNull(auditoria, "Registrador de auditoria é obrigatório.");
         this.numeroCaValidador = numeroCaValidador;
         this.modeloValidador = modeloValidador;
         this.epiValidador = epiValidador;
@@ -71,15 +69,29 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
         this.fabricaEpi = java.util.Objects.requireNonNull(fabricaEpi, "Fábrica de EPI é obrigatória.");
     }
 
+    public EpiService(
+            EpiRepository repository,
+            UsuarioRepository usuarioRepositorio,
+            LogAuditoriaRepository logAuditoriaRepository,
+            @Qualifier("numeroCaValidador") Validador<String> numeroCaValidador,
+            Validador<ModeloEPI> modeloValidador,
+            Validador<Epi> epiValidador,
+            Validador<MovimentacaoEstoque> movimentacaoValidador,
+            OperadorAtual operadorAtual,
+            FabricaEpi fabricaEpi) {
+        this(repository, usuarioRepositorio, new RegistradorAuditoria(logAuditoriaRepository, operadorAtual),
+                numeroCaValidador, modeloValidador, epiValidador, movimentacaoValidador, operadorAtual, fabricaEpi);
+    }
+
     /** Monta os validadores padrão; usado pelos testes sem contexto Spring. */
     public EpiService(
             EpiRepository repository,
             UsuarioRepository usuarioRepositorio,
             LogAuditoriaRepository logAuditoriaRepository,
             OperadorAtual operadorAtual) {
-        this(repository, usuarioRepositorio, logAuditoriaRepository, new NumeroCaValidador(),
-                new ModeloEpiValidador(), new EpiValidador(), new MovimentacaoEstoqueValidador(), operadorAtual,
-                new FabricaEpiPadrao());
+        this(repository, usuarioRepositorio, new RegistradorAuditoria(logAuditoriaRepository, operadorAtual),
+                new NumeroCaValidador(), new ModeloEpiValidador(), new EpiValidador(),
+                new MovimentacaoEstoqueValidador(), operadorAtual, new FabricaEpiPadrao());
     }
 
     @Override
@@ -103,13 +115,11 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
         epiValidador.validar(novoEpi);
         Epi salvo = repository.salvar(novoEpi);
 
-        LogAuditoria log = LogAuditoria.registrarCadastro(
-                operadorAtual.emailOuSistema(),
+        auditoria.cadastro(
                 "Epi",
                 salvo.getId(),
                 "Cadastro de EPI: " + salvo.getNome()
         );
-        logAuditoriaRepository.salvar(log);
 
         return EpiOutputDTO.deDominio(salvo);
     }
@@ -160,13 +170,11 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
         repository.atualizarSaldo(epi);
         MovimentacaoEstoque salvo = repository.salvarMovimentacao(movimentacao);
 
-        LogAuditoria log = LogAuditoria.registrarAlteracao(
-                operadorAtual.emailInformadoOuSistema(responsavelEmail),
+        auditoria.por(responsavelEmail).alteracao(
                 "Epi",
                 epi.getId(),
                 "Movimentação de estoque: " + tipo + " (" + quantidade + " un). Motivo: " + motivo
         );
-        logAuditoriaRepository.salvar(log);
 
         return MovimentacaoEstoqueOutputDTO.deDominio(salvo, epi.getQuantidade());
     }
