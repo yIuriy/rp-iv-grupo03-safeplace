@@ -328,9 +328,16 @@ class TarefaServiceTest {
         @Override
         public Tarefa salvar(Tarefa tarefa) {
             Integer id = tarefa.getId() != null ? tarefa.getId() : nextId++;
-            Tarefa salva = new Tarefa(id, tarefa.getDescricao(), tarefa.getNivelPerigo(),
-                    tarefa.getDataClassificacao(), tarefa.getResponsavelClassificacao(),
-                    tarefa.getAreaRisco(), tarefa.getSetores(), tarefa.getEpisObrigatorios());
+            Tarefa salva = new br.edu.safeplace.backend.domain.tarefa.TarefaBuilder()
+                    .id(id)
+                    .descricao(tarefa.getDescricao())
+                    .nivelPerigo(tarefa.getNivelPerigo())
+                    .dataClassificacao(tarefa.getDataClassificacao())
+                    .responsavelClassificacao(tarefa.getResponsavelClassificacao())
+                    .areaRisco(tarefa.getAreaRisco())
+                    .setores(tarefa.getSetores())
+                    .episObrigatorios(tarefa.getEpisObrigatorios())
+                    .build();
             storage.put(id, salva);
             return salva;
         }

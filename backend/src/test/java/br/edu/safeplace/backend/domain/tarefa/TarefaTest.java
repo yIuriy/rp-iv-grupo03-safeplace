@@ -143,7 +143,6 @@ class TarefaTest {
         assertThat(resultado).isTrue();
         assertThat(tarefa.verificarEpisObrigatoriosTarefa()).containsExactly(capacete, luva);
         assertThat(tarefa.getEpisObrigatorios()).containsExactly(capacete, luva);
-        assertThat(tarefa.verificarEPIsObrigatoriosTarefa()).containsExactly(capacete, luva);
     }
 
     @Test

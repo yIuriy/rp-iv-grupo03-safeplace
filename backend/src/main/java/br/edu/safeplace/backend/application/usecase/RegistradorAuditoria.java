@@ -36,6 +36,7 @@ public class RegistradorAuditoria {
                     @Override public java.util.Optional<br.edu.safeplace.backend.domain.usuario.Colaborador> buscarPorId(Integer id) { return java.util.Optional.empty(); }
                     @Override public java.util.Optional<br.edu.safeplace.backend.domain.usuario.Colaborador> buscarPorCpf(String cpf) { return java.util.Optional.empty(); }
                     @Override public java.util.List<br.edu.safeplace.backend.domain.usuario.Colaborador> listarTodos() { return java.util.List.of(); }
+                    @Override public java.util.List<br.edu.safeplace.backend.domain.usuario.Colaborador> listarColaboradores(String nome, String cpf) { return java.util.List.of(); }
                     @Override public br.edu.safeplace.backend.domain.usuario.Colaborador salvar(br.edu.safeplace.backend.domain.usuario.Colaborador colaborador) { return colaborador; }
                 }
         ));
