@@ -54,6 +54,10 @@ public class RegistradorAuditoria {
         doOperadorAtual().remocao(entidade, entidadeId, justificativa);
     }
 
+    public void operacao(String tipoOperacao, String entidade, Integer entidadeId, String justificativa) {
+        doOperadorAtual().operacao(tipoOperacao, entidade, entidadeId, justificativa);
+    }
+
     /** Registra em nome do e-mail informado pela borda; sem ele, vale o operador autenticado ou SISTEMA. */
     public Autoria por(String operadorInformado) {
         return new Autoria(operadorAtual.emailInformadoOuSistema(operadorInformado), null);
@@ -88,6 +92,10 @@ public class RegistradorAuditoria {
 
         public void remocao(String entidade, Integer entidadeId, String justificativa) {
             gravar(LogAuditoria.REMOCAO, entidade, entidadeId, justificativa);
+        }
+
+        public void operacao(String tipoOperacao, String entidade, Integer entidadeId, String justificativa) {
+            gravar(tipoOperacao, entidade, entidadeId, justificativa);
         }
 
         private void gravar(String tipoOperacao, String entidade, Integer entidadeId, String justificativa) {
