@@ -166,7 +166,5 @@ class CertificacaoVencimentoClockTest {
         @Override public List<Treinamento> listarTodosTreinamentos() { return List.of(); }
         @Override public ExigenciaCapacitacao salvarExigencia(ExigenciaCapacitacao exigencia) { return exigencia; }
         @Override public List<ExigenciaCapacitacao> buscarExigenciasPorAlvo(ExigenciaCapacitacao.TipoAlvo tipoAlvo, Integer alvoId) { return List.of(); }
-        @Override public List<ExigenciaCapacitacao> listarTodasExigencias() { return List.of(); }
-        @Override public void removerExigencia(Integer id) {}
     }
 }

@@ -49,6 +49,30 @@ public non-sealed class Acidente extends Ocorrencia {
     protected Acidente() {
     }
 
+    /** Construtor a partir do Builder (GoF, criacional, #240). */
+    public Acidente(AcidenteBuilder builder) {
+        super(builder.getIdOcorrencia(), builder.getDescricao(), builder.getDataOcorrencia(),
+                builder.getDataRegistro() != null ? builder.getDataRegistro() : LocalDateTime.now(),
+                builder.getStatusOcorrencia() != null ? builder.getStatusOcorrencia() : StatusOcorrencia.ABERTA,
+                builder.getColaborador(), builder.getArea(), builder.getRelator(),
+                builder.getLocalInformado(), builder.getPlanoDeAcao());
+        NumeroProtocoloCAT protocolo = builder.getNumeroProtocoloCAT();
+        this.numeroProtocoloCAT = protocolo != null && !protocolo.semValor() ? protocolo : null;
+        this.causaRaiz = builder.getCausaRaiz();
+        this.tipo = builder.getTipo() != null ? builder.getTipo().trim() : null;
+        this.dano = builder.getDano() != null ? builder.getDano().trim() : null;
+        this.destino = builder.getDestino() != null ? builder.getDestino().trim() : null;
+        this.gravidade = builder.getGravidade();
+    }
+
+    public static AcidenteBuilder builder() {
+        return new AcidenteBuilder();
+    }
+
+    public static class Builder extends AcidenteBuilder {
+    }
+
+    @Deprecated
     public Acidente(
             Integer idOcorrencia,
             String descricao,
@@ -66,21 +90,23 @@ public non-sealed class Acidente extends Ocorrencia {
             NumeroProtocoloCAT numeroProtocoloCAT,
             String destino,
             NivelPerigo gravidade) {
-        super(idOcorrencia, descricao, dataOcorrencia, dataRegistro, statusOcorrencia,
-                colaborador, area, relator, local, planoDeAcao);
-
-        // Causa raiz, gravidade e formato do protocolo: OcorrenciaValidador (issue #266).
-
-        // Value Object (#230): o protocolo é guardado como veio, sem revalidar; sem texto, não foi emitido.
-        this.numeroProtocoloCAT = numeroProtocoloCAT != null && !numeroProtocoloCAT.semValor()
-                ? numeroProtocoloCAT
-                : null;
-
-        this.causaRaiz = causaRaiz;
-        this.tipo = tipo != null ? tipo.trim() : null;
-        this.dano = dano != null ? dano.trim() : null;
-        this.destino = destino != null ? destino.trim() : null;
-        this.gravidade = gravidade;
+        this(new AcidenteBuilder()
+                .idOcorrencia(idOcorrencia)
+                .descricao(descricao)
+                .dataOcorrencia(dataOcorrencia)
+                .dataRegistro(dataRegistro)
+                .statusOcorrencia(statusOcorrencia)
+                .colaborador(colaborador)
+                .area(area)
+                .relator(relator)
+                .localInformado(local)
+                .planoDeAcao(planoDeAcao)
+                .causaRaiz(causaRaiz)
+                .tipo(tipo)
+                .dano(dano)
+                .numeroProtocoloCAT(numeroProtocoloCAT)
+                .destino(destino)
+                .gravidade(gravidade));
     }
 
     @Override
@@ -109,24 +135,24 @@ public non-sealed class Acidente extends Ocorrencia {
             throw new IllegalStateException("Protocolo CAT já emitido e não pode ser alterado.");
         }
         NumeroProtocoloCAT protocolo = NumeroProtocoloCAT.gerar(this.getDataOcorrencia(), sequencial);
-        return new Acidente(
-                this.getIdOcorrencia(),
-                this.getDescricao(),
-                this.getDataOcorrencia(),
-                this.getDataRegistro(),
-                this.getStatusOcorrencia(),
-                this.getColaborador(),
-                this.getArea(),
-                this.getRelator(),
-                this.getLocalInformado(),
-                this.getPlanoDeAcao(),
-                this.causaRaiz,
-                this.tipo,
-                this.dano,
-                protocolo,
-                this.destino,
-                this.gravidade
-        );
+        return new AcidenteBuilder()
+                .idOcorrencia(this.getIdOcorrencia())
+                .descricao(this.getDescricao())
+                .dataOcorrencia(this.getDataOcorrencia())
+                .dataRegistro(this.getDataRegistro())
+                .statusOcorrencia(this.getStatusOcorrencia())
+                .colaborador(this.getColaborador())
+                .area(this.getArea())
+                .relator(this.getRelator())
+                .localInformado(this.getLocalInformado())
+                .planoDeAcao(this.getPlanoDeAcao())
+                .causaRaiz(this.causaRaiz)
+                .tipo(this.tipo)
+                .dano(this.dano)
+                .numeroProtocoloCAT(protocolo)
+                .destino(this.destino)
+                .gravidade(this.gravidade)
+                .build();
     }
 
     public NivelPerigo getGravidade() {

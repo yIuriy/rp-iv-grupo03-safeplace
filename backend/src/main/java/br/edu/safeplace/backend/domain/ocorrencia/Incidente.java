@@ -25,6 +25,25 @@ public non-sealed class Incidente extends Ocorrencia {
     protected Incidente() {
     }
 
+    /** Construtor a partir do Builder (GoF, criacional, #240). */
+    public Incidente(IncidenteBuilder builder) {
+        super(builder.getIdOcorrencia(), builder.getDescricao(), builder.getDataOcorrencia(),
+                builder.getDataRegistro() != null ? builder.getDataRegistro() : LocalDateTime.now(),
+                builder.getStatusOcorrencia() != null ? builder.getStatusOcorrencia() : StatusOcorrencia.ABERTA,
+                builder.getColaborador(), builder.getArea(), builder.getRelator(),
+                builder.getLocalInformado(), builder.getPlanoDeAcao());
+        this.situacaoRisco = builder.getSituacaoRisco() != null ? builder.getSituacaoRisco().trim() : null;
+        this.potencialDano = builder.getPotencialDano() != null ? builder.getPotencialDano().trim() : null;
+    }
+
+    public static IncidenteBuilder builder() {
+        return new IncidenteBuilder();
+    }
+
+    public static class Builder extends IncidenteBuilder {
+    }
+
+    @Deprecated
     public Incidente(
             Integer idOcorrencia,
             String descricao,
@@ -38,12 +57,19 @@ public non-sealed class Incidente extends Ocorrencia {
             PlanoDeAcao planoDeAcao,
             String situacaoRisco,
             String potencialDano) {
-        super(idOcorrencia, descricao, dataOcorrencia, dataRegistro, statusOcorrencia,
-                colaborador, area, relator, local, planoDeAcao);
-
-        // Situação de risco e potencial de dano: OcorrenciaValidador (issue #266).
-        this.situacaoRisco = situacaoRisco != null ? situacaoRisco.trim() : null;
-        this.potencialDano = potencialDano != null ? potencialDano.trim() : null;
+        this(new IncidenteBuilder()
+                .idOcorrencia(idOcorrencia)
+                .descricao(descricao)
+                .dataOcorrencia(dataOcorrencia)
+                .dataRegistro(dataRegistro)
+                .statusOcorrencia(statusOcorrencia)
+                .colaborador(colaborador)
+                .area(area)
+                .relator(relator)
+                .localInformado(local)
+                .planoDeAcao(planoDeAcao)
+                .situacaoRisco(situacaoRisco)
+                .potencialDano(potencialDano));
     }
 
     @Override

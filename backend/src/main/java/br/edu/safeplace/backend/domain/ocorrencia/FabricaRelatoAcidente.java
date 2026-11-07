@@ -33,24 +33,21 @@ public class FabricaRelatoAcidente implements FabricaRelatoOcorrencia<RegistrarA
         CausaRaizAcidente causaRaiz = CausaRaizAcidente.de(input.causaRaiz());
         NivelPerigo gravidade = Acidente.lerGravidade(input.gravidade());
 
-        return new Acidente(
-                null,
-                input.descricao(),
-                input.dataOcorrencia(),
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                colaborador,
-                area,
-                relator,
-                null,
-                null,
-                causaRaiz,
-                input.tipo(),
-                input.dano(),
-                protocolo,
-                input.destino(),
-                gravidade
-        );
+        return new AcidenteBuilder()
+                .descricao(input.descricao())
+                .dataOcorrencia(input.dataOcorrencia())
+                .dataRegistro(LocalDateTime.now())
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .colaborador(colaborador)
+                .area(area)
+                .relator(relator)
+                .causaRaiz(causaRaiz)
+                .tipo(input.tipo())
+                .dano(input.dano())
+                .numeroProtocoloCAT(protocolo)
+                .destino(input.destino())
+                .gravidade(gravidade)
+                .build();
     }
 
     @Override

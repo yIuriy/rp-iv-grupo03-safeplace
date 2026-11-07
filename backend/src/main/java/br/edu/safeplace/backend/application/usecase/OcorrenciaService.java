@@ -305,40 +305,42 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
                 CausaRaizAcidente causaRaiz = inputDTO.causaRaiz() == null || inputDTO.causaRaiz().isBlank()
                         ? acidente.getCausaRaiz()
                         : CausaRaizAcidente.de(inputDTO.causaRaiz());
-                Acidente atualizado = new Acidente(
-                        acidente.getIdOcorrencia(),
-                        inputDTO.descricao(),
-                        inputDTO.dataOcorrencia(),
-                        acidente.getDataRegistro(),
-                        acidente.getStatusOcorrencia(),
-                        colaborador,
-                        area,
-                        acidente.getRelator(),
-                        acidente.getLocalInformado(),
-                        acidente.getPlanoDeAcao(),
-                        causaRaiz,
-                        inputDTO.tipo(),
-                        inputDTO.dano(),
-                        acidente.getProtocoloCAT(),
-                        inputDTO.destino(),
-                        gravidade);
+                Acidente atualizado = Acidente.builder()
+                        .idOcorrencia(acidente.getIdOcorrencia())
+                        .descricao(inputDTO.descricao())
+                        .dataOcorrencia(inputDTO.dataOcorrencia())
+                        .dataRegistro(acidente.getDataRegistro())
+                        .statusOcorrencia(acidente.getStatusOcorrencia())
+                        .colaborador(colaborador)
+                        .area(area)
+                        .relator(acidente.getRelator())
+                        .localInformado(acidente.getLocalInformado())
+                        .planoDeAcao(acidente.getPlanoDeAcao())
+                        .causaRaiz(causaRaiz)
+                        .tipo(inputDTO.tipo())
+                        .dano(inputDTO.dano())
+                        .numeroProtocoloCAT(acidente.getProtocoloCAT())
+                        .destino(inputDTO.destino())
+                        .gravidade(gravidade)
+                        .build();
                 validador.validar(atualizado);
                 yield repository.salvarAcidente(atualizado);
             }
             case Incidente incidente -> {
-                Incidente atualizado = new Incidente(
-                        incidente.getIdOcorrencia(),
-                        inputDTO.descricao(),
-                        inputDTO.dataOcorrencia(),
-                        incidente.getDataRegistro(),
-                        incidente.getStatusOcorrencia(),
-                        colaborador,
-                        area,
-                        incidente.getRelator(),
-                        incidente.getLocalInformado(),
-                        incidente.getPlanoDeAcao(),
-                        inputDTO.situacaoRisco(),
-                        inputDTO.potencialDano());
+                Incidente atualizado = Incidente.builder()
+                        .idOcorrencia(incidente.getIdOcorrencia())
+                        .descricao(inputDTO.descricao())
+                        .dataOcorrencia(inputDTO.dataOcorrencia())
+                        .dataRegistro(incidente.getDataRegistro())
+                        .statusOcorrencia(incidente.getStatusOcorrencia())
+                        .colaborador(colaborador)
+                        .area(area)
+                        .relator(incidente.getRelator())
+                        .localInformado(incidente.getLocalInformado())
+                        .planoDeAcao(incidente.getPlanoDeAcao())
+                        .situacaoRisco(inputDTO.situacaoRisco())
+                        .potencialDano(inputDTO.potencialDano())
+                        .build();
                 validador.validar(atualizado);
                 yield repository.salvarIncidente(atualizado);
             }

@@ -29,20 +29,17 @@ public class FabricaRelatoIncidente implements FabricaRelatoOcorrencia<Registrar
         if (input == null) {
             throw new IllegalArgumentException("Dados de entrada de incidente não podem ser nulos.");
         }
-        return new Incidente(
-                null,
-                input.descricao(),
-                input.dataOcorrencia(),
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                colaborador,
-                area,
-                relator,
-                null,
-                null,
-                input.situacaoRisco(),
-                input.potencialDano()
-        );
+        return new IncidenteBuilder()
+                .descricao(input.descricao())
+                .dataOcorrencia(input.dataOcorrencia())
+                .dataRegistro(LocalDateTime.now())
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .colaborador(colaborador)
+                .area(area)
+                .relator(relator)
+                .situacaoRisco(input.situacaoRisco())
+                .potencialDano(input.potencialDano())
+                .build();
     }
 
     @Override
