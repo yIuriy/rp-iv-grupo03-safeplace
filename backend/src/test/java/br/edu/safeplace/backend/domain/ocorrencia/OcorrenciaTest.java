@@ -33,20 +33,20 @@ class OcorrenciaTest {
             Colaborador relator,
             String local,
             PlanoDeAcao planoDeAcao) {
-        return new Incidente(
-                idOcorrencia,
-                descricao,
-                dataOcorrencia,
-                dataRegistro,
-                statusOcorrencia,
-                colaborador,
-                area,
-                relator,
-                local,
-                planoDeAcao,
-                "Risco",
-                "Dano"
-        );
+        return Incidente.builder()
+                .idOcorrencia(idOcorrencia)
+                .descricao(descricao)
+                .dataOcorrencia(dataOcorrencia)
+                .dataRegistro(dataRegistro)
+                .statusOcorrencia(statusOcorrencia)
+                .colaborador(colaborador)
+                .area(area)
+                .relator(relator)
+                .localInformado(local)
+                .planoDeAcao(planoDeAcao)
+                .situacaoRisco("Risco")
+                .potencialDano("Dano")
+                .build();
     }
 
     @Test

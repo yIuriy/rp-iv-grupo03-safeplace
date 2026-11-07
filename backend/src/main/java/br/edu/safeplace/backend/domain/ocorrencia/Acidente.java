@@ -72,43 +72,6 @@ public non-sealed class Acidente extends Ocorrencia {
     public static class Builder extends AcidenteBuilder {
     }
 
-    @Deprecated
-    public Acidente(
-            Integer idOcorrencia,
-            String descricao,
-            LocalDateTime dataOcorrencia,
-            LocalDateTime dataRegistro,
-            StatusOcorrencia statusOcorrencia,
-            Colaborador colaborador,
-            AreaRisco area,
-            Colaborador relator,
-            String local,
-            PlanoDeAcao planoDeAcao,
-            CausaRaizAcidente causaRaiz,
-            String tipo,
-            String dano,
-            NumeroProtocoloCAT numeroProtocoloCAT,
-            String destino,
-            NivelPerigo gravidade) {
-        this(new AcidenteBuilder()
-                .idOcorrencia(idOcorrencia)
-                .descricao(descricao)
-                .dataOcorrencia(dataOcorrencia)
-                .dataRegistro(dataRegistro)
-                .statusOcorrencia(statusOcorrencia)
-                .colaborador(colaborador)
-                .area(area)
-                .relator(relator)
-                .localInformado(local)
-                .planoDeAcao(planoDeAcao)
-                .causaRaiz(causaRaiz)
-                .tipo(tipo)
-                .dano(dano)
-                .numeroProtocoloCAT(numeroProtocoloCAT)
-                .destino(destino)
-                .gravidade(gravidade));
-    }
-
     @Override
     public TipoOcorrencia getTipoOcorrencia() {
         return TipoOcorrencia.ACIDENTE;

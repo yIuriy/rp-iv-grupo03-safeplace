@@ -46,9 +46,17 @@ class OcorrenciaServiceNotificadorTest {
             List.of(), null, List.of());
     private final Colaborador colaborador = new Colaborador(20, "11122233344", "Carlos",
             LocalDate.of(1995, 2, 2), null, true, null, null);
-    private final Incidente salvo = new Incidente(2, "Fagulha perto de inflamáveis",
-            LocalDateTime.of(2026, 9, 20, 11, 0), LocalDateTime.of(2026, 9, 20, 11, 5), StatusOcorrencia.ABERTA,
-            colaborador, area, null, null, null, "Vazamento de faíscas", "Incêndio");
+    private final Incidente salvo = Incidente.builder()
+            .idOcorrencia(2)
+            .descricao("Fagulha perto de inflamáveis")
+            .dataOcorrencia(LocalDateTime.of(2026, 9, 20, 11, 0))
+            .dataRegistro(LocalDateTime.of(2026, 9, 20, 11, 5))
+            .statusOcorrencia(StatusOcorrencia.ABERTA)
+            .colaborador(colaborador)
+            .area(area)
+            .situacaoRisco("Vazamento de faíscas")
+            .potencialDano("Incêndio")
+            .build();
 
     private OcorrenciaRepository repository;
     private AreaRiscoRepository areaRepo;

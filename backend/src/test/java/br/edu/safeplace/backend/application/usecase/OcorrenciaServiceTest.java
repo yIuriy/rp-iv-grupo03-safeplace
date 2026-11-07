@@ -353,24 +353,19 @@ class OcorrenciaServiceTest {
     @Test
     @DisplayName("Deve consolidar CAT de acidente legado gerando protocolo sequencial único e imutável")
     void deveConsolidarCATDeAcidente() {
-        Acidente acidenteSemProtocolo = new Acidente(
-                null,
-                "Queimadura leve por respingo",
-                LocalDateTime.of(2026, 9, 12, 9, 0),
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                colaborador,
-                area,
-                null,
-                null,
-                null,
-                CausaRaizAcidente.FALHA_EPI,
-                "Queimadura",
-                "Braco esquerdo",
-                null,
-                "Posto de enfermagem",
-                NivelPerigo.MEDIO
-        );
+        Acidente acidenteSemProtocolo = Acidente.builder()
+                .descricao("Queimadura leve por respingo")
+                .dataOcorrencia(LocalDateTime.of(2026, 9, 12, 9, 0))
+                .dataRegistro(LocalDateTime.now())
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .colaborador(colaborador)
+                .area(area)
+                .causaRaiz(CausaRaizAcidente.FALHA_EPI)
+                .tipo("Queimadura")
+                .dano("Braco esquerdo")
+                .destino("Posto de enfermagem")
+                .gravidade(NivelPerigo.MEDIO)
+                .build();
         Acidente salvo = repository.salvarAcidente(acidenteSemProtocolo);
 
         assertThat(salvo.getNumeroProtocoloCAT()).isNull();
@@ -434,12 +429,30 @@ class OcorrenciaServiceTest {
         LogAuditoriaRepository logRepo = mock(LogAuditoriaRepository.class);
         OcorrenciaService useCaseComLog = novoUseCase(logRepo);
 
-        Acidente ac1 = new Acidente(1, "Desc 1", LocalDateTime.of(2026, 9, 1, 10, 0), LocalDateTime.now(),
-                StatusOcorrencia.ABERTA, colaborador, area, null, null, null,
-                CausaRaizAcidente.OUTRO, null, null, NumeroProtocoloCAT.de("CAT-2026-09-0001"), null, NivelPerigo.BAIXO);
-        Acidente ac2 = new Acidente(2, "Desc 2", LocalDateTime.of(2026, 9, 2, 10, 0), LocalDateTime.now(),
-                StatusOcorrencia.ABERTA, colaborador, area, null, null, null,
-                CausaRaizAcidente.OUTRO, null, null, NumeroProtocoloCAT.de("CAT-2026-09-0002"), null, NivelPerigo.BAIXO);
+        Acidente ac1 = Acidente.builder()
+                .idOcorrencia(1)
+                .descricao("Desc 1")
+                .dataOcorrencia(LocalDateTime.of(2026, 9, 1, 10, 0))
+                .dataRegistro(LocalDateTime.now())
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .colaborador(colaborador)
+                .area(area)
+                .causaRaiz(CausaRaizAcidente.OUTRO)
+                .numeroProtocoloCAT(NumeroProtocoloCAT.de("CAT-2026-09-0001"))
+                .gravidade(NivelPerigo.BAIXO)
+                .build();
+        Acidente ac2 = Acidente.builder()
+                .idOcorrencia(2)
+                .descricao("Desc 2")
+                .dataOcorrencia(LocalDateTime.of(2026, 9, 2, 10, 0))
+                .dataRegistro(LocalDateTime.now())
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .colaborador(colaborador)
+                .area(area)
+                .causaRaiz(CausaRaizAcidente.OUTRO)
+                .numeroProtocoloCAT(NumeroProtocoloCAT.de("CAT-2026-09-0002"))
+                .gravidade(NivelPerigo.BAIXO)
+                .build();
         repository.salvarAcidente(ac1);
         repository.salvarAcidente(ac2);
 
@@ -579,23 +592,24 @@ class OcorrenciaServiceTest {
                 ocorrencias.add(acidente);
                 return acidente;
             }
-            Acidente salvo = new Acidente(
-                    proximoId++,
-                    acidente.getDescricao(),
-                    acidente.getDataOcorrencia(),
-                    acidente.getDataRegistro(),
-                    acidente.getStatusOcorrencia(),
-                    acidente.getColaborador(),
-                    acidente.getArea(),
-                    acidente.getRelator(),
-                    acidente.getLocalInformado(),
-                    acidente.getPlanoDeAcao(),
-                    acidente.getCausaRaiz(),
-                    acidente.getTipo(),
-                    acidente.getDano(),
-                    acidente.getProtocoloCAT(),
-                    acidente.getDestino(),
-                    acidente.getGravidade());
+            Acidente salvo = Acidente.builder()
+                    .idOcorrencia(proximoId++)
+                    .descricao(acidente.getDescricao())
+                    .dataOcorrencia(acidente.getDataOcorrencia())
+                    .dataRegistro(acidente.getDataRegistro())
+                    .statusOcorrencia(acidente.getStatusOcorrencia())
+                    .colaborador(acidente.getColaborador())
+                    .area(acidente.getArea())
+                    .relator(acidente.getRelator())
+                    .localInformado(acidente.getLocalInformado())
+                    .planoDeAcao(acidente.getPlanoDeAcao())
+                    .causaRaiz(acidente.getCausaRaiz())
+                    .tipo(acidente.getTipo())
+                    .dano(acidente.getDano())
+                    .numeroProtocoloCAT(acidente.getProtocoloCAT())
+                    .destino(acidente.getDestino())
+                    .gravidade(acidente.getGravidade())
+                    .build();
             ocorrencias.add(salvo);
             return salvo;
         }
@@ -607,19 +621,20 @@ class OcorrenciaServiceTest {
                 ocorrencias.add(incidente);
                 return incidente;
             }
-            Incidente salvo = new Incidente(
-                    proximoId++,
-                    incidente.getDescricao(),
-                    incidente.getDataOcorrencia(),
-                    incidente.getDataRegistro(),
-                    incidente.getStatusOcorrencia(),
-                    incidente.getColaborador(),
-                    incidente.getArea(),
-                    incidente.getRelator(),
-                    incidente.getLocalInformado(),
-                    incidente.getPlanoDeAcao(),
-                    incidente.getSituacaoRisco(),
-                    incidente.getPotencialDano());
+            Incidente salvo = Incidente.builder()
+                    .idOcorrencia(proximoId++)
+                    .descricao(incidente.getDescricao())
+                    .dataOcorrencia(incidente.getDataOcorrencia())
+                    .dataRegistro(incidente.getDataRegistro())
+                    .statusOcorrencia(incidente.getStatusOcorrencia())
+                    .colaborador(incidente.getColaborador())
+                    .area(incidente.getArea())
+                    .relator(incidente.getRelator())
+                    .localInformado(incidente.getLocalInformado())
+                    .planoDeAcao(incidente.getPlanoDeAcao())
+                    .situacaoRisco(incidente.getSituacaoRisco())
+                    .potencialDano(incidente.getPotencialDano())
+                    .build();
             ocorrencias.add(salvo);
             return salvo;
         }

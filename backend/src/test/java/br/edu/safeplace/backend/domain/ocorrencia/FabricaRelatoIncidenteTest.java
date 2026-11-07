@@ -68,11 +68,18 @@ class FabricaRelatoIncidenteTest {
     @Test
     @DisplayName("Cria NotificacaoOcorrencia da família sem protocolo CAT")
     void criaNotificacaoDeIncidenteSemProtocolo() {
-        Incidente incidente = new Incidente(
-                15, "Quase colisão", FATO, FATO, StatusOcorrencia.ABERTA,
-                COLABORADOR, AREA, RELATOR, null, null,
-                "Falta de sinalização", "Trauma leve"
-        );
+        Incidente incidente = Incidente.builder()
+                .idOcorrencia(15)
+                .descricao("Quase colisão")
+                .dataOcorrencia(FATO)
+                .dataRegistro(FATO)
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .colaborador(COLABORADOR)
+                .area(AREA)
+                .relator(RELATOR)
+                .situacaoRisco("Falta de sinalização")
+                .potencialDano("Trauma leve")
+                .build();
 
         NotificacaoOcorrencia notificacao = fabrica.criarNotificacao(incidente);
 

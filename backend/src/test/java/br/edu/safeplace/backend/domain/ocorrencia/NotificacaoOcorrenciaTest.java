@@ -27,8 +27,17 @@ class NotificacaoOcorrenciaTest {
     @Test
     @DisplayName("Notificação de acidente traz tipo, protocolo e área (DS09, VisaoNotificacao)")
     void deveMontarNotificacaoDeAcidente() {
-        Acidente acidente = new Acidente(7, "Queimadura", FATO, FATO, StatusOcorrencia.ABERTA, null, area(), null,
-                null, null, CausaRaizAcidente.FALHA_EPI, null, null, NumeroProtocoloCAT.de("CAT-2026-09-0003"), null, NivelPerigo.ALTO);
+        Acidente acidente = Acidente.builder()
+                .idOcorrencia(7)
+                .descricao("Queimadura")
+                .dataOcorrencia(FATO)
+                .dataRegistro(FATO)
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .area(area())
+                .causaRaiz(CausaRaizAcidente.FALHA_EPI)
+                .numeroProtocoloCAT(NumeroProtocoloCAT.de("CAT-2026-09-0003"))
+                .gravidade(NivelPerigo.ALTO)
+                .build();
 
         NotificacaoOcorrencia notificacao = new FabricaRelatoAcidente().criarNotificacao(acidente);
 
@@ -44,8 +53,16 @@ class NotificacaoOcorrenciaTest {
     @Test
     @DisplayName("Notificação de incidente não tem protocolo (DS09, seção 2.1)")
     void deveMontarNotificacaoDeIncidente() {
-        Incidente incidente = new Incidente(8, "Piso molhado", FATO, FATO, StatusOcorrencia.ABERTA, null, area(), null,
-                null, null, "Vazamento", "Queda");
+        Incidente incidente = Incidente.builder()
+                .idOcorrencia(8)
+                .descricao("Piso molhado")
+                .dataOcorrencia(FATO)
+                .dataRegistro(FATO)
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .area(area())
+                .situacaoRisco("Vazamento")
+                .potencialDano("Queda")
+                .build();
 
         NotificacaoOcorrencia notificacao = new FabricaRelatoIncidente().criarNotificacao(incidente);
 

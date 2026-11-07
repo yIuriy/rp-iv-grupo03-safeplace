@@ -39,14 +39,29 @@ class OcorrenciaValidadorTest {
 
     private static Acidente acidente(String descricao, LocalDateTime data, CausaRaizAcidente causa,
             String protocolo, NivelPerigo gravidade) {
-        return new Acidente(null, descricao, data, LocalDateTime.now(), StatusOcorrencia.ABERTA,
-                null, null, null, null, null, causa, "Tipo", "Dano", NumeroProtocoloCAT.de(protocolo), "Destino",
-                gravidade);
+        return Acidente.builder()
+                .descricao(descricao)
+                .dataOcorrencia(data)
+                .dataRegistro(LocalDateTime.now())
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .causaRaiz(causa)
+                .tipo("Tipo")
+                .dano("Dano")
+                .numeroProtocoloCAT(NumeroProtocoloCAT.de(protocolo))
+                .destino("Destino")
+                .gravidade(gravidade)
+                .build();
     }
 
     private static Incidente incidente(String descricao, LocalDateTime data, String situacao, String potencial) {
-        return new Incidente(null, descricao, data, LocalDateTime.now(), StatusOcorrencia.ABERTA,
-                null, null, null, null, null, situacao, potencial);
+        return Incidente.builder()
+                .descricao(descricao)
+                .dataOcorrencia(data)
+                .dataRegistro(LocalDateTime.now())
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .situacaoRisco(situacao)
+                .potencialDano(potencial)
+                .build();
     }
 
     @Test

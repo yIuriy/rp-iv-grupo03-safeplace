@@ -22,8 +22,16 @@ class AcidenteProtocoloCATTest {
     private static final LocalDateTime FATO = LocalDateTime.of(2026, 9, 10, 10, 0);
 
     private static Acidente acidente(Integer id, NumeroProtocoloCAT protocolo) {
-        return new Acidente(id, "Queimadura na bancada", FATO, FATO, StatusOcorrencia.ABERTA, null, null, null,
-                null, null, CausaRaizAcidente.FALHA_EPI, null, null, protocolo, null, NivelPerigo.ALTO);
+        return Acidente.builder()
+                .idOcorrencia(id)
+                .descricao("Queimadura na bancada")
+                .dataOcorrencia(FATO)
+                .dataRegistro(FATO)
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .causaRaiz(CausaRaizAcidente.FALHA_EPI)
+                .numeroProtocoloCAT(protocolo)
+                .gravidade(NivelPerigo.ALTO)
+                .build();
     }
 
     @Test

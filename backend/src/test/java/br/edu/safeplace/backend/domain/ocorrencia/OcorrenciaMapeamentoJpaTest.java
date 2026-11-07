@@ -41,12 +41,9 @@ class OcorrenciaMapeamentoJpaTest {
     @DisplayName("Identidade é pelo id quando ele existe (#254)")
     void identidadeEhPeloId() {
         LocalDateTime agora = LocalDateTime.now();
-        Acidente a1 = new Acidente(50, "Desc", agora, agora, StatusOcorrencia.ABERTA, null, null, null, null, null,
-                CausaRaizAcidente.FALHA_EPI, "Tipo", "Dano", null, "Destino", null);
-        Acidente a2 = new Acidente(50, "Outra desc", agora, agora, StatusOcorrencia.EM_TRIAGEM, null, null, null, null, null,
-                CausaRaizAcidente.OUTRO, "Outro tipo", "Outro dano", null, "Outro destino", null);
-        Acidente a3 = new Acidente(51, "Desc", agora, agora, StatusOcorrencia.ABERTA, null, null, null, null, null,
-                CausaRaizAcidente.FALHA_EPI, "Tipo", "Dano", null, "Destino", null);
+        Acidente a1 = Acidente.builder().idOcorrencia(50).descricao("Desc").build();
+        Acidente a2 = Acidente.builder().idOcorrencia(50).descricao("Outra desc").statusOcorrencia(StatusOcorrencia.EM_TRIAGEM).build();
+        Acidente a3 = Acidente.builder().idOcorrencia(51).descricao("Desc").build();
 
         assertThat(a1).isEqualTo(a2).hasSameHashCodeAs(a2);
         assertThat(a1).isNotEqualTo(a3);

@@ -38,20 +38,18 @@ class IncidenteTest {
         Colaborador colaborador = Colaborador.novo("Juliana", "87455877074", LocalDate.of(1995, 12, 1), "juliana@empresa.com");
         GestorDeSeguranca gestor = GestorDeSeguranca.novo("Fernando", "49216091040", LocalDate.of(1982, 8, 14), "fernando@empresa.com", "senha123");
 
-        Incidente incidente = new Incidente(
-                2,
-                "Palete instável quase desabou sobre corredor",
-                dataFato,
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                colaborador,
-                area,
-                gestor,
-                null,
-                null,
-                "Paletes empilhados além da altura máxima permitida",
-                "Esmagamento e fraturas múltiplas"
-        );
+        Incidente incidente = Incidente.builder()
+                .idOcorrencia(2)
+                .descricao("Palete instável quase desabou sobre corredor")
+                .dataOcorrencia(dataFato)
+                .dataRegistro(LocalDateTime.now())
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .colaborador(colaborador)
+                .area(area)
+                .relator(gestor)
+                .situacaoRisco("Paletes empilhados além da altura máxima permitida")
+                .potencialDano("Esmagamento e fraturas múltiplas")
+                .build();
 
         assertThat(incidente.getId()).isEqualTo(2);
         assertThat(incidente.getTipoOcorrencia()).isEqualTo(TipoOcorrencia.INCIDENTE);
@@ -78,20 +76,15 @@ class IncidenteTest {
                         .comDescricao("Colete")
                         .build()));
 
-        Incidente incidente = new Incidente(
-                null,
-                "Quase atropelamento por empilhadeira",
-                LocalDateTime.of(2026, 9, 8, 11, 0),
-                LocalDateTime.now(),
-                StatusOcorrencia.ABERTA,
-                null,
-                area,
-                null,
-                null,
-                null,
-                "Falta de sinalização no cruzamento",
-                "Atropelamento com trauma severo"
-        );
+        Incidente incidente = Incidente.builder()
+                .descricao("Quase atropelamento por empilhadeira")
+                .dataOcorrencia(LocalDateTime.of(2026, 9, 8, 11, 0))
+                .dataRegistro(LocalDateTime.now())
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .area(area)
+                .situacaoRisco("Falta de sinalização no cruzamento")
+                .potencialDano("Atropelamento com trauma severo")
+                .build();
 
         assertThat(incidente.getId()).isNull();
         assertThat(incidente.getTipoOcorrencia()).isEqualTo(TipoOcorrencia.INCIDENTE);

@@ -93,17 +93,37 @@ class PlanoDeAcaoServiceTest {
         colaborador = new Colaborador(10, "11122233344", "Carlos", LocalDate.of(1990, 1, 1), "carlos@safeplace.com", true, LocalDateTime.now(), LocalDateTime.now());
         setor = new Setor(20, "Manutenção", "Setor de Manutenção", "Bloco M", NivelPerigo.MEDIO);
 
-        ocorrenciaGrave = new Acidente(
-                1, "Amputacao de dedo", LocalDateTime.now().minusDays(1), LocalDateTime.now(),
-                StatusOcorrencia.ABERTA, colaborador, null, null, "Prensa",
-                null, CausaRaizAcidente.FALHA_EPI, "Amputação", "Grave", NumeroProtocoloCAT.de("CAT-2026-09-0001"), "Hospital", NivelPerigo.CRITICO
-        );
+        ocorrenciaGrave = Acidente.builder()
+                .idOcorrencia(1)
+                .descricao("Amputacao de dedo")
+                .dataOcorrencia(LocalDateTime.now().minusDays(1))
+                .dataRegistro(LocalDateTime.now())
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .colaborador(colaborador)
+                .localInformado("Prensa")
+                .causaRaiz(CausaRaizAcidente.FALHA_EPI)
+                .tipo("Amputação")
+                .dano("Grave")
+                .numeroProtocoloCAT(NumeroProtocoloCAT.de("CAT-2026-09-0001"))
+                .destino("Hospital")
+                .gravidade(NivelPerigo.CRITICO)
+                .build();
 
-        ocorrenciaLeve = new Acidente(
-                2, "Escoriacao no braco", LocalDateTime.now().minusDays(1), LocalDateTime.now(),
-                StatusOcorrencia.ABERTA, colaborador, null, null, "Pátio",
-                null, CausaRaizAcidente.OUTRO, "Escoriação", "Leve", NumeroProtocoloCAT.de("CAT-2026-09-0002"), "Ambulatório", NivelPerigo.BAIXO
-        );
+        ocorrenciaLeve = Acidente.builder()
+                .idOcorrencia(2)
+                .descricao("Escoriacao no braco")
+                .dataOcorrencia(LocalDateTime.now().minusDays(1))
+                .dataRegistro(LocalDateTime.now())
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .colaborador(colaborador)
+                .localInformado("Pátio")
+                .causaRaiz(CausaRaizAcidente.OUTRO)
+                .tipo("Escoriação")
+                .dano("Leve")
+                .numeroProtocoloCAT(NumeroProtocoloCAT.de("CAT-2026-09-0002"))
+                .destino("Ambulatório")
+                .gravidade(NivelPerigo.BAIXO)
+                .build();
     }
 
     @Test

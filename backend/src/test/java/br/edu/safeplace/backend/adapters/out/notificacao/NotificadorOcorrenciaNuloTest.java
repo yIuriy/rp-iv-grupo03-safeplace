@@ -25,9 +25,15 @@ class NotificadorOcorrenciaNuloTest {
     @Test
     @DisplayName("Notificar um relato não faz nada e não lança exceção")
     void notificarNaoTemEfeito() {
-        Incidente incidente = new Incidente(7, "Piso molhado", LocalDateTime.of(2026, 10, 1, 9, 0),
-                LocalDateTime.of(2026, 10, 1, 9, 5), StatusOcorrencia.ABERTA, null, null, null, null, null,
-                "Piso molhado", "Queda");
+        Incidente incidente = Incidente.builder()
+                .idOcorrencia(7)
+                .descricao("Piso molhado")
+                .dataOcorrencia(LocalDateTime.of(2026, 10, 1, 9, 0))
+                .dataRegistro(LocalDateTime.of(2026, 10, 1, 9, 5))
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .situacaoRisco("Piso molhado")
+                .potencialDano("Queda")
+                .build();
 
         assertThatCode(() -> notificador.notificarGestor(incidente)).doesNotThrowAnyException();
         assertThat(notificador.listar()).isEmpty();

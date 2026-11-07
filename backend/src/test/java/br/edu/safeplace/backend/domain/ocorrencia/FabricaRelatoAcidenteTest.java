@@ -73,12 +73,22 @@ class FabricaRelatoAcidenteTest {
     @Test
     @DisplayName("Cria NotificacaoOcorrencia da família contendo dados do acidente e protocolo CAT")
     void criaNotificacaoDeAcidenteComProtocolo() {
-        Acidente acidente = new Acidente(
-                10, "Queda", FATO, FATO, StatusOcorrencia.ABERTA,
-                COLABORADOR, AREA, RELATOR, null, null,
-                CausaRaizAcidente.FALHA_EPI, "Queda", "Escoriação",
-                NumeroProtocoloCAT.de("CAT-2026-11-0010"), "Ambulatório", NivelPerigo.MEDIO
-        );
+        Acidente acidente = Acidente.builder()
+                .idOcorrencia(10)
+                .descricao("Queda")
+                .dataOcorrencia(FATO)
+                .dataRegistro(FATO)
+                .statusOcorrencia(StatusOcorrencia.ABERTA)
+                .colaborador(COLABORADOR)
+                .area(AREA)
+                .relator(RELATOR)
+                .causaRaiz(CausaRaizAcidente.FALHA_EPI)
+                .tipo("Queda")
+                .dano("Escoriação")
+                .numeroProtocoloCAT(NumeroProtocoloCAT.de("CAT-2026-11-0010"))
+                .destino("Ambulatório")
+                .gravidade(NivelPerigo.MEDIO)
+                .build();
 
         NotificacaoOcorrencia notificacao = fabrica.criarNotificacao(acidente);
 
