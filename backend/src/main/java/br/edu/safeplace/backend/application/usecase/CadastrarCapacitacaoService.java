@@ -1,5 +1,8 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import java.time.Clock;
+import java.time.LocalDate;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +35,7 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
     private final Validador<Certificacao> certificacaoValidador;
     private final Validador<Treinamento> treinamentoValidador;
     private final Validador<ExigenciaCapacitacao> exigenciaValidador;
+    private final Clock clock;
 
     /** Usa os validadores padrão; usado pelos testes sem contexto Spring. */
     public CadastrarCapacitacaoService(
@@ -39,7 +43,18 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
             LogAuditoriaRepository logAuditoriaRepository,
             OperadorAtual operadorAtual) {
         this(capacitacaoRepository, logAuditoriaRepository, new CertificacaoValidador(),
-                new TreinamentoValidador(), new ExigenciaCapacitacaoValidador(), operadorAtual);
+                new TreinamentoValidador(), new ExigenciaCapacitacaoValidador(), operadorAtual, Clock.systemDefaultZone());
+    }
+
+    public CadastrarCapacitacaoService(
+            CapacitacaoRepository capacitacaoRepository,
+            LogAuditoriaRepository logAuditoriaRepository,
+            Validador<Certificacao> certificacaoValidador,
+            Validador<Treinamento> treinamentoValidador,
+            Validador<ExigenciaCapacitacao> exigenciaValidador,
+            OperadorAtual operadorAtual) {
+        this(capacitacaoRepository, logAuditoriaRepository, certificacaoValidador,
+                treinamentoValidador, exigenciaValidador, operadorAtual, Clock.systemDefaultZone());
     }
 
     @Autowired
@@ -49,7 +64,8 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
             Validador<Certificacao> certificacaoValidador,
             Validador<Treinamento> treinamentoValidador,
             Validador<ExigenciaCapacitacao> exigenciaValidador,
-            OperadorAtual operadorAtual) {
+            OperadorAtual operadorAtual,
+            Clock clock) {
         this.certificacaoValidador = certificacaoValidador;
         this.treinamentoValidador = treinamentoValidador;
         this.exigenciaValidador = exigenciaValidador;
@@ -59,11 +75,13 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
                 logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
         // Adapter (#236): o operador vem da porta OperadorAutenticado.
         this.operadorAtual = java.util.Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
+        this.clock = java.util.Objects.requireNonNull(clock, "Clock é obrigatório.");
     }
 
     @Override
     public CertificacaoOutputDTO cadastrarCertificacao(CadastrarCertificacaoInputDTO entrada) {
-        Certificacao nova = Certificacao.cadastrar(entrada.nome(), entrada.dataVencimento(), entrada.dataEmissao(), entrada.colaboradorId());
+        LocalDate hoje = LocalDate.now(clock);
+        Certificacao nova = Certificacao.cadastrar(entrada.nome(), entrada.dataVencimento(), entrada.dataEmissao(), entrada.colaboradorId(), hoje);
         // Chain of Responsibility (#265): valida antes do repository.
         certificacaoValidador.validar(nova);
         Certificacao salva = capacitacaoRepository.salvarCertificacao(nova);

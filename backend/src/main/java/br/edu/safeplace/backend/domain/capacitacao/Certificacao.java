@@ -15,12 +15,16 @@ public class Certificacao {
     private final Integer colaboradorId;
 
     public Certificacao(Integer id, String nome, LocalDate dataVencimento, LocalDate dataEmissao, Integer colaboradorId) {
+        this(id, nome, dataVencimento, dataEmissao, colaboradorId, dataEmissao);
+    }
+
+    public Certificacao(Integer id, String nome, LocalDate dataVencimento, LocalDate dataEmissao, Integer colaboradorId, LocalDate dataReferencia) {
         this.id = id;
         this.nome = nome != null ? nome.trim() : null;
         this.dataVencimento = dataVencimento;
         this.dataEmissao = dataEmissao;
         this.colaboradorId = colaboradorId;
-        this.status = dataVencimento != null ? calcularStatus(LocalDate.now()) : null;
+        this.status = (dataVencimento != null && dataReferencia != null) ? calcularStatus(dataReferencia) : null;
     }
 
     public static boolean validarInconsistenciaCronologica(LocalDate dataEmissao, LocalDate dataValidade) {
@@ -32,7 +36,11 @@ public class Certificacao {
 
     /** Cadastro de certificação; as datas e o vínculo são validados por CertificacaoValidador (#265). */
     public static Certificacao cadastrar(String nome, LocalDate dataVencimento, LocalDate dataEmissao, Integer colaboradorId) {
-        return new Certificacao(null, nome, dataVencimento, dataEmissao, colaboradorId);
+        return cadastrar(nome, dataVencimento, dataEmissao, colaboradorId, dataEmissao);
+    }
+
+    public static Certificacao cadastrar(String nome, LocalDate dataVencimento, LocalDate dataEmissao, Integer colaboradorId, LocalDate dataReferencia) {
+        return new Certificacao(null, nome, dataVencimento, dataEmissao, colaboradorId, dataReferencia);
     }
 
     public StatusCertificacao calcularStatus(LocalDate dataReferencia) {

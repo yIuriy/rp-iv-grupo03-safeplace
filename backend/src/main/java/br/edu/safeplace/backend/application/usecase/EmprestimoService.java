@@ -11,6 +11,7 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -67,6 +68,17 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
     private final Validador<MovimentacaoEstoque> movimentacaoValidador;
     private final Validador<ManutencaoEpi> manutencaoValidador;
     private final Validador<Emprestimo> emprestimoValidador;
+    private final Clock clock;
+
+    public EmprestimoService(EmprestimoRepository emprestimos, EpiRepository epis,
+                             UsuarioRepository usuarios, VerificadorImpedimentoCapacitacao capacitacoes,
+                             LogAuditoriaRepository auditoria, ManutencaoEpiRepository manutencoes,
+                             Validador<MovimentacaoEstoque> movimentacaoValidador,
+                             Validador<ManutencaoEpi> manutencaoValidador,
+                             Validador<Emprestimo> emprestimoValidador) {
+        this(emprestimos, epis, usuarios, capacitacoes, auditoria, manutencoes,
+                movimentacaoValidador, manutencaoValidador, emprestimoValidador, Clock.systemDefaultZone());
+    }
 
     @Autowired
     public EmprestimoService(EmprestimoRepository emprestimos, EpiRepository epis,
@@ -74,7 +86,8 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
                              LogAuditoriaRepository auditoria, ManutencaoEpiRepository manutencoes,
                              Validador<MovimentacaoEstoque> movimentacaoValidador,
                              Validador<ManutencaoEpi> manutencaoValidador,
-                             Validador<Emprestimo> emprestimoValidador) {
+                             Validador<Emprestimo> emprestimoValidador,
+                             Clock clock) {
         this.emprestimoValidador = emprestimoValidador;
         this.movimentacaoValidador = movimentacaoValidador;
         this.manutencaoValidador = manutencaoValidador;
@@ -82,6 +95,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
         this.epis = epis;
         this.usuarios = usuarios;
         this.capacitacoes = capacitacoes;
+        this.clock = java.util.Objects.requireNonNull(clock, "Clock é obrigatório.");
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.auditoria = java.util.Objects.requireNonNull(
                 auditoria, "Porta de auditoria é obrigatória (RNF05).");
@@ -233,7 +247,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<EpiOutputDTO> listarEpisDisponiveisParaEmprestimo() {
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = LocalDate.now(clock);
         return epis.listarTodos().stream()
                 .filter(epi -> epi.getStatus() == StatusEpi.DISPONIVEL)
                 .filter(epi -> epi.getQuantidade() >= Emprestimo.QUANTIDADE_POR_EMPRESTIMO)
@@ -252,7 +266,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
                     + " está sem saldo disponível em estoque.");
         }
         try {
-            epi.validarCaValido();
+            epi.validarCaValido(LocalDate.now(clock));
         } catch (CertificadoAprovacaoVencidoException vencido) {
             throw new EntregaImpedidaException("O EPI " + epi.getNome()
                     + " possui Certificado de Aprovação vencido e não pode ser entregue.");

@@ -1,9 +1,11 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import br.edu.safeplace.backend.application.dto.capacitacao.PendenciasColaboradorDTO;
@@ -18,9 +20,16 @@ import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
 public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase {
 
     private final CapacitacaoRepository capacitacaoRepository;
+    private final Clock clock;
 
     public ConsultarCapacitacaoService(CapacitacaoRepository capacitacaoRepository) {
+        this(capacitacaoRepository, Clock.systemDefaultZone());
+    }
+
+    @Autowired
+    public ConsultarCapacitacaoService(CapacitacaoRepository capacitacaoRepository, Clock clock) {
         this.capacitacaoRepository = capacitacaoRepository;
+        this.clock = java.util.Objects.requireNonNull(clock, "Clock é obrigatório.");
     }
 
     @Override
@@ -28,7 +37,7 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
         if (colaboradorId == null) {
             return List.of();
         }
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = LocalDate.now(clock);
         List<Certificacao> lista = capacitacaoRepository.buscarCertificacoesPorColaborador(colaboradorId);
         lista.forEach(cert -> cert.reavaliarStatus(hoje));
         return lista;
@@ -108,7 +117,7 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
                                           List<Certificacao> certificacoes,
                                           List<Treinamento> treinamentos) {
         List<String> impedimentos = new ArrayList<>();
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = LocalDate.now(clock);
 
         for (ExigenciaCapacitacao exigencia : exigencias) {
             String nomeExigido = exigencia.getNomeCapacitacao();
@@ -133,7 +142,7 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
 
     @Override
     public List<Certificacao> listarTodasCertificacoes() {
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = LocalDate.now(clock);
         List<Certificacao> lista = capacitacaoRepository.listarTodasCertificacoes();
         lista.forEach(cert -> cert.reavaliarStatus(hoje));
         return lista;

@@ -3,6 +3,7 @@ package br.edu.safeplace.backend.validacao.epi;
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
 import static br.edu.safeplace.backend.validacao.RegraElo.vazio;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.function.Supplier;
 
@@ -26,8 +27,12 @@ import br.edu.safeplace.backend.validacao.ValidadorEmCadeia;
 public class EpiValidador extends ValidadorEmCadeia<Epi> {
 
     @Autowired
+    public EpiValidador(Clock clock) {
+        this(() -> LocalDate.now(clock));
+    }
+
     public EpiValidador() {
-        this(LocalDate::now);
+        this(Clock.systemDefaultZone());
     }
 
     /** {@code hoje} permite testar a regra do CA vencido sem depender do relógio. */

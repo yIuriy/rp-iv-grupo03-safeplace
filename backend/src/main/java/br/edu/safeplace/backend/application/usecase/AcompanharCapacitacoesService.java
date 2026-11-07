@@ -5,6 +5,7 @@
  */
 package br.edu.safeplace.backend.application.usecase;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,11 +45,20 @@ public class AcompanharCapacitacoesService implements AcompanharCapacitacoesUseC
 
     private final UsuarioRepository usuarioRepository;
     private final ConsultarCapacitacaoUseCase consultarCapacitacao;
+    private final Clock clock;
 
     public AcompanharCapacitacoesService(UsuarioRepository usuarioRepository,
                                          ConsultarCapacitacaoUseCase consultarCapacitacao) {
+        this(usuarioRepository, consultarCapacitacao, Clock.systemDefaultZone());
+    }
+
+    @Autowired
+    public AcompanharCapacitacoesService(UsuarioRepository usuarioRepository,
+                                         ConsultarCapacitacaoUseCase consultarCapacitacao,
+                                         Clock clock) {
         this.usuarioRepository = usuarioRepository;
         this.consultarCapacitacao = consultarCapacitacao;
+        this.clock = java.util.Objects.requireNonNull(clock, "Clock é obrigatório.");
     }
 
     @Override
@@ -89,7 +100,7 @@ public class AcompanharCapacitacoesService implements AcompanharCapacitacoesUseC
 
     @Override
     public AlertasCapacitacaoOutputDTO consultarAlertas() {
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = LocalDate.now(clock);
         List<Colaborador> colaboradores = usuarioRepository.listarTodos();
         Map<Integer, String> nomes = new HashMap<>();
         colaboradores.forEach(c -> nomes.put(c.getId(), c.getNome()));

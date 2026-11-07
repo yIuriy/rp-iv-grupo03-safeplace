@@ -77,17 +77,18 @@ class ModeloEPITest {
     }
 
     @Test
-    void deveVerificarCaUsandoDataAtual() {
+    void deveVerificarCaContraDataReferencia() {
+        LocalDate referencia = LocalDate.of(2026, 6, 1);
         ModeloEPI vencido = new ModeloEPI(
-                1234, "Marca Teste", LocalDate.MIN
+                1234, "Marca Teste", referencia.minusDays(1)
         );
 
         ModeloEPI vigente = new ModeloEPI(
-                5678, "Marca Teste", LocalDate.MAX
+                5678, "Marca Teste", referencia.plusDays(1)
         );
 
-        assertThat(vencido.verificarCA()).isFalse();
-        assertThat(vigente.verificarCA()).isTrue();
+        assertThat(vencido.verificarCA(referencia)).isFalse();
+        assertThat(vigente.verificarCA(referencia)).isTrue();
     }
 
     @Test

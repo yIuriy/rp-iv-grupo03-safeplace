@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import br.edu.safeplace.backend.validacao.Validador;
@@ -29,6 +30,7 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
     private final LogAuditoriaRepository logAuditoriaRepository;
     private final Validador<ManutencaoEpi> manutencaoValidador;
     private final OperadorAtual operadorAtual;
+    private final Clock clock;
 
     /** Usa o validador padrão; usado pelos testes sem contexto Spring. */
     public ControlarManutencaoEpiService(EpiRepository epiRepository,
@@ -37,7 +39,17 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
                                          LogAuditoriaRepository logAuditoriaRepository,
                                          OperadorAtual operadorAtual) {
         this(epiRepository, manutencaoEpiRepository, usuarioRepository, logAuditoriaRepository,
-                new ManutencaoEpiValidador(), operadorAtual);
+                new ManutencaoEpiValidador(), operadorAtual, Clock.systemDefaultZone());
+    }
+
+    public ControlarManutencaoEpiService(EpiRepository epiRepository,
+                                         ManutencaoEpiRepository manutencaoEpiRepository,
+                                         UsuarioRepository usuarioRepository,
+                                         LogAuditoriaRepository logAuditoriaRepository,
+                                         Validador<ManutencaoEpi> manutencaoValidador,
+                                         OperadorAtual operadorAtual) {
+        this(epiRepository, manutencaoEpiRepository, usuarioRepository, logAuditoriaRepository,
+                manutencaoValidador, operadorAtual, Clock.systemDefaultZone());
     }
 
     @Autowired
@@ -46,7 +58,8 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
                                          UsuarioRepository usuarioRepository,
                                          LogAuditoriaRepository logAuditoriaRepository,
                                          Validador<ManutencaoEpi> manutencaoValidador,
-                                         OperadorAtual operadorAtual) {
+                                         OperadorAtual operadorAtual,
+                                         Clock clock) {
         this.manutencaoValidador = manutencaoValidador;
         this.epiRepository = epiRepository;
         this.manutencaoEpiRepository = manutencaoEpiRepository;
@@ -56,6 +69,7 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
                 logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
         // Adapter (#236): o operador vem da porta OperadorAutenticado.
         this.operadorAtual = java.util.Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
+        this.clock = java.util.Objects.requireNonNull(clock, "Clock é obrigatório.");
     }
 
     @Override
@@ -64,7 +78,7 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
         Epi epi = epiRepository.buscarPorId(epiId)
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId));
 
-        epi.enviarParaManutencao();
+        epi.enviarParaManutencao(LocalDate.now(clock));
         Epi salvo = epiRepository.salvar(epi);
 
         LogAuditoria log = LogAuditoria.registrarAlteracao(
@@ -97,7 +111,7 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
 
         LocalDate dataReferencia = inputDTO.dataManutencao() != null
                 ? inputDTO.dataManutencao().toLocalDate()
-                : LocalDate.now();
+                : LocalDate.now(clock);
         epi.validarCaValido(dataReferencia);
 
         ManutencaoEpi manutencao = ManutencaoEpi.novo(
