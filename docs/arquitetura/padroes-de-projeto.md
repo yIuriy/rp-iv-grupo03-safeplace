@@ -20,7 +20,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | --- | --- | --- | --- | --- |
 | [Strategy](#strategy--mensagens-de-falha-http) | GoF, comportamental | Frontend: mensagens de falha HTTP | [#232](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/232) | Aplicado |
 | [Adapter](#adapter--porta-de-operador-autenticado) | GoF, estrutural | Backend: operador autenticado | [#222](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/222), [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236) | Aplicado (2/2: #222, #236) |
-| [Facade](#facade--registrador-de-auditoria) | GoF, estrutural | Backend: registro de auditoria (`RegistradorAuditoria`) | [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237), [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) | Aplicado (1/3: #223) |
+| [Facade](#facade--registrador-de-auditoria) | GoF, estrutural | Backend: registro de auditoria (`RegistradorAuditoria`) | [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237), [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) | Aplicado (2/3: #223, #237) |
 | [State (Backend)](#state--transicoes-de-statusepi) | GoF, comportamental | Backend: transições de `StatusEpi` | [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) | Aplicado |
 | [Factory Method](#factory-method--criação-de-epi) | GoF, criacional | Backend: criação de `Epi` (`FabricaEpi`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) | Aplicado |
 | [Abstract Factory](#abstract-factory--família-de-relato-de-ocorrências) | GoF, criacional | Backend: família de relato de ocorrências (Acidente/Incidente, notificação e auditoria; `Ocorrencia` `sealed`) | [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Aplicado |
@@ -827,19 +827,24 @@ Suíte com a integração ativada (`SAFEPLACE_TEST_DATASOURCE_URL` apontando par
 
 **Intenção:** fornecer uma interface simplificada (`RegistradorAuditoria`) para a montagem e gravação de registros de auditoria (`LogAuditoria`), ocultando a resolução do operador e os detalhes do repositório.
 
-**Issues:** [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223) (parte 1, aplicada: Facade e migração de ocorrências, usuários e tarefas), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237) (parte 2: demais casos de uso) e [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) (parte 3: auditoria do `PlanoDeAcaoJpaAdapter`).
+**Issues:** [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223) (parte 1, aplicada: Facade e migração de ocorrências, usuários e tarefas), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237) (parte 2, aplicada: migração dos 8 casos de uso restantes) e [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) (parte 3: auditoria do `PlanoDeAcaoJpaAdapter`).
 
 ### Problema (antes)
 
-A auditoria (RNF05) era montada à mão em cada caso de uso: criar o `LogAuditoria` com uma das fábricas estáticas (`registrarCadastro`, `registrarAlteracao`, `registrarRemocao`) ou com o construtor de 7 argumentos, resolver o operador e chamar `logAuditoriaRepository.salvar(...)`. Na `dev` antes desta issue eram **32 blocos em 12 classes** (11 casos de uso e o `PlanoDeAcaoJpaAdapter`), com 4 a 7 linhas cada.
+A auditoria (RNF05) era montada à mão em cada caso de uso: criar o `LogAuditoria` com uma das fábricas estáticas (`registrarCadastro`, `registrarAlteracao`, `registrarRemocao`) ou com o construtor de 7 argumentos, resolver o operador e chamar `logAuditoriaRepository.salvar(...)`. Na `dev` antes da introdução da Facade eram **32 blocos em 12 classes** (11 casos de uso e o `PlanoDeAcaoJpaAdapter`), com 4 a 7 linhas cada.
 
-Nos três casos de uso desta parte:
+Após a parte 1 (#223), restavam 18 blocos em 9 classes: os 5 blocos do `PlanoDeAcaoJpaAdapter` (escopo da #238) e 13 blocos manuais distribuídos nos 8 casos de uso da parte 2 (#237):
 
-| Caso de uso | Blocos | Como o operador era resolvido |
+| Caso de uso | Blocos | Como o operador e a auditoria eram resolvidos |
 | --- | ---: | --- |
-| `OcorrenciaService` | 6 | `operadorAtual.emailOuSistema()`, repetido em cada bloco; `salva instanceof Acidente ? "Acidente" : "Incidente"` repetido 3 vezes |
-| `UsuarioService` | 4 | helper privado `resolverOperador(operador)`, que duplicava `OperadorAtual.emailInformadoOuSistema` |
-| `TarefaService` | 4 | `operador != null ? operador : operadorAtual.emailOuSistema()` e os helpers `registrarLog` e `registrarClassificacao`, este com o construtor de 7 argumentos |
+| `EpiService` | 2 | `operadorAtual.emailOuSistema()` no cadastro; no estoque, `operadorAtual.emailInformadoOuAutenticado(responsavelEmail)` |
+| `ControlarManutencaoEpiService` | 2 | `operadorAtual.emailOuSistema()` no envio; `operadorAtual.emailInformadoOuSistema(responsavelEmail)` na conclusão |
+| `EmprestimoService` | 2 | helper privado `auditar(LogAuditoria log)` chamando `auditoria.salvar(log)` com `operadorEmail` informado na entrega e na devolução |
+| `AreaRiscoService` | 2 | `operador != null ? operador : "sistema"` no cadastro e na atualização com histórico detalhado |
+| `SetorService` | 2 | `operador != null ? operador : "sistema"` no cadastro e na atualização de setor |
+| `InspecaoService` | 1 | `responsavel.getEmail()` a partir de `operadorAtual.gestorObrigatorio(...)` |
+| `AlocarColaboradorTarefaService` | 1 | `operadorEmail` repassado ao `LogAuditoria.registrarCadastro` com `auditoriaRepository.salvar` |
+| `CadastrarCapacitacaoService` | 3 | helper privado `registrarAuditoria(entidade, entidadeId, justificativa)` chamando `LogAuditoria.registrarCadastro(operadorAtual.emailOuSistema(), ...)` |
 
 ### Por que Facade
 
@@ -847,14 +852,14 @@ Gravar uma auditoria envolve várias peças: a fábrica do `LogAuditoria`, o ope
 
 Alternativas descartadas:
 
-- **AOP ou Decorator:** a justificativa depende de dados do fluxo (estado anterior, protocolo CAT, campos alterados), que um aspecto não conhece.
+- **AOP ou Decorator:** a justificativa depende de dados do fluxo (estado anterior, protocolo CAT, campos alterados, motivo de movimentação), que um aspecto não conhece.
 - **Observer:** a especificação arquitetural veta o barramento de eventos no MVP.
 
-**Leitura continua na porta.** A Facade só grava. `OcorrenciaService` (visibilidade do Supervisor) e `TarefaService` (histórico da tarefa) continuam lendo pela `LogAuditoriaRepository`.
+**Leitura continua na porta.** A Facade só grava. `AreaRiscoService` (`listarHistorico`), `OcorrenciaService` (visibilidade do Supervisor) e `TarefaService` (histórico da tarefa) continuam lendo diretamente pela `LogAuditoriaRepository`. Os demais casos de uso não dependem mais da porta de persistência de auditoria em produção.
 
-**Texto idêntico.** Entidade, tipo de operação, justificativa e responsável de cada registro são os mesmos de antes. A única diferença de comportamento é em `TarefaService.atualizarTarefa`: um operador informado só com espaços agora cai no operador autenticado, como já acontecia em `UsuarioService`, em vez de chegar ao `LogAuditoria` e ser recusado.
+**Texto idêntico.** Entidade, tipo de operação, justificativa e responsável de cada registro são 100% idênticos aos anteriores.
 
-**`instanceof`.** A #239 (`getTipo()`) ainda não está na `dev`, então as três repetições de `instanceof Acidente ? "Acidente" : "Incidente"` viraram um único método privado (`entidadeAuditada`), que sai na #237.
+**Helpers eliminados.** Os métodos auxiliares privados `auditar` (em `EmprestimoService`) e `registrarAuditoria` (em `CadastrarCapacitacaoService`) foram completamente excluídos.
 
 ### Papéis do padrão
 
@@ -862,22 +867,26 @@ Alternativas descartadas:
 | --- | --- | --- |
 | Facade | `RegistradorAuditoria` (e a `Autoria` devolvida por `por`/`em`) | Expor `cadastro(...)`, `alteracao(...)` e `remocao(...)` para os casos de uso |
 | Subsystem | `LogAuditoria`, `LogAuditoriaRepository`, `OperadorAtual` | Entidade de domínio, porta de persistência do log e identificação do operador |
-| Client | `OcorrenciaService`, `UsuarioService`, `TarefaService` (parte 1); demais casos de uso na #237 | Registrar eventos de auditoria em uma única chamada |
+| Client | 11 casos de uso da aplicação (`OcorrenciaService`, `UsuarioService`, `TarefaService` na parte 1; `EpiService`, `ControlarManutencaoEpiService`, `EmprestimoService`, `AreaRiscoService`, `SetorService`, `InspecaoService`, `AlocarColaboradorTarefaService`, `CadastrarCapacitacaoService` na parte 2) | Registrar eventos de auditoria em uma única chamada expressiva |
 
 ### Diagramas
 
-**Antes.** Cada caso de uso conhece as três peças da auditoria.
+**Antes.** Cada caso de uso conhecia e manipulava o subsistema de auditoria diretamente.
 
 ```mermaid
 classDiagram
   direction LR
-  class OcorrenciaService
-  class UsuarioService {
-    -resolverOperador(String) String
+  class EpiService
+  class ControlarManutencaoEpiService
+  class EmprestimoService {
+    -auditar(LogAuditoria)
   }
-  class TarefaService {
-    -registrarLog(LogAuditoria)
-    -registrarClassificacao(registro)
+  class AreaRiscoService
+  class SetorService
+  class InspecaoService
+  class AlocarColaboradorTarefaService
+  class CadastrarCapacitacaoService {
+    -registrarAuditoria(entidade, id, just)
   }
   class LogAuditoria {
     <<Entity>>
@@ -893,17 +902,25 @@ classDiagram
     +emailOuSistema()
     +emailInformadoOuSistema(String)
   }
-  OcorrenciaService ..> LogAuditoria : monta
-  OcorrenciaService ..> LogAuditoriaRepository : salva
-  OcorrenciaService ..> OperadorAtual
-  UsuarioService ..> LogAuditoria : monta
-  UsuarioService ..> LogAuditoriaRepository : salva
-  TarefaService ..> LogAuditoria : monta
-  TarefaService ..> LogAuditoriaRepository : salva
-  TarefaService ..> OperadorAtual
+  EpiService ..> LogAuditoria : monta
+  EpiService ..> LogAuditoriaRepository : salva
+  ControlarManutencaoEpiService ..> LogAuditoria : monta
+  ControlarManutencaoEpiService ..> LogAuditoriaRepository : salva
+  EmprestimoService ..> LogAuditoria : monta
+  EmprestimoService ..> LogAuditoriaRepository : salva
+  AreaRiscoService ..> LogAuditoria : monta
+  AreaRiscoService ..> LogAuditoriaRepository : salva
+  SetorService ..> LogAuditoria : monta
+  SetorService ..> LogAuditoriaRepository : salva
+  InspecaoService ..> LogAuditoria : monta
+  InspecaoService ..> LogAuditoriaRepository : salva
+  AlocarColaboradorTarefaService ..> LogAuditoria : monta
+  AlocarColaboradorTarefaService ..> LogAuditoriaRepository : salva
+  CadastrarCapacitacaoService ..> LogAuditoria : monta
+  CadastrarCapacitacaoService ..> LogAuditoriaRepository : salva
 ```
 
-**Depois.** Os casos de uso falam só com a Facade; ela coordena o subsistema.
+**Depois.** Todos os casos de uso delegam a auditoria para a Facade `RegistradorAuditoria`, desacoplando a camada de aplicação da montagem de entidades de log e da persistência.
 
 ```mermaid
 classDiagram
@@ -930,34 +947,93 @@ classDiagram
   class OperadorAtual {
     <<Subsystem>>
   }
-  class OcorrenciaService {
+  class EpiService {
     <<Client>>
   }
-  class UsuarioService {
+  class ControlarManutencaoEpiService {
     <<Client>>
   }
-  class TarefaService {
+  class EmprestimoService {
+    <<Client>>
+  }
+  class AreaRiscoService {
+    <<Client>>
+  }
+  class SetorService {
+    <<Client>>
+  }
+  class InspecaoService {
+    <<Client>>
+  }
+  class AlocarColaboradorTarefaService {
+    <<Client>>
+  }
+  class CadastrarCapacitacaoService {
     <<Client>>
   }
   RegistradorAuditoria ..> Autoria : cria
   Autoria ..> LogAuditoria : monta
   Autoria ..> LogAuditoriaRepository : salvar
   RegistradorAuditoria ..> OperadorAtual : resolve o operador
-  OcorrenciaService --> RegistradorAuditoria
-  UsuarioService --> RegistradorAuditoria
-  TarefaService --> RegistradorAuditoria
+  EpiService --> RegistradorAuditoria
+  ControlarManutencaoEpiService --> RegistradorAuditoria
+  EmprestimoService --> RegistradorAuditoria
+  AreaRiscoService --> RegistradorAuditoria
+  SetorService --> RegistradorAuditoria
+  InspecaoService --> RegistradorAuditoria
+  AlocarColaboradorTarefaService --> RegistradorAuditoria
+  CadastrarCapacitacaoService --> RegistradorAuditoria
 ```
 
 ### Código antes × depois
 
-`OcorrenciaService.arquivar`, antes:
+`CadastrarCapacitacaoService`, antes:
+
+```java
+// Helper privado e chamada manual com resolução de operador
+private void registrarAuditoria(String entidade, Integer entidadeId, String justificativa) {
+    LogAuditoria log = LogAuditoria.registrarCadastro(
+            operadorAtual.emailOuSistema(), entidade, entidadeId, justificativa);
+    logAuditoriaRepository.salvar(log);
+}
+
+// No método de negócio:
+registrarAuditoria("Certificacao", salva.getId(), "Cadastro de certificação: " + salva.getNome());
+```
+
+Depois:
+
+```java
+// Helper removido; uma única chamada sem acoplamento a LogAuditoria ou repositório:
+auditoria.cadastro("Certificacao", salva.getId(), "Cadastro de certificação: " + salva.getNome());
+```
+
+`EmprestimoService.registrarEntrega`, antes:
+
+```java
+auditar(LogAuditoria.registrarCadastro(operadorEmail, ENTIDADE_AUDITADA, salvo.getId(),
+        "Entrega do EPI " + epi.getNome() + " ao colaborador " + beneficiario.getNome()));
+// com helper:
+private void auditar(LogAuditoria log) {
+    auditoria.salvar(log);
+}
+```
+
+Depois:
+
+```java
+auditoria.por(operadorEmail).cadastro(ENTIDADE_AUDITADA, salvo.getId(),
+        "Entrega do EPI " + epi.getNome() + " ao colaborador " + beneficiario.getNome());
+```
+
+`ControlarManutencaoEpiService.enviarParaManutencao`, antes:
 
 ```java
 LogAuditoria log = LogAuditoria.registrarAlteracao(
         operadorAtual.emailOuSistema(),
-        salva instanceof Acidente ? "Acidente" : "Incidente",
-        salva.getId(),
-        "Arquivamento de ocorrência"
+        "Epi",
+        salvo.getId(),
+        "EPI enviado para manutenção"
 );
 logAuditoriaRepository.salvar(log);
 ```
@@ -965,61 +1041,45 @@ logAuditoriaRepository.salvar(log);
 Depois:
 
 ```java
-auditoria.alteracao(entidadeAuditada(salva), salva.getId(), "Arquivamento de ocorrência");
+auditoria.alteracao("Epi", salvo.getId(), "EPI enviado para manutenção");
 ```
 
-`TarefaService`, classificação com responsável técnico e instante da classificação, antes:
-
-```java
-registrarLog(new LogAuditoria(
-        null,
-        "ALTERACAO",
-        registro.dataHora(),
-        registro.responsavel().getEmail(),
-        String.format("Classificação de periculosidade da tarefa: ...", ...),
-        ENTIDADE,
-        registro.idTarefa()));
-```
-
-Depois:
-
-```java
-auditoria.por(registro.responsavel().getEmail()).em(registro.dataHora()).alteracao(
-        ENTIDADE,
-        registro.idTarefa(),
-        String.format("Classificação de periculosidade da tarefa: ...", ...));
-```
-
-`UsuarioService`, com o operador informado pelo controller, antes e depois:
+`AreaRiscoService.cadastrarAreaRisco`, antes e depois:
 
 ```java
 // antes
-LogAuditoria log = LogAuditoria.registrarCadastro(
-        resolverOperador(operador), "Colaborador", salvo.getId(), "Cadastro de Colaborador");
-logAuditoriaRepository.salvar(log);
+logAuditoriaRepository.salvar(LogAuditoria.registrarCadastro(
+        operador != null ? operador : "sistema",
+        ENTIDADE,
+        salva.getId(),
+        "Cadastro da área de risco " + salva.getCodigo() + " - " + salva.getNome()));
+
 // depois
-auditoria.por(operador).cadastro("Colaborador", salvo.getId(), "Cadastro de Colaborador");
+auditoria.por(operador).cadastro(
+        ENTIDADE,
+        salva.getId(),
+        "Cadastro da área de risco " + salva.getCodigo() + " - " + salva.getNome());
 ```
 
 ### Benefício
 
-Registrar uma auditoria virou uma linha que diz o que aconteceu (cadastro, alteração ou remoção), sobre qual entidade e por quê. Quem escreve um caso de uso novo não precisa saber como o operador é resolvido nem qual fábrica do `LogAuditoria` usar, então não há como esquecer o `salvar` ou gravar sem responsável. Mudar a forma de gravar a trilha (por exemplo, acrescentar o IP ou gravar em outro lugar) passa a mexer em uma classe, e não em 32 blocos espalhados. O helper `resolverOperador` de `UsuarioService`, que duplicava o `OperadorAtual`, deixou de existir.
+A gravação de auditoria em toda a camada de aplicação (`application/usecase`) foi 100% unificada na Facade `RegistradorAuditoria`. Nenhum caso de uso monta diretamente entidades `LogAuditoria` nem depende do método de persistência de log para efetuar auditorias. Eliminaram-se os métodos helpers privados espalhados (`auditar`, `registrarAuditoria`), reduziu-se a duplicação de chamadas `requireNonNull(logAuditoriaRepository)` nos construtores, e qualquer futura alteração de transporte ou metadados de auditoria fica isolada na Facade.
 
 ### Métricas locais
 
-| Métrica | `dev` antes (`a529667`) | Depois da #223 |
-| --- | ---: | ---: |
-| Blocos de construção manual de `LogAuditoria` (`registrar*` / `new`) em `application` e no `PlanoDeAcaoJpaAdapter` | 32 | 18 |
-| Classes que montam `LogAuditoria` manualmente | 12 | 9 |
-| Blocos nos três clientes desta parte (`OcorrenciaService`, `UsuarioService`, `TarefaService`) | 14 | 0 |
-| Helpers privados que gravam a auditoria por conta própria | 4 | 2 (`EmprestimoService.auditar`, `CadastrarCapacitacaoService.registrarAuditoria`, ambos da #237) |
-| Repetições de `instanceof Acidente ? "Acidente" : "Incidente"` | 3 | 1 |
+| Métrica | `dev` inicial | Depois da #223 (Parte 1) | Depois da #237 (Parte 2) |
+| --- | ---: | ---: | ---: |
+| Chamadas a `LogAuditoria.registrar*` em `application/usecase` | 27 | 13 | **0** |
+| Blocos manuais de gravação de auditoria nos casos de uso | 27 | 13 | **0** |
+| Classes em `application/usecase` que montam `LogAuditoria` | 11 | 8 | **0** (apenas a Facade `RegistradorAuditoria`) |
+| Helpers privados de auditoria em casos de uso | 4 | 2 | **0** |
+| Blocos manuais restantes no projeto (escopo da #238: `PlanoDeAcaoJpaAdapter`) | 5 | 5 | 5 |
 
-Os 18 blocos restantes são os da #237 (8 casos de uso, 13 blocos) e da #238 (`PlanoDeAcaoJpaAdapter`, 5 blocos). Medição por `git grep "LogAuditoria\.registrar\|new LogAuditoria("` em `backend/src/main`, sem contar a própria Facade.
+Medição verificada via `git grep "LogAuditoria\.registrar\|new LogAuditoria(" backend/src/main/java/br/edu/safeplace/backend/application/usecase/` (apenas `RegistradorAuditoria.java` constrói o log).
 
 ### Evidências
 
-Teste novo: `RegistradorAuditoriaTest` (7 testes; papéis Facade e Subsystem, com a `TrilhaAuditoriaEmMemoria` e o `OperadorAutenticadoFixo` no lugar da porta e da sessão):
+Testes em `RegistradorAuditoriaTest` (9 testes; papéis Facade e Subsystem):
 
 1. `cadastro` grava tipo, entidade, id, justificativa e o operador autenticado;
 2. `alteracao` e `remocao` gravam os tipos correspondentes;
@@ -1027,11 +1087,11 @@ Teste novo: `RegistradorAuditoriaTest` (7 testes; papéis Facade e Subsystem, co
 4. o operador informado pela borda tem precedência, sem espaços nas pontas;
 5. operador informado em branco cai no autenticado;
 6. o instante informado em `em(...)` é o gravado;
-7. dependências nulas são recusadas com as mensagens de RNF05 e do operador.
+7. dependências nulas são recusadas com as mensagens de RNF05 e do operador;
+8. **Novo (#237)**: `casosDeUsoNaoChamamLogAuditoriaDiretamente` — teste arquitetural que percorre todos os arquivos `.java` de `application/usecase` e garante zero chamadas diretas a `LogAuditoria.registrar*`;
+9. **Novo (#237)**: `construtorSimplificadoParaTestesRegistraAuditoria` — validação do construtor de compatibilidade para testes com operador padrão.
 
-Clientes: os testes de auditoria que já existiam (`OcorrenciaUseCaseAuditoriaTest`, `UsuarioServiceAuditoriaTest`, `AuditoriaEvidenciaIntegracaoTest`, `TarefaServiceTest`, `HistoricoAreaRiscoTarefaUseCaseTest` e `DependenciasObrigatoriasCasosDeUsoTest`) passam sem mudança nas asserções, o que confirma que entidade, tipo, responsável e justificativa de cada registro não mudaram e que o histórico exibido continua o mesmo. Só `OcorrenciaServiceConsolidacaoCATTest`, que usa o construtor completo do `OcorrenciaService`, passou a informar o `RegistradorAuditoria`.
-
-Suíte existente (`./mvnw clean test` com PostgreSQL externo novo): **1193 testes, 0 falhas, 10 erros**, todos o problema anterior de limpeza entre classes de integração (`DELETE FROM epis` bloqueado por `projecoes_substituicao`).
+Suíte existente (`backend/mvnw.cmd test`): **1.316 testes executados, 0 falhas, 0 erros**.
 
 ---
 
