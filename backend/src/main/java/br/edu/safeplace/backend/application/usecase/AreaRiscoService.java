@@ -25,7 +25,6 @@ import br.edu.safeplace.backend.domain.area_risco.AlteracaoAreaRisco;
 import br.edu.safeplace.backend.domain.area_risco.AreaRisco;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.area_risco.exception.AreaRiscoNaoEncontradaException;
-import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
@@ -44,6 +43,7 @@ public class AreaRiscoService implements GerenciarAreaRiscoUseCase {
     private final EpiRepository epiRepository;
     private final SetorRepository setorRepository;
     private final LogAuditoriaRepository logAuditoriaRepository;
+    private final RegistradorAuditoria auditoria;
     private final Validador<AreaRisco> validador;
 
     @Autowired
@@ -52,6 +52,7 @@ public class AreaRiscoService implements GerenciarAreaRiscoUseCase {
             EpiRepository epiRepository,
             SetorRepository setorRepository,
             LogAuditoriaRepository logAuditoriaRepository,
+            RegistradorAuditoria auditoria,
             Validador<AreaRisco> validador) {
         this.areaRiscoRepository = areaRiscoRepository;
         this.epiRepository = epiRepository;
@@ -59,6 +60,8 @@ public class AreaRiscoService implements GerenciarAreaRiscoUseCase {
         // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
         this.logAuditoriaRepository = Objects.requireNonNull(
                 logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
+        // Facade (#223, #237): auditoria simplificada sem manipular LogAuditoria diretamente.
+        this.auditoria = Objects.requireNonNull(auditoria, "Registrador de auditoria é obrigatório.");
         this.validador = Objects.requireNonNull(validador, "Validador da área de risco é obrigatório.");
     }
 
@@ -69,6 +72,7 @@ public class AreaRiscoService implements GerenciarAreaRiscoUseCase {
             SetorRepository setorRepository,
             LogAuditoriaRepository logAuditoriaRepository) {
         this(areaRiscoRepository, epiRepository, setorRepository, logAuditoriaRepository,
+                new RegistradorAuditoria(logAuditoriaRepository),
                 new AreaRiscoValidador(areaRiscoRepository, setorRepository));
     }
 
@@ -91,11 +95,10 @@ public class AreaRiscoService implements GerenciarAreaRiscoUseCase {
         validador.validar(novaArea);
 
         AreaRisco salva = areaRiscoRepository.salvar(novaArea);
-        logAuditoriaRepository.salvar(LogAuditoria.registrarCadastro(
-                operador != null ? operador : "sistema",
+        auditoria.por(operador).cadastro(
                 ENTIDADE,
                 salva.getId(),
-                "Cadastro da área de risco " + salva.getCodigo() + " - " + salva.getNome()));
+                "Cadastro da área de risco " + salva.getCodigo() + " - " + salva.getNome());
 
         return AreaRiscoOutputDTO.deDominio(salva);
     }
@@ -122,12 +125,11 @@ public class AreaRiscoService implements GerenciarAreaRiscoUseCase {
         List<AlteracaoAreaRisco> alteracoes = existente.compararCom(atualizada, this::descreverSetor);
         AreaRisco salva = areaRiscoRepository.atualizar(atualizada);
 
-        logAuditoriaRepository.salvar(LogAuditoria.registrarAlteracao(
-                operador != null ? operador : "sistema",
+        auditoria.por(operador).alteracao(
                 ENTIDADE,
                 id,
                 descreverHistorico(alteracoes, inputDTO.justificativa())
-        ));
+        );
 
         return AreaRiscoOutputDTO.deDominio(salva);
     }

@@ -32,7 +32,6 @@ import br.edu.safeplace.backend.application.port.out.VerificadorImpedimentoCapac
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepository;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
-import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.emprestimo.Emprestimo;
 import br.edu.safeplace.backend.domain.emprestimo.EstadoDevolucao;
 import br.edu.safeplace.backend.domain.emprestimo.exception.DuplicidadeDePosseException;
@@ -63,7 +62,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
     private final EpiRepository epis;
     private final UsuarioRepository usuarios;
     private final VerificadorImpedimentoCapacitacao capacitacoes;
-    private final LogAuditoriaRepository auditoria;
+    private final RegistradorAuditoria auditoria;
     private final ManutencaoEpiRepository manutencoes;
     private final Validador<MovimentacaoEstoque> movimentacaoValidador;
     private final Validador<ManutencaoEpi> manutencaoValidador;
@@ -76,14 +75,14 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
                              Validador<MovimentacaoEstoque> movimentacaoValidador,
                              Validador<ManutencaoEpi> manutencaoValidador,
                              Validador<Emprestimo> emprestimoValidador) {
-        this(emprestimos, epis, usuarios, capacitacoes, auditoria, manutencoes,
+        this(emprestimos, epis, usuarios, capacitacoes, new RegistradorAuditoria(auditoria), manutencoes,
                 movimentacaoValidador, manutencaoValidador, emprestimoValidador, Clock.systemDefaultZone());
     }
 
     @Autowired
     public EmprestimoService(EmprestimoRepository emprestimos, EpiRepository epis,
                              UsuarioRepository usuarios, VerificadorImpedimentoCapacitacao capacitacoes,
-                             LogAuditoriaRepository auditoria, ManutencaoEpiRepository manutencoes,
+                             RegistradorAuditoria auditoria, ManutencaoEpiRepository manutencoes,
                              Validador<MovimentacaoEstoque> movimentacaoValidador,
                              Validador<ManutencaoEpi> manutencaoValidador,
                              Validador<Emprestimo> emprestimoValidador,
@@ -96,9 +95,9 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
         this.usuarios = usuarios;
         this.capacitacoes = capacitacoes;
         this.clock = java.util.Objects.requireNonNull(clock, "Clock é obrigatório.");
-        // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
+        // Facade (#223, #237): auditoria simplificada sem manipular LogAuditoria diretamente.
         this.auditoria = java.util.Objects.requireNonNull(
-                auditoria, "Porta de auditoria é obrigatória (RNF05).");
+                auditoria, "Registrador de auditoria é obrigatório.");
         // #241: devolução para manutenção sempre grava o registro; a porta não é opcional.
         this.manutencoes = java.util.Objects.requireNonNull(
                 manutencoes, "Repositório de manutenções é obrigatório.");
@@ -108,8 +107,9 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
     public EmprestimoService(EmprestimoRepository emprestimos, EpiRepository epis,
                              UsuarioRepository usuarios, VerificadorImpedimentoCapacitacao capacitacoes,
                              LogAuditoriaRepository auditoria, ManutencaoEpiRepository manutencoes) {
-        this(emprestimos, epis, usuarios, capacitacoes, auditoria, manutencoes,
-                new MovimentacaoEstoqueValidador(), new ManutencaoEpiValidador(), new EmprestimoValidador());
+        this(emprestimos, epis, usuarios, capacitacoes, new RegistradorAuditoria(auditoria), manutencoes,
+                new MovimentacaoEstoqueValidador(), new ManutencaoEpiValidador(), new EmprestimoValidador(),
+                Clock.systemDefaultZone());
     }
 
     @Override
@@ -145,8 +145,8 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
         epis.salvarMovimentacao(saida);
 
         Emprestimo salvo = emprestimos.salvar(emprestimo);
-        auditar(LogAuditoria.registrarCadastro(operadorEmail, ENTIDADE_AUDITADA, salvo.getId(),
-                "Entrega do EPI " + epi.getNome() + " ao colaborador " + beneficiario.getNome()));
+        auditoria.por(operadorEmail).cadastro(ENTIDADE_AUDITADA, salvo.getId(),
+                "Entrega do EPI " + epi.getNome() + " ao colaborador " + beneficiario.getNome());
         return saida(salvo, epi, beneficiario);
     }
 
@@ -206,8 +206,8 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
 
         emprestimoValidador.validar(emprestimo);
         Emprestimo salvo = emprestimos.salvar(emprestimo);
-        auditar(LogAuditoria.registrarAlteracao(operadorEmail, ENTIDADE_AUDITADA, salvo.getId(),
-                "Devolução do EPI " + epi.getNome() + " com estado " + estado));
+        auditoria.por(operadorEmail).alteracao(ENTIDADE_AUDITADA, salvo.getId(),
+                "Devolução do EPI " + epi.getNome() + " com estado " + estado);
         String destinoAprovado = switch (estado) {
             case APTO -> "ESTOQUE";
             case MANUTENCAO -> "MANUTENCAO";
@@ -345,9 +345,5 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
                 epi != null ? epi.getNome() : null,
                 beneficiario != null ? beneficiario.getNome() : null,
                 LocalDate.now());
-    }
-
-    private void auditar(LogAuditoria log) {
-        auditoria.salvar(log);
     }
 }

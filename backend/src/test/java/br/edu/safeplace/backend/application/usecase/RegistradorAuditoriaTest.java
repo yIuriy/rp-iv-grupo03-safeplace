@@ -4,8 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Stream;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
@@ -83,6 +90,41 @@ class RegistradorAuditoriaTest {
         assertThatThrownBy(() -> new RegistradorAuditoria(trilha, null))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage("Operador atual é obrigatório.");
+    }
+
+    @Test
+    @DisplayName("Nenhum caso de uso chama LogAuditoria.registrar* diretamente (#237)")
+    void casosDeUsoNaoChamamLogAuditoriaDiretamente() throws IOException {
+        Path usecases = Path.of("src", "main", "java", "br", "edu", "safeplace", "backend", "application", "usecase");
+        try (Stream<Path> stream = Files.walk(usecases)) {
+            List<String> violacoes = stream
+                    .filter(p -> p.toString().endsWith(".java"))
+                    .filter(p -> !p.getFileName().toString().equals("RegistradorAuditoria.java"))
+                    .filter(p -> {
+                        try {
+                            String conteudo = Files.readString(p, StandardCharsets.UTF_8);
+                            return conteudo.contains("LogAuditoria.registrar");
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .map(p -> p.getFileName().toString())
+                    .toList();
+            assertThat(violacoes).isEmpty();
+        }
+    }
+
+    @Test
+    @DisplayName("Construtor simplificado para testes registra auditoria com operador padrão (#237)")
+    void construtorSimplificadoParaTestesRegistraAuditoria() {
+        RegistradorAuditoria registradorSimplificado = new RegistradorAuditoria(trilha);
+        registradorSimplificado.cadastro("Epi", 123, "Cadastro de EPI");
+
+        LogAuditoria log = unicoRegistro();
+        assertThat(log.getTipoOperacao()).isEqualTo(LogAuditoria.CADASTRO);
+        assertThat(log.getEntidade()).isEqualTo("Epi");
+        assertThat(log.getEntidadeId()).isEqualTo(123);
+        assertThat(log.getResponsavel()).isEqualTo(OperadorAtual.SISTEMA);
     }
 
     private LogAuditoria unicoRegistro() {

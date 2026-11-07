@@ -8,7 +8,6 @@ import br.edu.safeplace.backend.application.port.out.EpiRepository;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepository;
 import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
-import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.ManutencaoEpi;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
@@ -27,7 +26,7 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
     private final EpiRepository epiRepository;
     private final ManutencaoEpiRepository manutencaoEpiRepository;
     private final UsuarioRepository usuarioRepository;
-    private final LogAuditoriaRepository logAuditoriaRepository;
+    private final RegistradorAuditoria auditoria;
     private final Validador<ManutencaoEpi> manutencaoValidador;
     private final OperadorAtual operadorAtual;
     private final Clock clock;
@@ -38,7 +37,8 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
                                          UsuarioRepository usuarioRepository,
                                          LogAuditoriaRepository logAuditoriaRepository,
                                          OperadorAtual operadorAtual) {
-        this(epiRepository, manutencaoEpiRepository, usuarioRepository, logAuditoriaRepository,
+        this(epiRepository, manutencaoEpiRepository, usuarioRepository,
+                new RegistradorAuditoria(logAuditoriaRepository, operadorAtual),
                 new ManutencaoEpiValidador(), operadorAtual, Clock.systemDefaultZone());
     }
 
@@ -48,11 +48,11 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
                                          LogAuditoriaRepository logAuditoriaRepository,
                                          Validador<ManutencaoEpi> manutencaoValidador,
                                          OperadorAtual operadorAtual) {
-        this(epiRepository, manutencaoEpiRepository, usuarioRepository, logAuditoriaRepository,
+        this(epiRepository, manutencaoEpiRepository, usuarioRepository,
+                new RegistradorAuditoria(logAuditoriaRepository, operadorAtual),
                 manutencaoValidador, operadorAtual, Clock.systemDefaultZone());
     }
 
-    @Autowired
     public ControlarManutencaoEpiService(EpiRepository epiRepository,
                                          ManutencaoEpiRepository manutencaoEpiRepository,
                                          UsuarioRepository usuarioRepository,
@@ -60,13 +60,25 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
                                          Validador<ManutencaoEpi> manutencaoValidador,
                                          OperadorAtual operadorAtual,
                                          Clock clock) {
+        this(epiRepository, manutencaoEpiRepository, usuarioRepository,
+                new RegistradorAuditoria(logAuditoriaRepository, operadorAtual),
+                manutencaoValidador, operadorAtual, clock);
+    }
+
+    @Autowired
+    public ControlarManutencaoEpiService(EpiRepository epiRepository,
+                                         ManutencaoEpiRepository manutencaoEpiRepository,
+                                         UsuarioRepository usuarioRepository,
+                                         RegistradorAuditoria auditoria,
+                                         Validador<ManutencaoEpi> manutencaoValidador,
+                                         OperadorAtual operadorAtual,
+                                         Clock clock) {
         this.manutencaoValidador = manutencaoValidador;
         this.epiRepository = epiRepository;
         this.manutencaoEpiRepository = manutencaoEpiRepository;
         this.usuarioRepository = usuarioRepository;
-        // RNF05: auditoria obrigatória; nenhuma alteração é gravada sem trilha.
-        this.logAuditoriaRepository = java.util.Objects.requireNonNull(
-                logAuditoriaRepository, "Porta de auditoria é obrigatória (RNF05).");
+        // Facade (#223, #237): auditoria simplificada sem manipular LogAuditoria diretamente.
+        this.auditoria = java.util.Objects.requireNonNull(auditoria, "Registrador de auditoria é obrigatório.");
         // Adapter (#236): o operador vem da porta OperadorAutenticado.
         this.operadorAtual = java.util.Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
         this.clock = java.util.Objects.requireNonNull(clock, "Clock é obrigatório.");
@@ -81,13 +93,7 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
         epi.enviarParaManutencao(LocalDate.now(clock));
         Epi salvo = epiRepository.salvar(epi);
 
-        LogAuditoria log = LogAuditoria.registrarAlteracao(
-                operadorAtual.emailOuSistema(),
-                "Epi",
-                salvo.getId(),
-                "EPI enviado para manutenção"
-        );
-        logAuditoriaRepository.salvar(log);
+        auditoria.alteracao("Epi", salvo.getId(), "EPI enviado para manutenção");
 
         return EpiOutputDTO.deDominio(salvo);
     }
@@ -132,13 +138,8 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
 
         ManutencaoEpi salva = manutencaoEpiRepository.salvar(manutencao);
 
-        LogAuditoria log = LogAuditoria.registrarAlteracao(
-                operadorAtual.emailInformadoOuSistema(responsavelEmail),
-                "ManutencaoEpi",
-                salva.getId(),
-                "Manutenção de EPI concluída com resultado: " + inputDTO.resultado()
-        );
-        logAuditoriaRepository.salvar(log);
+        auditoria.por(responsavelEmail).alteracao(
+                "ManutencaoEpi", salva.getId(), "Manutenção de EPI concluída com resultado: " + inputDTO.resultado());
 
         return ManutencaoEpiOutputDTO.deDominio(salva, epi.getStatus());
     }
