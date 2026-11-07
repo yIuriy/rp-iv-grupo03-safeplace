@@ -172,19 +172,13 @@ public class Epi {
         return this.quantidade <= this.especificacao.getQuantidadeMinima();
     }
 
-    public void validarCaValido() {
-        validarCaValido(LocalDate.now());
-    }
-
     public void validarCaValido(LocalDate dataReferencia) {
-        LocalDate referencia = dataReferencia != null ? dataReferencia : LocalDate.now();
-        if (!lote.getModelo().verificarCA(referencia)) {
+        if (dataReferencia == null) {
+            throw new IllegalArgumentException("Data de referência é obrigatória.");
+        }
+        if (!lote.getModelo().verificarCA(dataReferencia)) {
             throw new CertificadoAprovacaoVencidoException(this.codigoEPI, this.nome, getNumeroCa(), getDataValidadeCa());
         }
-    }
-
-    public void enviarParaManutencao() {
-        enviarParaManutencao(LocalDate.now());
     }
 
     public void enviarParaManutencao(LocalDate dataReferencia) {
@@ -256,8 +250,11 @@ public class Epi {
         }
     }
 
-    public boolean validarVinculoEPIsObrigatorios() {
-        return status != StatusEpi.DESCARTADO && lote.getModelo().verificarCA(LocalDate.now());
+    public boolean validarVinculoEPIsObrigatorios(LocalDate dataReferencia) {
+        if (dataReferencia == null) {
+            throw new IllegalArgumentException("Data de referência é obrigatória.");
+        }
+        return status != StatusEpi.DESCARTADO && lote.getModelo().verificarCA(dataReferencia);
     }
 
     public boolean compararComQuantidadeMinima() {

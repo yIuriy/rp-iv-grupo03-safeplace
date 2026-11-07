@@ -110,10 +110,6 @@ public class ModeloEPI {
         }
     }
 
-    public boolean verificarCA() {
-        return verificarCA(LocalDate.now());
-    }
-
     public boolean verificarCA(LocalDate data) {
         if (data == null)
             throw new IllegalArgumentException("Data de referência é obrigatória.");

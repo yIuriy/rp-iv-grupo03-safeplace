@@ -95,8 +95,8 @@ class AptidaoColaboradorValidadorTest {
         Tarefa tarefa = new Tarefa(10, "Trabalho em altura", NivelPerigo.ALTO, hoje.atStartOfDay());
         ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(1, "NR-35 Altura",
                 ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, 10, ExigenciaCapacitacao.TipoAlvo.TAREFA);
-        Certificacao venceHoje = new Certificacao(1, "NR-35 Altura", hoje, hoje.minusYears(1), 1);
-        Certificacao venceAmanha = new Certificacao(2, "NR-35 Altura", hoje.plusDays(1), hoje.minusYears(1), 1);
+        Certificacao venceHoje = new Certificacao(1, "NR-35 Altura", hoje, hoje.minusYears(1), 1, hoje);
+        Certificacao venceAmanha = new Certificacao(2, "NR-35 Altura", hoje.plusDays(1), hoje.minusYears(1), 1, hoje);
 
         assertThat(venceHoje.getStatus()).isEqualTo(StatusCertificacao.VENCIDA);
         assertThatThrownBy(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefa,

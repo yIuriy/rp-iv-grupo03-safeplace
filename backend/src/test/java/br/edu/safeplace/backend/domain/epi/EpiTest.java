@@ -434,7 +434,7 @@ class EpiTest {
 
                 assertThat(epi.obterHistoricoManutencao()).containsExactly(m1);
 
-                epi.enviarParaManutencao();
+                epi.enviarParaManutencao(DATA_CADASTRO);
                 ManutencaoEpi m2 = ManutencaoEpi.novo(1, LocalDateTime.now(), TipoManutencao.CORRETIVA,
                                 "Troca de carneira", ResultadoManutencao.APROVADO, "Técnico Silva");
                 epi.concluirManutencao(m2);
@@ -457,7 +457,7 @@ class EpiTest {
                         .comClassificacao(ClassificacaoEPI.PROTECAO_DE_OLHOS)
                         .comLocalizacao("Armário 1")
                         .build();
-                assertTrue(epiValido.validarVinculoEPIsObrigatorios());
+                assertTrue(epiValido.validarVinculoEPIsObrigatorios(DATA_CADASTRO));
 
                 Epi epiDescartado = EpiDeTeste.umEpi()
                         .comId(2)
@@ -472,7 +472,7 @@ class EpiTest {
                         .comClassificacao(ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES)
                         .comLocalizacao("Descarte")
                         .build();
-                assertFalse(epiDescartado.validarVinculoEPIsObrigatorios());
+                assertFalse(epiDescartado.validarVinculoEPIsObrigatorios(DATA_CADASTRO));
 
                 Epi epiVencido = EpiDeTeste.umEpi()
                         .comId(3)
@@ -487,7 +487,7 @@ class EpiTest {
                         .comClassificacao(ClassificacaoEPI.PROTECAO_DE_MEMBROS_INFERIORES)
                         .comLocalizacao("Armário 2")
                         .build();
-                assertFalse(epiVencido.validarVinculoEPIsObrigatorios());
+                assertFalse(epiVencido.validarVinculoEPIsObrigatorios(DATA_CADASTRO));
         }
 
         @Test

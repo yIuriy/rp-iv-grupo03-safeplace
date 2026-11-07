@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -41,6 +42,7 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
     private final LogAuditoriaRepository auditoriaRepository;
     private final Validador<AptidaoParaTarefa> validadorAptidao;
     private final Validador<AlocacaoTarefa> validadorAlocacao;
+    private final Clock clock;
 
     /** Usa o validador padrão da alocação; usado pelos testes sem contexto Spring. */
     public AlocarColaboradorTarefaService(
@@ -51,7 +53,19 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
             LogAuditoriaRepository auditoriaRepository,
             Validador<AptidaoParaTarefa> validadorAptidao) {
         this(tarefaRepository, usuarioRepository, capacitacaoRepository, alocacaoTarefaRepository,
-                auditoriaRepository, validadorAptidao, new AlocacaoTarefaValidador());
+                auditoriaRepository, validadorAptidao, new AlocacaoTarefaValidador(), Clock.systemDefaultZone());
+    }
+
+    public AlocarColaboradorTarefaService(
+            TarefaRepository tarefaRepository,
+            UsuarioRepository usuarioRepository,
+            CapacitacaoRepository capacitacaoRepository,
+            AlocacaoTarefaRepository alocacaoTarefaRepository,
+            LogAuditoriaRepository auditoriaRepository,
+            Validador<AptidaoParaTarefa> validadorAptidao,
+            Validador<AlocacaoTarefa> validadorAlocacao) {
+        this(tarefaRepository, usuarioRepository, capacitacaoRepository, alocacaoTarefaRepository,
+                auditoriaRepository, validadorAptidao, validadorAlocacao, Clock.systemDefaultZone());
     }
 
     @Autowired
@@ -62,7 +76,8 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
             AlocacaoTarefaRepository alocacaoTarefaRepository,
             LogAuditoriaRepository auditoriaRepository,
             Validador<AptidaoParaTarefa> validadorAptidao,
-            Validador<AlocacaoTarefa> validadorAlocacao) {
+            Validador<AlocacaoTarefa> validadorAlocacao,
+            Clock clock) {
         this.validadorAlocacao = validadorAlocacao;
         this.tarefaRepository = tarefaRepository;
         this.usuarioRepository = usuarioRepository;
@@ -70,6 +85,7 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
         this.alocacaoTarefaRepository = alocacaoTarefaRepository;
         this.auditoriaRepository = auditoriaRepository;
         this.validadorAptidao = validadorAptidao;
+        this.clock = java.util.Objects.requireNonNull(clock, "Clock é obrigatório.");
     }
 
     @Override
@@ -88,7 +104,7 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
 
         // Chain of Responsibility (#228): valida antes do repository; se falhar, nada é gravado.
         validadorAptidao.validar(new AptidaoParaTarefa(
-                colaborador, tarefa, certificacoes, treinamentos, exigencias, LocalDate.now()));
+                colaborador, tarefa, certificacoes, treinamentos, exigencias, LocalDate.now(clock)));
 
         AlocacaoTarefa alocacao = AlocacaoTarefa.nova(tarefa, colaborador, operador, entrada.observacao());
         validadorAlocacao.validar(alocacao);
@@ -120,7 +136,7 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
 
         // Mesma cadeia da alocação: a consulta e o bloqueio não podem discordar.
         List<String> impedimentos = validadorAptidao.verificar(new AptidaoParaTarefa(
-                colaborador, tarefa, certificacoes, treinamentos, exigencias, LocalDate.now())).mensagens();
+                colaborador, tarefa, certificacoes, treinamentos, exigencias, LocalDate.now(clock))).mensagens();
 
         if (impedimentos.isEmpty()) {
             return ConsultaAptidaoOutputDTO.apto(tarefa.getId(), tarefa.getDescricao(), colaborador.getId(), colaborador.getNome());

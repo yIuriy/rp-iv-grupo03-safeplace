@@ -46,9 +46,9 @@ class AcompanharCapacitacoesServiceTest {
 
         // Ana: uma vencida e uma em dia; Bruno: vence exatamente em 30 dias; Carla: só treinamento,
         // sem certificação; Davi: sem histórico algum.
-        Certificacao anaVencida = new Certificacao(10, "NR-10", HOJE, HOJE.minusYears(2), 1);
-        Certificacao anaEmDia = new Certificacao(11, "NR-33", HOJE.plusDays(31), HOJE.minusYears(1), 1);
-        Certificacao brunoProxima = new Certificacao(12, "NR-35", HOJE.plusDays(30), HOJE.minusYears(1), 2);
+        Certificacao anaVencida = new Certificacao(10, "NR-10", HOJE, HOJE.minusYears(2), 1, HOJE);
+        Certificacao anaEmDia = new Certificacao(11, "NR-33", HOJE.plusDays(31), HOJE.minusYears(1), 1, HOJE);
+        Certificacao brunoProxima = new Certificacao(12, "NR-35", HOJE.plusDays(30), HOJE.minusYears(1), 2, HOJE);
         Treinamento carlaTreinamento = new Treinamento(20, "Integração", "Normas internas", "Eng. Paula",
                 HOJE.minusDays(5), 8, List.of(3));
 
@@ -88,8 +88,8 @@ class AcompanharCapacitacoesServiceTest {
     @Test
     @DisplayName("UC02 passos 4 e 5: detalha certificações e treinamentos com os atributos do modelo")
     void deveDetalharCapacitacoesDoColaborador() {
-        Certificacao vencida = new Certificacao(10, "NR-10", HOJE.minusDays(1), HOJE.minusYears(2), 1);
-        Certificacao proxima = new Certificacao(13, "NR-12", HOJE.plusDays(10), HOJE.minusYears(1), 1);
+        Certificacao vencida = new Certificacao(10, "NR-10", HOJE.minusDays(1), HOJE.minusYears(2), 1, HOJE);
+        Certificacao proxima = new Certificacao(13, "NR-12", HOJE.plusDays(10), HOJE.minusYears(1), 1, HOJE);
         Treinamento treinamento = new Treinamento(21, "NR-10 Básico", "Riscos elétricos", "Eng. Paula",
                 HOJE.minusMonths(3), 40, List.of(1));
         when(usuarioRepository.buscarPorId(1)).thenReturn(Optional.of(ana));

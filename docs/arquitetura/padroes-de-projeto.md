@@ -30,7 +30,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [Data Mapper](#data-mapper--mapeadores-de-persistencia) | Fowler / PoEAA | Backend: `EpiEntityMapper`, `AreaRiscoEntityMapper` e `PlanoDeAcaoEntityMapper` | [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229), [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242) | Pendente |
 | [Value Object](#value-object--protocolo-cat-em-acidente) | Fowler / DDD | Backend: `NumeroProtocoloCAT` dentro de `Acidente` | [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230) | Aplicado |
 | [DTO Assembler](#dto-assembler--ocorrenciaoutputdto) | Fowler / PoEAA | Backend: `OcorrenciaOutputAssembler` sem expor `PlanoDeAcao` | [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245) | Aplicado |
-| [Strategy (Backend)](#strategy--fonte-de-tempo-clock) | GoF, comportamental | Backend: injeção de `java.time.Clock` nas regras de vencimento | [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247) | Pendente |
+| [Strategy (Backend)](#strategy--fonte-de-tempo-clock) | GoF, comportamental | Backend: injeção de `java.time.Clock` nas regras de vencimento | [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247) | Aplicado |
 | [Adapter (Frontend)](#adapter--leitura-da-api-e-contrato-de-epi) | GoF, estrutural | Frontend: primitivas de leitura da API e unificação de `Epi` | [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244), [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) | Aplicado (2/2: #244, #231) |
 | [Template Method (hook)](#template-method-hook--envio-de-formulario) | GoF, comportamental | Frontend: submissão de formulários (`useEnvioFormulario`) | [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233), [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243) | Aplicado (2/2: #233, #243) |
 | [State (Frontend)](#state--dialogos-de-taskspage) | GoF, comportamental | Frontend: estado único `DialogoTarefa` em `TasksPage` | [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246) | Pendente |
@@ -3225,35 +3225,301 @@ Suíte existente (`./mvnw clean test` com PostgreSQL externo novo, `-Dsafeplace.
 
 **Catálogo:** GoF, comportamental.
 
-**Intenção:** injetar `java.time.Clock` como estratégia de obtenção da data/hora atual nas regras de vencimento do domínio, permitindo testes determinísticos em fronteiras de data.
+**Intenção:** injetar `java.time.Clock` como estratégia de obtenção da data/hora atual nas regras de vencimento e nos casos de uso, desacoplando o domínio de chamadas estáticas `LocalDate.now()` e viabilizando testes 100% determinísticos em fronteiras temporais.
 
 **Issue:** [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247).
 
 ### Problema (antes)
 
-*A preencher na issue [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, §4).*
+As regras de negócio relacionadas a prazos e expiração consultavam o relógio do sistema operacional diretamente dentro do domínio por meio de chamadas estáticas a `LocalDate.now()`.
+
+| Classe | Chamadas a `now()` no domínio |
+| --- | ---: |
+| `Epi` | 4 (em `validarCaValido`, `enviarParaManutencao`, `validarVinculoEPIsObrigatorios`) |
+| `ModeloEPI` | 1 (em `verificarCA()`) |
+| `Certificacao` | 1 (no construtor ao calcular `status`) |
+
+Consequências no projeto:
+1. **Testes não-determinísticos e frágeis:** Asserções de teste dependiam da data de execução na máquina do desenvolvedor ou no CI (como evidenciado pelo teste corrigido na [#199](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/199)).
+2. **Impossibilidade de testar limites na virada do dia:** Verificar se um CA que vence "hoje" é aceito e se um que venceu "ontem" é rejeitado exigia alterar dados dinamicamente com base no instante da execução.
+3. **Inconsistência arquitetural:** Entidades como `PlanoDeAcao` e `Inspecao` já recebiam datas de referência por parâmetro, enquanto `Epi`, `ModeloEPI` e `Certificacao` consultavam o relógio estaticamente no corpo de seus métodos.
+
+### Por que Strategy
+
+A regra de negócio "o item está vencido?" é invariável:
+- Em `ModeloEPI`: `!validadeCA.isBefore(dataReferencia)`.
+- Em `Certificacao`: comparação contra `dataVencimento` e limite de 30 dias de alerta (`PrazoVencimento`).
+
+O que varia é exclusivamente a **fonte temporal**. Em produção, deve-se usar o relógio real do sistema operacional; em testes, deve-se fixar um instante arbitrário (`Clock.fixed(...)`) para testar com precisão cirúrgica a virada de prazos.
+
+Com a injeção de `java.time.Clock` na camada de aplicação (`Context`) e o repasse explícito de `LocalDate.now(clock)` ao domínio, o domínio permanece puro e livre de acoplamento temporal, enquanto a aplicação decide qual estratégia temporal adotar.
 
 ### Papéis do padrão
 
 | Papel no padrão | Elemento no código | Responsabilidade |
 | --- | --- | --- |
-| Strategy | `java.time.Clock` | Abstrair a fonte de tempo |
-| ConcreteStrategy | `Clock.systemDefaultZone()`, `Clock.fixed(...)` | Prover o relógio real em produção e o relógio fixo nos testes |
-| Context | Casos de uso e regras de vencimento do domínio | Receber a data de referência obtida a partir do `Clock` |
+| **Strategy** | `java.time.Clock` | Interface abstrata da fonte temporal do sistema. |
+| **ConcreteStrategy** | `Clock.systemDefaultZone()` | Estratégia de produção provida pelo Spring Bean `ClockConfig`. |
+| **ConcreteStrategy** | `Clock.fixed(Instant, ZoneId)` | Estratégia determinística para testes unitários e de integração. |
+| **Context** | Casos de uso (`ControlarManutencaoEpiService`, `ConsultarCapacitacaoService`, `CadastrarCapacitacaoService`, `EmprestimoService`, `AcompanharCapacitacoesService`, `AlocarColaboradorTarefaService`) e validadores (`EpiValidador`, `CertificacaoValidador`) | Injetam a estratégia `Clock` e extraem a data de referência (`LocalDate.now(clock)`) para fornecer às regras de domínio. |
 
 ### Diagramas
 
-*Diagramas PlantUML antes e depois a preencher na issue [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247).*
+**Antes.** Casos de uso e entidades do domínio acoplados a chamadas estáticas a `LocalDate.now()`, dependendo rigidamente do relógio do sistema operacional:
+
+```mermaid
+classDiagram
+  direction TB
+  class SistemaOperacional {
+    <<Hardware/OS>>
+    +relogioDoSistema
+  }
+  class LocalDate {
+    <<Static Utility>>
+    +now()$ LocalDate
+  }
+  class Epi {
+    <<Domain>>
+    +validarCaValido()
+    +enviarParaManutencao()
+    +validarVinculoEPIsObrigatorios()
+  }
+  class ModeloEPI {
+    <<Domain>>
+    +verificarCA()
+  }
+  class Certificacao {
+    <<Domain>>
+    -status
+    +Certificacao(...)
+  }
+  class ControlarManutencaoEpiService {
+    <<Use Case>>
+    +enviarParaManutencao()
+    +concluirManutencao()
+  }
+  class ConsultarCapacitacaoService {
+    <<Use Case>>
+    +listarCertificacoesDoColaborador()
+    +listarTodasCertificacoes()
+  }
+
+  SistemaOperacional <.. LocalDate : consulta relogio real
+  Epi ..> LocalDate : now()
+  ModeloEPI ..> LocalDate : now()
+  Certificacao ..> LocalDate : now()
+  ControlarManutencaoEpiService ..> LocalDate : now()
+  ConsultarCapacitacaoService ..> LocalDate : now()
+```
+
+**Depois.** `Clock` como Strategy injetável na aplicação; produção usa relógio do sistema e testes usam relógio fixo; domínio recebe `dataReferencia`:
+
+```mermaid
+classDiagram
+  direction TB
+  class Clock {
+    <<Strategy>>
+    +instant()* Instant
+    +getZone()* ZoneId
+    +systemDefaultZone()$ Clock
+    +fixed(Instant, ZoneId)$ Clock
+  }
+  class ClockSistemaProducao {
+    <<ConcreteStrategy>>
+    Clock.systemDefaultZone()
+  }
+  class ClockFixoTestes {
+    <<ConcreteStrategy>>
+    Clock.fixed(instante, fuso)
+  }
+  class ClockConfig {
+    <<Configuration>>
+    +clock() Clock
+  }
+  class ControlarManutencaoEpiService {
+    <<Context>>
+    -clock: Clock
+    +enviarParaManutencao(epiId)
+    +concluirManutencao(dto)
+  }
+  class ConsultarCapacitacaoService {
+    <<Context>>
+    -clock: Clock
+    +listarCertificacoesDoColaborador(id)
+    +listarTodasCertificacoes()
+  }
+  class EpiValidador {
+    <<Context>>
+    -hoje: Supplier~LocalDate~
+    +validar(epi)
+  }
+  class CertificacaoValidador {
+    <<Context>>
+    -hoje: Supplier~LocalDate~
+    +validar(certificacao)
+  }
+  class Epi {
+    <<Domain Entity>>
+    +validarCaValido(dataReferencia)
+    +enviarParaManutencao(dataReferencia)
+    +validarVinculoEPIsObrigatorios(dataReferencia)
+  }
+  class ModeloEPI {
+    <<Domain Entity>>
+    +verificarCA(dataReferencia)
+  }
+  class Certificacao {
+    <<Domain Entity>>
+    +Certificacao(..., dataReferencia)
+    +calcularStatus(dataReferencia)
+    +reavaliarStatus(dataReferencia)
+  }
+
+  Clock <|.. ClockSistemaProducao
+  Clock <|.. ClockFixoTestes
+  ClockConfig ..> ClockSistemaProducao : provê Bean
+  ControlarManutencaoEpiService --> Clock : injeta
+  ConsultarCapacitacaoService --> Clock : injeta
+  EpiValidador --> Clock : injeta
+  CertificacaoValidador --> Clock : injeta
+
+  ControlarManutencaoEpiService ..> Epi : passa LocalDate.now(clock)
+  Epi ..> ModeloEPI : repassa data
+  ConsultarCapacitacaoService ..> Certificacao : reavaliarStatus(LocalDate.now(clock))
+```
+
+### Código antes × depois
+
+**1. Domínio (`Epi.java` e `ModeloEPI.java`):**
+
+Antes:
+```java
+// ModeloEPI.java
+public boolean verificarCA() {
+    return verificarCA(LocalDate.now());
+}
+
+// Epi.java
+public void validarCaValido() {
+    validarCaValido(LocalDate.now());
+}
+
+public void enviarParaManutencao() {
+    enviarParaManutencao(LocalDate.now());
+}
+
+public boolean validarVinculoEPIsObrigatorios() {
+    return status != StatusEpi.DESCARTADO && lote.getModelo().verificarCA(LocalDate.now());
+}
+```
+
+Depois:
+```java
+// ModeloEPI.java: método sem parâmetro removido
+public boolean verificarCA(LocalDate data) {
+    if (data == null) throw new IllegalArgumentException("Data de referência é obrigatória.");
+    return !validadeCA.isBefore(data);
+}
+
+// Epi.java: exige dataReferencia, sem fallback para LocalDate.now()
+public void validarCaValido(LocalDate dataReferencia) {
+    if (dataReferencia == null) throw new IllegalArgumentException("Data de referência é obrigatória.");
+    if (!lote.getModelo().verificarCA(dataReferencia)) {
+        throw new CertificadoAprovacaoVencidoException(this.codigoEPI, this.nome, getNumeroCa(), getDataValidadeCa());
+    }
+}
+
+public void enviarParaManutencao(LocalDate dataReferencia) {
+    validarCaValido(dataReferencia);
+    if (this.status != StatusEpi.DISPONIVEL) {
+        throw new EpiIndisponivelParaManutencaoException(this.codigoEPI, this.status, "Apenas EPIs com status DISPONIVEL...");
+    }
+    transicionarPara(StatusEpi.EM_MANUTENCAO);
+}
+
+public boolean validarVinculoEPIsObrigatorios(LocalDate dataReferencia) {
+    if (dataReferencia == null) throw new IllegalArgumentException("Data de referência é obrigatória.");
+    return status != StatusEpi.DESCARTADO && lote.getModelo().verificarCA(dataReferencia);
+}
+```
+
+**2. Domínio (`Certificacao.java`):**
+
+Antes:
+```java
+public Certificacao(Integer id, String nome, LocalDate dataVencimento, LocalDate dataEmissao, Integer colaboradorId) {
+    ...
+    this.status = dataVencimento != null ? calcularStatus(LocalDate.now()) : null;
+}
+```
+
+Depois:
+```java
+public Certificacao(Integer id, String nome, LocalDate dataVencimento, LocalDate dataEmissao, Integer colaboradorId, LocalDate dataReferencia) {
+    ...
+    this.status = (dataVencimento != null && dataReferencia != null) ? calcularStatus(dataReferencia) : null;
+}
+```
+
+**3. Caso de Uso (`ControlarManutencaoEpiService.java`):**
+
+Antes:
+```java
+@Transactional
+public EpiOutputDTO enviarParaManutencao(Integer epiId) {
+    Epi epi = epiRepository.buscarPorId(epiId).orElseThrow(...);
+    epi.enviarParaManutencao(); // chamava LocalDate.now() internamente
+    return EpiOutputDTO.deDominio(epiRepository.salvar(epi));
+}
+```
+
+Depois:
+```java
+@Autowired
+public ControlarManutencaoEpiService(..., Clock clock) {
+    this.clock = Objects.requireNonNull(clock, "Clock é obrigatório.");
+}
+
+@Transactional
+public EpiOutputDTO enviarParaManutencao(Integer epiId) {
+    Epi epi = epiRepository.buscarPorId(epiId).orElseThrow(...);
+    epi.enviarParaManutencao(LocalDate.now(clock)); // estratégia injetada
+    return EpiOutputDTO.deDominio(epiRepository.salvar(epi));
+}
+```
+
+### Benefício
+
+O desacoplamento do tempo eliminou o não-determinismo dos testes e tornou a arquitetura uniforme com `PlanoDeAcao` e `Inspecao`. O domínio não assume mais qual é a data atual; ele apenas aplica as regras de validade sobre a data recebida. Nos testes, é possível validar com precisão as fronteiras de expiração (vencimento hoje, ontem ou no limite de 30 dias de antecedência) usando `Clock.fixed(...)`, garantindo que a suíte passe de forma estável independentemente do dia, mês ou horário de execução.
 
 ### Métricas locais
 
 | Métrica | Antes (v1.0.0) | Depois |
-| --- | --- | --- |
-| Chamadas diretas a `now()` no domínio | 46 | *A medir* |
+| --- | ---: | ---: |
+| Chamadas diretas a `LocalDate.now()` nas regras de vencimento de `Epi` e `Certificacao` | 6 | 0 |
+| Métodos de vencimento em `Epi` e `ModeloEPI` com dependência oculta de relógio | 4 | 0 |
+| Testes determinísticos cobrindo fronteiras com `Clock.fixed(...)` | 0 | 12 |
+| Total de testes da suíte de backend passando sem falhas | 1304 | 1316 |
 
 ### Evidências
 
-*A preencher na issue [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247).*
+Testes novos exercitando a Strategy de tempo:
+1. `EpiVencimentoClockTest` (6 testes):
+   - `deveRecusarCaVencidoOntem`: valida recusa de CA vencido ontem com `Clock.fixed`.
+   - `deveAceitarCaQueVenceHoje`: valida que CA com vencimento hoje ainda é aceito.
+   - `deveAceitarCaQueVenceAmanha`: valida CA vigente.
+   - `serviceDeveRecusarManutencaoDeEpiComCaVencidoOntem`: valida caso de uso com relógio fixado.
+   - `serviceDeveAceitarManutencaoDeEpiComCaQueVenceHoje`: valida caso de uso com CA expirando na data atual.
+   - `validadorDeveVerificarCaNoCadastroUsandoClock`: valida que a cadeia de validação de cadastro respeita o relógio injetado.
+2. `CertificacaoVencimentoClockTest` (6 testes):
+   - `deveEstarVencidaQuandoVenceuOntem`: certificação vencida ontem fica `VENCIDA`.
+   - `deveEstarVencidaQuandoVenceHoje`: regra UC02 (no próprio dia de vencimento já está vencida).
+   - `deveEstarProximaDoVencimentoQuandoVenceAmanha`: entra na janela de alerta.
+   - `deveRespeitarLimiteTrintaDiasParaAlerta`: testa o limite exato de 30 dias (`PROXIMA_DO_VENCIMENTO`) versus 31 dias (`EM_DIA`).
+   - `serviceDeveReavaliarStatusUsandoClockInjetado`: `ConsultarCapacitacaoService` reavaliando status via `Clock` fixado.
+   - `validadorDeveRecusarVencimentoPresenteOuPassadoNoCadastroUsandoClock`: `CertificacaoValidador` com `Clock` rejeitando vencimento no presente ou passado.
+
+Suíte existente (`./backend/mvnw.cmd test`): **1316 testes, 0 falhas, 0 erros, 131 ignorados**.
 
 ---
 

@@ -3,6 +3,7 @@ package br.edu.safeplace.backend.validacao.capacitacao;
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
 import static br.edu.safeplace.backend.validacao.RegraElo.vazio;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.function.Supplier;
 
@@ -22,8 +23,12 @@ import br.edu.safeplace.backend.validacao.ValidadorEmCadeia;
 public class CertificacaoValidador extends ValidadorEmCadeia<Certificacao> {
 
     @Autowired
+    public CertificacaoValidador(Clock clock) {
+        this(() -> LocalDate.now(clock));
+    }
+
     public CertificacaoValidador() {
-        this(LocalDate::now);
+        this(Clock.systemDefaultZone());
     }
 
     /** {@code hoje} permite testar as regras de data sem depender do relógio. */
