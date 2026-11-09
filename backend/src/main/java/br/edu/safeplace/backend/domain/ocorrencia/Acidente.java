@@ -21,7 +21,7 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "acidentes")
-public non-sealed class Acidente extends Ocorrencia {
+public class Acidente extends Ocorrencia {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "causa_raiz")

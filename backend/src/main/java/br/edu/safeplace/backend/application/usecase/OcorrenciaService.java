@@ -344,6 +344,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
                 validador.validar(atualizado);
                 yield repository.salvarIncidente(atualizado);
             }
+            default -> throw new IllegalArgumentException("Tipo de ocorrência não suportado: " + atual.getClass().getName());
         };
 
         auditoria.alteracao(entidadeAuditada(salva), salva.getId(),
@@ -446,6 +447,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         return switch (ocorrencia) {
             case Acidente acidente -> repository.salvarAcidente(acidente);
             case Incidente incidente -> repository.salvarIncidente(incidente);
+            default -> throw new IllegalArgumentException("Tipo de ocorrência não suportado: " + ocorrencia.getClass().getName());
         };
     }
 }
