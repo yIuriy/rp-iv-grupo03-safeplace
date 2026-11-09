@@ -109,7 +109,7 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
                 consultaOcorrencia, operadorAtual,
                 new RegistradorAuditoria(new br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository() {
                     @Override public br.edu.safeplace.backend.domain.comum.LogAuditoria salvar(br.edu.safeplace.backend.domain.comum.LogAuditoria log) { return log; }
-                    @Override public List<br.edu.safeplace.backend.domain.comum.LogAuditoria> listarPorEntidade(String e, Integer id) { return List.of(); }
+                    @Override public List<br.edu.safeplace.backend.domain.comum.LogAuditoria> listarPorEntidade(String entidade, Integer entidadeId) { return List.of(); }
                 }, operadorAtual));
     }
 
