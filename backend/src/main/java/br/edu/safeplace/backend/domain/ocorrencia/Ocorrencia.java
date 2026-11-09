@@ -28,7 +28,7 @@ import jakarta.persistence.Transient;
 @Entity
 @Table(name = "ocorrencias")
 @Inheritance(strategy = InheritanceType.JOINED)
-public abstract sealed class Ocorrencia permits Acidente, Incidente {
+public abstract class Ocorrencia {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

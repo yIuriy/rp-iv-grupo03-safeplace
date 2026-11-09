@@ -3,6 +3,7 @@ package br.edu.safeplace.backend.application.usecase;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
@@ -22,6 +23,7 @@ public class RegistradorAuditoria {
     private final LogAuditoriaRepository repository;
     private final OperadorAtual operadorAtual;
 
+    @Autowired
     public RegistradorAuditoria(LogAuditoriaRepository repository, OperadorAtual operadorAtual) {
         this.repository = Objects.requireNonNull(repository, "Porta de auditoria é obrigatória (RNF05).");
         this.operadorAtual = Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
