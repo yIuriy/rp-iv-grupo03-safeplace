@@ -109,9 +109,7 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
                 consultaOcorrencia, operadorAtual,
                 new RegistradorAuditoria(new br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository() {
                     @Override public br.edu.safeplace.backend.domain.comum.LogAuditoria salvar(br.edu.safeplace.backend.domain.comum.LogAuditoria log) { return log; }
-                    @Override public List<br.edu.safeplace.backend.domain.comum.LogAuditoria> buscarPorPeriodo(java.time.LocalDateTime i, java.time.LocalDateTime f) { return List.of(); }
-                    @Override public List<br.edu.safeplace.backend.domain.comum.LogAuditoria> buscarPorResponsavel(String r) { return List.of(); }
-                    @Override public List<Integer> buscarIdsPorResponsavelETipoOperacao(String r, String t, java.util.Set<String> e) { return List.of(); }
+                    @Override public List<br.edu.safeplace.backend.domain.comum.LogAuditoria> listarPorEntidade(String entidade, Integer entidadeId) { return List.of(); }
                 }, operadorAtual));
     }
 
