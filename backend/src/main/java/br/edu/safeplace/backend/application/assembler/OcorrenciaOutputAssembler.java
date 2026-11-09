@@ -52,6 +52,7 @@ public class OcorrenciaOutputAssembler {
         return switch (ocorrencia) {
             case Acidente acidente -> deAcidente(acidente);
             case Incidente incidente -> deIncidente(incidente);
+            default -> throw new IllegalArgumentException("Tipo de ocorrência não suportado: " + ocorrencia.getClass().getName());
         };
     }
 

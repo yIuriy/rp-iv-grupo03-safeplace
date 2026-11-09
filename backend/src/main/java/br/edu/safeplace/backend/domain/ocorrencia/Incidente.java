@@ -13,7 +13,7 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "incidentes")
-public non-sealed class Incidente extends Ocorrencia {
+public class Incidente extends Ocorrencia {
 
     @Column(name = "situacao_risco")
     private String situacaoRisco;
