@@ -2,10 +2,12 @@ package br.edu.safeplace.backend.application.assembler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.Modifier;
 import java.lang.reflect.RecordComponent;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,11 +16,15 @@ import br.edu.safeplace.backend.application.dto.output.OcorrenciaOutputDTO;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
+import br.edu.safeplace.backend.domain.ocorrencia.FabricaRelatoAcidente;
+import br.edu.safeplace.backend.domain.ocorrencia.FabricaRelatoIncidente;
+import br.edu.safeplace.backend.domain.ocorrencia.FabricaRelatoOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
 import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
+import br.edu.safeplace.backend.domain.ocorrencia.TipoOcorrencia;
 
 class OcorrenciaOutputAssemblerTest {
 
@@ -110,11 +116,20 @@ class OcorrenciaOutputAssemblerTest {
         assertThat(dto.relatorPerfil()).isNull();
     }
 
+    /**
+     * Substitui a checagem de {@code sealed} (#239): a hierarquia foi reaberta no commit 01a0d18
+     * porque o Hibernate não gera proxy de classe {@code sealed}. A garantia que importa continua
+     * verificada aqui: todo {@link TipoOcorrencia} tem uma fábrica e uma subclasse correspondentes.
+     */
     @Test
-    @DisplayName("Hierarquia de Ocorrencia é sealed permitindo apenas Acidente e Incidente (#239)")
-    void hierarquiaDeOcorrenciaEhSealed() {
-        assertThat(Ocorrencia.class.isSealed()).isTrue();
-        assertThat(Ocorrencia.class.getPermittedSubclasses())
-                .containsExactlyInAnyOrder(Acidente.class, Incidente.class);
+    @DisplayName("Todo TipoOcorrencia tem fábrica e subclasse correspondentes (#239)")
+    void todoTipoDeOcorrenciaTemFabricaESubclasse() {
+        assertThat(Modifier.isAbstract(Ocorrencia.class.getModifiers())).isTrue();
+        assertThat(List.of(new FabricaRelatoAcidente(), new FabricaRelatoIncidente()))
+                .extracting(FabricaRelatoOcorrencia::getTipo)
+                .containsExactlyInAnyOrder(TipoOcorrencia.values());
+        assertThat(List.of(Acidente.builder().idOcorrencia(1).build(), Incidente.builder().idOcorrencia(2).build()))
+                .extracting(Ocorrencia::getTipoOcorrencia)
+                .containsExactlyInAnyOrder(TipoOcorrencia.values());
     }
 }
