@@ -344,6 +344,8 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
                 validador.validar(atualizado);
                 yield repository.salvarIncidente(atualizado);
             }
+            // Sem sealed (commit 01a0d18, proxies do Hibernate), o switch não é exaustivo para o compilador.
+            // Nenhuma associação aponta para Ocorrencia, então não chega proxy da classe base aqui.
             default -> throw new IllegalArgumentException("Tipo de ocorrência não suportado: " + atual.getClass().getName());
         };
 
@@ -447,6 +449,8 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         return switch (ocorrencia) {
             case Acidente acidente -> repository.salvarAcidente(acidente);
             case Incidente incidente -> repository.salvarIncidente(incidente);
+            // Sem sealed (commit 01a0d18, proxies do Hibernate), o switch não é exaustivo para o compilador.
+            // Nenhuma associação aponta para Ocorrencia, então não chega proxy da classe base aqui.
             default -> throw new IllegalArgumentException("Tipo de ocorrência não suportado: " + ocorrencia.getClass().getName());
         };
     }

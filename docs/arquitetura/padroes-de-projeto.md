@@ -23,7 +23,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [Facade](#facade--registrador-de-auditoria) | GoF, estrutural | Backend: registro de auditoria (`RegistradorAuditoria`) | [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237), [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) | Aplicado (3/3: #223, #237, #238) |
 | [State (Backend)](#state--transicoes-de-statusepi) | GoF, comportamental | Backend: transições de `StatusEpi` | [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) | Aplicado |
 | [Factory Method](#factory-method--criação-de-epi) | GoF, criacional | Backend: criação de `Epi` (`FabricaEpi`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) | Aplicado |
-| [Abstract Factory](#abstract-factory--família-de-relato-de-ocorrências) | GoF, criacional | Backend: família de relato de ocorrências (Acidente/Incidente, notificação e auditoria; `Ocorrencia` `sealed`) | [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Aplicado |
+| [Abstract Factory](#abstract-factory--família-de-relato-de-ocorrências) | GoF, criacional | Backend: família de relato de ocorrências (Acidente/Incidente, notificação e auditoria; uma fábrica por `TipoOcorrencia`) | [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Aplicado |
 | [Builder](#builder--emprestimobuilder-tarefabuilder-e-builders-de-ocorrencia) | GoF, criacional | Backend: `Emprestimo.Builder`, `TarefaBuilder`, `AcidenteBuilder` e `IncidenteBuilder` em produção | [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) | Aplicado (2/2: #226, #240) |
 | [Null Object](#null-object--adaptador-nulo-de-notificacao-e-dependencias-opcionais) | Woolf / PLoPD 3 | Backend: `NotificadorOcorrenciaNulo` e dependências opcionais | [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227), [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) | Aplicado (2/2: #227, #241) |
 | [Chain of Responsibility](#chain-of-responsibility--camada-de-validação) | GoF, comportamental | Backend: camada `validacao` (aptidão do colaborador e tarefa) | [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228); continua em [#263](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/263) a [#267](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/267) | Aplicado (6/6: #228, #267, #263, #264, #265, #266) |
@@ -1516,9 +1516,9 @@ Antes da aplicação do padrão:
 | AbstractFactory | interface `FabricaRelatoOcorrencia<I, O>` (`domain/ocorrencia`) | Declarar a criação da família: `criarOcorrencia`, `criarNotificacao`, `descricaoAuditoria` e `entidadeAuditoria` |
 | ConcreteFactory (Acidente) | `FabricaRelatoAcidente` (`domain/ocorrencia`) | Instanciar `Acidente` (com CAT), `NotificacaoOcorrencia` (com protocolo) e descritor de auditoria de acidente |
 | ConcreteFactory (Incidente) | `FabricaRelatoIncidente` (`domain/ocorrencia`) | Instanciar `Incidente` (sem CAT), `NotificacaoOcorrencia` (sem CAT) e descritor de auditoria de incidente |
-| AbstractProduct A | `Ocorrencia` (`public abstract sealed class ... permits Acidente, Incidente`) | Raiz fechada da hierarquia de ocorrências |
-| ConcreteProduct A1 | `Acidente` (`public non-sealed class Acidente extends Ocorrencia`) | Produto concreto com gravidade, causa raiz e protocolo CAT |
-| ConcreteProduct A2 | `Incidente` (`public non-sealed class Incidente extends Ocorrencia`) | Produto concreto com situação de risco e potencial de dano |
+| AbstractProduct A | `Ocorrencia` (`public abstract class`, com `getTipoOcorrencia()` abstrato) | Raiz da hierarquia de ocorrências |
+| ConcreteProduct A1 | `Acidente` (`public class Acidente extends Ocorrencia`) | Produto concreto com gravidade, causa raiz e protocolo CAT |
+| ConcreteProduct A2 | `Incidente` (`public class Incidente extends Ocorrencia`) | Produto concreto com situação de risco e potencial de dano |
 | AbstractProduct B | `NotificacaoOcorrencia` | Alerta interno ao Gestor de Segurança |
 | AbstractProduct C | Descrição e nome de entidade de auditoria (`String`) | Trilha de auditoria (RNF05) consistente por tipo |
 | Client | `OcorrenciaService` (`application/usecase`) | Receber as fábricas injetadas via interface/mapa e delegar a criação da família sem `instanceof` |
@@ -1572,7 +1572,7 @@ classDiagram
     +criarNotificacao(...) NotificacaoOcorrencia
   }
   class Ocorrencia {
-    <<abstract sealed / AbstractProduct>>
+    <<abstract / AbstractProduct>>
     +getTipoOcorrencia()* TipoOcorrencia
     +getGravidade() NivelPerigo
   }
@@ -1644,7 +1644,7 @@ NotificacaoOcorrencia notificacao = fabrica.criarNotificacao(ocorrencia);
 
 ### Benefício
 
-A criação de um relato agora produz uma família garantidamente consistente de objetos (entidade de domínio, notificação interna e texto de auditoria), eliminando métodos estáticos com dezenas de parâmetros soltos e extinguindo todo `instanceof` de `Acidente` e `Incidente` nas camadas de domínio e aplicação. Adicionar ou modificar regras de um novo tipo de relato exige apenas implementar uma nova fábrica concreta, sem tocar nas rotinas de auditoria, notificação ou orquestração do caso de uso. O uso de `sealed class` em `Ocorrencia` garante exaustividade em tempo de compilação.
+A criação de um relato agora produz uma família garantidamente consistente de objetos (entidade de domínio, notificação interna e texto de auditoria), eliminando métodos estáticos com dezenas de parâmetros soltos e extinguindo todo `instanceof` de `Acidente` e `Incidente` nas camadas de domínio e aplicação. Adicionar ou modificar regras de um novo tipo de relato exige apenas implementar uma nova fábrica concreta, sem tocar nas rotinas de auditoria, notificação ou orquestração do caso de uso. A hierarquia chegou a ser declarada `sealed`, mas foi reaberta no commit `01a0d18`: o Hibernate gera proxies como subclasses em tempo de execução, o que uma classe `sealed` não admite. A correspondência entre tipos, subclasses e fábricas passou a ser garantida por `getTipoOcorrencia()` abstrato, pelo enum `TipoOcorrencia`, pelo mapa de fábricas por tipo em `OcorrenciaService` e pelo teste `OcorrenciaOutputAssemblerTest.todoTipoDeOcorrenciaTemFabricaESubclasse`. Os `switch` por tipo mantêm um ramo `default`, que não é alcançado porque nenhuma associação aponta para `Ocorrencia` (logo não surge proxy da classe base).
 
 ### Métricas locais
 
@@ -1654,7 +1654,7 @@ A criação de um relato agora produz uma família garantidamente consistente de
 | `instanceof Incidente` em `domain/` e `application/` | 5 | 0 |
 | Métodos estáticos de criação em `domain/ocorrencia` | 3 (`Acidente.novo`, `Incidente.novo`, `NotificacaoOcorrencia.deNovoRelato`) | 0 |
 | Maior quantidade de parâmetros soltos na criação de ocorrência | 16 | 5 (objeto `InputDTO` inteiro + associações obrigatórias) |
-| Hierarquia de `Ocorrencia` | `abstract class` aberta | `public abstract sealed class` (`permits Acidente, Incidente`) |
+| Hierarquia de `Ocorrencia` | `abstract class` sem tipo declarado | `abstract class` com `getTipoOcorrencia()` abstrato e uma fábrica por `TipoOcorrencia` (`sealed` revertido por causa dos proxies do Hibernate) |
 
 ### Evidências
 
@@ -3329,7 +3329,7 @@ return assembler.montar(salvo);
 
 ### Benefício
 
-A API deixou de depender do formato interno do plano de ação: o que sai da aplicação são só DTOs, e o adaptador web não importa mais nenhuma classe de `domain/ocorrencia`. A montagem ficou num único lugar, sem a lista de 24 argumentos repetida: um campo novo comum às duas ocorrências entra em uma linha, e um campo novo de acidente só toca `deAcidente`. Quando a #239 tornar `Ocorrencia` `sealed`, a escolha entre `deAcidente` e `deIncidente` pode virar um `switch` exaustivo sem mexer no DTO.
+A API deixou de depender do formato interno do plano de ação: o que sai da aplicação são só DTOs, e o adaptador web não importa mais nenhuma classe de `domain/ocorrencia`. A montagem ficou num único lugar, sem a lista de 24 argumentos repetida: um campo novo comum às duas ocorrências entra em uma linha, e um campo novo de acidente só toca `deAcidente`. A escolha entre `deAcidente` e `deIncidente` é um `switch` por padrão de tipo; como `Ocorrencia` não é `sealed` (ver Abstract Factory, #239), ele mantém um ramo `default`.
 
 ### Métricas locais
 
