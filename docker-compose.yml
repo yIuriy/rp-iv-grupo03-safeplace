@@ -19,6 +19,8 @@ services:
       DB_NAME: safeplace
       DB_USER: safeplace
       DB_PASSWORD: safeplace
+      # Hora local nos registros (ocorrências, auditoria, relatórios); o contêiner usa UTC por padrão.
+      TZ: America/Sao_Paulo
     ports:
       - "8080:8080"
     depends_on:
