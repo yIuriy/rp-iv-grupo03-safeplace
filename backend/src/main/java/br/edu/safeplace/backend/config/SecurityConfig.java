@@ -124,6 +124,10 @@ public class SecurityConfig {
                                 .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
                         .requestMatchers(HttpMethod.POST, "/api/capacitacoes/**").hasRole("GESTOR_SEGURANCA")
                         .requestMatchers("/api/capacitacoes/**").denyAll()
+                        // RF18 (#299): Gestor e Supervisor emitem relatórios estatísticos; só leitura.
+                        .requestMatchers(HttpMethod.GET, "/api/relatorios/**")
+                                .hasAnyRole("GESTOR_SEGURANCA", "SUPERVISOR")
+                        .requestMatchers("/api/relatorios/**").denyAll()
                         .anyRequest().authenticated()
                 );
 
