@@ -41,6 +41,8 @@ A priorização deve começar pelos Requisitos Funcionais (RFs), pois eles repre
 | RF22 | Gerenciar visitantes | Deveria ter | É importante para controlar a entrega temporária de EPIs a visitantes, mas pode ser entregue após os fluxos essenciais. |
 | RF23 | Gerenciar supervisores e colaboradores | Deve ter | É necessário para controlar usuários e responsabilidades dentro dos fluxos principais. |
 
+Decisão de 11/11/2026: o RF18 (Emitir relatórios estatísticos) é implementado na entrega seguinte ao MVP, porque o backlog do MVP está praticamente concluído e há avaliações pela frente ([#299](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/299)). A classificação `Poderia ter` não muda; muda só o momento da entrega.
+
 ## Priorização dos Requisitos Não-Funcionais
 
 | ID | Requisito | Prioridade | Justificativa |

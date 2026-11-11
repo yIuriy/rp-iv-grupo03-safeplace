@@ -1,0 +1,127 @@
+/* Tela de relatórios (RF18, issue #299): filtros em linha, cartões de indicadores e tabelas com barra
+   proporcional na coluna de total. */
+
+.sp-relatorio-filtros {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-space-16);
+  align-items: start;
+}
+
+.sp-relatorio-acoes {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-space-12);
+}
+
+.sp-relatorio {
+  display: grid;
+  gap: var(--sp-space-32);
+  padding: var(--sp-space-24);
+  border: 1px solid var(--sp-border-default);
+  border-radius: var(--sp-radius-8);
+  background: var(--sp-surface-white);
+}
+
+.sp-relatorio-cabecalho {
+  display: grid;
+  gap: var(--sp-space-4);
+  padding-bottom: var(--sp-space-16);
+  border-bottom: 1px solid var(--sp-border-default);
+}
+
+.sp-relatorio-secao {
+  display: grid;
+  gap: var(--sp-space-12);
+}
+
+.sp-relatorio-indicadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--sp-space-12);
+  margin: 0;
+}
+
+.sp-relatorio-indicador {
+  display: grid;
+  gap: var(--sp-space-4);
+  align-content: start;
+  padding: var(--sp-space-16);
+  border-radius: var(--sp-radius-8);
+  background: var(--sp-surface-page);
+  border-left: 4px solid var(--sp-brand-primary);
+}
+
+.sp-relatorio-indicador dt {
+  color: var(--sp-text-secondary);
+  font-size: var(--sp-type-label-md-size);
+}
+
+.sp-relatorio-indicador dd {
+  margin: 0;
+  font-family: var(--sp-font-heading), sans-serif;
+  font-size: var(--sp-type-heading-md-size);
+  line-height: var(--sp-type-heading-md-line-height);
+  font-weight: 700;
+  color: var(--sp-text-primary);
+}
+
+/* As tabelas do relatório são estatísticas, sem ações por linha: dispensam a largura mínima e a altura
+   de linha das listagens. Tabelas largas (ranking de áreas) continuam rolando dentro da região. */
+.sp-table.sp-relatorio-tabela {
+  min-width: 0;
+}
+
+.sp-relatorio-tabela td {
+  height: auto;
+}
+
+.sp-relatorio-tabela .sp-relatorio-numero {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.sp-relatorio-barra {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-space-8);
+  width: 100%;
+}
+
+.sp-relatorio-barra-trilho {
+  flex: 1 1 auto;
+  min-width: 48px;
+  max-width: 160px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--sp-surface-page);
+  overflow: hidden;
+}
+
+.sp-relatorio-barra-trilho > span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--sp-brand-primary);
+}
+
+@media (max-width: 720px) {
+  .sp-relatorio-filtros {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sp-relatorio {
+    padding: var(--sp-space-16);
+  }
+
+  .sp-relatorio-barra-trilho {
+    display: none;
+  }
+
+  .sp-relatorio-tabela th,
+  .sp-relatorio-tabela td {
+    padding: var(--sp-space-8) var(--sp-space-12);
+  }
+}

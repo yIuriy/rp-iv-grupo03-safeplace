@@ -45,6 +45,8 @@ A prioridade indica quando o requisito será entregue, não se ele é válido. P
 
 Decisão de 17/10/2026: RF09 e RF12, classificados como `Deveria ter`, entram no MVP porque já estão implementados e testados (seções 5.1, 9 e 11.1). A classificação MoSCoW desses requisitos não muda.
 
+Decisão de 11/11/2026: RF18, classificado como `Poderia ter`, entra na entrega seguinte à v1.0.0 ([#299](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/299)). A classificação MoSCoW não muda.
+
 ### 4.1. Critérios da Técnica MoSCoW
 
 | Classificação | Significado em inglês | Critério de uso |
@@ -127,6 +129,7 @@ A priorização considera três fatores: a contribuição direta do requisito pa
 | RF12 | Conectar tarefas e EPIs | Deveria ter | Gestor associa e consulta os EPIs obrigatórios de cada tarefa. Incluído em 17/10/2026. |
 | RF13 | Criar registros de acidente | Deve ter | Permitir que o Supervisor registre acidentes. |
 | RF16 | Registrar incidentes | Deve ter | Permitir registro pelo Supervisor ou Gestor. Relatos comunicados pelo Colaborador são registrados pelo Supervisor. |
+| RF18 | Emitir relatórios estatísticos | Poderia ter | Gestor e Supervisor emitem relatórios de acidentes, treinamentos e áreas de maior risco, por mês ou ano, com pré-visualização e download em CSV ou PDF. Incluído em 11/11/2026, após a v1.0.0 ([#299](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/299)). |
 | RF21 | Gerenciar ciclo de vida e substituição inteligente de EPIs | Deve ter | Calcular a previsão de substituição dos EPIs e gerar alertas preventivos. |
 | RF23 | Gerenciar supervisores e colaboradores | Deve ter | Gestor gerencia supervisores com conta e senha inicial automática; Supervisor e Gestor de Segurança gerenciam colaboradores sem conta ou senha, preservando seus vínculos. |
 
@@ -163,7 +166,7 @@ A inclusão de um UC nesta tabela indica escopo previsto, não implementação c
 
 Os seguintes grupos permanecem fora do MVP:
 
-- alertas de comportamento, investigação, dashboards, relatórios, CAT e visitantes: RF08, RF15, RF17, RF18, RF19 e RF22;
+- alertas de comportamento, investigação, dashboards, CAT e visitantes: RF08, RF15, RF17, RF19 e RF22;
 - descarte, fornecedores e Certificado de Aprovação: RF14 e RF20;
 - tempo de resposta, capacidade de usuários, criptografia, disponibilidade, backup, conformidade normativa, integridade de documentos, facilidade de aprendizado, suporte multilíngue, modularidade, compatibilidade ampla e integração externa: RNF01, RNF02, RNF04, RNF06, RNF07, RNF09, RNF10, RNF12, RNF13, RNF14, RNF16 e RNF17.
 
@@ -250,6 +253,7 @@ As situações abaixo descrevem a cobertura documental, não o atendimento pela 
 | RF12 | Conectar tarefas e EPIs | UC08; US12 | Gestão de Tarefas e Gestão de EPIs | Coberto conforme [Correspondência Classes vs RF12](../arquitetura/correspondencia-classes-tarefa-rf12.md). Sugestão automática no empréstimo e compatibilidade entre modelos ficam fora do MVP. |
 | RF13 | Criar registros de acidente | UC09 e UC05 | Gestão de Ocorrências | Coberto. |
 | RF16 | Registrar incidentes | UC09 e UC05 | Gestão de Ocorrências | Supervisor registra em UC09, inclusive relatos de colaboradores; Gestor registra em UC05. |
+| RF18 | Emitir relatórios estatísticos | US18 (sem UC) | Relatórios, Gestão de Ocorrências, Gestão de Capacitações e Gestão de Áreas de Risco | Coberto para os três assuntos do requisito, em CSV e PDF, conforme a seção Bridge de [Padrões de Projeto](../arquitetura/padroes-de-projeto.md). Consulta offline de relatórios previamente gerados (RNF08) pendente. |
 | RF21 | Gerenciar ciclo de vida e substituição inteligente de EPIs | UC10 | Gestão de EPIs | Previsão e alertas no MVP; requisições, origem dos dados e parâmetros de cálculo ainda pendentes. |
 | RF23 | Gerenciar supervisores e colaboradores | UC13; US23 e US24 | Gestão de Usuários e Autorização | Coberto pelo fluxo de UC13, alinhado às histórias e ao RF. |
 | RNF03 | Controle de acesso por perfil | UCs do MVP | Autenticação e Autorização | Exige testes para Gestor e Supervisor e cadastro de Colaborador sem credenciais. |
@@ -280,7 +284,7 @@ Esta revisão cobre parte da [issue #81](https://github.com/yIuriy/rp-iv-grupo03
 | Ponto | Evidência e definição ainda necessária | Destino |
 | --- | --- | --- |
 | Gestão de pessoas | Decisão registrada no UC13: login por e-mail; dados cadastrais nome, CPF, data de nascimento e e-mail (opcional para o Colaborador); senha inicial do Supervisor gerada pelo sistema e exibida uma única vez; Gestor provisionado apenas por carga inicial, sem cadastro de novos gestores no MVP; CPF não alterável; Colaborador sem conta. A desativação de cadastros permanece fora do MVP, aguardando decisão. | UC13, US23, US24 e issues #74, #190 e #194. |
-| Offline | RNF08 prevê consulta de estatísticas, indicadores e relatórios pelo Gestor; RF17 e RF18 estão no backlog. UC09 prevê criação e envio posterior de relatos. Definir dados consultáveis, perfis, dispositivos e se haverá criação offline. | RNF08, UC09, US13/US16/US17/US18 e arquitetura. |
+| Offline | RNF08 prevê consulta de estatísticas, indicadores e relatórios pelo Gestor; RF17 está no backlog; RF18 entrou em 11/11/2026 (#299) sem consulta offline. UC09 prevê criação e envio posterior de relatos. Definir dados consultáveis, perfis, dispositivos e se haverá criação offline. | RNF08, UC09, US13/US16/US17/US18 e arquitetura. |
 | Substituição de EPIs | Decisão registrada em [Correspondência Classes vs DS10/DS10.1](../arquitetura/correspondencia-classes-ds10.md): Durabilidade nominal em dias (`Epi.vidaUtilDias`), taxa diária de uso ($U$) derivada de `Emprestimo`, multiplicadores ambientais de `Setor.status: NivelPerigo` (1.0, 1.25, 1.5, 2.0), teto intransponível de CA (`ModeloEPI.validadeCA`), alertas preventivos com escala de prioridade formalizada (descarte próximo em 7 e 15 dias; vencimento de CA em 10 dias; estoque crítico), e tratamento de dados ausentes como falha/nova tentativa (sem dados fictícios). Requisições de compra, prorrogação por laudo e exportação ficam no backlog. | UC10, US21 e issue #108. |
 | Cadastro de capacitações | UC02 consulta dados já cadastrados; os modelos também contêm cadastro e validação de datas. Identificar o fluxo responsável por essas operações. | UC02, US10 e revisão dos diagramas na issue #81. |
 | Plano de ação | Contrato aprovado e implementado em [Correspondência Classes vs UC07](../arquitetura/correspondencia-classes-plano-de-acao.md): cada `PlanoDeAcao` é uma ação (`idAcao`), 0..* por ocorrência; responsável único entre `Colaborador` e `Setor`; `status` com `ABERTA` → `CONCLUIDA` e atraso derivado do prazo; prorrogação com justificativa e histórico; antecedência de alerta por ação, sem valor fixo; aviso interno ao Gestor para responsável sem conta. Persistência entregue na issue #98 e API na issue #99 com `cadastrarAcao`. Na issue #196, uma rotina agendada passou a emitir os alertas de prazo uma única vez por ação e prazo, a reatribuição passou a gerar aviso, o Gestor consulta os avisos em `GET /api/notificacoes/acoes` e a V33 garante no banco um único responsável e `status` `ABERTA` ou `CONCLUIDA`. Gravidade de incidente, cancelamento de ação, canal externo e a tela dos avisos continuam pendentes. | UC07, US07 e issues #97, #98, #99 e #196. |

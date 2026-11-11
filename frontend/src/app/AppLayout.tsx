@@ -22,6 +22,7 @@ const baseNavigation: { path: string; label: string; icon: IconName }[] = [
   { path: '/emprestimos', label: 'Empréstimos de EPIs', icon: 'calendar' },
   { path: '/areas-risco', label: 'Áreas de risco', icon: 'map-pin' },
   { path: '/tarefas', label: 'Tarefas', icon: 'check-circle' },
+  { path: '/relatorios', label: 'Relatórios', icon: 'paperclip' },
 ]
 
 export function AppLayout() {

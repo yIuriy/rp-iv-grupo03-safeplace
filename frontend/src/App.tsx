@@ -15,6 +15,7 @@ import { EmprestimosPage } from './features/emprestimos/EmprestimosPage'
 import { RiskAreasPage } from './features/areas-risco/RiskAreasPage'
 import { TasksPage } from './features/tarefas/TasksPage'
 import { CapacitacoesPage } from './features/capacitacoes/CapacitacoesPage'
+import { RelatoriosPage } from './features/relatorios/RelatoriosPage'
 import { Catalog } from './features/design-system/Catalog'
 import { RiskAreasExample } from './features/design-system/RiskAreasExample'
 
@@ -33,6 +34,7 @@ function App() {
         <Route path="emprestimos" element={<EmprestimosPage />} />
         <Route path="areas-risco" element={<RiskAreasPage />} />
         <Route path="tarefas" element={<TasksPage />} />
+        <Route path="relatorios" element={<RelatoriosPage />} />
         <Route path="*" element={<><h1 className="sp-type-heading-md">Página não encontrada</h1><Link to="/usuarios">Voltar ao início</Link></>} />
       </Route>
     </Route>

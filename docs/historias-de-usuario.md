@@ -633,7 +633,7 @@ Referência: [RF17](requisitos/requisitos-funcionais.md#rf17-o-sistema-deve-perm
 
 # US18 – Emitir relatórios estatísticos
 
-Referência: [RF18](requisitos/requisitos-funcionais.md#rf18-o-sistema-deve-permitir-a-emissão-de-relatórios-estatísticos). Escopo: backlog, Poderia ter.
+Referência: [RF18](requisitos/requisitos-funcionais.md#rf18-o-sistema-deve-permitir-a-emissão-de-relatórios-estatísticos). Escopo: entrega seguinte à v1.0.0, desde 11/11/2026 ([#299](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/299)), Poderia ter.
 
 ## Descrição da História:
 
@@ -666,6 +666,14 @@ Referência: [RF18](requisitos/requisitos-funcionais.md#rf18-o-sistema-deve-perm
 > 3. Os dados exportados devem corresponder ao assunto e ao período solicitados, sem incluir registros de outros períodos.
 > 4. O arquivo disponibilizado deve abrir no formato escolhido e apresentar os resultados do relatório.
 > 5. Sem conexão, um relatório previamente sincronizado deve permanecer acessível; uma nova geração deve informar a necessidade de conexão.
+
+> **Decisões de 11/11/2026 ([#299](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/299)):**
+> 1. Assunto: cada relatório tem um único assunto (acidentes e incidentes; treinamentos e certificações; áreas de maior risco), um arquivo por emissão.
+> 2. Perfis: Gestor de Segurança e Supervisor emitem relatórios; o Colaborador não acessa o sistema.
+> 3. Ano de referência: de 2000 a 2100 na tela. O backend aceita qualquer período de até um ano; sem datas, usa o mês corrente.
+> 4. Conteúdo: todo relatório abre com um resumo de indicadores. Acidentes: ocorrências por mês, acidentes por gravidade e ocorrências por área. Treinamentos: treinamentos realizados no período e certificações vencidas ou a vencer no último dia do período. Áreas: ranking por número de ocorrências no período e, no empate, pelo nível de perigo e pelas não conformidades das inspeções.
+> 5. A tela permite pré-visualizar o conteúdo antes de baixar. A emissão do arquivo fica registrada na auditoria (RNF05).
+> 6. O critério de aceite 5 (consulta offline) continua pendente.
 
 # US19 – Preparar dados para a CAT
 

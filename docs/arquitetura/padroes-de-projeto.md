@@ -34,6 +34,8 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [Adapter (Frontend)](#adapter--leitura-da-api-e-contrato-de-epi) | GoF, estrutural | Frontend: primitivas de leitura da API e unificação de `Epi` | [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244), [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) | Aplicado (2/2: #244, #231) |
 | [Template Method (hook)](#template-method-hook--envio-de-formulario) | GoF, comportamental | Frontend: submissão de formulários (`useEnvioFormulario`) | [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233), [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243) | Aplicado (2/2: #233, #243) |
 | [State (Frontend)](#state--dialogos-de-taskspage) | GoF, comportamental | Frontend: estado único `DialogoTarefa` em `TasksPage` | [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246) | Pendente |
+| [Bridge](#bridge--relatórios-estatísticos-e-formatos-de-arquivo) | GoF, estrutural | Backend: relatórios (`Relatorio`) × formatos (`FormatoCsv`, `FormatoPdf`) | [#299](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/299) | Aplicado |
+| [Template Method (Backend)](#template-method-backend--esqueleto-dos-relatórios-estatísticos) | GoF, comportamental | Backend: `Relatorio.gerar` e os três relatórios do RF18 | [#299](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/299) | Aplicado |
 
 ---
 
@@ -4457,3 +4459,231 @@ Suíte do frontend: `npm ci && npm run lint && npm run build` sem erros; Playwri
 ### Evidências
 
 *A preencher na issue [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246).*
+
+---
+
+## Bridge — relatórios estatísticos e formatos de arquivo
+
+**Catálogo:** GoF, estrutural.
+
+**Intenção:** separar uma abstração da sua implementação para que as duas possam variar de forma independente.
+
+**Issue:** [#299](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/299) (RF18, US18).
+
+### Problema
+
+O RF18 pede três relatórios (acidentes, treinamentos realizados e áreas de maior risco) em dois formatos (CSV e PDF). Com herança simples, cada combinação vira uma classe: `RelatorioAcidentesPdf`, `RelatorioAcidentesCsv`, `RelatorioTreinamentosPdf` e assim por diante, 3 × 2 = 6 classes. Um quarto relatório traria duas classes novas, e um terceiro formato (XLSX, por exemplo) traria mais três. O código de PDF (fontes, quebra de página, cabeçalho de tabela) se repetiria em cada relatório, e a regra de cada relatório se repetiria em cada formato.
+
+As duas dimensões mudam por motivos diferentes: o relatório muda quando muda a regra de negócio (o que conta como área de maior risco, por exemplo); o formato muda quando muda a biblioteca ou o layout do arquivo.
+
+### Por que Bridge
+
+O Bridge separa as duas hierarquias e liga uma à outra por composição. O relatório (Abstraction) descreve o conteúdo em termos de operações primitivas (seção, indicador, tabela, aviso) e as entrega a um formato (Implementor), que só sabe escrever essas operações no seu tipo de arquivo. Com isso, 3 relatórios e 2 formatos são 5 classes, e cada dimensão cresce sem tocar na outra.
+
+O Implementor é uma porta de saída (`FormatoRelatorio`), e as implementações ficam em `adapters/out/relatorio`. Assim, a dependência do Apache PDFBox fica fora da camada de aplicação, como pede a arquitetura hexagonal.
+
+A escrita passo a passo lembra o Builder do GoF (um diretor que chama `buildPart` em construtores diferentes). O que caracteriza o Bridge aqui é a existência de duas hierarquias que variam: os relatórios também formam uma família com subclasses (as abstrações refinadas), e não há um único diretor fixo.
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| Abstraction | `Relatorio<D>` (`application/relatorio`) | Mantém o algoritmo do relatório e, em `exportar(periodo, geradoEm, formato)`, percorre o documento chamando as operações primitivas do formato |
+| RefinedAbstraction | `RelatorioAcidentes`, `RelatorioTreinamentos`, `RelatorioAreasRisco` | Definem o conteúdo de cada relatório (busca, resumo e seções) |
+| Implementor | `FormatoRelatorio` e `EscritaRelatorio` (`application/port/out`) | `iniciar(titulo, subtitulo)` abre um arquivo; `secao`, `indicador`, `tabela`, `aviso` e `concluir` são as operações primitivas |
+| ConcreteImplementor | `FormatoCsv`, `FormatoPdf` (`adapters/out/relatorio`) | Escrevem as operações em CSV (separador `;`, BOM UTF-8) ou PDF (A4, tabelas, paginação e rodapé) |
+| Client | `RelatorioService` | Escolhe o relatório e o formato pelos mapas `Map<TipoRelatorio, Relatorio<?>>` e `Map<TipoFormato, FormatoRelatorio>` e chama `exportar` |
+
+### Diagramas
+
+**Sem o padrão (alternativa descartada).** Uma classe por combinação.
+
+```mermaid
+classDiagram
+  direction TB
+  class RelatorioAcidentesPdf
+  class RelatorioAcidentesCsv
+  class RelatorioTreinamentosPdf
+  class RelatorioTreinamentosCsv
+  class RelatorioAreasRiscoPdf
+  class RelatorioAreasRiscoCsv
+```
+
+**Com o padrão.**
+
+```mermaid
+classDiagram
+  direction LR
+  class Relatorio~D~ {
+    <<abstract / Abstraction>>
+    +gerar(periodo, geradoEm) RelatorioOutputDTO
+    +exportar(periodo, geradoEm, formato) byte[]
+  }
+  class RelatorioAcidentes { <<RefinedAbstraction>> }
+  class RelatorioTreinamentos { <<RefinedAbstraction>> }
+  class RelatorioAreasRisco { <<RefinedAbstraction>> }
+  class FormatoRelatorio {
+    <<interface / Implementor>>
+    +tipo() TipoFormato
+    +iniciar(titulo, subtitulo) EscritaRelatorio
+  }
+  class EscritaRelatorio {
+    <<interface>>
+    +secao(titulo)
+    +indicador(rotulo, valor)
+    +tabela(colunas, linhas)
+    +aviso(texto)
+    +concluir() byte[]
+  }
+  class FormatoCsv { <<ConcreteImplementor>> }
+  class FormatoPdf { <<ConcreteImplementor>> }
+  Relatorio <|-- RelatorioAcidentes
+  Relatorio <|-- RelatorioTreinamentos
+  Relatorio <|-- RelatorioAreasRisco
+  Relatorio ..> FormatoRelatorio : exportar(..., formato)
+  FormatoRelatorio <|.. FormatoCsv
+  FormatoRelatorio <|.. FormatoPdf
+  FormatoRelatorio ..> EscritaRelatorio : cria
+```
+
+### Trecho principal
+
+```java
+// Relatorio.java: a Abstraction só conhece as operações primitivas do Implementor.
+public final byte[] exportar(PeriodoRelatorio periodo, LocalDateTime geradoEm, FormatoRelatorio formato) {
+    RelatorioOutputDTO documento = gerar(periodo, geradoEm);
+    EscritaRelatorio escrita = formato.iniciar(documento.titulo(), "Período: " + periodo.descrever() + ...);
+    for (Secao secao : documento.secoes()) {
+        escrita.secao(secao.titulo());
+        secao.indicadores().forEach(indicador -> escrita.indicador(indicador.rotulo(), indicador.valor()));
+        ...
+            escrita.tabela(tabela.colunas(), tabela.linhas());
+    }
+    return escrita.concluir();
+}
+```
+
+O formato não guarda estado: `iniciar` devolve uma `EscritaRelatorio` nova a cada arquivo, que guarda o texto do CSV ou o documento PDF em construção. Por isso `FormatoCsv` e `FormatoPdf` podem ser beans compartilhados pelo Spring.
+
+### Decisão sobre o Composite
+
+A #299 previa avaliar o Composite para o documento do relatório. As seções não se aninham (cada uma tem indicadores e, no máximo, uma tabela), então uma lista de seções basta. O Composite só se justificaria com subseções.
+
+### Benefício
+
+- Um formato novo (XLSX) é uma classe em `adapters/out/relatorio` que implementa `FormatoRelatorio`; nenhum relatório muda.
+- Um relatório novo é uma subclasse de `Relatorio` e uma constante em `TipoRelatorio`; nenhum formato muda.
+- A biblioteca de PDF não aparece fora de `FormatoPdf`.
+- Faltar um relatório ou um formato para alguma constante impede a aplicação de subir (`RelatorioService` confere os mapas na criação), e há teste para isso.
+
+### Métricas locais
+
+| Métrica | Herança por combinação | Bridge |
+| --- | ---: | ---: |
+| Classes para 3 relatórios × 2 formatos | 6 | 5 |
+| Classes a criar para um 3º formato | 3 | 1 |
+| Classes a criar para um 4º relatório | 2 | 1 |
+| Classes que importam o PDFBox | 3 | 1 (`FormatoPdf`) |
+
+### Evidências
+
+- `FormatosRelatorioTest` (4 testes): cada formato cobre um `TipoFormato`; CSV com BOM, `;` e aspas só quando preciso; PDF válido, com acentos, várias páginas numeradas para tabela longa e `?` no lugar de caractere sem glifo.
+- `RelatorioServiceTest` (5 testes): exportação no formato pedido, nome do arquivo, auditoria da emissão, recusa de tipo ou formato desconhecido e mapas completos.
+
+---
+
+## Template Method (Backend) — esqueleto dos relatórios estatísticos
+
+**Catálogo:** GoF, comportamental.
+
+**Intenção:** definir o esqueleto de um algoritmo numa operação, deixando alguns passos para as subclasses, que os redefinem sem mudar a estrutura do algoritmo.
+
+**Issue:** [#299](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/299) (RF18, US18).
+
+No frontend o padrão já aparece na forma de hook (`useEnvioFormulario`, #233). Aqui ele aparece na forma clássica do GoF: classe abstrata com o método-template `final` e operações primitivas `abstract`.
+
+### Problema
+
+Os três relatórios seguem o mesmo roteiro: buscar os dados do período uma vez, montar a seção "Resumo" com indicadores, montar as seções de detalhe e embalar tudo com título, período e instante de geração. Sem um esqueleto comum, cada relatório repetiria o roteiro e poderia se desviar dele (um relatório sem resumo, outro com o resumo no fim, outro buscando os dados duas vezes).
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| AbstractClass | `Relatorio<D>` | `gerar(periodo, geradoEm)` é o método-template, `final`: busca, resume, detalha e monta o `RelatorioOutputDTO` |
+| Operações primitivas | `buscar(periodo)`, `resumir(dados, periodo)`, `detalhar(dados, periodo)` | Passos `abstract` que cada relatório implementa |
+| Hook | `semRegistros(dados)` | Tem implementação padrão (`false`); cada relatório redefine o que significa "nenhum registro" no seu assunto. A tela mostra um aviso, e o arquivo traz a mesma frase logo após o cabeçalho |
+| ConcreteClass | `RelatorioAcidentes` | Ocorrências do período por mês, por gravidade e por área |
+| ConcreteClass | `RelatorioTreinamentos` | Treinamentos realizados e certificações vencidas ou a vencer no fim do período |
+| ConcreteClass | `RelatorioAreasRisco` | Ranking das áreas por ocorrências, nível de perigo e não conformidades das inspeções |
+
+O parâmetro de tipo `D` é o dado que cada relatório busca uma vez e reaproveita nos passos seguintes: `List<Ocorrencia>`, um record com treinamentos, certificações e nomes, ou a lista de `SituacaoArea`.
+
+### Diagrama
+
+```mermaid
+classDiagram
+  direction TB
+  class Relatorio~D~ {
+    <<abstract / AbstractClass>>
+    +gerar(periodo, geradoEm) RelatorioOutputDTO
+    #buscar(periodo)* D
+    #resumir(dados, periodo)* List~Indicador~
+    #detalhar(dados, periodo)* List~Secao~
+    #semRegistros(dados) boolean
+  }
+  class RelatorioAcidentes {
+    #buscar(periodo) List~Ocorrencia~
+  }
+  class RelatorioTreinamentos {
+    #buscar(periodo) Dados
+  }
+  class RelatorioAreasRisco {
+    #buscar(periodo) List~SituacaoArea~
+  }
+  Relatorio <|-- RelatorioAcidentes
+  Relatorio <|-- RelatorioTreinamentos
+  Relatorio <|-- RelatorioAreasRisco
+```
+
+### Trecho principal
+
+```java
+// Relatorio.java
+public final RelatorioOutputDTO gerar(PeriodoRelatorio periodo, LocalDateTime geradoEm) {
+    D dados = buscar(periodo);
+    List<Secao> secoes = new ArrayList<>();
+    secoes.add(new Secao("Resumo", resumir(dados, periodo)));
+    secoes.addAll(detalhar(dados, periodo));
+    return new RelatorioOutputDTO(tipo().name(), tipo().titulo(), periodo.inicio(), periodo.fim(),
+            geradoEm, semRegistros(dados), List.copyOf(secoes));
+}
+
+/** Hook: padrão "nunca vazio"; RelatorioAcidentes, por exemplo, devolve dados.isEmpty(). */
+protected boolean semRegistros(D dados) {
+    return false;
+}
+```
+
+O hook surgiu no primeiro teste com dados reais: a tela abria no mês corrente, as ocorrências cadastradas eram de meses anteriores e o relatório mostrava só zeros, sem dizer por quê.
+
+### Alinhamento com as demais refatorações
+
+- **Sem SQL escrito à mão:** os relatórios usam as portas que já existem (`OcorrenciaRepository.listar(filtro)`, `CapacitacaoRepository`, `AreaRiscoRepository`, `InspecaoRepository`, `UsuarioRepository`) e agregam em memória. Quando a capacitação virar JPA (#257), nada muda nos relatórios.
+- **Chain of Responsibility:** o período passa pelo `PeriodoRelatorioValidador` (datas obrigatórias, ordem e no máximo um ano) antes de qualquer busca.
+- **Strategy de tempo (#247):** o mês corrente e o instante de geração vêm do `Clock` injetado.
+- **Facade de auditoria (#223):** a emissão do arquivo é registrada por `RegistradorAuditoria.operacao("EMISSAO", "Relatorio", ...)`.
+- **Mapas por tipo, como as fábricas de ocorrência (#239):** sem criação estática e sem `switch` de escolha.
+
+### Benefício
+
+- O roteiro do relatório existe em um só lugar e não pode ser alterado pelas subclasses.
+- Cada relatório concreto tem só a regra própria.
+- A pré-visualização na tela (`gerar`) e o arquivo (`exportar`) usam o mesmo conteúdo, então o PDF nunca diverge do que o usuário conferiu.
+
+### Evidências
+
+- `RelatorioAcidentesTest` (6 testes): hook `semRegistros` e aviso no topo do CSV; o esqueleto começa pelo Resumo e mantém título, período e instante; contagens do resumo; uma linha por mês, inclusive meses sem ocorrência; gravidade com todos os níveis; ordenação por área; aviso sem acidentes.
+- `RelatorioTreinamentosTest` (3 testes): hook `semRegistros`; só treinamentos do período, em ordem de data; certificações avaliadas no último dia do período, vencidas primeiro.
+- `RelatorioAreasRiscoTest` (1 teste): ranking por ocorrências e nível de perigo, com inspeções e não conformidades só do período.
+- `PeriodoRelatorioValidadorTest` (4 testes): períodos válidos, datas obrigatórias interrompendo a cadeia, período invertido e maior que um ano.
