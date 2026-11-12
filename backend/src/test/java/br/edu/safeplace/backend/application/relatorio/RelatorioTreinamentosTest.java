@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.application.relatorio;
 
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoa;
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoas;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -30,7 +32,7 @@ class RelatorioTreinamentosTest {
     private final RelatorioTreinamentos relatorio = new RelatorioTreinamentos(capacitacoes, usuarios);
 
     private static Treinamento treinamento(String nome, LocalDate data, int carga, List<Integer> participantes) {
-        return new Treinamento(null, nome, "Conteúdo", "Instrutora", data, carga, participantes);
+        return new Treinamento(null, nome, "Conteúdo", "Instrutora", data, carga, pessoas(participantes));
     }
 
     private RelatorioOutputDTO gerar() {
@@ -63,7 +65,7 @@ class RelatorioTreinamentosTest {
     void semRegistros() {
         when(capacitacoes.listarTodosTreinamentos()).thenReturn(List.of(treinamento("Antigo", LocalDate.of(2026, 10, 1), 4, List.of(1))));
         when(capacitacoes.listarTodasCertificacoes()).thenReturn(List.of(
-                new Certificacao(1, "NR-12", LocalDate.of(2028, 1, 1), LocalDate.of(2026, 1, 1), 1)));
+                new Certificacao(1, "NR-12", LocalDate.of(2028, 1, 1), LocalDate.of(2026, 1, 1), pessoa(1))));
 
         assertThat(gerar().semRegistros()).isTrue();
     }
@@ -73,9 +75,9 @@ class RelatorioTreinamentosTest {
     void certificacoesPendentes() {
         when(capacitacoes.listarTodosTreinamentos()).thenReturn(List.of());
         when(capacitacoes.listarTodasCertificacoes()).thenReturn(List.of(
-                new Certificacao(1, "Brigada", LocalDate.of(2026, 12, 10), LocalDate.of(2025, 12, 10), 1),
-                new Certificacao(2, "NR-33", LocalDate.of(2026, 11, 15), LocalDate.of(2025, 11, 15), 9),
-                new Certificacao(3, "NR-12", LocalDate.of(2028, 1, 1), LocalDate.of(2026, 1, 1), 1)));
+                new Certificacao(1, "Brigada", LocalDate.of(2026, 12, 10), LocalDate.of(2025, 12, 10), pessoa(1)),
+                new Certificacao(2, "NR-33", LocalDate.of(2026, 11, 15), LocalDate.of(2025, 11, 15), pessoa(9)),
+                new Certificacao(3, "NR-12", LocalDate.of(2028, 1, 1), LocalDate.of(2026, 1, 1), pessoa(1))));
 
         RelatorioOutputDTO documento = gerar();
 
