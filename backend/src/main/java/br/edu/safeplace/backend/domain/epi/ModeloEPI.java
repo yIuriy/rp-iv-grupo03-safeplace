@@ -1,6 +1,7 @@
 package br.edu.safeplace.backend.domain.epi;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -83,19 +84,19 @@ public class ModeloEPI {
      * para que o lote novo o referencie em vez de uma cópia (#258).
      */
     public ModeloEPI reutilizarPara(ModeloEPI informado) {
-        if (informado == null || informado.ca != ca) {
-            throw new IllegalArgumentException("O modelo informado não corresponde ao CA " + ca + ".");
+        if (informado == null || informado.getCa() != getCa()) {
+            throw new IllegalArgumentException("O modelo informado não corresponde ao CA " + getCa() + ".");
         }
-        if (!validadeCA.equals(informado.validadeCA)) {
-            throw new IllegalArgumentException("CA " + ca + " já cadastrado com validade " + validadeCA
+        if (!getValidadeCA().equals(informado.getValidadeCA())) {
+            throw new IllegalArgumentException("CA " + getCa() + " já cadastrado com validade " + getValidadeCA()
                     + "; informe a mesma validade do Certificado de Aprovação.");
         }
-        if (marca != null && informado.marca != null && !marca.equalsIgnoreCase(informado.marca)) {
-            throw new IllegalArgumentException("CA " + ca + " já cadastrado com a marca " + marca
+        if (getMarca() != null && informado.getMarca() != null && !getMarca().equalsIgnoreCase(informado.getMarca())) {
+            throw new IllegalArgumentException("CA " + getCa() + " já cadastrado com a marca " + getMarca()
                     + "; informe a mesma marca do modelo.");
         }
         if (marca == null) {
-            marca = informado.marca;
+            marca = informado.getMarca();
         }
         return this;
     }
@@ -128,5 +129,22 @@ public class ModeloEPI {
 
     public LocalDate getValidadeCA() {
         return validadeCA;
+    }
+
+    /** Identidade pelo id gerado (decisão #254, seção 2.3); sem id, só o próprio objeto é igual. */
+    @Override
+    public boolean equals(Object outro) {
+        if (this == outro) {
+            return true;
+        }
+        if (!(outro instanceof ModeloEPI modelo)) {
+            return false;
+        }
+        return getId() != null && getId().equals(modelo.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
     }
 }
