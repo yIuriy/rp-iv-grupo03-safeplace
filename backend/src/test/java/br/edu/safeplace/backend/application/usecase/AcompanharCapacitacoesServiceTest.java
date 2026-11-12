@@ -1,5 +1,10 @@
 package br.edu.safeplace.backend.application.usecase;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -19,11 +24,6 @@ import br.edu.safeplace.backend.domain.capacitacao.StatusTreinamento;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.exception.UsuarioNaoEncontradoException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class AcompanharCapacitacoesServiceTest {
 
@@ -46,11 +46,11 @@ class AcompanharCapacitacoesServiceTest {
 
         // Ana: uma vencida e uma em dia; Bruno: vence exatamente em 30 dias; Carla: só treinamento,
         // sem certificação; Davi: sem histórico algum.
-        Certificacao anaVencida = new Certificacao(10, "NR-10", HOJE, HOJE.minusYears(2), 1, HOJE);
-        Certificacao anaEmDia = new Certificacao(11, "NR-33", HOJE.plusDays(31), HOJE.minusYears(1), 1, HOJE);
-        Certificacao brunoProxima = new Certificacao(12, "NR-35", HOJE.plusDays(30), HOJE.minusYears(1), 2, HOJE);
+        Certificacao anaVencida = new Certificacao(10, "NR-10", HOJE, HOJE.minusYears(2), ana, HOJE);
+        Certificacao anaEmDia = new Certificacao(11, "NR-33", HOJE.plusDays(31), HOJE.minusYears(1), ana, HOJE);
+        Certificacao brunoProxima = new Certificacao(12, "NR-35", HOJE.plusDays(30), HOJE.minusYears(1), bruno, HOJE);
         Treinamento carlaTreinamento = new Treinamento(20, "Integração", "Normas internas", "Eng. Paula",
-                HOJE.minusDays(5), 8, List.of(3));
+                HOJE.minusDays(5), 8, List.of(carla));
 
         when(usuarioRepository.listarTodos()).thenReturn(List.of(davi, carla, bruno, ana));
         when(consultarCapacitacao.listarTodasCertificacoes())
@@ -88,10 +88,10 @@ class AcompanharCapacitacoesServiceTest {
     @Test
     @DisplayName("UC02 passos 4 e 5: detalha certificações e treinamentos com os atributos do modelo")
     void deveDetalharCapacitacoesDoColaborador() {
-        Certificacao vencida = new Certificacao(10, "NR-10", HOJE.minusDays(1), HOJE.minusYears(2), 1, HOJE);
-        Certificacao proxima = new Certificacao(13, "NR-12", HOJE.plusDays(10), HOJE.minusYears(1), 1, HOJE);
+        Certificacao vencida = new Certificacao(10, "NR-10", HOJE.minusDays(1), HOJE.minusYears(2), ana, HOJE);
+        Certificacao proxima = new Certificacao(13, "NR-12", HOJE.plusDays(10), HOJE.minusYears(1), ana, HOJE);
         Treinamento treinamento = new Treinamento(21, "NR-10 Básico", "Riscos elétricos", "Eng. Paula",
-                HOJE.minusMonths(3), 40, List.of(1));
+                HOJE.minusMonths(3), 40, List.of(ana));
         when(usuarioRepository.buscarPorId(1)).thenReturn(Optional.of(ana));
         when(consultarCapacitacao.listarCertificacoesDoColaborador(1)).thenReturn(List.of(vencida, proxima));
         when(consultarCapacitacao.listarTreinamentosDoColaborador(1)).thenReturn(List.of(treinamento));
@@ -143,11 +143,11 @@ class AcompanharCapacitacoesServiceTest {
     @Test
     @DisplayName("RF10: alertas incluem treinamentos com validade, nas fronteiras de 30 dias e do vencimento")
     void deveAlertarTreinamentosComValidade() {
-        Treinamento proximo = new Treinamento(30, "NR-33", null, null, HOJE.minusMonths(12).plusDays(30), 8, 12, List.of(1, 2));
-        Treinamento foraDaJanela = new Treinamento(31, "NR-35", null, null, HOJE.minusMonths(12).plusDays(31), 8, 12, List.of(1));
-        Treinamento venceHoje = new Treinamento(32, "NR-10", null, null, HOJE.minusMonths(12), 8, 12, List.of(2));
-        Treinamento vencido = new Treinamento(33, "NR-12", null, null, HOJE.minusMonths(30), 8, 12, List.of(1));
-        Treinamento semValidade = new Treinamento(34, "Integração", null, null, HOJE.minusYears(10), 8, List.of(3));
+        Treinamento proximo = new Treinamento(30, "NR-33", null, null, HOJE.minusMonths(12).plusDays(30), 8, 12, List.of(ana, bruno));
+        Treinamento foraDaJanela = new Treinamento(31, "NR-35", null, null, HOJE.minusMonths(12).plusDays(31), 8, 12, List.of(ana));
+        Treinamento venceHoje = new Treinamento(32, "NR-10", null, null, HOJE.minusMonths(12), 8, 12, List.of(bruno));
+        Treinamento vencido = new Treinamento(33, "NR-12", null, null, HOJE.minusMonths(30), 8, 12, List.of(ana));
+        Treinamento semValidade = new Treinamento(34, "Integração", null, null, HOJE.minusYears(10), 8, List.of(carla));
         when(consultarCapacitacao.listarTodosTreinamentos())
                 .thenReturn(List.of(proximo, foraDaJanela, venceHoje, vencido, semValidade));
 
