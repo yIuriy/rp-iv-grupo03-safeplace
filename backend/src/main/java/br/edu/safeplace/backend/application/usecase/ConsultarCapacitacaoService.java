@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.edu.safeplace.backend.application.dto.capacitacao.PendenciasColaboradorDTO;
 import br.edu.safeplace.backend.application.port.in.capacitacao.ConsultarCapacitacaoUseCase;
@@ -17,6 +18,7 @@ import br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
 
 @Service
+@Transactional(readOnly = true)
 public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase {
 
     private final CapacitacaoRepository capacitacaoRepository;
