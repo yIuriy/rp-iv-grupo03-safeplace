@@ -1,12 +1,14 @@
 package br.edu.safeplace.backend.domain.epi;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -25,15 +27,15 @@ public class MovimentacaoEstoque {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "epi_id", nullable = false)
     private Epi epi;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lote_id")
     private LoteEPI lote;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "responsavel_id")
     private Colaborador responsavel;
 
@@ -108,5 +110,22 @@ public class MovimentacaoEstoque {
 
     public String getMotivo() {
         return motivo;
+    }
+
+    /** Identidade pelo id gerado (decisão #254, seção 2.3); sem id, só o próprio objeto é igual. */
+    @Override
+    public boolean equals(Object outro) {
+        if (this == outro) {
+            return true;
+        }
+        if (!(outro instanceof MovimentacaoEstoque movimentacao)) {
+            return false;
+        }
+        return getId() != null && getId().equals(movimentacao.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
     }
 }
