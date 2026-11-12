@@ -47,7 +47,7 @@ public class CertificacaoValidador extends ValidadorEmCadeia<Certificacao> {
                         "Data de emissão não pode ser no futuro."))
                 .encadear(exigir(c -> Certificacao.validarInconsistenciaCronologica(c.getDataEmissao(), c.getDataVencimento()),
                         "Data de emissão não pode ser posterior à data de vencimento."))
-                .encadear(exigir(c -> c.getColaboradorId() == null, "Colaborador é obrigatório."));
+                .encadear(exigir(c -> c.getColaborador() == null || c.getColaboradorId() == null, "Colaborador é obrigatório."));
         return primeiro;
     }
 }
