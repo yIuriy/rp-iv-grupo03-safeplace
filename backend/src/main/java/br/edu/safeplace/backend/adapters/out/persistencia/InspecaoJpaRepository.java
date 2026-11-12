@@ -13,6 +13,6 @@ import br.edu.safeplace.backend.domain.inspecao.Inspecao;
 
 public interface InspecaoJpaRepository extends JpaRepository<Inspecao, Integer> {
 
-    @EntityGraph(attributePaths = {"itens", "areaRisco"})
+    @EntityGraph(attributePaths = {"itens", "areaRisco", "responsavel"})
     List<Inspecao> findByAreaRisco_IdOrderByDataInspecaoDescIdDesc(Integer areaRiscoId);
 }

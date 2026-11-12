@@ -64,7 +64,7 @@ public class AreaRisco {
     @Column(name = "nivel_perigo", nullable = false, length = 20)
     private NivelPerigo nivelPerigo;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "setor_id")
     private Setor setor;
 
@@ -76,7 +76,7 @@ public class AreaRisco {
     private String limites;
 
     /** EPIs obrigatórios de acesso (UC03), pela tabela de junção areas_risco_epis (#258). */
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "areas_risco_epis", joinColumns = @JoinColumn(name = "area_risco_id"),
             inverseJoinColumns = @JoinColumn(name = "epi_id"))
     @OrderBy("codigoEPI ASC")
@@ -168,16 +168,16 @@ public class AreaRisco {
      */
     public List<AlteracaoAreaRisco> compararCom(AreaRisco atualizada, Function<Integer, String> descreverSetor) {
         List<AlteracaoAreaRisco> alteracoes = new ArrayList<>();
-        registrarSeMudou(alteracoes, "nome", nome, atualizada.nome);
-        registrarSeMudou(alteracoes, "descrição", descricao, atualizada.descricao);
-        registrarSeMudou(alteracoes, "nível de perigo", nomeDoNivel(nivelPerigo), nomeDoNivel(atualizada.nivelPerigo));
-        if (!Objects.equals(setor, atualizada.setor)) {
+        registrarSeMudou(alteracoes, "nome", getNome(), atualizada.getNome());
+        registrarSeMudou(alteracoes, "descrição", getDescricao(), atualizada.getDescricao());
+        registrarSeMudou(alteracoes, "nível de perigo", nomeDoNivel(getNivelPerigo()), nomeDoNivel(atualizada.getNivelPerigo()));
+        if (!Objects.equals(getSetor(), atualizada.getSetor())) {
             alteracoes.add(new AlteracaoAreaRisco("setor",
-                    descreverSetorOuNulo(setor, descreverSetor),
-                    descreverSetorOuNulo(atualizada.setor, descreverSetor)));
+                    descreverSetorOuNulo(getSetor(), descreverSetor),
+                    descreverSetorOuNulo(atualizada.getSetor(), descreverSetor)));
         }
-        registrarSeMudou(alteracoes, "agentes de risco", juntar(agentesRisco), juntar(atualizada.agentesRisco));
-        registrarSeMudou(alteracoes, "limites", limites, atualizada.limites);
+        registrarSeMudou(alteracoes, "agentes de risco", juntar(getAgentesRisco()), juntar(atualizada.getAgentesRisco()));
+        registrarSeMudou(alteracoes, "limites", getLimites(), atualizada.getLimites());
         if (!idsDosEpis().equals(atualizada.idsDosEpis())) {
             alteracoes.add(new AlteracaoAreaRisco("EPIs obrigatórios", nomesDosEpis(), atualizada.nomesDosEpis()));
         }
@@ -296,15 +296,15 @@ public class AreaRisco {
         if (!(outro instanceof AreaRisco area)) {
             return false;
         }
-        if (codigo == null || area.codigo == null) {
+        if (getCodigo() == null || area.getCodigo() == null) {
             return false;
         }
-        return codigo.equals(area.codigo);
+        return getCodigo().equals(area.getCodigo());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(codigo);
+        return Objects.hashCode(getCodigo());
     }
 
     @Converter

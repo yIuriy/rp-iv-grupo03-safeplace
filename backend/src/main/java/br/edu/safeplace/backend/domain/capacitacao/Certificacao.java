@@ -1,30 +1,74 @@
 package br.edu.safeplace.backend.domain.capacitacao;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
+import br.edu.safeplace.backend.domain.usuario.Colaborador;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+
+/**
+ * Certificação normativa de um colaborador (RF10, UC02, US10).
+ * Entidade JPA da tabela certificacoes (#257): o colaborador é associado por objeto;
+ * {@link #getColaboradorId()} serve aos DTOs e relatórios que continuam expondo ids.
+ */
+@Entity
+@Table(name = "certificacoes")
 public class Certificacao {
-    /**
-     * Antecedência do alerta de vencimento (UC02, regra 1; US10, regra 2).
-     */
 
-    private final Integer id;
-    private final String nome;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(nullable = false, length = 255)
+    private String nome;
+
+    @Transient
     private StatusCertificacao status;
-    private final LocalDate dataVencimento;
-    private final LocalDate dataEmissao;
-    private final Integer colaboradorId;
 
-    public Certificacao(Integer id, String nome, LocalDate dataVencimento, LocalDate dataEmissao, Integer colaboradorId) {
-        this(id, nome, dataVencimento, dataEmissao, colaboradorId, dataEmissao);
+    @Column(name = "data_vencimento", nullable = false)
+    private LocalDate dataVencimento;
+
+    @Column(name = "data_emissao", nullable = false)
+    private LocalDate dataEmissao;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "colaborador_id", nullable = false)
+    private Colaborador colaborador;
+
+    /** Exclusivo do JPA (decisão #254). */
+    protected Certificacao() {
     }
 
-    public Certificacao(Integer id, String nome, LocalDate dataVencimento, LocalDate dataEmissao, Integer colaboradorId, LocalDate dataReferencia) {
+    public Certificacao(Integer id, String nome, LocalDate dataVencimento, LocalDate dataEmissao,
+                        Colaborador colaborador) {
+        this(id, nome, dataVencimento, dataEmissao, colaborador, dataEmissao);
+    }
+
+    public Certificacao(Integer id, String nome, LocalDate dataVencimento, LocalDate dataEmissao,
+                        Colaborador colaborador, LocalDate dataReferencia) {
         this.id = id;
         this.nome = nome != null ? nome.trim() : null;
         this.dataVencimento = dataVencimento;
         this.dataEmissao = dataEmissao;
-        this.colaboradorId = colaboradorId;
+        this.colaborador = colaborador;
         this.status = (dataVencimento != null && dataReferencia != null) ? calcularStatus(dataReferencia) : null;
+    }
+
+    @PostLoad
+    void inicializarStatus() {
+        if (this.status == null && this.dataVencimento != null && this.dataEmissao != null) {
+            this.status = calcularStatus(this.dataEmissao);
+        }
     }
 
     public static boolean validarInconsistenciaCronologica(LocalDate dataEmissao, LocalDate dataValidade) {
@@ -35,12 +79,14 @@ public class Certificacao {
     }
 
     /** Cadastro de certificação; as datas e o vínculo são validados por CertificacaoValidador (#265). */
-    public static Certificacao cadastrar(String nome, LocalDate dataVencimento, LocalDate dataEmissao, Integer colaboradorId) {
-        return cadastrar(nome, dataVencimento, dataEmissao, colaboradorId, dataEmissao);
+    public static Certificacao cadastrar(String nome, LocalDate dataVencimento, LocalDate dataEmissao,
+                                         Colaborador colaborador) {
+        return cadastrar(nome, dataVencimento, dataEmissao, colaborador, dataEmissao);
     }
 
-    public static Certificacao cadastrar(String nome, LocalDate dataVencimento, LocalDate dataEmissao, Integer colaboradorId, LocalDate dataReferencia) {
-        return new Certificacao(null, nome, dataVencimento, dataEmissao, colaboradorId, dataReferencia);
+    public static Certificacao cadastrar(String nome, LocalDate dataVencimento, LocalDate dataEmissao,
+                                         Colaborador colaborador, LocalDate dataReferencia) {
+        return new Certificacao(null, nome, dataVencimento, dataEmissao, colaborador, dataReferencia);
     }
 
     public StatusCertificacao calcularStatus(LocalDate dataReferencia) {
@@ -86,7 +132,28 @@ public class Certificacao {
         return dataEmissao;
     }
 
+    public Colaborador getColaborador() {
+        return colaborador;
+    }
+
     public Integer getColaboradorId() {
-        return colaboradorId;
+        return colaborador != null ? colaborador.getId() : null;
+    }
+
+    /** Identidade pelo id gerado (decisão #254, seção 2.3); sem id, só o próprio objeto é igual. */
+    @Override
+    public boolean equals(Object outro) {
+        if (this == outro) {
+            return true;
+        }
+        if (!(outro instanceof Certificacao certificacao)) {
+            return false;
+        }
+        return getId() != null && getId().equals(certificacao.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
     }
 }

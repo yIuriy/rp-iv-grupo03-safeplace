@@ -38,18 +38,18 @@ public class Inspecao {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "area_risco_id", nullable = false)
     private AreaRisco areaRisco;
 
     @Column(name = "data_inspecao", nullable = false)
     private LocalDate dataInspecao;
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "gestor_id", nullable = false)
     private GestorDeSeguranca responsavel;
 
-    @OneToMany(mappedBy = "inspecao", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "inspecao", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("id ASC")
     private List<ItemVerificado> itens = new ArrayList<>();
 
@@ -117,11 +117,11 @@ public class Inspecao {
         if (!(outro instanceof Inspecao inspecao)) {
             return false;
         }
-        return id != null && id.equals(inspecao.id);
+        return getId() != null && getId().equals(inspecao.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hashCode(getId());
     }
 }

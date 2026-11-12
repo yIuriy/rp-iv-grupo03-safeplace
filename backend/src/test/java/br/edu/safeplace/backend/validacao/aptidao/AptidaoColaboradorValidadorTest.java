@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.validacao.aptidao;
 
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoa;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -13,8 +14,8 @@ import org.junit.jupiter.api.Test;
 
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
-import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
 import br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao;
+import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
 import br.edu.safeplace.backend.domain.capacitacao.exception.AlocacaoBloqueadaException;
 import br.edu.safeplace.backend.domain.capacitacao.exception.ColaboradorNaoAlocavelException;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
@@ -80,7 +81,7 @@ class AptidaoColaboradorValidadorTest {
         ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(1, "NR-35 Altura",
                 ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, 10, ExigenciaCapacitacao.TipoAlvo.TAREFA);
 
-        Certificacao certVencida = new Certificacao(1, "NR-35 Altura", hoje.minusDays(1), hoje.minusYears(1), 1);
+        Certificacao certVencida = new Certificacao(1, "NR-35 Altura", hoje.minusDays(1), hoje.minusYears(1), pessoa(1));
 
         assertThatThrownBy(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefa,
                 List.of(certVencida), List.of(), List.of(exigencia), hoje)))
@@ -95,8 +96,8 @@ class AptidaoColaboradorValidadorTest {
         Tarefa tarefa = new Tarefa(10, "Trabalho em altura", NivelPerigo.ALTO, hoje.atStartOfDay());
         ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(1, "NR-35 Altura",
                 ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, 10, ExigenciaCapacitacao.TipoAlvo.TAREFA);
-        Certificacao venceHoje = new Certificacao(1, "NR-35 Altura", hoje, hoje.minusYears(1), 1, hoje);
-        Certificacao venceAmanha = new Certificacao(2, "NR-35 Altura", hoje.plusDays(1), hoje.minusYears(1), 1, hoje);
+        Certificacao venceHoje = new Certificacao(1, "NR-35 Altura", hoje, hoje.minusYears(1), pessoa(1), hoje);
+        Certificacao venceAmanha = new Certificacao(2, "NR-35 Altura", hoje.plusDays(1), hoje.minusYears(1), pessoa(1), hoje);
 
         assertThat(venceHoje.getStatus()).isEqualTo(StatusCertificacao.VENCIDA);
         assertThatThrownBy(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefa,
@@ -118,7 +119,7 @@ class AptidaoColaboradorValidadorTest {
         ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(1, "NR-35 Altura",
                 ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, 10, ExigenciaCapacitacao.TipoAlvo.TAREFA);
 
-        Certificacao certValida = new Certificacao(1, "NR-35 Altura", hoje.plusMonths(6), hoje.minusMonths(6), 1);
+        Certificacao certValida = new Certificacao(1, "NR-35 Altura", hoje.plusMonths(6), hoje.minusMonths(6), pessoa(1));
 
         assertThatCode(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefa,
                 List.of(certValida), List.of(), List.of(exigencia), hoje)))
@@ -147,7 +148,7 @@ class AptidaoColaboradorValidadorTest {
                 ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO, 10, ExigenciaCapacitacao.TipoAlvo.TAREFA);
 
         Treinamento treinoRealizado = new Treinamento(1, "NR-33 Vigia", "Prática", "Instrutor A",
-                hoje.minusDays(10), 16, List.of(colaborador.getId()));
+                hoje.minusDays(10), 16, List.of(colaborador));
 
         assertThatCode(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefa,
                 List.of(), List.of(treinoRealizado), List.of(exigencia), hoje)))
@@ -176,7 +177,7 @@ class AptidaoColaboradorValidadorTest {
         ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(1, "NR-33 Vigia",
                 ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO, 10, ExigenciaCapacitacao.TipoAlvo.TAREFA);
         Treinamento vencido = new Treinamento(1, "NR-33 Vigia", "Prática", "Instrutor A",
-                hoje.minusMonths(13), 16, 12, List.of(colaborador.getId()));
+                hoje.minusMonths(13), 16, 12, List.of(colaborador));
 
         assertThatThrownBy(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefa,
                 List.of(), List.of(vencido), List.of(exigencia), hoje)))
@@ -192,7 +193,7 @@ class AptidaoColaboradorValidadorTest {
         ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(1, "NR-33 Vigia",
                 ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO, 10, ExigenciaCapacitacao.TipoAlvo.TAREFA);
         Treinamento proximo = new Treinamento(1, "NR-33 Vigia", "Prática", "Instrutor A",
-                hoje.minusMonths(12).plusDays(10), 16, 12, List.of(colaborador.getId()));
+                hoje.minusMonths(12).plusDays(10), 16, 12, List.of(colaborador));
 
         assertThatCode(() -> validador.validar(new AptidaoParaTarefa(colaborador, tarefa,
                 List.of(), List.of(proximo), List.of(exigencia), hoje)))
@@ -227,7 +228,7 @@ class AptidaoColaboradorValidadorTest {
         Tarefa semClassificacao = new Tarefa(11, "Atividade sem grau", null, null, null);
         ExigenciaCapacitacao certificacao = new ExigenciaCapacitacao(1, "NR-35 Altura",
                 ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, 10, ExigenciaCapacitacao.TipoAlvo.TAREFA);
-        Certificacao valida = new Certificacao(1, "NR-35 Altura", hoje.plusYears(1), hoje.minusYears(1), 1);
+        Certificacao valida = new Certificacao(1, "NR-35 Altura", hoje.plusYears(1), hoje.minusYears(1), pessoa(1));
         Supervisor supervisor = Supervisor.novo("Maria Souza", "98765432100", LocalDate.of(1985, 5, 5), "maria@safeplace.com", "senha");
 
         List<AptidaoParaTarefa> cenarios = List.of(

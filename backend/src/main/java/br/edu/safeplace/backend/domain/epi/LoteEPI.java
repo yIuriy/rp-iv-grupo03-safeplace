@@ -1,10 +1,12 @@
 package br.edu.safeplace.backend.domain.epi;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -35,7 +37,7 @@ public class LoteEPI {
     @Column(name = "quantidade_recebida", nullable = false)
     private int quantidadeRecebida;
 
-    @ManyToOne(cascade = CascadeType.ALL, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = false)
     @JoinColumn(name = "modelo_id", nullable = false)
     private ModeloEPI modelo;
 
@@ -93,5 +95,22 @@ public class LoteEPI {
 
     public ModeloEPI getModelo() {
         return modelo;
+    }
+
+    /** Identidade pelo id gerado (decisão #254, seção 2.3); sem id, só o próprio objeto é igual. */
+    @Override
+    public boolean equals(Object outro) {
+        if (this == outro) {
+            return true;
+        }
+        if (!(outro instanceof LoteEPI lote)) {
+            return false;
+        }
+        return getId() != null && getId().equals(lote.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
     }
 }

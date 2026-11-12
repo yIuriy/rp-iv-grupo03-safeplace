@@ -3,7 +3,6 @@ package br.edu.safeplace.backend.application.usecase;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,7 +29,6 @@ import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepository;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
-import br.edu.safeplace.backend.validacao.aptidao.AptidaoColaboradorValidador;
 import br.edu.safeplace.backend.domain.capacitacao.exception.AlocacaoBloqueadaException;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
@@ -41,6 +39,7 @@ import br.edu.safeplace.backend.domain.tarefa.exception.TarefaSemClassificacaoEx
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
 import br.edu.safeplace.backend.domain.usuario.exception.UsuarioNaoEncontradoException;
+import br.edu.safeplace.backend.validacao.aptidao.AptidaoColaboradorValidador;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AlocarColaboradorTarefaUseCase - Orquestração de Alocação e Consulta de Aptidão")
@@ -129,7 +128,7 @@ class AlocarColaboradorTarefaUseCaseTest {
         ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(1, "NR-10",
                 ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, 10, ExigenciaCapacitacao.TipoAlvo.TAREFA);
         Certificacao certVencida = new Certificacao(1, "NR-10", LocalDate.now().minusDays(5),
-                LocalDate.now().minusYears(2), colaborador.getId());
+                LocalDate.now().minusYears(2), colaborador);
 
         when(usuarioRepository.buscarPorEmail("gestor@safeplace.com")).thenReturn(Optional.of(gestor));
         when(tarefaRepository.buscarPorId(10)).thenReturn(Optional.of(tarefa));

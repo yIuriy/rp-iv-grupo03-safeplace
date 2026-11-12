@@ -11,17 +11,17 @@ import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 
 public interface AreaRiscoJpaRepository extends JpaRepository<AreaRisco, Integer> {
 
-    @EntityGraph(attributePaths = {"setor", "episObrigatorios"})
+    @EntityGraph(attributePaths = {"setor", "episObrigatorios", "episObrigatorios.lote", "episObrigatorios.lote.modelo"})
     Optional<AreaRisco> findByCodigo(String codigo);
 
     @Override
-    @EntityGraph(attributePaths = {"setor", "episObrigatorios"})
+    @EntityGraph(attributePaths = {"setor", "episObrigatorios", "episObrigatorios.lote", "episObrigatorios.lote.modelo"})
     List<AreaRisco> findAll();
 
     @Override
-    @EntityGraph(attributePaths = {"setor", "episObrigatorios"})
+    @EntityGraph(attributePaths = {"setor", "episObrigatorios", "episObrigatorios.lote", "episObrigatorios.lote.modelo"})
     Optional<AreaRisco> findById(Integer id);
 
-    @EntityGraph(attributePaths = {"setor", "episObrigatorios"})
+    @EntityGraph(attributePaths = {"setor", "episObrigatorios", "episObrigatorios.lote", "episObrigatorios.lote.modelo"})
     List<AreaRisco> findByNivelPerigo(NivelPerigo nivelPerigo);
 }

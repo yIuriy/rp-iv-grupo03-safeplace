@@ -6,6 +6,7 @@ import java.util.Objects;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -26,18 +27,18 @@ public class AlocacaoTarefa {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "tarefa_id", nullable = false)
     private Tarefa tarefa;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "colaborador_id", nullable = false)
     private Colaborador colaborador;
 
     @Column(name = "data_alocacao", nullable = false)
     private LocalDateTime dataAlocacao;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "responsavel_alocacao_id", nullable = false)
     private Colaborador responsavelAlocacao;
 

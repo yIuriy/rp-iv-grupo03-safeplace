@@ -1,5 +1,6 @@
 package br.edu.safeplace.backend.domain.capacitacao;
 
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoa;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -48,7 +49,7 @@ class CertificacaoVencimentoClockTest {
     @DisplayName("calcularStatus: Certificação com vencimento ontem está VENCIDA")
     void deveEstarVencidaQuandoVenceuOntem() {
         LocalDate hoje = LocalDate.now(clock);
-        Certificacao cert = new Certificacao(1, "NR-10 Segurança em Eletricidade", hoje.minusDays(1), hoje.minusYears(1), 10, hoje);
+        Certificacao cert = new Certificacao(1, "NR-10 Segurança em Eletricidade", hoje.minusDays(1), hoje.minusYears(1), pessoa(10), hoje);
 
         assertThat(cert.getStatus()).isEqualTo(StatusCertificacao.VENCIDA);
         assertThat(cert.estaValidaEm(hoje)).isFalse();
@@ -58,7 +59,7 @@ class CertificacaoVencimentoClockTest {
     @DisplayName("calcularStatus: Certificação com vencimento na data de hoje já é considerada VENCIDA (UC02)")
     void deveEstarVencidaQuandoVenceHoje() {
         LocalDate hoje = LocalDate.now(clock);
-        Certificacao cert = new Certificacao(2, "NR-35 Trabalho em Altura", hoje, hoje.minusYears(1), 10, hoje);
+        Certificacao cert = new Certificacao(2, "NR-35 Trabalho em Altura", hoje, hoje.minusYears(1), pessoa(10), hoje);
 
         assertThat(cert.getStatus()).isEqualTo(StatusCertificacao.VENCIDA);
         assertThat(cert.estaValidaEm(hoje)).isFalse();
@@ -68,7 +69,7 @@ class CertificacaoVencimentoClockTest {
     @DisplayName("calcularStatus: Certificação com vencimento amanhã está PROXIMA_DO_VENCIMENTO")
     void deveEstarProximaDoVencimentoQuandoVenceAmanha() {
         LocalDate hoje = LocalDate.now(clock);
-        Certificacao cert = new Certificacao(3, "NR-35 Trabalho em Altura", hoje.plusDays(1), hoje.minusYears(1), 10, hoje);
+        Certificacao cert = new Certificacao(3, "NR-35 Trabalho em Altura", hoje.plusDays(1), hoje.minusYears(1), pessoa(10), hoje);
 
         assertThat(cert.getStatus()).isEqualTo(StatusCertificacao.PROXIMA_DO_VENCIMENTO);
         assertThat(cert.estaValidaEm(hoje)).isTrue();
@@ -78,8 +79,8 @@ class CertificacaoVencimentoClockTest {
     @DisplayName("calcularStatus: Certificação com vencimento no limite de 30 dias está PROXIMA_DO_VENCIMENTO e com 31 dias está EM_DIA")
     void deveRespeitarLimiteTrintaDiasParaAlerta() {
         LocalDate hoje = LocalDate.now(clock);
-        Certificacao certLimite = new Certificacao(4, "NR-12", hoje.plusDays(30), hoje.minusYears(1), 10, hoje);
-        Certificacao certFutura = new Certificacao(5, "NR-12", hoje.plusDays(31), hoje.minusYears(1), 10, hoje);
+        Certificacao certLimite = new Certificacao(4, "NR-12", hoje.plusDays(30), hoje.minusYears(1), pessoa(10), hoje);
+        Certificacao certFutura = new Certificacao(5, "NR-12", hoje.plusDays(31), hoje.minusYears(1), pessoa(10), hoje);
 
         assertThat(certLimite.getStatus()).isEqualTo(StatusCertificacao.PROXIMA_DO_VENCIMENTO);
         assertThat(certFutura.getStatus()).isEqualTo(StatusCertificacao.EM_DIA);
@@ -91,16 +92,16 @@ class CertificacaoVencimentoClockTest {
         LocalDate hoje = LocalDate.now(clock);
 
         capacitacaoRepository.salvarCertificacao(
-                new Certificacao(1, "NR-10", hoje.minusDays(1), hoje.minusYears(1), 10)
+                new Certificacao(1, "NR-10", hoje.minusDays(1), hoje.minusYears(1), pessoa(10))
         );
         capacitacaoRepository.salvarCertificacao(
-                new Certificacao(2, "NR-35", hoje, hoje.minusYears(1), 10)
+                new Certificacao(2, "NR-35", hoje, hoje.minusYears(1), pessoa(10))
         );
         capacitacaoRepository.salvarCertificacao(
-                new Certificacao(3, "NR-33", hoje.plusDays(15), hoje.minusYears(1), 10)
+                new Certificacao(3, "NR-33", hoje.plusDays(15), hoje.minusYears(1), pessoa(10))
         );
         capacitacaoRepository.salvarCertificacao(
-                new Certificacao(4, "NR-12", hoje.plusMonths(6), hoje.minusMonths(6), 10)
+                new Certificacao(4, "NR-12", hoje.plusMonths(6), hoje.minusMonths(6), pessoa(10))
         );
 
         List<Certificacao> listadas = consultarService.listarCertificacoesDoColaborador(10);
@@ -121,17 +122,17 @@ class CertificacaoVencimentoClockTest {
     void validadorDeveRecusarVencimentoPresenteOuPassadoNoCadastroUsandoClock() {
         LocalDate hoje = LocalDate.now(clock);
 
-        Certificacao venceOntem = Certificacao.cadastrar("NR-10", hoje.minusDays(1), hoje.minusMonths(1), 10);
+        Certificacao venceOntem = Certificacao.cadastrar("NR-10", hoje.minusDays(1), hoje.minusMonths(1), pessoa(10));
         assertThatThrownBy(() -> certificacaoValidador.validar(venceOntem))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Data de vencimento não pode ser no passado ou presente no momento do cadastro.");
 
-        Certificacao venceHoje = Certificacao.cadastrar("NR-10", hoje, hoje.minusMonths(1), 10);
+        Certificacao venceHoje = Certificacao.cadastrar("NR-10", hoje, hoje.minusMonths(1), pessoa(10));
         assertThatThrownBy(() -> certificacaoValidador.validar(venceHoje))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Data de vencimento não pode ser no passado ou presente no momento do cadastro.");
 
-        Certificacao venceAmanha = Certificacao.cadastrar("NR-10", hoje.plusDays(1), hoje.minusMonths(1), 10);
+        Certificacao venceAmanha = Certificacao.cadastrar("NR-10", hoje.plusDays(1), hoje.minusMonths(1), pessoa(10));
         assertThatCode(() -> certificacaoValidador.validar(venceAmanha))
                 .doesNotThrowAnyException();
     }

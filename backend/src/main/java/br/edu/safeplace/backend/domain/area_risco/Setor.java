@@ -111,14 +111,14 @@ public class Setor {
         if (!(outro instanceof Setor setor)) {
             return false;
         }
-        if (id != null && setor.id != null) {
-            return id.equals(setor.id);
+        if (getId() != null && setor.getId() != null) {
+            return getId().equals(setor.getId());
         }
-        return nome != null && nome.equalsIgnoreCase(setor.nome);
+        return getNome() != null && getNome().equalsIgnoreCase(setor.getNome());
     }
 
     @Override
     public int hashCode() {
-        return id != null ? Objects.hashCode(id) : Objects.hashCode(nome != null ? nome.toLowerCase() : null);
+        return getId() != null ? Objects.hashCode(getId()) : Objects.hashCode(getNome() != null ? getNome().toLowerCase() : null);
     }
 }

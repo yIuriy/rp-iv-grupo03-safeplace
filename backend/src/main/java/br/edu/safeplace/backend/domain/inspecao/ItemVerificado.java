@@ -89,11 +89,11 @@ public class ItemVerificado {
         if (!(outro instanceof ItemVerificado item)) {
             return false;
         }
-        return id != null && id.equals(item.id);
+        return getId() != null && getId().equals(item.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hashCode(getId());
     }
 }

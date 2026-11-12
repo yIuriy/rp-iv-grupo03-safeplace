@@ -34,7 +34,7 @@ public class TreinamentoValidador extends ValidadorEmCadeia<Treinamento> {
                         "Data de realização não pode ser no futuro."))
                 .encadear(exigir(t -> t.getValidadeMeses() != null && t.getValidadeMeses() < 1,
                         "Validade do treinamento deve ser de ao menos 1 mês."))
-                .encadear(exigir(t -> t.getColaboradoresIds().isEmpty(),
+                .encadear(exigir(t -> t.getColaboradores().isEmpty() || t.getColaboradoresIds().isEmpty(),
                         "Treinamento deve possuir ao menos um colaborador vinculado."));
         return primeiro;
     }
