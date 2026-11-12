@@ -2,13 +2,14 @@ package br.edu.safeplace.backend.suporte;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 
 /**
  * Objetos associados mínimos para os testes que só precisam do id de um EPI ou de uma pessoa, desde que as
- * associações passaram a ser por objeto (#260). Id nulo devolve associação ausente.
+ * associações passaram a ser por objeto (#260, #257). Id nulo devolve associação ausente.
  */
 public final class ReferenciasDeTeste {
 
@@ -22,5 +23,9 @@ public final class ReferenciasDeTeste {
     public static Colaborador pessoa(Integer id) {
         return id == null ? null : new Colaborador(id, "52998224725", "Pessoa " + id, LocalDate.of(1990, 1, 1),
                 null, true, LocalDateTime.now(), LocalDateTime.now());
+    }
+
+    public static List<Colaborador> pessoas(List<Integer> ids) {
+        return ids == null ? null : ids.stream().map(ReferenciasDeTeste::pessoa).toList();
     }
 }
