@@ -110,6 +110,8 @@ class CapacitacaoPersistenciaIntegracaoTest {
         assertThat(recuperada.getNome()).isEqualTo("NR-35 Trabalho em Altura");
         assertThat(recuperada.getDataVencimento()).isEqualTo(vencimento);
         assertThat(recuperada.getDataEmissao()).isEqualTo(emissao);
+        assertThat(recuperada.getColaborador()).isNotNull();
+        assertThat(recuperada.getColaborador().getId()).isEqualTo(colab1Id);
         assertThat(recuperada.getColaboradorId()).isEqualTo(colab1Id);
 
         // 2. Colaborador não possui senha no banco
@@ -150,6 +152,7 @@ class CapacitacaoPersistenciaIntegracaoTest {
         assertThat(recuperado.getCargaHoraria()).isEqualTo(16);
         assertThat(recuperado.getValidadeMeses()).isEqualTo(12);
         assertThat(recuperado.getDataVencimento()).contains(realizacao.plusMonths(12));
+        assertThat(recuperado.getColaboradores()).extracting(Colaborador::getId).containsExactlyInAnyOrder(colab1Id, colab2Id);
         assertThat(recuperado.getColaboradoresIds()).containsExactlyInAnyOrder(colab1Id, colab2Id);
 
         // Tabela associativa treinamentos_colaboradores no PostgreSQL
