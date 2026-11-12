@@ -140,14 +140,14 @@ class CadastrarCapacitacaoServiceTest {
 
         @Override
         public Certificacao salvarCertificacao(Certificacao certificacao) {
-            Certificacao c = new Certificacao(idSequence++, certificacao.getNome(), certificacao.getDataVencimento(), certificacao.getDataEmissao(), certificacao.getColaboradorId());
+            Certificacao c = new Certificacao(idSequence++, certificacao.getNome(), certificacao.getDataVencimento(), certificacao.getDataEmissao(), certificacao.getColaborador());
             certificacoes.add(c);
             return c;
         }
 
         @Override
         public Treinamento salvarTreinamento(Treinamento treinamento) {
-            Treinamento t = new Treinamento(idSequence++, treinamento.getNome(), treinamento.getConteudo(), treinamento.getInstrutor(), treinamento.getDataRealizacao(), treinamento.getCargaHoraria(), treinamento.getValidadeMeses(), treinamento.getColaboradoresIds());
+            Treinamento t = new Treinamento(idSequence++, treinamento.getNome(), treinamento.getConteudo(), treinamento.getInstrutor(), treinamento.getDataRealizacao(), treinamento.getCargaHoraria(), treinamento.getValidadeMeses(), treinamento.getColaboradores());
             treinamentos.add(t);
             return t;
         }
