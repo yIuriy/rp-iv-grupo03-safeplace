@@ -33,7 +33,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [Strategy (Backend)](#strategy--fonte-de-tempo-clock) | GoF, comportamental | Backend: injeção de `java.time.Clock` nas regras de vencimento | [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247) | Aplicado |
 | [Adapter (Frontend)](#adapter--leitura-da-api-e-contrato-de-epi) | GoF, estrutural | Frontend: primitivas de leitura da API e unificação de `Epi` | [#244](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/244), [#231](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/231) | Aplicado (2/2: #244, #231) |
 | [Template Method (hook)](#template-method-hook--envio-de-formulario) | GoF, comportamental | Frontend: submissão de formulários (`useEnvioFormulario`) | [#233](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/233), [#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243) | Aplicado (2/2: #233, #243) |
-| [State (Frontend)](#state--dialogos-de-taskspage) | GoF, comportamental | Frontend: estado único `DialogoTarefa` em `TasksPage` | [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246) | Pendente |
+| [State (Frontend)](#state--dialogos-de-taskspage) | GoF, comportamental | Frontend: estado único `DialogoTarefa` em `TasksPage` | [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246) | Aplicado |
 | [Bridge](#bridge--relatórios-estatísticos-e-formatos-de-arquivo) | GoF, estrutural | Backend: relatórios (`Relatorio`) × formatos (`FormatoCsv`, `FormatoPdf`) | [#299](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/299) | Aplicado |
 | [Template Method (Backend)](#template-method-backend--esqueleto-dos-relatórios-estatísticos) | GoF, comportamental | Backend: `Relatorio.gerar` e os três relatórios do RF18 | [#299](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/299) | Aplicado |
 
@@ -4433,32 +4433,231 @@ Suíte do frontend: `npm ci && npm run lint && npm run build` sem erros; Playwri
 
 **Intenção:** substituir múltiplos `useState<Tarefa | null>` independentes em `TasksPage` por um estado único discriminado (`DialogoTarefa`), impedindo estados simultâneos inválidos.
 
-**Issue:** [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246).
+**Issue:** [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246), aplicada.
 
 ### Problema (antes)
 
-*A preencher na issue [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, §6).*
+`features/tarefas/TasksPage.tsx`, o maior arquivo do frontend (347 linhas, 321 de código), controlava os seus diálogos com seis estados independentes:
+
+| Estado | Diálogo |
+| --- | --- |
+| `formularioAberto: boolean` | cadastro de nova tarefa |
+| `tarefaEmEdicao: Tarefa \| null` | edição |
+| `tarefaExigencias: Tarefa \| null` | exigências de capacitação |
+| `tarefaClassificando: Tarefa \| null` | classificação de periculosidade |
+| `tarefaEpis: Tarefa \| null` | vínculo de EPIs |
+| `tarefaHistorico: Tarefa \| null` | histórico de alterações |
+
+Cada combinação desses seis valores era um estado possível para o React, mas só sete delas fazem sentido (nenhum diálogo ou exatamente um). Nada no código impedia, por exemplo, `formularioAberto = true` e `tarefaEpis` preenchida ao mesmo tempo; a exclusão dependia apenas de o diálogo modal cobrir os botões. Cada diálogo tinha o próprio `setX(null)` no fechamento.
+
+A reação ao salvar também estava repetida: três funções (`aoSalvarNovaTarefa`, `aoSalvarClassificacao`, `aoSalvarEpis`) e uma função anônima na edição faziam o mesmo `setMensagemSucesso(...)` seguido de `consultaTarefas.recarregar()`, mudando só o texto. O cadastro e a edição usavam duas instâncias de `TarefaFormDialog`.
+
+### Por que State
+
+A tela tem estados mutuamente exclusivos: nenhum diálogo, novo, editar, exigências, classificar, EPIs e histórico. O comportamento que depende do estado (qual diálogo recebe a tarefa e que mensagem aparece ao salvar) muda junto com ele. O State resolve exatamente isso: o objeto de estado diz o que vale agora, e o Context (`TasksPage`) só reage.
+
+Em TypeScript, a forma idiomática é a **união discriminada**: `DialogoTarefa` tem um campo `tipo` que distingue as variantes, e só as variantes que agem sobre uma tarefa carregam `tarefa`. O estado inválido (dois diálogos abertos, ou `editar` sem tarefa) não cabe no tipo, e o compilador recusa o código que tentar criá-lo. Uma classe por estado, como no State clássico do GoF, seria exagero para sete estados sem regras próprias além da mensagem.
+
+O estado ficou num módulo próprio, `features/tarefas/dialogoTarefa.ts`, sem React e sem chamadas à API, como o `erros.ts` (#232) e o `envioFormulario.ts` (#233). Por isso ele é testado sem navegador. O rótulo do grau de perigo é recebido por parâmetro (`rotuloNivelPerigo`), porque o módulo que o define também cria o cliente HTTP.
+
+Fora do escopo: as outras páginas têm no máximo dois diálogos, e a mudança não compensa nelas. `normalizar` e `formatarDataHora`, que continuam na `TasksPage`, serão unificados pela [#250](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/250).
 
 ### Papéis do padrão
 
 | Papel no padrão | Elemento no código | Responsabilidade |
 | --- | --- | --- |
-| Context | `TasksPage` | Renderizar o diálogo correspondente ao estado ativo |
-| State | `DialogoTarefa` (`nenhum`, `editar`, `classificar`, `epis`, `historico`, `novo`) | Representar de forma mutuamente exclusiva o diálogo aberto e seus dados |
+| Context | `TasksPage` | Guardar o único `DialogoTarefa` (`useState`) e renderizar cada diálogo a partir dele |
+| State | `DialogoTarefa` (união discriminada) | Representar de forma mutuamente exclusiva o diálogo aberto e a tarefa dele |
+| ConcreteStates | `nenhum`, `novo`, `editar`, `exigencias`, `classificar`, `epis`, `historico` | Cada variante; só as cinco de `DialogoDaTarefa` carregam `tarefa` |
+| Comportamento dependente do estado | `tarefaDoDialogo(dialogo, tipo)`, `mensagemAoSalvar(dialogo, salva, rotulos)` | Entregar a tarefa só ao diálogo aberto; escolher a mensagem de sucesso do diálogo que salvou |
+| Transições | `abrir(tipo, tarefa)`, `setDialogo({ tipo: 'novo' })`, `fechar()`, `aoSalvar(salva)` | Trocar o estado inteiro de uma vez; `aoSalvar` mostra a mensagem e recarrega a matriz |
 
 ### Diagramas
 
-*Diagramas PlantUML antes e depois a preencher na issue [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246).*
+**Antes.** Seis estados independentes e quatro reações ao salvar com a mesma estrutura.
+
+```mermaid
+classDiagram
+  direction LR
+  class TasksPage {
+    <<Context sem State>>
+    formularioAberto: boolean
+    tarefaEmEdicao: Tarefa ou null
+    tarefaExigencias: Tarefa ou null
+    tarefaClassificando: Tarefa ou null
+    tarefaEpis: Tarefa ou null
+    tarefaHistorico: Tarefa ou null
+    aoSalvarNovaTarefa(tarefa)
+    aoSalvarClassificacao(tarefa)
+    aoSalvarEpis(tarefa)
+    aoSalvarEdicao_anonima(tarefa)
+  }
+  TasksPage --> TarefaFormDialog : formularioAberto (instância 1)
+  TasksPage --> TarefaFormDialog : tarefaEmEdicao (instância 2)
+  TasksPage --> ExigenciasTarefaDialog : tarefaExigencias
+  TasksPage --> ClassificarTarefaDialog : tarefaClassificando
+  TasksPage --> VincularEpisTarefaDialog : tarefaEpis
+  TasksPage --> HistoricoTarefaDialog : tarefaHistorico
+```
+
+**Depois.** Um estado; cada diálogo recebe a tarefa só quando é o aberto.
+
+```mermaid
+classDiagram
+  direction LR
+  class TasksPage {
+    <<Context>>
+    dialogo: DialogoTarefa
+    abrir(tipo, tarefa)
+    fechar()
+    aoSalvar(salva)
+  }
+  class DialogoTarefa {
+    <<State: união discriminada>>
+    tipo: 'nenhum'
+    tipo: 'novo'
+    tipo: DialogoDaTarefa, tarefa: Tarefa
+  }
+  class DialogoDaTarefa {
+    <<ConcreteStates com tarefa>>
+    editar
+    exigencias
+    classificar
+    epis
+    historico
+  }
+  class ModuloDialogoTarefa {
+    <<dialogoTarefa.ts>>
+    +nenhumDialogo
+    +tarefaDoDialogo(dialogo, tipo) Tarefa ou null
+    +mensagemAoSalvar(dialogo, salva, rotulos) string
+  }
+  TasksPage --> DialogoTarefa : guarda um
+  DialogoTarefa ..> DialogoDaTarefa : tipo
+  TasksPage ..> ModuloDialogoTarefa : consulta
+  TasksPage --> TarefaFormDialog : novo ou editar
+  TasksPage --> ExigenciasTarefaDialog : exigencias
+  TasksPage --> ClassificarTarefaDialog : classificar
+  TasksPage --> VincularEpisTarefaDialog : epis
+  TasksPage --> HistoricoTarefaDialog : historico
+```
+
+### Código antes × depois
+
+**Estado da tela.**
+
+Antes:
+
+```tsx
+const [formularioAberto, setFormularioAberto] = useState(false)
+const [tarefaEmEdicao, setTarefaEmEdicao] = useState<Tarefa | null>(null)
+const [tarefaExigencias, setTarefaExigencias] = useState<Tarefa | null>(null)
+const [tarefaClassificando, setTarefaClassificando] = useState<Tarefa | null>(null)
+const [tarefaEpis, setTarefaEpis] = useState<Tarefa | null>(null)
+const [tarefaHistorico, setTarefaHistorico] = useState<Tarefa | null>(null)
+```
+
+Depois:
+
+```tsx
+// dialogoTarefa.ts
+export type DialogoDaTarefa = 'editar' | 'exigencias' | 'classificar' | 'epis' | 'historico'
+
+export type DialogoTarefa =
+  | { tipo: 'nenhum' }
+  | { tipo: 'novo' }
+  | { tipo: DialogoDaTarefa; tarefa: Tarefa }
+
+// TasksPage.tsx
+const [dialogo, setDialogo] = useState<DialogoTarefa>(nenhumDialogo)
+```
+
+**Reação ao salvar.**
+
+Antes:
+
+```tsx
+function aoSalvarNovaTarefa(tarefa: Tarefa) {
+  setMensagemSucesso(`Tarefa cadastrada com sucesso: "${tarefa.descricao}".`)
+  consultaTarefas.recarregar()
+}
+
+function aoSalvarClassificacao(tarefa: Tarefa) {
+  const grau = tarefa.nivelPerigo ? rotuloNivelPerigo[tarefa.nivelPerigo] : ''
+  setMensagemSucesso(`Grau de periculosidade atualizado para ${grau}.`)
+  consultaTarefas.recarregar()
+}
+
+function aoSalvarEpis(tarefa: Tarefa) { /* ... */ }
+// e mais uma função anônima no TarefaFormDialog de edição
+```
+
+Depois:
+
+```tsx
+function aoSalvar(salva: Tarefa) {
+  setMensagemSucesso(mensagemAoSalvar(dialogo, salva, rotuloNivelPerigo))
+  consultaTarefas.recarregar()
+}
+```
+
+**Diálogos.**
+
+Antes:
+
+```tsx
+<TarefaFormDialog open={formularioAberto} aoFechar={() => setFormularioAberto(false)} aoSalvar={aoSalvarNovaTarefa} />
+<TarefaFormDialog open={!!tarefaEmEdicao} tarefa={tarefaEmEdicao} aoFechar={() => setTarefaEmEdicao(null)} aoSalvar={...} />
+<ClassificarTarefaDialog tarefa={tarefaClassificando} aoFechar={() => setTarefaClassificando(null)} aoSalvar={aoSalvarClassificacao} />
+```
+
+Depois:
+
+```tsx
+<TarefaFormDialog
+  open={dialogo.tipo === 'novo' || dialogo.tipo === 'editar'}
+  tarefa={tarefaDoDialogo(dialogo, 'editar')}
+  aoFechar={fechar}
+  aoSalvar={aoSalvar}
+/>
+<ClassificarTarefaDialog tarefa={tarefaDoDialogo(dialogo, 'classificar')} aoFechar={fechar} aoSalvar={aoSalvar} />
+```
+
+Os componentes dos diálogos não mudaram: continuam recebendo `tarefa: Tarefa | null` (ou `open`), `aoFechar` e `aoSalvar`.
+
+### Benefício
+
+O estado inválido deixou de ser representável: a tela tem um único `dialogo`, e abrir um diálogo substitui o anterior inteiro. Fechar é sempre a mesma transição (`fechar`), em vez de seis `setX(null)` diferentes. A reação ao salvar existe uma vez; o texto vem do estado que salvou, numa função com teste próprio. Acrescentar um diálogo novo exige uma variante em `DialogoDaTarefa`, uma linha no `switch` de `mensagemAoSalvar` (se ele salvar) e o componente, sem outro `useState`. O cadastro e a edição passaram a usar a mesma instância de `TarefaFormDialog`, que já sabia distinguir os dois casos pela presença da tarefa.
 
 ### Métricas locais
 
-| Métrica | Antes (v1.0.0) | Depois |
-| --- | --- | --- |
-| Hooks `useState` para controle de diálogos em `TasksPage` | 6 | 1 |
+| Métrica | Antes (v1.0.0) | `dev` antes da #246 | Depois da #246 |
+| --- | ---: | ---: | ---: |
+| Hooks `useState` para controle de diálogos em `TasksPage` | 6 | 6 | 1 |
+| `useState` em `TasksPage` | 9 | 9 | 4 |
+| Funções de reação ao salvar em `TasksPage` | 4 (3 nomeadas + 1 anônima) | 4 | 1 |
+| Instâncias de `TarefaFormDialog` | 2 | 2 | 1 |
+| Linhas de código de `TasksPage.tsx` | 321 | 321 | 303 |
+| Linhas de código de `dialogoTarefa.ts` (novo) | | | 32 |
+| `useState` no frontend | 202 | 173 | 168 |
+| Linhas de código TS/TSX do frontend | 9.140 | 9.238 | 9.252 |
+
+A `TasksPage` não mudou entre a v1.0.0 e a `dev` anterior a esta issue, por isso as duas primeiras colunas são iguais nas linhas dela. O frontend como um todo ganhou 14 linhas de código, porque o módulo de estado é novo (32 linhas, com os tipos) e a página perdeu 18. Medição: `contar_linhas` de `scripts/metricas/coletar_metricas.py` (`frontend.linhas_ts_tsx.codigo`, `frontend.useState`); a coluna v1.0.0 vem de `docs/metricas/metricas-v1.0.0.json`.
 
 ### Evidências
 
-*A preencher na issue [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246).*
+Testes novos:
+
+- `tests/dialogo-tarefa.spec.ts` (6 testes, sem navegador) exercita o State e o comportamento que depende dele: sem diálogo e no cadastro nenhum diálogo recebe tarefa; com um diálogo aberto, só ele recebe a tarefa; cada diálogo que salva tem a sua mensagem, inclusive a concordância de "vinculado(s)" nos EPIs; exigências e histórico não têm mensagem.
+- `tests/tarefas.spec.ts` ganhou dois testes de tela, cobrindo os três diálogos que nenhum spec abria:
+  - a Gestora edita uma tarefa e depois vincula EPIs. Em cada passo há um único diálogo aberto, cada diálogo mostra a própria mensagem ao salvar e as chamadas à API são `PUT /api/tarefas/1` e `PUT /api/tarefas/1/epis`;
+  - o Supervisor abre as exigências de uma tarefa (um único diálogo aberto) e, ao fechar, a tela volta ao estado `nenhum` (nenhum diálogo aberto).
+
+Com isso, os sete estados têm teste de tela: novo e classificar (`tarefas.spec.ts`, já existentes), histórico (`historico.spec.ts`, já existente), editar, EPIs e exigências (novos).
+
+Os specs de tela que já existiam (`tarefas`, `historico`, `capacitacoes`, `acessibilidade`) continuam passando sem alteração, o que mostra que rótulos, papéis e textos foram mantidos.
+
+Suíte do frontend: `npm run lint && npm run build` sem erros; Playwright `--workers=2`: **327 testes, 327 aprovados** (319 existentes e 8 novos).
 
 ---
 
