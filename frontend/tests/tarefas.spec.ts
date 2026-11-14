@@ -171,6 +171,87 @@ test.describe('Módulo Classificação de Tarefas (RF06, UC11, RNF11)', () => {
     ).toBeVisible()
   })
 
+  test('Gestor edita a tarefa e depois vincula EPIs: um diálogo por vez, cada um com a sua mensagem (#246)', async ({ page }) => {
+    await iniciarSessao(page, gestora)
+    const chamadas = await simularTarefas(page)
+    const capacete = {
+      id: 5, nome: 'Capacete classe B', numeroCa: '12345', quantidade: 10, estoqueMinimo: 5, estoqueCritico: false,
+      status: 'DISPONIVEL', dataValidadeCa: '2027-12-31', vidaUtilDias: 365, descricao: null,
+      classificacao: 'PROTECAO_DE_CABECA', localizacao: 'Almoxarifado A',
+    }
+    await page.route('**/api/areas-risco', route => route.fulfill({ json: [] }))
+    await page.route('**/api/setores', route => route.fulfill({ json: [] }))
+    await page.route('**/api/epis', route => route.fulfill({ json: [capacete] }))
+    await page.route('**/api/tarefas/1', route => {
+      const req = route.request()
+      if (req.method() !== 'PUT') return route.fallback()
+      chamadas.push({ method: req.method(), url: req.url(), body: req.postDataJSON() })
+      const body = req.postDataJSON() as { descricao: string }
+      return route.fulfill({ json: { ...tarefa1, descricao: body.descricao } })
+    })
+    await page.route('**/api/tarefas/1/epis', route => {
+      const req = route.request()
+      if (req.method() === 'GET') return route.fulfill({ json: [] })
+      chamadas.push({ method: req.method(), url: req.url(), body: req.postDataJSON() })
+      const body = req.postDataJSON() as { epiIds: number[] }
+      return route.fulfill({ json: { ...tarefa1, episIds: body.epiIds } })
+    })
+    await page.goto('/tarefas')
+
+    const tabela = page.getByRole('table', { name: 'Matriz de tarefas e classificação de periculosidade' })
+    await tabela.getByRole('button', { name: 'Editar tarefa: Corte a quente e oxicorte de tubulação' }).click()
+    const edicao = page.getByRole('dialog', { name: 'Editar tarefa: #1' })
+    await expect(edicao).toBeVisible()
+    await expect(page.getByRole('dialog')).toHaveCount(1)
+    await edicao.getByLabel(/Descrição da atividade operacional/).fill('Corte a quente com maçarico')
+    await edicao.getByRole('button', { name: 'Salvar alterações' }).click()
+    await expect(edicao).not.toBeVisible()
+    await expect(page.getByText('Tarefa atualizada com sucesso: "Corte a quente com maçarico".')).toBeVisible()
+
+    await tabela.getByRole('button', { name: 'Vincular EPIs à tarefa: Corte a quente e oxicorte de tubulação' }).click()
+    const vinculo = page.getByRole('dialog', { name: 'Vincular EPIs obrigatórios' })
+    await expect(vinculo).toBeVisible()
+    await expect(page.getByRole('dialog')).toHaveCount(1)
+    await vinculo.getByLabel(/Capacete classe B/).check()
+    await vinculo.getByRole('button', { name: 'Salvar EPIs' }).click()
+    await expect(vinculo).not.toBeVisible()
+    await expect(page.getByText('EPIs da tarefa atualizados com sucesso (1 vinculado).')).toBeVisible()
+
+    expect(chamadas.map(c => `${c.method} ${new URL(c.url).pathname}`)).toEqual([
+      'PUT /api/tarefas/1',
+      'PUT /api/tarefas/1/epis',
+    ])
+    expect(chamadas[1].body).toEqual({ epiIds: [5] })
+  })
+
+  test('Supervisor consulta as exigências de uma tarefa e, ao fechar, nenhum diálogo fica aberto (#246)', async ({ page }) => {
+    await iniciarSessao(page, supervisor)
+    await simularTarefas(page)
+    await page.route('**/api/tarefas/2/exigencias', route =>
+      route.fulfill({
+        json: {
+          tarefaId: 2,
+          descricao: tarefa2.descricao,
+          nivelPerigo: null,
+          classificada: false,
+          capacitacoes: [{ id: 9, nomeCapacitacao: 'NR-12 Segurança em máquinas', tipoCapacitacao: 'TREINAMENTO' }],
+          episObrigatorios: [],
+        },
+      })
+    )
+    await page.goto('/tarefas')
+
+    const tabela = page.getByRole('table', { name: 'Matriz de tarefas e classificação de periculosidade' })
+    await tabela.getByRole('button', { name: 'Ver exigências da tarefa: Inspeção visual de esteira transportadora' }).click()
+    const exigencias = page.getByRole('dialog', { name: 'Exigências da Atividade' })
+    await expect(exigencias).toBeVisible()
+    await expect(page.getByRole('dialog')).toHaveCount(1)
+    await expect(exigencias.getByText('NR-12 Segurança em máquinas')).toBeVisible()
+
+    await exigencias.getByRole('button', { name: 'Fechar' }).click()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+  })
+
   test('tarefa classificada antes do registro de autoria indica responsável não registrado', async ({ page }) => {
     await iniciarSessao(page, supervisor)
     await page.route('**/api/tarefas', route =>
