@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Testes de Unidade - LogAuditoria")
 class LogAuditoriaTest {
@@ -35,27 +34,15 @@ class LogAuditoriaTest {
     }
 
     @Test
-    @DisplayName("Deve falhar ao criar log sem tipo de operação")
-    void deveFalharSemTipoOperacao() {
-        assertThatThrownBy(() -> new LogAuditoria(null, null, LocalDateTime.now(), "operador", null, "Entidade", 1))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Tipo de operação é obrigatório.");
+    @DisplayName("Construtor monta o log sem validar; a recusa ficou no LogAuditoriaValidador (#297)")
+    void construtorNaoValida() {
+        LogAuditoria semTipoNemResponsavel = new LogAuditoria(null, null, LocalDateTime.now(), null, null, "Entidade", 1);
+        LogAuditoria emBranco = new LogAuditoria(null, "   ", LocalDateTime.now(), "   ", null, "Entidade", 1);
 
-        assertThatThrownBy(() -> new LogAuditoria(null, "   ", LocalDateTime.now(), "operador", null, "Entidade", 1))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Tipo de operação é obrigatório.");
-    }
-
-    @Test
-    @DisplayName("Deve falhar ao criar log sem responsável")
-    void deveFalharSemResponsavel() {
-        assertThatThrownBy(() -> new LogAuditoria(null, "ALTERACAO", LocalDateTime.now(), null, null, "Entidade", 1))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Responsável pela operação é obrigatório.");
-
-        assertThatThrownBy(() -> new LogAuditoria(null, "ALTERACAO", LocalDateTime.now(), "   ", null, "Entidade", 1))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Responsável pela operação é obrigatório.");
+        assertThat(semTipoNemResponsavel.getTipoOperacao()).isNull();
+        assertThat(semTipoNemResponsavel.getResponsavel()).isNull();
+        assertThat(emBranco.getTipoOperacao()).isEmpty();
+        assertThat(emBranco.getResponsavel()).isEmpty();
     }
 
     @Test

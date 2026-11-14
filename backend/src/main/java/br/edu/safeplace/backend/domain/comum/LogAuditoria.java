@@ -52,6 +52,10 @@ public class LogAuditoria {
     protected LogAuditoria() {
     }
 
+    /**
+     * Monta o registro sem validar. O tipo de operação e o responsável obrigatórios são conferidos pelo
+     * {@code LogAuditoriaValidador} antes de gravar (Chain of Responsibility, #297).
+     */
     public LogAuditoria(
             Integer id,
             String tipoOperacao,
@@ -61,17 +65,10 @@ public class LogAuditoria {
             String entidade,
             Integer entidadeId) {
 
-        if (tipoOperacao == null || tipoOperacao.isBlank()) {
-            throw new IllegalArgumentException("Tipo de operação é obrigatório.");
-        }
-        if (responsavel == null || responsavel.isBlank()) {
-            throw new IllegalArgumentException("Responsável pela operação é obrigatório.");
-        }
-
         this.id = id;
-        this.tipoOperacao = tipoOperacao.trim();
+        this.tipoOperacao = tipoOperacao != null ? tipoOperacao.trim() : null;
         this.dataHora = dataHora != null ? dataHora : LocalDateTime.now();
-        this.responsavel = responsavel.trim();
+        this.responsavel = responsavel != null ? responsavel.trim() : null;
         this.justificativa = justificativa != null ? justificativa.trim() : null;
         this.entidade = entidade != null ? entidade.trim() : null;
         this.entidadeId = entidadeId;

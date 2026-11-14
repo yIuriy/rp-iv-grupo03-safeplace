@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
+import br.edu.safeplace.backend.validacao.Validador;
+import br.edu.safeplace.backend.validacao.auditoria.LogAuditoriaValidador;
 
 /**
  * Facade da trilha de auditoria (RNF05, #223). Os casos de uso registram um evento numa chamada
@@ -16,17 +18,28 @@ import br.edu.safeplace.backend.domain.comum.LogAuditoria;
  *
  * <p>Por padrão o responsável é o operador autenticado (ou {@code SISTEMA}). {@link #por(String)} usa o
  * e-mail informado pela borda e {@link Autoria#em(LocalDateTime)} fixa o instante do evento.
+ *
+ * <p>É o único ponto que grava na trilha: o registro passa pelo {@link LogAuditoriaValidador} antes de
+ * {@link LogAuditoriaRepository#salvar(LogAuditoria)} (#297).
  */
 @Service
 public class RegistradorAuditoria {
 
     private final LogAuditoriaRepository repository;
     private final OperadorAtual operadorAtual;
+    private final Validador<LogAuditoria> validador;
 
     @Autowired
-    public RegistradorAuditoria(LogAuditoriaRepository repository, OperadorAtual operadorAtual) {
+    public RegistradorAuditoria(LogAuditoriaRepository repository, OperadorAtual operadorAtual,
+            Validador<LogAuditoria> validador) {
         this.repository = Objects.requireNonNull(repository, "Porta de auditoria é obrigatória (RNF05).");
         this.operadorAtual = Objects.requireNonNull(operadorAtual, "Operador atual é obrigatório.");
+        this.validador = Objects.requireNonNull(validador, "Validador do registro de auditoria é obrigatório.");
+    }
+
+    /** Usa o validador padrão; usado pelos casos de uso e testes sem contexto Spring. */
+    public RegistradorAuditoria(LogAuditoriaRepository repository, OperadorAtual operadorAtual) {
+        this(repository, operadorAtual, new LogAuditoriaValidador());
     }
 
     /** Construtor para testes sem OperadorAtual explícito (assume Null Object OperadorAutenticadoNulo). */
@@ -101,8 +114,11 @@ public class RegistradorAuditoria {
         }
 
         private void gravar(String tipoOperacao, String entidade, Integer entidadeId, String justificativa) {
-            repository.salvar(new LogAuditoria(
-                    null, tipoOperacao, dataHora, responsavel, justificativa, entidade, entidadeId));
+            LogAuditoria log = new LogAuditoria(
+                    null, tipoOperacao, dataHora, responsavel, justificativa, entidade, entidadeId);
+            // Chain of Responsibility (#297): valida antes do repository; se falhar, nada é gravado.
+            validador.validar(log);
+            repository.salvar(log);
         }
     }
 }
