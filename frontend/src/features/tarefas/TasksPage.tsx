@@ -24,6 +24,13 @@ import {
   type Tarefa,
 } from './api'
 import { ClassificarTarefaDialog } from './ClassificarTarefaDialog'
+import {
+  mensagemAoSalvar,
+  nenhumDialogo,
+  tarefaDoDialogo,
+  type DialogoDaTarefa,
+  type DialogoTarefa,
+} from './dialogoTarefa'
 import { ExigenciasTarefaDialog } from './ExigenciasTarefaDialog'
 import { HistoricoTarefaDialog } from './HistoricoTarefaDialog'
 import { TarefaFormDialog } from './TarefaFormDialog'
@@ -53,12 +60,8 @@ export function TasksPage() {
   const [filtroNivel, setFiltroNivel] = useState<string>('')
   const [, startTransition] = useTransition()
 
-  const [formularioAberto, setFormularioAberto] = useState(false)
-  const [tarefaEmEdicao, setTarefaEmEdicao] = useState<Tarefa | null>(null)
-  const [tarefaExigencias, setTarefaExigencias] = useState<Tarefa | null>(null)
-  const [tarefaClassificando, setTarefaClassificando] = useState<Tarefa | null>(null)
-  const [tarefaEpis, setTarefaEpis] = useState<Tarefa | null>(null)
-  const [tarefaHistorico, setTarefaHistorico] = useState<Tarefa | null>(null)
+  // State (#246): um único diálogo aberto por vez; ver dialogoTarefa.ts.
+  const [dialogo, setDialogo] = useState<DialogoTarefa>(nenhumDialogo)
   const [mensagemSucesso, setMensagemSucesso] = useState('')
 
   const consultaTarefas = useConsulta('tarefas', listarTarefas)
@@ -77,22 +80,17 @@ export function TasksPage() {
     consultaTarefas.recarregar()
   }
 
-  function aoSalvarNovaTarefa(tarefa: Tarefa) {
-    setMensagemSucesso(`Tarefa cadastrada com sucesso: "${tarefa.descricao}".`)
-    consultaTarefas.recarregar()
+  function abrir(tipo: DialogoDaTarefa, tarefa: Tarefa) {
+    setDialogo({ tipo, tarefa })
   }
 
-  function aoSalvarClassificacao(tarefa: Tarefa) {
-    const grau = tarefa.nivelPerigo ? rotuloNivelPerigo[tarefa.nivelPerigo] : ''
-    setMensagemSucesso(`Grau de periculosidade atualizado para ${grau}.`)
-    consultaTarefas.recarregar()
+  function fechar() {
+    setDialogo(nenhumDialogo)
   }
 
-  function aoSalvarEpis(tarefa: Tarefa) {
-    const qtd = tarefa.episIds?.length ?? 0
-    setMensagemSucesso(
-      `EPIs da tarefa atualizados com sucesso (${qtd} vinculado${qtd === 1 ? '' : 's'}).`
-    )
+  // Os diálogos chamam aoSalvar e, em seguida, aoFechar; a mensagem vem do diálogo aberto.
+  function aoSalvar(salva: Tarefa) {
+    setMensagemSucesso(mensagemAoSalvar(dialogo, salva, rotuloNivelPerigo))
     consultaTarefas.recarregar()
   }
 
@@ -149,7 +147,7 @@ export function TasksPage() {
             <Button
               variant="primary"
               icon="plus"
-              onClick={() => setFormularioAberto(true)}
+              onClick={() => setDialogo({ tipo: 'novo' })}
             >
               Nova tarefa
             </Button>
@@ -249,7 +247,7 @@ export function TasksPage() {
                           <div className="sp-acoes-tarefa">
                             <Button
                               variant="secondary"
-                              onClick={() => setTarefaExigencias(tarefa)}
+                              onClick={() => abrir('exigencias', tarefa)}
                               aria-label={`Ver exigências da tarefa: ${tarefa.descricao}`}
                             >
                               Exigências
@@ -258,14 +256,14 @@ export function TasksPage() {
                               <>
                                 <Button
                                   variant="secondary"
-                                  onClick={() => setTarefaEmEdicao(tarefa)}
+                                  onClick={() => abrir('editar', tarefa)}
                                   aria-label={`Editar tarefa: ${tarefa.descricao}`}
                                 >
                                   Editar
                                 </Button>
                                 <Button
                                   variant="secondary"
-                                  onClick={() => setTarefaClassificando(tarefa)}
+                                  onClick={() => abrir('classificar', tarefa)}
                                   aria-label={`${
                                     tarefa.classificada ? 'Reavaliar' : 'Classificar'
                                   } risco da tarefa: ${tarefa.descricao}`}
@@ -274,14 +272,14 @@ export function TasksPage() {
                                 </Button>
                                 <Button
                                   variant="secondary"
-                                  onClick={() => setTarefaEpis(tarefa)}
+                                  onClick={() => abrir('epis', tarefa)}
                                   aria-label={`Vincular EPIs à tarefa: ${tarefa.descricao}`}
                                 >
                                   EPIs{tarefa.episIds && tarefa.episIds.length > 0 ? ` (${tarefa.episIds.length})` : ''}
                                 </Button>
                                 <Button
                                   variant="secondary"
-                                  onClick={() => setTarefaHistorico(tarefa)}
+                                  onClick={() => abrir('historico', tarefa)}
                                   aria-label={`Ver histórico da tarefa: ${tarefa.descricao}`}
                                 >
                                   Histórico
@@ -300,41 +298,26 @@ export function TasksPage() {
         </ResultadoConsulta>
 
         <TarefaFormDialog
-          open={formularioAberto}
-          aoFechar={() => setFormularioAberto(false)}
-          aoSalvar={aoSalvarNovaTarefa}
+          open={dialogo.tipo === 'novo' || dialogo.tipo === 'editar'}
+          tarefa={tarefaDoDialogo(dialogo, 'editar')}
+          aoFechar={fechar}
+          aoSalvar={aoSalvar}
         />
 
-        <TarefaFormDialog
-          open={!!tarefaEmEdicao}
-          tarefa={tarefaEmEdicao}
-          aoFechar={() => setTarefaEmEdicao(null)}
-          aoSalvar={tarefa => {
-            setMensagemSucesso(`Tarefa atualizada com sucesso: "${tarefa.descricao}".`)
-            consultaTarefas.recarregar()
-          }}
-        />
-
-        <ExigenciasTarefaDialog
-          tarefa={tarefaExigencias}
-          aoFechar={() => setTarefaExigencias(null)}
-        />
+        <ExigenciasTarefaDialog tarefa={tarefaDoDialogo(dialogo, 'exigencias')} aoFechar={fechar} />
 
         <ClassificarTarefaDialog
-          tarefa={tarefaClassificando}
-          aoFechar={() => setTarefaClassificando(null)}
-          aoSalvar={aoSalvarClassificacao}
+          tarefa={tarefaDoDialogo(dialogo, 'classificar')}
+          aoFechar={fechar}
+          aoSalvar={aoSalvar}
         />
 
-        <HistoricoTarefaDialog
-          tarefa={tarefaHistorico}
-          aoFechar={() => setTarefaHistorico(null)}
-        />
+        <HistoricoTarefaDialog tarefa={tarefaDoDialogo(dialogo, 'historico')} aoFechar={fechar} />
 
         <VincularEpisTarefaDialog
-          tarefa={tarefaEpis}
-          aoFechar={() => setTarefaEpis(null)}
-          aoSalvar={aoSalvarEpis}
+          tarefa={tarefaDoDialogo(dialogo, 'epis')}
+          aoFechar={fechar}
+          aoSalvar={aoSalvar}
         />
 
         <Toast
