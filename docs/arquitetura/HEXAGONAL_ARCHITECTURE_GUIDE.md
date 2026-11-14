@@ -99,7 +99,7 @@ As portas são interfaces Java puras:
 | Outra porta de saída (`port/out/`) | nome do papel, sem sufixo | `CodificadorSenha`, `NotificadorAcao` |
 | Adaptador de saída (`adapters/out/`) | `<Tecnologia>XxxAdapter` | `TarefaJpaAdapter`, `JwtTokenAdapter` |
 | Controlador web (`adapters/in/web/`) | `XxxController` | `UsuarioController` |
-| Tratamento de exceções da borda | `XxxExceptionHandler` | `UsuarioExceptionHandler` |
+| Tratamento de exceções da borda | `XxxExceptionHandler` | `ApiExceptionHandler`, `TarefaExceptionHandler` |
 | Corpo HTTP de entrada e de saída | `XxxRequest`, `XxxResponse` | `LoginRequest`, `UsuarioResponse` |
 | DTO da aplicação | `XxxInputDTO`, `XxxOutputDTO` | `LoginInputDTO`, `TokenOutputDTO` |
 | Repositório Spring Data | `XxxJpaRepository` | `TarefaJpaRepository` |
@@ -122,6 +122,38 @@ Modelados como Java `record` imutáveis para garantir concisão e segurança de 
 * Extraem informações de cabeçalhos, tokens de segurança (via `SecurityContextHolder`) e corpo JSON.
 * Documentam endpoints através de `@Tag` e `@Operation` (OpenAPI).
 * Traduzem exceções de negócio em respostas HTTP semânticas (201 Created, 400 Bad Request, 403 Forbidden, 404 Not Found, 409 Conflict).
+
+#### 3.5.1 Tratamento de erros da API (#234, #249)
+
+Todo erro da API responde no mesmo contrato, montado por `CorpoErro.mapa`:
+
+```json
+{ "timestamp": "2026-11-13T21:54:28.826", "status": 404, "error": "Não Encontrado", "message": "..." }
+```
+
+O frontend compara rótulos de `error` (por exemplo, `"Colaborador Não Alocável"`) e lê `message`, e os testes verificam `$.error` e `$.message`; por isso o contrato não muda e o `ProblemDetail` (RFC 7807) não é usado.
+
+Quem responde cada erro:
+
+| Classe | Escopo | Responde |
+| --- | --- | --- |
+| `TarefaExceptionHandler` | `TarefaController` | `AlocacaoBloqueadaException` (422), com o campo extra `impedimentos` |
+| `EmprestimoExceptionHandler` | `EmprestimoController` | `DuplicidadeDePosseException` (409), com o campo extra `emprestimoAtivoId` |
+| `ApiExceptionHandler` | global | um handler por tipo de exceção de domínio, mais `IllegalArgumentException`, `IllegalStateException` e `MethodArgumentNotValidException` |
+| `ErroInesperadoExceptionHandler` | global | o que nenhum outro advice tratou (ver abaixo) |
+| `RestSegurancaExceptionHandler` (`config/`) | filtro de segurança | 401 e 403 do Spring Security, que acontecem antes do controlador e não passam pelos advices |
+
+Regras:
+
+* **Advice com escopo só para campo extra.** Um advice restrito a um controlador (`assignableTypes`) só existe quando o corpo precisa de um campo além dos quatro. Os demais handlers ficam no `ApiExceptionHandler`, sem duplicar tipo de exceção entre advices (`ApiExceptionHandlerTest` confere).
+* **Ordem explícita** (`OrdemAdvices`): advices com escopo, depois o global, por último o de erro inesperado. Para cada exceção, o Spring percorre os advices nessa ordem e usa o primeiro que trata a exceção ou a causa dela.
+* **Mensagem nula.** Uma exceção lançada sem mensagem responde com o status do seu handler e `"message": null`. O `CorpoErro` usa `LinkedHashMap`, que aceita o valor nulo (o `Map.of` usado antes da #234 lançava `NullPointerException` e a resposta virava 500). O frontend já trata esse caso e mostra o texto padrão da tela.
+
+**Decisão sobre `Exception` genérica (#249).** O `ErroInesperadoExceptionHandler` trata `Exception`, mas só recebe o que os outros advices não trataram:
+
+* Erro inesperado (`NullPointerException`, falha de banco etc.) responde **500** no contrato acima, com `error: "Erro Interno"` e uma mensagem genérica. O texto da exceção, que pode trazer SQL ou nomes de classe, vai só para o log.
+* Exceções que o próprio Spring já traduz para um status são **devolvidas ao Spring** (o handler relança a própria exceção) e continuam com o status e o corpo de antes: JSON malformado ou com tipo errado (400), parâmetro ausente (400), rota inexistente (404), método não suportado (405), `ResponseStatusException` e exceções anotadas com `@ResponseStatus`. As do Spring Security também são relançadas, para chegarem ao `RestSegurancaExceptionHandler`.
+* O handler fica num advice separado, e não dentro do `ApiExceptionHandler`, por causa da busca pela causa. Uma `IllegalArgumentException` lançada por um construtor durante a leitura do JSON chega embrulhada numa `HttpMessageNotReadableException` e hoje responde 400 "Requisição Inválida" porque o Spring encontra o handler pela causa. Um `@ExceptionHandler(Exception.class)` no mesmo advice seria escolhido antes, pela exceção de fora, e essa resposta viraria um 400 sem o corpo da API. `TratamentoErrosApiTest` cobre esses casos; com a ordem invertida, três deles falham.
 
 ### 3.6 Adaptadores de Saída (`adapters/out/persistencia/`)
 * Implementam as interfaces de `port/out/`.
