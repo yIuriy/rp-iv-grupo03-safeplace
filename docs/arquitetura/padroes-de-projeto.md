@@ -26,7 +26,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [Abstract Factory](#abstract-factory--família-de-relato-de-ocorrências) | GoF, criacional | Backend: família de relato de ocorrências (Acidente/Incidente, notificação e auditoria; uma fábrica por `TipoOcorrencia`) | [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Aplicado |
 | [Builder](#builder--emprestimobuilder-tarefabuilder-e-builders-de-ocorrencia) | GoF, criacional | Backend: `Emprestimo.Builder`, `TarefaBuilder`, `AcidenteBuilder` e `IncidenteBuilder` em produção | [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) | Aplicado (2/2: #226, #240) |
 | [Null Object](#null-object--adaptador-nulo-de-notificacao-e-dependencias-opcionais) | Woolf / PLoPD 3 | Backend: `NotificadorOcorrenciaNulo` e dependências opcionais | [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227), [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) | Aplicado (2/2: #227, #241) |
-| [Chain of Responsibility](#chain-of-responsibility--camada-de-validação) | GoF, comportamental | Backend: camada `validacao` (aptidão do colaborador e tarefa) | [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228); continua em [#263](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/263) a [#267](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/267) | Aplicado (6/6: #228, #267, #263, #264, #265, #266) |
+| [Chain of Responsibility](#chain-of-responsibility--camada-de-validação) | GoF, comportamental | Backend: camada `validacao` (aptidão do colaborador e tarefa) | [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228); continua em [#263](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/263) a [#267](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/267); complemento em [#297](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/297) | Aplicado (6/6: #228, #267, #263, #264, #265, #266; complemento #297) |
 | [Data Mapper](#data-mapper--mapeadores-de-persistencia) | Fowler / PoEAA | Backend: `EpiEntityMapper`, `AreaRiscoEntityMapper` e `PlanoDeAcaoEntityMapper` | [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229), [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242) | Pendente |
 | [Value Object](#value-object--protocolo-cat-em-acidente) | Fowler / DDD | Backend: `NumeroProtocoloCAT` dentro de `Acidente` | [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230) | Aplicado |
 | [DTO Assembler](#dto-assembler--ocorrenciaoutputdto) | Fowler / PoEAA | Backend: `OcorrenciaOutputAssembler` sem expor `PlanoDeAcao` | [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245) | Aplicado |
@@ -2261,7 +2261,7 @@ Suíte existente (mesmo comando da parte 1): **1152 testes, 0 falhas, 6 erros**,
 
 **Intenção:** evitar acoplar quem envia uma requisição a quem a trata, dando a vários objetos a chance de tratá-la. Os objetos são encadeados, e a requisição passa pela cadeia.
 
-**Issue:** [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228). Primeira de seis: as issues [#263](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/263) a [#267](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/267) seguem a convenção criada aqui.
+**Issue:** [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228). Primeira de seis: as issues [#263](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/263) a [#267](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/267) seguem a convenção criada aqui. A [#297](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/297) aplica a mesma convenção ao `LogAuditoria`, criado depois delas.
 
 **Origem:** avaliação do professor. Ele pediu para tirar a validação do domínio, criar uma camada de validação no mesmo nível do domínio, com uma validação para cada classe, e chamá-la antes do repository, lançando a exceção nesse ponto. Citou `AlocarColaboradorTarefaService` e `TarefaService`, os dois na linha 87. Chain of Responsibility é um dos dois padrões que ele exigiu.
 
@@ -2823,7 +2823,53 @@ Decisões:
 
 **Evidências:** `validacao/ocorrencia/OcorrenciaValidadorTest` e `PlanoDeAcaoValidadoresTest` receberam os testes de recusa de `OcorrenciaTest`, `AcidenteTest`, `IncidenteTest`, `NotificacaoAcaoTest`, `NotificacaoOcorrenciaTest` e `PlanoDeAcaoTest`, com as mesmas asserções, além de casos para a ordem dos problemas. Em `NumeroProtocoloCATTest`, os casos de formato inválido passaram a conferir `formatoValido()`, com os mesmos valores.
 
-### Resultado das seis aplicações
+### Complemento: trilha de auditoria (#297)
+
+**Issue:** [#297](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/297). O `LogAuditoria` virou entidade JPA na #256, depois das seis aplicações, e ainda validava no construtor.
+
+**Antes** (`domain/comum/LogAuditoria.java`):
+
+```java
+public LogAuditoria(Integer id, String tipoOperacao, LocalDateTime dataHora, String responsavel, ...) {
+    if (tipoOperacao == null || tipoOperacao.isBlank()) {
+        throw new IllegalArgumentException("Tipo de operação é obrigatório.");
+    }
+    if (responsavel == null || responsavel.isBlank()) {
+        throw new IllegalArgumentException("Responsável pela operação é obrigatório.");
+    }
+    this.tipoOperacao = tipoOperacao.trim();
+    this.responsavel = responsavel.trim();
+    ...
+}
+```
+
+**Depois:** o construtor só monta o registro (o `trim` passou a aceitar nulo, como em `Setor`), e o `RegistradorAuditoria` valida antes do repository:
+
+```java
+// RegistradorAuditoria.Autoria.gravar
+LogAuditoria log = new LogAuditoria(null, tipoOperacao, dataHora, responsavel, justificativa, entidade, entidadeId);
+validador.validar(log);   // Chain of Responsibility (#297): se falhar, nada é gravado
+repository.salvar(log);
+```
+
+| Validador | Elos, na ordem | Onde é chamado |
+| --- | --- | --- |
+| `LogAuditoriaValidador` | tipo de operação, responsável | `RegistradorAuditoria`, antes de `LogAuditoriaRepository.salvar` |
+
+Decisões:
+
+- **Um único ponto de chamada.** Desde a Facade da auditoria (#223, #237 e #238), o `RegistradorAuditoria` é o único código que grava na trilha; os casos de uso que recebem o `LogAuditoriaRepository` só o usam para ler (histórico) ou para montar o registrador. Validar ali cobre todos os registros.
+- **Mesmo comportamento.** As duas regras usam `RegraElo.exigir`, com `IllegalArgumentException` e as mensagens de antes. Sem tipo e sem responsável, a recusa continua sendo pelo tipo, como no construtor.
+- **Injeção como nos outros validadores.** O Spring injeta o `Validador<LogAuditoria>` no construtor completo do `RegistradorAuditoria`; os construtores usados pelos casos de uso e testes sem contexto Spring usam `new LogAuditoriaValidador()`. Por isso nenhum caso de uso mudou.
+
+| Métrica | Antes | Depois |
+| --- | ---: | ---: |
+| `throw` de validação no construtor de `LogAuditoria` | 2 | 0 |
+| Validadores criados | 0 | 1 |
+
+**Evidências:** `validacao/auditoria/LogAuditoriaValidadorTest` recebeu os dois testes de recusa de `LogAuditoriaTest`, com as mesmas asserções, além do caso válido e da ordem dos problemas. Em `LogAuditoriaTest`, um teste confere que o construtor não valida mais. Em `RegistradorAuditoriaTest`, três testes novos: o registro inválido é recusado e nada é gravado, o registrador usa o validador recebido antes do repository e o validador é obrigatório; nesse arquivo só houve acréscimos. Os testes dos demais casos de uso não mudaram.
+
+### Resultado das aplicações
 
 | Issue | Escopo | Validadores | `throw` de criação removidos do domínio |
 | --- | --- | ---: | ---: |
@@ -2833,6 +2879,7 @@ Decisões:
 | #264 | EPI, estoque, manutenção e projeção | 7 | 29 |
 | #265 | Empréstimo, alocação e capacitação | 5 | 28 |
 | #266 | Ocorrência e plano de ação | 5 | 23 |
+| #297 | Trilha de auditoria (`LogAuditoria`) | 1 | 2 |
 
 As regras que continuam no domínio são das **operações** que mudam o estado de um objeto já criado (baixa de estoque, devolução, transição de situação, prorrogação, reatribuição). A **criação** de objetos não valida mais nada, como pediu o professor, e todo caso de uso valida antes de chamar o repository.
 ---
