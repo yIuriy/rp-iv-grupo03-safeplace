@@ -1,7 +1,8 @@
 /*
  * Tratador global das exceções da API (#234): um único handler por tipo de exceção, para que a resposta não
- * dependa da ordem em que o Spring registra os advices. Os advices com escopo (empréstimo e inspeção) tratam
- * apenas as exceções próprias dos seus controladores.
+ * dependa da ordem em que o Spring registra os advices. Os advices com escopo (tarefa e empréstimo) ficam só
+ * para os corpos com campos extras (#249); erros que nenhum advice trata caem no ErroInesperadoExceptionHandler.
+ * A ordem entre eles está em OrdemAdvices.
  */
 package br.edu.safeplace.backend.adapters.in.web;
 
@@ -9,6 +10,7 @@ import static br.edu.safeplace.backend.adapters.in.web.CorpoErro.corpo;
 
 import java.util.Map;
 
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -18,12 +20,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import br.edu.safeplace.backend.domain.area_risco.exception.AreaRiscoNaoEncontradaException;
 import br.edu.safeplace.backend.domain.area_risco.exception.AreaRiscoSemEpiObrigatorioException;
 import br.edu.safeplace.backend.domain.area_risco.exception.CodigoAreaRiscoDuplicadoException;
-import br.edu.safeplace.backend.domain.capacitacao.exception.AlocacaoBloqueadaException;
 import br.edu.safeplace.backend.domain.capacitacao.exception.ColaboradorNaoAlocavelException;
+import br.edu.safeplace.backend.domain.emprestimo.exception.EmprestimoJaEncerradoException;
+import br.edu.safeplace.backend.domain.emprestimo.exception.EmprestimoNaoEncontradoException;
+import br.edu.safeplace.backend.domain.emprestimo.exception.EntregaImpedidaException;
 import br.edu.safeplace.backend.domain.epi.exception.EpiIndisponivelParaManutencaoException;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 import br.edu.safeplace.backend.domain.epi.exception.SaldoInsuficienteException;
 import br.edu.safeplace.backend.domain.epi.exception.TransicaoStatusEpiInvalidaException;
+import br.edu.safeplace.backend.domain.inspecao.exception.InspecaoInvalidaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.AcaoPlanoNaoEncontradaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.AcaoPreventivaObrigatoriaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.DadosOcorrenciaInvalidosException;
@@ -43,6 +48,7 @@ import br.edu.safeplace.backend.domain.usuario.exception.EmailJaCadastradoExcept
 import br.edu.safeplace.backend.domain.usuario.exception.UsuarioNaoEncontradoException;
 
 @RestControllerAdvice
+@Order(OrdemAdvices.GLOBAL)
 public class ApiExceptionHandler {
 
     private static final String NAO_ENCONTRADO = "Não Encontrado";
@@ -147,17 +153,34 @@ public class ApiExceptionHandler {
         return corpo(HttpStatus.CONFLICT, "Tarefa Sem Classificação", ex.getMessage());
     }
 
-    @ExceptionHandler(AlocacaoBloqueadaException.class)
-    public ResponseEntity<Map<String, Object>> alocacaoBloqueada(AlocacaoBloqueadaException ex) {
-        ResponseEntity<Map<String, Object>> resposta =
-                corpo(HttpStatus.UNPROCESSABLE_ENTITY, "Alocação Bloqueada", ex.getMessage());
-        resposta.getBody().put("impedimentos", ex.getImpedimentos());
-        return resposta;
-    }
-
     @ExceptionHandler(ColaboradorNaoAlocavelException.class)
     public ResponseEntity<Map<String, Object>> colaboradorNaoAlocavel(ColaboradorNaoAlocavelException ex) {
         return corpo(HttpStatus.UNPROCESSABLE_ENTITY, "Colaborador Não Alocável", ex.getMessage());
+    }
+
+    // Empréstimo (UC12): 404 inexistente, 422 entrega impedida, 409 já encerrado. A duplicidade de posse,
+    // que leva o campo emprestimoAtivoId, fica no EmprestimoExceptionHandler.
+
+    @ExceptionHandler(EmprestimoNaoEncontradoException.class)
+    public ResponseEntity<Map<String, Object>> emprestimoNaoEncontrado(EmprestimoNaoEncontradoException ex) {
+        return corpo(HttpStatus.NOT_FOUND, NAO_ENCONTRADO, ex.getMessage());
+    }
+
+    @ExceptionHandler(EntregaImpedidaException.class)
+    public ResponseEntity<Map<String, Object>> entregaImpedida(EntregaImpedidaException ex) {
+        return corpo(HttpStatus.UNPROCESSABLE_ENTITY, "Entrega Impedida", ex.getMessage());
+    }
+
+    @ExceptionHandler(EmprestimoJaEncerradoException.class)
+    public ResponseEntity<Map<String, Object>> emprestimoJaEncerrado(EmprestimoJaEncerradoException ex) {
+        return corpo(HttpStatus.CONFLICT, "Empréstimo Encerrado", ex.getMessage());
+    }
+
+    // Inspeção (US09, #134): registro recusado pela regra do domínio.
+
+    @ExceptionHandler(InspecaoInvalidaException.class)
+    public ResponseEntity<Map<String, Object>> inspecaoInvalida(InspecaoInvalidaException ex) {
+        return corpo(HttpStatus.BAD_REQUEST, "Inspeção Inválida", ex.getMessage());
     }
 
     // Ocorrência
