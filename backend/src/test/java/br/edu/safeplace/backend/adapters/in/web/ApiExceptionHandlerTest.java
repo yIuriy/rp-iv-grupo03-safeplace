@@ -20,7 +20,7 @@ import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
 class ApiExceptionHandlerTest {
 
     private static final List<Class<?>> ADVICES = List.of(
-            ApiExceptionHandler.class, EmprestimoExceptionHandler.class, InspecaoExceptionHandler.class);
+            ApiExceptionHandler.class, EmprestimoExceptionHandler.class, TarefaExceptionHandler.class);
 
     private final ApiExceptionHandler handler = new ApiExceptionHandler();
 
