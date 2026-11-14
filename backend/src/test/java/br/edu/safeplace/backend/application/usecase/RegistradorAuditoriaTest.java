@@ -19,6 +19,8 @@ import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
 import br.edu.safeplace.backend.suporte.TrilhaAuditoriaEmMemoria;
+import br.edu.safeplace.backend.validacao.ResultadoValidacao;
+import br.edu.safeplace.backend.validacao.Validador;
 
 /** Facade da auditoria (#223): uma chamada monta o LogAuditoria, resolve o operador e grava pela porta. */
 class RegistradorAuditoriaTest {
@@ -90,6 +92,45 @@ class RegistradorAuditoriaTest {
         assertThatThrownBy(() -> new RegistradorAuditoria(trilha, null))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage("Operador atual é obrigatório.");
+    }
+
+    @Test
+    @DisplayName("Registro sem tipo de operação é recusado pelo validador antes de gravar (#297)")
+    void registroInvalidoNaoEhGravado() {
+        assertThatThrownBy(() -> registrador.operacao("   ", "Relatorio", null, "Exportação"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Tipo de operação é obrigatório.");
+
+        assertThat(trilha.registros()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("O registrador usa o validador recebido antes de chamar o repository (#297)")
+    void usaOValidadorRecebidoAntesDoRepository() {
+        RegistradorAuditoria comValidadorQueRecusa = new RegistradorAuditoria(
+                trilha, operador.operadorAtual(mock(UsuarioRepository.class)), new Validador<>() {
+                    @Override
+                    public ResultadoValidacao verificar(LogAuditoria log) {
+                        return new ResultadoValidacao();
+                    }
+
+                    @Override
+                    public void validar(LogAuditoria log) {
+                        throw new IllegalStateException("recusado pelo validador");
+                    }
+                });
+
+        assertThatThrownBy(() -> comValidadorQueRecusa.cadastro("Epi", 1, "Cadastro"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("recusado pelo validador");
+        assertThat(trilha.registros()).isEmpty();
+    }
+
+    @Test
+    void recusaValidadorNulo() {
+        assertThatThrownBy(() -> new RegistradorAuditoria(trilha, operador.operadorAtual(mock(UsuarioRepository.class)), null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessage("Validador do registro de auditoria é obrigatório.");
     }
 
     @Test
