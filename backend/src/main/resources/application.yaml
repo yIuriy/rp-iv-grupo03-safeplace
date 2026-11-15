@@ -26,6 +26,8 @@ safeplace:
     alertas:
       cron: "${SAFEPLACE_ALERTAS_PLANO_CRON:0 0 * * * *}"
 
+# Issue #309: a chave que assina os tokens vem só da variável JWT_SECRET, sem valor padrão.
+# Sem ela, o backend não sobe. Gere uma chave com `openssl rand -base64 32` (veja o .env.example).
 jwt:
-  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+  secret: ${JWT_SECRET:}
   expiration-ms: ${JWT_EXPIRATION_MS:604800000}

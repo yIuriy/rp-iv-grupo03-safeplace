@@ -22,3 +22,6 @@ gm-sidnei/
 # Operating system files
 .DS_Store
 Thumbs.db
+
+# Variáveis locais com segredos, como JWT_SECRET (issue #309)
+.env

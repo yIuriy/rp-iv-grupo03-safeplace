@@ -77,6 +77,15 @@ O [frontend](frontend/README.md) usa React 19, TypeScript e Vite 8. A interface 
 
 É necessário ter Docker com o plugin Compose e as portas 5432, 8080 e 5173 disponíveis. Execute os comandos a partir da raiz do repositório. O [Compose](docker-compose.yml) inicia banco, backend e frontend na mesma máquina; os servidores dos diagramas de implantação não são pré-requisito para o desenvolvimento local.
 
+Antes do primeiro uso, crie o arquivo `.env` a partir do modelo. Ele guarda a `JWT_SECRET`, chave que assina os tokens de login, e fica fora do Git. Sem essa chave, o backend não sobe.
+
+```sh
+cp .env.example .env
+openssl rand -base64 32
+```
+
+Cole a saída do `openssl` depois de `JWT_SECRET=` no `.env`. Cada pessoa usa a própria chave, e a chave nunca vai para o repositório.
+
 Inicie o banco:
 
 ```sh
@@ -134,6 +143,9 @@ No Windows, use `mvnw.cmd` no lugar de `./mvnw`. A conexão é configurada em [a
 | `DB_NAME` | `safeplace` |
 | `DB_USER` | `safeplace` |
 | `DB_PASSWORD` | `safeplace` |
+| `JWT_SECRET` | Sem padrão. Obrigatória, com pelo menos 32 bytes. |
+
+Antes de `./mvnw spring-boot:run`, defina a `JWT_SECRET` no terminal, por exemplo com `export JWT_SECRET="$(openssl rand -base64 32)"`. Os testes usam uma chave própria, definida em [config/application.yaml](backend/src/test/resources/config/application.yaml).
 
 Se usar outra instância de PostgreSQL, crie o banco e o usuário e defina essas variáveis antes de iniciar o backend. O Flyway aplica os arquivos de [migração](backend/src/main/resources/db/migration/) na inicialização; o JPA valida o esquema resultante.
 

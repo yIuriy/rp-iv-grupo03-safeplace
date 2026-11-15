@@ -8,7 +8,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class JwtTokenAdapterTest {
 
-    private static final String SECRET = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970";
+    /** Chave só de teste (issue #309), gerada com {@code openssl rand -base64 32}. */
+    private static final String SECRET = "gOR1rF3yZRJhDlW8lWiotFdsz6X1PtOTItpnF5RqTis=";
     private static final long EXPIRATION_MS = 604800000L; // 7 dias
 
     private JwtTokenAdapter adaptador;
@@ -53,5 +54,25 @@ class JwtTokenAdapterTest {
         String token = adaptadorExpirado.gerar("gestor@safeplace.com", "GESTOR_SEGURANCA");
 
         assertFalse(adaptador.validar(token));
+    }
+
+    @Test
+    @DisplayName("Deve impedir a inicialização sem JWT_SECRET")
+    void deveRecusarChaveAusente() {
+        IllegalStateException semChave = assertThrows(IllegalStateException.class,
+                () -> new JwtTokenAdapter("", EXPIRATION_MS));
+        assertTrue(semChave.getMessage().contains("JWT_SECRET não foi definida"));
+        assertThrows(IllegalStateException.class, () -> new JwtTokenAdapter(null, EXPIRATION_MS));
+        assertThrows(IllegalStateException.class, () -> new JwtTokenAdapter("   ", EXPIRATION_MS));
+    }
+
+    @Test
+    @DisplayName("Deve recusar chave com menos de 32 bytes, sem completar com zeros")
+    void deveRecusarChaveCurta() {
+        // 16 bytes em Base64 e 16 caracteres que não são Base64 válido
+        IllegalStateException curta = assertThrows(IllegalStateException.class,
+                () -> new JwtTokenAdapter("MTIzNDU2Nzg5MDEyMzQ1Ng==", EXPIRATION_MS));
+        assertTrue(curta.getMessage().contains("16 bytes"));
+        assertThrows(IllegalStateException.class, () -> new JwtTokenAdapter("chave-curta-demais", EXPIRATION_MS));
     }
 }
