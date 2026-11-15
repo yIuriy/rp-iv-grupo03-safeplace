@@ -1,0 +1,4 @@
+# Configuração só dos testes (issue #309). O Spring Boot lê este arquivo junto com o application.yaml
+# principal e dá preferência a ele. A chave abaixo é pública e vale apenas para os testes.
+jwt:
+  secret: bwBYgpdQWEaSt1zBtesPsf/C3S36miSdydXi5qAoiI0=

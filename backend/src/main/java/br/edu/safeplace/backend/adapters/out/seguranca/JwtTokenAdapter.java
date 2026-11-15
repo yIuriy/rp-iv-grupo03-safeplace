@@ -5,6 +5,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.io.DecodingException;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -16,13 +17,20 @@ import java.util.Date;
 @Component
 public class JwtTokenAdapter implements GerenciadorToken {
 
-    private final String jwtSecret;
+    /** O HS256 exige chave de 256 bits (32 bytes) ou mais. */
+    static final int TAMANHO_MINIMO_CHAVE_BYTES = 32;
+
+    private final SecretKey chaveAssinatura;
     private final long jwtExpirationMs;
 
+    /**
+     * Issue #309: a chave vem só da variável de ambiente {@code JWT_SECRET}, sem valor padrão no código.
+     * A chave é montada aqui para que uma chave ausente ou curta impeça o backend de subir.
+     */
     public JwtTokenAdapter(
-            @Value("${jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}") String jwtSecret,
+            @Value("${jwt.secret:}") String jwtSecret,
             @Value("${jwt.expiration-ms:604800000}") long jwtExpirationMs) {
-        this.jwtSecret = jwtSecret;
+        this.chaveAssinatura = criarChaveAssinatura(jwtSecret);
         this.jwtExpirationMs = jwtExpirationMs;
     }
 
@@ -36,7 +44,7 @@ public class JwtTokenAdapter implements GerenciadorToken {
                 .claim("perfil", perfil)
                 .issuedAt(now)
                 .expiration(expiryDate)
-                .signWith(obterChaveAssinatura(), Jwts.SIG.HS256)
+                .signWith(chaveAssinatura, Jwts.SIG.HS256)
                 .compact();
     }
 
@@ -54,7 +62,7 @@ public class JwtTokenAdapter implements GerenciadorToken {
     public boolean validar(String token) {
         try {
             Jwts.parser()
-                    .verifyWith(obterChaveAssinatura())
+                    .verifyWith(chaveAssinatura)
                     .build()
                     .parseSignedClaims(token);
             return true;
@@ -65,23 +73,26 @@ public class JwtTokenAdapter implements GerenciadorToken {
 
     private Claims obterClaims(String token) {
         return Jwts.parser()
-                .verifyWith(obterChaveAssinatura())
+                .verifyWith(chaveAssinatura)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
     }
 
-    private SecretKey obterChaveAssinatura() {
+    private static SecretKey criarChaveAssinatura(String jwtSecret) {
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            throw new IllegalStateException("A variável de ambiente JWT_SECRET não foi definida. "
+                    + "Gere uma chave com 'openssl rand -base64 32' e defina JWT_SECRET (veja o .env.example).");
+        }
         byte[] keyBytes;
         try {
             keyBytes = Decoders.BASE64.decode(jwtSecret);
-        } catch (Exception e) {
+        } catch (DecodingException e) {
             keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
         }
-        if (keyBytes.length < 32) {
-            byte[] padded = new byte[32];
-            System.arraycopy(keyBytes, 0, padded, 0, Math.min(keyBytes.length, 32));
-            keyBytes = padded;
+        if (keyBytes.length < TAMANHO_MINIMO_CHAVE_BYTES) {
+            throw new IllegalStateException("JWT_SECRET tem " + keyBytes.length + " bytes, e o mínimo é "
+                    + TAMANHO_MINIMO_CHAVE_BYTES + " bytes (256 bits). Gere uma chave com 'openssl rand -base64 32'.");
         }
         return Keys.hmacShaKeyFor(keyBytes);
     }
