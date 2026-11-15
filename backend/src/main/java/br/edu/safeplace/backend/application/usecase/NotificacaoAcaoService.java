@@ -31,7 +31,7 @@ public class NotificacaoAcaoService implements EmitirAlertasPrazoUseCase, Consul
 
     @Override
     @Transactional
-    public int emitirAlertasDePrazo(LocalDate dataReferencia) {
+    public int emitir(LocalDate dataReferencia) {
         if (dataReferencia == null) {
             throw new IllegalArgumentException("A data de referência é obrigatória.");
         }

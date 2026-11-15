@@ -62,7 +62,7 @@ class TarefaServiceRelacoesTest {
 
     @Test
     void associaAAreaEOsSetoresResolvidos() {
-        TarefaOutputDTO salva = service.cadastrarTarefa(tarefa(1, List.of(2, 2)));
+        TarefaOutputDTO salva = service.cadastrar(tarefa(1, List.of(2, 2)));
 
         assertThat(salva.areaRiscoId()).isEqualTo(1);
         assertThat(salva.setoresIds()).containsExactly(2);
@@ -70,7 +70,7 @@ class TarefaServiceRelacoesTest {
 
     @Test
     void recusaAreaInexistenteSemGravar() {
-        assertThatThrownBy(() -> service.cadastrarTarefa(tarefa(99, List.of())))
+        assertThatThrownBy(() -> service.cadastrar(tarefa(99, List.of())))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Área de risco não encontrada com id: 99");
         verify(tarefas, never()).salvar(any());
@@ -78,14 +78,14 @@ class TarefaServiceRelacoesTest {
 
     @Test
     void recusaIdDeSetorNulo() {
-        assertThatThrownBy(() -> service.cadastrarTarefa(tarefa(null, Arrays.asList(2, null))))
+        assertThatThrownBy(() -> service.cadastrar(tarefa(null, Arrays.asList(2, null))))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Identificador de setor não pode ser nulo.");
     }
 
     @Test
     void recusaSetorInexistenteSemGravar() {
-        assertThatThrownBy(() -> service.cadastrarTarefa(tarefa(null, List.of(2, 77))))
+        assertThatThrownBy(() -> service.cadastrar(tarefa(null, List.of(2, 77))))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Setor não encontrado com id: 77");
         verify(tarefas, never()).salvar(any());
@@ -93,7 +93,7 @@ class TarefaServiceRelacoesTest {
 
     @Test
     void conferePrimeiroAAreaComoACadeiaFazia() {
-        assertThatThrownBy(() -> service.cadastrarTarefa(tarefa(99, List.of(77))))
+        assertThatThrownBy(() -> service.cadastrar(tarefa(99, List.of(77))))
                 .hasMessage("Área de risco não encontrada com id: 99");
     }
 }

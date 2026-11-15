@@ -63,7 +63,7 @@ public class TarefaController {
             @ApiResponse(responseCode = "403", description = "Perfil sem permissão ou classificação sem Gestor de Segurança identificável")
     })
     public TarefaResponse criar(@Valid @RequestBody CriarTarefaRequest request) {
-        TarefaOutputDTO salva = useCase.cadastrarTarefa(request.toInputDTO());
+        TarefaOutputDTO salva = useCase.cadastrar(request.toInputDTO());
         return TarefaResponse.fromOutputDTO(salva);
     }
 
@@ -198,7 +198,7 @@ public class TarefaController {
                                    @Valid @RequestBody AtualizarTarefaRequest request,
                                    Authentication authentication) {
         String operador = authentication != null ? authentication.getName() : "SISTEMA";
-        TarefaOutputDTO salva = useCase.atualizarTarefa(id, request.toInputDTO(), operador);
+        TarefaOutputDTO salva = useCase.atualizar(id, request.toInputDTO(), operador);
         return TarefaResponse.fromOutputDTO(salva);
     }
 

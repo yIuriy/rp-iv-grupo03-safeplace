@@ -96,7 +96,7 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
 
     @Override
     @Transactional
-    public TarefaOutputDTO cadastrarTarefa(CadastrarTarefaInputDTO inputDTO) {
+    public TarefaOutputDTO cadastrar(CadastrarTarefaInputDTO inputDTO) {
         // Builder (#240): constrói a tarefa nomeando os dados da criação
         Tarefa novaTarefa = new TarefaBuilder()
                 .descricao(inputDTO.descricao())
@@ -123,7 +123,7 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
 
     @Override
     @Transactional
-    public TarefaOutputDTO atualizarTarefa(Integer id, AtualizarTarefaInputDTO inputDTO, String operador) {
+    public TarefaOutputDTO atualizar(Integer id, AtualizarTarefaInputDTO inputDTO, String operador) {
         Tarefa existente = buscarTarefa(id);
 
         Tarefa atualizada = existente.atualizar(

@@ -151,7 +151,7 @@ class AreaRiscoTarefaPersistenciaTest {
         Integer capacete = novoEpi("Capacete", "91001");
         Integer luva = novoEpi("Luva térmica", "91002");
 
-        AreaRiscoOutputDTO salva = areaRiscoService.cadastrarAreaRisco(new CadastrarAreaRiscoInputDTO(
+        AreaRiscoOutputDTO salva = areaRiscoService.cadastrar(new CadastrarAreaRiscoInputDTO(
                 "IT-SET-01", "Linha de Produção", "Solda e montagem", NivelPerigo.ALTO,
                 List.of(capacete, luva)));
 
@@ -174,12 +174,12 @@ class AreaRiscoTarefaPersistenciaTest {
     void codigoDuplicadoDeveSerBarrado() {
         Integer capacete = novoEpi("Capacete", "91003");
 
-        areaRiscoService.cadastrarAreaRisco(new CadastrarAreaRiscoInputDTO(
+        areaRiscoService.cadastrar(new CadastrarAreaRiscoInputDTO(
                 "IT-SET-02", "Caldeiras", null, NivelPerigo.CRITICO, List.of(capacete)));
 
         reiniciarContexto();
 
-        assertThatThrownBy(() -> areaRiscoService.cadastrarAreaRisco(new CadastrarAreaRiscoInputDTO(
+        assertThatThrownBy(() -> areaRiscoService.cadastrar(new CadastrarAreaRiscoInputDTO(
                 "it-set-02", "Outro setor", null, NivelPerigo.BAIXO, List.of(capacete))))
                 .isInstanceOf(CodigoAreaRiscoDuplicadoException.class);
     }
@@ -189,9 +189,9 @@ class AreaRiscoTarefaPersistenciaTest {
     void filtroPorGrauDePerigoDeveConsultarOBanco() {
         Integer capacete = novoEpi("Capacete", "91004");
 
-        areaRiscoService.cadastrarAreaRisco(new CadastrarAreaRiscoInputDTO(
+        areaRiscoService.cadastrar(new CadastrarAreaRiscoInputDTO(
                 "IT-SET-03", "Pintura", null, NivelPerigo.MEDIO, List.of(capacete)));
-        areaRiscoService.cadastrarAreaRisco(new CadastrarAreaRiscoInputDTO(
+        areaRiscoService.cadastrar(new CadastrarAreaRiscoInputDTO(
                 "IT-SET-04", "Solda", null, NivelPerigo.CRITICO, List.of(capacete)));
 
         reiniciarContexto();
@@ -205,7 +205,7 @@ class AreaRiscoTarefaPersistenciaTest {
     @Test
     @DisplayName("Deve persistir tarefa sem classificação e classificá-la depois")
     void devePersistirTarefaSemClassificacaoEClassificarDepois() {
-        TarefaOutputDTO semClassificacao = tarefaService.cadastrarTarefa(
+        TarefaOutputDTO semClassificacao = tarefaService.cadastrar(
                 new CadastrarTarefaInputDTO("Inspeção visual de andaimes", null));
 
         reiniciarContexto();
@@ -233,7 +233,7 @@ class AreaRiscoTarefaPersistenciaTest {
     @Test
     @DisplayName("A reclassificação não deve duplicar linhas na tabela de tarefas")
     void reclassificacaoNaoDeveDuplicarLinhas() {
-        TarefaOutputDTO tarefa = tarefaService.cadastrarTarefa(
+        TarefaOutputDTO tarefa = tarefaService.cadastrar(
                 new CadastrarTarefaInputDTO("Trabalho em espaço confinado", NivelPerigo.ALTO));
 
         tarefaService.classificar(tarefa.id(), NivelPerigo.BAIXO);
@@ -251,7 +251,7 @@ class AreaRiscoTarefaPersistenciaTest {
     @Test
     @DisplayName("#112: classificação e reavaliação gravam responsável técnico e histórico com valor anterior")
     void classificacaoGravaResponsavelEHistorico() {
-        TarefaOutputDTO tarefa = tarefaService.cadastrarTarefa(
+        TarefaOutputDTO tarefa = tarefaService.cadastrar(
                 new CadastrarTarefaInputDTO("Manutenção de painel elétrico", NivelPerigo.CRITICO));
         tarefaService.classificar(tarefa.id(), NivelPerigo.ALTO);
 
@@ -298,15 +298,15 @@ class AreaRiscoTarefaPersistenciaTest {
     @DisplayName("#113: tarefa reconstrói área e setores vinculados após leitura do PostgreSQL")
     void tarefaDeveReconstruirAreaESetoresVinculados() {
         Integer epiId = novoEpi("Protetor auricular", "91005");
-        var setorA = setorService.cadastrarSetor(new CadastrarSetorInputDTO(
+        var setorA = setorService.cadastrar(new CadastrarSetorInputDTO(
                 "Prensa", "Prensas hidráulicas", "Galpão A", NivelPerigo.ALTO));
-        var setorB = setorService.cadastrarSetor(new CadastrarSetorInputDTO(
+        var setorB = setorService.cadastrar(new CadastrarSetorInputDTO(
                 "Expedição", "Área de carga", "Galpão B", NivelPerigo.MEDIO));
-        AreaRiscoOutputDTO area = areaRiscoService.cadastrarAreaRisco(new CadastrarAreaRiscoInputDTO(
+        AreaRiscoOutputDTO area = areaRiscoService.cadastrar(new CadastrarAreaRiscoInputDTO(
                 "AR-TAR-113", "Prensas", null, NivelPerigo.ALTO, setorA.id(), List.of("Ruído"),
                 "Faixa de segurança", List.of(epiId)));
 
-        TarefaOutputDTO salva = tarefaService.cadastrarTarefa(new CadastrarTarefaInputDTO(
+        TarefaOutputDTO salva = tarefaService.cadastrar(new CadastrarTarefaInputDTO(
                 "Operar prensa hidráulica", null, area.id(), List.of(setorA.id(), setorB.id())));
 
         reiniciarContexto();
@@ -319,12 +319,12 @@ class AreaRiscoTarefaPersistenciaTest {
     @Test
     @DisplayName("#113: setor ou área inexistente não grava tarefa")
     void relacaoInexistenteNaoDeveGravarTarefa() {
-        assertThatThrownBy(() -> tarefaService.cadastrarTarefa(new CadastrarTarefaInputDTO(
+        assertThatThrownBy(() -> tarefaService.cadastrar(new CadastrarTarefaInputDTO(
                 "Tarefa sem vínculo válido", null, 999999, List.of())))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Área de risco não encontrada");
 
-        assertThatThrownBy(() -> tarefaService.cadastrarTarefa(new CadastrarTarefaInputDTO(
+        assertThatThrownBy(() -> tarefaService.cadastrar(new CadastrarTarefaInputDTO(
                 "Tarefa sem setor válido", null, null, List.of(999999))))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Setor não encontrado");

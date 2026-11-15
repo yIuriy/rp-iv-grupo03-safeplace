@@ -126,7 +126,7 @@ class PlanoDeAcaoAuditoriaTest {
                     a.getResponsavelSetor(), a.isAlertaAtivo(), a.getAntecedenciaAlertaDias(), a.getGestor());
         });
 
-        service.cadastrarAcao(10, input);
+        service.cadastrar(10, input);
 
         assertThat(trilha.registros()).hasSize(1);
         LogAuditoria log = trilha.registros().get(0);

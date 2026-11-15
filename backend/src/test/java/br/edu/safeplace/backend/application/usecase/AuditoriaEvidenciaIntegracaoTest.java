@@ -136,7 +136,7 @@ class AuditoriaEvidenciaIntegracaoTest {
                 "Corte Atualizado", "Nova desc", NivelPerigo.ALTO, null, List.of("Ruído"), "Limites", List.of(50), "Reclassificação de risco"
         );
 
-        areaRiscoService.atualizarAreaRisco(10, inputDTO, "gestor.auditor@safeplace.com");
+        areaRiscoService.atualizar(10, inputDTO, "gestor.auditor@safeplace.com");
 
         // Consulta de evidência
         List<LogAuditoria> evidencias = logAuditoriaRepository.listarPorEntidade("AreaRisco", 10);

@@ -128,7 +128,7 @@ class OcorrenciaServiceTest {
     @Test
     @DisplayName("Deve registrar acidente resolvendo área e colaborador pelos IDs")
     void deveRegistrarAcidente() {
-        OcorrenciaOutputDTO salvo = useCase.registrarAcidente(acidente("FALHA_EPI", "MEDIO"));
+        OcorrenciaOutputDTO salvo = useCase.registrar(acidente("FALHA_EPI", "MEDIO"));
 
         assertEquals(1, salvo.idOcorrencia());
         assertEquals("ACIDENTE", salvo.tipoOcorrencia());
@@ -147,7 +147,7 @@ class OcorrenciaServiceTest {
     @Test
     @DisplayName("Deve registrar incidente com área e colaborador")
     void deveRegistrarIncidente() {
-        OcorrenciaOutputDTO salvo = useCase.registrarIncidente(new RegistrarIncidenteInputDTO(
+        OcorrenciaOutputDTO salvo = useCase.registrar(new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 6, 15, 10),
                 "Empilhamento irregular quase causou queda de material.",
                 "Caixas acima do limite permitido",
@@ -171,10 +171,10 @@ class OcorrenciaServiceTest {
         RegistrarIncidenteInputDTO incidenteSemArea = new RegistrarIncidenteInputDTO(LocalDateTime.of(2026, 9, 6, 14, 30),
                 "Oleo", "Piso", "Queda", null, COLABORADOR_ID);
 
-        assertThatThrownBy(() -> useCase.registrarAcidente(semArea))
+        assertThatThrownBy(() -> useCase.registrar(semArea))
                 .isInstanceOf(DadosOcorrenciaInvalidosException.class)
                 .hasMessage("Área de risco é obrigatória.");
-        assertThatThrownBy(() -> useCase.registrarIncidente(incidenteSemArea))
+        assertThatThrownBy(() -> useCase.registrar(incidenteSemArea))
                 .isInstanceOf(DadosOcorrenciaInvalidosException.class)
                 .hasMessage("Área de risco é obrigatória.");
         assertThat(repository.listar()).isEmpty();
@@ -189,10 +189,10 @@ class OcorrenciaServiceTest {
         RegistrarIncidenteInputDTO incidenteSemColaborador = new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 6, 14, 30), "Oleo", "Piso", "Queda", AREA_ID, null);
 
-        assertThatThrownBy(() -> useCase.registrarAcidente(semColaborador))
+        assertThatThrownBy(() -> useCase.registrar(semColaborador))
                 .isInstanceOf(DadosOcorrenciaInvalidosException.class)
                 .hasMessage("Colaborador envolvido é obrigatório.");
-        assertThatThrownBy(() -> useCase.registrarIncidente(incidenteSemColaborador))
+        assertThatThrownBy(() -> useCase.registrar(incidenteSemColaborador))
                 .isInstanceOf(DadosOcorrenciaInvalidosException.class)
                 .hasMessage("Colaborador envolvido é obrigatório.");
         assertThat(repository.listar()).isEmpty();
@@ -206,10 +206,10 @@ class OcorrenciaServiceTest {
         RegistrarIncidenteInputDTO colaboradorInexistente = new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 6, 14, 30), "Oleo", "Piso", "Queda", AREA_ID, 999);
 
-        assertThatThrownBy(() -> useCase.registrarIncidente(areaInexistente))
+        assertThatThrownBy(() -> useCase.registrar(areaInexistente))
                 .isInstanceOf(DadosOcorrenciaInvalidosException.class)
                 .hasMessageContaining("Área de risco não encontrada");
-        assertThatThrownBy(() -> useCase.registrarIncidente(colaboradorInexistente))
+        assertThatThrownBy(() -> useCase.registrar(colaboradorInexistente))
                 .isInstanceOf(DadosOcorrenciaInvalidosException.class)
                 .hasMessageContaining("Colaborador não encontrado");
     }
@@ -219,7 +219,7 @@ class OcorrenciaServiceTest {
     @ValueSource(strings = {"GRAVE", "LEVE", "xyz"})
     @DisplayName("Gravidade ausente ou inválida é recusada, sem virar BAIXO (issue #195)")
     void deveRecusarGravidadeInvalida(String gravidade) {
-        assertThatThrownBy(() -> useCase.registrarAcidente(acidente("FALHA_EPI", gravidade)))
+        assertThatThrownBy(() -> useCase.registrar(acidente("FALHA_EPI", gravidade)))
                 .isInstanceOf(DadosOcorrenciaInvalidosException.class)
                 .hasMessageContaining("Gravidade");
         assertThat(repository.listar()).isEmpty();
@@ -231,7 +231,7 @@ class OcorrenciaServiceTest {
     @ValueSource(strings = {"QUEDA", "xyz"})
     @DisplayName("Causa raiz ausente ou inválida é recusada, sem virar OUTRO (issue #195)")
     void deveRecusarCausaRaizInvalida(String causaRaiz) {
-        assertThatThrownBy(() -> useCase.registrarAcidente(acidente(causaRaiz, "ALTO")))
+        assertThatThrownBy(() -> useCase.registrar(acidente(causaRaiz, "ALTO")))
                 .isInstanceOf(DadosOcorrenciaInvalidosException.class)
                 .hasMessageContaining("Causa raiz");
         assertThat(repository.listar()).isEmpty();
@@ -240,7 +240,7 @@ class OcorrenciaServiceTest {
     @Test
     @DisplayName("Gravidade e causa raiz aceitam qualquer combinação de maiúsculas")
     void deveAceitarGravidadeECausaSemDiferenciarMaiusculas() {
-        OcorrenciaOutputDTO salvo = useCase.registrarAcidente(acidente("fator_humano", "critico"));
+        OcorrenciaOutputDTO salvo = useCase.registrar(acidente("fator_humano", "critico"));
 
         assertThat(salvo.causaRaiz()).isEqualTo("FATOR_HUMANO");
         assertThat(salvo.gravidade()).isEqualTo("CRITICO");
@@ -249,8 +249,8 @@ class OcorrenciaServiceTest {
     @Test
     @DisplayName("Protocolo CAT do acidente é sempre gerado pelo servidor (US13, issue #195)")
     void deveGerarProtocoloNoServidor() {
-        OcorrenciaOutputDTO primeiro = useCase.registrarAcidente(acidente("OUTRO", "BAIXO"));
-        OcorrenciaOutputDTO segundo = useCase.registrarAcidente(acidente("OUTRO", "BAIXO"));
+        OcorrenciaOutputDTO primeiro = useCase.registrar(acidente("OUTRO", "BAIXO"));
+        OcorrenciaOutputDTO segundo = useCase.registrar(acidente("OUTRO", "BAIXO"));
 
         assertThat(primeiro.numeroProtocoloCAT()).isEqualTo("CAT-2026-09-0001");
         assertThat(segundo.numeroProtocoloCAT()).isEqualTo("CAT-2026-09-0002");
@@ -261,7 +261,7 @@ class OcorrenciaServiceTest {
     void gestorAutenticadoDeveSerRelator() {
         autenticar("paula@email.com", "ROLE_GESTOR_SEGURANCA");
 
-        OcorrenciaOutputDTO salvo = useCase.registrarAcidente(acidente("FATOR_HUMANO", "MEDIO"));
+        OcorrenciaOutputDTO salvo = useCase.registrar(acidente("FATOR_HUMANO", "MEDIO"));
 
         assertThat(salvo.relatorId()).isEqualTo(30);
         assertThat(salvo.relatorNome()).isEqualTo("Paula");
@@ -273,7 +273,7 @@ class OcorrenciaServiceTest {
     void supervisorAutenticadoDeveSerRelator() {
         autenticar("sergio@email.com", "ROLE_SUPERVISOR");
 
-        OcorrenciaOutputDTO salvo = useCase.registrarIncidente(incidente("Oleo no piso"));
+        OcorrenciaOutputDTO salvo = useCase.registrar(incidente("Oleo no piso"));
 
         assertThat(salvo.relatorId()).isEqualTo(40);
         assertThat(salvo.relatorNome()).isEqualTo("Sérgio");
@@ -283,7 +283,7 @@ class OcorrenciaServiceTest {
     @Test
     @DisplayName("Sem sessão, o relato fica sem relator")
     void semSessaoNaoHaRelator() {
-        OcorrenciaOutputDTO salvo = useCase.registrarIncidente(incidente("Oleo no piso"));
+        OcorrenciaOutputDTO salvo = useCase.registrar(incidente("Oleo no piso"));
 
         assertThat(salvo.relatorId()).isNull();
     }
@@ -291,8 +291,8 @@ class OcorrenciaServiceTest {
     @Test
     @DisplayName("Deve listar ocorrências registradas")
     void deveListarOcorrenciasRegistradas() {
-        useCase.registrarIncidente(incidente("Piso molhado sem sinalizacao."));
-        useCase.registrarAcidente(acidente("FATOR_HUMANO", "BAIXO"));
+        useCase.registrar(incidente("Piso molhado sem sinalizacao."));
+        useCase.registrar(acidente("FATOR_HUMANO", "BAIXO"));
 
         List<OcorrenciaOutputDTO> ocorrencias = useCase.listar();
 
@@ -304,7 +304,7 @@ class OcorrenciaServiceTest {
     @Test
     @DisplayName("Deve buscar ocorrência por ID com sucesso")
     void deveBuscarOcorrenciaPorId() {
-        OcorrenciaOutputDTO cadastrado = useCase.registrarIncidente(incidente("Fio desencapado"));
+        OcorrenciaOutputDTO cadastrado = useCase.registrar(incidente("Fio desencapado"));
 
         OcorrenciaOutputDTO buscado = useCase.buscarPorId(cadastrado.idOcorrencia());
 
@@ -323,7 +323,7 @@ class OcorrenciaServiceTest {
     @Test
     @DisplayName("Deve transicionar ocorrência para EM_TRIAGEM")
     void deveEnviarOcorrenciaParaTriagem() {
-        OcorrenciaOutputDTO cadastrado = useCase.registrarIncidente(incidente("Quase queda"));
+        OcorrenciaOutputDTO cadastrado = useCase.registrar(incidente("Quase queda"));
 
         OcorrenciaOutputDTO emTriagem = useCase.enviarParaTriagem(cadastrado.idOcorrencia());
 
@@ -333,7 +333,7 @@ class OcorrenciaServiceTest {
     @Test
     @DisplayName("Deve arquivar ocorrência após triagem")
     void deveArquivarOcorrenciaAposTriagem() {
-        OcorrenciaOutputDTO cadastrado = useCase.registrarIncidente(incidente("Desgaste estrutural"));
+        OcorrenciaOutputDTO cadastrado = useCase.registrar(incidente("Desgaste estrutural"));
 
         useCase.enviarParaTriagem(cadastrado.idOcorrencia());
         OcorrenciaOutputDTO arquivada = useCase.arquivar(cadastrado.idOcorrencia());
@@ -344,7 +344,7 @@ class OcorrenciaServiceTest {
     @Test
     @DisplayName("Deve proibir arquivamento direto de ocorrência ABERTA")
     void deveProibirArquivamentoDiretoDeOcorrenciaAberta() {
-        OcorrenciaOutputDTO cadastrado = useCase.registrarIncidente(incidente("Falta de iluminacao"));
+        OcorrenciaOutputDTO cadastrado = useCase.registrar(incidente("Falta de iluminacao"));
 
         assertThatThrownBy(() -> useCase.arquivar(cadastrado.idOcorrencia()))
                 .isInstanceOf(TransicaoStatusInvalidaException.class);
@@ -382,11 +382,11 @@ class OcorrenciaServiceTest {
     @Test
     @DisplayName("Deve acionar porta de notificação interna ao registrar acidente e incidente")
     void deveNotificarGestorAoRegistrarAcidenteEIncidente() {
-        useCase.registrarAcidente(acidente("OUTRO", "BAIXO"));
+        useCase.registrar(acidente("OUTRO", "BAIXO"));
 
         verify(notificacaoPort).notificar(any(Acidente.class));
 
-        useCase.registrarIncidente(incidente("Cabo exposto no chão"));
+        useCase.registrar(incidente("Cabo exposto no chão"));
 
         verify(notificacaoPort).notificar(any(Incidente.class));
     }
@@ -401,7 +401,7 @@ class OcorrenciaServiceTest {
     @Test
     @DisplayName("Deve buscar ocorrencia por protocolo CAT gerado no registro")
     void deveBuscarPorProtocoloComSucesso() {
-        OcorrenciaOutputDTO registrado = useCase.registrarAcidente(acidente("OUTRO", "BAIXO"));
+        OcorrenciaOutputDTO registrado = useCase.registrar(acidente("OUTRO", "BAIXO"));
 
         OcorrenciaOutputDTO encontrada = useCase.buscarPorProtocolo(registrado.numeroProtocoloCAT());
 
@@ -469,7 +469,7 @@ class OcorrenciaServiceTest {
     @DisplayName("Edição de acidente altera os dados e preserva tipo, registro, situação, relator e protocolo CAT")
     void deveEditarAcidentePreservandoIdentidade() {
         autenticar("paula@email.com", "ROLE_GESTOR_SEGURANCA");
-        OcorrenciaOutputDTO cadastrado = useCase.registrarAcidente(acidente("FATOR_HUMANO", "BAIXO"));
+        OcorrenciaOutputDTO cadastrado = useCase.registrar(acidente("FATOR_HUMANO", "BAIXO"));
         useCase.enviarParaTriagem(cadastrado.idOcorrencia());
 
         OcorrenciaOutputDTO editado = useCase.atualizar(cadastrado.idOcorrencia(), new AtualizarOcorrenciaInputDTO(
@@ -492,7 +492,7 @@ class OcorrenciaServiceTest {
     @Test
     @DisplayName("Edição mantém gravidade e causa em branco e recusa valores inválidos (issue #195)")
     void edicaoDeveRecusarGravidadeECausaInvalidas() {
-        OcorrenciaOutputDTO cadastrado = useCase.registrarAcidente(acidente("FALHA_EPI", "ALTO"));
+        OcorrenciaOutputDTO cadastrado = useCase.registrar(acidente("FALHA_EPI", "ALTO"));
 
         OcorrenciaOutputDTO mantido = useCase.atualizar(cadastrado.idOcorrencia(), new AtualizarOcorrenciaInputDTO(
                 LocalDateTime.of(2026, 9, 6, 14, 30), "Corte", AREA_ID, COLABORADOR_ID,
@@ -513,7 +513,7 @@ class OcorrenciaServiceTest {
     @Test
     @DisplayName("Edição sem área ou colaborador é recusada (issue #195)")
     void edicaoDeveExigirAreaEColaborador() {
-        OcorrenciaOutputDTO cadastrado = useCase.registrarIncidente(incidente("Oleo no piso"));
+        OcorrenciaOutputDTO cadastrado = useCase.registrar(incidente("Oleo no piso"));
 
         assertThatThrownBy(() -> useCase.atualizar(cadastrado.idOcorrencia(), new AtualizarOcorrenciaInputDTO(
                 LocalDateTime.of(2026, 9, 10, 10, 0), "Oleo", null, COLABORADOR_ID,
@@ -528,7 +528,7 @@ class OcorrenciaServiceTest {
     @Test
     @DisplayName("Edição de incidente exige situação de risco e potencial de dano")
     void deveEditarIncidenteValidandoCamposProprios() {
-        OcorrenciaOutputDTO cadastrado = useCase.registrarIncidente(incidente("Oleo no piso"));
+        OcorrenciaOutputDTO cadastrado = useCase.registrar(incidente("Oleo no piso"));
 
         OcorrenciaOutputDTO editado = useCase.atualizar(cadastrado.idOcorrencia(), new AtualizarOcorrenciaInputDTO(
                 LocalDateTime.of(2026, 9, 10, 10, 0), "Oleo no piso da doca", AREA_ID, COLABORADOR_ID,
@@ -545,7 +545,7 @@ class OcorrenciaServiceTest {
     @Test
     @DisplayName("Ocorrência arquivada não é editada e inexistente responde não encontrada")
     void deveRecusarEdicaoDeArquivadaOuInexistente() {
-        OcorrenciaOutputDTO cadastrado = useCase.registrarIncidente(incidente("Oleo no piso"));
+        OcorrenciaOutputDTO cadastrado = useCase.registrar(incidente("Oleo no piso"));
         useCase.enviarParaTriagem(cadastrado.idOcorrencia());
         useCase.arquivar(cadastrado.idOcorrencia());
         AtualizarOcorrenciaInputDTO dados = new AtualizarOcorrenciaInputDTO(
@@ -564,7 +564,7 @@ class OcorrenciaServiceTest {
     void deveAuditarCamposAlteradosNaEdicao() {
         LogAuditoriaRepository logRepo = mock(LogAuditoriaRepository.class);
         OcorrenciaService useCaseComLog = novoUseCase(logRepo);
-        OcorrenciaOutputDTO cadastrado = useCaseComLog.registrarIncidente(incidente("Oleo no piso"));
+        OcorrenciaOutputDTO cadastrado = useCaseComLog.registrar(incidente("Oleo no piso"));
 
         operador.autenticar("gestor@safeplace.com");
         useCaseComLog.atualizar(cadastrado.idOcorrencia(), new AtualizarOcorrenciaInputDTO(

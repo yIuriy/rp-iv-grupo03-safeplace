@@ -9,5 +9,5 @@ public interface EmitirAlertasPrazoUseCase {
      * Emite o alerta de cada ação aberta cuja data de alerta já chegou e que ainda não foi avisada
      * para o prazo vigente. Devolve quantos alertas novos foram emitidos.
      */
-    int emitirAlertasDePrazo(LocalDate dataReferencia);
+    int emitir(LocalDate dataReferencia);
 }

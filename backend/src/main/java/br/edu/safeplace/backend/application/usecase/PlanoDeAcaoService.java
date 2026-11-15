@@ -130,7 +130,7 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
 
     @Override
     @Transactional
-    public PlanoDeAcaoOutputDTO cadastrarAcao(Integer idOcorrencia, CriarAcaoPlanoInputDTO inputDTO) {
+    public PlanoDeAcaoOutputDTO cadastrar(Integer idOcorrencia, CriarAcaoPlanoInputDTO inputDTO) {
         Ocorrencia ocorrencia = ocorrenciaRepository.buscarPorId(idOcorrencia)
                 .orElseThrow(() -> new OcorrenciaNaoEncontradaException(idOcorrencia));
 

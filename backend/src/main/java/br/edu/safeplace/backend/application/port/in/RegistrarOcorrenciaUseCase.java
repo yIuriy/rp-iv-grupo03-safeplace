@@ -12,8 +12,8 @@ import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
 import java.util.List;
 
 public interface RegistrarOcorrenciaUseCase {
-    OcorrenciaOutputDTO registrarAcidente(RegistrarAcidenteInputDTO inputDTO);
-    OcorrenciaOutputDTO registrarIncidente(RegistrarIncidenteInputDTO inputDTO);
+    OcorrenciaOutputDTO registrar(RegistrarAcidenteInputDTO inputDTO);
+    OcorrenciaOutputDTO registrar(RegistrarIncidenteInputDTO inputDTO);
 
     /**
      * Ocorrências que atendem aos critérios (UC05/UC09, issue #128). O Supervisor recebe só os relatos

@@ -106,7 +106,7 @@ class OcorrenciaConsultaPersistenciaIntegracaoTest {
         autenticar(GESTOR, "ROLE_GESTOR_SEGURANCA");
         o3 = relatar(LocalDateTime.of(2025, 10, 1, 0, 0), areaA, maria);
         o4 = relatar(LocalDateTime.of(2025, 8, 31, 23, 59), areaSemSetor, joao);
-        o5 = registrarUseCase.registrarAcidente(new RegistrarAcidenteInputDTO(LocalDateTime.of(2025, 7, 15, 9, 0),
+        o5 = registrarUseCase.registrar(new RegistrarAcidenteInputDTO(LocalDateTime.of(2025, 7, 15, 9, 0),
                 "Acidente C128", "FATOR_HUMANO", "ALTO", null, null, null, areaB, maria)).idOcorrencia();
     }
 
@@ -187,7 +187,7 @@ class OcorrenciaConsultaPersistenciaIntegracaoTest {
     }
 
     private Integer relatar(LocalDateTime fato, Integer areaId, Integer colaboradorId) {
-        return registrarUseCase.registrarIncidente(new RegistrarIncidenteInputDTO(
+        return registrarUseCase.registrar(new RegistrarIncidenteInputDTO(
                 fato, "Relato C128", "Piso escorregadio", "Queda", areaId, colaboradorId))
                 .idOcorrencia();
     }

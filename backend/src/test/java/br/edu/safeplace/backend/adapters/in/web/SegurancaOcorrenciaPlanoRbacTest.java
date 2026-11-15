@@ -305,7 +305,7 @@ class SegurancaOcorrenciaPlanoRbacTest {
         @WithMockUser(roles = "SUPERVISOR")
         @DisplayName("Supervisor pode registrar ocorrência (UC09)")
         void supervisorPodeRegistrarOcorrencia() throws Exception {
-            when(registrarOcorrenciaUseCase.registrarAcidente(any(RegistrarAcidenteInputDTO.class)))
+            when(registrarOcorrenciaUseCase.registrar(any(RegistrarAcidenteInputDTO.class)))
                     .thenReturn(mockOcorrencia());
 
             mockMvc.perform(post("/api/ocorrencias")
@@ -352,7 +352,7 @@ class SegurancaOcorrenciaPlanoRbacTest {
         @WithMockUser(roles = "GESTOR_SEGURANCA")
         @DisplayName("Gestor de Segurança pode cadastrar ação no plano (UC07)")
         void gestorPodeCadastrarAcao() throws Exception {
-            when(gerenciarPlanoDeAcaoUseCase.cadastrarAcao(eq(1), any(CriarAcaoPlanoInputDTO.class)))
+            when(gerenciarPlanoDeAcaoUseCase.cadastrar(eq(1), any(CriarAcaoPlanoInputDTO.class)))
                     .thenReturn(mockPlano());
 
             mockMvc.perform(post("/api/ocorrencias/1/planos-acao")

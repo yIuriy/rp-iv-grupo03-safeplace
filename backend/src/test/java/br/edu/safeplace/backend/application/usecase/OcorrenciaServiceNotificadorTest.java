@@ -95,7 +95,7 @@ class OcorrenciaServiceNotificadorTest {
     void deveChamarPortaComOcorrenciaGravada() {
         NotificadorQueRegistra dubleQueRegistra = new NotificadorQueRegistra();
 
-        servicoCom(dubleQueRegistra).registrarIncidente(relato());
+        servicoCom(dubleQueRegistra).registrar(relato());
 
         assertThat(dubleQueRegistra.notificadas).containsExactly(salvo);
     }
@@ -105,7 +105,7 @@ class OcorrenciaServiceNotificadorTest {
     void deveRegistrarRelatoComNotificadorNulo() {
         NotificadorOcorrencia nulo = new NotificadorOcorrenciaNulo();
 
-        var resposta = servicoCom(nulo).registrarIncidente(relato());
+        var resposta = servicoCom(nulo).registrar(relato());
 
         assertThat(resposta.idOcorrencia()).isEqualTo(2);
         assertThat(new NotificacaoOcorrenciaService(nulo).listar()).isEmpty();

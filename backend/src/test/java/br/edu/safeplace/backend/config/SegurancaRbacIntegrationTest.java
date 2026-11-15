@@ -5,6 +5,8 @@ import br.edu.safeplace.backend.adapters.in.web.HealthController;
 import br.edu.safeplace.backend.adapters.in.web.UsuarioController;
 import br.edu.safeplace.backend.adapters.in.web.ApiExceptionHandler;
 import br.edu.safeplace.backend.adapters.out.seguranca.JwtTokenAdapter;
+import br.edu.safeplace.backend.application.dto.input.CadastrarColaboradorInputDTO;
+import br.edu.safeplace.backend.application.dto.input.CadastrarSupervisorInputDTO;
 import br.edu.safeplace.backend.application.dto.output.UsuarioOutputDTO;
 import br.edu.safeplace.backend.application.port.in.AutenticarUsuarioUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarUsuarioUseCase;
@@ -103,7 +105,7 @@ class SegurancaRbacIntegrationTest {
     @Test
     @DisplayName("Gestor de Segurança acessando listagem geral GET /api/usuarios deve retornar 200 OK")
     void gestorListandoTodosUsuariosDeveRetornar200() throws Exception {
-        when(gerenciarUsuarioUseCase.listarUsuarios()).thenReturn(List.of());
+        when(gerenciarUsuarioUseCase.listar()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/usuarios")
                         .header("Authorization", tokenGestor))
@@ -148,7 +150,7 @@ class SegurancaRbacIntegrationTest {
                 10, "Novo Supervisor", "52998224725", LocalDate.of(1988, 4, 12),
                 "supervisor.novo@safeplace.com", Perfil.SUPERVISOR, true, LocalDateTime.now(), "senhaInicial123"
         );
-        when(gerenciarUsuarioUseCase.cadastrarSupervisor(any())).thenReturn(saida);
+        when(gerenciarUsuarioUseCase.cadastrar(any(CadastrarSupervisorInputDTO.class))).thenReturn(saida);
 
         String jsonSupervisor = """
                 {
@@ -174,7 +176,7 @@ class SegurancaRbacIntegrationTest {
                 11, "Novo Colaborador", "52998224725", LocalDate.of(1992, 6, 18),
                 "colaborador@safeplace.com", null, true, LocalDateTime.now(), null
         );
-        when(gerenciarUsuarioUseCase.cadastrarColaborador(any())).thenReturn(saida);
+        when(gerenciarUsuarioUseCase.cadastrar(any(CadastrarColaboradorInputDTO.class))).thenReturn(saida);
 
         String jsonColaborador = """
                 {

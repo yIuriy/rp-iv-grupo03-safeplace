@@ -51,8 +51,8 @@ public class OcorrenciaController {
                     + "cadastrado à parte pelo Gestor (issue #195).")
     public OcorrenciaResponse criar(@Valid @RequestBody CriarOcorrenciaRequest request) {
         return switch (TipoOcorrencia.de(request.tipoOcorrencia())) {
-            case ACIDENTE -> OcorrenciaResponse.fromOutputDTO(registrarUseCase.registrarAcidente(request.toAcidenteInputDTO()));
-            case INCIDENTE -> OcorrenciaResponse.fromOutputDTO(registrarUseCase.registrarIncidente(request.toIncidenteInputDTO()));
+            case ACIDENTE -> OcorrenciaResponse.fromOutputDTO(registrarUseCase.registrar(request.toAcidenteInputDTO()));
+            case INCIDENTE -> OcorrenciaResponse.fromOutputDTO(registrarUseCase.registrar(request.toIncidenteInputDTO()));
         };
     }
 

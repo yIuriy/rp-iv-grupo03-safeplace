@@ -38,7 +38,7 @@ public class HistoricoProprioController {
             @Parameter(description = "Quantidade máxima de ações, de 1 a 100")
             @RequestParam(defaultValue = "" + ConsultarHistoricoProprioUseCase.LIMITE_PADRAO) int limite) {
         Authentication autenticacao = SecurityContextHolder.getContext().getAuthentication();
-        return casoDeUso.listarAcoes(autenticacao.getName(), limite).stream()
+        return casoDeUso.listar(autenticacao.getName(), limite).stream()
                 .map(AcaoUsuarioResponse::fromOutputDTO)
                 .toList();
     }

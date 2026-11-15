@@ -107,7 +107,7 @@ class OcorrenciaUseCaseAuditoriaTest {
         when(repository.salvar(any(Acidente.class))).thenReturn(salvo);
         when(repository.proximoSequencialCAT(anyInt(), anyInt())).thenReturn(1L);
 
-        OcorrenciaOutputDTO dto = useCase.registrarAcidente(input);
+        OcorrenciaOutputDTO dto = useCase.registrar(input);
 
         assertThat(dto.idOcorrencia()).isEqualTo(1);
 
@@ -147,7 +147,7 @@ class OcorrenciaUseCaseAuditoriaTest {
                 .build();
         when(repository.salvar(any(Incidente.class))).thenReturn(salvo);
 
-        OcorrenciaOutputDTO dto = useCase.registrarIncidente(input);
+        OcorrenciaOutputDTO dto = useCase.registrar(input);
 
         assertThat(dto.idOcorrencia()).isEqualTo(2);
 

@@ -20,12 +20,12 @@ class AlertaPrazoAcaoAgendadorTest {
     @DisplayName("A rotina verifica os prazos na data de hoje")
     void verificaNaDataDeHoje() {
         EmitirAlertasPrazoUseCase useCase = mock(EmitirAlertasPrazoUseCase.class);
-        when(useCase.emitirAlertasDePrazo(any(LocalDate.class))).thenReturn(2);
+        when(useCase.emitir(any(LocalDate.class))).thenReturn(2);
         LocalDate antes = LocalDate.now();
 
         new AlertaPrazoAcaoAgendador(useCase).verificarPrazos();
 
-        verify(useCase).emitirAlertasDePrazo(org.mockito.ArgumentMatchers.argThat(
+        verify(useCase).emitir(org.mockito.ArgumentMatchers.argThat(
                 data -> !data.isBefore(antes) && !data.isAfter(LocalDate.now())));
     }
 

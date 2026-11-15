@@ -63,7 +63,7 @@ class DependenciasObrigatoriasCasosDeUsoTest {
         TrilhaAuditoriaEmMemoria trilha = new TrilhaAuditoriaEmMemoria();
         UsuarioService servico = usuarioServiceCom(trilha, new OperadorAutenticadoNulo());
 
-        servico.cadastrarColaborador(colaborador());
+        servico.cadastrar(colaborador());
 
         assertThat(trilha.registros()).extracting(LogAuditoria::getResponsavel).containsExactly("SISTEMA");
     }
@@ -74,7 +74,7 @@ class DependenciasObrigatoriasCasosDeUsoTest {
         TrilhaAuditoriaEmMemoria trilha = new TrilhaAuditoriaEmMemoria();
         UsuarioService servico = usuarioServiceCom(trilha, new OperadorFixo("supervisor@safeplace.com"));
 
-        servico.cadastrarColaborador(colaborador());
+        servico.cadastrar(colaborador());
 
         assertThat(trilha.registros()).extracting(LogAuditoria::getResponsavel)
                 .containsExactly("supervisor@safeplace.com");

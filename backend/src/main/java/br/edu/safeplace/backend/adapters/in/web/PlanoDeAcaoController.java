@@ -31,7 +31,7 @@ public class PlanoDeAcaoController {
     public PlanoDeAcaoResponse cadastrarAcao(
             @PathVariable Integer idOcorrencia,
             @Valid @RequestBody CriarPlanoDeAcaoRequest request) {
-        return PlanoDeAcaoResponse.fromOutputDTO(useCase.cadastrarAcao(idOcorrencia, request.toInputDTO()));
+        return PlanoDeAcaoResponse.fromOutputDTO(useCase.cadastrar(idOcorrencia, request.toInputDTO()));
     }
 
     @GetMapping("/api/ocorrencias/{idOcorrencia}/planos-acao")

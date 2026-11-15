@@ -149,7 +149,7 @@ class PlanoDeAcaoServiceTest {
                 3
         );
 
-        PlanoDeAcaoOutputDTO output = useCase.cadastrarAcao(2, input);
+        PlanoDeAcaoOutputDTO output = useCase.cadastrar(2, input);
 
         assertThat(output.id()).isEqualTo(100);
         assertThat(output.medidasCorretivas()).isEqualTo("Instalar protecao na esteira");
@@ -168,7 +168,7 @@ class PlanoDeAcaoServiceTest {
                     p.isAlertaAtivo(), p.getAntecedenciaAlertaDias(), p.getGestor());
         });
 
-        useCase.cadastrarAcao(2, new CriarAcaoPlanoInputDTO(
+        useCase.cadastrar(2, new CriarAcaoPlanoInputDTO(
                 "Instalar protecao na esteira", null, LocalDate.now().plusDays(10), 10, null, false, null));
 
         ArgumentCaptor<PlanoDeAcao> plano = ArgumentCaptor.forClass(PlanoDeAcao.class);
@@ -210,7 +210,7 @@ class PlanoDeAcaoServiceTest {
                 null
         );
 
-        assertThatThrownBy(() -> useCase.cadastrarAcao(1, input))
+        assertThatThrownBy(() -> useCase.cadastrar(1, input))
                 .isInstanceOf(AcaoPreventivaObrigatoriaException.class);
     }
 
@@ -232,7 +232,7 @@ class PlanoDeAcaoServiceTest {
                 2
         );
 
-        PlanoDeAcaoOutputDTO output = useCase.cadastrarAcao(1, input);
+        PlanoDeAcaoOutputDTO output = useCase.cadastrar(1, input);
         assertThat(output.medidasPreventivas()).contains("Instalacao de redundancia");
     }
 
@@ -252,7 +252,7 @@ class PlanoDeAcaoServiceTest {
                 null
         );
 
-        assertThatThrownBy(() -> useCase.cadastrarAcao(2, input))
+        assertThatThrownBy(() -> useCase.cadastrar(2, input))
                 .isInstanceOf(PrazoAcaoInvalidoException.class);
     }
 

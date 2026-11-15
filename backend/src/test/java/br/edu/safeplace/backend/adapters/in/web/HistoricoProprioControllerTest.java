@@ -49,7 +49,7 @@ class HistoricoProprioControllerTest {
     @Test
     @WithMockUser(username = "gestor.demo@safeplace.com", roles = "GESTOR_SEGURANCA")
     void gestorConsultaAsPropriasAcoesComLimitePadrao() throws Exception {
-        when(casoDeUso.listarAcoes("gestor.demo@safeplace.com", 20)).thenReturn(List.of(new AcaoUsuarioOutputDTO(
+        when(casoDeUso.listar("gestor.demo@safeplace.com", 20)).thenReturn(List.of(new AcaoUsuarioOutputDTO(
                 31, "CADASTRO", LocalDateTime.of(2026, 10, 5, 20, 53), "Inspecao", 5,
                 "Inspeção de 03/10/2026 na área AR-03 - Corredor de estoque: 2 itens verificados, 0 não conformidades.")));
 
@@ -69,13 +69,13 @@ class HistoricoProprioControllerTest {
     @Test
     @WithMockUser(username = "supervisor.demo@safeplace.com", roles = "SUPERVISOR")
     void supervisorInformaOLimite() throws Exception {
-        when(casoDeUso.listarAcoes("supervisor.demo@safeplace.com", 5)).thenReturn(List.of());
+        when(casoDeUso.listar("supervisor.demo@safeplace.com", 5)).thenReturn(List.of());
 
         mockMvc.perform(get("/api/usuarios/me/historico").param("limite", "5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isEmpty());
 
-        verify(casoDeUso).listarAcoes("supervisor.demo@safeplace.com", 5);
+        verify(casoDeUso).listar("supervisor.demo@safeplace.com", 5);
     }
 
     @Test
@@ -84,6 +84,6 @@ class HistoricoProprioControllerTest {
         mockMvc.perform(get("/api/usuarios/me/historico"))
                 .andExpect(status().isUnauthorized());
 
-        verify(casoDeUso, never()).listarAcoes(anyString(), anyInt());
+        verify(casoDeUso, never()).listar(anyString(), anyInt());
     }
 }

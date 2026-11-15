@@ -78,7 +78,7 @@ public class AreaRiscoService implements GerenciarAreaRiscoUseCase {
 
     @Override
     @Transactional
-    public AreaRiscoOutputDTO cadastrarAreaRisco(CadastrarAreaRiscoInputDTO inputDTO, String operador) {
+    public AreaRiscoOutputDTO cadastrar(CadastrarAreaRiscoInputDTO inputDTO, String operador) {
         List<Epi> episObrigatorios = resolverEpis(inputDTO.episObrigatoriosIds());
         Setor setor = resolverSetor(inputDTO.setorId());
 
@@ -105,7 +105,7 @@ public class AreaRiscoService implements GerenciarAreaRiscoUseCase {
 
     @Override
     @Transactional
-    public AreaRiscoOutputDTO atualizarAreaRisco(Integer id, AtualizarAreaRiscoInputDTO inputDTO, String operador) {
+    public AreaRiscoOutputDTO atualizar(Integer id, AtualizarAreaRiscoInputDTO inputDTO, String operador) {
         AreaRisco existente = areaRiscoRepository.buscarPorId(id)
                 .orElseThrow(() -> new AreaRiscoNaoEncontradaException(id));
 

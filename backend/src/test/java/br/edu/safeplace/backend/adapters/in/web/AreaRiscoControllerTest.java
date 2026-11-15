@@ -64,7 +64,7 @@ class AreaRiscoControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("Gestor de Segurança deve cadastrar área de risco")
     void deveCriarAreaRiscoComSucesso() throws Exception {
-        when(useCase.cadastrarAreaRisco(any(CadastrarAreaRiscoInputDTO.class), any())).thenReturn(areaSalva());
+        when(useCase.cadastrar(any(CadastrarAreaRiscoInputDTO.class), any())).thenReturn(areaSalva());
 
         mockMvc.perform(post("/api/areas-risco")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -136,7 +136,7 @@ class AreaRiscoControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("UC03 exceção I: código duplicado deve retornar 409")
     void codigoDuplicadoDeveRetornar409() throws Exception {
-        when(useCase.cadastrarAreaRisco(any(CadastrarAreaRiscoInputDTO.class), any()))
+        when(useCase.cadastrar(any(CadastrarAreaRiscoInputDTO.class), any()))
                 .thenThrow(new CodigoAreaRiscoDuplicadoException("SET-01"));
 
         mockMvc.perform(post("/api/areas-risco")
@@ -150,7 +150,7 @@ class AreaRiscoControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("UC03 exceção II: ausência de EPI obrigatório vinda do domínio deve retornar 400")
     void ausenciaDeEpiNoDominioDeveRetornar400() throws Exception {
-        when(useCase.cadastrarAreaRisco(any(CadastrarAreaRiscoInputDTO.class), any()))
+        when(useCase.cadastrar(any(CadastrarAreaRiscoInputDTO.class), any()))
                 .thenThrow(new AreaRiscoSemEpiObrigatorioException("SET-01"));
 
         mockMvc.perform(post("/api/areas-risco")
@@ -213,7 +213,7 @@ class AreaRiscoControllerTest {
                 }
                 """;
 
-        when(useCase.atualizarAreaRisco(eq(1), any(br.edu.safeplace.backend.application.dto.input.AtualizarAreaRiscoInputDTO.class), any()))
+        when(useCase.atualizar(eq(1), any(br.edu.safeplace.backend.application.dto.input.AtualizarAreaRiscoInputDTO.class), any()))
                 .thenReturn(areaSalva());
 
         mockMvc.perform(put("/api/areas-risco/1")

@@ -68,7 +68,7 @@ class TarefaControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("Gestor de Segurança deve cadastrar tarefa classificada")
     void deveCriarTarefaComSucesso() throws Exception {
-        when(useCase.cadastrarTarefa(any(CadastrarTarefaInputDTO.class))).thenReturn(tarefaClassificada());
+        when(useCase.cadastrar(any(CadastrarTarefaInputDTO.class))).thenReturn(tarefaClassificada());
 
         String json = """
                 {
@@ -91,7 +91,7 @@ class TarefaControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("UC11: deve aceitar cadastro de tarefa sem classificação")
     void deveCriarTarefaSemClassificacao() throws Exception {
-        when(useCase.cadastrarTarefa(any(CadastrarTarefaInputDTO.class)))
+        when(useCase.cadastrar(any(CadastrarTarefaInputDTO.class)))
                 .thenReturn(new TarefaOutputDTO(2, "Inspeção visual", null, false, null));
 
         String json = """
@@ -407,7 +407,7 @@ class TarefaControllerTest {
     void gestorDeveAtualizarTarefa() throws Exception {
         TarefaOutputDTO atualizada = new TarefaOutputDTO(1, "Solda MIG em altura", NivelPerigo.ALTO, true,
                 LocalDateTime.of(2026, 9, 13, 10, 15, 30));
-        when(useCase.atualizarTarefa(eq(1), any(br.edu.safeplace.backend.application.dto.input.AtualizarTarefaInputDTO.class), any()))
+        when(useCase.atualizar(eq(1), any(br.edu.safeplace.backend.application.dto.input.AtualizarTarefaInputDTO.class), any()))
                 .thenReturn(atualizada);
 
         String json = """

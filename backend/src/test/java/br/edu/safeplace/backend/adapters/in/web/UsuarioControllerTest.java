@@ -49,7 +49,7 @@ class UsuarioControllerTest {
                 "ana@empresa.com", Perfil.SUPERVISOR, true, LocalDateTime.now(), "senhaInicial123"
         );
 
-        when(casoDeUso.cadastrarSupervisor(any(CadastrarSupervisorInputDTO.class))).thenReturn(saida);
+        when(casoDeUso.cadastrar(any(CadastrarSupervisorInputDTO.class))).thenReturn(saida);
 
         String jsonRequest = """
                 {
@@ -78,7 +78,7 @@ class UsuarioControllerTest {
                 1, "Carlos Souza", cpfValido, LocalDate.of(1995, 3, 10),
                 "carlos@empresa.com", null, true, LocalDateTime.now(), null
         );
-        when(casoDeUso.listarUsuarios()).thenReturn(List.of(u1));
+        when(casoDeUso.listar()).thenReturn(List.of(u1));
 
         mockMvc.perform(get("/api/usuarios"))
                 .andExpect(status().isOk())
@@ -89,7 +89,7 @@ class UsuarioControllerTest {
 
     @Test
     void deveRetornar409QuandoCpfJaCadastrado() throws Exception {
-        when(casoDeUso.cadastrarSupervisor(any()))
+        when(casoDeUso.cadastrar(any(CadastrarSupervisorInputDTO.class)))
                 .thenThrow(new CpfJaCadastradoException("CPF já cadastrado no sistema."));
 
         String jsonRequest = """
@@ -110,7 +110,7 @@ class UsuarioControllerTest {
 
     @Test
     void deveRetornar400QuandoCpfInvalido() throws Exception {
-        when(casoDeUso.cadastrarSupervisor(any()))
+        when(casoDeUso.cadastrar(any(CadastrarSupervisorInputDTO.class)))
                 .thenThrow(new CpfInvalidoException("CPF deve conter exatamente 11 dígitos numéricos."));
 
         String jsonRequest = """

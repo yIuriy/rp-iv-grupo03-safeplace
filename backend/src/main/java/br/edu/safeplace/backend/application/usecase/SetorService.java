@@ -42,7 +42,7 @@ public class SetorService implements GerenciarSetorUseCase {
 
     @Override
     @Transactional
-    public SetorOutputDTO cadastrarSetor(CadastrarSetorInputDTO inputDTO, String operador) {
+    public SetorOutputDTO cadastrar(CadastrarSetorInputDTO inputDTO, String operador) {
         Setor setor = Setor.novo(
                 inputDTO.nome(),
                 inputDTO.descricao(),
@@ -61,7 +61,7 @@ public class SetorService implements GerenciarSetorUseCase {
 
     @Override
     @Transactional
-    public SetorOutputDTO atualizarSetor(Integer id, AtualizarSetorInputDTO inputDTO, String operador) {
+    public SetorOutputDTO atualizar(Integer id, AtualizarSetorInputDTO inputDTO, String operador) {
         Setor existente = setorRepository.buscarPorId(id)
                 .orElseThrow(() -> new IllegalArgumentException("Setor não encontrado com id: " + id));
 

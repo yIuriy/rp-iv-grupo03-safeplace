@@ -70,7 +70,7 @@ class UsuarioServiceTest {
             return new Colaborador(1, c.getCpf(), c.getNome(), c.getDataNascimento(), c.getEmail(), true, LocalDateTime.now(), LocalDateTime.now());
         });
 
-        UsuarioOutputDTO saida = casoDeUso.cadastrarUsuario(entrada);
+        UsuarioOutputDTO saida = casoDeUso.cadastrar(entrada);
 
         assertNotNull(saida);
         assertEquals(1, saida.id());
@@ -97,7 +97,7 @@ class UsuarioServiceTest {
             return new Supervisor(2, s.getCpf(), s.getNome(), s.getDataNascimento(), s.getEmail(), s.getSenha(), true, LocalDateTime.now(), LocalDateTime.now());
         });
 
-        UsuarioOutputDTO saida = casoDeUso.cadastrarUsuario(entrada);
+        UsuarioOutputDTO saida = casoDeUso.cadastrar(entrada);
 
         assertNotNull(saida);
         assertEquals(2, saida.id());
@@ -113,7 +113,7 @@ class UsuarioServiceTest {
 
         when(repositorioPorta.buscarPorCpf(cpfValido)).thenReturn(Optional.of(mock(Colaborador.class)));
 
-        assertThrows(CpfJaCadastradoException.class, () -> casoDeUso.cadastrarUsuario(entrada));
+        assertThrows(CpfJaCadastradoException.class, () -> casoDeUso.cadastrar(entrada));
         verify(repositorioPorta, never()).salvar(any());
     }
 
@@ -126,7 +126,7 @@ class UsuarioServiceTest {
         when(repositorioPorta.buscarPorCpf(cpfValido)).thenReturn(Optional.empty());
         when(repositorioPorta.buscarPorEmail("carlos@empresa.com")).thenReturn(Optional.of(mock(Colaborador.class)));
 
-        assertThrows(EmailJaCadastradoException.class, () -> casoDeUso.cadastrarUsuario(entrada));
+        assertThrows(EmailJaCadastradoException.class, () -> casoDeUso.cadastrar(entrada));
         verify(repositorioPorta, never()).salvar(any());
     }
 
@@ -135,7 +135,7 @@ class UsuarioServiceTest {
         Colaborador c = new Colaborador(1, cpfValido, "Carlos", LocalDate.of(1990, 1, 1), "carlos@empresa.com", true, LocalDateTime.now(), LocalDateTime.now());
         when(repositorioPorta.listar()).thenReturn(List.of(c));
 
-        List<UsuarioOutputDTO> lista = casoDeUso.listarUsuarios();
+        List<UsuarioOutputDTO> lista = casoDeUso.listar();
 
         assertEquals(1, lista.size());
         assertEquals("Carlos", lista.getFirst().nome());

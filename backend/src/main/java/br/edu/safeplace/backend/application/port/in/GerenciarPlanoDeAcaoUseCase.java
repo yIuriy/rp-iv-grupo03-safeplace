@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface GerenciarPlanoDeAcaoUseCase {
 
-    PlanoDeAcaoOutputDTO cadastrarAcao(Integer idOcorrencia, CriarAcaoPlanoInputDTO inputDTO);
+    PlanoDeAcaoOutputDTO cadastrar(Integer idOcorrencia, CriarAcaoPlanoInputDTO inputDTO);
 
     List<PlanoDeAcaoOutputDTO> listarPorOcorrencia(Integer idOcorrencia);
 

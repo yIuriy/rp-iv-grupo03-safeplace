@@ -362,18 +362,18 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
                 .contains(acao.getId())
                 .doesNotContain(semAlerta.getId());
 
-        assertThat(emitirAlertasPrazo.emitirAlertasDePrazo(hoje.minusDays(2))).isZero();
-        assertThat(emitirAlertasPrazo.emitirAlertasDePrazo(hoje)).isEqualTo(1);
+        assertThat(emitirAlertasPrazo.emitir(hoje.minusDays(2))).isZero();
+        assertThat(emitirAlertasPrazo.emitir(hoje)).isEqualTo(1);
         // Repetir a verificação, no mesmo dia ou depois, não duplica o alerta do mesmo prazo.
-        assertThat(emitirAlertasPrazo.emitirAlertasDePrazo(hoje)).isZero();
-        assertThat(emitirAlertasPrazo.emitirAlertasDePrazo(hoje.plusDays(1))).isZero();
+        assertThat(emitirAlertasPrazo.emitir(hoje)).isZero();
+        assertThat(emitirAlertasPrazo.emitir(hoje.plusDays(1))).isZero();
 
         // A prorrogação cria um novo prazo e rearma o alerta.
         ProrrogacaoPrazo prorrogacao = acao.prorrogarPrazo(hoje.plusDays(10), "Peça em falta no fornecedor", hoje);
         planoRepository.salvar(acao);
         planoRepository.salvar(prorrogacao);
-        assertThat(emitirAlertasPrazo.emitirAlertasDePrazo(hoje.plusDays(1))).isZero();
-        assertThat(emitirAlertasPrazo.emitirAlertasDePrazo(hoje.plusDays(7))).isEqualTo(1);
+        assertThat(emitirAlertasPrazo.emitir(hoje.plusDays(1))).isZero();
+        assertThat(emitirAlertasPrazo.emitir(hoje.plusDays(7))).isEqualTo(1);
 
         List<NotificacaoAcao> avisos = consultarNotificacoesAcao.listar().stream()
                 .filter(aviso -> acao.getId().equals(aviso.idAcao()))
@@ -399,7 +399,7 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
 
         assertThat(planoRepository.listarAbertasComAlerta()).extracting(PlanoDeAcao::getId)
                 .doesNotContain(acao.getId());
-        assertThat(emitirAlertasPrazo.emitirAlertasDePrazo(hoje.plusDays(5))).isZero();
+        assertThat(emitirAlertasPrazo.emitir(hoje.plusDays(5))).isZero();
     }
 
     @Test

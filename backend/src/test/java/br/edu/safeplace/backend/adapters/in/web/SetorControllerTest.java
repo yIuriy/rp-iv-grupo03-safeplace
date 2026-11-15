@@ -54,7 +54,7 @@ class SetorControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("Gestor de Segurança deve cadastrar setor físico")
     void gestorDeveCadastrarSetor() throws Exception {
-        when(useCase.cadastrarSetor(any(CadastrarSetorInputDTO.class), any())).thenReturn(setorSalvo());
+        when(useCase.cadastrar(any(CadastrarSetorInputDTO.class), any())).thenReturn(setorSalvo());
 
         mockMvc.perform(post("/api/setores")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -78,7 +78,7 @@ class SetorControllerTest {
     @WithMockUser(roles = "SUPERVISOR")
     @DisplayName("Supervisor deve ter permissão para listar setores físicos")
     void supervisorDeveListarSetores() throws Exception {
-        when(useCase.listarTodos()).thenReturn(List.of(setorSalvo()));
+        when(useCase.listar()).thenReturn(List.of(setorSalvo()));
 
         mockMvc.perform(get("/api/setores"))
                 .andExpect(status().isOk())
@@ -102,7 +102,7 @@ class SetorControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("Gestor de Segurança deve atualizar setor físico com sucesso")
     void gestorDeveAtualizarSetor() throws Exception {
-        when(useCase.atualizarSetor(eq(1), any(br.edu.safeplace.backend.application.dto.input.AtualizarSetorInputDTO.class), any()))
+        when(useCase.atualizar(eq(1), any(br.edu.safeplace.backend.application.dto.input.AtualizarSetorInputDTO.class), any()))
                 .thenReturn(new SetorOutputDTO(1, "Galpão Principal Modificado", "Nova descrição", "Bloco B", NivelPerigo.CRITICO));
 
         mockMvc.perform(put("/api/setores/1")

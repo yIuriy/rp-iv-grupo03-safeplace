@@ -17,14 +17,14 @@ import br.edu.safeplace.backend.domain.comum.NivelPerigo;
  */
 public interface GerenciarAreaRiscoUseCase {
 
-    default AreaRiscoOutputDTO cadastrarAreaRisco(CadastrarAreaRiscoInputDTO inputDTO) {
-        return cadastrarAreaRisco(inputDTO, null);
+    default AreaRiscoOutputDTO cadastrar(CadastrarAreaRiscoInputDTO inputDTO) {
+        return cadastrar(inputDTO, null);
     }
 
     /** RNF05: o cadastro também é registrado em LogAuditoria com o operador. */
-    AreaRiscoOutputDTO cadastrarAreaRisco(CadastrarAreaRiscoInputDTO inputDTO, String operador);
+    AreaRiscoOutputDTO cadastrar(CadastrarAreaRiscoInputDTO inputDTO, String operador);
 
-    AreaRiscoOutputDTO atualizarAreaRisco(Integer id, AtualizarAreaRiscoInputDTO inputDTO, String operador);
+    AreaRiscoOutputDTO atualizar(Integer id, AtualizarAreaRiscoInputDTO inputDTO, String operador);
 
     List<AreaRiscoOutputDTO> listar();
 

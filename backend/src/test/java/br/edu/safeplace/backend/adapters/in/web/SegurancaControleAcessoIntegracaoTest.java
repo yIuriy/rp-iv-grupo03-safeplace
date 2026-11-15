@@ -353,7 +353,7 @@ class SegurancaControleAcessoIntegracaoTest {
             UsuarioOutputDTO supervisor = new UsuarioOutputDTO(1, "Carlos Supervisor", "52998224725",
                     LocalDate.of(1985, 5, 20), "carlos.supervisor@safeplace.com", Perfil.SUPERVISOR,
                     true, LocalDateTime.now(), "SenhaInicial@123");
-            when(gerenciarUsuarioUseCase.cadastrarSupervisor(any(CadastrarSupervisorInputDTO.class))).thenReturn(supervisor);
+            when(gerenciarUsuarioUseCase.cadastrar(any(CadastrarSupervisorInputDTO.class))).thenReturn(supervisor);
 
             mockMvc.perform(post("/api/usuarios/supervisores")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -380,7 +380,7 @@ class SegurancaControleAcessoIntegracaoTest {
             UsuarioOutputDTO colaborador = new UsuarioOutputDTO(2, "João Operador", "52998224725",
                     LocalDate.of(1990, 10, 15), "joao.operador@safeplace.com", null,
                     true, LocalDateTime.now(), null);
-            when(gerenciarUsuarioUseCase.cadastrarColaborador(any(CadastrarColaboradorInputDTO.class))).thenReturn(colaborador);
+            when(gerenciarUsuarioUseCase.cadastrar(any(CadastrarColaboradorInputDTO.class))).thenReturn(colaborador);
 
             mockMvc.perform(post("/api/usuarios/colaboradores")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -397,7 +397,7 @@ class SegurancaControleAcessoIntegracaoTest {
             UsuarioOutputDTO colaborador = new UsuarioOutputDTO(2, "João Operador", "52998224725",
                     LocalDate.of(1990, 10, 15), "joao.operador@safeplace.com", null,
                     true, LocalDateTime.now(), null);
-            when(gerenciarUsuarioUseCase.cadastrarColaborador(any(CadastrarColaboradorInputDTO.class))).thenReturn(colaborador);
+            when(gerenciarUsuarioUseCase.cadastrar(any(CadastrarColaboradorInputDTO.class))).thenReturn(colaborador);
 
             mockMvc.perform(post("/api/usuarios/colaboradores")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -421,7 +421,7 @@ class SegurancaControleAcessoIntegracaoTest {
         @WithMockUser(roles = "GESTOR_SEGURANCA")
         @DisplayName("Gestor de Segurança pode listar todos os usuários (RF23)")
         void gestorPodeListarUsuarios() throws Exception {
-            when(gerenciarUsuarioUseCase.listarUsuarios()).thenReturn(List.of());
+            when(gerenciarUsuarioUseCase.listar()).thenReturn(List.of());
 
             mockMvc.perform(get("/api/usuarios"))
                     .andExpect(status().isOk());

@@ -64,7 +64,7 @@ class UsuarioServiceSenhaInicialTest {
         when(geradorSenha.gerar()).thenReturn(SENHA_GERADA);
         when(codificadorSenha.codificar(SENHA_GERADA)).thenReturn(HASH);
 
-        UsuarioOutputDTO saida = casoDeUso.cadastrarUsuario(
+        UsuarioOutputDTO saida = casoDeUso.cadastrar(
                 new CadastrarUsuarioInputDTO("Ana Lima", CPF, NASCIMENTO, "ana@empresa.com", null, Perfil.SUPERVISOR));
 
         ArgumentCaptor<Colaborador> salvo = ArgumentCaptor.forClass(Colaborador.class);
@@ -80,7 +80,7 @@ class UsuarioServiceSenhaInicialTest {
         when(geradorSenha.gerar()).thenReturn(SENHA_GERADA);
         when(codificadorSenha.codificar(SENHA_GERADA)).thenReturn(HASH);
 
-        UsuarioOutputDTO saida = casoDeUso.cadastrarUsuario(
+        UsuarioOutputDTO saida = casoDeUso.cadastrar(
                 new CadastrarUsuarioInputDTO("Ana Lima", CPF, NASCIMENTO, "ana@empresa.com", "escolhida123", Perfil.SUPERVISOR));
 
         verify(codificadorSenha, never()).codificar("escolhida123");
@@ -89,7 +89,7 @@ class UsuarioServiceSenhaInicialTest {
 
     @Test
     void naoDeveGerarNemCodificarSenhaParaColaborador() {
-        UsuarioOutputDTO saida = casoDeUso.cadastrarUsuario(
+        UsuarioOutputDTO saida = casoDeUso.cadastrar(
                 new CadastrarUsuarioInputDTO("Carlos Souza", CPF, NASCIMENTO, null, null, null));
 
         verify(geradorSenha, never()).gerar();
@@ -101,7 +101,7 @@ class UsuarioServiceSenhaInicialTest {
     void gestorDeveUsarASenhaInformadaSemSenhaInicialNaResposta() {
         when(codificadorSenha.codificar("Segredo@123")).thenReturn(HASH);
 
-        UsuarioOutputDTO saida = casoDeUso.cadastrarUsuario(
+        UsuarioOutputDTO saida = casoDeUso.cadastrar(
                 new CadastrarUsuarioInputDTO("Marina Costa", CPF, NASCIMENTO, "marina@empresa.com", "Segredo@123", Perfil.GESTOR_SEGURANCA));
 
         ArgumentCaptor<Colaborador> salvo = ArgumentCaptor.forClass(Colaborador.class);

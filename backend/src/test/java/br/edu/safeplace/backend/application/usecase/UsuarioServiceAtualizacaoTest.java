@@ -59,9 +59,9 @@ class UsuarioServiceAtualizacaoTest {
         repositorio = new RepositorioEmMemoria();
         casoDeUso = new UsuarioService(repositorio, new CodificadorFake(), () -> "SenhaGerada#1", auditoria,
                 new OperadorAutenticadoNulo());
-        idSupervisora = casoDeUso.cadastrarSupervisor(new CadastrarSupervisorInputDTO(
+        idSupervisora = casoDeUso.cadastrar(new CadastrarSupervisorInputDTO(
                 "Joana Ribeiro", CPF_SUPERVISORA, LocalDate.of(1988, 4, 20), "joana@safeplace.com")).id();
-        idColaborador = casoDeUso.cadastrarColaborador(new CadastrarColaboradorInputDTO(
+        idColaborador = casoDeUso.cadastrar(new CadastrarColaboradorInputDTO(
                 "João da Silva", CPF_COLABORADOR, LocalDate.of(1992, 6, 18), null)).id();
     }
 
@@ -124,7 +124,7 @@ class UsuarioServiceAtualizacaoTest {
     @Test
     @DisplayName("E-mail já usado por outra pessoa é recusado e nada muda")
     void emailDeOutraPessoaEhRecusado() {
-        casoDeUso.cadastrarSupervisor(new CadastrarSupervisorInputDTO(
+        casoDeUso.cadastrar(new CadastrarSupervisorInputDTO(
                 "Marta Lima", CPF_OUTRA_SUPERVISORA, LocalDate.of(1985, 2, 2), "marta@safeplace.com"));
 
         assertThatThrownBy(() -> casoDeUso.atualizarSupervisor(idSupervisora, dados("Joana", "Marta@Safeplace.com")))

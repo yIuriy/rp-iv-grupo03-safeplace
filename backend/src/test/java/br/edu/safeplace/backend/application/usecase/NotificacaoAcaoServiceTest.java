@@ -58,7 +58,7 @@ class NotificacaoAcaoServiceTest {
         when(planoDeAcaoRepository.listarAbertasComAlerta()).thenReturn(List.of(naAntecedencia, vencida, aindaNao));
         when(notificadorAcao.notificar(any(AvisoAcao.class))).thenReturn(true);
 
-        int emitidos = useCase.emitirAlertasDePrazo(HOJE);
+        int emitidos = useCase.emitir(HOJE);
 
         assertThat(emitidos).isEqualTo(2);
         ArgumentCaptor<AvisoAcao> avisos = ArgumentCaptor.forClass(AvisoAcao.class);
@@ -77,8 +77,8 @@ class NotificacaoAcaoServiceTest {
         when(planoDeAcaoRepository.listarAbertasComAlerta()).thenReturn(List.of(acao(1, HOJE, 0)));
         when(notificadorAcao.notificar(any(AvisoAcao.class))).thenReturn(true, false);
 
-        assertThat(useCase.emitirAlertasDePrazo(HOJE)).isEqualTo(1);
-        assertThat(useCase.emitirAlertasDePrazo(HOJE)).isZero();
+        assertThat(useCase.emitir(HOJE)).isEqualTo(1);
+        assertThat(useCase.emitir(HOJE)).isZero();
     }
 
     @Test
@@ -88,14 +88,14 @@ class NotificacaoAcaoServiceTest {
                 true, 1, null);
         when(planoDeAcaoRepository.listarAbertasComAlerta()).thenReturn(List.of(concluida));
 
-        assertThat(useCase.emitirAlertasDePrazo(HOJE)).isZero();
+        assertThat(useCase.emitir(HOJE)).isZero();
         verify(notificadorAcao, never()).notificar(any(AvisoAcao.class));
     }
 
     @Test
     @DisplayName("A data de referência é obrigatória")
     void exigeDataDeReferencia() {
-        assertThatThrownBy(() -> useCase.emitirAlertasDePrazo(null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> useCase.emitir(null)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

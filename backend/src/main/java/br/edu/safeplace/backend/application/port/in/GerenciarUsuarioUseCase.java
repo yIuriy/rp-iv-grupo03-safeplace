@@ -21,23 +21,23 @@ public interface GerenciarUsuarioUseCase {
     /**
      * Cadastro genérico por perfil. Mantido para compatibilidade com o endpoint
      * {@code POST /api/usuarios}; os fluxos de RF23 devem usar
-     * {@link #cadastrarSupervisor} e {@link #cadastrarColaborador}, que são específicos por papel.
+     * {@link #cadastrar(CadastrarSupervisorInputDTO)} e {@link #cadastrar(CadastrarColaboradorInputDTO)}, que são específicos por papel.
      */
-    UsuarioOutputDTO cadastrarUsuario(CadastrarUsuarioInputDTO entrada);
-    UsuarioOutputDTO cadastrarUsuario(CadastrarUsuarioInputDTO entrada, String operador);
+    UsuarioOutputDTO cadastrar(CadastrarUsuarioInputDTO entrada);
+    UsuarioOutputDTO cadastrar(CadastrarUsuarioInputDTO entrada, String operador);
 
     /**
      * RF23: o Gestor de Segurança cadastra supervisores. A senha inicial é gerada pelo sistema e
      * devolvida somente nesta resposta.
      */
-    UsuarioOutputDTO cadastrarSupervisor(CadastrarSupervisorInputDTO entrada);
-    UsuarioOutputDTO cadastrarSupervisor(CadastrarSupervisorInputDTO entrada, String operador);
+    UsuarioOutputDTO cadastrar(CadastrarSupervisorInputDTO entrada);
+    UsuarioOutputDTO cadastrar(CadastrarSupervisorInputDTO entrada, String operador);
 
     /**
      * RF23: Supervisor e Gestor de Segurança cadastram colaboradores, que não possuem conta de acesso nem senha.
      */
-    UsuarioOutputDTO cadastrarColaborador(CadastrarColaboradorInputDTO entrada);
-    UsuarioOutputDTO cadastrarColaborador(CadastrarColaboradorInputDTO entrada, String operador);
+    UsuarioOutputDTO cadastrar(CadastrarColaboradorInputDTO entrada);
+    UsuarioOutputDTO cadastrar(CadastrarColaboradorInputDTO entrada, String operador);
 
     /**
      * RF23 / issue #122: o Gestor de Segurança atualiza os dados cadastrais de um Supervisor,
@@ -53,7 +53,7 @@ public interface GerenciarUsuarioUseCase {
     UsuarioOutputDTO atualizarColaborador(Integer id, AtualizarPessoaInputDTO entrada);
     UsuarioOutputDTO atualizarColaborador(Integer id, AtualizarPessoaInputDTO entrada, String operador);
 
-    List<UsuarioOutputDTO> listarUsuarios();
+    List<UsuarioOutputDTO> listar();
 
     /**
      * Lista apenas as pessoas com perfil Colaborador, opcionalmente filtradas por nome ou CPF.

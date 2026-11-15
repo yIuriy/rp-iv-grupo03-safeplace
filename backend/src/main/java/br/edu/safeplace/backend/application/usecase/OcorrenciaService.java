@@ -136,7 +136,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
 
     @Override
     @Transactional
-    public OcorrenciaOutputDTO registrarAcidente(RegistrarAcidenteInputDTO inputDTO) {
+    public OcorrenciaOutputDTO registrar(RegistrarAcidenteInputDTO inputDTO) {
         if (inputDTO == null) {
             throw new DadosOcorrenciaInvalidosException("Dados do relato não podem ser nulos.");
         }
@@ -166,7 +166,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
 
     @Override
     @Transactional
-    public OcorrenciaOutputDTO registrarIncidente(RegistrarIncidenteInputDTO inputDTO) {
+    public OcorrenciaOutputDTO registrar(RegistrarIncidenteInputDTO inputDTO) {
         if (inputDTO == null) {
             throw new DadosOcorrenciaInvalidosException("Dados do relato não podem ser nulos.");
         }
