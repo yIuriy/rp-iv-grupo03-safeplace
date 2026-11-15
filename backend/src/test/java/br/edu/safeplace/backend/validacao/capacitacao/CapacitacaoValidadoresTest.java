@@ -32,7 +32,7 @@ class CapacitacaoValidadoresTest {
     @DisplayName("Deve rejeitar cadastro com data de vencimento no passado ou presente")
     void deveRejeitarCadastroComVencimentoInvalido() {
         LocalDate hoje = LocalDate.now();
-        assertThatThrownBy(() -> certificacao.validar(Certificacao.cadastrar("NR-10", hoje.minusDays(1), hoje.minusMonths(1), pessoa(10))))
+        assertThatThrownBy(() -> certificacao.validar(new Certificacao(null, "NR-10", hoje.minusDays(1), hoje.minusMonths(1), pessoa(10))))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Data de vencimento não pode ser no passado ou presente no momento do cadastro.");
     }
@@ -80,7 +80,7 @@ class CapacitacaoValidadoresTest {
     @DisplayName("Deve rejeitar data de realização no futuro")
     void deveRejeitarDataNoFuturo() {
         LocalDate futuro = LocalDate.now().plusDays(1);
-        assertThatThrownBy(() -> treinamento.validar(Treinamento.cadastrar("NR-10", "Conteúdo", "Instrutor", futuro, 4, pessoas(List.of(1)))))
+        assertThatThrownBy(() -> treinamento.validar(new Treinamento(null, "NR-10", "Conteúdo", "Instrutor", futuro, 4, pessoas(List.of(1)))))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Data de realização não pode ser no futuro.");
     }
@@ -91,7 +91,7 @@ class CapacitacaoValidadoresTest {
     @DisplayName("Deve rejeitar nome nulo ou em branco")
     void treinamentoDeveRejeitarNomeInvalido(String nomeInvalido) {
         LocalDate hoje = LocalDate.now();
-        assertThatThrownBy(() -> treinamento.validar(Treinamento.cadastrar(nomeInvalido, "Conteúdo", "Instrutor", hoje, 4, pessoas(List.of(1)))))
+        assertThatThrownBy(() -> treinamento.validar(new Treinamento(null, nomeInvalido, "Conteúdo", "Instrutor", hoje, 4, pessoas(List.of(1)))))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Nome do treinamento é obrigatório.");
     }
@@ -100,11 +100,11 @@ class CapacitacaoValidadoresTest {
     @DisplayName("Deve rejeitar treinamento sem nenhum colaborador")
     void treinamentoDeveRejeitarSemColaborador() {
         LocalDate hoje = LocalDate.now();
-        assertThatThrownBy(() -> treinamento.validar(Treinamento.cadastrar("NR-10", "Conteúdo", "Instrutor", hoje, 4, Collections.emptyList())))
+        assertThatThrownBy(() -> treinamento.validar(new Treinamento(null, "NR-10", "Conteúdo", "Instrutor", hoje, 4, Collections.emptyList())))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Treinamento deve possuir ao menos um colaborador vinculado.");
 
-        assertThatThrownBy(() -> treinamento.validar(Treinamento.cadastrar("NR-10", "Conteúdo", "Instrutor", hoje, 4, null)))
+        assertThatThrownBy(() -> treinamento.validar(new Treinamento(null, "NR-10", "Conteúdo", "Instrutor", hoje, 4, null)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Treinamento deve possuir ao menos um colaborador vinculado.");
     }
@@ -113,7 +113,7 @@ class CapacitacaoValidadoresTest {
     @ValueSource(ints = {0, -3})
     @DisplayName("Validade deve ser de ao menos 1 mês")
     void deveRejeitarValidadeInvalida(int validade) {
-        assertThatThrownBy(() -> treinamento.validar(Treinamento.cadastrar("NR-10", "Conteúdo", "Instrutor", LocalDate.now(), 4, validade, pessoas(List.of(1)))))
+        assertThatThrownBy(() -> treinamento.validar(new Treinamento(null, "NR-10", "Conteúdo", "Instrutor", LocalDate.now(), 4, validade, pessoas(List.of(1)))))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Validade do treinamento deve ser de ao menos 1 mês.");
     }
@@ -134,7 +134,7 @@ class CapacitacaoValidadoresTest {
     @DisplayName("No cadastro, o vencimento no futuro vem antes dos demais campos; certificação gravada não é cobrada")
     void vencimentoNoCadastroSoParaCertificacaoNova() {
         LocalDate hoje = LocalDate.now();
-        assertThatThrownBy(() -> certificacao.validar(Certificacao.cadastrar(" ", hoje, hoje.minusMonths(1), null)))
+        assertThatThrownBy(() -> certificacao.validar(new Certificacao(null, " ", hoje, hoje.minusMonths(1), null)))
                 .hasMessage("Data de vencimento não pode ser no passado ou presente no momento do cadastro.");
         org.assertj.core.api.Assertions.assertThatCode(() -> certificacao.validar(
                 new Certificacao(5, "NR-10", hoje.minusDays(1), hoje.minusYears(1), pessoa(10)))).doesNotThrowAnyException();

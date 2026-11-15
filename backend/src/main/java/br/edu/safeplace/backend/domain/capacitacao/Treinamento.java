@@ -79,16 +79,6 @@ public class Treinamento {
                 : new ArrayList<>();
     }
 
-    public static Treinamento cadastrar(String nome, String conteudo, String instrutor, LocalDate dataRealizacao,
-                                        Integer cargaHoraria, List<Colaborador> colaboradores) {
-        return cadastrar(nome, conteudo, instrutor, dataRealizacao, cargaHoraria, null, colaboradores);
-    }
-
-    public static Treinamento cadastrar(String nome, String conteudo, String instrutor, LocalDate dataRealizacao,
-                                        Integer cargaHoraria, Integer validadeMeses, List<Colaborador> colaboradores) {
-        return new Treinamento(null, nome, conteudo, instrutor, dataRealizacao, cargaHoraria, validadeMeses, colaboradores);
-    }
-
     public Integer getId() {
         return id;
     }

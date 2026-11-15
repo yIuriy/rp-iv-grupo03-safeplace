@@ -5,7 +5,10 @@ import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoas;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
@@ -113,5 +116,17 @@ class FabricaCapacitacaoPadraoTest {
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> fabrica.criarExigencia(null))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("Nenhum produto de domain/capacitacao possui método estático de criação")
+    void nenhumProdutoPossuiMetodoEstaticoDeCriacao() {
+        for (Class<?> classe : List.of(Certificacao.class, Treinamento.class, ExigenciaCapacitacao.class)) {
+            assertThat(Arrays.stream(classe.getDeclaredMethods())
+                    .filter(metodo -> Modifier.isStatic(metodo.getModifiers()))
+                    .filter(metodo -> metodo.getReturnType() == classe)
+                    .map(Method::getName))
+                    .isEmpty();
+        }
     }
 }

@@ -17,7 +17,8 @@ class TreinamentoTest {
     @DisplayName("Deve instanciar treinamento coletivo com sucesso")
     void deveInstanciarTreinamentoComSucesso() {
         LocalDate hoje = LocalDate.now();
-        Treinamento treinamento = Treinamento.cadastrar(
+        Treinamento treinamento = new Treinamento(
+                null,
                 "Integração de Segurança",
                 "Normas internas e procedimentos de emergência",
                 "Carlos Instrutor",
@@ -37,8 +38,8 @@ class TreinamentoTest {
     @DisplayName("Diagrama de Classes: Deve verificar status de treinamento unitário e coletivo")
     void deveVerificarStatusTreinamentos() {
         LocalDate hoje = LocalDate.now();
-        Treinamento t1 = Treinamento.cadastrar("NR-10", "Conteúdo", "Instrutor", hoje.minusDays(5), 8, pessoas(List.of(1)));
-        Treinamento t2 = Treinamento.cadastrar("NR-35", "Conteúdo", "Instrutor", hoje, 8, pessoas(List.of(1)));
+        Treinamento t1 = new Treinamento(null, "NR-10", "Conteúdo", "Instrutor", hoje.minusDays(5), 8, pessoas(List.of(1)));
+        Treinamento t2 = new Treinamento(null, "NR-35", "Conteúdo", "Instrutor", hoje, 8, pessoas(List.of(1)));
 
         assertThat(t1.calcularStatus(hoje)).isEqualTo(StatusTreinamento.REALIZADO);
         assertThat(t2.calcularStatus(hoje)).isEqualTo(StatusTreinamento.REALIZADO);
@@ -51,7 +52,7 @@ class TreinamentoTest {
     @DisplayName("Treinamento sem validade nunca vence")
     void treinamentoSemValidadeNaoVence() {
         LocalDate hoje = LocalDate.of(2026, 10, 9);
-        Treinamento treinamento = Treinamento.cadastrar("NR-10", "Conteúdo", "Instrutor", hoje.minusYears(20), 8, pessoas(List.of(1)));
+        Treinamento treinamento = new Treinamento(null, "NR-10", "Conteúdo", "Instrutor", hoje.minusYears(20), 8, pessoas(List.of(1)));
 
         assertThat(treinamento.getDataVencimento()).isEmpty();
         assertThat(treinamento.calcularStatus(hoje)).isEqualTo(StatusTreinamento.REALIZADO);
@@ -60,7 +61,7 @@ class TreinamentoTest {
     @Test
     @DisplayName("Vencimento é a data de realização somada à validade em meses")
     void deveCalcularDataVencimento() {
-        Treinamento treinamento = Treinamento.cadastrar("NR-35", "Conteúdo", "Instrutor", LocalDate.of(2025, 10, 9), 8, 12, pessoas(List.of(1)));
+        Treinamento treinamento = new Treinamento(null, "NR-35", "Conteúdo", "Instrutor", LocalDate.of(2025, 10, 9), 8, 12, pessoas(List.of(1)));
 
         assertThat(treinamento.getDataVencimento()).contains(LocalDate.of(2026, 10, 9));
     }
@@ -70,7 +71,7 @@ class TreinamentoTest {
     @DisplayName("Fronteiras de vencimento seguem a regra das certificações")
     void deveAplicarFronteirasDeVencimento(long diasParaVencer, StatusTreinamento esperado) {
         LocalDate vencimento = LocalDate.of(2026, 10, 9);
-        Treinamento treinamento = Treinamento.cadastrar("NR-35", "Conteúdo", "Instrutor", vencimento.minusMonths(12), 8, 12, pessoas(List.of(1)));
+        Treinamento treinamento = new Treinamento(null, "NR-35", "Conteúdo", "Instrutor", vencimento.minusMonths(12), 8, 12, pessoas(List.of(1)));
 
         assertThat(treinamento.calcularStatus(vencimento.minusDays(diasParaVencer))).isEqualTo(esperado);
     }

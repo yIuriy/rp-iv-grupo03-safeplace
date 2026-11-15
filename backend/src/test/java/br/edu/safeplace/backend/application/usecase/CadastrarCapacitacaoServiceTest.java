@@ -3,7 +3,10 @@ package br.edu.safeplace.backend.application.usecase;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +29,14 @@ import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepository;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
+import br.edu.safeplace.backend.domain.capacitacao.FabricaCapacitacao;
+import br.edu.safeplace.backend.domain.capacitacao.FabricaCapacitacaoPadrao;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
 import br.edu.safeplace.backend.suporte.OperadorAutenticadoFixo;
+import br.edu.safeplace.backend.validacao.capacitacao.CertificacaoValidador;
+import br.edu.safeplace.backend.validacao.capacitacao.ExigenciaCapacitacaoValidador;
+import br.edu.safeplace.backend.validacao.capacitacao.TreinamentoValidador;
 
 class CadastrarCapacitacaoServiceTest {
 
@@ -130,6 +138,43 @@ class CadastrarCapacitacaoServiceTest {
         LogAuditoria log = auditoria.logs.get(0);
         assertThat(log.getEntidade()).isEqualTo("ExigenciaCapacitacao");
         assertThat(log.getEntidadeId()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Factory Method (#268): delega a criação dos três produtos à FabricaCapacitacao passando os InputDTOs inteiros")
+    void delegaCriacaoAFabricaInjetadaSemDesmontarInputDTO() {
+        FabricaCapacitacao fabrica = spy(new FabricaCapacitacaoPadrao());
+        Clock clock = Clock.systemDefaultZone();
+        LocalDate hoje = LocalDate.now(clock);
+        CadastrarCapacitacaoService servicoComFabrica = new CadastrarCapacitacaoService(
+                repositorio,
+                null,
+                new RegistradorAuditoria(auditoria, operador.operadorAtual(mock(UsuarioRepository.class))),
+                fabrica,
+                new CertificacaoValidador(),
+                new TreinamentoValidador(),
+                new ExigenciaCapacitacaoValidador(),
+                clock);
+
+        CadastrarCertificacaoInputDTO inputCert = new CadastrarCertificacaoInputDTO(
+                "NR-35", hoje.plusYears(1), hoje.minusDays(10), 10);
+        CadastrarTreinamentoInputDTO inputTreino = new CadastrarTreinamentoInputDTO(
+                "NR-10", "Conteúdo", "Instrutor", hoje.minusDays(2), 8, 12, List.of(10));
+        DefinirExigenciaInputDTO inputExigencia = new DefinirExigenciaInputDTO(
+                "NR-35", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, ExigenciaCapacitacao.TipoAlvo.TAREFA, 5);
+
+        servicoComFabrica.cadastrar(inputCert);
+        servicoComFabrica.cadastrar(inputTreino);
+        servicoComFabrica.cadastrar(inputExigencia);
+
+        verify(fabrica).criarCertificacao(
+                org.mockito.ArgumentMatchers.same(inputCert),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.eq(hoje));
+        verify(fabrica).criarTreinamento(
+                org.mockito.ArgumentMatchers.same(inputTreino),
+                org.mockito.ArgumentMatchers.anyList());
+        verify(fabrica).criarExigencia(org.mockito.ArgumentMatchers.same(inputExigencia));
     }
 
     private static class FakeCapacitacaoRepository implements CapacitacaoRepository {
