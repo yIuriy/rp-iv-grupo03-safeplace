@@ -16,7 +16,7 @@ public final class NotificadorOcorrenciaNulo implements NotificadorOcorrencia {
 
     /** Não notifica ninguém: o relato segue o fluxo normal, apenas sem aviso ao gestor. */
     @Override
-    public void notificarGestor(Ocorrencia ocorrencia) {
+    public void notificar(Ocorrencia ocorrencia) {
         // Intencionalmente vazio: é o comportamento neutro do Null Object.
     }
 

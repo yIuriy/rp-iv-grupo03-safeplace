@@ -155,11 +155,11 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         Acidente acidente = fabrica.criarOcorrencia(inputDTO, area, colaborador, relatorAutenticado(), numeroProtocolo);
         // Chain of Responsibility (#266): valida antes do repository.
         validador.validar(acidente);
-        Acidente salvo = repository.salvarAcidente(acidente);
+        Ocorrencia salvo = repository.salvar(acidente);
 
         auditoria.cadastro(fabrica.entidadeAuditoria(), salvo.getId(), fabrica.descricaoAuditoria());
 
-        notificadorOcorrencia.notificarGestor(salvo);
+        notificadorOcorrencia.notificar(salvo);
 
         return assembler.montar(salvo);
     }
@@ -179,11 +179,11 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
 
         Incidente incidente = fabrica.criarOcorrencia(inputDTO, area, colaborador, relatorAutenticado(), null);
         validador.validar(incidente);
-        Incidente salvo = repository.salvarIncidente(incidente);
+        Ocorrencia salvo = repository.salvar(incidente);
 
         auditoria.cadastro(fabrica.entidadeAuditoria(), salvo.getId(), fabrica.descricaoAuditoria());
 
-        notificadorOcorrencia.notificarGestor(salvo);
+        notificadorOcorrencia.notificar(salvo);
 
         return assembler.montar(salvo);
     }
@@ -324,7 +324,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
                         .gravidade(gravidade)
                         .build();
                 validador.validar(atualizado);
-                yield repository.salvarAcidente(atualizado);
+                yield repository.salvar(atualizado);
             }
             case Incidente incidente -> {
                 Incidente atualizado = Incidente.builder()
@@ -342,7 +342,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
                         .potencialDano(inputDTO.potencialDano())
                         .build();
                 validador.validar(atualizado);
-                yield repository.salvarIncidente(atualizado);
+                yield repository.salvar(atualizado);
             }
             // Sem sealed (commit 01a0d18, proxies do Hibernate), o switch não é exaustivo para o compilador.
             // Nenhuma associação aponta para Ocorrencia, então não chega proxy da classe base aqui.
@@ -400,7 +400,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
 
         ocorrencia.enviarParaTriagem();
 
-        Ocorrencia salva = salvarOcorrencia(ocorrencia);
+        Ocorrencia salva = repository.salvar(ocorrencia);
 
         auditoria.alteracao(entidadeAuditada(salva), salva.getId(), "Envio de ocorrência para triagem");
 
@@ -415,7 +415,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
 
         ocorrencia.arquivar();
 
-        Ocorrencia salva = salvarOcorrencia(ocorrencia);
+        Ocorrencia salva = repository.salvar(ocorrencia);
 
         auditoria.alteracao(entidadeAuditada(salva), salva.getId(), "Arquivamento de ocorrência");
 
@@ -437,21 +437,11 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
         // Só o protocolo muda: valida o formato (elo de #266) antes do repository, sem reaplicar as
         // regras do relato a acidentes antigos (issue #230).
         protocoloValidador.validar(consolidado);
-        Acidente salvo = repository.salvarAcidente(consolidado);
+        Acidente salvo = (Acidente) repository.salvar(consolidado);
 
         auditoria.alteracao("Acidente", salvo.getId(),
                 "Consolidação de CAT com protocolo " + salvo.getNumeroProtocolo());
 
         return assembler.montar(salvo);
-    }
-
-    private Ocorrencia salvarOcorrencia(Ocorrencia ocorrencia) {
-        return switch (ocorrencia) {
-            case Acidente acidente -> repository.salvarAcidente(acidente);
-            case Incidente incidente -> repository.salvarIncidente(incidente);
-            // Sem sealed (commit 01a0d18, proxies do Hibernate), o switch não é exaustivo para o compilador.
-            // Nenhuma associação aponta para Ocorrencia, então não chega proxy da classe base aqui.
-            default -> throw new IllegalArgumentException("Tipo de ocorrência não suportado: " + ocorrencia.getClass().getName());
-        };
     }
 }

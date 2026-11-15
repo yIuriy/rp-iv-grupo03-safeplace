@@ -178,7 +178,7 @@ class OcorrenciaServiceTest {
                 .isInstanceOf(DadosOcorrenciaInvalidosException.class)
                 .hasMessage("Área de risco é obrigatória.");
         assertThat(repository.listar()).isEmpty();
-        verify(notificacaoPort, never()).notificarGestor(any());
+        verify(notificacaoPort, never()).notificar(any());
     }
 
     @Test
@@ -223,7 +223,7 @@ class OcorrenciaServiceTest {
                 .isInstanceOf(DadosOcorrenciaInvalidosException.class)
                 .hasMessageContaining("Gravidade");
         assertThat(repository.listar()).isEmpty();
-        verify(notificacaoPort, never()).notificarGestor(any());
+        verify(notificacaoPort, never()).notificar(any());
     }
 
     @ParameterizedTest
@@ -366,7 +366,7 @@ class OcorrenciaServiceTest {
                 .destino("Posto de enfermagem")
                 .gravidade(NivelPerigo.MEDIO)
                 .build();
-        Acidente salvo = repository.salvarAcidente(acidenteSemProtocolo);
+        Acidente salvo = (Acidente) repository.salvar(acidenteSemProtocolo);
 
         assertThat(salvo.getNumeroProtocoloCAT()).isNull();
 
@@ -384,11 +384,11 @@ class OcorrenciaServiceTest {
     void deveNotificarGestorAoRegistrarAcidenteEIncidente() {
         useCase.registrarAcidente(acidente("OUTRO", "BAIXO"));
 
-        verify(notificacaoPort).notificarGestor(any(Acidente.class));
+        verify(notificacaoPort).notificar(any(Acidente.class));
 
         useCase.registrarIncidente(incidente("Cabo exposto no chão"));
 
-        verify(notificacaoPort).notificarGestor(any(Incidente.class));
+        verify(notificacaoPort).notificar(any(Incidente.class));
     }
 
     @Test
@@ -453,8 +453,8 @@ class OcorrenciaServiceTest {
                 .numeroProtocoloCAT(NumeroProtocoloCAT.de("CAT-2026-09-0002"))
                 .gravidade(NivelPerigo.BAIXO)
                 .build();
-        repository.salvarAcidente(ac1);
-        repository.salvarAcidente(ac2);
+        repository.salvar(ac1);
+        repository.salvar(ac2);
 
         autenticar("supervisor@safeplace.com", "ROLE_SUPERVISOR");
         when(logRepo.buscarIdsPorResponsavel("supervisor@safeplace.com", "CADASTRO", OcorrenciaService.ENTIDADES_DE_RELATO))
@@ -586,57 +586,55 @@ class OcorrenciaServiceTest {
         private int proximoId = 1;
 
         @Override
-        public Acidente salvarAcidente(Acidente acidente) {
-            if (acidente.getIdOcorrencia() != null) {
-                ocorrencias.removeIf(o -> o.getIdOcorrencia().equals(acidente.getIdOcorrencia()));
-                ocorrencias.add(acidente);
-                return acidente;
+        public Ocorrencia salvar(Ocorrencia ocorrencia) {
+            if (ocorrencia.getIdOcorrencia() != null) {
+                ocorrencias.removeIf(o -> o.getIdOcorrencia().equals(ocorrencia.getIdOcorrencia()));
+                ocorrencias.add(ocorrencia);
+                return ocorrencia;
             }
-            Acidente salvo = Acidente.builder()
-                    .idOcorrencia(proximoId++)
-                    .descricao(acidente.getDescricao())
-                    .dataOcorrencia(acidente.getDataOcorrencia())
-                    .dataRegistro(acidente.getDataRegistro())
-                    .statusOcorrencia(acidente.getStatusOcorrencia())
-                    .colaborador(acidente.getColaborador())
-                    .area(acidente.getArea())
-                    .relator(acidente.getRelator())
-                    .localInformado(acidente.getLocalInformado())
-                    .planoDeAcao(acidente.getPlanoDeAcao())
-                    .causaRaiz(acidente.getCausaRaiz())
-                    .tipo(acidente.getTipo())
-                    .dano(acidente.getDano())
-                    .numeroProtocoloCAT(acidente.getProtocoloCAT())
-                    .destino(acidente.getDestino())
-                    .gravidade(acidente.getGravidade())
-                    .build();
-            ocorrencias.add(salvo);
-            return salvo;
-        }
-
-        @Override
-        public Incidente salvarIncidente(Incidente incidente) {
-            if (incidente.getIdOcorrencia() != null) {
-                ocorrencias.removeIf(o -> o.getIdOcorrencia().equals(incidente.getIdOcorrencia()));
-                ocorrencias.add(incidente);
-                return incidente;
-            }
-            Incidente salvo = Incidente.builder()
-                    .idOcorrencia(proximoId++)
-                    .descricao(incidente.getDescricao())
-                    .dataOcorrencia(incidente.getDataOcorrencia())
-                    .dataRegistro(incidente.getDataRegistro())
-                    .statusOcorrencia(incidente.getStatusOcorrencia())
-                    .colaborador(incidente.getColaborador())
-                    .area(incidente.getArea())
-                    .relator(incidente.getRelator())
-                    .localInformado(incidente.getLocalInformado())
-                    .planoDeAcao(incidente.getPlanoDeAcao())
-                    .situacaoRisco(incidente.getSituacaoRisco())
-                    .potencialDano(incidente.getPotencialDano())
-                    .build();
-            ocorrencias.add(salvo);
-            return salvo;
+            return switch (ocorrencia) {
+                case Acidente acidente -> {
+                    Acidente salvo = Acidente.builder()
+                            .idOcorrencia(proximoId++)
+                            .descricao(acidente.getDescricao())
+                            .dataOcorrencia(acidente.getDataOcorrencia())
+                            .dataRegistro(acidente.getDataRegistro())
+                            .statusOcorrencia(acidente.getStatusOcorrencia())
+                            .colaborador(acidente.getColaborador())
+                            .area(acidente.getArea())
+                            .relator(acidente.getRelator())
+                            .localInformado(acidente.getLocalInformado())
+                            .planoDeAcao(acidente.getPlanoDeAcao())
+                            .causaRaiz(acidente.getCausaRaiz())
+                            .tipo(acidente.getTipo())
+                            .dano(acidente.getDano())
+                            .numeroProtocoloCAT(acidente.getProtocoloCAT())
+                            .destino(acidente.getDestino())
+                            .gravidade(acidente.getGravidade())
+                            .build();
+                    ocorrencias.add(salvo);
+                    yield salvo;
+                }
+                case Incidente incidente -> {
+                    Incidente salvo = Incidente.builder()
+                            .idOcorrencia(proximoId++)
+                            .descricao(incidente.getDescricao())
+                            .dataOcorrencia(incidente.getDataOcorrencia())
+                            .dataRegistro(incidente.getDataRegistro())
+                            .statusOcorrencia(incidente.getStatusOcorrencia())
+                            .colaborador(incidente.getColaborador())
+                            .area(incidente.getArea())
+                            .relator(incidente.getRelator())
+                            .localInformado(incidente.getLocalInformado())
+                            .planoDeAcao(incidente.getPlanoDeAcao())
+                            .situacaoRisco(incidente.getSituacaoRisco())
+                            .potencialDano(incidente.getPotencialDano())
+                            .build();
+                    ocorrencias.add(salvo);
+                    yield salvo;
+                }
+                default -> throw new IllegalArgumentException("Tipo não suportado: " + ocorrencia.getClass().getName());
+            };
         }
 
         @Override

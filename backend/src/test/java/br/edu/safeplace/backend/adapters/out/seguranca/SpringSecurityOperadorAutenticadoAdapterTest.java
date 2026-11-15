@@ -32,7 +32,7 @@ class SpringSecurityOperadorAutenticadoAdapterTest {
 
     @Test
     void obterIdentificadorOperadorDeveRetornarVazioQuandoNaoHouverAutenticacao() {
-        Optional<String> operador = adaptador.obterIdentificadorOperador();
+        Optional<String> operador = adaptador.obterIdentificador();
         assertTrue(operador.isEmpty());
     }
 
@@ -43,7 +43,7 @@ class SpringSecurityOperadorAutenticadoAdapterTest {
         context.setAuthentication(auth);
         SecurityContextHolder.setContext(context);
 
-        Optional<String> operador = adaptador.obterIdentificadorOperador();
+        Optional<String> operador = adaptador.obterIdentificador();
         assertTrue(operador.isEmpty());
     }
 
@@ -58,7 +58,7 @@ class SpringSecurityOperadorAutenticadoAdapterTest {
         context.setAuthentication(auth);
         SecurityContextHolder.setContext(context);
 
-        Optional<String> operador = adaptador.obterIdentificadorOperador();
+        Optional<String> operador = adaptador.obterIdentificador();
         assertTrue(operador.isEmpty(), "anonymousUser deve ser filtrado retornando vazio");
     }
 
@@ -69,7 +69,7 @@ class SpringSecurityOperadorAutenticadoAdapterTest {
         context.setAuthentication(auth);
         SecurityContextHolder.setContext(context);
 
-        Optional<String> operador = adaptador.obterIdentificadorOperador();
+        Optional<String> operador = adaptador.obterIdentificador();
         assertTrue(operador.isEmpty());
     }
 
@@ -80,7 +80,7 @@ class SpringSecurityOperadorAutenticadoAdapterTest {
         context.setAuthentication(auth);
         SecurityContextHolder.setContext(context);
 
-        Optional<String> operador = adaptador.obterIdentificadorOperador();
+        Optional<String> operador = adaptador.obterIdentificador();
         assertTrue(operador.isPresent());
         assertEquals("gestor@empresa.com", operador.get());
     }

@@ -7,6 +7,6 @@ import java.util.Optional;
  * sem acoplar a camada de aplicação/domínio ao framework de segurança.
  */
 public interface OperadorAutenticado {
-    Optional<String> obterIdentificadorOperador();
+    Optional<String> obterIdentificador();
     boolean possuiPapel(String papel);
 }

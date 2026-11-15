@@ -31,7 +31,7 @@ public class JwtFiltroAutenticacao extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
 
-            if (gerenciadorToken.validarToken(token) && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (gerenciadorToken.validar(token) && SecurityContextHolder.getContext().getAuthentication() == null) {
                 String email = gerenciadorToken.extrairEmail(token);
                 String perfil = gerenciadorToken.extrairPerfil(token);
 

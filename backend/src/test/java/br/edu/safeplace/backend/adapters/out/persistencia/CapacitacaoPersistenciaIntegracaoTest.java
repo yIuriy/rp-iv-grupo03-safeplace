@@ -106,7 +106,7 @@ class CapacitacaoPersistenciaIntegracaoTest {
         assertThat(salva.id()).isNotNull();
 
         // 1. Reconstrução completa dos atributos
-        Certificacao recuperada = repository.buscarCertificacaoPorId(salva.id()).orElseThrow();
+        Certificacao recuperada = repository.buscarCertificacao(salva.id()).orElseThrow();
         assertThat(recuperada.getNome()).isEqualTo("NR-35 Trabalho em Altura");
         assertThat(recuperada.getDataVencimento()).isEqualTo(vencimento);
         assertThat(recuperada.getDataEmissao()).isEqualTo(emissao);
@@ -144,7 +144,7 @@ class CapacitacaoPersistenciaIntegracaoTest {
         assertThat(salvo.id()).isNotNull();
 
         // Reconstrução integral
-        Treinamento recuperado = repository.buscarTreinamentoPorId(salvo.id()).orElseThrow();
+        Treinamento recuperado = repository.buscarTreinamento(salvo.id()).orElseThrow();
         assertThat(recuperado.getNome()).isEqualTo("Treinamento de Espaço Confinado");
         assertThat(recuperado.getConteudo()).isEqualTo("Conteúdo completo sobre ventilação, detecção de gases e resgate");
         assertThat(recuperado.getInstrutor()).isEqualTo("Eng. Carlos Silva");
@@ -227,11 +227,11 @@ class CapacitacaoPersistenciaIntegracaoTest {
         assertThat(exTarefa.id()).isNotNull();
         assertThat(exEpi.id()).isNotNull();
 
-        List<ExigenciaCapacitacao> exigenciasTarefa = repository.buscarExigenciasPorAlvo(ExigenciaCapacitacao.TipoAlvo.TAREFA, 10);
+        List<ExigenciaCapacitacao> exigenciasTarefa = repository.listarExigencias(ExigenciaCapacitacao.TipoAlvo.TAREFA, 10);
         assertThat(exigenciasTarefa).hasSize(1);
         assertThat(exigenciasTarefa.get(0).getNomeCapacitacao()).isEqualTo("NR-35");
 
-        List<ExigenciaCapacitacao> exigenciasEpi = repository.buscarExigenciasPorAlvo(ExigenciaCapacitacao.TipoAlvo.EPI, 20);
+        List<ExigenciaCapacitacao> exigenciasEpi = repository.listarExigencias(ExigenciaCapacitacao.TipoAlvo.EPI, 20);
         assertThat(exigenciasEpi).hasSize(1);
         assertThat(exigenciasEpi.get(0).getNomeCapacitacao()).isEqualTo("Treinamento de Cinto");
 

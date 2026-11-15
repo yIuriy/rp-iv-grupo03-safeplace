@@ -44,11 +44,11 @@ class RelatorioTreinamentosTest {
     @Test
     @DisplayName("Só os treinamentos do período entram, em ordem de data")
     void treinamentosDoPeriodo() {
-        when(capacitacoes.listarTodosTreinamentos()).thenReturn(List.of(
+        when(capacitacoes.listarTreinamentos()).thenReturn(List.of(
                 treinamento("NR-35", LocalDate.of(2026, 11, 20), 8, List.of(1, 2)),
                 treinamento("NR-10", LocalDate.of(2026, 11, 3), 40, List.of(1)),
                 treinamento("Antigo", LocalDate.of(2026, 10, 31), 4, List.of(1))));
-        when(capacitacoes.listarTodasCertificacoes()).thenReturn(List.of());
+        when(capacitacoes.listarCertificacoes()).thenReturn(List.of());
 
         RelatorioOutputDTO documento = gerar();
 
@@ -63,8 +63,8 @@ class RelatorioTreinamentosTest {
     @Test
     @DisplayName("Hook semRegistros: sem treinamento no período e certificações em dia")
     void semRegistros() {
-        when(capacitacoes.listarTodosTreinamentos()).thenReturn(List.of(treinamento("Antigo", LocalDate.of(2026, 10, 1), 4, List.of(1))));
-        when(capacitacoes.listarTodasCertificacoes()).thenReturn(List.of(
+        when(capacitacoes.listarTreinamentos()).thenReturn(List.of(treinamento("Antigo", LocalDate.of(2026, 10, 1), 4, List.of(1))));
+        when(capacitacoes.listarCertificacoes()).thenReturn(List.of(
                 new Certificacao(1, "NR-12", LocalDate.of(2028, 1, 1), LocalDate.of(2026, 1, 1), pessoa(1))));
 
         assertThat(gerar().semRegistros()).isTrue();
@@ -73,8 +73,8 @@ class RelatorioTreinamentosTest {
     @Test
     @DisplayName("Certificações avaliadas no fim do período: vencidas primeiro, com o nome do colaborador")
     void certificacoesPendentes() {
-        when(capacitacoes.listarTodosTreinamentos()).thenReturn(List.of());
-        when(capacitacoes.listarTodasCertificacoes()).thenReturn(List.of(
+        when(capacitacoes.listarTreinamentos()).thenReturn(List.of());
+        when(capacitacoes.listarCertificacoes()).thenReturn(List.of(
                 new Certificacao(1, "Brigada", LocalDate.of(2026, 12, 10), LocalDate.of(2025, 12, 10), pessoa(1)),
                 new Certificacao(2, "NR-33", LocalDate.of(2026, 11, 15), LocalDate.of(2025, 11, 15), pessoa(9)),
                 new Certificacao(3, "NR-12", LocalDate.of(2028, 1, 1), LocalDate.of(2026, 1, 1), pessoa(1))));

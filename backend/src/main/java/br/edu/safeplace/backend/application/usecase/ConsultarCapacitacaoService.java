@@ -40,7 +40,7 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
             return List.of();
         }
         LocalDate hoje = LocalDate.now(clock);
-        List<Certificacao> lista = capacitacaoRepository.buscarCertificacoesPorColaborador(colaboradorId);
+        List<Certificacao> lista = capacitacaoRepository.listarCertificacoes(colaboradorId);
         lista.forEach(cert -> cert.reavaliarStatus(hoje));
         return lista;
     }
@@ -50,7 +50,7 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
         if (colaboradorId == null) {
             return List.of();
         }
-        return capacitacaoRepository.buscarTreinamentosPorColaborador(colaboradorId);
+        return capacitacaoRepository.listarTreinamentos(colaboradorId);
     }
 
     @Override
@@ -58,7 +58,7 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
         if (tarefaId == null) {
             return List.of();
         }
-        return capacitacaoRepository.buscarExigenciasPorAlvo(ExigenciaCapacitacao.TipoAlvo.TAREFA, tarefaId);
+        return capacitacaoRepository.listarExigencias(ExigenciaCapacitacao.TipoAlvo.TAREFA, tarefaId);
     }
 
     @Override
@@ -66,7 +66,7 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
         if (epiId == null) {
             return List.of();
         }
-        return capacitacaoRepository.buscarExigenciasPorAlvo(ExigenciaCapacitacao.TipoAlvo.EPI, epiId);
+        return capacitacaoRepository.listarExigencias(ExigenciaCapacitacao.TipoAlvo.EPI, epiId);
     }
 
     @Override
@@ -145,14 +145,14 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
     @Override
     public List<Certificacao> listarTodasCertificacoes() {
         LocalDate hoje = LocalDate.now(clock);
-        List<Certificacao> lista = capacitacaoRepository.listarTodasCertificacoes();
+        List<Certificacao> lista = capacitacaoRepository.listarCertificacoes();
         lista.forEach(cert -> cert.reavaliarStatus(hoje));
         return lista;
     }
 
     @Override
     public List<Treinamento> listarTodosTreinamentos() {
-        return capacitacaoRepository.listarTodosTreinamentos();
+        return capacitacaoRepository.listarTreinamentos();
     }
 
     @Override

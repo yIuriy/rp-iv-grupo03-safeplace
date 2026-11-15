@@ -32,52 +32,52 @@ public class CapacitacaoJpaAdapter implements CapacitacaoRepository {
     }
 
     @Override
-    public Certificacao salvarCertificacao(Certificacao certificacao) {
+    public Certificacao salvar(Certificacao certificacao) {
         return certificacoes.save(certificacao);
     }
 
     @Override
-    public Treinamento salvarTreinamento(Treinamento treinamento) {
+    public Treinamento salvar(Treinamento treinamento) {
         return treinamentos.save(treinamento);
     }
 
     @Override
-    public ExigenciaCapacitacao salvarExigencia(ExigenciaCapacitacao exigencia) {
+    public ExigenciaCapacitacao salvar(ExigenciaCapacitacao exigencia) {
         return exigencias.save(exigencia);
     }
 
     @Override
-    public List<Certificacao> buscarCertificacoesPorColaborador(Integer colaboradorId) {
+    public List<Certificacao> listarCertificacoes(Integer colaboradorId) {
         return certificacoes.findByColaborador_IdOrderByDataVencimentoAsc(colaboradorId);
     }
 
     @Override
-    public List<Treinamento> buscarTreinamentosPorColaborador(Integer colaboradorId) {
+    public List<Treinamento> listarTreinamentos(Integer colaboradorId) {
         return treinamentos.findByColaboradorIdOrderByDataRealizacaoDesc(colaboradorId);
     }
 
     @Override
-    public List<ExigenciaCapacitacao> buscarExigenciasPorAlvo(ExigenciaCapacitacao.TipoAlvo tipoAlvo, Integer alvoId) {
+    public List<ExigenciaCapacitacao> listarExigencias(ExigenciaCapacitacao.TipoAlvo tipoAlvo, Integer alvoId) {
         return exigencias.findByAlvoAndAlvoId(tipoAlvo, alvoId);
     }
 
     @Override
-    public Optional<Certificacao> buscarCertificacaoPorId(Integer id) {
+    public Optional<Certificacao> buscarCertificacao(Integer id) {
         return certificacoes.findById(id);
     }
 
     @Override
-    public Optional<Treinamento> buscarTreinamentoPorId(Integer id) {
+    public Optional<Treinamento> buscarTreinamento(Integer id) {
         return treinamentos.findById(id);
     }
 
     @Override
-    public List<Certificacao> listarTodasCertificacoes() {
+    public List<Certificacao> listarCertificacoes() {
         return certificacoes.findAllByOrderByDataVencimentoAsc();
     }
 
     @Override
-    public List<Treinamento> listarTodosTreinamentos() {
+    public List<Treinamento> listarTreinamentos() {
         return treinamentos.findAllByOrderByDataRealizacaoDesc();
     }
 }

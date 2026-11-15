@@ -97,9 +97,9 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
         Colaborador colaborador = usuarioRepository.buscarPorId(entrada.colaboradorId())
                 .orElseThrow(() -> new UsuarioNaoEncontradoException("Colaborador não encontrado: " + entrada.colaboradorId()));
 
-        List<Certificacao> certificacoes = capacitacaoRepository.buscarCertificacoesPorColaborador(colaborador.getId());
-        List<Treinamento> treinamentos = capacitacaoRepository.buscarTreinamentosPorColaborador(colaborador.getId());
-        List<ExigenciaCapacitacao> exigencias = capacitacaoRepository.buscarExigenciasPorAlvo(
+        List<Certificacao> certificacoes = capacitacaoRepository.listarCertificacoes(colaborador.getId());
+        List<Treinamento> treinamentos = capacitacaoRepository.listarTreinamentos(colaborador.getId());
+        List<ExigenciaCapacitacao> exigencias = capacitacaoRepository.listarExigencias(
                 ExigenciaCapacitacao.TipoAlvo.TAREFA, tarefa.getId());
 
         // Chain of Responsibility (#228): valida antes do repository; se falhar, nada é gravado.
@@ -128,9 +128,9 @@ public class AlocarColaboradorTarefaService implements AlocarColaboradorTarefaUs
         Colaborador colaborador = usuarioRepository.buscarPorId(colaboradorId)
                 .orElseThrow(() -> new UsuarioNaoEncontradoException("Colaborador não encontrado: " + colaboradorId));
 
-        List<Certificacao> certificacoes = capacitacaoRepository.buscarCertificacoesPorColaborador(colaborador.getId());
-        List<Treinamento> treinamentos = capacitacaoRepository.buscarTreinamentosPorColaborador(colaborador.getId());
-        List<ExigenciaCapacitacao> exigencias = capacitacaoRepository.buscarExigenciasPorAlvo(
+        List<Certificacao> certificacoes = capacitacaoRepository.listarCertificacoes(colaborador.getId());
+        List<Treinamento> treinamentos = capacitacaoRepository.listarTreinamentos(colaborador.getId());
+        List<ExigenciaCapacitacao> exigencias = capacitacaoRepository.listarExigencias(
                 ExigenciaCapacitacao.TipoAlvo.TAREFA, tarefa.getId());
 
         // Mesma cadeia da alocação: a consulta e o bloqueio não podem discordar.

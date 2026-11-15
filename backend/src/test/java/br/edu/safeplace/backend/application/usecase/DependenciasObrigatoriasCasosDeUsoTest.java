@@ -131,7 +131,7 @@ class DependenciasObrigatoriasCasosDeUsoTest {
     /** Dublê de operador identificado (papel RealObject), escrito à mão. */
     private record OperadorFixo(String email) implements OperadorAutenticado {
         @Override
-        public Optional<String> obterIdentificadorOperador() {
+        public Optional<String> obterIdentificador() {
             return Optional.of(email);
         }
 

@@ -91,16 +91,16 @@ class CertificacaoVencimentoClockTest {
     void serviceDeveReavaliarStatusUsandoClockInjetado() {
         LocalDate hoje = LocalDate.now(clock);
 
-        capacitacaoRepository.salvarCertificacao(
+        capacitacaoRepository.salvar(
                 new Certificacao(1, "NR-10", hoje.minusDays(1), hoje.minusYears(1), pessoa(10))
         );
-        capacitacaoRepository.salvarCertificacao(
+        capacitacaoRepository.salvar(
                 new Certificacao(2, "NR-35", hoje, hoje.minusYears(1), pessoa(10))
         );
-        capacitacaoRepository.salvarCertificacao(
+        capacitacaoRepository.salvar(
                 new Certificacao(3, "NR-33", hoje.plusDays(15), hoje.minusYears(1), pessoa(10))
         );
-        capacitacaoRepository.salvarCertificacao(
+        capacitacaoRepository.salvar(
                 new Certificacao(4, "NR-12", hoje.plusMonths(6), hoje.minusMonths(6), pessoa(10))
         );
 
@@ -141,31 +141,31 @@ class CertificacaoVencimentoClockTest {
         private final List<Certificacao> certs = new ArrayList<>();
 
         @Override
-        public Certificacao salvarCertificacao(Certificacao certificacao) {
+        public Certificacao salvar(Certificacao certificacao) {
             certs.add(certificacao);
             return certificacao;
         }
 
         @Override
-        public List<Certificacao> buscarCertificacoesPorColaborador(Integer colaboradorId) {
+        public List<Certificacao> listarCertificacoes(Integer colaboradorId) {
             return new ArrayList<>(certs.stream().filter(c -> c.getColaboradorId().equals(colaboradorId)).toList());
         }
 
         @Override
-        public Optional<Certificacao> buscarCertificacaoPorId(Integer id) {
+        public Optional<Certificacao> buscarCertificacao(Integer id) {
             return certs.stream().filter(c -> c.getId().equals(id)).findFirst();
         }
 
         @Override
-        public List<Certificacao> listarTodasCertificacoes() {
+        public List<Certificacao> listarCertificacoes() {
             return new ArrayList<>(certs);
         }
 
-        @Override public Treinamento salvarTreinamento(Treinamento treinamento) { return treinamento; }
-        @Override public List<Treinamento> buscarTreinamentosPorColaborador(Integer colaboradorId) { return List.of(); }
-        @Override public Optional<Treinamento> buscarTreinamentoPorId(Integer id) { return Optional.empty(); }
-        @Override public List<Treinamento> listarTodosTreinamentos() { return List.of(); }
-        @Override public ExigenciaCapacitacao salvarExigencia(ExigenciaCapacitacao exigencia) { return exigencia; }
-        @Override public List<ExigenciaCapacitacao> buscarExigenciasPorAlvo(ExigenciaCapacitacao.TipoAlvo tipoAlvo, Integer alvoId) { return List.of(); }
+        @Override public Treinamento salvar(Treinamento treinamento) { return treinamento; }
+        @Override public List<Treinamento> listarTreinamentos(Integer colaboradorId) { return List.of(); }
+        @Override public Optional<Treinamento> buscarTreinamento(Integer id) { return Optional.empty(); }
+        @Override public List<Treinamento> listarTreinamentos() { return List.of(); }
+        @Override public ExigenciaCapacitacao salvar(ExigenciaCapacitacao exigencia) { return exigencia; }
+        @Override public List<ExigenciaCapacitacao> listarExigencias(ExigenciaCapacitacao.TipoAlvo tipoAlvo, Integer alvoId) { return List.of(); }
     }
 }

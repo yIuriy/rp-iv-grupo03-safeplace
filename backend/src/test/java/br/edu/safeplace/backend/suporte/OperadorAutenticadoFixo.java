@@ -50,7 +50,7 @@ public final class OperadorAutenticadoFixo implements OperadorAutenticado {
     }
 
     @Override
-    public Optional<String> obterIdentificadorOperador() {
+    public Optional<String> obterIdentificador() {
         return Optional.ofNullable(identificador).filter(email -> !email.isBlank());
     }
 

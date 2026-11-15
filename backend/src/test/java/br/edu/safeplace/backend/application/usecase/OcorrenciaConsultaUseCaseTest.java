@@ -141,12 +141,7 @@ class OcorrenciaConsultaUseCaseTest {
     /** Repositório somente leitura: a consulta filtrada usa a implementação padrão da porta. */
     private record RepositorioFixo(List<Ocorrencia> ocorrencias) implements OcorrenciaRepository {
         @Override
-        public Acidente salvarAcidente(Acidente acidente) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Incidente salvarIncidente(Incidente incidente) {
+        public Ocorrencia salvar(Ocorrencia ocorrencia) {
             throw new UnsupportedOperationException();
         }
 

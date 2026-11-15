@@ -110,7 +110,7 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
                 entrada.nome(), entrada.dataVencimento(), entrada.dataEmissao(), colaborador, hoje);
         // Chain of Responsibility (#265): valida antes do repository.
         certificacaoValidador.validar(nova);
-        Certificacao salva = capacitacaoRepository.salvarCertificacao(nova);
+        Certificacao salva = capacitacaoRepository.salvar(nova);
 
         auditoria.cadastro("Certificacao", salva.getId(), "Cadastro de certificação: " + salva.getNome());
         return CertificacaoOutputDTO.deDominio(salva);
@@ -122,7 +122,7 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
         Treinamento novo = Treinamento.cadastrar(entrada.nome(), entrada.conteudo(), entrada.instrutor(),
                 entrada.dataRealizacao(), entrada.cargaHoraria(), entrada.validadeMeses(), colaboradores);
         treinamentoValidador.validar(novo);
-        Treinamento salvo = capacitacaoRepository.salvarTreinamento(novo);
+        Treinamento salvo = capacitacaoRepository.salvar(novo);
 
         auditoria.cadastro("Treinamento", salvo.getId(), "Cadastro de treinamento: " + salvo.getNome());
         return TreinamentoOutputDTO.deDominio(salvo);
@@ -133,7 +133,7 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
         ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(null, entrada.nomeCapacitacao(),
                 entrada.tipoCapacitacao(), entrada.alvoId(), entrada.alvo());
         exigenciaValidador.validar(exigencia);
-        ExigenciaCapacitacao salva = capacitacaoRepository.salvarExigencia(exigencia);
+        ExigenciaCapacitacao salva = capacitacaoRepository.salvar(exigencia);
 
         auditoria.cadastro("ExigenciaCapacitacao", salva.getId(),
                 "Definição de exigência para " + salva.getAlvo() + " " + salva.getAlvoId() + ": " + salva.getNomeCapacitacao());

@@ -517,7 +517,7 @@ class EmprestimoServiceTest {
         }
 
         @Override
-        public List<String> impedimentosParaEntrega(Integer colaboradorId, Integer epiId) {
+        public List<String> listarParaEntrega(Integer colaboradorId, Integer epiId) {
             return impedimentos.getOrDefault(colaboradorId + ":" + epiId, List.of());
         }
     }

@@ -65,8 +65,8 @@ class SegurancaRbacIntegrationTest {
     @BeforeEach
     void setUp() {
         SecurityContextHolder.clearContext();
-        tokenGestor = "Bearer " + gerenciadorToken.gerarToken("gestor@safeplace.com", Perfil.GESTOR_SEGURANCA.name());
-        tokenSupervisor = "Bearer " + gerenciadorToken.gerarToken("supervisor@safeplace.com", Perfil.SUPERVISOR.name());
+        tokenGestor = "Bearer " + gerenciadorToken.gerar("gestor@safeplace.com", Perfil.GESTOR_SEGURANCA.name());
+        tokenSupervisor = "Bearer " + gerenciadorToken.gerar("supervisor@safeplace.com", Perfil.SUPERVISOR.name());
     }
 
     @AfterEach

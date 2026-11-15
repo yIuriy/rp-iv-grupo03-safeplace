@@ -14,7 +14,7 @@ public final class OperadorAutenticadoNulo implements OperadorAutenticado {
 
     /** Sem sessão não há identificador; a auditoria cai no responsável "SISTEMA". */
     @Override
-    public Optional<String> obterIdentificadorOperador() {
+    public Optional<String> obterIdentificador() {
         return Optional.empty();
     }
 

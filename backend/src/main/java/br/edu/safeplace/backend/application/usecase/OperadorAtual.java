@@ -33,7 +33,7 @@ public class OperadorAtual {
      * @return identificador do operador ou "SISTEMA".
      */
     public String emailOuSistema() {
-        return operadorPorta.obterIdentificadorOperador().orElse(SISTEMA);
+        return operadorPorta.obterIdentificador().orElse(SISTEMA);
     }
 
     /**
@@ -42,7 +42,7 @@ public class OperadorAtual {
      * @return Optional contendo o identificador ou vazio.
      */
     public Optional<String> obterIdentificadorOperador() {
-        return operadorPorta.obterIdentificadorOperador();
+        return operadorPorta.obterIdentificador();
     }
 
     /**
@@ -75,7 +75,7 @@ public class OperadorAtual {
      * @return Optional com o Gestor de Segurança autenticado ou vazio.
      */
     public Optional<GestorDeSeguranca> buscarGestor() {
-        return operadorPorta.obterIdentificadorOperador()
+        return operadorPorta.obterIdentificador()
                 .flatMap(usuarioRepository::buscarPorEmail)
                 .filter(GestorDeSeguranca.class::isInstance)
                 .map(GestorDeSeguranca.class::cast);

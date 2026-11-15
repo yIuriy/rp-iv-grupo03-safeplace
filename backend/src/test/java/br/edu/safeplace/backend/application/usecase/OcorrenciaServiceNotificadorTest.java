@@ -69,7 +69,7 @@ class OcorrenciaServiceNotificadorTest {
         usuarioRepo = mock(UsuarioRepository.class);
         when(areaRepo.buscarPorId(10)).thenReturn(Optional.of(area));
         when(usuarioRepo.buscarPorId(20)).thenReturn(Optional.of(colaborador));
-        when(repository.salvarIncidente(any(Incidente.class))).thenReturn(salvo);
+        when(repository.salvar(any(Incidente.class))).thenReturn(salvo);
     }
 
     private OcorrenciaService servicoCom(NotificadorOcorrencia notificador) {
@@ -116,7 +116,7 @@ class OcorrenciaServiceNotificadorTest {
         private final List<Ocorrencia> notificadas = new ArrayList<>();
 
         @Override
-        public void notificarGestor(Ocorrencia ocorrencia) {
+        public void notificar(Ocorrencia ocorrencia) {
             notificadas.add(ocorrencia);
         }
 

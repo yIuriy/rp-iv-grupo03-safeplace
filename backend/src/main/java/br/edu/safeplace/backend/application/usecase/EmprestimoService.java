@@ -271,7 +271,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
             throw new EntregaImpedidaException("O EPI " + epi.getNome()
                     + " possui Certificado de Aprovação vencido e não pode ser entregue.");
         }
-        List<String> pendencias = capacitacoes.impedimentosParaEntrega(beneficiario.getId(), epi.getId());
+        List<String> pendencias = capacitacoes.listarParaEntrega(beneficiario.getId(), epi.getId());
         if (!pendencias.isEmpty()) {
             throw new EntregaImpedidaException("Impedimento normativo: o colaborador " + beneficiario.getNome()
                     + " não atende às capacitações exigidas pelo EPI: " + String.join("; ", pendencias) + ".");

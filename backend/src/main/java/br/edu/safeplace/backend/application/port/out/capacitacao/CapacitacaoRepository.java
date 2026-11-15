@@ -8,18 +8,18 @@ import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
 
 public interface CapacitacaoRepository {
-    Certificacao salvarCertificacao(Certificacao certificacao);
-    Treinamento salvarTreinamento(Treinamento treinamento);
-    ExigenciaCapacitacao salvarExigencia(ExigenciaCapacitacao exigencia);
+    Certificacao salvar(Certificacao certificacao);
+    Treinamento salvar(Treinamento treinamento);
+    ExigenciaCapacitacao salvar(ExigenciaCapacitacao exigencia);
 
-    List<Certificacao> buscarCertificacoesPorColaborador(Integer colaboradorId);
-    List<Treinamento> buscarTreinamentosPorColaborador(Integer colaboradorId);
+    List<Certificacao> listarCertificacoes(Integer colaboradorId);
+    List<Treinamento> listarTreinamentos(Integer colaboradorId);
     
-    List<ExigenciaCapacitacao> buscarExigenciasPorAlvo(ExigenciaCapacitacao.TipoAlvo tipoAlvo, Integer alvoId);
+    List<ExigenciaCapacitacao> listarExigencias(ExigenciaCapacitacao.TipoAlvo tipoAlvo, Integer alvoId);
     
-    Optional<Certificacao> buscarCertificacaoPorId(Integer id);
-    Optional<Treinamento> buscarTreinamentoPorId(Integer id);
+    Optional<Certificacao> buscarCertificacao(Integer id);
+    Optional<Treinamento> buscarTreinamento(Integer id);
 
-    List<Certificacao> listarTodasCertificacoes();
-    List<Treinamento> listarTodosTreinamentos();
+    List<Certificacao> listarCertificacoes();
+    List<Treinamento> listarTreinamentos();
 }

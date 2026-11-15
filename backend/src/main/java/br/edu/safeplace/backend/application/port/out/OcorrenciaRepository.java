@@ -9,13 +9,10 @@ import java.util.Optional;
 
 import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
-import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 
 public interface OcorrenciaRepository {
-    Acidente salvarAcidente(Acidente acidente);
-
-    Incidente salvarIncidente(Incidente incidente);
+    Ocorrencia salvar(Ocorrencia ocorrencia);
 
     List<Ocorrencia> listar();
 

@@ -99,12 +99,12 @@ class CapacitacaoApiIntegracaoTest {
 
         // Dados de teste explicitamente identificados; o cadastro pela API é coberto nos testes de #192.
         // A NR-35 vence hoje: na data de vencimento ela já está vencida para alertas e para aptidão.
-        capacitacaoRepositorio.salvarCertificacao(new Certificacao(null, "NR-35 Trabalho em Altura", hoje, hoje.minusYears(2), vencido));
-        capacitacaoRepositorio.salvarCertificacao(new Certificacao(null, "NR-10 Eletricidade", hoje.plusDays(30), hoje.minusYears(1), proximo));
-        capacitacaoRepositorio.salvarCertificacao(new Certificacao(null, "NR-33 Espaço Confinado", hoje.plusDays(31), hoje.minusYears(1), proximo));
-        capacitacaoRepositorio.salvarTreinamento(new Treinamento(null, "Integração de Segurança", "Normas internas e rotas de fuga",
+        capacitacaoRepositorio.salvar(new Certificacao(null, "NR-35 Trabalho em Altura", hoje, hoje.minusYears(2), vencido));
+        capacitacaoRepositorio.salvar(new Certificacao(null, "NR-10 Eletricidade", hoje.plusDays(30), hoje.minusYears(1), proximo));
+        capacitacaoRepositorio.salvar(new Certificacao(null, "NR-33 Espaço Confinado", hoje.plusDays(31), hoje.minusYears(1), proximo));
+        capacitacaoRepositorio.salvar(new Treinamento(null, "Integração de Segurança", "Normas internas e rotas de fuga",
                 "Eng. Paula", hoje.minusDays(15), 8, List.of(vencido)));
-        capacitacaoRepositorio.salvarTreinamento(new Treinamento(null, "Integração de Segurança 119", "Normas internas",
+        capacitacaoRepositorio.salvar(new Treinamento(null, "Integração de Segurança 119", "Normas internas",
                 "Eng. Paula", hoje.minusDays(5), 4, List.of(soTreinamento)));
 
         mockMvc.perform(post("/api/tarefas").with(gestor())

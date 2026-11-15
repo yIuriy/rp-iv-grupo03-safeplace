@@ -46,7 +46,7 @@ class ConsultarCapacitacaoServiceTest {
     void deveAlertarCertificacaoProximaDoVencimento() {
         LocalDate hoje = LocalDate.now();
         Certificacao cert = new Certificacao(1, "NR-35", hoje.plusDays(20), hoje.minusMonths(11), pessoa(1));
-        repositorio.salvarCertificacao(cert);
+        repositorio.salvar(cert);
 
         PendenciasColaboradorDTO pendencias = service.consultarPendenciasColaborador(1);
 
@@ -62,7 +62,7 @@ class ConsultarCapacitacaoServiceTest {
     void deveIdentificarCertificacoesVencidas() {
         LocalDate hoje = LocalDate.now();
         Certificacao certVencida = new Certificacao(1, "NR-10", hoje.minusDays(1), hoje.minusYears(1), pessoa(1));
-        repositorio.salvarCertificacao(certVencida);
+        repositorio.salvar(certVencida);
 
         PendenciasColaboradorDTO pendencias = service.consultarPendenciasColaborador(1);
 
@@ -78,8 +78,8 @@ class ConsultarCapacitacaoServiceTest {
         Integer epiId = 100;
         Integer colaboradorId = 1;
 
-        repositorio.salvarExigencia(new ExigenciaCapacitacao(1, "NR-10", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, epiId, ExigenciaCapacitacao.TipoAlvo.EPI));
-        repositorio.salvarExigencia(new ExigenciaCapacitacao(2, "Treinamento Trabalho Seguro", ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO, epiId, ExigenciaCapacitacao.TipoAlvo.EPI));
+        repositorio.salvar(new ExigenciaCapacitacao(1, "NR-10", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, epiId, ExigenciaCapacitacao.TipoAlvo.EPI));
+        repositorio.salvar(new ExigenciaCapacitacao(2, "Treinamento Trabalho Seguro", ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO, epiId, ExigenciaCapacitacao.TipoAlvo.EPI));
 
         // Sem nada cadastrado para o colaborador
         List<String> impedimentos = service.verificarImpedimentosParaEpi(colaboradorId, epiId);
@@ -88,8 +88,8 @@ class ConsultarCapacitacaoServiceTest {
         assertThat(impedimentos.get(1)).contains("treinamento Treinamento Trabalho Seguro não registrado");
 
         // Colaborador realiza o treinamento e obtém certificação válida
-        repositorio.salvarTreinamento(Treinamento.cadastrar("Treinamento Trabalho Seguro", "Conteúdo", "Instrutor", hoje.minusDays(2), 4, pessoas(List.of(colaboradorId))));
-        repositorio.salvarCertificacao(new Certificacao(1, "NR-10", hoje.plusMonths(6), hoje.minusMonths(6), pessoa(colaboradorId)));
+        repositorio.salvar(Treinamento.cadastrar("Treinamento Trabalho Seguro", "Conteúdo", "Instrutor", hoje.minusDays(2), 4, pessoas(List.of(colaboradorId))));
+        repositorio.salvar(new Certificacao(1, "NR-10", hoje.plusMonths(6), hoje.minusMonths(6), pessoa(colaboradorId)));
 
         List<String> impedimentosAposConclusao = service.verificarImpedimentosParaEpi(colaboradorId, epiId);
         assertThat(impedimentosAposConclusao).isEmpty();
@@ -101,13 +101,13 @@ class ConsultarCapacitacaoServiceTest {
         LocalDate hoje = LocalDate.now();
         Integer epiId = 101;
         Integer colaboradorId = 3;
-        repositorio.salvarExigencia(new ExigenciaCapacitacao(1, "NR-10", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, epiId, ExigenciaCapacitacao.TipoAlvo.EPI));
+        repositorio.salvar(new ExigenciaCapacitacao(1, "NR-10", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, epiId, ExigenciaCapacitacao.TipoAlvo.EPI));
 
-        repositorio.salvarCertificacao(new Certificacao(1, "NR-10", hoje, hoje.minusYears(1), pessoa(colaboradorId)));
+        repositorio.salvar(new Certificacao(1, "NR-10", hoje, hoje.minusYears(1), pessoa(colaboradorId)));
         assertThat(service.verificarImpedimentosParaEpi(colaboradorId, epiId))
                 .containsExactly("certificação NR-10 ausente ou vencida");
 
-        repositorio.salvarCertificacao(new Certificacao(1, "NR-10", hoje.plusDays(1), hoje.minusYears(1), pessoa(colaboradorId)));
+        repositorio.salvar(new Certificacao(1, "NR-10", hoje.plusDays(1), hoje.minusYears(1), pessoa(colaboradorId)));
         assertThat(service.verificarImpedimentosParaEpi(colaboradorId, epiId)).isEmpty();
     }
 
@@ -115,7 +115,7 @@ class ConsultarCapacitacaoServiceTest {
     @DisplayName("UC02 Cenário Alternativo III: ausência de certificações é pendência mesmo com treinamentos registrados")
     void deveApontarPendenciaSemCertificacoesMesmoComTreinamento() {
         LocalDate hoje = LocalDate.now();
-        repositorio.salvarTreinamento(new Treinamento(30, "Integração", "Normas internas", "Instrutor", hoje.minusDays(3), 8, pessoas(List.of(7))));
+        repositorio.salvar(new Treinamento(30, "Integração", "Normas internas", "Instrutor", hoje.minusDays(3), 8, pessoas(List.of(7))));
 
         PendenciasColaboradorDTO pendencias = service.consultarPendenciasColaborador(7);
 
@@ -133,10 +133,10 @@ class ConsultarCapacitacaoServiceTest {
         Integer tarefaId = 50;
         Integer colaboradorId = 2;
 
-        repositorio.salvarExigencia(new ExigenciaCapacitacao(1, "NR-35", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, tarefaId, ExigenciaCapacitacao.TipoAlvo.TAREFA));
+        repositorio.salvar(new ExigenciaCapacitacao(1, "NR-35", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, tarefaId, ExigenciaCapacitacao.TipoAlvo.TAREFA));
 
         // Certificação vencida ontem
-        repositorio.salvarCertificacao(new Certificacao(1, "NR-35", hoje.minusDays(1), hoje.minusYears(1), pessoa(colaboradorId)));
+        repositorio.salvar(new Certificacao(1, "NR-35", hoje.minusDays(1), hoje.minusYears(1), pessoa(colaboradorId)));
 
         assertThat(service.colaboradorPossuiPendencias(colaboradorId, tarefaId)).isTrue();
         List<String> impedimentos = service.verificarImpedimentosParaTarefa(colaboradorId, tarefaId);
@@ -149,64 +149,64 @@ class ConsultarCapacitacaoServiceTest {
         private final List<ExigenciaCapacitacao> exigencias = new ArrayList<>();
 
         @Override
-        public Certificacao salvarCertificacao(Certificacao certificacao) {
+        public Certificacao salvar(Certificacao certificacao) {
             certificacoes.removeIf(c -> c.getId() != null && c.getId().equals(certificacao.getId()));
             certificacoes.add(certificacao);
             return certificacao;
         }
 
         @Override
-        public Treinamento salvarTreinamento(Treinamento treinamento) {
+        public Treinamento salvar(Treinamento treinamento) {
             treinamentos.removeIf(t -> t.getId() != null && t.getId().equals(treinamento.getId()));
             treinamentos.add(treinamento);
             return treinamento;
         }
 
         @Override
-        public ExigenciaCapacitacao salvarExigencia(ExigenciaCapacitacao exigencia) {
+        public ExigenciaCapacitacao salvar(ExigenciaCapacitacao exigencia) {
             exigencias.removeIf(e -> e.getId() != null && e.getId().equals(exigencia.getId()));
             exigencias.add(exigencia);
             return exigencia;
         }
 
         @Override
-        public List<Certificacao> buscarCertificacoesPorColaborador(Integer colaboradorId) {
+        public List<Certificacao> listarCertificacoes(Integer colaboradorId) {
             return new ArrayList<>(certificacoes.stream()
                     .filter(c -> c.getColaboradorId().equals(colaboradorId))
                     .toList());
         }
 
         @Override
-        public List<Treinamento> buscarTreinamentosPorColaborador(Integer colaboradorId) {
+        public List<Treinamento> listarTreinamentos(Integer colaboradorId) {
             return new ArrayList<>(treinamentos.stream()
                     .filter(t -> t.getColaboradoresIds().contains(colaboradorId))
                     .toList());
         }
 
         @Override
-        public List<ExigenciaCapacitacao> buscarExigenciasPorAlvo(ExigenciaCapacitacao.TipoAlvo tipoAlvo, Integer alvoId) {
+        public List<ExigenciaCapacitacao> listarExigencias(ExigenciaCapacitacao.TipoAlvo tipoAlvo, Integer alvoId) {
             return new ArrayList<>(exigencias.stream()
                     .filter(e -> e.getAlvo() == tipoAlvo && e.getAlvoId().equals(alvoId))
                     .toList());
         }
 
         @Override
-        public Optional<Certificacao> buscarCertificacaoPorId(Integer id) {
+        public Optional<Certificacao> buscarCertificacao(Integer id) {
             return certificacoes.stream().filter(c -> c.getId().equals(id)).findFirst();
         }
 
         @Override
-        public Optional<Treinamento> buscarTreinamentoPorId(Integer id) {
+        public Optional<Treinamento> buscarTreinamento(Integer id) {
             return treinamentos.stream().filter(t -> t.getId().equals(id)).findFirst();
         }
 
         @Override
-        public List<Certificacao> listarTodasCertificacoes() {
+        public List<Certificacao> listarCertificacoes() {
             return new ArrayList<>(certificacoes);
         }
 
         @Override
-        public List<Treinamento> listarTodosTreinamentos() {
+        public List<Treinamento> listarTreinamentos() {
             return new ArrayList<>(treinamentos);
         }
     }
@@ -217,11 +217,11 @@ class ConsultarCapacitacaoServiceTest {
         LocalDate hoje = LocalDate.now();
 
         // Colaborador 1: Vencida
-        repositorio.salvarCertificacao(new Certificacao(1, "NR-10", hoje.minusDays(5), hoje.minusYears(1), pessoa(1)));
+        repositorio.salvar(new Certificacao(1, "NR-10", hoje.minusDays(5), hoje.minusYears(1), pessoa(1)));
         // Colaborador 2: Próxima do vencimento (20 dias)
-        repositorio.salvarCertificacao(new Certificacao(2, "NR-35", hoje.plusDays(20), hoje.minusMonths(11), pessoa(2)));
+        repositorio.salvar(new Certificacao(2, "NR-35", hoje.plusDays(20), hoje.minusMonths(11), pessoa(2)));
         // Colaborador 3: Em dia (60 dias)
-        repositorio.salvarCertificacao(new Certificacao(3, "NR-33", hoje.plusDays(60), hoje.minusMonths(6), pessoa(3)));
+        repositorio.salvar(new Certificacao(3, "NR-33", hoje.plusDays(60), hoje.minusMonths(6), pessoa(3)));
 
         List<Integer> vencidos = service.listarColaboradoresPorStatusCertificacao(br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao.VENCIDA);
         List<Integer> proximos = service.listarColaboradoresPorStatusCertificacao(br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao.PROXIMA_DO_VENCIMENTO);
@@ -236,8 +236,8 @@ class ConsultarCapacitacaoServiceTest {
     @DisplayName("UC02: Listar todas as certificações e treinamentos com status reavaliado")
     void deveListarTodasCertificacoesETreinamentos() {
         LocalDate hoje = LocalDate.now();
-        repositorio.salvarCertificacao(new Certificacao(10, "NR-35", hoje.plusDays(10), hoje.minusMonths(11), pessoa(1)));
-        repositorio.salvarTreinamento(new Treinamento(20, "Treinamento Trabalho em Altura", "Conteúdo", "Instrutor", hoje.minusMonths(2), 8, pessoas(List.of(1, 2))));
+        repositorio.salvar(new Certificacao(10, "NR-35", hoje.plusDays(10), hoje.minusMonths(11), pessoa(1)));
+        repositorio.salvar(new Treinamento(20, "Treinamento Trabalho em Altura", "Conteúdo", "Instrutor", hoje.minusMonths(2), 8, pessoas(List.of(1, 2))));
 
         List<Certificacao> certs = service.listarTodasCertificacoes();
         List<Treinamento> treinos = service.listarTodosTreinamentos();
@@ -258,7 +258,7 @@ class ConsultarCapacitacaoServiceTest {
 
         // Com certificação vencida
         LocalDate hoje = LocalDate.now();
-        repositorio.salvarCertificacao(new Certificacao(1, "NR-10", hoje.minusDays(2), hoje.minusYears(1), pessoa(50)));
+        repositorio.salvar(new Certificacao(1, "NR-10", hoje.minusDays(2), hoje.minusYears(1), pessoa(50)));
         PendenciasColaboradorDTO pendenciaVencida = service.consultarPendenciasColaborador(50);
         assertThat(pendenciaVencida.obterMensagensAvisos())
                 .anyMatch(msg -> msg.contains("vencida(s) necessitando de renovação imediata"));
