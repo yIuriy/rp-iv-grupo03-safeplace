@@ -104,7 +104,7 @@ class SubstituicaoEpiControllerTest {
         AlertaSubstituicaoOutputDTO alerta = new AlertaSubstituicaoOutputDTO(
                 1, "Óculos", "ESTOQUE_CRITICO", "Saldo 1 <= Mínimo 2", null, null, "ALTA");
 
-        when(planejarSubstituicaoUseCase.emitirAlertasPreventivos(any(LocalDate.class)))
+        when(planejarSubstituicaoUseCase.emitirAlertas(any(LocalDate.class)))
                 .thenReturn(List.of(alerta));
 
         mockMvc.perform(get("/api/projecoes/alertas")
@@ -121,7 +121,7 @@ class SubstituicaoEpiControllerTest {
         ProjecaoSubstituicaoOutputDTO proj = new ProjecaoSubstituicaoOutputDTO(
                 5, 10, "Bota de Segurança", hoje, hoje.plusDays(40), "Desgaste", hoje.plusYears(1), 12, 3);
 
-        when(planejarSubstituicaoUseCase.listarProjecoesPorEpi(10)).thenReturn(List.of(proj));
+        when(planejarSubstituicaoUseCase.listarPorEpi(10)).thenReturn(List.of(proj));
 
         mockMvc.perform(get("/api/projecoes/epi/10"))
                 .andExpect(status().isOk())

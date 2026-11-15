@@ -100,7 +100,7 @@ class CapacitacaoPersistenciaIntegracaoTest {
         LocalDate vencimento = hoje.plusMonths(12);
         LocalDate emissao = hoje.minusMonths(1);
 
-        CertificacaoOutputDTO salva = cadastroService.cadastrarCertificacao(
+        CertificacaoOutputDTO salva = cadastroService.cadastrar(
                 new CadastrarCertificacaoInputDTO("NR-35 Trabalho em Altura", vencimento, emissao, colab1Id));
 
         assertThat(salva.id()).isNotNull();
@@ -131,7 +131,7 @@ class CapacitacaoPersistenciaIntegracaoTest {
         LocalDate hoje = LocalDate.now();
         LocalDate realizacao = hoje.minusDays(10);
 
-        TreinamentoOutputDTO salvo = cadastroService.cadastrarTreinamento(new CadastrarTreinamentoInputDTO(
+        TreinamentoOutputDTO salvo = cadastroService.cadastrar(new CadastrarTreinamentoInputDTO(
                 "Treinamento de Espaço Confinado",
                 "Conteúdo completo sobre ventilação, detecção de gases e resgate",
                 "Eng. Carlos Silva",
@@ -174,7 +174,7 @@ class CapacitacaoPersistenciaIntegracaoTest {
         LocalDate hoje = LocalDate.now();
 
         // 1. Cenário III: Ausência de histórico
-        PendenciasColaboradorDTO pendenciaAusente = consultaService.consultarPendenciasColaborador(colabSemDadosId);
+        PendenciasColaboradorDTO pendenciaAusente = consultaService.consultarPendencias(colabSemDadosId);
         assertThat(pendenciaAusente.pendenteIntegracaoAdmissional()).isTrue();
         assertThat(pendenciaAusente.totalCertificacoes()).isZero();
         assertThat(pendenciaAusente.totalTreinamentosRealizados()).isZero();
@@ -185,31 +185,31 @@ class CapacitacaoPersistenciaIntegracaoTest {
         jdbc.update("INSERT INTO certificacoes (nome, data_vencimento, data_emissao, colaborador_id) VALUES (?, ?, ?, ?)",
                 "NR-10 Segurança em Instalações Elétricas", java.sql.Date.valueOf(hoje.minusDays(5)), java.sql.Date.valueOf(hoje.minusYears(2)), colab1Id);
 
-        PendenciasColaboradorDTO pendenciaVencida = consultaService.consultarPendenciasColaborador(colab1Id);
+        PendenciasColaboradorDTO pendenciaVencida = consultaService.consultarPendencias(colab1Id);
         assertThat(pendenciaVencida.certificacoesVencidas()).isEqualTo(1);
         assertThat(pendenciaVencida.possuiPendenciasImpeditivas()).isTrue();
         assertThat(pendenciaVencida.obterMensagensAvisos())
                 .anyMatch(msg -> msg.contains("vencida(s) necessitando de renovação imediata"));
 
         // 3. Regra 1: Próxima do vencimento em 30 dias (ex.: vence em 15 dias)
-        cadastroService.cadastrarCertificacao(new CadastrarCertificacaoInputDTO("NR-35 Alerta", hoje.plusDays(15), hoje.minusMonths(11), colab2Id));
-        PendenciasColaboradorDTO pendenciaProxima = consultaService.consultarPendenciasColaborador(colab2Id);
+        cadastroService.cadastrar(new CadastrarCertificacaoInputDTO("NR-35 Alerta", hoje.plusDays(15), hoje.minusMonths(11), colab2Id));
+        PendenciasColaboradorDTO pendenciaProxima = consultaService.consultarPendencias(colab2Id);
         assertThat(pendenciaProxima.certificacoesProximasVencimento()).isEqualTo(1);
         assertThat(pendenciaProxima.possuiPendenciasImpeditivas()).isFalse();
         assertThat(pendenciaProxima.obterMensagensAvisos())
                 .anyMatch(msg -> msg.contains("próxima(s) do vencimento (30 dias)"));
 
         // 4. Em dia (vence em 180 dias)
-        cadastroService.cadastrarCertificacao(new CadastrarCertificacaoInputDTO("NR-33 Espaço Confinado", hoje.plusDays(180), hoje.minusMonths(1), colab3Id));
-        PendenciasColaboradorDTO pendenciaEmDia = consultaService.consultarPendenciasColaborador(colab3Id);
+        cadastroService.cadastrar(new CadastrarCertificacaoInputDTO("NR-33 Espaço Confinado", hoje.plusDays(180), hoje.minusMonths(1), colab3Id));
+        PendenciasColaboradorDTO pendenciaEmDia = consultaService.consultarPendencias(colab3Id);
         assertThat(pendenciaEmDia.certificacoesEmDia()).isEqualTo(1);
         assertThat(pendenciaEmDia.certificacoesVencidas()).isZero();
         assertThat(pendenciaEmDia.certificacoesProximasVencimento()).isZero();
 
         // 5. Cenário IV: Filtragem de colaboradores por status
-        List<Integer> vencidos = consultaService.listarColaboradoresPorStatusCertificacao(StatusCertificacao.VENCIDA);
-        List<Integer> proximos = consultaService.listarColaboradoresPorStatusCertificacao(StatusCertificacao.PROXIMA_DO_VENCIMENTO);
-        List<Integer> emDia = consultaService.listarColaboradoresPorStatusCertificacao(StatusCertificacao.EM_DIA);
+        List<Integer> vencidos = consultaService.listarColaboradores(StatusCertificacao.VENCIDA);
+        List<Integer> proximos = consultaService.listarColaboradores(StatusCertificacao.PROXIMA_DO_VENCIMENTO);
+        List<Integer> emDia = consultaService.listarColaboradores(StatusCertificacao.EM_DIA);
 
         assertThat(vencidos).contains(colab1Id);
         assertThat(proximos).contains(colab2Id);
@@ -219,9 +219,9 @@ class CapacitacaoPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Critério 5: Gravação de Exigências de Capacitação para Tarefa e EPI gera logs de auditoria (#121)")
     void definicaoDeExigenciasGeraPersistenciaEAuditoria() {
-        ExigenciaCapacitacaoOutputDTO exTarefa = cadastroService.definirExigencia(new DefinirExigenciaInputDTO(
+        ExigenciaCapacitacaoOutputDTO exTarefa = cadastroService.cadastrar(new DefinirExigenciaInputDTO(
                 "NR-35", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, ExigenciaCapacitacao.TipoAlvo.TAREFA, 10));
-        ExigenciaCapacitacaoOutputDTO exEpi = cadastroService.definirExigencia(new DefinirExigenciaInputDTO(
+        ExigenciaCapacitacaoOutputDTO exEpi = cadastroService.cadastrar(new DefinirExigenciaInputDTO(
                 "Treinamento de Cinto", ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO, ExigenciaCapacitacao.TipoAlvo.EPI, 20));
 
         assertThat(exTarefa.id()).isNotNull();

@@ -22,6 +22,6 @@ public class ImpedimentoCapacitacaoAdapter implements VerificadorImpedimentoCapa
 
     @Override
     public List<String> listarParaEntrega(Integer colaboradorId, Integer epiId) {
-        return consultarCapacitacaoUseCase.verificarImpedimentosParaEpi(colaboradorId, epiId);
+        return consultarCapacitacaoUseCase.listarImpedimentosEpi(colaboradorId, epiId);
     }
 }

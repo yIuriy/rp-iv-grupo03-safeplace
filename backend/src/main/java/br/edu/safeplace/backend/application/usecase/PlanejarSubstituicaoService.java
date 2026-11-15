@@ -158,7 +158,7 @@ public class PlanejarSubstituicaoService implements PlanejarSubstituicaoUseCase 
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProjecaoSubstituicaoOutputDTO> listarProjecoes() {
+    public List<ProjecaoSubstituicaoOutputDTO> listar() {
         Map<Integer, Epi> mapaEpis = epiRepository.listar().stream()
                 .filter(e -> e.getId() != null)
                 .collect(Collectors.toMap(Epi::getId, e -> e, (e1, e2) -> e1));
@@ -177,7 +177,7 @@ public class PlanejarSubstituicaoService implements PlanejarSubstituicaoUseCase 
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProjecaoSubstituicaoOutputDTO> listarProjecoesPorEpi(Integer epiId) {
+    public List<ProjecaoSubstituicaoOutputDTO> listarPorEpi(Integer epiId) {
         if (epiId == null) {
             return List.of();
         }
@@ -194,7 +194,7 @@ public class PlanejarSubstituicaoService implements PlanejarSubstituicaoUseCase 
 
     @Override
     @Transactional(readOnly = true)
-    public List<AlertaSubstituicaoOutputDTO> emitirAlertasPreventivos(LocalDate dataReferencia) {
+    public List<AlertaSubstituicaoOutputDTO> emitirAlertas(LocalDate dataReferencia) {
         if (dataReferencia == null) {
             dataReferencia = LocalDate.now();
         }

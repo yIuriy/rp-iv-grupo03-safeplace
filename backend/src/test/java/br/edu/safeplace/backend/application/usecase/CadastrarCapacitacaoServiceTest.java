@@ -52,7 +52,7 @@ class CadastrarCapacitacaoServiceTest {
         operador.autenticar("gestora@safeplace.com", "GESTOR_SEGURANCA");
         LocalDate hoje = LocalDate.now();
 
-        service.cadastrarCertificacao(new CadastrarCertificacaoInputDTO("NR-10", hoje.plusYears(1), hoje.minusDays(1), 10));
+        service.cadastrar(new CadastrarCertificacaoInputDTO("NR-10", hoje.plusYears(1), hoje.minusDays(1), 10));
 
         assertThat(auditoria.logs.get(0).getResponsavel()).isEqualTo("gestora@safeplace.com");
     }
@@ -62,7 +62,7 @@ class CadastrarCapacitacaoServiceTest {
     void semOperadorAuditoriaRegistraSistema() {
         LocalDate hoje = LocalDate.now();
 
-        service.cadastrarCertificacao(new CadastrarCertificacaoInputDTO("NR-10", hoje.plusYears(1), hoje.minusDays(1), 10));
+        service.cadastrar(new CadastrarCertificacaoInputDTO("NR-10", hoje.plusYears(1), hoje.minusDays(1), 10));
 
         assertThat(auditoria.logs.get(0).getResponsavel()).isEqualTo(OperadorAtual.SISTEMA);
     }
@@ -71,7 +71,7 @@ class CadastrarCapacitacaoServiceTest {
     @DisplayName("Deve cadastrar certificação válida e registrar log de auditoria (#121)")
     void deveCadastrarCertificacaoEAuditar() {
         LocalDate hoje = LocalDate.now();
-        CertificacaoOutputDTO cert = service.cadastrarCertificacao(new CadastrarCertificacaoInputDTO("NR-35 Trabalho em Altura", hoje.plusYears(1), hoje.minusDays(5), 10));
+        CertificacaoOutputDTO cert = service.cadastrar(new CadastrarCertificacaoInputDTO("NR-35 Trabalho em Altura", hoje.plusYears(1), hoje.minusDays(5), 10));
 
         assertThat(cert).isNotNull();
         assertThat(cert.id()).isEqualTo(1);
@@ -89,7 +89,7 @@ class CadastrarCapacitacaoServiceTest {
     @DisplayName("Deve recusar certificação com data de vencimento inválida (no passado) sem gerar auditoria")
     void deveRecusarCertificacaoVencidaNoCadastro() {
         LocalDate hoje = LocalDate.now();
-        assertThatThrownBy(() -> service.cadastrarCertificacao(new CadastrarCertificacaoInputDTO("NR-35", hoje.minusDays(1), hoje.minusMonths(1), 10)))
+        assertThatThrownBy(() -> service.cadastrar(new CadastrarCertificacaoInputDTO("NR-35", hoje.minusDays(1), hoje.minusMonths(1), 10)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Data de vencimento não pode ser no passado ou presente");
 
@@ -101,7 +101,7 @@ class CadastrarCapacitacaoServiceTest {
     @DisplayName("Deve cadastrar treinamento com colaboradores e registrar log de auditoria (#121)")
     void deveCadastrarTreinamentoEAuditar() {
         LocalDate hoje = LocalDate.now();
-        TreinamentoOutputDTO treino = service.cadastrarTreinamento(new CadastrarTreinamentoInputDTO("Prevenção e Combate a Incêndio", "Módulo prático", "Instrutor Bombeiro", hoje.minusDays(2), 16, 12, List.of(10, 20)));
+        TreinamentoOutputDTO treino = service.cadastrar(new CadastrarTreinamentoInputDTO("Prevenção e Combate a Incêndio", "Módulo prático", "Instrutor Bombeiro", hoje.minusDays(2), 16, 12, List.of(10, 20)));
 
         assertThat(treino).isNotNull();
         assertThat(treino.id()).isEqualTo(1);
@@ -119,7 +119,7 @@ class CadastrarCapacitacaoServiceTest {
     @CsvSource({"TAREFA,5", "EPI,8"})
     @DisplayName("Deve definir exigência para tarefa ou EPI e registrar auditoria (#121)")
     void deveDefinirExigenciaEAuditar(ExigenciaCapacitacao.TipoAlvo alvo, int alvoId) {
-        ExigenciaCapacitacaoOutputDTO ex = service.definirExigencia(
+        ExigenciaCapacitacaoOutputDTO ex = service.cadastrar(
                 new DefinirExigenciaInputDTO("NR-10", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, alvo, alvoId));
 
         assertThat(ex.id()).isEqualTo(1);

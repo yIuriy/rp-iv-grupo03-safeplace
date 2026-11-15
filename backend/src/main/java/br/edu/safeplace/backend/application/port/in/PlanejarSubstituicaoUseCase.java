@@ -23,16 +23,16 @@ public interface PlanejarSubstituicaoUseCase {
     /**
      * Operação consultarHistorico() / buscarEPIs() / exibirProjecoes() do DS10.
      */
-    List<ProjecaoSubstituicaoOutputDTO> listarProjecoes();
+    List<ProjecaoSubstituicaoOutputDTO> listar();
 
     /**
      * Consulta as projeções registradas para um EPI específico.
      */
-    List<ProjecaoSubstituicaoOutputDTO> listarProjecoesPorEpi(Integer epiId);
+    List<ProjecaoSubstituicaoOutputDTO> listarPorEpi(Integer epiId);
 
     /**
      * Operação emitirListaReposicao() do DS10: emite alertas preventivos de descarte iminente,
      * validade de CA e estoque crítico, com a antecedência fixa de 30 dias do DS10, 2.4.
      */
-    List<AlertaSubstituicaoOutputDTO> emitirAlertasPreventivos(LocalDate dataReferencia);
+    List<AlertaSubstituicaoOutputDTO> emitirAlertas(LocalDate dataReferencia);
 }

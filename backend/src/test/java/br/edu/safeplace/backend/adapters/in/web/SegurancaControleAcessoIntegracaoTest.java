@@ -302,7 +302,7 @@ class SegurancaControleAcessoIntegracaoTest {
         void gestorPodeCadastrarEpi() throws Exception {
             EpiOutputDTO saida = new EpiOutputDTO(1, "Capacete H-700", "CA-12345", 20, 5,
                     StatusEpi.DISPONIVEL, LocalDate.of(2028, 6, 30), 365, false, null, null);
-            when(gerenciarEpiUseCase.cadastrarEpi(any(CadastrarEpiInputDTO.class))).thenReturn(saida);
+            when(gerenciarEpiUseCase.cadastrar(any(CadastrarEpiInputDTO.class))).thenReturn(saida);
 
             mockMvc.perform(post("/api/epis")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -336,7 +336,7 @@ class SegurancaControleAcessoIntegracaoTest {
             ManutencaoEpiOutputDTO saida = new ManutencaoEpiOutputDTO(
                     1, 1, LocalDateTime.now(), TipoManutencao.PREVENTIVA,
                     "Inspeção visual", ResultadoManutencao.APROVADO, "Técnico", 1, StatusEpi.DISPONIVEL);
-            when(controlarManutencaoEpiUseCase.concluirManutencao(any(ConcluirManutencaoInputDTO.class), anyString()))
+            when(controlarManutencaoEpiUseCase.concluir(any(ConcluirManutencaoInputDTO.class), anyString()))
                     .thenReturn(saida);
 
             mockMvc.perform(post("/api/epis/1/manutencoes")

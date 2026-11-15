@@ -169,7 +169,7 @@ public class TarefaController {
     })
     public TarefaResponse associarEpis(@PathVariable Integer id,
                                        @Valid @RequestBody AssociarEpisTarefaRequest request) {
-        TarefaOutputDTO atualizada = gerenciarEpiUseCase.associarEpis(id, request.epiIds());
+        TarefaOutputDTO atualizada = gerenciarEpiUseCase.associar(id, request.epiIds());
         return TarefaResponse.fromOutputDTO(atualizada);
     }
 
@@ -181,7 +181,7 @@ public class TarefaController {
             @ApiResponse(responseCode = "404", description = "Tarefa não existe")
     })
     public List<EpiResponse> listarEpisObrigatorios(@PathVariable Integer id) {
-        return gerenciarEpiUseCase.listarEpisObrigatorios(id).stream()
+        return gerenciarEpiUseCase.listarObrigatorios(id).stream()
                 .map(EpiResponse::fromOutputDTO)
                 .toList();
     }
@@ -211,7 +211,7 @@ public class TarefaController {
     })
     public ExigenciasTarefaResponse consultarExigencias(@PathVariable Integer id) {
         TarefaOutputDTO tarefa = useCase.buscarPorId(id);
-        List<EpiResponse> epis = gerenciarEpiUseCase.listarEpisObrigatorios(id).stream()
+        List<EpiResponse> epis = gerenciarEpiUseCase.listarObrigatorios(id).stream()
                 .map(EpiResponse::fromOutputDTO)
                 .toList();
         List<ExigenciasTarefaResponse.ItemExigenciaCapacitacaoResponse> capacitacoes = consultarCapacitacaoUseCase != null

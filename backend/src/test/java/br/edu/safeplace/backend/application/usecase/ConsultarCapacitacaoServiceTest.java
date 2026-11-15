@@ -33,7 +33,7 @@ class ConsultarCapacitacaoServiceTest {
     @Test
     @DisplayName("UC02 Cenário Alternativo III: Identificar pendência admissional quando colaborador não possui capacitações")
     void deveIdentificarPendenciaIntegracaoAdmissional() {
-        PendenciasColaboradorDTO pendencias = service.consultarPendenciasColaborador(1);
+        PendenciasColaboradorDTO pendencias = service.consultarPendencias(1);
 
         assertThat(pendencias.totalCertificacoes()).isZero();
         assertThat(pendencias.totalTreinamentosRealizados()).isZero();
@@ -48,7 +48,7 @@ class ConsultarCapacitacaoServiceTest {
         Certificacao cert = new Certificacao(1, "NR-35", hoje.plusDays(20), hoje.minusMonths(11), pessoa(1));
         repositorio.salvar(cert);
 
-        PendenciasColaboradorDTO pendencias = service.consultarPendenciasColaborador(1);
+        PendenciasColaboradorDTO pendencias = service.consultarPendencias(1);
 
         assertThat(pendencias.certificacoesProximasVencimento()).isEqualTo(1);
         assertThat(pendencias.alertasVencimento()).hasSize(1);
@@ -64,7 +64,7 @@ class ConsultarCapacitacaoServiceTest {
         Certificacao certVencida = new Certificacao(1, "NR-10", hoje.minusDays(1), hoje.minusYears(1), pessoa(1));
         repositorio.salvar(certVencida);
 
-        PendenciasColaboradorDTO pendencias = service.consultarPendenciasColaborador(1);
+        PendenciasColaboradorDTO pendencias = service.consultarPendencias(1);
 
         assertThat(pendencias.certificacoesVencidas()).isEqualTo(1);
         assertThat(pendencias.certificacoesVencidasLista()).hasSize(1);
@@ -82,7 +82,7 @@ class ConsultarCapacitacaoServiceTest {
         repositorio.salvar(new ExigenciaCapacitacao(2, "Treinamento Trabalho Seguro", ExigenciaCapacitacao.TipoCapacitacao.TREINAMENTO, epiId, ExigenciaCapacitacao.TipoAlvo.EPI));
 
         // Sem nada cadastrado para o colaborador
-        List<String> impedimentos = service.verificarImpedimentosParaEpi(colaboradorId, epiId);
+        List<String> impedimentos = service.listarImpedimentosEpi(colaboradorId, epiId);
         assertThat(impedimentos).hasSize(2);
         assertThat(impedimentos.get(0)).contains("certificação NR-10 ausente ou vencida");
         assertThat(impedimentos.get(1)).contains("treinamento Treinamento Trabalho Seguro não registrado");
@@ -91,7 +91,7 @@ class ConsultarCapacitacaoServiceTest {
         repositorio.salvar(Treinamento.cadastrar("Treinamento Trabalho Seguro", "Conteúdo", "Instrutor", hoje.minusDays(2), 4, pessoas(List.of(colaboradorId))));
         repositorio.salvar(new Certificacao(1, "NR-10", hoje.plusMonths(6), hoje.minusMonths(6), pessoa(colaboradorId)));
 
-        List<String> impedimentosAposConclusao = service.verificarImpedimentosParaEpi(colaboradorId, epiId);
+        List<String> impedimentosAposConclusao = service.listarImpedimentosEpi(colaboradorId, epiId);
         assertThat(impedimentosAposConclusao).isEmpty();
     }
 
@@ -104,11 +104,11 @@ class ConsultarCapacitacaoServiceTest {
         repositorio.salvar(new ExigenciaCapacitacao(1, "NR-10", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, epiId, ExigenciaCapacitacao.TipoAlvo.EPI));
 
         repositorio.salvar(new Certificacao(1, "NR-10", hoje, hoje.minusYears(1), pessoa(colaboradorId)));
-        assertThat(service.verificarImpedimentosParaEpi(colaboradorId, epiId))
+        assertThat(service.listarImpedimentosEpi(colaboradorId, epiId))
                 .containsExactly("certificação NR-10 ausente ou vencida");
 
         repositorio.salvar(new Certificacao(1, "NR-10", hoje.plusDays(1), hoje.minusYears(1), pessoa(colaboradorId)));
-        assertThat(service.verificarImpedimentosParaEpi(colaboradorId, epiId)).isEmpty();
+        assertThat(service.listarImpedimentosEpi(colaboradorId, epiId)).isEmpty();
     }
 
     @Test
@@ -117,7 +117,7 @@ class ConsultarCapacitacaoServiceTest {
         LocalDate hoje = LocalDate.now();
         repositorio.salvar(new Treinamento(30, "Integração", "Normas internas", "Instrutor", hoje.minusDays(3), 8, pessoas(List.of(7))));
 
-        PendenciasColaboradorDTO pendencias = service.consultarPendenciasColaborador(7);
+        PendenciasColaboradorDTO pendencias = service.consultarPendencias(7);
 
         assertThat(pendencias.totalCertificacoes()).isZero();
         assertThat(pendencias.totalTreinamentosRealizados()).isEqualTo(1);
@@ -138,8 +138,8 @@ class ConsultarCapacitacaoServiceTest {
         // Certificação vencida ontem
         repositorio.salvar(new Certificacao(1, "NR-35", hoje.minusDays(1), hoje.minusYears(1), pessoa(colaboradorId)));
 
-        assertThat(service.colaboradorPossuiPendencias(colaboradorId, tarefaId)).isTrue();
-        List<String> impedimentos = service.verificarImpedimentosParaTarefa(colaboradorId, tarefaId);
+        assertThat(service.possuiPendencias(colaboradorId, tarefaId)).isTrue();
+        List<String> impedimentos = service.listarImpedimentosTarefa(colaboradorId, tarefaId);
         assertThat(impedimentos).containsExactly("certificação NR-35 ausente ou vencida");
     }
 
@@ -223,9 +223,9 @@ class ConsultarCapacitacaoServiceTest {
         // Colaborador 3: Em dia (60 dias)
         repositorio.salvar(new Certificacao(3, "NR-33", hoje.plusDays(60), hoje.minusMonths(6), pessoa(3)));
 
-        List<Integer> vencidos = service.listarColaboradoresPorStatusCertificacao(br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao.VENCIDA);
-        List<Integer> proximos = service.listarColaboradoresPorStatusCertificacao(br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao.PROXIMA_DO_VENCIMENTO);
-        List<Integer> emDia = service.listarColaboradoresPorStatusCertificacao(br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao.EM_DIA);
+        List<Integer> vencidos = service.listarColaboradores(br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao.VENCIDA);
+        List<Integer> proximos = service.listarColaboradores(br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao.PROXIMA_DO_VENCIMENTO);
+        List<Integer> emDia = service.listarColaboradores(br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao.EM_DIA);
 
         assertThat(vencidos).containsExactly(1);
         assertThat(proximos).containsExactly(2);
@@ -239,8 +239,8 @@ class ConsultarCapacitacaoServiceTest {
         repositorio.salvar(new Certificacao(10, "NR-35", hoje.plusDays(10), hoje.minusMonths(11), pessoa(1)));
         repositorio.salvar(new Treinamento(20, "Treinamento Trabalho em Altura", "Conteúdo", "Instrutor", hoje.minusMonths(2), 8, pessoas(List.of(1, 2))));
 
-        List<Certificacao> certs = service.listarTodasCertificacoes();
-        List<Treinamento> treinos = service.listarTodosTreinamentos();
+        List<Certificacao> certs = service.listarCertificacoes();
+        List<Treinamento> treinos = service.listarTreinamentos();
 
         assertThat(certs).hasSize(1);
         assertThat(certs.get(0).getStatus()).isEqualTo(br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao.PROXIMA_DO_VENCIMENTO);
@@ -252,14 +252,14 @@ class ConsultarCapacitacaoServiceTest {
     @DisplayName("UC02 Cenários I, II e III: Gerar mensagens textuais de avisos e pendências")
     void deveGerarMensagensAvisosCorretamente() {
         // Sem capacitações: pendência admissional e trilha de integração
-        PendenciasColaboradorDTO pendenciaAdmissional = service.consultarPendenciasColaborador(99);
+        PendenciasColaboradorDTO pendenciaAdmissional = service.consultarPendencias(99);
         assertThat(pendenciaAdmissional.obterMensagensAvisos())
                 .contains("Pendência da trilha inicial de integração", "Pendência de treinamentos admissionais");
 
         // Com certificação vencida
         LocalDate hoje = LocalDate.now();
         repositorio.salvar(new Certificacao(1, "NR-10", hoje.minusDays(2), hoje.minusYears(1), pessoa(50)));
-        PendenciasColaboradorDTO pendenciaVencida = service.consultarPendenciasColaborador(50);
+        PendenciasColaboradorDTO pendenciaVencida = service.consultarPendencias(50);
         assertThat(pendenciaVencida.obterMensagensAvisos())
                 .anyMatch(msg -> msg.contains("vencida(s) necessitando de renovação imediata"));
     }

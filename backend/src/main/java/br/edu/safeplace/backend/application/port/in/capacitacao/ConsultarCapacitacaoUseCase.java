@@ -9,16 +9,16 @@ import br.edu.safeplace.backend.domain.capacitacao.StatusCertificacao;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
 
 public interface ConsultarCapacitacaoUseCase {
-    List<Certificacao> listarCertificacoesDoColaborador(Integer colaboradorId);
-    List<Treinamento> listarTreinamentosDoColaborador(Integer colaboradorId);
+    List<Certificacao> listarCertificacoes(Integer colaboradorId);
+    List<Treinamento> listarTreinamentos(Integer colaboradorId);
     List<ExigenciaCapacitacao> listarExigenciasPorTarefa(Integer tarefaId);
     List<ExigenciaCapacitacao> listarExigenciasPorEpi(Integer epiId);
-    PendenciasColaboradorDTO consultarPendenciasColaborador(Integer colaboradorId);
-    List<String> verificarImpedimentosParaEpi(Integer colaboradorId, Integer epiId);
-    List<String> verificarImpedimentosParaTarefa(Integer colaboradorId, Integer tarefaId);
-    boolean colaboradorPossuiPendencias(Integer colaboradorId, Integer tarefaId);
+    PendenciasColaboradorDTO consultarPendencias(Integer colaboradorId);
+    List<String> listarImpedimentosEpi(Integer colaboradorId, Integer epiId);
+    List<String> listarImpedimentosTarefa(Integer colaboradorId, Integer tarefaId);
+    boolean possuiPendencias(Integer colaboradorId, Integer tarefaId);
 
-    List<Certificacao> listarTodasCertificacoes();
-    List<Treinamento> listarTodosTreinamentos();
-    List<Integer> listarColaboradoresPorStatusCertificacao(StatusCertificacao status);
+    List<Certificacao> listarCertificacoes();
+    List<Treinamento> listarTreinamentos();
+    List<Integer> listarColaboradores(StatusCertificacao status);
 }

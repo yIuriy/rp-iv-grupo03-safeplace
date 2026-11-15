@@ -35,7 +35,7 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
     }
 
     @Override
-    public List<Certificacao> listarCertificacoesDoColaborador(Integer colaboradorId) {
+    public List<Certificacao> listarCertificacoes(Integer colaboradorId) {
         if (colaboradorId == null) {
             return List.of();
         }
@@ -46,7 +46,7 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
     }
 
     @Override
-    public List<Treinamento> listarTreinamentosDoColaborador(Integer colaboradorId) {
+    public List<Treinamento> listarTreinamentos(Integer colaboradorId) {
         if (colaboradorId == null) {
             return List.of();
         }
@@ -70,14 +70,14 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
     }
 
     @Override
-    public PendenciasColaboradorDTO consultarPendenciasColaborador(Integer colaboradorId) {
-        List<Certificacao> certificacoes = listarCertificacoesDoColaborador(colaboradorId);
-        List<Treinamento> treinamentos = listarTreinamentosDoColaborador(colaboradorId);
+    public PendenciasColaboradorDTO consultarPendencias(Integer colaboradorId) {
+        List<Certificacao> certificacoes = listarCertificacoes(colaboradorId);
+        List<Treinamento> treinamentos = listarTreinamentos(colaboradorId);
         return PendenciasColaboradorDTO.avaliar(colaboradorId, certificacoes, treinamentos);
     }
 
     @Override
-    public List<String> verificarImpedimentosParaEpi(Integer colaboradorId, Integer epiId) {
+    public List<String> listarImpedimentosEpi(Integer colaboradorId, Integer epiId) {
         if (colaboradorId == null || epiId == null) {
             return List.of("identificadores de colaborador e EPI são obrigatórios");
         }
@@ -87,14 +87,14 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
             return List.of();
         }
 
-        List<Certificacao> certificacoes = listarCertificacoesDoColaborador(colaboradorId);
-        List<Treinamento> treinamentos = listarTreinamentosDoColaborador(colaboradorId);
+        List<Certificacao> certificacoes = listarCertificacoes(colaboradorId);
+        List<Treinamento> treinamentos = listarTreinamentos(colaboradorId);
 
         return avaliarExigencias(exigencias, certificacoes, treinamentos);
     }
 
     @Override
-    public List<String> verificarImpedimentosParaTarefa(Integer colaboradorId, Integer tarefaId) {
+    public List<String> listarImpedimentosTarefa(Integer colaboradorId, Integer tarefaId) {
         if (colaboradorId == null || tarefaId == null) {
             return List.of("identificadores de colaborador e tarefa são obrigatórios");
         }
@@ -104,15 +104,15 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
             return List.of();
         }
 
-        List<Certificacao> certificacoes = listarCertificacoesDoColaborador(colaboradorId);
-        List<Treinamento> treinamentos = listarTreinamentosDoColaborador(colaboradorId);
+        List<Certificacao> certificacoes = listarCertificacoes(colaboradorId);
+        List<Treinamento> treinamentos = listarTreinamentos(colaboradorId);
 
         return avaliarExigencias(exigencias, certificacoes, treinamentos);
     }
 
     @Override
-    public boolean colaboradorPossuiPendencias(Integer colaboradorId, Integer tarefaId) {
-        return !verificarImpedimentosParaTarefa(colaboradorId, tarefaId).isEmpty();
+    public boolean possuiPendencias(Integer colaboradorId, Integer tarefaId) {
+        return !listarImpedimentosTarefa(colaboradorId, tarefaId).isEmpty();
     }
 
     private List<String> avaliarExigencias(List<ExigenciaCapacitacao> exigencias,
@@ -143,7 +143,7 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
     }
 
     @Override
-    public List<Certificacao> listarTodasCertificacoes() {
+    public List<Certificacao> listarCertificacoes() {
         LocalDate hoje = LocalDate.now(clock);
         List<Certificacao> lista = capacitacaoRepository.listarCertificacoes();
         lista.forEach(cert -> cert.reavaliarStatus(hoje));
@@ -151,16 +151,16 @@ public class ConsultarCapacitacaoService implements ConsultarCapacitacaoUseCase 
     }
 
     @Override
-    public List<Treinamento> listarTodosTreinamentos() {
+    public List<Treinamento> listarTreinamentos() {
         return capacitacaoRepository.listarTreinamentos();
     }
 
     @Override
-    public List<Integer> listarColaboradoresPorStatusCertificacao(StatusCertificacao status) {
+    public List<Integer> listarColaboradores(StatusCertificacao status) {
         if (status == null) {
             return List.of();
         }
-        List<Certificacao> todas = listarTodasCertificacoes();
+        List<Certificacao> todas = listarCertificacoes();
         java.util.Map<Integer, List<Certificacao>> porColaborador = todas.stream()
                 .collect(java.util.stream.Collectors.groupingBy(Certificacao::getColaboradorId));
 

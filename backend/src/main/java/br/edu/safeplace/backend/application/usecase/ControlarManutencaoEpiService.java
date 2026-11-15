@@ -86,7 +86,7 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
 
     @Override
     @Transactional
-    public EpiOutputDTO enviarParaManutencao(Integer epiId) {
+    public EpiOutputDTO enviar(Integer epiId) {
         Epi epi = epiRepository.buscarPorId(epiId)
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId));
 
@@ -100,14 +100,14 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
 
     @Override
     @Transactional
-    public ManutencaoEpiOutputDTO concluirManutencao(ConcluirManutencaoInputDTO inputDTO) {
-        return concluirManutencao(inputDTO, null);
+    public ManutencaoEpiOutputDTO concluir(ConcluirManutencaoInputDTO inputDTO) {
+        return concluir(inputDTO, null);
     }
 
     @Override
     @Transactional
-    public ManutencaoEpiOutputDTO concluirManutencao(ConcluirManutencaoInputDTO inputDTO,
-                                                      String responsavelEmail) {
+    public ManutencaoEpiOutputDTO concluir(ConcluirManutencaoInputDTO inputDTO,
+                                           String responsavelEmail) {
         if (inputDTO == null) {
             throw new IllegalArgumentException("Dados para conclusão de manutenção são obrigatórios.");
         }
@@ -161,7 +161,7 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
 
     @Override
     @Transactional(readOnly = true)
-    public List<ManutencaoEpiOutputDTO> listarHistoricoPorEpi(Integer epiId) {
+    public List<ManutencaoEpiOutputDTO> listarPorEpi(Integer epiId) {
         Epi epi = epiRepository.buscarPorId(epiId)
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId));
 

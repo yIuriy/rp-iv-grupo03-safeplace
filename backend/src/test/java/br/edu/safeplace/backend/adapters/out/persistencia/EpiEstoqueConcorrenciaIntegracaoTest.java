@@ -76,7 +76,7 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
                 "Descrição de teste",
                 ClassificacaoEPI.PROTECAO_DE_CABECA
         );
-        EpiOutputDTO output = epiService.cadastrarEpi(dto);
+        EpiOutputDTO output = epiService.cadastrar(dto);
         return output.id();
     }
 

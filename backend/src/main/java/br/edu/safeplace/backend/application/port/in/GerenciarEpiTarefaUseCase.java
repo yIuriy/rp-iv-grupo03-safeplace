@@ -14,10 +14,10 @@ public interface GerenciarEpiTarefaUseCase {
      * UC08 / US12: associa a lista de EPIs obrigatórios a uma tarefa cadastrada.
      * Operação restrita ao Gestor de Segurança.
      */
-    TarefaOutputDTO associarEpis(Integer tarefaId, List<Integer> epiIds);
+    TarefaOutputDTO associar(Integer tarefaId, List<Integer> epiIds);
 
     /**
      * UC08 / US12: consulta a lista de EPIs obrigatórios vinculados a uma tarefa cadastrada.
      */
-    List<EpiOutputDTO> listarEpisObrigatorios(Integer tarefaId);
+    List<EpiOutputDTO> listarObrigatorios(Integer tarefaId);
 }

@@ -307,7 +307,7 @@ class TarefaControllerTest {
         TarefaOutputDTO dto = new TarefaOutputDTO(1, "Solda em altura", NivelPerigo.ALTO, true,
                 LocalDateTime.of(2026, 9, 13, 10, 15, 30), null, null, null, List.of(), List.of(10, 20));
 
-        when(gerenciarEpiUseCase.associarEpis(eq(1), eq(List.of(10, 20)))).thenReturn(dto);
+        when(gerenciarEpiUseCase.associar(eq(1), eq(List.of(10, 20)))).thenReturn(dto);
 
         String json = """
                 {
@@ -338,7 +338,7 @@ class TarefaControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("RF12 / UC08: Deve retornar 404 ao associar EPIs em tarefa inexistente")
     void deveRetornar404AoAssociarEpisEmTarefaInexistente() throws Exception {
-        when(gerenciarEpiUseCase.associarEpis(eq(99), any()))
+        when(gerenciarEpiUseCase.associar(eq(99), any()))
                 .thenThrow(new TarefaNaoEncontradaException(99));
 
         mockMvc.perform(put("/api/tarefas/99/epis")
@@ -352,7 +352,7 @@ class TarefaControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("RF12 / UC08: Deve retornar 404 ao associar EPI que não existe no catálogo")
     void deveRetornar404AoAssociarEpiNaoExistente() throws Exception {
-        when(gerenciarEpiUseCase.associarEpis(eq(1), any()))
+        when(gerenciarEpiUseCase.associar(eq(1), any()))
                 .thenThrow(new EpiNaoEncontradoException(999));
 
         mockMvc.perform(put("/api/tarefas/1/epis")
@@ -381,7 +381,7 @@ class TarefaControllerTest {
                 StatusEpi.DISPONIVEL, null, 365, false,
                 "Capacete de proteção", ClassificacaoEPI.PROTECAO_DE_CABECA);
 
-        when(gerenciarEpiUseCase.listarEpisObrigatorios(1)).thenReturn(List.of(epiDto));
+        when(gerenciarEpiUseCase.listarObrigatorios(1)).thenReturn(List.of(epiDto));
 
         mockMvc.perform(get("/api/tarefas/1/epis"))
                 .andExpect(status().isOk())
@@ -394,7 +394,7 @@ class TarefaControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("RF12 / UC08: Gestor deve consultar EPIs obrigatórios da tarefa (200 OK)")
     void gestorDeveConsultarEpisObrigatorios() throws Exception {
-        when(gerenciarEpiUseCase.listarEpisObrigatorios(1)).thenReturn(List.of());
+        when(gerenciarEpiUseCase.listarObrigatorios(1)).thenReturn(List.of());
 
         mockMvc.perform(get("/api/tarefas/1/epis"))
                 .andExpect(status().isOk())
@@ -449,7 +449,7 @@ class TarefaControllerTest {
     @DisplayName("Supervisor deve consultar exigências normativas e EPIs da tarefa (US06 critério 4)")
     void supervisorDeveConsultarExigenciasTarefa() throws Exception {
         when(useCase.buscarPorId(1)).thenReturn(tarefaClassificada());
-        when(gerenciarEpiUseCase.listarEpisObrigatorios(1)).thenReturn(List.of());
+        when(gerenciarEpiUseCase.listarObrigatorios(1)).thenReturn(List.of());
         when(consultarCapacitacaoUseCase.listarExigenciasPorTarefa(1)).thenReturn(List.of(
                 new br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao(
                         10, "NR-35 Trabalho em Altura",

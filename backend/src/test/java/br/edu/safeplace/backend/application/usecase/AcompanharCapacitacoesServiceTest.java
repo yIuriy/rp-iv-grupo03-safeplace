@@ -53,9 +53,9 @@ class AcompanharCapacitacoesServiceTest {
                 HOJE.minusDays(5), 8, List.of(carla));
 
         when(usuarioRepository.listar()).thenReturn(List.of(davi, carla, bruno, ana));
-        when(consultarCapacitacao.listarTodasCertificacoes())
+        when(consultarCapacitacao.listarCertificacoes())
                 .thenReturn(List.of(anaVencida, brunoProxima, anaEmDia));
-        when(consultarCapacitacao.listarTodosTreinamentos()).thenReturn(List.of(carlaTreinamento));
+        when(consultarCapacitacao.listarTreinamentos()).thenReturn(List.of(carlaTreinamento));
     }
 
     @Test
@@ -93,8 +93,8 @@ class AcompanharCapacitacoesServiceTest {
         Treinamento treinamento = new Treinamento(21, "NR-10 Básico", "Riscos elétricos", "Eng. Paula",
                 HOJE.minusMonths(3), 40, List.of(ana));
         when(usuarioRepository.buscarPorId(1)).thenReturn(Optional.of(ana));
-        when(consultarCapacitacao.listarCertificacoesDoColaborador(1)).thenReturn(List.of(vencida, proxima));
-        when(consultarCapacitacao.listarTreinamentosDoColaborador(1)).thenReturn(List.of(treinamento));
+        when(consultarCapacitacao.listarCertificacoes(1)).thenReturn(List.of(vencida, proxima));
+        when(consultarCapacitacao.listarTreinamentos(1)).thenReturn(List.of(treinamento));
 
         CapacitacoesColaboradorOutputDTO detalhe = service.consultarColaborador(1);
 
@@ -120,8 +120,8 @@ class AcompanharCapacitacoesServiceTest {
     @DisplayName("UC02 cenário alternativo III: colaborador sem histórico recebe pendência de integração")
     void deveApresentarPendenciaDeIntegracao() {
         when(usuarioRepository.buscarPorId(4)).thenReturn(Optional.of(davi));
-        when(consultarCapacitacao.listarCertificacoesDoColaborador(4)).thenReturn(List.of());
-        when(consultarCapacitacao.listarTreinamentosDoColaborador(4)).thenReturn(List.of());
+        when(consultarCapacitacao.listarCertificacoes(4)).thenReturn(List.of());
+        when(consultarCapacitacao.listarTreinamentos(4)).thenReturn(List.of());
 
         CapacitacoesColaboradorOutputDTO detalhe = service.consultarColaborador(4);
 
@@ -148,7 +148,7 @@ class AcompanharCapacitacoesServiceTest {
         Treinamento venceHoje = new Treinamento(32, "NR-10", null, null, HOJE.minusMonths(12), 8, 12, List.of(bruno));
         Treinamento vencido = new Treinamento(33, "NR-12", null, null, HOJE.minusMonths(30), 8, 12, List.of(ana));
         Treinamento semValidade = new Treinamento(34, "Integração", null, null, HOJE.minusYears(10), 8, List.of(carla));
-        when(consultarCapacitacao.listarTodosTreinamentos())
+        when(consultarCapacitacao.listarTreinamentos())
                 .thenReturn(List.of(proximo, foraDaJanela, venceHoje, vencido, semValidade));
 
         AlertasCapacitacaoOutputDTO alertas = service.consultarAlertas();

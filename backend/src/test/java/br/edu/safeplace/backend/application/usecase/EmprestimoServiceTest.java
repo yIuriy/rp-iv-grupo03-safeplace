@@ -350,7 +350,7 @@ class EmprestimoServiceTest {
         epis.salvar(epi("Manutenção", 2, StatusEpi.EM_MANUTENCAO, LocalDate.now().plusYears(1), ClassificacaoEPI.PROTECAO_DE_FACE));
         epis.salvar(epi("CA vencido", 2, StatusEpi.DISPONIVEL, LocalDate.now().minusDays(1), ClassificacaoEPI.PROTECAO_DE_FACE));
 
-        assertThat(useCase.listarEpisDisponiveisParaEmprestimo()).singleElement()
+        assertThat(useCase.listarEpisDisponiveis()).singleElement()
                 .satisfies(epi -> assertThat(epi.nome()).isEqualTo("Capacete"));
     }
 

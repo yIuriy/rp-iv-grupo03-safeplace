@@ -246,7 +246,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public List<EpiOutputDTO> listarEpisDisponiveisParaEmprestimo() {
+    public List<EpiOutputDTO> listarEpisDisponiveis() {
         LocalDate hoje = LocalDate.now(clock);
         return epis.listar().stream()
                 .filter(epi -> epi.getStatus() == StatusEpi.DISPONIVEL)

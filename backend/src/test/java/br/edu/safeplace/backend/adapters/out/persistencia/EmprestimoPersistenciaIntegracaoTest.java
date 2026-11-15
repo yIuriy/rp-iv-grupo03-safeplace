@@ -92,7 +92,7 @@ class EmprestimoPersistenciaIntegracaoTest {
         usuarios.salvar(Supervisor.novo("Bruno Empréstimo", CPF_SUPERVISOR, LocalDate.of(1985, 3, 10), EMAIL_SUPERVISOR, "hash"));
         colaboradorId = usuarios.salvar(Colaborador.novo("Carlos Empréstimo", CPF_COLABORADOR, LocalDate.of(1992, 6, 18), null)).getId();
         colaborador2Id = usuarios.salvar(Colaborador.novo("Maria Empréstimo", CPF_COLABORADOR_2, LocalDate.of(1995, 8, 20), null)).getId();
-        capaceteId = epis.cadastrarEpi(new CadastrarEpiInputDTO("Capacete", "12345", 3, 1,
+        capaceteId = epis.cadastrar(new CadastrarEpiInputDTO("Capacete", "12345", 3, 1,
                 LocalDate.now().plusYears(1), 365, "Capacete classe B", ClassificacaoEPI.PROTECAO_DE_CABECA)).id();
     }
 
@@ -147,7 +147,7 @@ class EmprestimoPersistenciaIntegracaoTest {
         assertThat(saldo()).isEqualTo(3);
         assertThat(jdbc.queryForObject("SELECT estado_devolucao FROM emprestimos WHERE id = ?", String.class, entregue.id()))
                 .isEqualTo("APTO");
-        assertThat(epis.buscarHistorico(capaceteId)).hasSize(2);
+        assertThat(epis.listarHistorico(capaceteId)).hasSize(2);
         assertThat(emprestimos.listar(Situacao.PENDENTES, colaboradorId)).isEmpty();
     }
 
@@ -159,7 +159,7 @@ class EmprestimoPersistenciaIntegracaoTest {
         emprestimos.registrarDevolucao(entregue.id(), new RegistrarDevolucaoInputDTO(EstadoDevolucao.MANUTENCAO), EMAIL_SUPERVISOR);
 
         assertThat(saldo()).isEqualTo(2);
-        assertThat(epis.buscarHistorico(capaceteId)).hasSize(1);
+        assertThat(epis.listarHistorico(capaceteId)).hasSize(1);
         assertThat(emprestimos.buscarPorId(entregue.id()).estadoDevolucao()).isEqualTo(EstadoDevolucao.MANUTENCAO);
     }
 
@@ -212,7 +212,7 @@ class EmprestimoPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Duas entregas concorrentes não consomem a mesma disponibilidade: apenas uma confirma e saldo final é zero")
     void duasEntregasConcorrentesNaoConsomemMesmaDisponibilidade() throws Exception {
-        Integer epiUnicoId = epis.cadastrarEpi(new CadastrarEpiInputDTO("Luva de Raspa", "54321", 1, 1,
+        Integer epiUnicoId = epis.cadastrar(new CadastrarEpiInputDTO("Luva de Raspa", "54321", 1, 1,
                 LocalDate.now().plusYears(1), 180, "Luva proteção", ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES)).id();
 
         int threads = 2;
@@ -280,7 +280,7 @@ class EmprestimoPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Devolução repetida concorrente não duplica crédito de estoque: apenas uma confirma e saldo final é consistente")
     void devolucaoRepetidaConcorrenteNaoDuplicaCredito() throws Exception {
-        Integer epiUnicoId = epis.cadastrarEpi(new CadastrarEpiInputDTO("Óculos de Proteção", "99999", 1, 1,
+        Integer epiUnicoId = epis.cadastrar(new CadastrarEpiInputDTO("Óculos de Proteção", "99999", 1, 1,
                 LocalDate.now().plusYears(1), 180, "Óculos", ClassificacaoEPI.PROTECAO_DE_OLHOS)).id();
 
         EmprestimoOutputDTO entregue = emprestimos.registrarEntrega(
@@ -407,7 +407,7 @@ class EmprestimoPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Itens devolvidos para manutenção não aparecem automaticamente disponíveis")
     void itensDevolvidosParaManutencaoNaoAparecemAutomaticamenteDisponiveis() {
-        Integer epiUnicoId = epis.cadastrarEpi(new CadastrarEpiInputDTO("Abafador", "88888", 1, 1,
+        Integer epiUnicoId = epis.cadastrar(new CadastrarEpiInputDTO("Abafador", "88888", 1, 1,
                 LocalDate.now().plusYears(1), 180, "Abafador auricular", ClassificacaoEPI.PROTECAO_AUDITIVA)).id();
 
         EmprestimoOutputDTO entregue = emprestimos.registrarEntrega(
@@ -420,7 +420,7 @@ class EmprestimoPersistenciaIntegracaoTest {
         int saldoAposManutencao = jdbc.queryForObject("SELECT quantidade FROM epis WHERE id = ?", Integer.class, epiUnicoId);
         assertThat(saldoAposManutencao).isZero();
 
-        List<EpiOutputDTO> disponiveis = emprestimos.listarEpisDisponiveisParaEmprestimo();
+        List<EpiOutputDTO> disponiveis = emprestimos.listarEpisDisponiveis();
         assertThat(disponiveis).extracting(EpiOutputDTO::id).doesNotContain(epiUnicoId);
     }
 

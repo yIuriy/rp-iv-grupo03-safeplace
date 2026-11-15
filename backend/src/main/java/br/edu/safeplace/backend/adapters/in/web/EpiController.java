@@ -32,7 +32,7 @@ public class EpiController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Cadastra um novo EPI")
     public EpiResponse criar(@Valid @RequestBody CriarEpiRequest request) {
-        EpiOutputDTO salvo = useCase.cadastrarEpi(request.toInputDTO());
+        EpiOutputDTO salvo = useCase.cadastrar(request.toInputDTO());
         return EpiResponse.fromOutputDTO(salvo);
     }
 
@@ -69,7 +69,7 @@ public class EpiController {
     @GetMapping("/{id}/movimentacoes")
     @Operation(summary = "Consulta o histórico de movimentações de estoque do EPI")
     public List<MovimentacaoEstoqueResponse> buscarHistorico(@PathVariable Integer id) {
-        return useCase.buscarHistorico(id).stream()
+        return useCase.listarHistorico(id).stream()
                 .map(MovimentacaoEstoqueResponse::fromOutputDTO)
                 .toList();
     }
@@ -80,7 +80,7 @@ public class EpiController {
     public ManutencaoEpiResponse registrarManutencao(@PathVariable Integer id,
                                                       @Valid @RequestBody RegistrarManutencaoRequest request,
                                                       Authentication autenticacao) {
-        ManutencaoEpiOutputDTO manutencao = manutencaoUseCase.concluirManutencao(
+        ManutencaoEpiOutputDTO manutencao = manutencaoUseCase.concluir(
                 request.toInputDTO(id), autenticacao.getName());
         return ManutencaoEpiResponse.fromOutputDTO(manutencao);
     }
@@ -88,7 +88,7 @@ public class EpiController {
     @GetMapping("/{id}/manutencoes")
     @Operation(summary = "Consulta o histórico persistido de manutenção do EPI")
     public List<ManutencaoEpiResponse> listarHistoricoManutencao(@PathVariable Integer id) {
-        return manutencaoUseCase.listarHistoricoPorEpi(id).stream()
+        return manutencaoUseCase.listarPorEpi(id).stream()
                 .map(ManutencaoEpiResponse::fromOutputDTO)
                 .toList();
     }

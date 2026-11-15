@@ -104,7 +104,7 @@ class CertificacaoVencimentoClockTest {
                 new Certificacao(4, "NR-12", hoje.plusMonths(6), hoje.minusMonths(6), pessoa(10))
         );
 
-        List<Certificacao> listadas = consultarService.listarCertificacoesDoColaborador(10);
+        List<Certificacao> listadas = consultarService.listarCertificacoes(10);
         assertThat(listadas).hasSize(4);
 
         assertThat(listadas.stream().filter(c -> c.getId() == 1).findFirst().orElseThrow().getStatus())

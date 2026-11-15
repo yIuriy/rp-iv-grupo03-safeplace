@@ -8,11 +8,11 @@ import br.edu.safeplace.backend.domain.epi.TipoMovimentacao;
 import java.util.List;
 
 public interface GerenciarEpiUseCase {
-    EpiOutputDTO cadastrarEpi(CadastrarEpiInputDTO inputDTO);
+    EpiOutputDTO cadastrar(CadastrarEpiInputDTO inputDTO);
     List<EpiOutputDTO> listar();
     EpiOutputDTO buscarPorId(Integer id);
     MovimentacaoEstoqueOutputDTO registrarMovimentacao(Integer epiId, TipoMovimentacao tipo, int quantidade, String motivo);
     MovimentacaoEstoqueOutputDTO registrarMovimentacao(Integer epiId, TipoMovimentacao tipo, int quantidade,
                                                         String motivo, String responsavelEmail);
-    List<MovimentacaoEstoqueOutputDTO> buscarHistorico(Integer epiId);
+    List<MovimentacaoEstoqueOutputDTO> listarHistorico(Integer epiId);
 }

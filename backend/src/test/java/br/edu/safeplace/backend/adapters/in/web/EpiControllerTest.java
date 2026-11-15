@@ -53,7 +53,7 @@ class EpiControllerTest {
         EpiOutputDTO epiSalvo = new EpiOutputDTO(1, "Capacete H-700", "CA-12345", 20, 5,
                 StatusEpi.DISPONIVEL, LocalDate.of(2028, 6, 30), 365, false, null, null);
 
-        when(useCase.cadastrarEpi(any(CadastrarEpiInputDTO.class))).thenReturn(epiSalvo);
+        when(useCase.cadastrar(any(CadastrarEpiInputDTO.class))).thenReturn(epiSalvo);
 
         String jsonRequest = """
                 {
@@ -183,7 +183,7 @@ class EpiControllerTest {
     void deveConsultarHistoricoDeMovimentacoes() throws Exception {
         MovimentacaoEstoqueOutputDTO movimento = new MovimentacaoEstoqueOutputDTO(5, 1,
                 TipoMovimentacao.ENTRADA, 10, LocalDateTime.of(2026, 9, 22, 9, 0), "Reposição", 30);
-        when(useCase.buscarHistorico(1)).thenReturn(List.of(movimento));
+        when(useCase.listarHistorico(1)).thenReturn(List.of(movimento));
 
         mockMvc.perform(get("/api/epis/1/movimentacoes"))
                 .andExpect(status().isOk())
@@ -198,7 +198,7 @@ class EpiControllerTest {
                 10, 1, LocalDateTime.of(2026, 9, 21, 10, 30), null,
                 "Higienização e inspeção", ResultadoManutencao.APROVADO,
                 "gestor@safeplace.com", 2, StatusEpi.DISPONIVEL);
-        when(manutencaoUseCase.concluirManutencao(any(), eq("user"))).thenReturn(manutencao);
+        when(manutencaoUseCase.concluir(any(), eq("user"))).thenReturn(manutencao);
 
         mockMvc.perform(post("/api/epis/1/manutencoes")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -221,7 +221,7 @@ class EpiControllerTest {
                 10, 1, LocalDateTime.of(2026, 9, 21, 10, 30), null,
                 "Higienização e inspeção", ResultadoManutencao.APROVADO,
                 "gestor@safeplace.com", 2, StatusEpi.DISPONIVEL);
-        when(manutencaoUseCase.listarHistoricoPorEpi(1)).thenReturn(List.of(manutencao));
+        when(manutencaoUseCase.listarPorEpi(1)).thenReturn(List.of(manutencao));
 
         mockMvc.perform(get("/api/epis/1/manutencoes"))
                 .andExpect(status().isOk())

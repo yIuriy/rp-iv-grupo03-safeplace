@@ -72,7 +72,7 @@ public class EmprestimoController {
     @GetMapping("/epis-disponiveis")
     @Operation(summary = "Lista os EPIs disponíveis para empréstimo (passo 4 do UC12)")
     public List<EpiResponse> listarEpisDisponiveis() {
-        return useCase.listarEpisDisponiveisParaEmprestimo().stream()
+        return useCase.listarEpisDisponiveis().stream()
                 .map(EpiResponse::fromOutputDTO)
                 .toList();
     }

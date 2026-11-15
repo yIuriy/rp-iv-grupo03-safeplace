@@ -203,7 +203,7 @@ class PlanejarSubstituicaoUseCaseTest {
         when(epiRepository.listar()).thenReturn(List.of(epi));
         when(projecaoRepository.buscarUltimaPorEpi(1)).thenReturn(Optional.of(projecao));
 
-        List<AlertaSubstituicaoOutputDTO> alertas = useCase.emitirAlertasPreventivos(hoje);
+        List<AlertaSubstituicaoOutputDTO> alertas = useCase.emitirAlertas(hoje);
 
         assertNotNull(alertas);
         // Espera alerta de estoque crítico (1 <= 5), descarte próximo (20 dias) e CA próximo (25 dias)
@@ -270,7 +270,7 @@ class PlanejarSubstituicaoUseCaseTest {
         when(epiRepository.listar()).thenReturn(List.of(epi));
         when(projecaoRepository.listar()).thenReturn(List.of(projecao));
 
-        List<ProjecaoSubstituicaoOutputDTO> lista = useCase.listarProjecoes();
+        List<ProjecaoSubstituicaoOutputDTO> lista = useCase.listar();
 
         assertNotNull(lista);
         assertEquals(1, lista.size());

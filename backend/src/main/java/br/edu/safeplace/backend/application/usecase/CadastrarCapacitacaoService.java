@@ -103,7 +103,7 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
     }
 
     @Override
-    public CertificacaoOutputDTO cadastrarCertificacao(CadastrarCertificacaoInputDTO entrada) {
+    public CertificacaoOutputDTO cadastrar(CadastrarCertificacaoInputDTO entrada) {
         LocalDate hoje = LocalDate.now(clock);
         Colaborador colaborador = resolverColaborador(entrada.colaboradorId());
         Certificacao nova = Certificacao.cadastrar(
@@ -117,7 +117,7 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
     }
 
     @Override
-    public TreinamentoOutputDTO cadastrarTreinamento(CadastrarTreinamentoInputDTO entrada) {
+    public TreinamentoOutputDTO cadastrar(CadastrarTreinamentoInputDTO entrada) {
         List<Colaborador> colaboradores = resolverColaboradores(entrada.colaboradoresIds());
         Treinamento novo = Treinamento.cadastrar(entrada.nome(), entrada.conteudo(), entrada.instrutor(),
                 entrada.dataRealizacao(), entrada.cargaHoraria(), entrada.validadeMeses(), colaboradores);
@@ -129,7 +129,7 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
     }
 
     @Override
-    public ExigenciaCapacitacaoOutputDTO definirExigencia(DefinirExigenciaInputDTO entrada) {
+    public ExigenciaCapacitacaoOutputDTO cadastrar(DefinirExigenciaInputDTO entrada) {
         ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(null, entrada.nomeCapacitacao(),
                 entrada.tipoCapacitacao(), entrada.alvoId(), entrada.alvo());
         exigenciaValidador.validar(exigencia);

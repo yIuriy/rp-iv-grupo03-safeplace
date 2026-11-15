@@ -66,7 +66,7 @@ class ManutencaoEpiPersistenciaIntegracaoTest {
     @BeforeEach
     void cadastrarEpi() {
         limparRegistrosDoTeste();
-        epiId = epis.cadastrarEpi(new CadastrarEpiInputDTO(
+        epiId = epis.cadastrar(new CadastrarEpiInputDTO(
                 "Cinto paraquedista", Integer.toString(CA_TESTE), 4, 1, LocalDate.now().plusYears(1), 730,
                 "Cinto para trabalho em altura", ClassificacaoEPI.PROTECAO_CONTRA_QUEDAS)).id();
     }
@@ -87,9 +87,9 @@ class ManutencaoEpiPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Manutenção aprovada fica no banco com o responsável e devolve o EPI à disponibilidade")
     void manutencaoAprovadaPersisteHistoricoEResponsavel() {
-        manutencoes.concluirManutencao(manutencao(ResultadoManutencao.APROVADO), GESTOR_DEMO);
+        manutencoes.concluir(manutencao(ResultadoManutencao.APROVADO), GESTOR_DEMO);
 
-        List<ManutencaoEpiOutputDTO> historico = manutencoes.listarHistoricoPorEpi(epiId);
+        List<ManutencaoEpiOutputDTO> historico = manutencoes.listarPorEpi(epiId);
         assertThat(historico).singleElement().satisfies(registro -> {
             assertThat(registro.id()).isNotNull();
             assertThat(registro.resultado()).isEqualTo(ResultadoManutencao.APROVADO);
@@ -104,9 +104,9 @@ class ManutencaoEpiPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Manutenção reprovada fica no banco e mantém o EPI indisponível, sem descarte")
     void manutencaoReprovadaMantemEpiEmManutencao() {
-        manutencoes.concluirManutencao(manutencao(ResultadoManutencao.REPROVADO), GESTOR_DEMO);
+        manutencoes.concluir(manutencao(ResultadoManutencao.REPROVADO), GESTOR_DEMO);
 
-        assertThat(manutencoes.listarHistoricoPorEpi(epiId)).singleElement()
+        assertThat(manutencoes.listarPorEpi(epiId)).singleElement()
                 .satisfies(registro -> assertThat(registro.resultado()).isEqualTo(ResultadoManutencao.REPROVADO));
         assertThat(statusNoBanco()).isEqualTo(StatusEpi.EM_MANUTENCAO.name());
         assertThat(jdbc.queryForObject("SELECT quantidade FROM epis WHERE id = ?", Integer.class, epiId))

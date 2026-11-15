@@ -33,5 +33,5 @@ public interface ControlarEmprestimoUseCase {
     List<EmprestimoOutputDTO> listar(Situacao situacao, Integer colaboradorId);
 
     /** Passo 4 do UC12: EPIs disponíveis para empréstimo (situação DISPONIVEL, saldo e CA válido). */
-    List<EpiOutputDTO> listarEpisDisponiveisParaEmprestimo();
+    List<EpiOutputDTO> listarEpisDisponiveis();
 }

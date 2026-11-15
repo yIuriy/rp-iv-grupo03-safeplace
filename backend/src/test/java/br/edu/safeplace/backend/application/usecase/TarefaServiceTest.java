@@ -225,11 +225,11 @@ class TarefaServiceTest {
         epiRepository.adicionar(capacete);
         epiRepository.adicionar(cinto);
 
-        TarefaOutputDTO resultado = useCase.associarEpis(tarefaId, List.of(1, 2));
+        TarefaOutputDTO resultado = useCase.associar(tarefaId, List.of(1, 2));
 
         assertThat(resultado.episIds()).containsExactly(1, 2);
 
-        List<EpiOutputDTO> epis = useCase.listarEpisObrigatorios(tarefaId);
+        List<EpiOutputDTO> epis = useCase.listarObrigatorios(tarefaId);
         assertThat(epis).hasSize(2);
         assertThat(epis.stream().map(EpiOutputDTO::id)).containsExactly(1, 2);
         assertThat(epis.stream().map(EpiOutputDTO::nome)).containsExactly("Capacete de Segurança", "Cinto Paraquedista");
@@ -240,7 +240,7 @@ class TarefaServiceTest {
     void deveFalharAoAssociarEpiInexistente() {
         Integer tarefaId = useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Solda", null)).id();
 
-        assertThatThrownBy(() -> useCase.associarEpis(tarefaId, List.of(999)))
+        assertThatThrownBy(() -> useCase.associar(tarefaId, List.of(999)))
                 .isInstanceOf(EpiNaoEncontradoException.class)
                 .hasMessageContaining("999");
     }
@@ -252,7 +252,7 @@ class TarefaServiceTest {
         List<Integer> ids = new ArrayList<>();
         ids.add(null);
 
-        assertThatThrownBy(() -> useCase.associarEpis(tarefaId, ids))
+        assertThatThrownBy(() -> useCase.associar(tarefaId, ids))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Identificador de EPI não pode ser nulo.");
     }
@@ -260,10 +260,10 @@ class TarefaServiceTest {
     @Test
     @DisplayName("RF12 / UC08: deve falhar ao associar EPIs a tarefa inexistente")
     void deveFalharAoAssociarEpisATarefaInexistente() {
-        assertThatThrownBy(() -> useCase.associarEpis(999, List.of(1)))
+        assertThatThrownBy(() -> useCase.associar(999, List.of(1)))
                 .isInstanceOf(TarefaNaoEncontradaException.class);
 
-        assertThatThrownBy(() -> useCase.listarEpisObrigatorios(999))
+        assertThatThrownBy(() -> useCase.listarObrigatorios(999))
                 .isInstanceOf(TarefaNaoEncontradaException.class);
     }
 
@@ -274,12 +274,12 @@ class TarefaServiceTest {
         Epi luva = epi(5, "Luva");
         epiRepository.adicionar(luva);
 
-        useCase.associarEpis(tarefaId, List.of(5));
-        assertThat(useCase.listarEpisObrigatorios(tarefaId)).hasSize(1);
+        useCase.associar(tarefaId, List.of(5));
+        assertThat(useCase.listarObrigatorios(tarefaId)).hasSize(1);
 
-        TarefaOutputDTO resultado = useCase.associarEpis(tarefaId, List.of());
+        TarefaOutputDTO resultado = useCase.associar(tarefaId, List.of());
         assertThat(resultado.episIds()).isEmpty();
-        assertThat(useCase.listarEpisObrigatorios(tarefaId)).isEmpty();
+        assertThat(useCase.listarObrigatorios(tarefaId)).isEmpty();
     }
 
     @Test
@@ -289,8 +289,8 @@ class TarefaServiceTest {
         epiRepository.adicionar(epi(5, "Luva"));
         epiRepository.adicionar(epi(6, "Cinto"));
 
-        useCase.associarEpis(tarefaId, List.of(5));
-        useCase.associarEpis(tarefaId, List.of(6));
+        useCase.associar(tarefaId, List.of(5));
+        useCase.associar(tarefaId, List.of(6));
 
         assertThat(auditoria.listarPorEntidade("Tarefa", tarefaId))
                 .extracting(LogAuditoria::getJustificativa)

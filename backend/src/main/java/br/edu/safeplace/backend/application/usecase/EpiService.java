@@ -96,7 +96,7 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
 
     @Override
     @Transactional
-    public EpiOutputDTO cadastrarEpi(CadastrarEpiInputDTO inputDTO) {
+    public EpiOutputDTO cadastrar(CadastrarEpiInputDTO inputDTO) {
         // Chain of Responsibility (#264): CA e modelo antes da busca pelo modelo existente.
         numeroCaValidador.validar(inputDTO.numeroCa());
         ModeloEPI informado = ModeloEPI.deCadastroLegado(
@@ -181,7 +181,7 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
 
     @Override
     @Transactional(readOnly = true)
-    public List<MovimentacaoEstoqueOutputDTO> buscarHistorico(Integer epiId) {
+    public List<MovimentacaoEstoqueOutputDTO> listarHistorico(Integer epiId) {
         Epi epi = repository.buscarPorId(epiId)
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId));
         int saldoAposMovimentacao = epi.getQuantidade();
@@ -226,7 +226,7 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
 
     @Override
     @Transactional
-    public MovimentacaoEstoqueOutputDTO darBaixaEstoque(
+    public MovimentacaoEstoqueOutputDTO darBaixa(
             Integer epiId,
             int quantidade,
             String motivo) {
@@ -239,7 +239,7 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
 
     @Override
     @Transactional(readOnly = true)
-    public int consultarSaldoDisponivel(Integer epiId) {
+    public int consultarSaldo(Integer epiId) {
         return repository.buscarPorId(epiId)
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId))
                 .getQuantidade();

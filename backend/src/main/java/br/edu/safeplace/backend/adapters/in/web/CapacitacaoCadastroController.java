@@ -45,7 +45,7 @@ public class CapacitacaoCadastroController {
             @ApiResponse(responseCode = "403", description = "Perfil sem permissão")
     })
     public CertificacaoOutputDTO cadastrarCertificacao(@Valid @RequestBody CadastrarCertificacaoInputDTO entrada) {
-        return cadastrarUseCase.cadastrarCertificacao(entrada);
+        return cadastrarUseCase.cadastrar(entrada);
     }
 
     @PostMapping("/treinamentos")
@@ -58,7 +58,7 @@ public class CapacitacaoCadastroController {
             @ApiResponse(responseCode = "403", description = "Perfil sem permissão")
     })
     public TreinamentoOutputDTO cadastrarTreinamento(@Valid @RequestBody CadastrarTreinamentoInputDTO entrada) {
-        return cadastrarUseCase.cadastrarTreinamento(entrada);
+        return cadastrarUseCase.cadastrar(entrada);
     }
 
     @PostMapping("/exigencias")
@@ -70,6 +70,6 @@ public class CapacitacaoCadastroController {
             @ApiResponse(responseCode = "403", description = "Perfil sem permissão")
     })
     public ExigenciaCapacitacaoOutputDTO definirExigencia(@Valid @RequestBody DefinirExigenciaInputDTO entrada) {
-        return cadastrarUseCase.definirExigencia(entrada);
+        return cadastrarUseCase.cadastrar(entrada);
     }
 }

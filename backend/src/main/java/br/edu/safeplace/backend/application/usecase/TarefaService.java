@@ -188,7 +188,7 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
 
     @Override
     @Transactional
-    public TarefaOutputDTO associarEpis(Integer tarefaId, List<Integer> epiIds) {
+    public TarefaOutputDTO associar(Integer tarefaId, List<Integer> epiIds) {
         Tarefa tarefa = buscarTarefa(tarefaId);
         List<Epi> epis = resolverEpis(epiIds);
         String anteriores = descreverEpis(tarefa.verificarEpisObrigatoriosTarefa());
@@ -213,7 +213,7 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
 
     @Override
     @Transactional(readOnly = true)
-    public List<EpiOutputDTO> listarEpisObrigatorios(Integer tarefaId) {
+    public List<EpiOutputDTO> listarObrigatorios(Integer tarefaId) {
         Tarefa tarefa = buscarTarefa(tarefaId);
         return tarefa.verificarEpisObrigatoriosTarefa().stream()
                 .map(EpiOutputDTO::deDominio)

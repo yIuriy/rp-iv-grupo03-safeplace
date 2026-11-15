@@ -22,6 +22,9 @@ import br.edu.safeplace.backend.application.dto.capacitacao.ColaboradorCapacitac
 import br.edu.safeplace.backend.application.dto.capacitacao.ExigenciaCapacitacaoOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.PendenciaColaboradorOutputDTO;
 import br.edu.safeplace.backend.application.dto.capacitacao.TreinamentoOutputDTO;
+import br.edu.safeplace.backend.application.dto.input.CadastrarCertificacaoInputDTO;
+import br.edu.safeplace.backend.application.dto.input.CadastrarTreinamentoInputDTO;
+import br.edu.safeplace.backend.application.dto.input.DefinirExigenciaInputDTO;
 import br.edu.safeplace.backend.application.dto.output.ConsultaAptidaoOutputDTO;
 import br.edu.safeplace.backend.application.port.in.AlocarColaboradorTarefaUseCase;
 import br.edu.safeplace.backend.application.port.in.capacitacao.AcompanharCapacitacoesUseCase;
@@ -209,11 +212,11 @@ class CapacitacaoControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("#192: Gestor cadastra certificação, treinamento e exigência")
     void gestorDeveCadastrar() throws Exception {
-        when(cadastrarUseCase.cadastrarCertificacao(any())).thenReturn(
+        when(cadastrarUseCase.cadastrar(any(CadastrarCertificacaoInputDTO.class))).thenReturn(
                 new CertificacaoOutputDTO(1, "NR-35", StatusCertificacao.EM_DIA, VENCIMENTO.plusYears(1), VENCIMENTO.minusYears(1)));
-        when(cadastrarUseCase.cadastrarTreinamento(any())).thenReturn(new TreinamentoOutputDTO(
+        when(cadastrarUseCase.cadastrar(any(CadastrarTreinamentoInputDTO.class))).thenReturn(new TreinamentoOutputDTO(
                 2, "NR-10", null, null, VENCIMENTO.minusDays(5), 8, 12, VENCIMENTO.plusMonths(12), StatusTreinamento.REALIZADO));
-        when(cadastrarUseCase.definirExigencia(any())).thenReturn(new ExigenciaCapacitacaoOutputDTO(
+        when(cadastrarUseCase.cadastrar(any(DefinirExigenciaInputDTO.class))).thenReturn(new ExigenciaCapacitacaoOutputDTO(
                 3, "NR-35", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, ExigenciaCapacitacao.TipoAlvo.TAREFA, 5));
 
         mockMvc.perform(post("/api/capacitacoes/certificacoes").contentType(MediaType.APPLICATION_JSON)

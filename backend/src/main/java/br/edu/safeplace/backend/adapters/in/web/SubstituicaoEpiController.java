@@ -60,7 +60,7 @@ public class SubstituicaoEpiController {
     @GetMapping
     @Operation(summary = "Lista todas as projeções de substituição registradas no histórico")
     public ResponseEntity<List<ProjecaoSubstituicaoOutputDTO>> listarProjecoes() {
-        return ResponseEntity.ok(planejarSubstituicaoUseCase.listarProjecoes());
+        return ResponseEntity.ok(planejarSubstituicaoUseCase.listar());
     }
 
     /**
@@ -69,7 +69,7 @@ public class SubstituicaoEpiController {
     @GetMapping("/epi/{epiId}")
     @Operation(summary = "Lista o histórico de projeções de um EPI específico")
     public ResponseEntity<List<ProjecaoSubstituicaoOutputDTO>> listarPorEpi(@PathVariable Integer epiId) {
-        return ResponseEntity.ok(planejarSubstituicaoUseCase.listarProjecoesPorEpi(epiId));
+        return ResponseEntity.ok(planejarSubstituicaoUseCase.listarPorEpi(epiId));
     }
 
     /**
@@ -84,6 +84,6 @@ public class SubstituicaoEpiController {
         if (dataReferencia == null) {
             dataReferencia = LocalDate.now();
         }
-        return ResponseEntity.ok(planejarSubstituicaoUseCase.emitirAlertasPreventivos(dataReferencia));
+        return ResponseEntity.ok(planejarSubstituicaoUseCase.emitirAlertas(dataReferencia));
     }
 }
