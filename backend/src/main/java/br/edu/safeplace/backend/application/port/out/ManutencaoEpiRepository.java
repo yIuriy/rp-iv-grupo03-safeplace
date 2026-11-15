@@ -8,5 +8,5 @@ import java.util.Optional;
 public interface ManutencaoEpiRepository {
     ManutencaoEpi salvar(ManutencaoEpi manutencao);
     Optional<ManutencaoEpi> buscarPorId(Integer id);
-    List<ManutencaoEpi> listarPorEpiId(Integer epiId);
+    List<ManutencaoEpi> listarPorEpi(Integer epiId);
 }

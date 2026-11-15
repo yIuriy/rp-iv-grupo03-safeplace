@@ -28,7 +28,7 @@ public class SetorJpaAdapter implements SetorRepository {
     }
 
     @Override
-    public List<Setor> listarTodos() {
+    public List<Setor> listar() {
         return jpaRepository.findAll();
     }
 

@@ -56,7 +56,7 @@ class ProjecaoSubstituicaoPersistenciaIntegracaoTest {
                 "Descrição",
                 ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES
         );
-        var epiSalvo = gerenciarEpiUseCase.cadastrarEpi(dto);
+        var epiSalvo = gerenciarEpiUseCase.cadastrar(dto);
 
         // Cria e salva a projeção
         ProjecaoSubstituicao projecao = ProjecaoSubstituicao.nova(

@@ -142,7 +142,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
                 "Empréstimo ao colaborador " + beneficiario.getNome(), operador);
         movimentacaoValidador.validar(saida);
         epis.atualizarSaldo(epi);
-        epis.salvarMovimentacao(saida);
+        epis.salvar(saida);
 
         Emprestimo salvo = emprestimos.salvar(emprestimo);
         auditoria.por(operadorEmail).cadastro(ENTIDADE_AUDITADA, salvo.getId(),
@@ -172,7 +172,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
                     "Devolução do empréstimo " + emprestimoId + " (item apto)", operador);
             movimentacaoValidador.validar(retorno);
             epis.atualizarSaldo(epi);
-            epis.salvarMovimentacao(retorno);
+            epis.salvar(retorno);
         } else if (estado == EstadoDevolucao.MANUTENCAO) {
             ManutencaoEpi manutencao = ManutencaoEpi.novo(
                     epi.getId(),
@@ -199,7 +199,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
                     "Baixa por descarte na devolução do empréstimo " + emprestimoId
             );
             movimentacaoValidador.validar(baixaDescarte);
-            epis.salvarMovimentacao(baixaDescarte);
+            epis.salvar(baixaDescarte);
             epi.registrarDevolucaoDescarte();
             epis.salvar(epi);
         }
@@ -233,7 +233,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
         LocalDate hoje = LocalDate.now();
         List<Emprestimo> base = colaboradorId != null
                 ? emprestimos.listarPorColaborador(colaboradorId)
-                : emprestimos.listarTodos();
+                : emprestimos.listar();
         return base.stream()
                 .filter(emprestimo -> switch (filtro) {
                     case TODOS -> true;
@@ -246,9 +246,9 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public List<EpiOutputDTO> listarEpisDisponiveisParaEmprestimo() {
+    public List<EpiOutputDTO> listarEpisDisponiveis() {
         LocalDate hoje = LocalDate.now(clock);
-        return epis.listarTodos().stream()
+        return epis.listar().stream()
                 .filter(epi -> epi.getStatus() == StatusEpi.DISPONIVEL)
                 .filter(epi -> epi.getQuantidade() >= Emprestimo.QUANTIDADE_POR_EMPRESTIMO)
                 .filter(epi -> epi.getModelo().verificarCA(hoje))
@@ -271,7 +271,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
             throw new EntregaImpedidaException("O EPI " + epi.getNome()
                     + " possui Certificado de Aprovação vencido e não pode ser entregue.");
         }
-        List<String> pendencias = capacitacoes.impedimentosParaEntrega(beneficiario.getId(), epi.getId());
+        List<String> pendencias = capacitacoes.listarParaEntrega(beneficiario.getId(), epi.getId());
         if (!pendencias.isEmpty()) {
             throw new EntregaImpedidaException("Impedimento normativo: o colaborador " + beneficiario.getNome()
                     + " não atende às capacitações exigidas pelo EPI: " + String.join("; ", pendencias) + ".");
@@ -281,7 +281,7 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
     /** UC12, exceção III: mesmo tipo é a classificação da EspecificacaoEPI, com fallback para o mesmo EPI quando ausente. */
     private void verificarDuplicidadeDeTipo(Epi epi, Colaborador beneficiario, RegistrarEntregaInputDTO entrada) {
         ClassificacaoEPI tipo = epi.getEspecificacao() != null ? epi.getEspecificacao().getClassificacao() : null;
-        Optional<Emprestimo> duplicado = emprestimos.listarAtivosPorColaborador(beneficiario.getId()).stream()
+        Optional<Emprestimo> duplicado = emprestimos.listarAtivos(beneficiario.getId()).stream()
                 .filter(ativo -> epis.buscarPorId(ativo.getEpiId())
                         .map(outro -> {
                             if (tipo != null && outro.getEspecificacao() != null && outro.getEspecificacao().getClassificacao() != null) {

@@ -104,10 +104,10 @@ class OcorrenciaUseCaseAuditoriaTest {
                 .destino("Hospital")
                 .gravidade(NivelPerigo.ALTO)
                 .build();
-        when(repository.salvarAcidente(any(Acidente.class))).thenReturn(salvo);
+        when(repository.salvar(any(Acidente.class))).thenReturn(salvo);
         when(repository.proximoSequencialCAT(anyInt(), anyInt())).thenReturn(1L);
 
-        OcorrenciaOutputDTO dto = useCase.registrarAcidente(input);
+        OcorrenciaOutputDTO dto = useCase.registrar(input);
 
         assertThat(dto.idOcorrencia()).isEqualTo(1);
 
@@ -145,9 +145,9 @@ class OcorrenciaUseCaseAuditoriaTest {
                 .situacaoRisco("Vazamento de faíscas")
                 .potencialDano("Incêndio")
                 .build();
-        when(repository.salvarIncidente(any(Incidente.class))).thenReturn(salvo);
+        when(repository.salvar(any(Incidente.class))).thenReturn(salvo);
 
-        OcorrenciaOutputDTO dto = useCase.registrarIncidente(input);
+        OcorrenciaOutputDTO dto = useCase.registrar(input);
 
         assertThat(dto.idOcorrencia()).isEqualTo(2);
 
@@ -176,7 +176,7 @@ class OcorrenciaUseCaseAuditoriaTest {
                 .gravidade(NivelPerigo.BAIXO)
                 .build();
         when(repository.buscarPorId(3)).thenReturn(Optional.of(acidente));
-        when(repository.salvarAcidente(any(Acidente.class))).thenReturn(acidente);
+        when(repository.salvar(any(Acidente.class))).thenReturn(acidente);
 
         useCase.enviarParaTriagem(3);
 
@@ -206,7 +206,7 @@ class OcorrenciaUseCaseAuditoriaTest {
                 .gravidade(NivelPerigo.BAIXO)
                 .build();
         when(repository.buscarPorId(4)).thenReturn(Optional.of(acidente));
-        when(repository.salvarAcidente(any(Acidente.class))).thenReturn(acidente);
+        when(repository.salvar(any(Acidente.class))).thenReturn(acidente);
 
         useCase.arquivar(4);
 
@@ -237,7 +237,7 @@ class OcorrenciaUseCaseAuditoriaTest {
                 .build();
         when(repository.buscarAcidentePorId(5)).thenReturn(Optional.of(acidente));
         when(repository.proximoSequencialCAT(anyInt(), anyInt())).thenReturn(1L);
-        when(repository.salvarAcidente(any(Acidente.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(repository.salvar(any(Acidente.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         useCase.consolidarCAT(5);
 

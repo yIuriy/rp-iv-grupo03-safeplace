@@ -54,7 +54,7 @@ class RelatorioAreasRiscoTest {
         AreaRisco baixa = area(1, "SET-01", NivelPerigo.BAIXO);
         AreaRisco critica = area(2, "SET-02", NivelPerigo.CRITICO);
         AreaRisco media = area(3, "SET-03", NivelPerigo.MEDIO);
-        when(areas.listarTodas()).thenReturn(List.of(baixa, critica, media));
+        when(areas.listar()).thenReturn(List.of(baixa, critica, media));
         when(ocorrencias.listar(any(FiltroOcorrenciasDTO.class))).thenReturn(List.of(
                 Acidente.builder().idOcorrencia(1).dataOcorrencia(LocalDateTime.of(2026, 11, 2, 8, 0))
                         .gravidade(NivelPerigo.ALTO).area(baixa).build(),

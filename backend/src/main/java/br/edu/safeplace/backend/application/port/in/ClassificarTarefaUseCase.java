@@ -17,13 +17,13 @@ import br.edu.safeplace.backend.domain.comum.NivelPerigo;
  */
 public interface ClassificarTarefaUseCase {
 
-    TarefaOutputDTO cadastrarTarefa(CadastrarTarefaInputDTO inputDTO);
+    TarefaOutputDTO cadastrar(CadastrarTarefaInputDTO inputDTO);
 
-    default TarefaOutputDTO atualizarTarefa(Integer id, AtualizarTarefaInputDTO inputDTO) {
-        return atualizarTarefa(id, inputDTO, null);
+    default TarefaOutputDTO atualizar(Integer id, AtualizarTarefaInputDTO inputDTO) {
+        return atualizar(id, inputDTO, null);
     }
 
-    TarefaOutputDTO atualizarTarefa(Integer id, AtualizarTarefaInputDTO inputDTO, String operador);
+    TarefaOutputDTO atualizar(Integer id, AtualizarTarefaInputDTO inputDTO, String operador);
 
     List<TarefaOutputDTO> listar();
 

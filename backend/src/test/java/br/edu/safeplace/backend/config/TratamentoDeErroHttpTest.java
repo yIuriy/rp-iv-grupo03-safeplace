@@ -68,7 +68,7 @@ class TratamentoDeErroHttpTest {
 
         if (perfil != null) {
             builder.header("Authorization", "Bearer "
-                    + gerenciadorToken.gerarToken(perfil.name().toLowerCase() + "@safeplace.test", perfil.name()));
+                    + gerenciadorToken.gerar(perfil.name().toLowerCase() + "@safeplace.test", perfil.name()));
         }
 
         try {

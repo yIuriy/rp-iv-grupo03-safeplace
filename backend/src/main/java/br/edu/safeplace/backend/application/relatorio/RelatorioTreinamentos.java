@@ -51,14 +51,14 @@ public class RelatorioTreinamentos extends Relatorio<RelatorioTreinamentos.Dados
 
     @Override
     protected Dados buscar(PeriodoRelatorio periodo) {
-        List<Treinamento> realizados = capacitacoes.listarTodosTreinamentos().stream()
+        List<Treinamento> realizados = capacitacoes.listarTreinamentos().stream()
                 .filter(t -> periodo.contem(t.getDataRealizacao()))
                 .sorted(Comparator.comparing(Treinamento::getDataRealizacao).thenComparing(Treinamento::getNome))
                 .toList();
-        Map<Integer, String> nomes = usuarios.listarTodos().stream()
+        Map<Integer, String> nomes = usuarios.listar().stream()
                 .filter(c -> c.getId() != null)
                 .collect(Collectors.toMap(Colaborador::getId, Colaborador::getNome, (a, b) -> a));
-        return new Dados(realizados, capacitacoes.listarTodasCertificacoes(), nomes, periodo.fim());
+        return new Dados(realizados, capacitacoes.listarCertificacoes(), nomes, periodo.fim());
     }
 
     @Override

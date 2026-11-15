@@ -31,12 +31,12 @@ public class NotificacaoAcaoService implements EmitirAlertasPrazoUseCase, Consul
 
     @Override
     @Transactional
-    public int emitirAlertasDePrazo(LocalDate dataReferencia) {
+    public int emitir(LocalDate dataReferencia) {
         if (dataReferencia == null) {
             throw new IllegalArgumentException("A data de referência é obrigatória.");
         }
         int emitidos = 0;
-        for (PlanoDeAcao acao : planoDeAcaoRepository.listarAbertasComAlertaAtivo()) {
+        for (PlanoDeAcao acao : planoDeAcaoRepository.listarAbertasComAlerta()) {
             boolean novo = acao.emitirAvisoPrazo(dataReferencia)
                     .map(notificadorAcao::notificar)
                     .orElse(false);

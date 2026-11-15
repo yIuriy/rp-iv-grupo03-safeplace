@@ -50,7 +50,7 @@ public class AreaRiscoController {
     })
     public AreaRiscoResponse criar(@Valid @RequestBody CriarAreaRiscoRequest request, Authentication authentication) {
         String responsavel = authentication != null ? authentication.getName() : "SISTEMA";
-        AreaRiscoOutputDTO salva = useCase.cadastrarAreaRisco(request.toInputDTO(), responsavel);
+        AreaRiscoOutputDTO salva = useCase.cadastrar(request.toInputDTO(), responsavel);
         return AreaRiscoResponse.fromOutputDTO(salva);
     }
 
@@ -68,7 +68,7 @@ public class AreaRiscoController {
             @Valid @RequestBody AtualizarAreaRiscoRequest request,
             Authentication authentication) {
         String responsavel = authentication != null ? authentication.getName() : "SISTEMA";
-        AreaRiscoOutputDTO atualizada = useCase.atualizarAreaRisco(id, request.toInputDTO(), responsavel);
+        AreaRiscoOutputDTO atualizada = useCase.atualizar(id, request.toInputDTO(), responsavel);
         return AreaRiscoResponse.fromOutputDTO(atualizada);
     }
 

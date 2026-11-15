@@ -39,7 +39,7 @@ public class EpiJpaAdapter implements EpiRepository {
     }
 
     @Override
-    public List<Epi> listarTodos() {
+    public List<Epi> listar() {
         return epiRepository.findAll();
     }
 
@@ -49,12 +49,12 @@ public class EpiJpaAdapter implements EpiRepository {
     }
 
     @Override
-    public MovimentacaoEstoque salvarMovimentacao(MovimentacaoEstoque movimentacao) {
+    public MovimentacaoEstoque salvar(MovimentacaoEstoque movimentacao) {
         return movimentacaoRepository.save(movimentacao);
     }
 
     @Override
-    public List<MovimentacaoEstoque> listarMovimentacoesPorEpi(Integer epiId) {
+    public List<MovimentacaoEstoque> listarMovimentacoes(Integer epiId) {
         return movimentacaoRepository.findByEpiIdOrderByDataHoraDesc(epiId);
     }
 

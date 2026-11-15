@@ -84,13 +84,13 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
 
     @Override
     @Transactional
-    public UsuarioOutputDTO cadastrarUsuario(CadastrarUsuarioInputDTO entrada) {
-        return cadastrarUsuario(entrada, null);
+    public UsuarioOutputDTO cadastrar(CadastrarUsuarioInputDTO entrada) {
+        return cadastrar(entrada, null);
     }
 
     @Override
     @Transactional
-    public UsuarioOutputDTO cadastrarUsuario(CadastrarUsuarioInputDTO entrada, String operador) {
+    public UsuarioOutputDTO cadastrar(CadastrarUsuarioInputDTO entrada, String operador) {
         String cpfSanitizado = Cpf.sanitizar(entrada.cpf());
 
         Colaborador novoUsuario;
@@ -121,13 +121,13 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
 
     @Override
     @Transactional
-    public UsuarioOutputDTO cadastrarSupervisor(CadastrarSupervisorInputDTO entrada) {
-        return cadastrarSupervisor(entrada, null);
+    public UsuarioOutputDTO cadastrar(CadastrarSupervisorInputDTO entrada) {
+        return cadastrar(entrada, null);
     }
 
     @Override
     @Transactional
-    public UsuarioOutputDTO cadastrarSupervisor(CadastrarSupervisorInputDTO entrada, String operador) {
+    public UsuarioOutputDTO cadastrar(CadastrarSupervisorInputDTO entrada, String operador) {
         String cpfSanitizado = Cpf.sanitizar(entrada.cpf());
 
         // RF23 / issue #91: a credencial inicial é gerada pelo sistema e só o hash é persistido.
@@ -147,13 +147,13 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
 
     @Override
     @Transactional
-    public UsuarioOutputDTO cadastrarColaborador(CadastrarColaboradorInputDTO entrada) {
-        return cadastrarColaborador(entrada, null);
+    public UsuarioOutputDTO cadastrar(CadastrarColaboradorInputDTO entrada) {
+        return cadastrar(entrada, null);
     }
 
     @Override
     @Transactional
-    public UsuarioOutputDTO cadastrarColaborador(CadastrarColaboradorInputDTO entrada, String operador) {
+    public UsuarioOutputDTO cadastrar(CadastrarColaboradorInputDTO entrada, String operador) {
         String cpfSanitizado = Cpf.sanitizar(entrada.cpf());
 
         Colaborador novoColaborador = Colaborador.novo(
@@ -245,8 +245,8 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
     }
     @Override
     @Transactional(readOnly = true)
-    public List<UsuarioOutputDTO> listarUsuarios() {
-        return repositorioPorta.listarTodos()
+    public List<UsuarioOutputDTO> listar() {
+        return repositorioPorta.listar()
                 .stream()
                 .map(UsuarioOutputDTO::deDominio)
                 .toList();

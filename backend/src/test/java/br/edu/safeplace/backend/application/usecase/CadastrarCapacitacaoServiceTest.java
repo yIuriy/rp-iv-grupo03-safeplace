@@ -52,7 +52,7 @@ class CadastrarCapacitacaoServiceTest {
         operador.autenticar("gestora@safeplace.com", "GESTOR_SEGURANCA");
         LocalDate hoje = LocalDate.now();
 
-        service.cadastrarCertificacao(new CadastrarCertificacaoInputDTO("NR-10", hoje.plusYears(1), hoje.minusDays(1), 10));
+        service.cadastrar(new CadastrarCertificacaoInputDTO("NR-10", hoje.plusYears(1), hoje.minusDays(1), 10));
 
         assertThat(auditoria.logs.get(0).getResponsavel()).isEqualTo("gestora@safeplace.com");
     }
@@ -62,7 +62,7 @@ class CadastrarCapacitacaoServiceTest {
     void semOperadorAuditoriaRegistraSistema() {
         LocalDate hoje = LocalDate.now();
 
-        service.cadastrarCertificacao(new CadastrarCertificacaoInputDTO("NR-10", hoje.plusYears(1), hoje.minusDays(1), 10));
+        service.cadastrar(new CadastrarCertificacaoInputDTO("NR-10", hoje.plusYears(1), hoje.minusDays(1), 10));
 
         assertThat(auditoria.logs.get(0).getResponsavel()).isEqualTo(OperadorAtual.SISTEMA);
     }
@@ -71,12 +71,12 @@ class CadastrarCapacitacaoServiceTest {
     @DisplayName("Deve cadastrar certificação válida e registrar log de auditoria (#121)")
     void deveCadastrarCertificacaoEAuditar() {
         LocalDate hoje = LocalDate.now();
-        CertificacaoOutputDTO cert = service.cadastrarCertificacao(new CadastrarCertificacaoInputDTO("NR-35 Trabalho em Altura", hoje.plusYears(1), hoje.minusDays(5), 10));
+        CertificacaoOutputDTO cert = service.cadastrar(new CadastrarCertificacaoInputDTO("NR-35 Trabalho em Altura", hoje.plusYears(1), hoje.minusDays(5), 10));
 
         assertThat(cert).isNotNull();
         assertThat(cert.id()).isEqualTo(1);
         assertThat(cert.nome()).isEqualTo("NR-35 Trabalho em Altura");
-        assertThat(repositorio.buscarCertificacoesPorColaborador(10)).hasSize(1);
+        assertThat(repositorio.listarCertificacoes(10)).hasSize(1);
 
         assertThat(auditoria.logs).hasSize(1);
         LogAuditoria log = auditoria.logs.get(0);
@@ -89,7 +89,7 @@ class CadastrarCapacitacaoServiceTest {
     @DisplayName("Deve recusar certificação com data de vencimento inválida (no passado) sem gerar auditoria")
     void deveRecusarCertificacaoVencidaNoCadastro() {
         LocalDate hoje = LocalDate.now();
-        assertThatThrownBy(() -> service.cadastrarCertificacao(new CadastrarCertificacaoInputDTO("NR-35", hoje.minusDays(1), hoje.minusMonths(1), 10)))
+        assertThatThrownBy(() -> service.cadastrar(new CadastrarCertificacaoInputDTO("NR-35", hoje.minusDays(1), hoje.minusMonths(1), 10)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Data de vencimento não pode ser no passado ou presente");
 
@@ -101,7 +101,7 @@ class CadastrarCapacitacaoServiceTest {
     @DisplayName("Deve cadastrar treinamento com colaboradores e registrar log de auditoria (#121)")
     void deveCadastrarTreinamentoEAuditar() {
         LocalDate hoje = LocalDate.now();
-        TreinamentoOutputDTO treino = service.cadastrarTreinamento(new CadastrarTreinamentoInputDTO("Prevenção e Combate a Incêndio", "Módulo prático", "Instrutor Bombeiro", hoje.minusDays(2), 16, 12, List.of(10, 20)));
+        TreinamentoOutputDTO treino = service.cadastrar(new CadastrarTreinamentoInputDTO("Prevenção e Combate a Incêndio", "Módulo prático", "Instrutor Bombeiro", hoje.minusDays(2), 16, 12, List.of(10, 20)));
 
         assertThat(treino).isNotNull();
         assertThat(treino.id()).isEqualTo(1);
@@ -119,7 +119,7 @@ class CadastrarCapacitacaoServiceTest {
     @CsvSource({"TAREFA,5", "EPI,8"})
     @DisplayName("Deve definir exigência para tarefa ou EPI e registrar auditoria (#121)")
     void deveDefinirExigenciaEAuditar(ExigenciaCapacitacao.TipoAlvo alvo, int alvoId) {
-        ExigenciaCapacitacaoOutputDTO ex = service.definirExigencia(
+        ExigenciaCapacitacaoOutputDTO ex = service.cadastrar(
                 new DefinirExigenciaInputDTO("NR-10", ExigenciaCapacitacao.TipoCapacitacao.CERTIFICACAO, alvo, alvoId));
 
         assertThat(ex.id()).isEqualTo(1);
@@ -139,58 +139,58 @@ class CadastrarCapacitacaoServiceTest {
         private int idSequence = 1;
 
         @Override
-        public Certificacao salvarCertificacao(Certificacao certificacao) {
+        public Certificacao salvar(Certificacao certificacao) {
             Certificacao c = new Certificacao(idSequence++, certificacao.getNome(), certificacao.getDataVencimento(), certificacao.getDataEmissao(), certificacao.getColaborador());
             certificacoes.add(c);
             return c;
         }
 
         @Override
-        public Treinamento salvarTreinamento(Treinamento treinamento) {
+        public Treinamento salvar(Treinamento treinamento) {
             Treinamento t = new Treinamento(idSequence++, treinamento.getNome(), treinamento.getConteudo(), treinamento.getInstrutor(), treinamento.getDataRealizacao(), treinamento.getCargaHoraria(), treinamento.getValidadeMeses(), treinamento.getColaboradores());
             treinamentos.add(t);
             return t;
         }
 
         @Override
-        public ExigenciaCapacitacao salvarExigencia(ExigenciaCapacitacao exigencia) {
+        public ExigenciaCapacitacao salvar(ExigenciaCapacitacao exigencia) {
             ExigenciaCapacitacao e = new ExigenciaCapacitacao(idSequence++, exigencia.getNomeCapacitacao(), exigencia.getTipoCapacitacao(), exigencia.getAlvoId(), exigencia.getAlvo());
             exigencias.add(e);
             return e;
         }
 
         @Override
-        public List<Certificacao> buscarCertificacoesPorColaborador(Integer colaboradorId) {
+        public List<Certificacao> listarCertificacoes(Integer colaboradorId) {
             return certificacoes.stream().filter(c -> c.getColaboradorId().equals(colaboradorId)).toList();
         }
 
         @Override
-        public List<Treinamento> buscarTreinamentosPorColaborador(Integer colaboradorId) {
+        public List<Treinamento> listarTreinamentos(Integer colaboradorId) {
             return treinamentos.stream().filter(t -> t.getColaboradoresIds().contains(colaboradorId)).toList();
         }
 
         @Override
-        public List<ExigenciaCapacitacao> buscarExigenciasPorAlvo(ExigenciaCapacitacao.TipoAlvo tipoAlvo, Integer alvoId) {
+        public List<ExigenciaCapacitacao> listarExigencias(ExigenciaCapacitacao.TipoAlvo tipoAlvo, Integer alvoId) {
             return exigencias.stream().filter(e -> e.getAlvo() == tipoAlvo && e.getAlvoId().equals(alvoId)).toList();
         }
 
         @Override
-        public Optional<Certificacao> buscarCertificacaoPorId(Integer id) {
+        public Optional<Certificacao> buscarCertificacao(Integer id) {
             return certificacoes.stream().filter(c -> c.getId().equals(id)).findFirst();
         }
 
         @Override
-        public Optional<Treinamento> buscarTreinamentoPorId(Integer id) {
+        public Optional<Treinamento> buscarTreinamento(Integer id) {
             return treinamentos.stream().filter(t -> t.getId().equals(id)).findFirst();
         }
 
         @Override
-        public List<Certificacao> listarTodasCertificacoes() {
+        public List<Certificacao> listarCertificacoes() {
             return new ArrayList<>(certificacoes);
         }
 
         @Override
-        public List<Treinamento> listarTodosTreinamentos() {
+        public List<Treinamento> listarTreinamentos() {
             return new ArrayList<>(treinamentos);
         }
     }

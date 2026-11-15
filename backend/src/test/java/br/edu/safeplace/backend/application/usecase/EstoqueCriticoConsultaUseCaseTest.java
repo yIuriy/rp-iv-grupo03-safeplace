@@ -62,7 +62,7 @@ class EstoqueCriticoConsultaUseCaseTest {
                 7, "49216091040", "Mariana", LocalDate.of(1988, 7, 20), EMAIL_GESTOR, "hash", true,
                 LocalDateTime.now(), LocalDateTime.now())));
         useCase = new EpiService(repositorio, usuarios, auditoria, operador.operadorAtual(usuarios));
-        EpiOutputDTO salvo = useCase.cadastrarEpi(new CadastrarEpiInputDTO(
+        EpiOutputDTO salvo = useCase.cadastrar(new CadastrarEpiInputDTO(
                 "Luva nitrílica", "12345", 10, 5, LocalDate.now().plusYears(1), 180,
                 "Luva de proteção química", ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES));
         epiId = salvo.id();
@@ -111,7 +111,7 @@ class EstoqueCriticoConsultaUseCaseTest {
         EpiOutputDTO consultado = useCase.buscarPorId(epiId);
         assertThat(consultado.quantidade()).isEqualTo(10);
         assertThat(consultado.estoqueCritico()).isFalse();
-        assertThat(useCase.buscarHistorico(epiId)).isEmpty();
+        assertThat(useCase.listarHistorico(epiId)).isEmpty();
     }
 
     /** Guarda o EPI pelo estado devolvido do domínio, como faria o adaptador JPA. */
@@ -152,7 +152,7 @@ class EstoqueCriticoConsultaUseCaseTest {
         }
 
         @Override
-        public List<Epi> listarTodos() {
+        public List<Epi> listar() {
             return new ArrayList<>(epis.values());
         }
 
@@ -162,7 +162,7 @@ class EstoqueCriticoConsultaUseCaseTest {
         }
 
         @Override
-        public MovimentacaoEstoque salvarMovimentacao(MovimentacaoEstoque movimentacao) {
+        public MovimentacaoEstoque salvar(MovimentacaoEstoque movimentacao) {
             MovimentacaoEstoque salva = new MovimentacaoEstoque(proximaMovimentacaoId++, movimentacao.getEpi(),
                     movimentacao.getLote(), movimentacao.getResponsavel(), movimentacao.getTipo(),
                     movimentacao.getQuantidade(), movimentacao.getDataHora(), movimentacao.getMotivo());
@@ -171,7 +171,7 @@ class EstoqueCriticoConsultaUseCaseTest {
         }
 
         @Override
-        public List<MovimentacaoEstoque> listarMovimentacoesPorEpi(Integer epiId) {
+        public List<MovimentacaoEstoque> listarMovimentacoes(Integer epiId) {
             return movimentacoes.stream().filter(m -> m.getEpiId().equals(epiId)).toList();
         }
     }

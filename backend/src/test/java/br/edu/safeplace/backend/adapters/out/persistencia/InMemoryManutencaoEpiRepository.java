@@ -41,7 +41,7 @@ public class InMemoryManutencaoEpiRepository implements ManutencaoEpiRepository 
     }
 
     @Override
-    public List<ManutencaoEpi> listarPorEpiId(Integer epiId) {
+    public List<ManutencaoEpi> listarPorEpi(Integer epiId) {
         if (epiId == null) {
             return Collections.emptyList();
         }

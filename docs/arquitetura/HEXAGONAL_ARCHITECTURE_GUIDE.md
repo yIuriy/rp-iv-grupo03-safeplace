@@ -182,8 +182,8 @@ sequenceDiagram
 
     User->>Ctrl: POST /api/ocorrencias (JSON payload)
     Note over Ctrl: Valida payload e autenticação JWT
-    Ctrl->>PortIn: registrarAcidente(inputDto)
-    PortIn->>UC: registrarAcidente(inputDto)
+    Ctrl->>PortIn: registrar(inputDto)
+    PortIn->>UC: registrar(inputDto)
 
     Note over UC: Valida colaborador, área e regras de relato
     UC->>Domain: new Acidente(dataOcorrencia, causa, gravidade, CAT...)
@@ -223,7 +223,7 @@ public class OcorrenciaController {
     @PostMapping
     @Operation(summary = "Registrar novo acidente de trabalho")
     public ResponseEntity<OcorrenciaOutputDTO> registrarAcidente(@Valid @RequestBody RegistrarAcidenteInputDTO dto) {
-        OcorrenciaOutputDTO resposta = registrarUseCase.registrarAcidente(dto);
+        OcorrenciaOutputDTO resposta = registrarUseCase.registrar(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
     }
 }
@@ -250,8 +250,8 @@ public record RegistrarAcidenteInputDTO(
 #### 3. Porta de Entrada (Primary Port): `application/port/in/RegistrarOcorrenciaUseCase.java`
 ```java
 public interface RegistrarOcorrenciaUseCase {
-    OcorrenciaOutputDTO registrarAcidente(RegistrarAcidenteInputDTO input);
-    OcorrenciaOutputDTO registrarIncidente(RegistrarIncidenteInputDTO input);
+    OcorrenciaOutputDTO registrar(RegistrarAcidenteInputDTO input);
+    OcorrenciaOutputDTO registrar(RegistrarIncidenteInputDTO input);
     List<OcorrenciaOutputDTO> listar();
 }
 ```
@@ -271,7 +271,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
     }
 
     @Override
-    public OcorrenciaOutputDTO registrarAcidente(RegistrarAcidenteInputDTO dto) {
+    public OcorrenciaOutputDTO registrar(RegistrarAcidenteInputDTO dto) {
         NumeroProtocoloCAT protocolo = geradorCat.proximoProtocolo(dto.dataOcorrencia());
         
         Acidente acidente = new Acidente(
@@ -321,8 +321,8 @@ public class Acidente extends Ocorrencia {
 public interface OcorrenciaRepository {
     Ocorrencia salvar(Ocorrencia ocorrencia);
     Optional<Ocorrencia> buscarPorId(Integer id);
-    Optional<Acidente> buscarAcidentePorProtocolo(NumeroProtocoloCAT protocolo);
-    List<Ocorrencia> listarTodas();
+    Optional<Ocorrencia> buscarPorProtocolo(String protocolo);
+    List<Ocorrencia> listar();
 }
 ```
 

@@ -91,7 +91,7 @@ class OcorrenciaControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("Deve registrar acidente via POST /api/ocorrencias")
     void deveRegistrarAcidente() throws Exception {
-        when(registrarUseCase.registrarAcidente(any(RegistrarAcidenteInputDTO.class)))
+        when(registrarUseCase.registrar(any(RegistrarAcidenteInputDTO.class)))
                 .thenReturn(acidenteDTO(1, "ABERTA", "CAT-2026-09-0001"));
 
         String payload = """
@@ -126,7 +126,7 @@ class OcorrenciaControllerTest {
     @WithMockUser(roles = "SUPERVISOR")
     @DisplayName("Protocolo, gestor, plano e local enviados pelo cliente não chegam ao caso de uso (issue #195)")
     void camposDefinidosPeloServidorNaoChegamAoCasoDeUso() throws Exception {
-        when(registrarUseCase.registrarAcidente(any(RegistrarAcidenteInputDTO.class)))
+        when(registrarUseCase.registrar(any(RegistrarAcidenteInputDTO.class)))
                 .thenReturn(acidenteDTO(1, "ABERTA", "CAT-2026-09-0001"));
 
         mockMvc.perform(post("/api/ocorrencias")
@@ -142,7 +142,7 @@ class OcorrenciaControllerTest {
 
         org.mockito.ArgumentCaptor<RegistrarAcidenteInputDTO> captor =
                 org.mockito.ArgumentCaptor.forClass(RegistrarAcidenteInputDTO.class);
-        verify(registrarUseCase).registrarAcidente(captor.capture());
+        verify(registrarUseCase).registrar(captor.capture());
         assertThat(captor.getValue()).isEqualTo(new RegistrarAcidenteInputDTO(
                 LocalDateTime.of(2026, 9, 10, 10, 0), "Queimadura por fagulha", "FALHA_EPI", "MEDIO",
                 null, null, null, 1, 2));
@@ -200,7 +200,7 @@ class OcorrenciaControllerTest {
     @WithMockUser(roles = "SUPERVISOR")
     @DisplayName("Gravidade ou causa raiz inválidas recusadas no caso de uso respondem 400 (issue #195)")
     void gravidadeInvalidaDeveResponder400() throws Exception {
-        when(registrarUseCase.registrarAcidente(any(RegistrarAcidenteInputDTO.class)))
+        when(registrarUseCase.registrar(any(RegistrarAcidenteInputDTO.class)))
                 .thenThrow(new DadosOcorrenciaInvalidosException(
                         "Gravidade inválida: GRAVE. Use BAIXO, MEDIO, ALTO ou CRITICO."));
 

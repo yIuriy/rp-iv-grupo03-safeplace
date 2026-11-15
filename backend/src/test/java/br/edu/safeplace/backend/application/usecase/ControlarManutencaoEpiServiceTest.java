@@ -61,7 +61,7 @@ class ControlarManutencaoEpiServiceTest {
                 .build());
         operador.autenticar("gestora@safeplace.com", "GESTOR_SEGURANCA");
 
-        service.enviarParaManutencao(1);
+        service.enviar(1);
 
         assertEquals("gestora@safeplace.com", auditoria.registros().get(0).getResponsavel());
     }
@@ -79,7 +79,7 @@ class ControlarManutencaoEpiServiceTest {
                 .comVidaUtilDias(365)
                 .build());
 
-        service.enviarParaManutencao(1);
+        service.enviar(1);
 
         assertEquals(OperadorAtual.SISTEMA, auditoria.registros().get(0).getResponsavel());
     }
@@ -98,7 +98,7 @@ class ControlarManutencaoEpiServiceTest {
                 .build();
         epiRepository.salvar(epi);
 
-        EpiOutputDTO dto = service.enviarParaManutencao(1);
+        EpiOutputDTO dto = service.enviar(1);
 
         assertEquals(StatusEpi.EM_MANUTENCAO, dto.status());
         assertEquals(StatusEpi.EM_MANUTENCAO, epiRepository.buscarPorId(1).orElseThrow().getStatus());
@@ -118,12 +118,12 @@ class ControlarManutencaoEpiServiceTest {
                 .build();
         epiRepository.salvar(epi);
 
-        assertThrows(CertificadoAprovacaoVencidoException.class, () -> service.enviarParaManutencao(2));
+        assertThrows(CertificadoAprovacaoVencidoException.class, () -> service.enviar(2));
     }
 
     @Test
     void deveLancarExcecaoAoEnviarEpiInexistente() {
-        assertThrows(EpiNaoEncontradoException.class, () -> service.enviarParaManutencao(999));
+        assertThrows(EpiNaoEncontradoException.class, () -> service.enviar(999));
     }
 
     @Test
@@ -146,13 +146,13 @@ class ControlarManutencaoEpiServiceTest {
                 "Polimento e troca de elastico", ResultadoManutencao.APROVADO, "Tecnico Roberto"
         );
 
-        ManutencaoEpiOutputDTO resultadoDTO = service.concluirManutencao(input);
+        ManutencaoEpiOutputDTO resultadoDTO = service.concluir(input);
 
         assertNotNull(resultadoDTO.id());
         assertEquals(3, resultadoDTO.epiId());
         assertEquals(StatusEpi.DISPONIVEL, resultadoDTO.statusAtualEpi());
         assertEquals(StatusEpi.DISPONIVEL, epiRepository.buscarPorId(3).orElseThrow().getStatus());
-        assertEquals(1, manutencaoRepository.listarPorEpiId(3).size());
+        assertEquals(1, manutencaoRepository.listarPorEpi(3).size());
     }
 
     @Test
@@ -175,7 +175,7 @@ class ControlarManutencaoEpiServiceTest {
                 "Costura rompida", ResultadoManutencao.REPROVADO, "Tecnico Roberto"
         );
 
-        ManutencaoEpiOutputDTO resultadoDTO = service.concluirManutencao(input);
+        ManutencaoEpiOutputDTO resultadoDTO = service.concluir(input);
 
         assertEquals(StatusEpi.EM_MANUTENCAO, resultadoDTO.statusAtualEpi());
         Epi atualizado = epiRepository.buscarPorId(4).orElseThrow();
@@ -202,7 +202,7 @@ class ControlarManutencaoEpiServiceTest {
                 "Reparo de válvula", ResultadoManutencao.APROVADO, "Tecnico Roberto"
         );
 
-        assertThrows(CertificadoAprovacaoVencidoException.class, () -> service.concluirManutencao(input));
+        assertThrows(CertificadoAprovacaoVencidoException.class, () -> service.concluir(input));
     }
 
     @Test
@@ -224,7 +224,7 @@ class ControlarManutencaoEpiServiceTest {
                 "Reparo", ResultadoManutencao.APROVADO, "Tecnico Roberto"
         );
 
-        assertThrows(EpiIndisponivelParaManutencaoException.class, () -> service.concluirManutencao(input));
+        assertThrows(EpiIndisponivelParaManutencaoException.class, () -> service.concluir(input));
     }
 
     @Test
@@ -241,20 +241,20 @@ class ControlarManutencaoEpiServiceTest {
                 .build();
         epiRepository.salvar(epi);
 
-        service.concluirManutencao(new ConcluirManutencaoInputDTO(
+        service.concluir(new ConcluirManutencaoInputDTO(
                 7, LocalDateTime.of(2026, 8, 1, 10, 0), TipoManutencao.PREVENTIVA,
                 "Primeira manutenção", ResultadoManutencao.APROVADO, "Tecnico 1"
         ));
 
         // Re-enviar para manutenção para simular um segundo ciclo
-        service.enviarParaManutencao(7);
+        service.enviar(7);
 
-        service.concluirManutencao(new ConcluirManutencaoInputDTO(
+        service.concluir(new ConcluirManutencaoInputDTO(
                 7, LocalDateTime.of(2026, 9, 1, 10, 0), TipoManutencao.PREVENTIVA,
                 "Segunda manutenção", ResultadoManutencao.APROVADO, "Tecnico 2"
         ));
 
-        List<ManutencaoEpiOutputDTO> historico = service.listarHistoricoPorEpi(7);
+        List<ManutencaoEpiOutputDTO> historico = service.listarPorEpi(7);
 
         assertEquals(2, historico.size());
         assertEquals("Primeira manutenção", historico.get(0).descricao());
@@ -296,7 +296,7 @@ class ControlarManutencaoEpiServiceTest {
         }
 
         @Override
-        public List<Epi> listarTodos() {
+        public List<Epi> listar() {
             return new ArrayList<>(storage.values());
         }
 
@@ -307,18 +307,13 @@ class ControlarManutencaoEpiServiceTest {
         }
 
         @Override
-        public List<Epi> listar() {
-            return listarTodos();
-        }
-
-        @Override
-        public MovimentacaoEstoque salvarMovimentacao(MovimentacaoEstoque movimentacao) {
+        public MovimentacaoEstoque salvar(MovimentacaoEstoque movimentacao) {
             movimentacoes.add(movimentacao);
             return movimentacao;
         }
 
         @Override
-        public List<MovimentacaoEstoque> listarMovimentacoesPorEpi(Integer epiId) {
+        public List<MovimentacaoEstoque> listarMovimentacoes(Integer epiId) {
             return movimentacoes.stream()
                     .filter(m -> m.getEpiId().equals(epiId))
                     .toList();

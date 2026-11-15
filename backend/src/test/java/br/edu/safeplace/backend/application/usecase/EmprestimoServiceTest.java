@@ -120,7 +120,7 @@ class EmprestimoServiceTest {
         assertThat(saida.termoCautela()).contains("Termo de cautela", "João da Silva", "Capacete", "Bruno Souza");
 
         assertThat(epis.buscarPorId(capaceteId).orElseThrow().getQuantidade()).isEqualTo(4);
-        assertThat(epis.listarMovimentacoesPorEpi(capaceteId)).singleElement().satisfies(mov -> {
+        assertThat(epis.listarMovimentacoes(capaceteId)).singleElement().satisfies(mov -> {
             assertThat(mov.getTipo()).isEqualTo(TipoMovimentacao.SAIDA);
             assertThat(mov.getQuantidade()).isEqualTo(1);
             assertThat(mov.getResponsavelId()).isEqualTo(supervisorId);
@@ -138,7 +138,7 @@ class EmprestimoServiceTest {
         assertThatThrownBy(() -> useCase.registrarEntrega(entregaDe(luvaId), EMAIL_SUPERVISOR))
                 .isInstanceOf(EntregaImpedidaException.class)
                 .hasMessageContaining("ESGOTADO");
-        assertThat(emprestimos.listarTodos()).hasSize(1);
+        assertThat(emprestimos.listar()).hasSize(1);
     }
 
     @Test
@@ -152,8 +152,8 @@ class EmprestimoServiceTest {
                 .hasMessageContaining("Certificado de Aprovação vencido");
 
         assertThat(epis.buscarPorId(oculosId).orElseThrow().getQuantidade()).isEqualTo(3);
-        assertThat(epis.listarMovimentacoesPorEpi(oculosId)).isEmpty();
-        assertThat(emprestimos.listarTodos()).isEmpty();
+        assertThat(epis.listarMovimentacoes(oculosId)).isEmpty();
+        assertThat(emprestimos.listar()).isEmpty();
     }
 
     @Test
@@ -253,7 +253,7 @@ class EmprestimoServiceTest {
         assertThat(devolvido.dataDevolucaoReal()).isNotNull();
         assertThat(devolvido.responsavelDevolucaoId()).isEqualTo(supervisorId);
         assertThat(epis.buscarPorId(capaceteId).orElseThrow().getQuantidade()).isEqualTo(5);
-        assertThat(epis.listarMovimentacoesPorEpi(capaceteId)).extracting(MovimentacaoEstoque::getTipo)
+        assertThat(epis.listarMovimentacoes(capaceteId)).extracting(MovimentacaoEstoque::getTipo)
                 .containsExactly(TipoMovimentacao.SAIDA, TipoMovimentacao.ENTRADA);
         assertThat(useCase.listar(Situacao.PENDENTES, colaboradorId)).isEmpty();
     }
@@ -295,9 +295,9 @@ class EmprestimoServiceTest {
 
         assertThat(epis.buscarPorId(capaceteId).orElseThrow().getQuantidade()).isEqualTo(3);
         assertThat(epis.buscarPorId(capaceteId).orElseThrow().getStatus()).isEqualTo(StatusEpi.DISPONIVEL);
-        assertThat(epis.listarMovimentacoesPorEpi(capaceteId)).extracting(MovimentacaoEstoque::getTipo)
+        assertThat(epis.listarMovimentacoes(capaceteId)).extracting(MovimentacaoEstoque::getTipo)
                 .containsExactly(TipoMovimentacao.SAIDA, TipoMovimentacao.SAIDA, TipoMovimentacao.SAIDA);
-        assertThat(manutencoes.listarPorEpiId(capaceteId)).hasSize(1);
+        assertThat(manutencoes.listarPorEpi(capaceteId)).hasSize(1);
         assertThat(useCase.buscarPorId(primeira.id()).estadoDevolucao()).isEqualTo(EstadoDevolucao.MANUTENCAO);
         assertThat(useCase.buscarPorId(segunda.id()).estadoDevolucao()).isEqualTo(EstadoDevolucao.DESCARTE);
     }
@@ -350,7 +350,7 @@ class EmprestimoServiceTest {
         epis.salvar(epi("Manutenção", 2, StatusEpi.EM_MANUTENCAO, LocalDate.now().plusYears(1), ClassificacaoEPI.PROTECAO_DE_FACE));
         epis.salvar(epi("CA vencido", 2, StatusEpi.DISPONIVEL, LocalDate.now().minusDays(1), ClassificacaoEPI.PROTECAO_DE_FACE));
 
-        assertThat(useCase.listarEpisDisponiveisParaEmprestimo()).singleElement()
+        assertThat(useCase.listarEpisDisponiveis()).singleElement()
                 .satisfies(epi -> assertThat(epi.nome()).isEqualTo("Capacete"));
     }
 
@@ -385,7 +385,7 @@ class EmprestimoServiceTest {
         }
 
         @Override
-        public List<Emprestimo> listarTodos() {
+        public List<Emprestimo> listar() {
             return new ArrayList<>(registros.values());
         }
 
@@ -395,7 +395,7 @@ class EmprestimoServiceTest {
         }
 
         @Override
-        public List<Emprestimo> listarAtivosPorColaborador(Integer colaboradorId) {
+        public List<Emprestimo> listarAtivos(Integer colaboradorId) {
             return listarPorColaborador(colaboradorId).stream().filter(Emprestimo::estaAtivo).toList();
         }
 
@@ -441,7 +441,7 @@ class EmprestimoServiceTest {
         }
 
         @Override
-        public List<Epi> listarTodos() {
+        public List<Epi> listar() {
             return new ArrayList<>(registros.values());
         }
 
@@ -451,7 +451,7 @@ class EmprestimoServiceTest {
         }
 
         @Override
-        public MovimentacaoEstoque salvarMovimentacao(MovimentacaoEstoque movimentacao) {
+        public MovimentacaoEstoque salvar(MovimentacaoEstoque movimentacao) {
             MovimentacaoEstoque salva = new MovimentacaoEstoque(proximaMovimentacao++, movimentacao.getEpi(),
                     movimentacao.getLote(), movimentacao.getResponsavel(), movimentacao.getTipo(),
                     movimentacao.getQuantidade(), movimentacao.getDataHora(), movimentacao.getMotivo());
@@ -460,7 +460,7 @@ class EmprestimoServiceTest {
         }
 
         @Override
-        public List<MovimentacaoEstoque> listarMovimentacoesPorEpi(Integer epiId) {
+        public List<MovimentacaoEstoque> listarMovimentacoes(Integer epiId) {
             return movimentacoes.stream().filter(m -> m.getEpiId().equals(epiId)).toList();
         }
     }
@@ -499,13 +499,13 @@ class EmprestimoServiceTest {
         }
 
         @Override
-        public List<Colaborador> listarTodos() {
+        public List<Colaborador> listar() {
             return new ArrayList<>(registros.values());
         }
 
         @Override
         public List<Colaborador> listarColaboradores(String nome, String cpf) {
-            return listarTodos();
+            return listar();
         }
     }
 
@@ -517,7 +517,7 @@ class EmprestimoServiceTest {
         }
 
         @Override
-        public List<String> impedimentosParaEntrega(Integer colaboradorId, Integer epiId) {
+        public List<String> listarParaEntrega(Integer colaboradorId, Integer epiId) {
             return impedimentos.getOrDefault(colaboradorId + ":" + epiId, List.of());
         }
     }
@@ -548,7 +548,7 @@ class EmprestimoServiceTest {
         }
 
         @Override
-        public List<ManutencaoEpi> listarPorEpiId(Integer epiId) {
+        public List<ManutencaoEpi> listarPorEpi(Integer epiId) {
             return registros.stream().filter(m -> m.getEpiId().equals(epiId)).toList();
         }
     }

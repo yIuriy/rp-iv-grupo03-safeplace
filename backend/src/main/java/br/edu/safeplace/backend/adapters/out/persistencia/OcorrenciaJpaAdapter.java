@@ -12,8 +12,6 @@ import org.springframework.stereotype.Repository;
 
 import br.edu.safeplace.backend.application.dto.input.FiltroOcorrenciasDTO;
 import br.edu.safeplace.backend.application.port.out.OcorrenciaRepository;
-import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
-import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 
 @Repository
@@ -40,13 +38,8 @@ public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
     }
 
     @Override
-    public Acidente salvarAcidente(Acidente acidente) {
-        return repository.save(acidente);
-    }
-
-    @Override
-    public Incidente salvarIncidente(Incidente incidente) {
-        return repository.save(incidente);
+    public Ocorrencia salvar(Ocorrencia ocorrencia) {
+        return repository.save(ocorrencia);
     }
 
     @Override

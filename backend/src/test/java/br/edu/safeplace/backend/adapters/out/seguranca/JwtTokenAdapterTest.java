@@ -24,11 +24,11 @@ class JwtTokenAdapterTest {
         String email = "gestor@safeplace.com";
         String perfil = "GESTOR_SEGURANCA";
 
-        String token = adaptador.gerarToken(email, perfil);
+        String token = adaptador.gerar(email, perfil);
 
         assertNotNull(token);
         assertFalse(token.isBlank());
-        assertTrue(adaptador.validarToken(token));
+        assertTrue(adaptador.validar(token));
         assertEquals(email, adaptador.extrairEmail(token));
         assertEquals(perfil, adaptador.extrairPerfil(token));
     }
@@ -36,13 +36,13 @@ class JwtTokenAdapterTest {
     @Test
     @DisplayName("Deve rejeitar token inválido ou adulterado")
     void deveRejeitarTokenInvalido() {
-        assertFalse(adaptador.validarToken("token.totalmente.invalido"));
-        assertFalse(adaptador.validarToken(null));
-        assertFalse(adaptador.validarToken(""));
+        assertFalse(adaptador.validar("token.totalmente.invalido"));
+        assertFalse(adaptador.validar(null));
+        assertFalse(adaptador.validar(""));
 
-        String tokenValido = adaptador.gerarToken("supervisor@safeplace.com", "SUPERVISOR");
+        String tokenValido = adaptador.gerar("supervisor@safeplace.com", "SUPERVISOR");
         String tokenAdulterado = tokenValido + "tampered";
-        assertFalse(adaptador.validarToken(tokenAdulterado));
+        assertFalse(adaptador.validar(tokenAdulterado));
     }
 
     @Test
@@ -50,8 +50,8 @@ class JwtTokenAdapterTest {
     void deveInvalidarTokenExpirado() {
         // Adaptador com expiração negativa para gerar token já expirado
         JwtTokenAdapter adaptadorExpirado = new JwtTokenAdapter(SECRET, -1000L);
-        String token = adaptadorExpirado.gerarToken("gestor@safeplace.com", "GESTOR_SEGURANCA");
+        String token = adaptadorExpirado.gerar("gestor@safeplace.com", "GESTOR_SEGURANCA");
 
-        assertFalse(adaptador.validarToken(token));
+        assertFalse(adaptador.validar(token));
     }
 }

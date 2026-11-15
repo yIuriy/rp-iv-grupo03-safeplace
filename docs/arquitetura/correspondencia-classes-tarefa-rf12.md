@@ -51,8 +51,8 @@ O PNG define:
 
 | Elemento no Diagrama / UC08 | Camada Hexagonal e Destino | Papel Arquitetural e Semântica |
 | :--- | :--- | :--- |
-| `associarEPIs(listaIds : List<int>) : boolean` | Domínio `Tarefa.associarEpis(List<Epi>)`<br>Porta de entrada `GerenciarEpiTarefaUseCase.associarEpis`<br>Porta de saída `TarefaRepository.salvarVinculosEpis` | Associa a lista de EPIs à tarefa informada, substituindo a lista anterior pelos itens vigentes. |
-| `verificarEPIsObrigatoriosTarefa() : List<EPI>` | Domínio `Tarefa.verificarEpisObrigatoriosTarefa()` e `Tarefa.getEpisObrigatorios()`<br>Porta de entrada `GerenciarEpiTarefaUseCase.listarEpisObrigatorios` | Retorna a lista de EPIs vinculados como obrigatórios para a atividade. |
+| `associarEPIs(listaIds : List<int>) : boolean` | Domínio `Tarefa.associarEpis(List<Epi>)`<br>Porta de entrada `GerenciarEpiTarefaUseCase.associar`<br>Porta de saída `TarefaRepository.salvar` | Associa a lista de EPIs à tarefa informada, substituindo a lista anterior pelos itens vigentes. |
+| `verificarEPIsObrigatoriosTarefa() : List<EPI>` | Domínio `Tarefa.verificarEpisObrigatoriosTarefa()` e `Tarefa.getEpisObrigatorios()`<br>Porta de entrada `GerenciarEpiTarefaUseCase.listarObrigatorios` | Retorna a lista de EPIs vinculados como obrigatórios para a atividade. |
 | Associação `Tarefa` 0..* <---> 0..* `EPI` | Persistência JPA: `tarefas_epis`<br>`TarefaEntity.epis` (`@ManyToMany`) | Chaves estrangeiras `tarefa_id` e `epi_id` com deleção em cascata na associação. |
 | Endpoint de associação | Adaptador web: `PUT /api/tarefas/{id}/epis` | Exclusivo do Gestor de Segurança (`GESTOR_SEGURANCA` / `ROLE_GESTOR_SEGURANCA`). Recebe `AssociarEpisTarefaRequest` com lista de IDs de EPIs. |
 | Endpoint de consulta | Adaptador web: `GET /api/tarefas/{id}/epis` | Disponível para Gestor e Supervisor. Retorna lista de `EpiResponse`. |

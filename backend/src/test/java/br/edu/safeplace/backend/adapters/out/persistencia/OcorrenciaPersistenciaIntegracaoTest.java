@@ -143,7 +143,7 @@ class OcorrenciaPersistenciaIntegracaoTest {
         LocalDateTime dataFato = LocalDateTime.of(2026, 9, 10, 14, 37, 12);
         autenticarComo("maria" + DOMINIO_DE_TESTE, "GESTOR_SEGURANCA");
 
-        OcorrenciaOutputDTO criado = registrarUseCase.registrarAcidente(new RegistrarAcidenteInputDTO(
+        OcorrenciaOutputDTO criado = registrarUseCase.registrar(new RegistrarAcidenteInputDTO(
                 dataFato, "Prensa atingiu a mão do operador.", "FALHA_EPI", "CRITICO",
                 "Esmagamento", "Lesão na mão direita", "Hospital Municipal", areaId, colaboradorId));
 
@@ -193,7 +193,7 @@ class OcorrenciaPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Deve reconstruir incidente com área e colaborador, sem emitir protocolo")
     void deveReconstruirIncidente() {
-        OcorrenciaOutputDTO criado = registrarUseCase.registrarIncidente(new RegistrarIncidenteInputDTO(
+        OcorrenciaOutputDTO criado = registrarUseCase.registrar(new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 9, 8, 15), "Piso oleoso próximo à prensa.",
                 "Piso escorregadio", "Queda de mesmo nível", areaId, colaboradorId));
 
@@ -211,7 +211,7 @@ class OcorrenciaPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Deve preservar dataRegistro e a própria linha ao triar e arquivar, sem exclusão física")
     void devePreservarRegistroAoTriarEArquivar() {
-        OcorrenciaOutputDTO criado = registrarUseCase.registrarAcidente(new RegistrarAcidenteInputDTO(
+        OcorrenciaOutputDTO criado = registrarUseCase.registrar(new RegistrarAcidenteInputDTO(
                 LocalDateTime.of(2026, 9, 8, 11, 5), "Queda de ferramenta da passarela.",
                 "FATOR_HUMANO", "ALTO", "Impacto", "Contusão no ombro", "Ambulatório", areaId, colaboradorId));
 
@@ -265,7 +265,7 @@ class OcorrenciaPersistenciaIntegracaoTest {
                 final int index = i;
                 emissoes.add(() -> {
                     largada.await(20, TimeUnit.SECONDS);
-                    return registrarUseCase.registrarAcidente(new RegistrarAcidenteInputDTO(
+                    return registrarUseCase.registrar(new RegistrarAcidenteInputDTO(
                             LocalDateTime.of(2026, 9, 7, 9, 0), "Acidente concorrente " + index,
                             "FATOR_HUMANO", "MEDIO", "Impacto", "Escoriação", "Ambulatório",
                             areaId, colaboradorId)).numeroProtocoloCAT();
@@ -288,8 +288,8 @@ class OcorrenciaPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Banco rejeita protocolo CAT duplicado")
     void bancoRejeitaProtocoloDuplicado() {
-        OcorrenciaOutputDTO primeiro = registrarUseCase.registrarAcidente(acidenteSimples("Primeiro acidente"));
-        Integer segundoId = registrarUseCase.registrarAcidente(acidenteSimples("Segundo acidente")).idOcorrencia();
+        OcorrenciaOutputDTO primeiro = registrarUseCase.registrar(acidenteSimples("Primeiro acidente"));
+        Integer segundoId = registrarUseCase.registrar(acidenteSimples("Segundo acidente")).idOcorrencia();
 
         String protocolo = primeiro.numeroProtocoloCAT();
         assertThat(protocolo).isNotNull();
@@ -304,7 +304,7 @@ class OcorrenciaPersistenciaIntegracaoTest {
     void devePersistirGestorComoRelator() {
         autenticarComo("maria" + DOMINIO_DE_TESTE, "GESTOR_SEGURANCA");
 
-        OcorrenciaOutputDTO criado = registrarUseCase.registrarAcidente(acidenteSimples("Ferramenta sem trava."));
+        OcorrenciaOutputDTO criado = registrarUseCase.registrar(acidenteSimples("Ferramenta sem trava."));
 
         assertThat(gerenciarUseCase.buscarPorId(criado.idOcorrencia()).relatorId()).isEqualTo(gestorId);
         assertThat(contar("SELECT COUNT(*) FROM ocorrencias WHERE id_ocorrencia = ? AND relator_id = ?",
@@ -316,7 +316,7 @@ class OcorrenciaPersistenciaIntegracaoTest {
     void devePersistirSupervisorComoRelator() {
         autenticarComo("sergio" + DOMINIO_DE_TESTE, "SUPERVISOR");
 
-        OcorrenciaOutputDTO criado = registrarUseCase.registrarIncidente(new RegistrarIncidenteInputDTO(
+        OcorrenciaOutputDTO criado = registrarUseCase.registrar(new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 6, 16, 45), "Cabo solto no corredor.", "Cabo atravessado",
                 "Tropeço", areaId, colaboradorId));
 
@@ -350,7 +350,7 @@ class OcorrenciaPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Relato sem área é recusado pelo caso de uso e nada é gravado (issue #195)")
     void relatoSemAreaNaoGrava() {
-        assertThatThrownBy(() -> registrarUseCase.registrarIncidente(new RegistrarIncidenteInputDTO(
+        assertThatThrownBy(() -> registrarUseCase.registrar(new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 5, 10, 20), "Tropeço em cabo solto.", "Cabo", "Queda",
                 null, colaboradorId)))
                 .isInstanceOf(DadosOcorrenciaInvalidosException.class);
@@ -361,7 +361,7 @@ class OcorrenciaPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Banco recusa gravidade e causa raiz fora do vocabulário aprovado (issue #195)")
     void bancoRecusaGravidadeECausaInvalidas() {
-        Integer id = registrarUseCase.registrarAcidente(acidenteSimples("Acidente válido")).idOcorrencia();
+        Integer id = registrarUseCase.registrar(acidenteSimples("Acidente válido")).idOcorrencia();
 
         assertThatThrownBy(() -> jdbcTemplate.update(
                 "UPDATE acidentes SET gravidade = 'GRAVE' WHERE id_ocorrencia = ?", id))
@@ -374,8 +374,8 @@ class OcorrenciaPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Notificação ao Gestor fica gravada e pode ser consultada (UC09, passo 12; issue #195)")
     void deveGravarNotificacaoConsultavel() {
-        OcorrenciaOutputDTO acidente = registrarUseCase.registrarAcidente(acidenteSimples("Acidente notificado"));
-        OcorrenciaOutputDTO incidente = registrarUseCase.registrarIncidente(new RegistrarIncidenteInputDTO(
+        OcorrenciaOutputDTO acidente = registrarUseCase.registrar(acidenteSimples("Acidente notificado"));
+        OcorrenciaOutputDTO incidente = registrarUseCase.registrar(new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 4, 7, 30), "Incidente notificado.", "Sinalização ausente",
                 "Colisão", areaId, colaboradorId));
 
@@ -396,7 +396,7 @@ class OcorrenciaPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Gravar a ocorrência não regrava o plano embutido legado (issue #196)")
     void naoRegravaPlanoEmbutidoLegado() {
-        Integer ocorrenciaId = registrarUseCase.registrarIncidente(new RegistrarIncidenteInputDTO(
+        Integer ocorrenciaId = registrarUseCase.registrar(new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 2, 9, 0), "Relato com plano antigo.", "Piso", "Queda",
                 areaId, colaboradorId)).idOcorrencia();
         Integer planoId = jdbcTemplate.queryForObject("""
@@ -425,8 +425,8 @@ class OcorrenciaPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Listagem reconstrói acidentes e incidentes já gravados, com datas e vínculos")
     void deveListarOcorrenciasGravadas() {
-        registrarUseCase.registrarAcidente(acidenteSimples("Acidente listado"));
-        registrarUseCase.registrarIncidente(new RegistrarIncidenteInputDTO(
+        registrarUseCase.registrar(acidenteSimples("Acidente listado"));
+        registrarUseCase.registrar(new RegistrarIncidenteInputDTO(
                 LocalDateTime.of(2026, 9, 4, 7, 30), "Incidente listado.",
                 "Sinalização ausente", "Colisão com empilhadeira", areaId, colaboradorId));
 

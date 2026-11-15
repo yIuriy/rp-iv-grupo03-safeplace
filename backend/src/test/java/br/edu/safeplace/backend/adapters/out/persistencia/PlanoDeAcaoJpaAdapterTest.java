@@ -186,7 +186,7 @@ class PlanoDeAcaoJpaAdapterTest {
                 "Atraso na entrega de peças"
         );
 
-        ProrrogacaoPrazo resultado = adapter.salvarProrrogacao(prorrogacao);
+        ProrrogacaoPrazo resultado = adapter.salvar(prorrogacao);
 
         assertThat(resultado).isEqualTo(prorrogacao);
         verify(prorrogacaoRepository).save(any(ProrrogacaoPrazoEntity.class));

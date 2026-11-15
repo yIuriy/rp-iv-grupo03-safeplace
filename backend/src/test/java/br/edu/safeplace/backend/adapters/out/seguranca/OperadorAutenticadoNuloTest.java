@@ -22,7 +22,7 @@ class OperadorAutenticadoNuloTest {
     @Test
     @DisplayName("Não há identificador de operador: Optional vazio, nunca null")
     void semIdentificador() {
-        assertThat(operador.obterIdentificadorOperador()).isNotNull().isEmpty();
+        assertThat(operador.obterIdentificador()).isNotNull().isEmpty();
     }
 
     @ParameterizedTest

@@ -27,7 +27,7 @@ public class JwtTokenAdapter implements GerenciadorToken {
     }
 
     @Override
-    public String gerarToken(String email, String perfil) {
+    public String gerar(String email, String perfil) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
@@ -51,7 +51,7 @@ public class JwtTokenAdapter implements GerenciadorToken {
     }
 
     @Override
-    public boolean validarToken(String token) {
+    public boolean validar(String token) {
         try {
             Jwts.parser()
                     .verifyWith(obterChaveAssinatura())

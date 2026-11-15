@@ -113,7 +113,7 @@ class EpiVencimentoClockTest {
         Epi epiVencido = criarEpiComValidade(10, hoje.minusDays(1));
         when(epiRepository.buscarPorId(10)).thenReturn(Optional.of(epiVencido));
 
-        assertThatThrownBy(() -> manutencaoService.enviarParaManutencao(10))
+        assertThatThrownBy(() -> manutencaoService.enviar(10))
                 .isInstanceOf(CertificadoAprovacaoVencidoException.class);
     }
 
@@ -123,9 +123,9 @@ class EpiVencimentoClockTest {
         LocalDate hoje = LocalDate.now(clock);
         Epi epiVigente = criarEpiComValidade(11, hoje);
         when(epiRepository.buscarPorId(11)).thenReturn(Optional.of(epiVigente));
-        when(epiRepository.salvar(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(epiRepository.salvar(any(Epi.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertThatCode(() -> manutencaoService.enviarParaManutencao(11))
+        assertThatCode(() -> manutencaoService.enviar(11))
                 .doesNotThrowAnyException();
     }
 

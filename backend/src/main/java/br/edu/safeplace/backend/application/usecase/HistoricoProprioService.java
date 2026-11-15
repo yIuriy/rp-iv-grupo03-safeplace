@@ -24,7 +24,7 @@ public class HistoricoProprioService implements ConsultarHistoricoProprioUseCase
 
     @Override
     @Transactional(readOnly = true)
-    public List<AcaoUsuarioOutputDTO> listarAcoes(String email, int limite) {
+    public List<AcaoUsuarioOutputDTO> listar(String email, int limite) {
         if (email == null || email.isBlank()) {
             return List.of();
         }

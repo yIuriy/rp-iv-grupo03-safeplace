@@ -89,7 +89,7 @@ class ProjecaoApiIntegracaoTest {
                 "Oculos de Protecao Projecao", "554433", 10, 2,
                 LocalDate.now().plusYears(1), 180, "Setor Usinagem Projecao",
                 ClassificacaoEPI.PROTECAO_DE_OLHOS);
-        epiId = gerenciarEpiUseCase.cadastrarEpi(epiDTO).id();
+        epiId = gerenciarEpiUseCase.cadastrar(epiDTO).id();
     }
 
     @AfterEach

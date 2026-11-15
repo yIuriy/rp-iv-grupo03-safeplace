@@ -8,7 +8,7 @@ import br.edu.safeplace.backend.application.dto.input.CadastrarTreinamentoInputD
 import br.edu.safeplace.backend.application.dto.input.DefinirExigenciaInputDTO;
 
 public interface CadastrarCapacitacaoUseCase {
-    CertificacaoOutputDTO cadastrarCertificacao(CadastrarCertificacaoInputDTO entrada);
-    TreinamentoOutputDTO cadastrarTreinamento(CadastrarTreinamentoInputDTO entrada);
-    ExigenciaCapacitacaoOutputDTO definirExigencia(DefinirExigenciaInputDTO entrada);
+    CertificacaoOutputDTO cadastrar(CadastrarCertificacaoInputDTO entrada);
+    TreinamentoOutputDTO cadastrar(CadastrarTreinamentoInputDTO entrada);
+    ExigenciaCapacitacaoOutputDTO cadastrar(DefinirExigenciaInputDTO entrada);
 }

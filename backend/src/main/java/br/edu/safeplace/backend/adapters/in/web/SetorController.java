@@ -35,14 +35,14 @@ public class SetorController {
     @Operation(summary = "Cadastra um novo setor físico da planta")
     public SetorResponse criar(@Valid @RequestBody CriarSetorRequest request, Authentication authentication) {
         String responsavel = authentication != null ? authentication.getName() : "SISTEMA";
-        SetorOutputDTO salvo = useCase.cadastrarSetor(request.toInputDTO(), responsavel);
+        SetorOutputDTO salvo = useCase.cadastrar(request.toInputDTO(), responsavel);
         return SetorResponse.fromOutputDTO(salvo);
     }
 
     @GetMapping
     @Operation(summary = "Lista todos os setores físicos da planta")
     public List<SetorResponse> listar() {
-        return useCase.listarTodos().stream()
+        return useCase.listar().stream()
                 .map(SetorResponse::fromOutputDTO)
                 .toList();
     }
@@ -59,7 +59,7 @@ public class SetorController {
                                    @Valid @RequestBody AtualizarSetorRequest request,
                                    Authentication authentication) {
         String responsavel = authentication != null ? authentication.getName() : "SISTEMA";
-        SetorOutputDTO salvo = useCase.atualizarSetor(id, request.toInputDTO(), responsavel);
+        SetorOutputDTO salvo = useCase.atualizar(id, request.toInputDTO(), responsavel);
         return SetorResponse.fromOutputDTO(salvo);
     }
 }

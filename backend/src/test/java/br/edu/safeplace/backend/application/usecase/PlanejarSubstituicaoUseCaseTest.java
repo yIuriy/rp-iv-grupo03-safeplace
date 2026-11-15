@@ -97,7 +97,7 @@ class PlanejarSubstituicaoUseCaseTest {
                 .comStatus(ClassificacaoEmprestimo.DISPONIVEL)
                 .build();
 
-        when(epiRepository.listarTodos()).thenReturn(List.of(epi));
+        when(epiRepository.listar()).thenReturn(List.of(epi));
         when(setorRepository.buscarPorNome("Setor Usinagem")).thenReturn(Optional.of(setor));
         when(emprestimoRepository.listarPorEpi(1)).thenReturn(List.of(emp));
 
@@ -111,7 +111,7 @@ class PlanejarSubstituicaoUseCaseTest {
         assertEquals(1, resultado.projecoes().size());
         assertEquals("Capacete H-700", resultado.projecoes().get(0).nomeEpi());
 
-        verify(projecaoRepository).salvarTodas(anyList());
+        verify(projecaoRepository).salvar(anyList());
     }
 
     @Test
@@ -161,7 +161,7 @@ class PlanejarSubstituicaoUseCaseTest {
                 .comStatus(ClassificacaoEmprestimo.DISPONIVEL)
                 .build();
 
-        when(epiRepository.listarTodos()).thenReturn(List.of(epiSemHistorico, epiValido));
+        when(epiRepository.listar()).thenReturn(List.of(epiSemHistorico, epiValido));
         when(setorRepository.buscarPorNome("Pintura")).thenReturn(Optional.of(setor));
         when(emprestimoRepository.listarPorEpi(1)).thenReturn(List.of()); // Histórico vazio
         when(emprestimoRepository.listarPorEpi(2)).thenReturn(List.of(empValido));
@@ -178,7 +178,7 @@ class PlanejarSubstituicaoUseCaseTest {
         assertEquals(1, resultado.pendenciasFalhas().get(0).epiId());
         assertTrue(resultado.pendenciasFalhas().get(0).motivoFalha().contains("empréstimo"));
 
-        verify(projecaoRepository).salvarTodas(anyList());
+        verify(projecaoRepository).salvar(anyList());
     }
 
     @Test
@@ -200,10 +200,10 @@ class PlanejarSubstituicaoUseCaseTest {
 
         ProjecaoSubstituicao projecao = ProjecaoSubstituicao.nova(1, hoje, hoje.plusDays(20), "Substituição");
 
-        when(epiRepository.listarTodos()).thenReturn(List.of(epi));
+        when(epiRepository.listar()).thenReturn(List.of(epi));
         when(projecaoRepository.buscarUltimaPorEpi(1)).thenReturn(Optional.of(projecao));
 
-        List<AlertaSubstituicaoOutputDTO> alertas = useCase.emitirAlertasPreventivos(hoje);
+        List<AlertaSubstituicaoOutputDTO> alertas = useCase.emitirAlertas(hoje);
 
         assertNotNull(alertas);
         // Espera alerta de estoque crítico (1 <= 5), descarte próximo (20 dias) e CA próximo (25 dias)
@@ -238,7 +238,7 @@ class PlanejarSubstituicaoUseCaseTest {
                 .comClassificacao(ClassificacaoEPI.PROTECAO_RESPIRATORIA)
                 .comLocalizacao("10")
                 .build();
-        when(epiRepository.listarTodos()).thenReturn(List.of(epi));
+        when(epiRepository.listar()).thenReturn(List.of(epi));
 
         ResultadoAnaliseSubstituicaoDTO resultado = useCase.gerarAnalise(new GerarAnaliseProjecaoInputDTO(hoje, null, null));
 
@@ -267,10 +267,10 @@ class PlanejarSubstituicaoUseCaseTest {
 
         ProjecaoSubstituicao projecao = ProjecaoSubstituicao.reconstituir(10, 1, hoje, hoje.plusDays(50), "Desgaste");
 
-        when(epiRepository.listarTodos()).thenReturn(List.of(epi));
-        when(projecaoRepository.listarTodas()).thenReturn(List.of(projecao));
+        when(epiRepository.listar()).thenReturn(List.of(epi));
+        when(projecaoRepository.listar()).thenReturn(List.of(projecao));
 
-        List<ProjecaoSubstituicaoOutputDTO> lista = useCase.listarProjecoes();
+        List<ProjecaoSubstituicaoOutputDTO> lista = useCase.listar();
 
         assertNotNull(lista);
         assertEquals(1, lista.size());

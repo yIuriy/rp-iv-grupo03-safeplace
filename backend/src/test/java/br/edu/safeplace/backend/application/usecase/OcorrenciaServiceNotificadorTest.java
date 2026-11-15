@@ -69,7 +69,7 @@ class OcorrenciaServiceNotificadorTest {
         usuarioRepo = mock(UsuarioRepository.class);
         when(areaRepo.buscarPorId(10)).thenReturn(Optional.of(area));
         when(usuarioRepo.buscarPorId(20)).thenReturn(Optional.of(colaborador));
-        when(repository.salvarIncidente(any(Incidente.class))).thenReturn(salvo);
+        when(repository.salvar(any(Incidente.class))).thenReturn(salvo);
     }
 
     private OcorrenciaService servicoCom(NotificadorOcorrencia notificador) {
@@ -95,7 +95,7 @@ class OcorrenciaServiceNotificadorTest {
     void deveChamarPortaComOcorrenciaGravada() {
         NotificadorQueRegistra dubleQueRegistra = new NotificadorQueRegistra();
 
-        servicoCom(dubleQueRegistra).registrarIncidente(relato());
+        servicoCom(dubleQueRegistra).registrar(relato());
 
         assertThat(dubleQueRegistra.notificadas).containsExactly(salvo);
     }
@@ -105,7 +105,7 @@ class OcorrenciaServiceNotificadorTest {
     void deveRegistrarRelatoComNotificadorNulo() {
         NotificadorOcorrencia nulo = new NotificadorOcorrenciaNulo();
 
-        var resposta = servicoCom(nulo).registrarIncidente(relato());
+        var resposta = servicoCom(nulo).registrar(relato());
 
         assertThat(resposta.idOcorrencia()).isEqualTo(2);
         assertThat(new NotificacaoOcorrenciaService(nulo).listar()).isEmpty();
@@ -116,7 +116,7 @@ class OcorrenciaServiceNotificadorTest {
         private final List<Ocorrencia> notificadas = new ArrayList<>();
 
         @Override
-        public void notificarGestor(Ocorrencia ocorrencia) {
+        public void notificar(Ocorrencia ocorrencia) {
             notificadas.add(ocorrencia);
         }
 

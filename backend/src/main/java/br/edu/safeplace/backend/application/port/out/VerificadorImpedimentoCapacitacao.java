@@ -14,5 +14,5 @@ public interface VerificadorImpedimentoCapacitacao {
      * Descrições das exigências de capacitação do EPI que o colaborador não atende (ausentes ou
      * vencidas). Lista vazia significa entrega liberada quanto a capacitações.
      */
-    List<String> impedimentosParaEntrega(Integer colaboradorId, Integer epiId);
+    List<String> listarParaEntrega(Integer colaboradorId, Integer epiId);
 }

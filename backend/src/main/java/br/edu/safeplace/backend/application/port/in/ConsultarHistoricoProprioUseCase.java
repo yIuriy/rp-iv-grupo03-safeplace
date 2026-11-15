@@ -17,5 +17,5 @@ public interface ConsultarHistoricoProprioUseCase {
      * Ações registradas com o e-mail informado como responsável. O limite fica entre 1 e
      * {@link #LIMITE_MAXIMO}; valores fora dessa faixa são ajustados para o mais próximo.
      */
-    List<AcaoUsuarioOutputDTO> listarAcoes(String email, int limite);
+    List<AcaoUsuarioOutputDTO> listar(String email, int limite);
 }

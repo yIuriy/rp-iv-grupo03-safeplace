@@ -28,7 +28,7 @@ public class AlertaPrazoAcaoAgendador {
 
     @Scheduled(cron = "${safeplace.plano-acao.alertas.cron:0 0 * * * *}")
     public void verificarPrazos() {
-        int emitidos = emitirAlertasPrazo.emitirAlertasDePrazo(LocalDate.now());
+        int emitidos = emitirAlertasPrazo.emitir(LocalDate.now());
         if (emitidos > 0) {
             log.info("Alertas de prazo de ações emitidos: {}", emitidos);
         }

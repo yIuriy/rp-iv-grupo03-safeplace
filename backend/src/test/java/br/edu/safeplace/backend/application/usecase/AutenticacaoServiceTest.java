@@ -58,7 +58,7 @@ class AutenticacaoServiceTest {
 
         when(usuarioRepository.buscarPorEmail(email)).thenReturn(Optional.of(gestor));
         when(codificadorSenha.validar(senhaPura, hash)).thenReturn(true);
-        when(gerenciadorToken.gerarToken(email, Perfil.GESTOR_SEGURANCA.name())).thenReturn(tokenJwt);
+        when(gerenciadorToken.gerar(email, Perfil.GESTOR_SEGURANCA.name())).thenReturn(tokenJwt);
 
         LoginInputDTO entrada = new LoginInputDTO(email, senhaPura);
         TokenOutputDTO resposta = casoDeUso.autenticar(entrada);
@@ -70,7 +70,7 @@ class AutenticacaoServiceTest {
         assertEquals("Roberto Gestor", resposta.nome());
         assertEquals(Perfil.GESTOR_SEGURANCA.name(), resposta.perfil());
 
-        verify(gerenciadorToken).gerarToken(email, Perfil.GESTOR_SEGURANCA.name());
+        verify(gerenciadorToken).gerar(email, Perfil.GESTOR_SEGURANCA.name());
     }
 
     @Test
@@ -88,7 +88,7 @@ class AutenticacaoServiceTest {
 
         when(usuarioRepository.buscarPorEmail(email)).thenReturn(Optional.of(supervisor));
         when(codificadorSenha.validar(senhaPura, hash)).thenReturn(true);
-        when(gerenciadorToken.gerarToken(email, Perfil.SUPERVISOR.name())).thenReturn(tokenJwt);
+        when(gerenciadorToken.gerar(email, Perfil.SUPERVISOR.name())).thenReturn(tokenJwt);
 
         LoginInputDTO entrada = new LoginInputDTO(email, senhaPura);
         TokenOutputDTO resposta = casoDeUso.autenticar(entrada);

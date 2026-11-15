@@ -38,7 +38,7 @@ public class UsuarioController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Cadastra um Supervisor e devolve a senha inicial gerada pelo sistema")
     public UsuarioResponse criarSupervisor(@Valid @RequestBody CadastrarSupervisorRequest requisicao) {
-        return UsuarioResponse.aPartirDe(casoDeUso.cadastrarSupervisor(requisicao.paraDTOEntrada()));
+        return UsuarioResponse.aPartirDe(casoDeUso.cadastrar(requisicao.paraDTOEntrada()));
     }
 
     /**
@@ -48,7 +48,7 @@ public class UsuarioController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Cadastra um Colaborador, sem conta de acesso nem senha")
     public UsuarioResponse criarColaborador(@Valid @RequestBody CadastrarColaboradorRequest requisicao) {
-        return UsuarioResponse.aPartirDe(casoDeUso.cadastrarColaborador(requisicao.paraDTOEntrada()));
+        return UsuarioResponse.aPartirDe(casoDeUso.cadastrar(requisicao.paraDTOEntrada()));
     }
 
     @GetMapping("/colaboradores")
@@ -87,7 +87,7 @@ public class UsuarioController {
     @GetMapping
     @Operation(summary = "Lista todos os usuários e colaboradores cadastrados")
     public List<UsuarioResponse> listar() {
-        return casoDeUso.listarUsuarios().stream()
+        return casoDeUso.listar().stream()
                 .map(UsuarioResponse::aPartirDe)
                 .toList();
     }

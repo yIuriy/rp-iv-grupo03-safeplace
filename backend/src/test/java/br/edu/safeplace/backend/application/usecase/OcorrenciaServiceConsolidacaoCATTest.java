@@ -62,7 +62,7 @@ class OcorrenciaServiceConsolidacaoCATTest {
         repository = mock(OcorrenciaRepository.class);
         when(repository.buscarAcidentePorId(5)).thenReturn(Optional.of(legadoSemCausaRaiz));
         when(repository.proximoSequencialCAT(2026, 9)).thenReturn(3L);
-        when(repository.salvarAcidente(any(Acidente.class))).thenAnswer(chamada -> chamada.getArgument(0));
+        when(repository.salvar(any(Acidente.class))).thenAnswer(chamada -> chamada.getArgument(0));
     }
 
     private OcorrenciaService servico(ValidadorEmCadeia<Acidente> protocoloValidador) {
@@ -80,7 +80,7 @@ class OcorrenciaServiceConsolidacaoCATTest {
         List<NumeroProtocoloCAT> recebidos = new ArrayList<>();
         ValidadorEmCadeia<Acidente> registrador = new ValidadorEmCadeia<>(RegraElo.<Acidente>exigir(a -> {
             recebidos.add(a.getProtocoloCAT());
-            verify(repository, never()).salvarAcidente(any(Acidente.class));
+            verify(repository, never()).salvar(any(Acidente.class));
             return false;
         }, "não usado")) { };
 
@@ -99,7 +99,7 @@ class OcorrenciaServiceConsolidacaoCATTest {
         assertThatThrownBy(() -> servico(recusa).consolidarCAT(5))
                 .isInstanceOf(ProtocoloCATInvalidoException.class)
                 .hasMessage("Formato de protocolo CAT inválido: X");
-        verify(repository, never()).salvarAcidente(any(Acidente.class));
+        verify(repository, never()).salvar(any(Acidente.class));
     }
 
     @Test
@@ -108,6 +108,6 @@ class OcorrenciaServiceConsolidacaoCATTest {
         OcorrenciaOutputDTO consolidado = servico(new ProtocoloCATValidador()).consolidarCAT(5);
 
         assertThat(consolidado.numeroProtocoloCAT()).isEqualTo("CAT-2026-09-0003");
-        verify(repository).salvarAcidente(any(Acidente.class));
+        verify(repository).salvar(any(Acidente.class));
     }
 }

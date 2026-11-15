@@ -78,7 +78,7 @@ public class PlanoDeAcaoJpaAdapter implements PlanoDeAcaoRepository {
 
     @Override
     @Transactional
-    public ProrrogacaoPrazo salvarProrrogacao(ProrrogacaoPrazo prorrogacao) {
+    public ProrrogacaoPrazo salvar(ProrrogacaoPrazo prorrogacao) {
         if (prorrogacao == null) {
             throw new IllegalArgumentException("Dados de prorrogação não podem ser nulos.");
         }
@@ -113,7 +113,7 @@ public class PlanoDeAcaoJpaAdapter implements PlanoDeAcaoRepository {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PlanoDeAcao> listarAbertasComAlertaAtivo() {
+    public List<PlanoDeAcao> listarAbertasComAlerta() {
         return planoRepository.findByAlertaAtivoTrueAndStatusOrderByIdAsc(StatusPlanoDeAcao.ABERTA.name()).stream()
                 .map(this::toDomain)
                 .toList();

@@ -96,7 +96,7 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
 
     @Override
     @Transactional
-    public TarefaOutputDTO cadastrarTarefa(CadastrarTarefaInputDTO inputDTO) {
+    public TarefaOutputDTO cadastrar(CadastrarTarefaInputDTO inputDTO) {
         // Builder (#240): constrói a tarefa nomeando os dados da criação
         Tarefa novaTarefa = new TarefaBuilder()
                 .descricao(inputDTO.descricao())
@@ -123,7 +123,7 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
 
     @Override
     @Transactional
-    public TarefaOutputDTO atualizarTarefa(Integer id, AtualizarTarefaInputDTO inputDTO, String operador) {
+    public TarefaOutputDTO atualizar(Integer id, AtualizarTarefaInputDTO inputDTO, String operador) {
         Tarefa existente = buscarTarefa(id);
 
         Tarefa atualizada = existente.atualizar(
@@ -142,7 +142,7 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
     @Override
     @Transactional(readOnly = true)
     public List<TarefaOutputDTO> listar() {
-        return repository.listarTodas().stream()
+        return repository.listar().stream()
                 .map(TarefaOutputDTO::deDominio)
                 .toList();
     }
@@ -188,7 +188,7 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
 
     @Override
     @Transactional
-    public TarefaOutputDTO associarEpis(Integer tarefaId, List<Integer> epiIds) {
+    public TarefaOutputDTO associar(Integer tarefaId, List<Integer> epiIds) {
         Tarefa tarefa = buscarTarefa(tarefaId);
         List<Epi> epis = resolverEpis(epiIds);
         String anteriores = descreverEpis(tarefa.verificarEpisObrigatoriosTarefa());
@@ -213,7 +213,7 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
 
     @Override
     @Transactional(readOnly = true)
-    public List<EpiOutputDTO> listarEpisObrigatorios(Integer tarefaId) {
+    public List<EpiOutputDTO> listarObrigatorios(Integer tarefaId) {
         Tarefa tarefa = buscarTarefa(tarefaId);
         return tarefa.verificarEpisObrigatoriosTarefa().stream()
                 .map(EpiOutputDTO::deDominio)

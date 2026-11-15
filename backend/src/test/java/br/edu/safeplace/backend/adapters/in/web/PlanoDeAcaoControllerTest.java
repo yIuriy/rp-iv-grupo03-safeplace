@@ -70,7 +70,7 @@ class PlanoDeAcaoControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("Deve cadastrar ação do plano via POST /api/ocorrencias/{idOcorrencia}/planos-acao")
     void deveCadastrarAcao() throws Exception {
-        when(useCase.cadastrarAcao(eq(1), any(CriarAcaoPlanoInputDTO.class)))
+        when(useCase.cadastrar(eq(1), any(CriarAcaoPlanoInputDTO.class)))
                 .thenReturn(acaoDTO(100, 1));
 
         String payload = """
@@ -98,7 +98,7 @@ class PlanoDeAcaoControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("Deve retornar 400 ao tentar cadastrar plano em ocorrencia grave sem acao preventiva")
     void deveRetornar400AoFaltarAcaoPreventiva() throws Exception {
-        when(useCase.cadastrarAcao(eq(1), any(CriarAcaoPlanoInputDTO.class)))
+        when(useCase.cadastrar(eq(1), any(CriarAcaoPlanoInputDTO.class)))
                 .thenThrow(new AcaoPreventivaObrigatoriaException(1));
 
         String payload = """
@@ -120,7 +120,7 @@ class PlanoDeAcaoControllerTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("Deve retornar 400 com prazo retroativo")
     void deveRetornar400ComPrazoRetroativo() throws Exception {
-        when(useCase.cadastrarAcao(eq(1), any(CriarAcaoPlanoInputDTO.class)))
+        when(useCase.cadastrar(eq(1), any(CriarAcaoPlanoInputDTO.class)))
                 .thenThrow(new PrazoAcaoInvalidoException("O prazo da ação não pode ser anterior à data do fato"));
 
         String payload = """

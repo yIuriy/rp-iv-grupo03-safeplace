@@ -76,7 +76,7 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
                 "Descrição de teste",
                 ClassificacaoEPI.PROTECAO_DE_CABECA
         );
-        EpiOutputDTO output = epiService.cadastrarEpi(dto);
+        EpiOutputDTO output = epiService.cadastrar(dto);
         return output.id();
     }
 
@@ -121,7 +121,7 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
         Epi epiAtualizado = epiRepository.buscarPorId(epiId).orElseThrow();
         assertThat(epiAtualizado.getQuantidade()).isEqualTo(2);
 
-        var movimentacoes = epiRepository.listarMovimentacoesPorEpi(epiId);
+        var movimentacoes = epiRepository.listarMovimentacoes(epiId);
         assertThat(movimentacoes).hasSize(1);
         assertThat(movimentacoes.get(0).getQuantidade()).isEqualTo(8);
         assertThat(movimentacoes.get(0).getTipo()).isEqualTo(TipoMovimentacao.SAIDA);
@@ -192,7 +192,7 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
         Epi epiAtualizado = epiRepository.buscarPorId(epiId).orElseThrow();
         assertThat(epiAtualizado.getQuantidade()).isEqualTo(saldoEsperado);
 
-        var movimentacoes = epiRepository.listarMovimentacoesPorEpi(epiId);
+        var movimentacoes = epiRepository.listarMovimentacoes(epiId);
         assertThat(movimentacoes).hasSize(totalOperacoes);
     }
 
@@ -224,7 +224,7 @@ class EpiEstoqueConcorrenciaIntegracaoTest {
         Epi epi = epiRepository.buscarPorId(epiId).orElseThrow();
         assertThat(epi.getQuantidade()).isEqualTo(5);
 
-        var movimentacoes = epiRepository.listarMovimentacoesPorEpi(epiId);
+        var movimentacoes = epiRepository.listarMovimentacoes(epiId);
         assertThat(movimentacoes).isEmpty();
     }
 }

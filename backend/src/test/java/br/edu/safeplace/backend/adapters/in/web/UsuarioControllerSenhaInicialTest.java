@@ -49,7 +49,7 @@ class UsuarioControllerSenhaInicialTest {
 
     @Test
     void cadastroDeSupervisorSemSenhaDeveRetornar201ComSenhaInicial() throws Exception {
-        when(casoDeUso.cadastrarSupervisor(any(CadastrarSupervisorInputDTO.class))).thenReturn(supervisor("Xk7!pQ2#mA9z"));
+        when(casoDeUso.cadastrar(any(CadastrarSupervisorInputDTO.class))).thenReturn(supervisor("Xk7!pQ2#mA9z"));
 
         mockMvc.perform(post("/api/usuarios/supervisores")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -70,7 +70,7 @@ class UsuarioControllerSenhaInicialTest {
     void cadastroDeColaboradorNaoDeveTrazerSenhaInicial() throws Exception {
         UsuarioOutputDTO colaborador = new UsuarioOutputDTO(2, "Carlos Souza", CPF, LocalDate.of(1995, 3, 10),
                 null, null, true, LocalDateTime.now(), null);
-        when(casoDeUso.cadastrarColaborador(any(CadastrarColaboradorInputDTO.class))).thenReturn(colaborador);
+        when(casoDeUso.cadastrar(any(CadastrarColaboradorInputDTO.class))).thenReturn(colaborador);
 
         mockMvc.perform(post("/api/usuarios/colaboradores")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -88,7 +88,7 @@ class UsuarioControllerSenhaInicialTest {
 
     @Test
     void listagemEBuscaPorIdNaoDevemTrazerSenhaInicial() throws Exception {
-        when(casoDeUso.listarUsuarios()).thenReturn(List.of(supervisor(null)));
+        when(casoDeUso.listar()).thenReturn(List.of(supervisor(null)));
         when(casoDeUso.buscarPorId(1)).thenReturn(supervisor(null));
 
         mockMvc.perform(get("/api/usuarios"))

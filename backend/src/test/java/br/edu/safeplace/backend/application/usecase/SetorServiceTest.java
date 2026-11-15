@@ -30,7 +30,7 @@ class SetorServiceTest {
     void cadastroDeSetorGeraAuditoria() {
         SetorService useCase = new SetorService(setores, auditoria);
 
-        SetorOutputDTO salvo = useCase.cadastrarSetor(
+        SetorOutputDTO salvo = useCase.cadastrar(
                 new CadastrarSetorInputDTO("Usinagem", "Tornos", "Bloco B", NivelPerigo.ALTO), "gestor@empresa.com");
 
         assertThat(auditoria.listarPorEntidade("Setor", salvo.id())).singleElement().satisfies(log -> {
@@ -45,10 +45,10 @@ class SetorServiceTest {
     void atualizacaoDeSetorGeraAuditoria() {
         SetorService useCase = new SetorService(setores, auditoria);
 
-        SetorOutputDTO cadastrado = useCase.cadastrarSetor(
+        SetorOutputDTO cadastrado = useCase.cadastrar(
                 new CadastrarSetorInputDTO("Usinagem", "Tornos", "Bloco B", NivelPerigo.ALTO), "gestor@empresa.com");
 
-        SetorOutputDTO atualizado = useCase.atualizarSetor(cadastrado.id(),
+        SetorOutputDTO atualizado = useCase.atualizar(cadastrado.id(),
                 new AtualizarSetorInputDTO("Usinagem Pesada", "Tornos CNC", "Bloco C", NivelPerigo.CRITICO), "gestor2@empresa.com");
 
         assertThat(atualizado.nome()).isEqualTo("Usinagem Pesada");
@@ -91,7 +91,7 @@ class SetorServiceTest {
         }
 
         @Override
-        public List<Setor> listarTodos() {
+        public List<Setor> listar() {
             return List.copyOf(setores);
         }
 

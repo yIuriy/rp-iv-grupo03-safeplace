@@ -37,7 +37,7 @@ public class UsuarioJpaAdapter implements UsuarioRepository {
     }
 
     @Override
-    public List<Colaborador> listarTodos() {
+    public List<Colaborador> listar() {
         return jpaRepositorio.findAll();
     }
 

@@ -7,8 +7,8 @@ import br.edu.safeplace.backend.application.dto.output.ManutencaoEpiOutputDTO;
 import java.util.List;
 
 public interface ControlarManutencaoEpiUseCase {
-    EpiOutputDTO enviarParaManutencao(Integer epiId);
-    ManutencaoEpiOutputDTO concluirManutencao(ConcluirManutencaoInputDTO inputDTO);
-    ManutencaoEpiOutputDTO concluirManutencao(ConcluirManutencaoInputDTO inputDTO, String responsavelEmail);
-    List<ManutencaoEpiOutputDTO> listarHistoricoPorEpi(Integer epiId);
+    EpiOutputDTO enviar(Integer epiId);
+    ManutencaoEpiOutputDTO concluir(ConcluirManutencaoInputDTO inputDTO);
+    ManutencaoEpiOutputDTO concluir(ConcluirManutencaoInputDTO inputDTO, String responsavelEmail);
+    List<ManutencaoEpiOutputDTO> listarPorEpi(Integer epiId);
 }

@@ -63,7 +63,7 @@ public class TarefaController {
             @ApiResponse(responseCode = "403", description = "Perfil sem permissão ou classificação sem Gestor de Segurança identificável")
     })
     public TarefaResponse criar(@Valid @RequestBody CriarTarefaRequest request) {
-        TarefaOutputDTO salva = useCase.cadastrarTarefa(request.toInputDTO());
+        TarefaOutputDTO salva = useCase.cadastrar(request.toInputDTO());
         return TarefaResponse.fromOutputDTO(salva);
     }
 
@@ -169,7 +169,7 @@ public class TarefaController {
     })
     public TarefaResponse associarEpis(@PathVariable Integer id,
                                        @Valid @RequestBody AssociarEpisTarefaRequest request) {
-        TarefaOutputDTO atualizada = gerenciarEpiUseCase.associarEpis(id, request.epiIds());
+        TarefaOutputDTO atualizada = gerenciarEpiUseCase.associar(id, request.epiIds());
         return TarefaResponse.fromOutputDTO(atualizada);
     }
 
@@ -181,7 +181,7 @@ public class TarefaController {
             @ApiResponse(responseCode = "404", description = "Tarefa não existe")
     })
     public List<EpiResponse> listarEpisObrigatorios(@PathVariable Integer id) {
-        return gerenciarEpiUseCase.listarEpisObrigatorios(id).stream()
+        return gerenciarEpiUseCase.listarObrigatorios(id).stream()
                 .map(EpiResponse::fromOutputDTO)
                 .toList();
     }
@@ -198,7 +198,7 @@ public class TarefaController {
                                    @Valid @RequestBody AtualizarTarefaRequest request,
                                    Authentication authentication) {
         String operador = authentication != null ? authentication.getName() : "SISTEMA";
-        TarefaOutputDTO salva = useCase.atualizarTarefa(id, request.toInputDTO(), operador);
+        TarefaOutputDTO salva = useCase.atualizar(id, request.toInputDTO(), operador);
         return TarefaResponse.fromOutputDTO(salva);
     }
 
@@ -211,7 +211,7 @@ public class TarefaController {
     })
     public ExigenciasTarefaResponse consultarExigencias(@PathVariable Integer id) {
         TarefaOutputDTO tarefa = useCase.buscarPorId(id);
-        List<EpiResponse> epis = gerenciarEpiUseCase.listarEpisObrigatorios(id).stream()
+        List<EpiResponse> epis = gerenciarEpiUseCase.listarObrigatorios(id).stream()
                 .map(EpiResponse::fromOutputDTO)
                 .toList();
         List<ExigenciasTarefaResponse.ItemExigenciaCapacitacaoResponse> capacitacoes = consultarCapacitacaoUseCase != null

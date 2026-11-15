@@ -12,7 +12,7 @@ public interface TarefaRepository {
 
     Optional<Tarefa> buscarPorId(Integer id);
 
-    List<Tarefa> listarTodas();
+    List<Tarefa> listar();
 
     List<Tarefa> listarPorNivelPerigo(NivelPerigo nivelPerigo);
 }

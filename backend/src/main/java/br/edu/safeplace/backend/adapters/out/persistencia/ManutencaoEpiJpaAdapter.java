@@ -28,7 +28,7 @@ public class ManutencaoEpiJpaAdapter implements ManutencaoEpiRepository {
     }
 
     @Override
-    public List<ManutencaoEpi> listarPorEpiId(Integer epiId) {
+    public List<ManutencaoEpi> listarPorEpi(Integer epiId) {
         return repository.findByEpiIdOrderByDataManutencaoDesc(epiId).stream()
                 .map(this::toDomain)
                 .toList();

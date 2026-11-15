@@ -90,9 +90,9 @@ class AlocarColaboradorTarefaUseCaseTest {
         when(usuarioRepository.buscarPorEmail("gestor@safeplace.com")).thenReturn(Optional.of(gestor));
         when(tarefaRepository.buscarPorId(10)).thenReturn(Optional.of(tarefa));
         when(usuarioRepository.buscarPorId(2)).thenReturn(Optional.of(colaborador));
-        when(capacitacaoRepository.buscarCertificacoesPorColaborador(colaborador.getId())).thenReturn(List.of());
-        when(capacitacaoRepository.buscarTreinamentosPorColaborador(colaborador.getId())).thenReturn(List.of());
-        when(capacitacaoRepository.buscarExigenciasPorAlvo(ExigenciaCapacitacao.TipoAlvo.TAREFA, 10)).thenReturn(List.of());
+        when(capacitacaoRepository.listarCertificacoes(colaborador.getId())).thenReturn(List.of());
+        when(capacitacaoRepository.listarTreinamentos(colaborador.getId())).thenReturn(List.of());
+        when(capacitacaoRepository.listarExigencias(ExigenciaCapacitacao.TipoAlvo.TAREFA, 10)).thenReturn(List.of());
 
         AlocacaoTarefa salva = new AlocacaoTarefa(1, tarefa, colaborador, LocalDateTime.now(), gestor, "Turno 1");
         when(alocacaoTarefaRepository.salvar(any())).thenReturn(salva);
@@ -133,9 +133,9 @@ class AlocarColaboradorTarefaUseCaseTest {
         when(usuarioRepository.buscarPorEmail("gestor@safeplace.com")).thenReturn(Optional.of(gestor));
         when(tarefaRepository.buscarPorId(10)).thenReturn(Optional.of(tarefa));
         when(usuarioRepository.buscarPorId(2)).thenReturn(Optional.of(colaborador));
-        when(capacitacaoRepository.buscarCertificacoesPorColaborador(colaborador.getId())).thenReturn(List.of(certVencida));
-        when(capacitacaoRepository.buscarTreinamentosPorColaborador(colaborador.getId())).thenReturn(List.of());
-        when(capacitacaoRepository.buscarExigenciasPorAlvo(ExigenciaCapacitacao.TipoAlvo.TAREFA, 10)).thenReturn(List.of(exigencia));
+        when(capacitacaoRepository.listarCertificacoes(colaborador.getId())).thenReturn(List.of(certVencida));
+        when(capacitacaoRepository.listarTreinamentos(colaborador.getId())).thenReturn(List.of());
+        when(capacitacaoRepository.listarExigencias(ExigenciaCapacitacao.TipoAlvo.TAREFA, 10)).thenReturn(List.of(exigencia));
 
         assertThatThrownBy(() -> useCase.alocar(10, new AlocarColaboradorInputDTO(2, null), "gestor@safeplace.com"))
                 .isInstanceOf(AlocacaoBloqueadaException.class)
@@ -175,9 +175,9 @@ class AlocarColaboradorTarefaUseCaseTest {
     void deveRetornarAptoTrueNaConsulta() {
         when(tarefaRepository.buscarPorId(10)).thenReturn(Optional.of(tarefa));
         when(usuarioRepository.buscarPorId(colaborador.getId())).thenReturn(Optional.of(colaborador));
-        when(capacitacaoRepository.buscarCertificacoesPorColaborador(colaborador.getId())).thenReturn(List.of());
-        when(capacitacaoRepository.buscarTreinamentosPorColaborador(colaborador.getId())).thenReturn(List.of());
-        when(capacitacaoRepository.buscarExigenciasPorAlvo(ExigenciaCapacitacao.TipoAlvo.TAREFA, 10)).thenReturn(List.of());
+        when(capacitacaoRepository.listarCertificacoes(colaborador.getId())).thenReturn(List.of());
+        when(capacitacaoRepository.listarTreinamentos(colaborador.getId())).thenReturn(List.of());
+        when(capacitacaoRepository.listarExigencias(ExigenciaCapacitacao.TipoAlvo.TAREFA, 10)).thenReturn(List.of());
 
         ConsultaAptidaoOutputDTO consulta = useCase.consultarAptidao(10, colaborador.getId());
 
@@ -193,9 +193,9 @@ class AlocarColaboradorTarefaUseCaseTest {
 
         when(tarefaRepository.buscarPorId(10)).thenReturn(Optional.of(tarefa));
         when(usuarioRepository.buscarPorId(colaborador.getId())).thenReturn(Optional.of(colaborador));
-        when(capacitacaoRepository.buscarCertificacoesPorColaborador(colaborador.getId())).thenReturn(List.of());
-        when(capacitacaoRepository.buscarTreinamentosPorColaborador(colaborador.getId())).thenReturn(List.of());
-        when(capacitacaoRepository.buscarExigenciasPorAlvo(ExigenciaCapacitacao.TipoAlvo.TAREFA, 10)).thenReturn(List.of(exigencia));
+        when(capacitacaoRepository.listarCertificacoes(colaborador.getId())).thenReturn(List.of());
+        when(capacitacaoRepository.listarTreinamentos(colaborador.getId())).thenReturn(List.of());
+        when(capacitacaoRepository.listarExigencias(ExigenciaCapacitacao.TipoAlvo.TAREFA, 10)).thenReturn(List.of(exigencia));
 
         ConsultaAptidaoOutputDTO consulta = useCase.consultarAptidao(10, colaborador.getId());
 

@@ -35,7 +35,7 @@ class NotificadorOcorrenciaNuloTest {
                 .potencialDano("Queda")
                 .build();
 
-        assertThatCode(() -> notificador.notificarGestor(incidente)).doesNotThrowAnyException();
+        assertThatCode(() -> notificador.notificar(incidente)).doesNotThrowAnyException();
         assertThat(notificador.listar()).isEmpty();
     }
 

@@ -69,7 +69,7 @@ public class AutenticacaoService implements AutenticarUsuarioUseCase {
             throw new CredenciaisInvalidasException("Credenciais inválidas.");
         }
 
-        String token = gerenciadorToken.gerarToken(usuario.getEmail(), usuario.getPerfil().name());
+        String token = gerenciadorToken.gerar(usuario.getEmail(), usuario.getPerfil().name());
         return new TokenOutputDTO(token, "Bearer", usuario.getEmail(), usuario.getNome(), usuario.getPerfil().name());
     }
 }

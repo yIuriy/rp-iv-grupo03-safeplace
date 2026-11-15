@@ -42,21 +42,21 @@ class OperadorAtualTest {
 
     @Test
     void emailOuSistemaDeveRetornarSistemaQuandoOperadorVazio() {
-        when(operadorPorta.obterIdentificadorOperador()).thenReturn(Optional.empty());
+        when(operadorPorta.obterIdentificador()).thenReturn(Optional.empty());
 
         assertEquals("SISTEMA", operadorAtual.emailOuSistema());
     }
 
     @Test
     void emailOuSistemaDeveRetornarEmailQuandoOperadorPresente() {
-        when(operadorPorta.obterIdentificadorOperador()).thenReturn(Optional.of("operador@empresa.com"));
+        when(operadorPorta.obterIdentificador()).thenReturn(Optional.of("operador@empresa.com"));
 
         assertEquals("operador@empresa.com", operadorAtual.emailOuSistema());
     }
 
     @Test
     void obterIdentificadorOperadorDeveDelegarParaPorta() {
-        when(operadorPorta.obterIdentificadorOperador()).thenReturn(Optional.of("teste@empresa.com"));
+        when(operadorPorta.obterIdentificador()).thenReturn(Optional.of("teste@empresa.com"));
 
         Optional<String> resultado = operadorAtual.obterIdentificadorOperador();
         assertTrue(resultado.isPresent());
@@ -73,7 +73,7 @@ class OperadorAtualTest {
 
     @Test
     void emailInformadoAusenteOuEmBrancoUsaOOperadorAutenticado() {
-        when(operadorPorta.obterIdentificadorOperador()).thenReturn(Optional.of("token@empresa.com"));
+        when(operadorPorta.obterIdentificador()).thenReturn(Optional.of("token@empresa.com"));
 
         assertEquals(Optional.of("token@empresa.com"), operadorAtual.emailInformadoOuAutenticado("   "));
         assertEquals("token@empresa.com", operadorAtual.emailInformadoOuSistema(null));
@@ -81,7 +81,7 @@ class OperadorAtualTest {
 
     @Test
     void semEmailInformadoNemOperadorDevolveVazioOuSistema() {
-        when(operadorPorta.obterIdentificadorOperador()).thenReturn(Optional.empty());
+        when(operadorPorta.obterIdentificador()).thenReturn(Optional.empty());
 
         assertEquals(Optional.empty(), operadorAtual.emailInformadoOuAutenticado(null));
         assertEquals("SISTEMA", operadorAtual.emailInformadoOuSistema(""));
@@ -89,7 +89,7 @@ class OperadorAtualTest {
 
     @Test
     void buscarGestorDeveRetornarVazioQuandoOperadorNaoAutenticado() {
-        when(operadorPorta.obterIdentificadorOperador()).thenReturn(Optional.empty());
+        when(operadorPorta.obterIdentificador()).thenReturn(Optional.empty());
 
         Optional<GestorDeSeguranca> gestor = operadorAtual.buscarGestor();
         assertTrue(gestor.isEmpty());
@@ -98,7 +98,7 @@ class OperadorAtualTest {
 
     @Test
     void buscarGestorDeveRetornarVazioQuandoUsuarioNaoEncontradoNoRepositorio() {
-        when(operadorPorta.obterIdentificadorOperador()).thenReturn(Optional.of("gestor@empresa.com"));
+        when(operadorPorta.obterIdentificador()).thenReturn(Optional.of("gestor@empresa.com"));
         when(usuarioRepository.buscarPorEmail("gestor@empresa.com")).thenReturn(Optional.empty());
 
         Optional<GestorDeSeguranca> gestor = operadorAtual.buscarGestor();
@@ -117,7 +117,7 @@ class OperadorAtualTest {
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
-        when(operadorPorta.obterIdentificadorOperador()).thenReturn(Optional.of("carlos@empresa.com"));
+        when(operadorPorta.obterIdentificador()).thenReturn(Optional.of("carlos@empresa.com"));
         when(usuarioRepository.buscarPorEmail("carlos@empresa.com")).thenReturn(Optional.of(colaboradorComum));
 
         Optional<GestorDeSeguranca> gestor = operadorAtual.buscarGestor();
@@ -137,7 +137,7 @@ class OperadorAtualTest {
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
-        when(operadorPorta.obterIdentificadorOperador()).thenReturn(Optional.of("gestor@empresa.com"));
+        when(operadorPorta.obterIdentificador()).thenReturn(Optional.of("gestor@empresa.com"));
         when(usuarioRepository.buscarPorEmail("gestor@empresa.com")).thenReturn(Optional.of(gestorEsperado));
 
         Optional<GestorDeSeguranca> gestor = operadorAtual.buscarGestor();
@@ -158,7 +158,7 @@ class OperadorAtualTest {
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
-        when(operadorPorta.obterIdentificadorOperador()).thenReturn(Optional.of("gestor@empresa.com"));
+        when(operadorPorta.obterIdentificador()).thenReturn(Optional.of("gestor@empresa.com"));
         when(usuarioRepository.buscarPorEmail("gestor@empresa.com")).thenReturn(Optional.of(gestorEsperado));
 
         GestorDeSeguranca retorno = operadorAtual.gestorObrigatorio();
@@ -167,7 +167,7 @@ class OperadorAtualTest {
 
     @Test
     void gestorObrigatorioSemMensagemDeveLancarAcessoNegadoComMensagemPadrao() {
-        when(operadorPorta.obterIdentificadorOperador()).thenReturn(Optional.empty());
+        when(operadorPorta.obterIdentificador()).thenReturn(Optional.empty());
 
         AcessoNegadoException ex = assertThrows(AcessoNegadoException.class, () -> operadorAtual.gestorObrigatorio());
         assertEquals("Operação exige um Gestor de Segurança autenticado.", ex.getMessage());
@@ -175,7 +175,7 @@ class OperadorAtualTest {
 
     @Test
     void gestorObrigatorioComMensagemCustomizadaDeveLancarAcessoNegadoComMensagemInformada() {
-        when(operadorPorta.obterIdentificadorOperador()).thenReturn(Optional.empty());
+        when(operadorPorta.obterIdentificador()).thenReturn(Optional.empty());
 
         String mensagemCustom = "A classificação de periculosidade exige um Gestor de Segurança autenticado como responsável técnico.";
         AcessoNegadoException ex = assertThrows(AcessoNegadoException.class, () -> operadorAtual.gestorObrigatorio(mensagemCustom));
@@ -184,7 +184,7 @@ class OperadorAtualTest {
 
     @Test
     void gestorObrigatorioComMensagemNulaOuVaziaDeveUsarMensagemPadrao() {
-        when(operadorPorta.obterIdentificadorOperador()).thenReturn(Optional.empty());
+        when(operadorPorta.obterIdentificador()).thenReturn(Optional.empty());
 
         AcessoNegadoException exNulo = assertThrows(AcessoNegadoException.class, () -> operadorAtual.gestorObrigatorio(null));
         assertEquals("Operação exige um Gestor de Segurança autenticado.", exNulo.getMessage());

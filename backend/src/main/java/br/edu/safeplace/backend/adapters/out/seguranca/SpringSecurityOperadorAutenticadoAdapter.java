@@ -13,7 +13,7 @@ public class SpringSecurityOperadorAutenticadoAdapter implements OperadorAutenti
     private static final String USUARIO_ANONIMO = "anonymousUser";
 
     @Override
-    public Optional<String> obterIdentificadorOperador() {
+    public Optional<String> obterIdentificador() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
             String identificador = auth.getName().trim();

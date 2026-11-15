@@ -43,7 +43,7 @@ class HistoricoProprioServiceTest {
         when(logs.listarPorResponsavel(EMAIL, 20)).thenReturn(List.of(
                 new LogAuditoria(31, "CADASTRO", quando, EMAIL, "Registro de incidente", "Incidente", 4)));
 
-        List<AcaoUsuarioOutputDTO> acoes = useCase.listarAcoes("  " + EMAIL + " ", 20);
+        List<AcaoUsuarioOutputDTO> acoes = useCase.listar("  " + EMAIL + " ", 20);
 
         assertThat(acoes).containsExactly(
                 new AcaoUsuarioOutputDTO(31, "CADASTRO", quando, "Incidente", 4, "Registro de incidente"));
@@ -52,8 +52,8 @@ class HistoricoProprioServiceTest {
     @Test
     @DisplayName("Ajusta o limite para a faixa de 1 a 100")
     void ajustaLimite() {
-        useCase.listarAcoes(EMAIL, 0);
-        useCase.listarAcoes(EMAIL, 500);
+        useCase.listar(EMAIL, 0);
+        useCase.listar(EMAIL, 500);
 
         verify(logs).listarPorResponsavel(EMAIL, 1);
         verify(logs).listarPorResponsavel(EMAIL, 100);
@@ -62,8 +62,8 @@ class HistoricoProprioServiceTest {
     @Test
     @DisplayName("Sem e-mail, devolve lista vazia sem consultar a auditoria")
     void semEmail() {
-        assertThat(useCase.listarAcoes(null, 20)).isEmpty();
-        assertThat(useCase.listarAcoes("  ", 20)).isEmpty();
+        assertThat(useCase.listar(null, 20)).isEmpty();
+        assertThat(useCase.listar("  ", 20)).isEmpty();
 
         verify(logs, never()).listarPorResponsavel(anyString(), anyInt());
     }

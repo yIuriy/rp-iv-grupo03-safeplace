@@ -79,7 +79,7 @@ class TarefaServiceTest {
     @Test
     @DisplayName("Deve cadastrar tarefa já classificada com responsável técnico e histórico")
     void deveCadastrarTarefaClassificada() {
-        TarefaOutputDTO salva = useCase.cadastrarTarefa(
+        TarefaOutputDTO salva = useCase.cadastrar(
                 new CadastrarTarefaInputDTO("Solda em altura", NivelPerigo.ALTO));
 
         assertThat(salva.id()).isEqualTo(1);
@@ -102,7 +102,7 @@ class TarefaServiceTest {
     void deveCadastrarTarefaSemClassificacao() {
         operador.encerrarSessao();
 
-        TarefaOutputDTO salva = useCase.cadastrarTarefa(
+        TarefaOutputDTO salva = useCase.cadastrar(
                 new CadastrarTarefaInputDTO("Inspeção visual", null));
 
         assertThat(salva.classificada()).isFalse();
@@ -115,7 +115,7 @@ class TarefaServiceTest {
     @Test
     @DisplayName("UC11: deve classificar tarefa existente registrando responsável técnico")
     void deveClassificarTarefaExistente() {
-        Integer id = useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Inspeção visual", null)).id();
+        Integer id = useCase.cadastrar(new CadastrarTarefaInputDTO("Inspeção visual", null)).id();
 
         TarefaOutputDTO classificada = useCase.classificar(id, NivelPerigo.CRITICO);
 
@@ -132,7 +132,7 @@ class TarefaServiceTest {
     @Test
     @DisplayName("UC11 alternativo I: reavaliação substitui o grau e preserva o valor anterior no histórico")
     void reavaliacaoSubstituiGrauAnterior() {
-        Integer id = useCase.cadastrarTarefa(
+        Integer id = useCase.cadastrar(
                 new CadastrarTarefaInputDTO("Solda em altura", NivelPerigo.CRITICO)).id();
 
         useCase.classificar(id, NivelPerigo.BAIXO);
@@ -148,7 +148,7 @@ class TarefaServiceTest {
     @Test
     @DisplayName("Classificação sem Gestor de Segurança identificável é recusada sem gravar nada")
     void classificacaoSemGestorERecusada() {
-        Integer id = useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Inspeção visual", null)).id();
+        Integer id = useCase.cadastrar(new CadastrarTarefaInputDTO("Inspeção visual", null)).id();
 
         String mensagem =
                 "A classificação de periculosidade exige um Gestor de Segurança autenticado como responsável técnico.";
@@ -161,7 +161,7 @@ class TarefaServiceTest {
         assertThatThrownBy(() -> useCase.classificar(id, NivelPerigo.ALTO))
                 .isInstanceOf(AcessoNegadoException.class)
                 .hasMessage(mensagem);
-        assertThatThrownBy(() -> useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Solda", NivelPerigo.ALTO)))
+        assertThatThrownBy(() -> useCase.cadastrar(new CadastrarTarefaInputDTO("Solda", NivelPerigo.ALTO)))
                 .isInstanceOf(AcessoNegadoException.class);
 
         assertThat(useCase.buscarPorId(id).classificada()).isFalse();
@@ -172,7 +172,7 @@ class TarefaServiceTest {
     @Test
     @DisplayName("Deve rejeitar classificação com nível nulo")
     void deveRejeitarClassificacaoComNivelNulo() {
-        Integer id = useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Inspeção visual", null)).id();
+        Integer id = useCase.cadastrar(new CadastrarTarefaInputDTO("Inspeção visual", null)).id();
 
         assertThatThrownBy(() -> useCase.classificar(id, null))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -193,9 +193,9 @@ class TarefaServiceTest {
     @Test
     @DisplayName("Deve filtrar a matriz de periculosidade pelo grau de perigo")
     void deveFiltrarPorNivelPerigo() {
-        useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Solda em altura", NivelPerigo.ALTO));
-        useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Pintura", NivelPerigo.BAIXO));
-        useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Trabalho em espaço confinado", NivelPerigo.ALTO));
+        useCase.cadastrar(new CadastrarTarefaInputDTO("Solda em altura", NivelPerigo.ALTO));
+        useCase.cadastrar(new CadastrarTarefaInputDTO("Pintura", NivelPerigo.BAIXO));
+        useCase.cadastrar(new CadastrarTarefaInputDTO("Trabalho em espaço confinado", NivelPerigo.ALTO));
 
         assertThat(useCase.listarPorNivelPerigo(NivelPerigo.ALTO)).hasSize(2);
         assertThat(useCase.listarPorNivelPerigo(NivelPerigo.BAIXO)).hasSize(1);
@@ -219,17 +219,17 @@ class TarefaServiceTest {
     @Test
     @DisplayName("RF12 / UC08: deve associar EPIs a uma tarefa e listar EPIs obrigatórios")
     void deveAssociarEpisEListarObrigatorios() {
-        Integer tarefaId = useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Trabalho em altura", null)).id();
+        Integer tarefaId = useCase.cadastrar(new CadastrarTarefaInputDTO("Trabalho em altura", null)).id();
         Epi capacete = epi(1, "Capacete de Segurança");
         Epi cinto = epi(2, "Cinto Paraquedista");
         epiRepository.adicionar(capacete);
         epiRepository.adicionar(cinto);
 
-        TarefaOutputDTO resultado = useCase.associarEpis(tarefaId, List.of(1, 2));
+        TarefaOutputDTO resultado = useCase.associar(tarefaId, List.of(1, 2));
 
         assertThat(resultado.episIds()).containsExactly(1, 2);
 
-        List<EpiOutputDTO> epis = useCase.listarEpisObrigatorios(tarefaId);
+        List<EpiOutputDTO> epis = useCase.listarObrigatorios(tarefaId);
         assertThat(epis).hasSize(2);
         assertThat(epis.stream().map(EpiOutputDTO::id)).containsExactly(1, 2);
         assertThat(epis.stream().map(EpiOutputDTO::nome)).containsExactly("Capacete de Segurança", "Cinto Paraquedista");
@@ -238,9 +238,9 @@ class TarefaServiceTest {
     @Test
     @DisplayName("RF12 / UC08: deve falhar ao associar EPI inexistente")
     void deveFalharAoAssociarEpiInexistente() {
-        Integer tarefaId = useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Solda", null)).id();
+        Integer tarefaId = useCase.cadastrar(new CadastrarTarefaInputDTO("Solda", null)).id();
 
-        assertThatThrownBy(() -> useCase.associarEpis(tarefaId, List.of(999)))
+        assertThatThrownBy(() -> useCase.associar(tarefaId, List.of(999)))
                 .isInstanceOf(EpiNaoEncontradoException.class)
                 .hasMessageContaining("999");
     }
@@ -248,11 +248,11 @@ class TarefaServiceTest {
     @Test
     @DisplayName("RF12 / UC08: deve falhar ao associar com id de EPI nulo")
     void deveFalharAoAssociarEpiNulo() {
-        Integer tarefaId = useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Solda", null)).id();
+        Integer tarefaId = useCase.cadastrar(new CadastrarTarefaInputDTO("Solda", null)).id();
         List<Integer> ids = new ArrayList<>();
         ids.add(null);
 
-        assertThatThrownBy(() -> useCase.associarEpis(tarefaId, ids))
+        assertThatThrownBy(() -> useCase.associar(tarefaId, ids))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Identificador de EPI não pode ser nulo.");
     }
@@ -260,37 +260,37 @@ class TarefaServiceTest {
     @Test
     @DisplayName("RF12 / UC08: deve falhar ao associar EPIs a tarefa inexistente")
     void deveFalharAoAssociarEpisATarefaInexistente() {
-        assertThatThrownBy(() -> useCase.associarEpis(999, List.of(1)))
+        assertThatThrownBy(() -> useCase.associar(999, List.of(1)))
                 .isInstanceOf(TarefaNaoEncontradaException.class);
 
-        assertThatThrownBy(() -> useCase.listarEpisObrigatorios(999))
+        assertThatThrownBy(() -> useCase.listarObrigatorios(999))
                 .isInstanceOf(TarefaNaoEncontradaException.class);
     }
 
     @Test
     @DisplayName("RF12 / UC08: deve permitir associar lista vazia de EPIs desvinculando anteriores")
     void devePermitirListaVaziaDeEpis() {
-        Integer tarefaId = useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Inspeção", null)).id();
+        Integer tarefaId = useCase.cadastrar(new CadastrarTarefaInputDTO("Inspeção", null)).id();
         Epi luva = epi(5, "Luva");
         epiRepository.adicionar(luva);
 
-        useCase.associarEpis(tarefaId, List.of(5));
-        assertThat(useCase.listarEpisObrigatorios(tarefaId)).hasSize(1);
+        useCase.associar(tarefaId, List.of(5));
+        assertThat(useCase.listarObrigatorios(tarefaId)).hasSize(1);
 
-        TarefaOutputDTO resultado = useCase.associarEpis(tarefaId, List.of());
+        TarefaOutputDTO resultado = useCase.associar(tarefaId, List.of());
         assertThat(resultado.episIds()).isEmpty();
-        assertThat(useCase.listarEpisObrigatorios(tarefaId)).isEmpty();
+        assertThat(useCase.listarObrigatorios(tarefaId)).isEmpty();
     }
 
     @Test
     @DisplayName("RNF05 (#193): o vínculo de EPIs registra em LogAuditoria os EPIs anteriores e os novos")
     void vinculoDeEpisRegistraAuditoriaComValorAnteriorENovo() {
-        Integer tarefaId = useCase.cadastrarTarefa(new CadastrarTarefaInputDTO("Inspeção de telhado", null)).id();
+        Integer tarefaId = useCase.cadastrar(new CadastrarTarefaInputDTO("Inspeção de telhado", null)).id();
         epiRepository.adicionar(epi(5, "Luva"));
         epiRepository.adicionar(epi(6, "Cinto"));
 
-        useCase.associarEpis(tarefaId, List.of(5));
-        useCase.associarEpis(tarefaId, List.of(6));
+        useCase.associar(tarefaId, List.of(5));
+        useCase.associar(tarefaId, List.of(6));
 
         assertThat(auditoria.listarPorEntidade("Tarefa", tarefaId))
                 .extracting(LogAuditoria::getJustificativa)
@@ -303,10 +303,10 @@ class TarefaServiceTest {
     @Test
     @DisplayName("Deve atualizar descrição, área de risco e setores da tarefa gravando LogAuditoria de ALTERACAO")
     void deveAtualizarTarefa() {
-        TarefaOutputDTO cadastrada = useCase.cadastrarTarefa(
+        TarefaOutputDTO cadastrada = useCase.cadastrar(
                 new CadastrarTarefaInputDTO("Solda simples", null));
 
-        TarefaOutputDTO atualizada = useCase.atualizarTarefa(cadastrada.id(),
+        TarefaOutputDTO atualizada = useCase.atualizar(cadastrada.id(),
                 new br.edu.safeplace.backend.application.dto.input.AtualizarTarefaInputDTO(
                         "Solda complexa em altura", null, List.of()), EMAIL_GESTOR);
 
@@ -348,7 +348,7 @@ class TarefaServiceTest {
         }
 
         @Override
-        public List<Tarefa> listarTodas() {
+        public List<Tarefa> listar() {
             return new ArrayList<>(storage.values());
         }
 
@@ -384,7 +384,7 @@ class TarefaServiceTest {
         }
 
         @Override
-        public List<Epi> listarTodos() {
+        public List<Epi> listar() {
             return new ArrayList<>(storage.values());
         }
 
@@ -394,12 +394,12 @@ class TarefaServiceTest {
         }
 
         @Override
-        public MovimentacaoEstoque salvarMovimentacao(MovimentacaoEstoque movimentacao) {
+        public MovimentacaoEstoque salvar(MovimentacaoEstoque movimentacao) {
             return movimentacao;
         }
 
         @Override
-        public List<MovimentacaoEstoque> listarMovimentacoesPorEpi(Integer epiId) {
+        public List<MovimentacaoEstoque> listarMovimentacoes(Integer epiId) {
             return List.of();
         }
     }
@@ -449,7 +449,7 @@ class TarefaServiceTest {
         }
 
         @Override
-        public List<Colaborador> listarTodos() {
+        public List<Colaborador> listar() {
             return pessoas;
         }
 

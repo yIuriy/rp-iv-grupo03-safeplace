@@ -37,7 +37,7 @@ public class EmprestimoJpaAdapter implements EmprestimoRepository {
     }
 
     @Override
-    public List<Emprestimo> listarTodos() {
+    public List<Emprestimo> listar() {
         return repositorio.findAllByOrderByDataRetiradaDesc();
     }
 
@@ -47,7 +47,7 @@ public class EmprestimoJpaAdapter implements EmprestimoRepository {
     }
 
     @Override
-    public List<Emprestimo> listarAtivosPorColaborador(Integer colaboradorId) {
+    public List<Emprestimo> listarAtivos(Integer colaboradorId) {
         return repositorio.listarPorColaboradorEStatus(colaboradorId, ClassificacaoEmprestimo.INDISPONIVEL);
     }
 

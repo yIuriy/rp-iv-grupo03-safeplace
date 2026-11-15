@@ -85,7 +85,7 @@ class UsuarioServiceCadastroPorPapelTest {
     @Test
     @DisplayName("RF23: cadastro de Supervisor gera senha inicial e persiste apenas o hash")
     void cadastroDeSupervisorGeraSenhaInicialEPersisteHash() {
-        UsuarioOutputDTO salvo = casoDeUso.cadastrarSupervisor(supervisor(CPF_VALIDO, "joana@safeplace.com"));
+        UsuarioOutputDTO salvo = casoDeUso.cadastrar(supervisor(CPF_VALIDO, "joana@safeplace.com"));
 
         assertThat(salvo.perfil()).isEqualTo(Perfil.SUPERVISOR);
         assertThat(salvo.senhaInicial()).isEqualTo("SenhaGerada#1");
@@ -98,17 +98,17 @@ class UsuarioServiceCadastroPorPapelTest {
     @Test
     @DisplayName("A senha inicial aparece só no cadastro; listagem e busca nunca a devolvem")
     void senhaInicialNaoVazaEmConsultas() {
-        Integer id = casoDeUso.cadastrarSupervisor(supervisor(CPF_VALIDO, "joana@safeplace.com")).id();
+        Integer id = casoDeUso.cadastrar(supervisor(CPF_VALIDO, "joana@safeplace.com")).id();
 
         assertThat(casoDeUso.buscarPorId(id).senhaInicial()).isNull();
         assertThat(casoDeUso.buscarPorCpf(CPF_VALIDO).senhaInicial()).isNull();
-        assertThat(casoDeUso.listarUsuarios()).allSatisfy(dto -> assertThat(dto.senhaInicial()).isNull());
+        assertThat(casoDeUso.listar()).allSatisfy(dto -> assertThat(dto.senhaInicial()).isNull());
     }
 
     @Test
     @DisplayName("RF23: cadastro de Colaborador não gera credenciais")
     void cadastroDeColaboradorNaoGeraCredenciais() {
-        UsuarioOutputDTO salvo = casoDeUso.cadastrarColaborador(
+        UsuarioOutputDTO salvo = casoDeUso.cadastrar(
                 colaborador("João da Silva", CPF_VALIDO, "joao@safeplace.com"));
 
         assertThat(salvo.perfil()).isNull();
@@ -122,7 +122,7 @@ class UsuarioServiceCadastroPorPapelTest {
     @Test
     @DisplayName("Colaborador pode ser cadastrado sem e-mail")
     void colaboradorPodeSerCadastradoSemEmail() {
-        UsuarioOutputDTO salvo = casoDeUso.cadastrarColaborador(colaborador("Sem Email", CPF_VALIDO, null));
+        UsuarioOutputDTO salvo = casoDeUso.cadastrar(colaborador("Sem Email", CPF_VALIDO, null));
 
         assertThat(salvo.email()).isNull();
         assertThat(salvo.perfil()).isNull();
@@ -131,13 +131,13 @@ class UsuarioServiceCadastroPorPapelTest {
     @Test
     @DisplayName("Duplicidade de CPF é rejeitada nos dois cadastros, inclusive com máscara")
     void duplicidadeDeCpfEhRejeitada() {
-        casoDeUso.cadastrarColaborador(colaborador("João da Silva", CPF_VALIDO, "joao@safeplace.com"));
+        casoDeUso.cadastrar(colaborador("João da Silva", CPF_VALIDO, "joao@safeplace.com"));
 
-        assertThatThrownBy(() -> casoDeUso.cadastrarColaborador(
+        assertThatThrownBy(() -> casoDeUso.cadastrar(
                 colaborador("Outro Nome", "529.982.247-25", "outro@safeplace.com")))
                 .isInstanceOf(CpfJaCadastradoException.class);
 
-        assertThatThrownBy(() -> casoDeUso.cadastrarSupervisor(
+        assertThatThrownBy(() -> casoDeUso.cadastrar(
                 supervisor(CPF_VALIDO, "novo.supervisor@safeplace.com")))
                 .isInstanceOf(CpfJaCadastradoException.class);
     }
@@ -145,9 +145,9 @@ class UsuarioServiceCadastroPorPapelTest {
     @Test
     @DisplayName("Duplicidade de e-mail é rejeitada sem diferenciar maiúsculas")
     void duplicidadeDeEmailEhRejeitada() {
-        casoDeUso.cadastrarSupervisor(supervisor(CPF_VALIDO, "joana@safeplace.com"));
+        casoDeUso.cadastrar(supervisor(CPF_VALIDO, "joana@safeplace.com"));
 
-        assertThatThrownBy(() -> casoDeUso.cadastrarColaborador(
+        assertThatThrownBy(() -> casoDeUso.cadastrar(
                 colaborador("Outra Pessoa", OUTRO_CPF_VALIDO, "JOANA@SafePlace.com")))
                 .isInstanceOf(EmailJaCadastradoException.class);
     }
@@ -155,17 +155,17 @@ class UsuarioServiceCadastroPorPapelTest {
     @Test
     @DisplayName("CPF inválido é rejeitado antes de qualquer persistência")
     void cpfInvalidoEhRejeitado() {
-        assertThatThrownBy(() -> casoDeUso.cadastrarColaborador(colaborador("X", "111", null)))
+        assertThatThrownBy(() -> casoDeUso.cadastrar(colaborador("X", "111", null)))
                 .isInstanceOf(CpfInvalidoException.class);
 
-        assertThat(repositorio.listarTodos()).isEmpty();
+        assertThat(repositorio.listar()).isEmpty();
     }
 
     @Test
     @DisplayName("Listagem de colaboradores não inclui supervisores")
     void listagemDeColaboradoresNaoIncluiSupervisores() {
-        casoDeUso.cadastrarColaborador(colaborador("João da Silva", CPF_VALIDO, "joao@safeplace.com"));
-        casoDeUso.cadastrarSupervisor(supervisor(OUTRO_CPF_VALIDO, "joana@safeplace.com"));
+        casoDeUso.cadastrar(colaborador("João da Silva", CPF_VALIDO, "joao@safeplace.com"));
+        casoDeUso.cadastrar(supervisor(OUTRO_CPF_VALIDO, "joana@safeplace.com"));
 
         List<UsuarioOutputDTO> colaboradores = casoDeUso.listarColaboradores(FiltroColaboradorDTO.SEM_FILTRO);
 
@@ -176,8 +176,8 @@ class UsuarioServiceCadastroPorPapelTest {
     @Test
     @DisplayName("Filtro por nome é parcial e ignora maiúsculas; filtro por CPF aceita máscara")
     void filtrosDeListagemFuncionam() {
-        casoDeUso.cadastrarColaborador(colaborador("João da Silva", CPF_VALIDO, "joao@safeplace.com"));
-        casoDeUso.cadastrarColaborador(colaborador("Maria Souza", OUTRO_CPF_VALIDO, "maria@safeplace.com"));
+        casoDeUso.cadastrar(colaborador("João da Silva", CPF_VALIDO, "joao@safeplace.com"));
+        casoDeUso.cadastrar(colaborador("Maria Souza", OUTRO_CPF_VALIDO, "maria@safeplace.com"));
 
         assertThat(casoDeUso.listarColaboradores(new FiltroColaboradorDTO("silva", null)))
                 .extracting(UsuarioOutputDTO::nome).containsExactly("João da Silva");
@@ -226,7 +226,7 @@ class UsuarioServiceCadastroPorPapelTest {
         }
 
         @Override
-        public List<Colaborador> listarTodos() {
+        public List<Colaborador> listar() {
             return List.copyOf(armazenados);
         }
 

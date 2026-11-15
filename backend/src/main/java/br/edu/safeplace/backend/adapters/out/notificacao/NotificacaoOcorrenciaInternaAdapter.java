@@ -55,7 +55,7 @@ public class NotificacaoOcorrenciaInternaAdapter implements NotificadorOcorrenci
     }
 
     @Override
-    public void notificarGestor(Ocorrencia ocorrencia) {
+    public void notificar(Ocorrencia ocorrencia) {
         if (ocorrencia == null) {
             return;
         }

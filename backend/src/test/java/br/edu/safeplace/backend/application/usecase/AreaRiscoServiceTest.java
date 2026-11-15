@@ -69,7 +69,7 @@ class AreaRiscoServiceTest {
     @Test
     @DisplayName("Deve cadastrar área de risco com os EPIs obrigatórios resolvidos do catálogo")
     void deveCadastrarAreaRiscoComEpisResolvidos() {
-        AreaRiscoOutputDTO salva = useCase.cadastrarAreaRisco(input("SET-01", NivelPerigo.ALTO, List.of(1, 2)));
+        AreaRiscoOutputDTO salva = useCase.cadastrar(input("SET-01", NivelPerigo.ALTO, List.of(1, 2)));
 
         assertThat(salva.id()).isEqualTo(1);
         assertThat(salva.codigo()).isEqualTo("SET-01");
@@ -83,7 +83,7 @@ class AreaRiscoServiceTest {
     @Test
     @DisplayName("RNF05 (#193): o cadastro da área é registrado com operador; código duplicado não gera registro")
     void cadastroDaAreaGeraAuditoria() {
-        AreaRiscoOutputDTO salva = useCase.cadastrarAreaRisco(
+        AreaRiscoOutputDTO salva = useCase.cadastrar(
                 input("SET-07", NivelPerigo.MEDIO, List.of(1)), "gestor@empresa.com");
 
         assertThat(auditoria.listarPorEntidade("AreaRisco", salva.id())).singleElement().satisfies(log -> {
@@ -92,7 +92,7 @@ class AreaRiscoServiceTest {
             assertThat(log.getJustificativa()).contains("SET-07");
         });
 
-        assertThatThrownBy(() -> useCase.cadastrarAreaRisco(input("SET-07", NivelPerigo.BAIXO, List.of(2)), "gestor@empresa.com"))
+        assertThatThrownBy(() -> useCase.cadastrar(input("SET-07", NivelPerigo.BAIXO, List.of(2)), "gestor@empresa.com"))
                 .isInstanceOf(CodigoAreaRiscoDuplicadoException.class);
         assertThat(auditoria.registros()).hasSize(1);
     }
@@ -100,9 +100,9 @@ class AreaRiscoServiceTest {
     @Test
     @DisplayName("UC03 exceção I: deve rejeitar código de setor já cadastrado")
     void deveRejeitarCodigoDuplicado() {
-        useCase.cadastrarAreaRisco(input("SET-01", NivelPerigo.ALTO, List.of(1)));
+        useCase.cadastrar(input("SET-01", NivelPerigo.ALTO, List.of(1)));
 
-        assertThatThrownBy(() -> useCase.cadastrarAreaRisco(input("SET-01", NivelPerigo.BAIXO, List.of(2))))
+        assertThatThrownBy(() -> useCase.cadastrar(input("SET-01", NivelPerigo.BAIXO, List.of(2))))
                 .isInstanceOf(CodigoAreaRiscoDuplicadoException.class)
                 .hasMessageContaining("SET-01");
     }
@@ -110,25 +110,25 @@ class AreaRiscoServiceTest {
     @Test
     @DisplayName("UC03 exceção I: a verificação de duplicidade ignora caixa e espaços")
     void verificacaoDeDuplicidadeIgnoraCaixaEEspacos() {
-        useCase.cadastrarAreaRisco(input("SET-01", NivelPerigo.ALTO, List.of(1)));
+        useCase.cadastrar(input("SET-01", NivelPerigo.ALTO, List.of(1)));
 
-        assertThatThrownBy(() -> useCase.cadastrarAreaRisco(input(" set-01 ", NivelPerigo.BAIXO, List.of(2))))
+        assertThatThrownBy(() -> useCase.cadastrar(input(" set-01 ", NivelPerigo.BAIXO, List.of(2))))
                 .isInstanceOf(CodigoAreaRiscoDuplicadoException.class);
     }
 
     @Test
     @DisplayName("UC03 exceção II: deve bloquear cadastro sem EPIs obrigatórios e não persistir nada")
     void deveBloquearCadastroSemEpisObrigatorios() {
-        assertThatThrownBy(() -> useCase.cadastrarAreaRisco(input("SET-02", NivelPerigo.CRITICO, List.of())))
+        assertThatThrownBy(() -> useCase.cadastrar(input("SET-02", NivelPerigo.CRITICO, List.of())))
                 .isInstanceOf(AreaRiscoSemEpiObrigatorioException.class);
 
-        assertThat(areaRepository.listarTodas()).isEmpty();
+        assertThat(areaRepository.listar()).isEmpty();
     }
 
     @Test
     @DisplayName("Deve rejeitar vínculo com EPI inexistente no catálogo")
     void deveRejeitarEpiInexistente() {
-        assertThatThrownBy(() -> useCase.cadastrarAreaRisco(input("SET-03", NivelPerigo.MEDIO, List.of(99))))
+        assertThatThrownBy(() -> useCase.cadastrar(input("SET-03", NivelPerigo.MEDIO, List.of(99))))
                 .isInstanceOf(EpiNaoEncontradoException.class)
                 .hasMessageContaining("99");
     }
@@ -136,7 +136,7 @@ class AreaRiscoServiceTest {
     @Test
     @DisplayName("Deve ignorar IDs de EPI repetidos no formulário")
     void deveIgnorarEpisRepetidos() {
-        AreaRiscoOutputDTO salva = useCase.cadastrarAreaRisco(input("SET-04", NivelPerigo.BAIXO, List.of(1, 1, 2)));
+        AreaRiscoOutputDTO salva = useCase.cadastrar(input("SET-04", NivelPerigo.BAIXO, List.of(1, 1, 2)));
 
         assertThat(salva.episObrigatorios()).hasSize(2);
     }
@@ -144,9 +144,9 @@ class AreaRiscoServiceTest {
     @Test
     @DisplayName("UC03 alternativo I: deve filtrar o mapa de riscos pelo grau de perigo")
     void deveFiltrarPorNivelPerigo() {
-        useCase.cadastrarAreaRisco(input("SET-01", NivelPerigo.ALTO, List.of(1)));
-        useCase.cadastrarAreaRisco(input("SET-02", NivelPerigo.BAIXO, List.of(1)));
-        useCase.cadastrarAreaRisco(input("SET-03", NivelPerigo.ALTO, List.of(2)));
+        useCase.cadastrar(input("SET-01", NivelPerigo.ALTO, List.of(1)));
+        useCase.cadastrar(input("SET-02", NivelPerigo.BAIXO, List.of(1)));
+        useCase.cadastrar(input("SET-03", NivelPerigo.ALTO, List.of(2)));
 
         assertThat(useCase.listarPorNivelPerigo(NivelPerigo.ALTO)).hasSize(2);
         assertThat(useCase.listarPorNivelPerigo(NivelPerigo.BAIXO)).hasSize(1);
@@ -156,8 +156,8 @@ class AreaRiscoServiceTest {
     @Test
     @DisplayName("Filtro sem nível informado devolve o mapa completo")
     void filtroSemNivelDevolveMapaCompleto() {
-        useCase.cadastrarAreaRisco(input("SET-01", NivelPerigo.ALTO, List.of(1)));
-        useCase.cadastrarAreaRisco(input("SET-02", NivelPerigo.BAIXO, List.of(1)));
+        useCase.cadastrar(input("SET-01", NivelPerigo.ALTO, List.of(1)));
+        useCase.cadastrar(input("SET-02", NivelPerigo.BAIXO, List.of(1)));
 
         assertThat(useCase.listarPorNivelPerigo(null)).hasSize(2);
         assertThat(useCase.listar()).hasSize(2);
@@ -166,7 +166,7 @@ class AreaRiscoServiceTest {
     @Test
     @DisplayName("Deve buscar área por ID e falhar quando não existe")
     void deveBuscarPorIdEFalharQuandoNaoExiste() {
-        useCase.cadastrarAreaRisco(input("SET-01", NivelPerigo.ALTO, List.of(1)));
+        useCase.cadastrar(input("SET-01", NivelPerigo.ALTO, List.of(1)));
 
         assertThat(useCase.buscarPorId(1).codigo()).isEqualTo("SET-01");
         assertThatThrownBy(() -> useCase.buscarPorId(99))
@@ -177,14 +177,14 @@ class AreaRiscoServiceTest {
     @Test
     @DisplayName("Deve atualizar área de risco com novos agentes e limites")
     void deveAtualizarAreaRiscoComNovosAgentesELimites() {
-        AreaRiscoOutputDTO criada = useCase.cadastrarAreaRisco(new CadastrarAreaRiscoInputDTO(
+        AreaRiscoOutputDTO criada = useCase.cadastrar(new CadastrarAreaRiscoInputDTO(
                 "SET-01", "Nome Original", "Desc", NivelPerigo.MEDIO, null, List.of("Ruído"), "Limite", List.of(1)));
 
         br.edu.safeplace.backend.application.dto.input.AtualizarAreaRiscoInputDTO atualizacao =
                 new br.edu.safeplace.backend.application.dto.input.AtualizarAreaRiscoInputDTO(
                         "Novo Nome", "Nova Desc", NivelPerigo.ALTO, null, List.of("Ruído", "Calor"), "Novo Limite", List.of(1, 2), "Revisão");
 
-        AreaRiscoOutputDTO atualizada = useCase.atualizarAreaRisco(criada.id(), atualizacao, "gestor");
+        AreaRiscoOutputDTO atualizada = useCase.atualizar(criada.id(), atualizacao, "gestor");
 
         assertThat(atualizada.nome()).isEqualTo("Novo Nome");
         assertThat(atualizada.nivelPerigo()).isEqualTo(NivelPerigo.ALTO);
@@ -221,7 +221,7 @@ class AreaRiscoServiceTest {
         }
 
         @Override
-        public List<AreaRisco> listarTodas() {
+        public List<AreaRisco> listar() {
             return new ArrayList<>(storage.values());
         }
 
@@ -259,7 +259,7 @@ class AreaRiscoServiceTest {
         }
 
         @Override
-        public List<Epi> listarTodos() {
+        public List<Epi> listar() {
             return new ArrayList<>(storage.values());
         }
 
@@ -269,12 +269,12 @@ class AreaRiscoServiceTest {
         }
 
         @Override
-        public MovimentacaoEstoque salvarMovimentacao(MovimentacaoEstoque movimentacao) {
+        public MovimentacaoEstoque salvar(MovimentacaoEstoque movimentacao) {
             throw new UnsupportedOperationException("Não usado neste teste.");
         }
 
         @Override
-        public List<MovimentacaoEstoque> listarMovimentacoesPorEpi(Integer epiId) {
+        public List<MovimentacaoEstoque> listarMovimentacoes(Integer epiId) {
             return List.of();
         }
     }

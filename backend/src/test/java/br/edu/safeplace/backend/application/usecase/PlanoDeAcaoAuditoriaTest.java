@@ -126,7 +126,7 @@ class PlanoDeAcaoAuditoriaTest {
                     a.getResponsavelSetor(), a.isAlertaAtivo(), a.getAntecedenciaAlertaDias(), a.getGestor());
         });
 
-        service.cadastrarAcao(10, input);
+        service.cadastrar(10, input);
 
         assertThat(trilha.registros()).hasSize(1);
         LogAuditoria log = trilha.registros().get(0);
@@ -204,7 +204,7 @@ class PlanoDeAcaoAuditoriaTest {
                 100, 10, "Medida", null, hoje.plusDays(2), "ABERTA", colaborador, null, false, null, null
         );
         when(planoDeAcaoRepository.buscarPorId(100)).thenReturn(Optional.of(existente));
-        when(planoDeAcaoRepository.salvarProrrogacao(any(ProrrogacaoPrazo.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(planoDeAcaoRepository.salvar(any(ProrrogacaoPrazo.class))).thenAnswer(inv -> inv.getArgument(0));
         when(planoDeAcaoRepository.salvar(any(PlanoDeAcao.class))).thenAnswer(inv -> inv.getArgument(0));
 
         service.prorrogarPrazo(100, new ProrrogarPrazoInputDTO(hoje.plusDays(10), "Atraso na entrega de peças"));

@@ -99,7 +99,7 @@ class HistoricoAreaRiscoTarefaUseCaseTest {
     @Test
     @DisplayName("Atualizar área grava no histórico o valor anterior e o novo de cada campo, e a justificativa")
     void atualizacaoGravaAnteriorNovoEJustificativa() {
-        areaUseCase.atualizarAreaRisco(ID_AREA, new AtualizarAreaRiscoInputDTO("Solda", null, NivelPerigo.ALTO, 1,
+        areaUseCase.atualizar(ID_AREA, new AtualizarAreaRiscoInputDTO("Solda", null, NivelPerigo.ALTO, 1,
                 List.of("Ruído", "Calor"), "Entre as linhas A e C", List.of(1, 2), "Revisão anual"),
                 "gestor@safeplace.com");
 
@@ -120,7 +120,7 @@ class HistoricoAreaRiscoTarefaUseCaseTest {
     @Test
     @DisplayName("Sem justificativa, o histórico guarda só as mudanças")
     void semJustificativaGuardaSoMudancas() {
-        areaUseCase.atualizarAreaRisco(ID_AREA, new AtualizarAreaRiscoInputDTO("Solda", null, NivelPerigo.MEDIO, null,
+        areaUseCase.atualizar(ID_AREA, new AtualizarAreaRiscoInputDTO("Solda", null, NivelPerigo.MEDIO, null,
                 List.of("Ruído"), "Linha amarela", List.of(1), "  "), "gestor@safeplace.com");
 
         assertThat(logGravado().getJustificativa()).isEqualTo(

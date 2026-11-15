@@ -12,7 +12,7 @@ import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
  */
 public interface NotificadorOcorrencia {
 
-    void notificarGestor(Ocorrencia ocorrencia);
+    void notificar(Ocorrencia ocorrencia);
 
     /** Notificações gravadas, da mais recente para a mais antiga. */
     List<NotificacaoOcorrencia> listar();

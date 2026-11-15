@@ -31,7 +31,7 @@ public interface PlanoDeAcaoRepository {
      * Salva o registro estruturado de uma prorrogação de prazo aceita com justificativa,
      * incluindo registro no log de auditoria.
      */
-    ProrrogacaoPrazo salvarProrrogacao(ProrrogacaoPrazo prorrogacao);
+    ProrrogacaoPrazo salvar(ProrrogacaoPrazo prorrogacao);
 
     /**
      * Lista o histórico de prorrogações de prazo de uma ação.
@@ -41,5 +41,5 @@ public interface PlanoDeAcaoRepository {
     /**
      * Ações abertas com alerta ativo, candidatas à verificação periódica de prazo (issue #196).
      */
-    List<PlanoDeAcao> listarAbertasComAlertaAtivo();
+    List<PlanoDeAcao> listarAbertasComAlerta();
 }

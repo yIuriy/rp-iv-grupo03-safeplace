@@ -24,7 +24,7 @@ public class ProjecaoSubstituicaoJpaAdapter implements ProjecaoSubstituicaoRepos
     }
 
     @Override
-    public List<ProjecaoSubstituicao> salvarTodas(List<ProjecaoSubstituicao> projecoes) {
+    public List<ProjecaoSubstituicao> salvar(List<ProjecaoSubstituicao> projecoes) {
         List<ProjecaoSubstituicaoEntity> entidades = projecoes.stream().map(this::paraEntidade).toList();
         return repositorio.saveAll(entidades).stream().map(this::paraDominio).toList();
     }
@@ -42,7 +42,7 @@ public class ProjecaoSubstituicaoJpaAdapter implements ProjecaoSubstituicaoRepos
     }
 
     @Override
-    public List<ProjecaoSubstituicao> listarTodas() {
+    public List<ProjecaoSubstituicao> listar() {
         return repositorio.findAllByOrderByDataProjecaoDescIdDesc().stream()
                 .map(this::paraDominio)
                 .toList();

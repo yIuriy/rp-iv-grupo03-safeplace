@@ -63,12 +63,12 @@ public class AcompanharCapacitacoesService implements AcompanharCapacitacoesUseC
 
     @Override
     public List<ColaboradorCapacitacaoResumoOutputDTO> listarColaboradores(StatusCertificacao situacao) {
-        Map<Integer, List<Certificacao>> certificacoesPorColaborador = consultarCapacitacao.listarTodasCertificacoes()
+        Map<Integer, List<Certificacao>> certificacoesPorColaborador = consultarCapacitacao.listarCertificacoes()
                 .stream()
                 .collect(Collectors.groupingBy(Certificacao::getColaboradorId));
         Map<Integer, List<Treinamento>> treinamentosPorColaborador = agruparTreinamentosPorColaborador();
 
-        return usuarioRepository.listarTodos().stream()
+        return usuarioRepository.listar().stream()
                 .sorted(Comparator.comparing(Colaborador::getNome, String.CASE_INSENSITIVE_ORDER))
                 .map(colaborador -> resumir(colaborador,
                         certificacoesPorColaborador.getOrDefault(colaborador.getId(), List.of()),
@@ -82,8 +82,8 @@ public class AcompanharCapacitacoesService implements AcompanharCapacitacoesUseC
         Colaborador colaborador = usuarioRepository.buscarPorId(colaboradorId)
                 .orElseThrow(() -> new UsuarioNaoEncontradoException("Colaborador não encontrado: " + colaboradorId));
 
-        List<Certificacao> certificacoes = consultarCapacitacao.listarCertificacoesDoColaborador(colaborador.getId());
-        List<Treinamento> treinamentos = consultarCapacitacao.listarTreinamentosDoColaborador(colaborador.getId());
+        List<Certificacao> certificacoes = consultarCapacitacao.listarCertificacoes(colaborador.getId());
+        List<Treinamento> treinamentos = consultarCapacitacao.listarTreinamentos(colaborador.getId());
         PendenciasColaboradorDTO pendencias = PendenciasColaboradorDTO.avaliar(colaborador.getId(), certificacoes, treinamentos);
 
         return new CapacitacoesColaboradorOutputDTO(
@@ -101,11 +101,11 @@ public class AcompanharCapacitacoesService implements AcompanharCapacitacoesUseC
     @Override
     public AlertasCapacitacaoOutputDTO consultarAlertas() {
         LocalDate hoje = LocalDate.now(clock);
-        List<Colaborador> colaboradores = usuarioRepository.listarTodos();
+        List<Colaborador> colaboradores = usuarioRepository.listar();
         Map<Integer, String> nomes = new HashMap<>();
         colaboradores.forEach(c -> nomes.put(c.getId(), c.getNome()));
 
-        List<Certificacao> certificacoes = consultarCapacitacao.listarTodasCertificacoes();
+        List<Certificacao> certificacoes = consultarCapacitacao.listarCertificacoes();
         List<AlertaCertificacaoOutputDTO> proximas = new ArrayList<>();
         List<AlertaCertificacaoOutputDTO> vencidas = new ArrayList<>();
         for (Certificacao certificacao : certificacoes) {
@@ -139,7 +139,7 @@ public class AcompanharCapacitacoesService implements AcompanharCapacitacoesUseC
     }
 
     private Map<StatusTreinamento, List<AlertaTreinamentoOutputDTO>> alertarTreinamentos(LocalDate hoje, Map<Integer, String> nomes) {
-        return consultarCapacitacao.listarTodosTreinamentos().stream()
+        return consultarCapacitacao.listarTreinamentos().stream()
                 .flatMap(treinamento -> {
                     StatusTreinamento status = treinamento.calcularStatus(hoje);
                     if (status != StatusTreinamento.VENCIDO && status != StatusTreinamento.PROXIMO_DO_VENCIMENTO) {
@@ -169,7 +169,7 @@ public class AcompanharCapacitacoesService implements AcompanharCapacitacoesUseC
 
     private Map<Integer, List<Treinamento>> agruparTreinamentosPorColaborador() {
         Map<Integer, List<Treinamento>> porColaborador = new HashMap<>();
-        for (Treinamento treinamento : consultarCapacitacao.listarTodosTreinamentos()) {
+        for (Treinamento treinamento : consultarCapacitacao.listarTreinamentos()) {
             for (Integer colaboradorId : treinamento.getColaboradoresIds()) {
                 porColaborador.computeIfAbsent(colaboradorId, id -> new ArrayList<>()).add(treinamento);
             }

@@ -62,7 +62,7 @@ class EstoqueCriticoPersistenciaIntegracaoTest {
         jdbcTemplate.execute("DELETE FROM lotes_epi l WHERE NOT EXISTS (SELECT 1 FROM epis e WHERE e.lote_id = l.id) "
                 + "AND NOT EXISTS (SELECT 1 FROM movimentacoes_estoque m WHERE m.lote_id = l.id)");
         jdbcTemplate.execute("DELETE FROM modelos_epi o WHERE NOT EXISTS (SELECT 1 FROM lotes_epi l WHERE l.modelo_id = o.id)");
-        EpiOutputDTO salvo = useCase.cadastrarEpi(new CadastrarEpiInputDTO(
+        EpiOutputDTO salvo = useCase.cadastrar(new CadastrarEpiInputDTO(
                 "Luva nitrílica", "12345", 10, 5, LocalDate.now().plusYears(1), 180,
                 "Luva de proteção química", ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES));
         epiId = salvo.id();
@@ -84,7 +84,7 @@ class EstoqueCriticoPersistenciaIntegracaoTest {
 
         assertThat(saldoNoBanco()).isEqualTo(6);
         assertThat(useCase.buscarPorId(epiId).estoqueCritico()).isFalse();
-        assertThat(useCase.buscarHistorico(epiId)).hasSize(2);
+        assertThat(useCase.listarHistorico(epiId)).hasSize(2);
     }
 
     @Test
@@ -95,7 +95,7 @@ class EstoqueCriticoPersistenciaIntegracaoTest {
 
         assertThat(saldoNoBanco()).isEqualTo(10);
         assertThat(useCase.buscarPorId(epiId).estoqueCritico()).isFalse();
-        assertThat(useCase.buscarHistorico(epiId)).isEmpty();
+        assertThat(useCase.listarHistorico(epiId)).isEmpty();
     }
 
     private Integer saldoNoBanco() {

@@ -80,7 +80,7 @@ class UsuarioControllerPorPapelTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("RF23: Gestor cadastra Supervisor e recebe a senha inicial uma única vez")
     void gestorCadastraSupervisorERecebeSenhaInicial() throws Exception {
-        when(casoDeUso.cadastrarSupervisor(any(CadastrarSupervisorInputDTO.class)))
+        when(casoDeUso.cadastrar(any(CadastrarSupervisorInputDTO.class)))
                 .thenReturn(supervisorSalvo());
 
         mockMvc.perform(post("/api/usuarios/supervisores")
@@ -102,14 +102,14 @@ class UsuarioControllerPorPapelTest {
                         .content(JSON_SUPERVISOR))
                 .andExpect(status().isForbidden());
 
-        verify(casoDeUso, never()).cadastrarSupervisor(any());
+        verify(casoDeUso, never()).cadastrar(any(CadastrarSupervisorInputDTO.class));
     }
 
     @Test
     @WithMockUser(roles = "SUPERVISOR")
     @DisplayName("RF23: Supervisor cadastra Colaborador, sem senha inicial na resposta")
     void supervisorCadastraColaborador() throws Exception {
-        when(casoDeUso.cadastrarColaborador(any(CadastrarColaboradorInputDTO.class)))
+        when(casoDeUso.cadastrar(any(CadastrarColaboradorInputDTO.class)))
                 .thenReturn(colaboradorSalvo());
 
         mockMvc.perform(post("/api/usuarios/colaboradores")
@@ -125,7 +125,7 @@ class UsuarioControllerPorPapelTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("Gestor também pode cadastrar Colaborador")
     void gestorTambemCadastraColaborador() throws Exception {
-        when(casoDeUso.cadastrarColaborador(any(CadastrarColaboradorInputDTO.class)))
+        when(casoDeUso.cadastrar(any(CadastrarColaboradorInputDTO.class)))
                 .thenReturn(colaboradorSalvo());
 
         mockMvc.perform(post("/api/usuarios/colaboradores")
@@ -153,7 +153,7 @@ class UsuarioControllerPorPapelTest {
                         .content(comSenha))
                 .andExpect(status().isBadRequest());
 
-        verify(casoDeUso, never()).cadastrarColaborador(any());
+        verify(casoDeUso, never()).cadastrar(any(CadastrarColaboradorInputDTO.class));
     }
 
     @Test
@@ -174,7 +174,7 @@ class UsuarioControllerPorPapelTest {
                         .content(comPerfil))
                 .andExpect(status().isBadRequest());
 
-        verify(casoDeUso, never()).cadastrarColaborador(any());
+        verify(casoDeUso, never()).cadastrar(any(CadastrarColaboradorInputDTO.class));
     }
 
     @Test
@@ -196,7 +196,7 @@ class UsuarioControllerPorPapelTest {
                         .content(comSenha))
                 .andExpect(status().isBadRequest());
 
-        verify(casoDeUso, never()).cadastrarSupervisor(any());
+        verify(casoDeUso, never()).cadastrar(any(CadastrarSupervisorInputDTO.class));
     }
 
     @Test
@@ -217,7 +217,7 @@ class UsuarioControllerPorPapelTest {
                         .content(cpfInvalido))
                 .andExpect(status().isBadRequest());
 
-        verify(casoDeUso, never()).cadastrarSupervisor(any());
+        verify(casoDeUso, never()).cadastrar(any(CadastrarSupervisorInputDTO.class));
     }
 
     @Test
@@ -242,7 +242,7 @@ class UsuarioControllerPorPapelTest {
     @WithMockUser(roles = "GESTOR_SEGURANCA")
     @DisplayName("Duplicidade de CPF responde 409")
     void duplicidadeDeCpfResponde409() throws Exception {
-        when(casoDeUso.cadastrarColaborador(any(CadastrarColaboradorInputDTO.class)))
+        when(casoDeUso.cadastrar(any(CadastrarColaboradorInputDTO.class)))
                 .thenThrow(new CpfJaCadastradoException("CPF já cadastrado no sistema: 52998224725"));
 
         mockMvc.perform(post("/api/usuarios/colaboradores")

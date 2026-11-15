@@ -88,22 +88,22 @@ class EmprestimoApiIntegracaoTest {
                 CPF_COLABORADOR, LocalDate.of(1992, 8, 24), null));
         colaboradorId = colab.getId();
 
-        capaceteId = gerenciarEpiUseCase.cadastrarEpi(new CadastrarEpiInputDTO(
+        capaceteId = gerenciarEpiUseCase.cadastrar(new CadastrarEpiInputDTO(
                 "Capacete de Seguranca API", "11223", 5, 1,
                 LocalDate.now().plusYears(1), 365, "Capacete", ClassificacaoEPI.PROTECAO_DE_CABECA)).id();
 
-        luvaSemSaldoId = gerenciarEpiUseCase.cadastrarEpi(new CadastrarEpiInputDTO(
+        luvaSemSaldoId = gerenciarEpiUseCase.cadastrar(new CadastrarEpiInputDTO(
                 "Luva de Seguranca Zerada API", "44556", 0, 1,
                 LocalDate.now().plusYears(1), 180, "Luva", ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES)).id();
 
-        oculosCaVencidoId = gerenciarEpiUseCase.cadastrarEpi(new CadastrarEpiInputDTO(
+        oculosCaVencidoId = gerenciarEpiUseCase.cadastrar(new CadastrarEpiInputDTO(
                 "Oculos com CA Vencido API", "77889", 3, 1,
                 LocalDate.now().plusMonths(6), 365, "Oculos", ClassificacaoEPI.PROTECAO_DE_OLHOS)).id();
         jdbc.update("UPDATE modelos_epi SET validade_ca = ? WHERE id IN "
                 + "(SELECT l.modelo_id FROM lotes_epi l JOIN epis e ON e.lote_id = l.id WHERE e.id = ?)",
                 LocalDate.now().minusDays(1), oculosCaVencidoId);
 
-        respiradorComExigenciaId = gerenciarEpiUseCase.cadastrarEpi(new CadastrarEpiInputDTO(
+        respiradorComExigenciaId = gerenciarEpiUseCase.cadastrar(new CadastrarEpiInputDTO(
                 "Respirador Facial API", "99001", 2, 1,
                 LocalDate.now().plusYears(1), 365, "Respirador", ClassificacaoEPI.PROTECAO_RESPIRATORIA)).id();
 

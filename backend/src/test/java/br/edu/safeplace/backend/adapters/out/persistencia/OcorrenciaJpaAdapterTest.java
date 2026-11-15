@@ -101,7 +101,7 @@ class OcorrenciaJpaAdapterTest {
                     .build();
         });
 
-        Acidente salvo = adapter.salvarAcidente(acidente);
+        Acidente salvo = (Acidente) adapter.salvar(acidente);
 
         assertThat(salvo).isNotNull();
         assertThat(salvo.getIdOcorrencia()).isEqualTo(100);
@@ -131,7 +131,7 @@ class OcorrenciaJpaAdapterTest {
 
         when(ocorrenciaRepository.save(any(Incidente.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Incidente salvo = adapter.salvarIncidente(Incidente.builder()
+        Incidente salvo = (Incidente) adapter.salvar(Incidente.builder()
                 .descricao("Quase queda")
                 .dataOcorrencia(LocalDateTime.of(2026, 9, 10, 10, 0))
                 .dataRegistro(LocalDateTime.now())
@@ -182,7 +182,7 @@ class OcorrenciaJpaAdapterTest {
                     .build();
         });
 
-        Incidente salvo = adapter.salvarIncidente(incidente);
+        Incidente salvo = (Incidente) adapter.salvar(incidente);
 
         assertThat(salvo).isNotNull();
         assertThat(salvo.getIdOcorrencia()).isEqualTo(200);

@@ -18,7 +18,7 @@ public interface LogAuditoriaRepository {
      * aparece com a operação dada. Filtrar pelo tipo evita confundir o id de uma ocorrência com o de
      * um colaborador ou empréstimo cadastrado pela mesma pessoa (issue #128).
      */
-    default List<Integer> buscarIdsPorResponsavelETipoOperacao(
+    default List<Integer> buscarIdsPorResponsavel(
             String responsavel, String tipoOperacao, Collection<String> entidades) {
         return List.of();
     }

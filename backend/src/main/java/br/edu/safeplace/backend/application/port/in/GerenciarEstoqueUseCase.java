@@ -8,10 +8,10 @@ public interface GerenciarEstoqueUseCase {
             int quantidade,
             String motivo);
 
-    MovimentacaoEstoqueOutputDTO darBaixaEstoque(
+    MovimentacaoEstoqueOutputDTO darBaixa(
             Integer epiId,
             int quantidade,
             String motivo);
 
-    int consultarSaldoDisponivel(Integer epiId);
+    int consultarSaldo(Integer epiId);
 }

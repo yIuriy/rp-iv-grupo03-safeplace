@@ -75,7 +75,7 @@ class UsuarioServiceAuditoriaTest {
         );
         when(usuarioRepository.salvar(any(Supervisor.class))).thenReturn(salvo);
 
-        UsuarioOutputDTO resultado = casoDeUso.cadastrarSupervisor(entrada, "admin@safeplace.com");
+        UsuarioOutputDTO resultado = casoDeUso.cadastrar(entrada, "admin@safeplace.com");
 
         assertThat(resultado.id()).isEqualTo(10);
         assertThat(resultado.senhaInicial()).isEqualTo("SenhaInicial#123");
@@ -105,7 +105,7 @@ class UsuarioServiceAuditoriaTest {
         );
         when(usuarioRepository.salvar(any(Colaborador.class))).thenReturn(salvo);
 
-        UsuarioOutputDTO resultado = casoDeUso.cadastrarColaborador(entrada, "supervisor@safeplace.com");
+        UsuarioOutputDTO resultado = casoDeUso.cadastrar(entrada, "supervisor@safeplace.com");
 
         assertThat(resultado.id()).isEqualTo(20);
 
@@ -160,7 +160,7 @@ class UsuarioServiceAuditoriaTest {
         CadastrarColaboradorInputDTO entrada = new CadastrarColaboradorInputDTO(
                 "Teste", "52998224725", LocalDate.of(1990, 1, 1), "teste@safeplace.com");
 
-        assertThatThrownBy(() -> casoDeUso.cadastrarColaborador(entrada, "op@safeplace.com"))
+        assertThatThrownBy(() -> casoDeUso.cadastrar(entrada, "op@safeplace.com"))
                 .isInstanceOf(CpfJaCadastradoException.class);
 
         verifyNoInteractions(logAuditoriaRepository);
