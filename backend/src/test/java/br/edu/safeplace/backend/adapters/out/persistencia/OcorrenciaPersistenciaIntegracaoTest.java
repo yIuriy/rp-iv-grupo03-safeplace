@@ -69,7 +69,11 @@ class OcorrenciaPersistenciaIntegracaoTest {
 
     @DynamicPropertySource
     static void configurarDatasource(DynamicPropertyRegistry registry) {
-        PostgresDeTeste.registrar(registry);
+        // Desde a #261, a primeira emissão de CAT do mês cria a linha da sequência em REQUIRES_NEW, que
+        // pede uma segunda conexão. Com o pool de 2 dos testes, duas das 8 threads concorrentes seguram
+        // as duas conexões e esperam a terceira até o timeout de 30 s. O pool de 10, padrão do Hikari em
+        // produção, deixa sobrar conexão para a transação interna.
+        PostgresDeTeste.registrar(registry, 10);
     }
 
     @Autowired

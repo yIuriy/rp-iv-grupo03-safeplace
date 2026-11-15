@@ -5,11 +5,13 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
@@ -40,7 +42,29 @@ class ProjecaoSubstituicaoPersistenciaIntegracaoTest {
     @Autowired
     private GerenciarEpiUseCase gerenciarEpiUseCase;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     private final LocalDate hoje = LocalDate.of(2026, 9, 24);
+
+    private Integer epiId;
+
+    /**
+     * Apaga a projeção e o EPI criados aqui. Sem essa limpeza, a projeção prende o EPI pela chave
+     * estrangeira, e o {@code DELETE FROM epis} dos testes de estoque executados depois falha.
+     */
+    @AfterEach
+    void limparDados() {
+        if (epiId == null) {
+            return;
+        }
+        jdbcTemplate.update("DELETE FROM projecoes_substituicao WHERE epi_id = ?", epiId);
+        jdbcTemplate.update("DELETE FROM movimentacoes_estoque WHERE epi_id = ?", epiId);
+        jdbcTemplate.update("DELETE FROM epis WHERE id = ?", epiId);
+        jdbcTemplate.execute("DELETE FROM lotes_epi l WHERE NOT EXISTS (SELECT 1 FROM epis e WHERE e.lote_id = l.id) "
+                + "AND NOT EXISTS (SELECT 1 FROM movimentacoes_estoque m WHERE m.lote_id = l.id)");
+        jdbcTemplate.execute("DELETE FROM modelos_epi o WHERE NOT EXISTS (SELECT 1 FROM lotes_epi l WHERE l.modelo_id = o.id)");
+    }
 
     @Test
     @DisplayName("Deve persistir e consultar projeção de substituição vinculada a EPI")
@@ -57,6 +81,7 @@ class ProjecaoSubstituicaoPersistenciaIntegracaoTest {
                 ClassificacaoEPI.PROTECAO_DE_MEMBROS_SUPERIORES
         );
         var epiSalvo = gerenciarEpiUseCase.cadastrar(dto);
+        epiId = epiSalvo.id();
 
         // Cria e salva a projeção
         ProjecaoSubstituicao projecao = ProjecaoSubstituicao.nova(
