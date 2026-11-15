@@ -88,7 +88,7 @@ class ConsultarCapacitacaoServiceTest {
         assertThat(impedimentos.get(1)).contains("treinamento Treinamento Trabalho Seguro não registrado");
 
         // Colaborador realiza o treinamento e obtém certificação válida
-        repositorio.salvar(Treinamento.cadastrar("Treinamento Trabalho Seguro", "Conteúdo", "Instrutor", hoje.minusDays(2), 4, pessoas(List.of(colaboradorId))));
+        repositorio.salvar(new Treinamento(null, "Treinamento Trabalho Seguro", "Conteúdo", "Instrutor", hoje.minusDays(2), 4, pessoas(List.of(colaboradorId))));
         repositorio.salvar(new Certificacao(1, "NR-10", hoje.plusMonths(6), hoje.minusMonths(6), pessoa(colaboradorId)));
 
         List<String> impedimentosAposConclusao = service.listarImpedimentosEpi(colaboradorId, epiId);

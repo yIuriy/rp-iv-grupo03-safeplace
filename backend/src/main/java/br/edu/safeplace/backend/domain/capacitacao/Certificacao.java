@@ -78,17 +78,6 @@ public class Certificacao {
         return dataEmissao.isAfter(dataValidade);
     }
 
-    /** Cadastro de certificação; as datas e o vínculo são validados por CertificacaoValidador (#265). */
-    public static Certificacao cadastrar(String nome, LocalDate dataVencimento, LocalDate dataEmissao,
-                                         Colaborador colaborador) {
-        return cadastrar(nome, dataVencimento, dataEmissao, colaborador, dataEmissao);
-    }
-
-    public static Certificacao cadastrar(String nome, LocalDate dataVencimento, LocalDate dataEmissao,
-                                         Colaborador colaborador, LocalDate dataReferencia) {
-        return new Certificacao(null, nome, dataVencimento, dataEmissao, colaborador, dataReferencia);
-    }
-
     public StatusCertificacao calcularStatus(LocalDate dataReferencia) {
         if (PrazoVencimento.estaVencido(dataReferencia, dataVencimento)) {
             return StatusCertificacao.VENCIDA;

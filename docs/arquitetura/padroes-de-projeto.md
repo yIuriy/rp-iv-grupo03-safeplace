@@ -22,7 +22,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [Adapter](#adapter--porta-de-operador-autenticado) | GoF, estrutural | Backend: operador autenticado | [#222](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/222), [#236](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/236) | Aplicado (2/2: #222, #236) |
 | [Facade](#facade--registrador-de-auditoria) | GoF, estrutural | Backend: registro de auditoria (`RegistradorAuditoria`) | [#223](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/223), [#237](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/237), [#238](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/238) | Aplicado (3/3: #223, #237, #238) |
 | [State (Backend)](#state--transicoes-de-statusepi) | GoF, comportamental | Backend: transições de `StatusEpi` | [#224](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/224) | Aplicado |
-| [Factory Method](#factory-method--criação-de-epi) | GoF, criacional | Backend: criação de `Epi` (`FabricaEpi`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225) | Aplicado |
+| [Factory Method](#factory-method--criação-de-epi) | GoF, criacional | Backend: criação de `Epi` (`FabricaEpi`) e capacitação (`FabricaCapacitacao`) | [#225](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/225), [#268](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/268) | Aplicado (2/2: #225, #268) |
 | [Abstract Factory](#abstract-factory--família-de-relato-de-ocorrências) | GoF, criacional | Backend: família de relato de ocorrências (Acidente/Incidente, notificação e auditoria; uma fábrica por `TipoOcorrencia`) | [#239](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/239) | Aplicado |
 | [Builder](#builder--emprestimobuilder-tarefabuilder-e-builders-de-ocorrencia) | GoF, criacional | Backend: `Emprestimo.Builder`, `TarefaBuilder`, `AcidenteBuilder` e `IncidenteBuilder` em produção | [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) | Aplicado (2/2: #226, #240) |
 | [Null Object](#null-object--adaptador-nulo-de-notificacao-e-dependencias-opcionais) | Woolf / PLoPD 3 | Backend: `NotificadorOcorrenciaNulo` e dependências opcionais | [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227), [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) | Aplicado (2/2: #227, #241) |
@@ -1487,6 +1487,155 @@ Testes novos:
 Testes ajustados: 31 classes passaram a criar EPIs pelo `EpiDeTeste`. Em `EpiTest` saíram os 4 testes do que deixou de existir (as duas sobrecargas de `novo`, que agora estão em `FabricaEpiPadraoTest`, o construtor público sem id e o construtor reduzido com dados inventados). Os dois testes do `EpiValidadorTest` que recusam status ausente usam `semStatus()`, porque a fábrica nunca cria um EPI sem situação.
 
 Suíte existente (`./mvnw clean test` com PostgreSQL externo novo): **1199 testes, 0 falhas, 10 erros**, todos o problema anterior de limpeza entre classes de integração (`DELETE FROM epis` bloqueado por `projecoes_substituicao`).
+
+---
+
+## Factory Method — criação de capacitação (`FabricaCapacitacao`)
+
+**Catálogo:** GoF, criacional, exposto por interface.
+
+**Intenção:** expor a criação de `Certificacao`, `Treinamento` e `ExigenciaCapacitacao` pela interface `FabricaCapacitacao`, recebendo os objetos de entrada (`InputDTO`) inteiros para que o caso de uso não desmonte os dados nem chame métodos estáticos ou construtores diretamente.
+
+**Issue:** [#268](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/268) (depende de [#257](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/257) e [#265](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/265)).
+
+**Revisão após a avaliação do professor.** Na avaliação presencial (`docs/revisões/alinhamento-avaliacao-professor.md`), o professor marcou `CadastrarCapacitacaoService.java:40`: a operação de cadastro era estática (`Certificacao.cadastrar(...)`) e recebia parâmetros soltos desmontados do `InputDTO`. O mesmo ocorria com `Treinamento.cadastrar(...)` (6 e 7 parâmetros) e com a instanciação direta `new ExigenciaCapacitacao(null, entrada.nomeCapacitacao(), ...)`.
+
+### Problema (antes)
+
+- `CadastrarCapacitacaoService` desmontava `CadastrarCertificacaoInputDTO` em 4 argumentos soltos e chamava o método estático `Certificacao.cadastrar(...)`.
+- O mesmo serviço desmontava `CadastrarTreinamentoInputDTO` em 6 argumentos soltos e chamava `Treinamento.cadastrar(...)` (que possuía duas sobrecargas estáticas em `Treinamento.java`).
+- Para exigências, o serviço desmontava `DefinirExigenciaInputDTO` e invocava `new ExigenciaCapacitacao(null, ...)` diretamente.
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| Creator | interface `FabricaCapacitacao` (`domain/capacitacao`) | Declarar um método por produto (`criarCertificacao`, `criarTreinamento`, `criarExigencia`), cada um recebendo o objeto de entrada inteiro |
+| ConcreteCreator | `FabricaCapacitacaoPadrao`, registrada como `@Bean` em `ServicosDominioConfig` | Instanciar `Certificacao`, `Treinamento` e `ExigenciaCapacitacao` a partir dos DTOs de entrada e associações resolvidas, sem validar regras de negócio |
+| Products | `Certificacao`, `Treinamento`, `ExigenciaCapacitacao` | Entidades JPA do domínio de capacitação, sem métodos estáticos de criação |
+| Client | `CadastrarCapacitacaoService` | Receber `FabricaCapacitacao` via interface, repassar o `InputDTO` inteiro e validar o produto na cadeia antes de `capacitacaoRepository.salvar` |
+
+### Diagramas
+
+**Antes.** O caso de uso desmontava os DTOs de entrada e acoplava-se a métodos estáticos de criação e ao construtor.
+
+```mermaid
+classDiagram
+  direction LR
+  class Certificacao {
+    +cadastrar(nome, dataVencimento, dataEmissao, colaborador)$
+    +cadastrar(nome, dataVencimento, dataEmissao, colaborador, dataReferencia)$
+  }
+  class Treinamento {
+    +cadastrar(nome, conteudo, instrutor, data, carga, colaboradores)$
+    +cadastrar(nome, conteudo, instrutor, data, carga, validade, colaboradores)$
+  }
+  class ExigenciaCapacitacao {
+    +ExigenciaCapacitacao(id, nome, tipo, alvoId, alvo)
+  }
+  class CadastrarCapacitacaoService {
+    +cadastrar(CadastrarCertificacaoInputDTO)
+    +cadastrar(CadastrarTreinamentoInputDTO)
+    +cadastrar(DefinirExigenciaInputDTO)
+  }
+  CadastrarCapacitacaoService ..> Certificacao : Certificacao.cadastrar(campos soltos)
+  CadastrarCapacitacaoService ..> Treinamento : Treinamento.cadastrar(campos soltos)
+  CadastrarCapacitacaoService ..> ExigenciaCapacitacao : new ExigenciaCapacitacao(campos soltos)
+```
+
+**Depois.** O caso de uso depende apenas da interface `FabricaCapacitacao` (Creator) e entrega o objeto de entrada inteiro.
+
+```mermaid
+classDiagram
+  direction TB
+  class FabricaCapacitacao {
+    <<interface / Creator>>
+    +criarCertificacao(entrada, colaborador, dataReferencia) Certificacao
+    +criarTreinamento(entrada, colaboradores) Treinamento
+    +criarExigencia(entrada) ExigenciaCapacitacao
+  }
+  class FabricaCapacitacaoPadrao {
+    <<ConcreteCreator>>
+    +criarCertificacao(...) Certificacao
+    +criarTreinamento(...) Treinamento
+    +criarExigencia(...) ExigenciaCapacitacao
+  }
+  class Certificacao {
+    <<Product / Entity>>
+  }
+  class Treinamento {
+    <<Product / Entity>>
+  }
+  class ExigenciaCapacitacao {
+    <<Product / Entity>>
+  }
+  class CadastrarCapacitacaoService {
+    <<Client>>
+    -FabricaCapacitacao fabricaCapacitacao
+    +cadastrar(CadastrarCertificacaoInputDTO)
+    +cadastrar(CadastrarTreinamentoInputDTO)
+    +cadastrar(DefinirExigenciaInputDTO)
+  }
+  class ServicosDominioConfig {
+    +fabricaCapacitacao() FabricaCapacitacao
+  }
+  FabricaCapacitacao <|.. FabricaCapacitacaoPadrao
+  FabricaCapacitacaoPadrao ..> Certificacao : cria
+  FabricaCapacitacaoPadrao ..> Treinamento : cria
+  FabricaCapacitacaoPadrao ..> ExigenciaCapacitacao : cria
+  CadastrarCapacitacaoService --> FabricaCapacitacao : injetada via interface
+  ServicosDominioConfig ..> FabricaCapacitacaoPadrao : registra o bean
+```
+
+### Código antes × depois
+
+`CadastrarCapacitacaoService`, antes:
+
+```java
+// Certificação: método estático desmontando o InputDTO
+Certificacao nova = Certificacao.cadastrar(
+        entrada.nome(), entrada.dataVencimento(), entrada.dataEmissao(), colaborador, hoje);
+
+// Treinamento: método estático com 7 parâmetros soltos
+Treinamento novo = Treinamento.cadastrar(entrada.nome(), entrada.conteudo(), entrada.instrutor(),
+        entrada.dataRealizacao(), entrada.cargaHoraria(), entrada.validadeMeses(), colaboradores);
+
+// Exigência: construtor direto desmontando o InputDTO
+ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(null, entrada.nomeCapacitacao(),
+        entrada.tipoCapacitacao(), entrada.alvoId(), entrada.alvo());
+```
+
+Depois:
+
+```java
+// O serviço repassa o objeto de entrada inteiro para a fábrica injetada pela interface
+Certificacao nova = fabricaCapacitacao.criarCertificacao(entrada, colaborador, hoje);
+
+Treinamento novo = fabricaCapacitacao.criarTreinamento(entrada, colaboradores);
+
+ExigenciaCapacitacao exigencia = fabricaCapacitacao.criarExigencia(entrada);
+```
+
+### Benefício
+
+O caso de uso `CadastrarCapacitacaoService` ficou mais simples e coeso por não desmontar mais os três DTOs de entrada em listas de argumentos posicionais nem conhecer construtores ou métodos estáticos das entidades: ele apenas resolve as associações, delega a montagem à `FabricaCapacitacao`, aciona os validadores da camada `validacao` (#265) e persiste no repositório. Ficou mais seguro e fácil de evoluir porque novos atributos nos DTOs de cadastro são absorvidos num único ponto (`FabricaCapacitacaoPadrao`), sem alterar a assinatura dos métodos da fábrica nem o código do serviço.
+
+### Métricas locais
+
+| Métrica | Antes | Depois |
+| --- | ---: | ---: |
+| Métodos estáticos de criação em `domain/capacitacao` | 4 (`Certificacao.cadastrar` x2, `Treinamento.cadastrar` x2) | **0** |
+| Pontos em `CadastrarCapacitacaoService` que desmontam `InputDTO` para construir entidades | 3 | **0** |
+| Maior lista de argumentos passada pelo serviço na criação | 7 | **3** (`entrada`, `colaborador`, `hoje`) |
+
+### Evidências
+
+Testes novos:
+
+1. `FabricaCapacitacaoPadraoTest` (6 testes; papéis Creator, ConcreteCreator e Products): criação de `Certificacao`, `Treinamento` e `ExigenciaCapacitacao` a partir dos `InputDTO`s inteiros, verificação de que a fábrica não executa regras de validação de negócio, recusa de entrada nula e verificação por reflexão garantindo que nenhuma classe de `domain/capacitacao` possui métodos estáticos de criação.
+2. `CadastrarCapacitacaoServiceTest.delegaCriacaoAFabricaInjetadaSemDesmontarInputDTO` (papel Client): verifica que o serviço delega a criação dos três produtos à `FabricaCapacitacao` injetada repassando a mesma instância de cada `InputDTO`.
+
+Suíte de testes de capacitação (`FabricaCapacitacaoPadraoTest`, `CadastrarCapacitacaoServiceTest`, `ConsultarCapacitacaoServiceTest`, `CertificacaoVencimentoClockTest`, `TreinamentoTest`, `CapacitacaoValidadoresTest`): **59 testes executados, 0 falhas, 0 erros**.
 
 ---
 

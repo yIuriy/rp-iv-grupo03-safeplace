@@ -7,6 +7,8 @@ package br.edu.safeplace.backend.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import br.edu.safeplace.backend.domain.capacitacao.FabricaCapacitacao;
+import br.edu.safeplace.backend.domain.capacitacao.FabricaCapacitacaoPadrao;
 import br.edu.safeplace.backend.domain.epi.CalculoProjecaoSubstituicao;
 import br.edu.safeplace.backend.domain.epi.FabricaEpi;
 import br.edu.safeplace.backend.domain.epi.FabricaEpiPadrao;
@@ -25,6 +27,11 @@ public class ServicosDominioConfig {
     @Bean
     public FabricaEpi fabricaEpi() {
         return new FabricaEpiPadrao();
+    }
+
+    @Bean
+    public FabricaCapacitacao fabricaCapacitacao() {
+        return new FabricaCapacitacaoPadrao();
     }
 
     @Bean

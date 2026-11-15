@@ -122,17 +122,17 @@ class CertificacaoVencimentoClockTest {
     void validadorDeveRecusarVencimentoPresenteOuPassadoNoCadastroUsandoClock() {
         LocalDate hoje = LocalDate.now(clock);
 
-        Certificacao venceOntem = Certificacao.cadastrar("NR-10", hoje.minusDays(1), hoje.minusMonths(1), pessoa(10));
+        Certificacao venceOntem = new Certificacao(null, "NR-10", hoje.minusDays(1), hoje.minusMonths(1), pessoa(10));
         assertThatThrownBy(() -> certificacaoValidador.validar(venceOntem))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Data de vencimento não pode ser no passado ou presente no momento do cadastro.");
 
-        Certificacao venceHoje = Certificacao.cadastrar("NR-10", hoje, hoje.minusMonths(1), pessoa(10));
+        Certificacao venceHoje = new Certificacao(null, "NR-10", hoje, hoje.minusMonths(1), pessoa(10));
         assertThatThrownBy(() -> certificacaoValidador.validar(venceHoje))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Data de vencimento não pode ser no passado ou presente no momento do cadastro.");
 
-        Certificacao venceAmanha = Certificacao.cadastrar("NR-10", hoje.plusDays(1), hoje.minusMonths(1), pessoa(10));
+        Certificacao venceAmanha = new Certificacao(null, "NR-10", hoje.plusDays(1), hoje.minusMonths(1), pessoa(10));
         assertThatCode(() -> certificacaoValidador.validar(venceAmanha))
                 .doesNotThrowAnyException();
     }

@@ -22,6 +22,8 @@ import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.application.port.out.capacitacao.CapacitacaoRepository;
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
+import br.edu.safeplace.backend.domain.capacitacao.FabricaCapacitacao;
+import br.edu.safeplace.backend.domain.capacitacao.FabricaCapacitacaoPadrao;
 import br.edu.safeplace.backend.domain.capacitacao.Treinamento;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.exception.UsuarioNaoEncontradoException;
@@ -37,19 +39,20 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
     private final CapacitacaoRepository capacitacaoRepository;
     private final UsuarioRepository usuarioRepository;
     private final RegistradorAuditoria auditoria;
+    private final FabricaCapacitacao fabricaCapacitacao;
     private final Validador<Certificacao> certificacaoValidador;
     private final Validador<Treinamento> treinamentoValidador;
     private final Validador<ExigenciaCapacitacao> exigenciaValidador;
     private final Clock clock;
 
-    /** Usa os validadores padrão; usado pelos testes sem contexto Spring. */
+    /** Usa a fábrica e os validadores padrão; usado pelos testes sem contexto Spring. */
     public CadastrarCapacitacaoService(
             CapacitacaoRepository capacitacaoRepository,
             LogAuditoriaRepository logAuditoriaRepository,
             OperadorAtual operadorAtual) {
         this(capacitacaoRepository, null, new RegistradorAuditoria(logAuditoriaRepository, operadorAtual),
-                new CertificacaoValidador(), new TreinamentoValidador(), new ExigenciaCapacitacaoValidador(),
-                Clock.systemDefaultZone());
+                new FabricaCapacitacaoPadrao(), new CertificacaoValidador(), new TreinamentoValidador(),
+                new ExigenciaCapacitacaoValidador(), Clock.systemDefaultZone());
     }
 
     public CadastrarCapacitacaoService(
@@ -58,8 +61,8 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
             LogAuditoriaRepository logAuditoriaRepository,
             OperadorAtual operadorAtual) {
         this(capacitacaoRepository, usuarioRepository, new RegistradorAuditoria(logAuditoriaRepository, operadorAtual),
-                new CertificacaoValidador(), new TreinamentoValidador(), new ExigenciaCapacitacaoValidador(),
-                Clock.systemDefaultZone());
+                new FabricaCapacitacaoPadrao(), new CertificacaoValidador(), new TreinamentoValidador(),
+                new ExigenciaCapacitacaoValidador(), Clock.systemDefaultZone());
     }
 
     public CadastrarCapacitacaoService(
@@ -70,7 +73,8 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
             Validador<ExigenciaCapacitacao> exigenciaValidador,
             OperadorAtual operadorAtual) {
         this(capacitacaoRepository, null, new RegistradorAuditoria(logAuditoriaRepository, operadorAtual),
-                certificacaoValidador, treinamentoValidador, exigenciaValidador, Clock.systemDefaultZone());
+                new FabricaCapacitacaoPadrao(), certificacaoValidador, treinamentoValidador, exigenciaValidador,
+                Clock.systemDefaultZone());
     }
 
     public CadastrarCapacitacaoService(
@@ -80,7 +84,20 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
             Validador<Treinamento> treinamentoValidador,
             Validador<ExigenciaCapacitacao> exigenciaValidador,
             Clock clock) {
-        this(capacitacaoRepository, null, auditoria, certificacaoValidador, treinamentoValidador, exigenciaValidador, clock);
+        this(capacitacaoRepository, null, auditoria, new FabricaCapacitacaoPadrao(), certificacaoValidador,
+                treinamentoValidador, exigenciaValidador, clock);
+    }
+
+    public CadastrarCapacitacaoService(
+            CapacitacaoRepository capacitacaoRepository,
+            UsuarioRepository usuarioRepository,
+            RegistradorAuditoria auditoria,
+            Validador<Certificacao> certificacaoValidador,
+            Validador<Treinamento> treinamentoValidador,
+            Validador<ExigenciaCapacitacao> exigenciaValidador,
+            Clock clock) {
+        this(capacitacaoRepository, usuarioRepository, auditoria, new FabricaCapacitacaoPadrao(),
+                certificacaoValidador, treinamentoValidador, exigenciaValidador, clock);
     }
 
     @Autowired
@@ -88,6 +105,7 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
             CapacitacaoRepository capacitacaoRepository,
             UsuarioRepository usuarioRepository,
             RegistradorAuditoria auditoria,
+            FabricaCapacitacao fabricaCapacitacao,
             Validador<Certificacao> certificacaoValidador,
             Validador<Treinamento> treinamentoValidador,
             Validador<ExigenciaCapacitacao> exigenciaValidador,
@@ -99,6 +117,7 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
         this.usuarioRepository = usuarioRepository;
         // Facade (#223, #237): auditoria simplificada sem manipular LogAuditoria diretamente.
         this.auditoria = Objects.requireNonNull(auditoria, "Registrador de auditoria é obrigatório.");
+        this.fabricaCapacitacao = Objects.requireNonNull(fabricaCapacitacao, "Fábrica de capacitação é obrigatória.");
         this.clock = Objects.requireNonNull(clock, "Clock é obrigatório.");
     }
 
@@ -106,8 +125,7 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
     public CertificacaoOutputDTO cadastrar(CadastrarCertificacaoInputDTO entrada) {
         LocalDate hoje = LocalDate.now(clock);
         Colaborador colaborador = resolverColaborador(entrada.colaboradorId());
-        Certificacao nova = Certificacao.cadastrar(
-                entrada.nome(), entrada.dataVencimento(), entrada.dataEmissao(), colaborador, hoje);
+        Certificacao nova = fabricaCapacitacao.criarCertificacao(entrada, colaborador, hoje);
         // Chain of Responsibility (#265): valida antes do repository.
         certificacaoValidador.validar(nova);
         Certificacao salva = capacitacaoRepository.salvar(nova);
@@ -119,8 +137,7 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
     @Override
     public TreinamentoOutputDTO cadastrar(CadastrarTreinamentoInputDTO entrada) {
         List<Colaborador> colaboradores = resolverColaboradores(entrada.colaboradoresIds());
-        Treinamento novo = Treinamento.cadastrar(entrada.nome(), entrada.conteudo(), entrada.instrutor(),
-                entrada.dataRealizacao(), entrada.cargaHoraria(), entrada.validadeMeses(), colaboradores);
+        Treinamento novo = fabricaCapacitacao.criarTreinamento(entrada, colaboradores);
         treinamentoValidador.validar(novo);
         Treinamento salvo = capacitacaoRepository.salvar(novo);
 
@@ -130,8 +147,7 @@ public class CadastrarCapacitacaoService implements CadastrarCapacitacaoUseCase 
 
     @Override
     public ExigenciaCapacitacaoOutputDTO cadastrar(DefinirExigenciaInputDTO entrada) {
-        ExigenciaCapacitacao exigencia = new ExigenciaCapacitacao(null, entrada.nomeCapacitacao(),
-                entrada.tipoCapacitacao(), entrada.alvoId(), entrada.alvo());
+        ExigenciaCapacitacao exigencia = fabricaCapacitacao.criarExigencia(entrada);
         exigenciaValidador.validar(exigencia);
         ExigenciaCapacitacao salva = capacitacaoRepository.salvar(exigencia);
 
