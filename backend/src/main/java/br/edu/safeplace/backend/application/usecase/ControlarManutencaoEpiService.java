@@ -165,7 +165,7 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
         Epi epi = epiRepository.buscarPorId(epiId)
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId));
 
-        return manutencaoEpiRepository.listarPorEpiId(epiId).stream()
+        return manutencaoEpiRepository.listarPorEpi(epiId).stream()
                 .map(m -> ManutencaoEpiOutputDTO.deDominio(m, epi.getStatus()))
                 .toList();
     }

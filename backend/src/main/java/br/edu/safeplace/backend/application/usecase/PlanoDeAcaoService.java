@@ -238,7 +238,7 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
         }
 
         ProrrogacaoPrazo prorrogacao = acao.prorrogarPrazo(inputDTO.novoPrazo(), inputDTO.justificativa(), LocalDate.now());
-        planoDeAcaoRepository.salvarProrrogacao(prorrogacao);
+        planoDeAcaoRepository.salvar(prorrogacao);
         planoDeAcaoRepository.salvar(acao);
 
         auditoria.por(resolverOperador(acao)).operacao(

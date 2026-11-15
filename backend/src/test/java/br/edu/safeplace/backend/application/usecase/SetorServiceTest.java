@@ -91,7 +91,7 @@ class SetorServiceTest {
         }
 
         @Override
-        public List<Setor> listarTodos() {
+        public List<Setor> listar() {
             return List.copyOf(setores);
         }
 

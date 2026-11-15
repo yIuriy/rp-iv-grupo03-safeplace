@@ -40,7 +40,7 @@ public class AreaRiscoJpaAdapter implements AreaRiscoRepository {
     }
 
     @Override
-    public List<AreaRisco> listarTodas() {
+    public List<AreaRisco> listar() {
         return areaRiscoRepository.findAll();
     }
 

@@ -457,7 +457,7 @@ class OcorrenciaServiceTest {
         repository.salvarAcidente(ac2);
 
         autenticar("supervisor@safeplace.com", "ROLE_SUPERVISOR");
-        when(logRepo.buscarIdsPorResponsavelETipoOperacao("supervisor@safeplace.com", "CADASTRO", OcorrenciaService.ENTIDADES_DE_RELATO))
+        when(logRepo.buscarIdsPorResponsavel("supervisor@safeplace.com", "CADASTRO", OcorrenciaService.ENTIDADES_DE_RELATO))
                 .thenReturn(List.of(1));
 
         List<OcorrenciaOutputDTO> listaSupervisor = useCaseComLog.listar();

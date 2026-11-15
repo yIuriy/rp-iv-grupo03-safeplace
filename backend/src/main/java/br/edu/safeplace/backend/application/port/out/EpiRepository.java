@@ -28,19 +28,15 @@ public interface EpiRepository {
         return Optional.empty();
     }
 
-    List<Epi> listarTodos();
+    List<Epi> listar();
 
     Epi atualizarSaldo(Epi epi);
 
-    MovimentacaoEstoque salvarMovimentacao(
+    MovimentacaoEstoque salvar(
             MovimentacaoEstoque movimentacao
     );
 
-    List<MovimentacaoEstoque> listarMovimentacoesPorEpi(
+    List<MovimentacaoEstoque> listarMovimentacoes(
             Integer epiId
     );
-
-    default List<Epi> listar() {
-        return listarTodos();
-    }
 }

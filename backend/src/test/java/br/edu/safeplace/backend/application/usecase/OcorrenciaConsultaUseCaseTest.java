@@ -53,7 +53,7 @@ class OcorrenciaConsultaUseCaseTest {
     @BeforeEach
     void preparar() {
         auditoria = mock(LogAuditoriaRepository.class);
-        when(auditoria.buscarIdsPorResponsavelETipoOperacao(SUPERVISOR, "CADASTRO", OcorrenciaService.ENTIDADES_DE_RELATO))
+        when(auditoria.buscarIdsPorResponsavel(SUPERVISOR, "CADASTRO", OcorrenciaService.ENTIDADES_DE_RELATO))
                 .thenReturn(List.of(1, 3));
         useCase = new OcorrenciaService(new RepositorioFixo(List.of(proprio, alheio, proprioAntigo)), null, null, auditoria,
                 new NotificadorOcorrenciaNulo(), operador.operadorAtual(mock(UsuarioRepository.class)));
@@ -89,7 +89,7 @@ class OcorrenciaConsultaUseCaseTest {
 
         useCase.listar();
 
-        verify(auditoria).buscarIdsPorResponsavelETipoOperacao(SUPERVISOR, "CADASTRO", List.of("Acidente", "Incidente"));
+        verify(auditoria).buscarIdsPorResponsavel(SUPERVISOR, "CADASTRO", List.of("Acidente", "Incidente"));
     }
 
     @Test

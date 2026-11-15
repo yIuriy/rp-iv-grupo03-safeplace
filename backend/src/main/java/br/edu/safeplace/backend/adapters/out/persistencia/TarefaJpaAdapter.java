@@ -29,7 +29,7 @@ public class TarefaJpaAdapter implements TarefaRepository {
     }
 
     @Override
-    public List<Tarefa> listarTodas() {
+    public List<Tarefa> listar() {
         return tarefaRepository.findAll();
     }
 

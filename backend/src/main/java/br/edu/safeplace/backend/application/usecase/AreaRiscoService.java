@@ -137,7 +137,7 @@ public class AreaRiscoService implements GerenciarAreaRiscoUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<AreaRiscoOutputDTO> listar() {
-        return areaRiscoRepository.listarTodas().stream()
+        return areaRiscoRepository.listar().stream()
                 .map(AreaRiscoOutputDTO::deDominio)
                 .toList();
     }

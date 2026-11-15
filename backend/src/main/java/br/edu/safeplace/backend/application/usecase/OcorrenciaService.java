@@ -252,7 +252,7 @@ public class OcorrenciaService implements RegistrarOcorrenciaUseCase, GerenciarO
             return ocorrencia -> true;
         }
         List<Integer> idsRelatados = logAuditoriaRepository
-                .buscarIdsPorResponsavelETipoOperacao(email.get(), "CADASTRO", ENTIDADES_DE_RELATO);
+                .buscarIdsPorResponsavel(email.get(), "CADASTRO", ENTIDADES_DE_RELATO);
         return ocorrencia -> idsRelatados.contains(ocorrencia.getIdOcorrencia());
     }
 

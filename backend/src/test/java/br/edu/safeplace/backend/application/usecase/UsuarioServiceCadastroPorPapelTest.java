@@ -158,7 +158,7 @@ class UsuarioServiceCadastroPorPapelTest {
         assertThatThrownBy(() -> casoDeUso.cadastrarColaborador(colaborador("X", "111", null)))
                 .isInstanceOf(CpfInvalidoException.class);
 
-        assertThat(repositorio.listarTodos()).isEmpty();
+        assertThat(repositorio.listar()).isEmpty();
     }
 
     @Test
@@ -226,7 +226,7 @@ class UsuarioServiceCadastroPorPapelTest {
         }
 
         @Override
-        public List<Colaborador> listarTodos() {
+        public List<Colaborador> listar() {
             return List.copyOf(armazenados);
         }
 

@@ -68,7 +68,7 @@ public class AcompanharCapacitacoesService implements AcompanharCapacitacoesUseC
                 .collect(Collectors.groupingBy(Certificacao::getColaboradorId));
         Map<Integer, List<Treinamento>> treinamentosPorColaborador = agruparTreinamentosPorColaborador();
 
-        return usuarioRepository.listarTodos().stream()
+        return usuarioRepository.listar().stream()
                 .sorted(Comparator.comparing(Colaborador::getNome, String.CASE_INSENSITIVE_ORDER))
                 .map(colaborador -> resumir(colaborador,
                         certificacoesPorColaborador.getOrDefault(colaborador.getId(), List.of()),
@@ -101,7 +101,7 @@ public class AcompanharCapacitacoesService implements AcompanharCapacitacoesUseC
     @Override
     public AlertasCapacitacaoOutputDTO consultarAlertas() {
         LocalDate hoje = LocalDate.now(clock);
-        List<Colaborador> colaboradores = usuarioRepository.listarTodos();
+        List<Colaborador> colaboradores = usuarioRepository.listar();
         Map<Integer, String> nomes = new HashMap<>();
         colaboradores.forEach(c -> nomes.put(c.getId(), c.getNome()));
 

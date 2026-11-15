@@ -18,7 +18,7 @@ public interface AreaRiscoRepository {
 
     Optional<AreaRisco> buscarPorCodigo(String codigo);
 
-    List<AreaRisco> listarTodas();
+    List<AreaRisco> listar();
 
     List<AreaRisco> listarPorNivelPerigo(NivelPerigo nivelPerigo);
 }

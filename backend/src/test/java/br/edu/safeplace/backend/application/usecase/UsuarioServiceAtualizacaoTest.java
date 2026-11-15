@@ -84,7 +84,7 @@ class UsuarioServiceAtualizacaoTest {
 
         Supervisor persistida = (Supervisor) repositorio.buscarPorId(idSupervisora).orElseThrow();
         assertThat(persistida.getSenha()).isEqualTo("hash:SenhaGerada#1");
-        assertThat(repositorio.listarTodos()).hasSize(2);
+        assertThat(repositorio.listar()).hasSize(2);
     }
 
     @Test
@@ -200,7 +200,7 @@ class UsuarioServiceAtualizacaoTest {
         }
 
         @Override
-        public List<Colaborador> listarTodos() {
+        public List<Colaborador> listar() {
             return List.copyOf(porId.values());
         }
 

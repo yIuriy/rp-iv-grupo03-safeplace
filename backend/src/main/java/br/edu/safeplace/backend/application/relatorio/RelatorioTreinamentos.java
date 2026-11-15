@@ -55,7 +55,7 @@ public class RelatorioTreinamentos extends Relatorio<RelatorioTreinamentos.Dados
                 .filter(t -> periodo.contem(t.getDataRealizacao()))
                 .sorted(Comparator.comparing(Treinamento::getDataRealizacao).thenComparing(Treinamento::getNome))
                 .toList();
-        Map<Integer, String> nomes = usuarios.listarTodos().stream()
+        Map<Integer, String> nomes = usuarios.listar().stream()
                 .filter(c -> c.getId() != null)
                 .collect(Collectors.toMap(Colaborador::getId, Colaborador::getNome, (a, b) -> a));
         return new Dados(realizados, capacitacoes.listarTodasCertificacoes(), nomes, periodo.fim());

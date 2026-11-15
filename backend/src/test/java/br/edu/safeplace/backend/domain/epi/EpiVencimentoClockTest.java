@@ -123,7 +123,7 @@ class EpiVencimentoClockTest {
         LocalDate hoje = LocalDate.now(clock);
         Epi epiVigente = criarEpiComValidade(11, hoje);
         when(epiRepository.buscarPorId(11)).thenReturn(Optional.of(epiVigente));
-        when(epiRepository.salvar(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(epiRepository.salvar(any(Epi.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         assertThatCode(() -> manutencaoService.enviarParaManutencao(11))
                 .doesNotThrowAnyException();

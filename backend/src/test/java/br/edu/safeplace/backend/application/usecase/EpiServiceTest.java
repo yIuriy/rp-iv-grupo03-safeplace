@@ -135,7 +135,7 @@ class EpiServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("CA 12345 já cadastrado com validade");
 
-        assertThat(repository.listarTodos()).isEmpty();
+        assertThat(repository.listar()).isEmpty();
     }
 
     @Test
@@ -339,7 +339,7 @@ class EpiServiceTest {
         }
 
         @Override
-        public MovimentacaoEstoque salvarMovimentacao(MovimentacaoEstoque movimentacao) {
+        public MovimentacaoEstoque salvar(MovimentacaoEstoque movimentacao) {
             Integer id = movimentacao.getId() != null ? movimentacao.getId() : nextMovId++;
             MovimentacaoEstoque salvo = new MovimentacaoEstoque(
                     id,
@@ -355,7 +355,7 @@ class EpiServiceTest {
         }
 
         @Override
-        public List<MovimentacaoEstoque> listarMovimentacoesPorEpi(Integer epiId) {
+        public List<MovimentacaoEstoque> listarMovimentacoes(Integer epiId) {
             return movimentacoes.stream()
                     .filter(m -> m.getEpiId().equals(epiId))
                     .toList();
@@ -369,7 +369,7 @@ class EpiServiceTest {
         }
 
         @Override
-        public List<Epi> listarTodos() {
+        public List<Epi> listar() {
             return new ArrayList<>(storage.values());
         }
 
@@ -389,7 +389,7 @@ class EpiServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Não é permitido cadastrar EPI com CA vencido.");
 
-        assertThat(repository.listarTodos()).isEmpty();
+        assertThat(repository.listar()).isEmpty();
     }
 
     @Test
@@ -402,7 +402,7 @@ class EpiServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Data de validade do CA é obrigatória.");
 
-        assertThat(repository.listarTodos()).isEmpty();
+        assertThat(repository.listar()).isEmpty();
     }
 
     @Test

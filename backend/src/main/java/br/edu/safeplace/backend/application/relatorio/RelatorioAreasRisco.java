@@ -66,7 +66,7 @@ public class RelatorioAreasRisco extends Relatorio<List<RelatorioAreasRisco.Situ
     @Override
     protected List<SituacaoArea> buscar(PeriodoRelatorio periodo) {
         List<Ocorrencia> doPeriodo = ocorrencias.listar(periodo.comoFiltroDeOcorrencias());
-        return areas.listarTodas().stream()
+        return areas.listar().stream()
                 .map(area -> situacao(area, doPeriodo, periodo))
                 .sorted(MAIOR_RISCO)
                 .toList();

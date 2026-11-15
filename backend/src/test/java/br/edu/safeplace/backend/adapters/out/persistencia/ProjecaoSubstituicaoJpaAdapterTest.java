@@ -96,7 +96,7 @@ class ProjecaoSubstituicaoJpaAdapterTest {
 
         when(jpaRepository.saveAll(any())).thenReturn(List.of(e1, e2));
 
-        List<ProjecaoSubstituicao> salvas = adapter.salvarTodas(List.of(p1, p2));
+        List<ProjecaoSubstituicao> salvas = adapter.salvar(List.of(p1, p2));
 
         assertThat(salvas).hasSize(2);
         verify(jpaRepository).saveAll(any());

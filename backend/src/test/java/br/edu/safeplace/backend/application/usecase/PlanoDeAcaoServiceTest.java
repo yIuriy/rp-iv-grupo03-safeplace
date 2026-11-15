@@ -264,7 +264,7 @@ class PlanoDeAcaoServiceTest {
                 50, 2, "Conserto", null, prazoAtual, "ABERTA", colaborador, null, true, 3, null
         );
         when(planoDeAcaoRepository.buscarPorId(50)).thenReturn(Optional.of(acao));
-        when(planoDeAcaoRepository.salvarProrrogacao(any(ProrrogacaoPrazo.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(planoDeAcaoRepository.salvar(any(ProrrogacaoPrazo.class))).thenAnswer(inv -> inv.getArgument(0));
 
         LocalDate novoPrazo = LocalDate.now().plusDays(15);
         ProrrogarPrazoInputDTO input = new ProrrogarPrazoInputDTO(novoPrazo, "Atraso no fornecimento de peças pelo fabricante");

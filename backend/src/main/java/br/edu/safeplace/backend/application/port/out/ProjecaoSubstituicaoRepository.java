@@ -12,11 +12,11 @@ public interface ProjecaoSubstituicaoRepository {
 
     ProjecaoSubstituicao salvar(ProjecaoSubstituicao projecao);
 
-    List<ProjecaoSubstituicao> salvarTodas(List<ProjecaoSubstituicao> projecoes);
+    List<ProjecaoSubstituicao> salvar(List<ProjecaoSubstituicao> projecoes);
 
     Optional<ProjecaoSubstituicao> buscarUltimaPorEpi(Integer epiId);
 
     List<ProjecaoSubstituicao> listarPorEpi(Integer epiId);
 
-    List<ProjecaoSubstituicao> listarTodas();
+    List<ProjecaoSubstituicao> listar();
 }

@@ -133,7 +133,7 @@ class UsuarioServiceTest {
     @Test
     void deveListarUsuarios() {
         Colaborador c = new Colaborador(1, cpfValido, "Carlos", LocalDate.of(1990, 1, 1), "carlos@empresa.com", true, LocalDateTime.now(), LocalDateTime.now());
-        when(repositorioPorta.listarTodos()).thenReturn(List.of(c));
+        when(repositorioPorta.listar()).thenReturn(List.of(c));
 
         List<UsuarioOutputDTO> lista = casoDeUso.listarUsuarios();
 

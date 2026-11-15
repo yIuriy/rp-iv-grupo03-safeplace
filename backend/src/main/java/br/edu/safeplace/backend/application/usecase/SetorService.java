@@ -84,7 +84,7 @@ public class SetorService implements GerenciarSetorUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<SetorOutputDTO> listar() {
-        return setorRepository.listarTodos().stream()
+        return setorRepository.listar().stream()
                 .map(SetorOutputDTO::deDominio)
                 .toList();
     }

@@ -152,7 +152,7 @@ class EstoqueCriticoConsultaUseCaseTest {
         }
 
         @Override
-        public List<Epi> listarTodos() {
+        public List<Epi> listar() {
             return new ArrayList<>(epis.values());
         }
 
@@ -162,7 +162,7 @@ class EstoqueCriticoConsultaUseCaseTest {
         }
 
         @Override
-        public MovimentacaoEstoque salvarMovimentacao(MovimentacaoEstoque movimentacao) {
+        public MovimentacaoEstoque salvar(MovimentacaoEstoque movimentacao) {
             MovimentacaoEstoque salva = new MovimentacaoEstoque(proximaMovimentacaoId++, movimentacao.getEpi(),
                     movimentacao.getLote(), movimentacao.getResponsavel(), movimentacao.getTipo(),
                     movimentacao.getQuantidade(), movimentacao.getDataHora(), movimentacao.getMotivo());
@@ -171,7 +171,7 @@ class EstoqueCriticoConsultaUseCaseTest {
         }
 
         @Override
-        public List<MovimentacaoEstoque> listarMovimentacoesPorEpi(Integer epiId) {
+        public List<MovimentacaoEstoque> listarMovimentacoes(Integer epiId) {
             return movimentacoes.stream().filter(m -> m.getEpiId().equals(epiId)).toList();
         }
     }

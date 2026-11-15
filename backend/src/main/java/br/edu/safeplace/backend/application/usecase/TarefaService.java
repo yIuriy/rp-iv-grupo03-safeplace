@@ -142,7 +142,7 @@ public class TarefaService implements ClassificarTarefaUseCase, GerenciarEpiTare
     @Override
     @Transactional(readOnly = true)
     public List<TarefaOutputDTO> listar() {
-        return repository.listarTodas().stream()
+        return repository.listar().stream()
                 .map(TarefaOutputDTO::deDominio)
                 .toList();
     }

@@ -168,7 +168,7 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
         movimentacaoValidador.validar(movimentacao);
 
         repository.atualizarSaldo(epi);
-        MovimentacaoEstoque salvo = repository.salvarMovimentacao(movimentacao);
+        MovimentacaoEstoque salvo = repository.salvar(movimentacao);
 
         auditoria.por(responsavelEmail).alteracao(
                 "Epi",
@@ -186,7 +186,7 @@ public class EpiService implements GerenciarEpiUseCase, GerenciarEstoqueUseCase 
                 .orElseThrow(() -> new EpiNaoEncontradoException(epiId));
         int saldoAposMovimentacao = epi.getQuantidade();
         List<MovimentacaoEstoqueOutputDTO> historico = new ArrayList<>();
-        List<MovimentacaoEstoque> movimentacoes = repository.listarMovimentacoesPorEpi(epiId).stream()
+        List<MovimentacaoEstoque> movimentacoes = repository.listarMovimentacoes(epiId).stream()
                 .sorted(Comparator.comparing(MovimentacaoEstoque::getDataHora).reversed())
                 .toList();
         for (MovimentacaoEstoque movimentacao : movimentacoes) {

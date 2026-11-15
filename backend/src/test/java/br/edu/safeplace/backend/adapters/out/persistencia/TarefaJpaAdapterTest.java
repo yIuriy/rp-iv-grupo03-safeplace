@@ -35,7 +35,7 @@ class TarefaJpaAdapterTest {
         when(repositorio.findByNivelPerigo(NivelPerigo.BAIXO)).thenReturn(List.of(tarefa));
 
         assertThat(adapter.buscarPorId(3)).containsSame(tarefa);
-        assertThat(adapter.listarTodas()).containsExactly(tarefa);
+        assertThat(adapter.listar()).containsExactly(tarefa);
         assertThat(adapter.listarPorNivelPerigo(NivelPerigo.BAIXO)).containsExactly(tarefa);
     }
 }

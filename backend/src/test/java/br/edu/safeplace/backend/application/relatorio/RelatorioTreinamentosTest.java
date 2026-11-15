@@ -36,7 +36,7 @@ class RelatorioTreinamentosTest {
     }
 
     private RelatorioOutputDTO gerar() {
-        when(usuarios.listarTodos()).thenReturn(List.of(
+        when(usuarios.listar()).thenReturn(List.of(
                 new Colaborador(1, "52998224725", "Ana", LocalDate.of(1990, 1, 1), null, true, null, null)));
         return relatorio.gerar(NOVEMBRO, LocalDateTime.of(2026, 12, 1, 9, 0));
     }

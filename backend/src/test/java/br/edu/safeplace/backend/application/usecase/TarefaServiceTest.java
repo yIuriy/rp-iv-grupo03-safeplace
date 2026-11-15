@@ -348,7 +348,7 @@ class TarefaServiceTest {
         }
 
         @Override
-        public List<Tarefa> listarTodas() {
+        public List<Tarefa> listar() {
             return new ArrayList<>(storage.values());
         }
 
@@ -384,7 +384,7 @@ class TarefaServiceTest {
         }
 
         @Override
-        public List<Epi> listarTodos() {
+        public List<Epi> listar() {
             return new ArrayList<>(storage.values());
         }
 
@@ -394,12 +394,12 @@ class TarefaServiceTest {
         }
 
         @Override
-        public MovimentacaoEstoque salvarMovimentacao(MovimentacaoEstoque movimentacao) {
+        public MovimentacaoEstoque salvar(MovimentacaoEstoque movimentacao) {
             return movimentacao;
         }
 
         @Override
-        public List<MovimentacaoEstoque> listarMovimentacoesPorEpi(Integer epiId) {
+        public List<MovimentacaoEstoque> listarMovimentacoes(Integer epiId) {
             return List.of();
         }
     }
@@ -449,7 +449,7 @@ class TarefaServiceTest {
         }
 
         @Override
-        public List<Colaborador> listarTodos() {
+        public List<Colaborador> listar() {
             return pessoas;
         }
 

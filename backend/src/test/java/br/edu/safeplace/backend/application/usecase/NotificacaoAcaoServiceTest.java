@@ -55,7 +55,7 @@ class NotificacaoAcaoServiceTest {
         PlanoDeAcao naAntecedencia = acao(1, HOJE.plusDays(3), 3);
         PlanoDeAcao vencida = acao(2, HOJE.minusDays(2), 1);
         PlanoDeAcao aindaNao = acao(3, HOJE.plusDays(10), 3);
-        when(planoDeAcaoRepository.listarAbertasComAlertaAtivo()).thenReturn(List.of(naAntecedencia, vencida, aindaNao));
+        when(planoDeAcaoRepository.listarAbertasComAlerta()).thenReturn(List.of(naAntecedencia, vencida, aindaNao));
         when(notificadorAcao.notificar(any(AvisoAcao.class))).thenReturn(true);
 
         int emitidos = useCase.emitirAlertasDePrazo(HOJE);
@@ -74,7 +74,7 @@ class NotificacaoAcaoServiceTest {
     @Test
     @DisplayName("Alerta já emitido para o mesmo prazo não é contado de novo (deduplicação)")
     void naoContaAlertaRepetido() {
-        when(planoDeAcaoRepository.listarAbertasComAlertaAtivo()).thenReturn(List.of(acao(1, HOJE, 0)));
+        when(planoDeAcaoRepository.listarAbertasComAlerta()).thenReturn(List.of(acao(1, HOJE, 0)));
         when(notificadorAcao.notificar(any(AvisoAcao.class))).thenReturn(true, false);
 
         assertThat(useCase.emitirAlertasDePrazo(HOJE)).isEqualTo(1);
@@ -86,7 +86,7 @@ class NotificacaoAcaoServiceTest {
     void acaoConcluidaNaoRecebeAlerta() {
         PlanoDeAcao concluida = new PlanoDeAcao(4, 5, "Medida", null, HOJE.minusDays(1), "CONCLUIDA", carlos, null,
                 true, 1, null);
-        when(planoDeAcaoRepository.listarAbertasComAlertaAtivo()).thenReturn(List.of(concluida));
+        when(planoDeAcaoRepository.listarAbertasComAlerta()).thenReturn(List.of(concluida));
 
         assertThat(useCase.emitirAlertasDePrazo(HOJE)).isZero();
         verify(notificadorAcao, never()).notificar(any(AvisoAcao.class));

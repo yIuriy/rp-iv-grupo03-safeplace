@@ -36,7 +36,7 @@ public class NotificacaoAcaoService implements EmitirAlertasPrazoUseCase, Consul
             throw new IllegalArgumentException("A data de referência é obrigatória.");
         }
         int emitidos = 0;
-        for (PlanoDeAcao acao : planoDeAcaoRepository.listarAbertasComAlertaAtivo()) {
+        for (PlanoDeAcao acao : planoDeAcaoRepository.listarAbertasComAlerta()) {
             boolean novo = acao.emitirAvisoPrazo(dataReferencia)
                     .map(notificadorAcao::notificar)
                     .orElse(false);

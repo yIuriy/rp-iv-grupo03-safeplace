@@ -15,7 +15,7 @@ public interface UsuarioRepository {
 
     Optional<Colaborador> buscarPorEmail(String email);
 
-    List<Colaborador> listarTodos();
+    List<Colaborador> listar();
 
     /**
      * Lista somente as pessoas com perfil Colaborador (excluindo Supervisor e Gestor de

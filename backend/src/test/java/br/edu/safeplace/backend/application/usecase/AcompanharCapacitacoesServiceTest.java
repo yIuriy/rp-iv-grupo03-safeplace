@@ -52,7 +52,7 @@ class AcompanharCapacitacoesServiceTest {
         Treinamento carlaTreinamento = new Treinamento(20, "Integração", "Normas internas", "Eng. Paula",
                 HOJE.minusDays(5), 8, List.of(carla));
 
-        when(usuarioRepository.listarTodos()).thenReturn(List.of(davi, carla, bruno, ana));
+        when(usuarioRepository.listar()).thenReturn(List.of(davi, carla, bruno, ana));
         when(consultarCapacitacao.listarTodasCertificacoes())
                 .thenReturn(List.of(anaVencida, brunoProxima, anaEmDia));
         when(consultarCapacitacao.listarTodosTreinamentos()).thenReturn(List.of(carlaTreinamento));

@@ -97,7 +97,7 @@ public class PlanejarSubstituicaoService implements PlanejarSubstituicaoUseCase 
                     .orElseThrow(() -> new IllegalArgumentException("Setor não encontrado com id: " + setorId)));
         }
 
-        List<Epi> epis = epiRepository.listarTodos();
+        List<Epi> epis = epiRepository.listar();
         List<ProjecaoSubstituicao> projecoesParaSalvar = new ArrayList<>();
         List<ProjecaoSubstituicaoOutputDTO> projecoesDTO = new ArrayList<>();
         List<FalhaProjecaoOutputDTO> falhasDTO = new ArrayList<>();
@@ -150,7 +150,7 @@ public class PlanejarSubstituicaoService implements PlanejarSubstituicaoUseCase 
 
         // 2. Persistência em lote das projeções geradas com sucesso
         if (!projecoesParaSalvar.isEmpty()) {
-            projecaoRepository.salvarTodas(projecoesParaSalvar);
+            projecaoRepository.salvar(projecoesParaSalvar);
         }
 
         return ResultadoAnaliseSubstituicaoDTO.criar(projecoesDTO, falhasDTO, alertasDTO);
@@ -159,11 +159,11 @@ public class PlanejarSubstituicaoService implements PlanejarSubstituicaoUseCase 
     @Override
     @Transactional(readOnly = true)
     public List<ProjecaoSubstituicaoOutputDTO> listarProjecoes() {
-        Map<Integer, Epi> mapaEpis = epiRepository.listarTodos().stream()
+        Map<Integer, Epi> mapaEpis = epiRepository.listar().stream()
                 .filter(e -> e.getId() != null)
                 .collect(Collectors.toMap(Epi::getId, e -> e, (e1, e2) -> e1));
 
-        return projecaoRepository.listarTodas().stream()
+        return projecaoRepository.listar().stream()
                 .map(proj -> {
                     Epi epi = mapaEpis.get(proj.getEpiId());
                     String nome = epi != null ? epi.getNome() : "EPI-" + proj.getEpiId();
@@ -199,7 +199,7 @@ public class PlanejarSubstituicaoService implements PlanejarSubstituicaoUseCase 
             dataReferencia = LocalDate.now();
         }
 
-        List<Epi> epis = epiRepository.listarTodos();
+        List<Epi> epis = epiRepository.listar();
         List<AlertaSubstituicaoOutputDTO> resultado = new ArrayList<>();
 
         for (Epi epi : epis) {

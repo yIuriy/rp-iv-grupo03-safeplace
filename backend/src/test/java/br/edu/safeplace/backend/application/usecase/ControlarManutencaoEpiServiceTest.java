@@ -152,7 +152,7 @@ class ControlarManutencaoEpiServiceTest {
         assertEquals(3, resultadoDTO.epiId());
         assertEquals(StatusEpi.DISPONIVEL, resultadoDTO.statusAtualEpi());
         assertEquals(StatusEpi.DISPONIVEL, epiRepository.buscarPorId(3).orElseThrow().getStatus());
-        assertEquals(1, manutencaoRepository.listarPorEpiId(3).size());
+        assertEquals(1, manutencaoRepository.listarPorEpi(3).size());
     }
 
     @Test
@@ -296,7 +296,7 @@ class ControlarManutencaoEpiServiceTest {
         }
 
         @Override
-        public List<Epi> listarTodos() {
+        public List<Epi> listar() {
             return new ArrayList<>(storage.values());
         }
 
@@ -307,18 +307,13 @@ class ControlarManutencaoEpiServiceTest {
         }
 
         @Override
-        public List<Epi> listar() {
-            return listarTodos();
-        }
-
-        @Override
-        public MovimentacaoEstoque salvarMovimentacao(MovimentacaoEstoque movimentacao) {
+        public MovimentacaoEstoque salvar(MovimentacaoEstoque movimentacao) {
             movimentacoes.add(movimentacao);
             return movimentacao;
         }
 
         @Override
-        public List<MovimentacaoEstoque> listarMovimentacoesPorEpi(Integer epiId) {
+        public List<MovimentacaoEstoque> listarMovimentacoes(Integer epiId) {
             return movimentacoes.stream()
                     .filter(m -> m.getEpiId().equals(epiId))
                     .toList();

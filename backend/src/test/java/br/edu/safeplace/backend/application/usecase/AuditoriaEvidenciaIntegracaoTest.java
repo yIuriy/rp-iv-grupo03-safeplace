@@ -209,7 +209,7 @@ class AuditoriaEvidenciaIntegracaoTest {
                 .comVidaUtilDias(null)
                 .build();
         when(epiRepository.buscarPorIdComLock(50)).thenReturn(Optional.of(epi));
-        when(epiRepository.salvarMovimentacao(any(MovimentacaoEstoque.class))).thenAnswer(i -> i.getArgument(0));
+        when(epiRepository.salvar(any(MovimentacaoEstoque.class))).thenAnswer(i -> i.getArgument(0));
 
         epiService.registrarMovimentacao(50, TipoMovimentacao.ENTRADA, 20, "Recebimento novo lote", "gestor.auditor@safeplace.com");
 

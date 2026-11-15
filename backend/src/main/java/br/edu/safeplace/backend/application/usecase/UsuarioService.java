@@ -246,7 +246,7 @@ public class UsuarioService implements GerenciarUsuarioUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<UsuarioOutputDTO> listarUsuarios() {
-        return repositorioPorta.listarTodos()
+        return repositorioPorta.listar()
                 .stream()
                 .map(UsuarioOutputDTO::deDominio)
                 .toList();

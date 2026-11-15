@@ -34,7 +34,7 @@ public class LogAuditoriaJpaAdapter implements LogAuditoriaRepository {
     }
 
     @Override
-    public List<Integer> buscarIdsPorResponsavelETipoOperacao(
+    public List<Integer> buscarIdsPorResponsavel(
             String responsavel, String tipoOperacao, Collection<String> entidades) {
         if (responsavel == null || tipoOperacao == null || entidades == null || entidades.isEmpty()) {
             return List.of();

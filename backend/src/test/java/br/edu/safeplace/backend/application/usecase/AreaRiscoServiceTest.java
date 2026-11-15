@@ -122,7 +122,7 @@ class AreaRiscoServiceTest {
         assertThatThrownBy(() -> useCase.cadastrarAreaRisco(input("SET-02", NivelPerigo.CRITICO, List.of())))
                 .isInstanceOf(AreaRiscoSemEpiObrigatorioException.class);
 
-        assertThat(areaRepository.listarTodas()).isEmpty();
+        assertThat(areaRepository.listar()).isEmpty();
     }
 
     @Test
@@ -221,7 +221,7 @@ class AreaRiscoServiceTest {
         }
 
         @Override
-        public List<AreaRisco> listarTodas() {
+        public List<AreaRisco> listar() {
             return new ArrayList<>(storage.values());
         }
 
@@ -259,7 +259,7 @@ class AreaRiscoServiceTest {
         }
 
         @Override
-        public List<Epi> listarTodos() {
+        public List<Epi> listar() {
             return new ArrayList<>(storage.values());
         }
 
@@ -269,12 +269,12 @@ class AreaRiscoServiceTest {
         }
 
         @Override
-        public MovimentacaoEstoque salvarMovimentacao(MovimentacaoEstoque movimentacao) {
+        public MovimentacaoEstoque salvar(MovimentacaoEstoque movimentacao) {
             throw new UnsupportedOperationException("Não usado neste teste.");
         }
 
         @Override
-        public List<MovimentacaoEstoque> listarMovimentacoesPorEpi(Integer epiId) {
+        public List<MovimentacaoEstoque> listarMovimentacoes(Integer epiId) {
             return List.of();
         }
     }
