@@ -42,7 +42,15 @@ public final class PostgresDeTeste {
         // Cada contexto Spring de teste mantém seu pool aberto até o fim da suíte. Com pools de 10
         // conexões, a soma dos contextos ultrapassa o limite padrão de 100 do PostgreSQL
         // ("sorry, too many clients already"); 2 conexões bastam para os testes de integração.
-        registry.add("spring.datasource.hikari.maximum-pool-size", () -> "2");
+        registrar(registry, 2);
+    }
+
+    /**
+     * Igual a {@link #registrar(DynamicPropertyRegistry)}, com pool de {@code conexoes}. Serve aos testes
+     * de concorrência em que cada thread segura uma conexão e abre outra (REQUIRES_NEW).
+     */
+    public static synchronized void registrar(DynamicPropertyRegistry registry, int conexoes) {
+        registry.add("spring.datasource.hikari.maximum-pool-size", () -> String.valueOf(conexoes));
         String urlExterna = urlExterna();
 
         if (urlExterna != null) {

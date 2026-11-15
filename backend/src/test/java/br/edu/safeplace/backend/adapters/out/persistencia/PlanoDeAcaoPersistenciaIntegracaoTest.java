@@ -22,6 +22,9 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 import br.edu.safeplace.backend.application.dto.input.AtualizarResponsavelInputDTO;
+import br.edu.safeplace.backend.application.dto.input.AtualizarStatusPlanoInputDTO;
+import br.edu.safeplace.backend.application.dto.input.CriarAcaoPlanoInputDTO;
+import br.edu.safeplace.backend.application.dto.input.ProrrogarPrazoInputDTO;
 import br.edu.safeplace.backend.application.port.in.ConsultarNotificacoesAcaoUseCase;
 import br.edu.safeplace.backend.application.port.in.EmitirAlertasPrazoUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarPlanoDeAcaoUseCase;
@@ -124,6 +127,12 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
                 VALUES (?, 'Vazamento de fluido hidráulico', 'ABERTA', ?, ?)
                 RETURNING id_ocorrencia
                 """, Integer.class, LocalDateTime.now().minusDays(1), areaId, colaboradorId);
+        // Ocorrencia é abstrata (herança JOINED). Sem a linha em incidentes, o Hibernate não consegue
+        // carregar a ocorrência quando o caso de uso a busca pelo id.
+        jdbcTemplate.update("""
+                INSERT INTO incidentes (id_ocorrencia, situacao_risco, potencial_dano)
+                VALUES (?, 'Fluido no piso', 'Escorregão')
+                """, ocorrenciaId);
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("gestor" + DOMINIO_DE_TESTE, "senha",
@@ -437,20 +446,21 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Critério 5: Transações verificam plano, histórico e auditoria coerentes")
     void transacoesEAuditoriaCoerentes() {
-        PlanoDeAcao acao = planoRepository.salvar(new PlanoDeAcao(
-                null, ocorrenciaId, "Ação auditada", null, hoje.plusDays(4),
-                "ABERTA", colaborador(), null, false, null, gestor()
-        ));
+        // Desde a #238, a auditoria é gravada pelo caso de uso (RegistradorAuditoria), e não pelo
+        // repositório. Por isso o teste passa pelo GerenciarPlanoDeAcaoUseCase. O serviço compara os
+        // prazos com LocalDate.now(), então as datas partem do dia real, e não do campo hoje.
+        LocalDate agora = LocalDate.now();
+        Integer acaoId = gerenciarPlanoDeAcao.cadastrar(ocorrenciaId, new CriarAcaoPlanoInputDTO(
+                "Ação auditada", null, agora.plusDays(4), colaboradorId, null, false, null)).id();
+
+        // Prorrogação com justificativa, antes da conclusão
+        gerenciarPlanoDeAcao.prorrogarPrazo(acaoId,
+                new ProrrogarPrazoInputDTO(agora.plusDays(12), "Necessidade de peças importadas"));
 
         // Conclui a ação
-        acao.atualizarStatus(StatusPlanoDeAcao.CONCLUIDA);
-        planoRepository.salvar(acao);
+        gerenciarPlanoDeAcao.atualizarStatus(acaoId, new AtualizarStatusPlanoInputDTO("CONCLUIDA"));
 
-        // Prorrogação com justificativa
-        ProrrogacaoPrazo prorrogacao = new ProrrogacaoPrazo(acao.getId(), hoje.plusDays(4), hoje.plusDays(12), "Necessidade de peças importadas");
-        planoRepository.salvar(prorrogacao);
-
-        List<LogAuditoria> logs = auditoriaRepository.listarPorEntidade("PlanoDeAcao", acao.getId());
+        List<LogAuditoria> logs = auditoriaRepository.listarPorEntidade("PlanoDeAcao", acaoId);
         assertThat(logs).isNotEmpty();
 
         assertThat(logs).anySatisfy(log -> {
