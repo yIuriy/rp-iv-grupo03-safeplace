@@ -1,7 +1,7 @@
 package br.edu.safeplace.backend.validacao.auditoria;
 
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
-import static br.edu.safeplace.backend.validacao.RegraElo.vazio;
+import static org.apache.commons.validator.GenericValidator.isBlankOrNull;
 
 import org.springframework.stereotype.Component;
 
@@ -23,8 +23,8 @@ public class LogAuditoriaValidador extends ValidadorEmCadeia<LogAuditoria> {
 
     private static EloValidacao<LogAuditoria> montarCadeia() {
         EloValidacao<LogAuditoria> primeiro =
-                exigir(log -> vazio(log.getTipoOperacao()), "Tipo de operação é obrigatório.");
-        primeiro.encadear(exigir(log -> vazio(log.getResponsavel()), "Responsável pela operação é obrigatório."));
+                exigir(log -> isBlankOrNull(log.getTipoOperacao()), "Tipo de operação é obrigatório.");
+        primeiro.encadear(exigir(log -> isBlankOrNull(log.getResponsavel()), "Responsável pela operação é obrigatório."));
         return primeiro;
     }
 }

@@ -1,8 +1,10 @@
 package br.edu.safeplace.backend.validacao.capacitacao;
 
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
-import static br.edu.safeplace.backend.validacao.RegraElo.vazio;
+import static org.apache.commons.validator.GenericValidator.isBlankOrNull;
+import static org.apache.commons.validator.GenericValidator.minValue;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.function.Supplier;
 
@@ -17,9 +19,14 @@ import br.edu.safeplace.backend.validacao.ValidadorEmCadeia;
 @Component
 public class TreinamentoValidador extends ValidadorEmCadeia<Treinamento> {
 
+    /** Issue #308: usa o mesmo {@link Clock} do projeto (Strategy Clock, #247), com o fuso configurado. */
     @Autowired
+    public TreinamentoValidador(Clock clock) {
+        this(() -> LocalDate.now(clock));
+    }
+
     public TreinamentoValidador() {
-        this(LocalDate::now);
+        this(Clock.systemDefaultZone());
     }
 
     /** {@code hoje} permite testar a regra da data futura sem depender do relógio. */
@@ -28,11 +35,11 @@ public class TreinamentoValidador extends ValidadorEmCadeia<Treinamento> {
     }
 
     private static EloValidacao<Treinamento> montarCadeia(Supplier<LocalDate> hoje) {
-        EloValidacao<Treinamento> primeiro = exigir(t -> vazio(t.getNome()), "Nome do treinamento é obrigatório.");
+        EloValidacao<Treinamento> primeiro = exigir(t -> isBlankOrNull(t.getNome()), "Nome do treinamento é obrigatório.");
         primeiro.encadear(exigir(t -> t.getDataRealizacao() == null, "Data de realização é obrigatória."))
                 .encadear(exigir(t -> t.getDataRealizacao() != null && t.getDataRealizacao().isAfter(hoje.get()),
                         "Data de realização não pode ser no futuro."))
-                .encadear(exigir(t -> t.getValidadeMeses() != null && t.getValidadeMeses() < 1,
+                .encadear(exigir(t -> t.getValidadeMeses() != null && !minValue(t.getValidadeMeses(), 1),
                         "Validade do treinamento deve ser de ao menos 1 mês."))
                 .encadear(exigir(t -> t.getColaboradores().isEmpty() || t.getColaboradoresIds().isEmpty(),
                         "Treinamento deve possuir ao menos um colaborador vinculado."));

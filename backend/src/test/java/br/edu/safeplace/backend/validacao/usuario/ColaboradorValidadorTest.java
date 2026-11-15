@@ -142,4 +142,27 @@ class ColaboradorValidadorTest {
         assertThat(validador.verificar(Colaborador.novo(" ", "123", null, null)).mensagens())
                 .containsExactly("CPF deve conter exatamente 11 dígitos numéricos.");
     }
+
+    @Test
+    @DisplayName("Nascimento é comparado com o relógio injetado (issue #308)")
+    void nascimentoUsaORelogioInjetado() {
+        LocalDate hoje = LocalDate.of(2026, 1, 10);
+        ColaboradorValidador comRelogioFixo = new ColaboradorValidador(null, new CpfValidador(), () -> hoje);
+
+        assertThat(comRelogioFixo.verificar(Colaborador.novo("Carlos", CPF, hoje.plusDays(1), null)).mensagens())
+                .containsExactly("Data de nascimento não pode estar no futuro.");
+        assertThatCode(() -> comRelogioFixo.validar(Colaborador.novo("Carlos", CPF, hoje, null)))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("E-mail de perfil com conta segue o @Email dos Requests (issue #308)")
+    void emailDoPerfilComContaPrecisaDeFormatoValido() {
+        assertThat(validador.verificar(Supervisor.novo("Ana Lima", CPF, NASCIMENTO, "ana.empresa.com", "hash")).mensagens())
+                .containsExactly("Email inválido para o perfil Supervisor.");
+        assertThat(validador.verificar(GestorDeSeguranca.novo("Marina", CPF, NASCIMENTO, "marina@", "hash")).mensagens())
+                .containsExactly("Email inválido para o perfil Gestor de Segurança.");
+        assertThatCode(() -> validador.validar(Supervisor.novo("Ana Lima", CPF, NASCIMENTO, "ana@safeplace.test", "hash")))
+                .doesNotThrowAnyException();
+    }
 }

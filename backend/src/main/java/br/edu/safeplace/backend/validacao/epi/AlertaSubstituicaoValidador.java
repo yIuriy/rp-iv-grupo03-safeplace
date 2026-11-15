@@ -1,7 +1,7 @@
 package br.edu.safeplace.backend.validacao.epi;
 
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
-import static br.edu.safeplace.backend.validacao.RegraElo.vazio;
+import static org.apache.commons.validator.GenericValidator.isBlankOrNull;
 
 import org.springframework.stereotype.Component;
 
@@ -23,9 +23,9 @@ public class AlertaSubstituicaoValidador extends ValidadorEmCadeia<AlertaSubstit
     private static EloValidacao<AlertaSubstituicaoEpi> montarCadeia() {
         EloValidacao<AlertaSubstituicaoEpi> primeiro = exigir(a -> a.getEpiId() == null,
                 "Identificador do EPI é obrigatório no alerta.");
-        primeiro.encadear(exigir(a -> vazio(a.getNomeEpi()), "Nome do EPI é obrigatório no alerta."))
+        primeiro.encadear(exigir(a -> isBlankOrNull(a.getNomeEpi()), "Nome do EPI é obrigatório no alerta."))
                 .encadear(exigir(a -> a.getTipoAlerta() == null, "Tipo de alerta é obrigatório."))
-                .encadear(exigir(a -> vazio(a.getMensagem()), "Mensagem do alerta é obrigatória."));
+                .encadear(exigir(a -> isBlankOrNull(a.getMensagem()), "Mensagem do alerta é obrigatória."));
         return primeiro;
     }
 }

@@ -1,7 +1,7 @@
 package br.edu.safeplace.backend.validacao.setor;
 
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
-import static br.edu.safeplace.backend.validacao.RegraElo.vazio;
+import static org.apache.commons.validator.GenericValidator.isBlankOrNull;
 
 import org.springframework.stereotype.Component;
 
@@ -18,7 +18,7 @@ public class SetorValidador extends ValidadorEmCadeia<Setor> {
     }
 
     private static EloValidacao<Setor> montarCadeia() {
-        EloValidacao<Setor> primeiro = exigir(s -> vazio(s.getNome()), "Nome do setor é obrigatório.");
+        EloValidacao<Setor> primeiro = exigir(s -> isBlankOrNull(s.getNome()), "Nome do setor é obrigatório.");
         primeiro.encadear(exigir(s -> s.getStatus() == null, "Status/Nível de perigo do setor é obrigatório."));
         return primeiro;
     }

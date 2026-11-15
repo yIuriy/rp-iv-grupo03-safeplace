@@ -3031,6 +3031,36 @@ Decisões:
 | #297 | Trilha de auditoria (`LogAuditoria`) | 1 | 2 |
 
 As regras que continuam no domínio são das **operações** que mudam o estado de um objeto já criado (baixa de estoque, devolução, transição de situação, prorrogação, reatribuição). A **criação** de objetos não valida mais nada, como pediu o professor, e todo caso de uso valida antes de chamar o repository.
+
+### Bibliotecas prontas nos elos (#308)
+
+**Issue:** [#308](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/308). O professor pediu uma biblioteca pronta de validação no lugar das checagens escritas à mão. A cadeia continua, porque cada elo é uma regra do negócio e a ordem dos elos decide qual erro aparece primeiro. Mudou o teste dentro de cada elo. A parte de formato passou a chamar o Apache Commons Validator (`commons-validator` 1.10.1) ou o Bean Validation.
+
+| Checagem | Antes | Depois | Onde |
+| --- | --- | --- | --- |
+| Texto vazio | `RegraElo.vazio` e `x == null \|\| x.isBlank()` | `GenericValidator.isBlankOrNull` | 26 chamadas em 18 arquivos, e `RegraElo.vazio` foi removido |
+| Limite numérico | `<= 0` e `< 0` | `GenericValidator.minValue` | 8 chamadas em 6 arquivos |
+| Número do CA | `String.matches` e conversão com `try/catch` | `GenericValidator.matchRegexp` e `isInt` | `NumeroCaValidador` |
+| CPF (11 dígitos, dígitos repetidos) | `length()` e laço `allMatch` | `GenericValidator.matchRegexp` com dois regex | `CpfValidador` |
+| Formato do e-mail de Supervisor e Gestor | não havia | `@Email` do Bean Validation, por `Validator.validateValue` | `CredenciaisDoPerfilElo` |
+
+Decisões:
+
+- **E-mail com `@Email` do Bean Validation.** O `EmailValidator` do Commons recusa domínios como `safeplace.test` e `safeplace.local`, que os testes usam, e seria mais rígido que o `@Email` dos Requests. Com a mesma anotação, a regra é igual na entrada HTTP e no domínio.
+- **CPF sem dígitos verificadores no domínio.** O `@CPF` dos Requests já confere os dígitos na entrada HTTP. Levar essa regra ao `CpfValidador` recusaria 24 CPFs fictícios usados nos testes do backend.
+- **Relógio único.** `TreinamentoValidador`, `InspecaoValidador`, `OcorrenciaValidador` e `ColaboradorValidador` usavam `LocalDate.now()` ou `LocalDateTime.now()` do sistema. Agora o Spring injeta o `Clock` da Strategy Clock (#247), como já faziam `EpiValidador` e `CertificacaoValidador`. `AcaoDoPlano` e `AptidaoParaTarefa` não completam mais a data nula com `LocalDate.now()`, porque todo chamador já passa a data do relógio.
+- **`@PastOrPresent` avaliado e não adotado.** As classes do domínio são entidades JPA. Com a anotação nelas, o Hibernate também validaria cada `persist` com o relógio do sistema, e os testes com data fixa precisariam de um `ClockProvider`. A comparação `isAfter(hoje.get())` já usa o relógio injetado em uma linha.
+- **Regras de negócio continuam escritas.** Setor existente, CPF e e-mail disponíveis, prazos comparados com a ocorrência e aptidão para a tarefa consultam o banco ou comparam objetos. Nenhuma biblioteca cobre essas regras.
+
+No frontend, os oito arquivos `validacao*.ts` viraram esquemas zod, que já estava no `package.json` sem uso. Cada função manteve a assinatura e as mensagens, então os formulários e o Template Method de envio (#233) não mudaram. `shared/formularios/errosDoEsquema.ts` converte o resultado do zod no objeto de erros por campo. O CPF passou a conferir os dígitos verificadores com `isValidCPF`, da biblioteca `@brazilian-utils/brazilian-utils`, como o `@CPF` do backend. O `react-hook-form` saiu do `package.json`, porque nunca foi importado e duplicaria o Template Method.
+
+| Métrica | Antes | Depois |
+| --- | ---: | ---: |
+| `if`/`else if` nos `validacao*.ts` do frontend | 68 | 8 |
+| Linhas nos `validacao*.ts` e no adaptador do zod | 443 | 563 |
+| Bundle de produção (minificado / gzip) | 544 kB / 156 kB | 627 kB / 180 kB |
+
+**Evidências:** `ColaboradorValidadorTest` ganhou dois testes, um para a data de nascimento com relógio fixo e outro para o formato do e-mail. As funções antigas e as novas do frontend foram comparadas em 5.665 combinações de entrada, com o mesmo resultado em todas.
 ---
 
 ## Data Mapper — mapeadores de persistência
@@ -4319,7 +4349,7 @@ Decisões de comportamento:
 - **Mensagem única continua única.** Área e tarefa mostram uma mensagem por vez, não erros por campo. A validação delas devolve `{ geral: '...' }`, com `ordem: []`, e a tela mostra `erros.geral || falha` no mesmo alerta de antes. Os textos não mudaram, porque os specs dependem deles.
 - **Foco por `name` ou por `id`.** `focarCampo` procura o campo pelo `name` e, sem ele (grupos de rádio e campos controlados, como os itens da inspeção), pelo `id` dentro do formulário.
 
-Descartado por agora: `react-hook-form`, que está instalado sem uso e exigiria reescrever todos os formulários.
+Descartado: `react-hook-form`, que estava instalado sem uso e exigiria reescrever todos os formulários. A #308 o removeu do `package.json` e passou as regras dos formulários para esquemas zod, sem mudar este esqueleto.
 
 **Parte 2 ([#243](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/243)).** Os formulários restantes trouxeram dois casos que o esqueleto da parte 1 não cobria, e ele ganhou três peças:
 

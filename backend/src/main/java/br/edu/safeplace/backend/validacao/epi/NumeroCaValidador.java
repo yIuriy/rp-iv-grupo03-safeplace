@@ -1,7 +1,9 @@
 package br.edu.safeplace.backend.validacao.epi;
 
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
-import static br.edu.safeplace.backend.validacao.RegraElo.vazio;
+import static org.apache.commons.validator.GenericValidator.isBlankOrNull;
+import static org.apache.commons.validator.GenericValidator.isInt;
+import static org.apache.commons.validator.GenericValidator.matchRegexp;
 
 import org.springframework.stereotype.Component;
 
@@ -24,20 +26,24 @@ public class NumeroCaValidador extends ValidadorEmCadeia<String> {
 
     private static EloValidacao<String> montarCadeia() {
         EloValidacao<String> primeiro = new ObrigatorioElo();
-        primeiro.encadear(exigir(numero -> !ModeloEPI.numeroSemPrefixo(numero).matches("[0-9]+"),
+        primeiro.encadear(exigir(numero -> !soDigitos(numero),
                         "Número do CA deve conter apenas dígitos, com prefixo CA- opcional."))
-                .encadear(exigir(numero -> ModeloEPI.numeroSemPrefixo(numero).matches("[0-9]+")
-                                && ModeloEPI.converterNumero(numero) == 0
-                                && !ModeloEPI.numeroSemPrefixo(numero).matches("0+"),
+                .encadear(exigir(numero -> soDigitos(numero) && !isInt(ModeloEPI.numeroSemPrefixo(numero)),
                         "Número do CA excede o limite inteiro do modelo."));
         return primeiro;
+    }
+
+    /** Issue #308: o regex e a conversão para {@code int} são do Commons Validator. */
+    private static boolean soDigitos(String numero) {
+        String semPrefixo = ModeloEPI.numeroSemPrefixo(numero);
+        return semPrefixo != null && matchRegexp(semPrefixo, "^[0-9]+$");
     }
 
     /** Sem número não há formato a conferir: interrompe a cadeia. */
     private static final class ObrigatorioElo extends EloValidacao<String> {
         @Override
         protected void verificar(String numero, ResultadoValidacao resultado) {
-            if (vazio(numero)) {
+            if (isBlankOrNull(numero)) {
                 String mensagem = "Número do CA é obrigatório.";
                 resultado.interromper(Problema.comExcecao(mensagem, () -> new IllegalArgumentException(mensagem)));
             }

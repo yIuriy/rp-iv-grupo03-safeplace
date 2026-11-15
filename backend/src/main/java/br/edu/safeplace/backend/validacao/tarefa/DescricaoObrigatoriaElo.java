@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.validacao.tarefa;
 
+import static org.apache.commons.validator.GenericValidator.isBlankOrNull;
+
 import br.edu.safeplace.backend.domain.tarefa.Tarefa;
 import br.edu.safeplace.backend.validacao.EloValidacao;
 import br.edu.safeplace.backend.validacao.Problema;
@@ -12,7 +14,7 @@ class DescricaoObrigatoriaElo extends EloValidacao<Tarefa> {
 
     @Override
     protected void verificar(Tarefa tarefa, ResultadoValidacao resultado) {
-        if (tarefa.getDescricao() == null || tarefa.getDescricao().isBlank()) {
+        if (isBlankOrNull(tarefa.getDescricao())) {
             resultado.adicionar(Problema.comExcecao(MENSAGEM, () -> new IllegalArgumentException(MENSAGEM)));
         }
     }

@@ -1,6 +1,10 @@
 // Leitura do FormData e validação local dos dados de pessoa, espelhando o que o backend exige:
-// nome, CPF com 11 dígitos, data no passado e e-mail.
+// nome, CPF válido, data no passado e e-mail. Desde a issue #308, as regras são um esquema zod e os
+// dígitos do CPF são conferidos pela biblioteca brazilian-utils, como o @CPF dos Requests.
 
+import { isValidCPF } from '@brazilian-utils/brazilian-utils'
+import { z } from 'zod'
+import { errosPorCampo } from '../../shared/formularios/errosDoEsquema'
 import type { DadosPessoa } from './api'
 import { digitosDoCpf, hojeIso } from './formatos'
 
@@ -8,7 +12,6 @@ export type CampoPessoa = keyof DadosPessoa
 export type ErrosPessoa = Partial<Record<CampoPessoa, string>>
 
 export const ordemDosCampos: CampoPessoa[] = ['nome', 'cpf', 'dataNascimento', 'email']
-const formatoEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function lerDadosPessoa(form: FormData): DadosPessoa {
   const texto = (campo: CampoPessoa) => String(form.get(campo) ?? '').trim()
@@ -16,14 +19,23 @@ export function lerDadosPessoa(form: FormData): DadosPessoa {
   return { nome: texto('nome'), cpf: digitosDoCpf(texto('cpf')), dataNascimento: texto('dataNascimento'), email: email || undefined }
 }
 
-/** Confere só o que o backend também exige: obrigatoriedade, 11 dígitos, data no passado e e-mail. */
+function esquemaPessoa(emailObrigatorio: boolean, hoje: string) {
+  const emailValido = z.email('Informe um e-mail válido.')
+  return z.object({
+    nome: z.string().min(1, 'Informe o nome completo.'),
+    cpf: z.string()
+      .refine(cpf => digitosDoCpf(cpf).length === 11, 'Informe um CPF com 11 dígitos.')
+      .refine(isValidCPF, 'CPF inválido: confira os dígitos.'),
+    dataNascimento: z.string()
+      .min(1, 'Informe a data de nascimento.')
+      .refine(data => data < hoje, 'A data de nascimento deve estar no passado.'),
+    email: emailObrigatorio
+      ? z.string('Informe o e-mail corporativo usado no login.').pipe(emailValido)
+      : emailValido.optional(),
+  })
+}
+
+/** Confere o que o backend também exige: obrigatoriedade, CPF válido, data no passado e e-mail. */
 export function validarPessoa(dados: DadosPessoa, emailObrigatorio: boolean): ErrosPessoa {
-  const erros: ErrosPessoa = {}
-  if (!dados.nome) erros.nome = 'Informe o nome completo.'
-  if (digitosDoCpf(dados.cpf).length !== 11) erros.cpf = 'Informe um CPF com 11 dígitos.'
-  if (!dados.dataNascimento) erros.dataNascimento = 'Informe a data de nascimento.'
-  else if (dados.dataNascimento >= hojeIso()) erros.dataNascimento = 'A data de nascimento deve estar no passado.'
-  if (emailObrigatorio && !dados.email) erros.email = 'Informe o e-mail corporativo usado no login.'
-  else if (dados.email && !formatoEmail.test(dados.email)) erros.email = 'Informe um e-mail válido.'
-  return erros
+  return errosPorCampo(esquemaPessoa(emailObrigatorio, hojeIso()).safeParse(dados))
 }

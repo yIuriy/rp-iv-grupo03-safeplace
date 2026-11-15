@@ -1,6 +1,8 @@
 // Validação local do registro de inspeção (US09, issue #136), igual à da API: data obrigatória e não
-// posterior a hoje, ao menos um item, e cada item com referência avaliada e resultado.
+// posterior a hoje, ao menos um item, e cada item com referência avaliada e resultado. Desde a issue
+// #308, as regras são um esquema zod.
 
+import { z } from 'zod'
 import type { DadosRegistroInspecao } from './apiInspecoes'
 
 export type Resultado = '' | 'conforme' | 'nao-conforme'
@@ -17,10 +19,30 @@ export function hojeIso(agora: Date = new Date()): string {
   return `${agora.getFullYear()}-${doisDigitos(agora.getMonth() + 1)}-${doisDigitos(agora.getDate())}`
 }
 
-function validarItem(item: RascunhoItem): ErrosItem {
-  const erros: ErrosItem = {}
-  if (!item.descricao.trim()) erros.descricao = 'Informe a norma ou referência avaliada.'
-  if (!item.resultado) erros.resultado = 'Indique conformidade ou não conformidade.'
+const esquemaItem = z.object({
+  descricao: z.string().trim().min(1, 'Informe a norma ou referência avaliada.'),
+  resultado: z.enum(['conforme', 'nao-conforme'], 'Indique conformidade ou não conformidade.'),
+})
+
+function esquemaInspecao(hoje: string) {
+  return z.object({
+    dataInspecao: z.string()
+      .min(1, 'Informe a data em que a inspeção foi realizada.')
+      .refine(data => data <= hoje, 'A data da inspeção não pode ser posterior a hoje.'),
+    itens: z.array(esquemaItem).min(1),
+  })
+}
+
+/** Os erros de item ficam na chave do rascunho, para a linha certa mostrar a mensagem. */
+function errosDaInspecao(problemas: z.core.$ZodIssue[], itens: RascunhoItem[]): ErrosInspecao {
+  const erros: ErrosInspecao = { itens: {} }
+  for (const { path, message } of problemas) {
+    if (path[0] === 'dataInspecao') erros.dataInspecao ??= message
+    if (path[0] !== 'itens' || typeof path[1] !== 'number') continue
+    const campo = path[2] as keyof ErrosItem
+    const chave = itens[path[1]].chave
+    erros.itens[chave] = { ...erros.itens[chave], [campo]: erros.itens[chave]?.[campo] ?? message }
+  }
   return erros
 }
 
@@ -28,14 +50,9 @@ export function validarInspecao(dataInspecao: string, itens: RascunhoItem[], hoj
   dados?: DadosRegistroInspecao
   erros: ErrosInspecao
 } {
+  const resultado = esquemaInspecao(hoje).safeParse({ dataInspecao, itens })
+  if (!resultado.success) return { erros: errosDaInspecao(resultado.error.issues, itens) }
   const erros: ErrosInspecao = { itens: {} }
-  if (!dataInspecao) erros.dataInspecao = 'Informe a data em que a inspeção foi realizada.'
-  else if (dataInspecao > hoje) erros.dataInspecao = 'A data da inspeção não pode ser posterior a hoje.'
-  for (const item of itens) {
-    const errosItem = validarItem(item)
-    if (errosItem.descricao || errosItem.resultado) erros.itens[item.chave] = errosItem
-  }
-  if (erros.dataInspecao || Object.keys(erros.itens).length > 0 || itens.length === 0) return { erros }
   return {
     erros,
     dados: {

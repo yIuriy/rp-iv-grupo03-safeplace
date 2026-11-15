@@ -49,11 +49,6 @@ public final class RegraElo<T> extends EloValidacao<T> {
         return new RegraElo<>(violada, mensagem, excecao, false);
     }
 
-    /** Verdadeiro para texto nulo ou só com espaços. */
-    public static boolean vazio(String texto) {
-        return texto == null || texto.isBlank();
-    }
-
     @Override
     protected void verificar(T alvo, ResultadoValidacao resultado) {
         if (violada.test(alvo)) {

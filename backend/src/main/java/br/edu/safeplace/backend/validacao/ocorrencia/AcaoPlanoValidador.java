@@ -1,6 +1,7 @@
 package br.edu.safeplace.backend.validacao.ocorrencia;
 
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
+import static org.apache.commons.validator.GenericValidator.minValue;
 
 import org.springframework.stereotype.Component;
 
@@ -40,7 +41,7 @@ public class AcaoPlanoValidador extends ValidadorEmCadeia<AcaoDoPlano> {
                 .encadear(exigir(c -> c.acao().isAlertaAtivo() && c.acao().getAntecedenciaAlertaDias() == null,
                         "Informe a antecedência do alerta em dias.", PlanoDeAcaoInvalidoException::new))
                 .encadear(exigir(c -> c.acao().isAlertaAtivo() && c.acao().getAntecedenciaAlertaDias() != null
-                                && c.acao().getAntecedenciaAlertaDias() < 0,
+                                && !minValue(c.acao().getAntecedenciaAlertaDias(), 0),
                         "A antecedência do alerta não pode ser negativa.", PlanoDeAcaoInvalidoException::new));
         return primeiro;
     }
