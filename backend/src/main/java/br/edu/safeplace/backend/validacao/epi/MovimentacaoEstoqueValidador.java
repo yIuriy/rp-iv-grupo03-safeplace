@@ -1,7 +1,8 @@
 package br.edu.safeplace.backend.validacao.epi;
 
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
-import static br.edu.safeplace.backend.validacao.RegraElo.vazio;
+import static org.apache.commons.validator.GenericValidator.isBlankOrNull;
+import static org.apache.commons.validator.GenericValidator.minValue;
 
 import org.springframework.stereotype.Component;
 
@@ -19,9 +20,9 @@ public class MovimentacaoEstoqueValidador extends ValidadorEmCadeia<Movimentacao
 
     private static EloValidacao<MovimentacaoEstoque> montarCadeia() {
         EloValidacao<MovimentacaoEstoque> primeiro = exigir(m -> m.getTipo() == null, "Tipo de movimentação é obrigatório.");
-        primeiro.encadear(exigir(m -> m.getQuantidade() <= 0, "Quantidade movimentada deve ser maior que zero."))
+        primeiro.encadear(exigir(m -> !minValue(m.getQuantidade(), 1), "Quantidade movimentada deve ser maior que zero."))
                 .encadear(exigir(m -> m.getDataHora() == null, "Data e hora da movimentação são obrigatórias."))
-                .encadear(exigir(m -> vazio(m.getMotivo()), "Motivo da movimentação é obrigatório."));
+                .encadear(exigir(m -> isBlankOrNull(m.getMotivo()), "Motivo da movimentação é obrigatório."));
         return primeiro;
     }
 }

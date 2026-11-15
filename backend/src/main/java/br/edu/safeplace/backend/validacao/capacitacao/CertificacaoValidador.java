@@ -1,7 +1,7 @@
 package br.edu.safeplace.backend.validacao.capacitacao;
 
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
-import static br.edu.safeplace.backend.validacao.RegraElo.vazio;
+import static org.apache.commons.validator.GenericValidator.isBlankOrNull;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -40,7 +40,7 @@ public class CertificacaoValidador extends ValidadorEmCadeia<Certificacao> {
         EloValidacao<Certificacao> primeiro = exigir(c -> c.getId() == null && c.getDataVencimento() != null
                         && !c.getDataVencimento().isAfter(hoje.get()),
                 "Data de vencimento não pode ser no passado ou presente no momento do cadastro.");
-        primeiro.encadear(exigir(c -> vazio(c.getNome()), "Nome da certificação é obrigatório."))
+        primeiro.encadear(exigir(c -> isBlankOrNull(c.getNome()), "Nome da certificação é obrigatório."))
                 .encadear(exigir(c -> c.getDataEmissao() == null, "Data de emissão é obrigatória."))
                 .encadear(exigir(c -> c.getDataVencimento() == null, "Data de vencimento é obrigatória."))
                 .encadear(exigir(c -> c.getDataEmissao() != null && c.getDataEmissao().isAfter(hoje.get()),

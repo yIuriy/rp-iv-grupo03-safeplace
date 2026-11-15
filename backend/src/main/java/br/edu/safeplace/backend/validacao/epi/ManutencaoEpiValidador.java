@@ -1,7 +1,7 @@
 package br.edu.safeplace.backend.validacao.epi;
 
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
-import static br.edu.safeplace.backend.validacao.RegraElo.vazio;
+import static org.apache.commons.validator.GenericValidator.isBlankOrNull;
 
 import org.springframework.stereotype.Component;
 
@@ -20,9 +20,9 @@ public class ManutencaoEpiValidador extends ValidadorEmCadeia<ManutencaoEpi> {
     private static EloValidacao<ManutencaoEpi> montarCadeia() {
         EloValidacao<ManutencaoEpi> primeiro = exigir(m -> m.getEpiId() == null, "Identificador do EPI é obrigatório.");
         primeiro.encadear(exigir(m -> m.getDataManutencao() == null, "Data da manutenção é obrigatória."))
-                .encadear(exigir(m -> vazio(m.getDescricao()), "Descrição da manutenção é obrigatória."))
+                .encadear(exigir(m -> isBlankOrNull(m.getDescricao()), "Descrição da manutenção é obrigatória."))
                 .encadear(exigir(m -> m.getResultado() == null, "Resultado da manutenção é obrigatório."))
-                .encadear(exigir(m -> vazio(m.getResponsavelManutencao()), "Responsável pela manutenção é obrigatório."));
+                .encadear(exigir(m -> isBlankOrNull(m.getResponsavelManutencao()), "Responsável pela manutenção é obrigatório."));
         return primeiro;
     }
 }

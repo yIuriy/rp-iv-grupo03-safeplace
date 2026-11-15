@@ -2,6 +2,7 @@ package br.edu.safeplace.backend.validacao.aptidao;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 import br.edu.safeplace.backend.domain.capacitacao.Certificacao;
 import br.edu.safeplace.backend.domain.capacitacao.ExigenciaCapacitacao;
@@ -14,7 +15,8 @@ import br.edu.safeplace.backend.domain.usuario.Colaborador;
  * tarefa (RF06, RF10, UC02, UC11). Substitui os 6 parâmetros soltos do antigo
  * {@code ValidadorAptidaoColaboradorService}.
  *
- * @param dataReferencia data das verificações de vencimento; nula vale como hoje
+ * @param dataReferencia data das verificações de vencimento, vinda do relógio do caso de uso
+ *                       (obrigatória desde a issue #308)
  */
 public record AptidaoParaTarefa(Colaborador colaborador, Tarefa tarefa,
                                 List<Certificacao> certificacoes,
@@ -26,6 +28,6 @@ public record AptidaoParaTarefa(Colaborador colaborador, Tarefa tarefa,
         certificacoes = certificacoes != null ? List.copyOf(certificacoes) : List.of();
         treinamentos = treinamentos != null ? List.copyOf(treinamentos) : List.of();
         exigencias = exigencias != null ? List.copyOf(exigencias) : List.of();
-        dataReferencia = dataReferencia != null ? dataReferencia : LocalDate.now();
+        Objects.requireNonNull(dataReferencia, "A data de referência da aptidão é obrigatória.");
     }
 }

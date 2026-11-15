@@ -1,7 +1,7 @@
 package br.edu.safeplace.backend.validacao.capacitacao;
 
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
-import static br.edu.safeplace.backend.validacao.RegraElo.vazio;
+import static org.apache.commons.validator.GenericValidator.isBlankOrNull;
 
 import org.springframework.stereotype.Component;
 
@@ -18,7 +18,7 @@ public class ExigenciaCapacitacaoValidador extends ValidadorEmCadeia<ExigenciaCa
     }
 
     private static EloValidacao<ExigenciaCapacitacao> montarCadeia() {
-        EloValidacao<ExigenciaCapacitacao> primeiro = exigir(e -> vazio(e.getNomeCapacitacao()),
+        EloValidacao<ExigenciaCapacitacao> primeiro = exigir(e -> isBlankOrNull(e.getNomeCapacitacao()),
                 "Nome da capacitação exigida é obrigatório.");
         primeiro.encadear(exigir(e -> e.getTipoCapacitacao() == null || e.getAlvoId() == null || e.getAlvo() == null,
                 "Todos os campos de vínculo são obrigatórios."));

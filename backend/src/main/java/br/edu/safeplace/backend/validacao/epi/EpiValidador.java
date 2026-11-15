@@ -1,7 +1,8 @@
 package br.edu.safeplace.backend.validacao.epi;
 
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
-import static br.edu.safeplace.backend.validacao.RegraElo.vazio;
+import static org.apache.commons.validator.GenericValidator.isBlankOrNull;
+import static org.apache.commons.validator.GenericValidator.minValue;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -43,13 +44,13 @@ public class EpiValidador extends ValidadorEmCadeia<Epi> {
     private static EloValidacao<Epi> montarCadeia(Supplier<LocalDate> hoje) {
         EloValidacao<Epi> primeiro = exigir(e -> e.getLote() != null && e.getLote().getModelo() == null,
                 "Modelo do EPI é obrigatório para o lote.");
-        primeiro.encadear(exigir(e -> modelo(e) != null && modelo(e).getCa() <= 0, "CA inválido."))
+        primeiro.encadear(exigir(e -> modelo(e) != null && !minValue(modelo(e).getCa(), 1), "CA inválido."))
                 .encadear(exigir(e -> modelo(e) != null && modelo(e).getValidadeCA() == null,
                         "Data de validade do CA é obrigatória."))
-                .encadear(exigir(e -> e.getEspecificacao() != null && e.getEspecificacao().getQuantidadeMinima() < 0,
+                .encadear(exigir(e -> e.getEspecificacao() != null && !minValue(e.getEspecificacao().getQuantidadeMinima(), 0),
                         "Quantidade mínima não pode ser negativa."))
-                .encadear(exigir(e -> vazio(e.getNome()), "Nome do EPI é obrigatório."))
-                .encadear(exigir(e -> e.getQuantidade() < 0, "Quantidade em estoque não pode ser negativa."))
+                .encadear(exigir(e -> isBlankOrNull(e.getNome()), "Nome do EPI é obrigatório."))
+                .encadear(exigir(e -> !minValue(e.getQuantidade(), 0), "Quantidade em estoque não pode ser negativa."))
                 .encadear(exigir(e -> e.getEspecificacao() == null, "Especificação do EPI é obrigatória."))
                 .encadear(exigir(e -> e.getStatus() == null, "Status do EPI é obrigatório."))
                 .encadear(exigir(e -> e.getLote() == null, "Lote do EPI é obrigatório."))

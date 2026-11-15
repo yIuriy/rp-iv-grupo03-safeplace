@@ -1,8 +1,11 @@
 // Leitura e validação local do relato de ocorrência (UC09, exceção II; UC05): tipo, data do fato não
 // futura, setor e área de risco, colaborador envolvido e descrição, mais os campos próprios de
 // acidente (causa e gravidade) e de incidente (situação de risco e potencial de dano), exigidos pelo
-// domínio. A regra definitiva é do backend; aqui se evita um envio que já se sabe inválido.
+// domínio. A regra definitiva é do backend; aqui se evita um envio que já se sabe inválido. Desde a
+// issue #308, as regras são um esquema zod.
 
+import { z } from 'zod'
+import { errosPorCampo, regraDoCampo } from '../../shared/formularios/errosDoEsquema'
 import type { DadosOcorrencia, TipoOcorrencia } from './api'
 
 export type CampoRelato = 'tipoOcorrencia' | 'dataOcorrencia' | 'setorId' | 'areaId' | 'colaboradorId' | 'descricao'
@@ -65,22 +68,33 @@ export function lerRelato(form: FormData, tipoFixo?: TipoOcorrencia): LeituraRel
   return { tipo, setorId: texto(form, 'setorId'), dados }
 }
 
+/** Campo exigido só para um dos tipos: acidente pede causa e gravidade, incidente pede risco e dano. */
+function exigidoNoTipo(tipo: TipoOcorrencia, campo: CampoRelato, mensagem: string) {
+  return [
+    (relato: Record<string, unknown>) => relato.tipoOcorrencia !== tipo || Boolean(relato[campo]),
+    regraDoCampo(campo, mensagem),
+  ] as const
+}
+
+function esquemaRelato(agora: string) {
+  return z.object({
+    tipoOcorrencia: z.enum(['ACIDENTE', 'INCIDENTE'], 'Selecione se foi um acidente ou um incidente.'),
+    dataOcorrencia: z.string()
+      .min(1, 'Informe a data e a hora do fato.')
+      .refine(data => data.slice(0, 16) <= agora, 'A data do fato não pode estar no futuro.'),
+    setorId: z.string().min(1, 'Selecione o setor onde o fato ocorreu.'),
+    areaId: z.number(),
+    colaboradorId: z.number().positive('Selecione o colaborador envolvido.'),
+    descricao: z.string().min(1, 'Descreva o que aconteceu.'),
+  }).loose()
+    .refine(r => Boolean(r.areaId || r.setorId), regraDoCampo('areaId', 'Selecione o setor e depois a área de risco.'))
+    .refine(r => Boolean(r.areaId) || !r.setorId, regraDoCampo('areaId', 'Selecione a área de risco do setor.'))
+    .refine(...exigidoNoTipo('ACIDENTE', 'causaRaiz', 'Indique a causa: fator humano, falha de EPI ou outra.'))
+    .refine(...exigidoNoTipo('ACIDENTE', 'gravidade', 'Indique a gravidade do acidente.'))
+    .refine(...exigidoNoTipo('INCIDENTE', 'situacaoRisco', 'Descreva a situação de risco observada.'))
+    .refine(...exigidoNoTipo('INCIDENTE', 'potencialDano', 'Informe o potencial de dano.'))
+}
+
 export function validarRelato({ tipo, setorId, dados }: LeituraRelato, agora: string = agoraLocal()): ErrosRelato {
-  const erros: ErrosRelato = {}
-  if (!tipo) erros.tipoOcorrencia = 'Selecione se foi um acidente ou um incidente.'
-  if (!dados.dataOcorrencia) erros.dataOcorrencia = 'Informe a data e a hora do fato.'
-  else if (dados.dataOcorrencia.slice(0, 16) > agora) erros.dataOcorrencia = 'A data do fato não pode estar no futuro.'
-  if (!setorId) erros.setorId = 'Selecione o setor onde o fato ocorreu.'
-  if (!dados.areaId) erros.areaId = setorId ? 'Selecione a área de risco do setor.' : 'Selecione o setor e depois a área de risco.'
-  if (!dados.colaboradorId) erros.colaboradorId = 'Selecione o colaborador envolvido.'
-  if (!dados.descricao) erros.descricao = 'Descreva o que aconteceu.'
-  if (tipo === 'ACIDENTE') {
-    if (!dados.causaRaiz) erros.causaRaiz = 'Indique a causa: fator humano, falha de EPI ou outra.'
-    if (!dados.gravidade) erros.gravidade = 'Indique a gravidade do acidente.'
-  }
-  if (tipo === 'INCIDENTE') {
-    if (!dados.situacaoRisco) erros.situacaoRisco = 'Descreva a situação de risco observada.'
-    if (!dados.potencialDano) erros.potencialDano = 'Informe o potencial de dano.'
-  }
-  return erros
+  return errosPorCampo(esquemaRelato(agora).safeParse({ ...dados, tipoOcorrencia: tipo, setorId }))
 }

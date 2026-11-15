@@ -1,7 +1,7 @@
 package br.edu.safeplace.backend.validacao.epi;
 
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
-import static br.edu.safeplace.backend.validacao.RegraElo.vazio;
+import static org.apache.commons.validator.GenericValidator.isBlankOrNull;
 
 import org.springframework.stereotype.Component;
 
@@ -26,7 +26,7 @@ public class ProjecaoSubstituicaoValidador extends ValidadorEmCadeia<ProjecaoSub
                 "Identificador do EPI é obrigatório para a projeção.");
         primeiro.encadear(exigir(p -> p.getDataProjecao() == null, "Data da projeção é obrigatória."))
                 .encadear(exigir(p -> p.getDataEstimadaDescarte() == null, "Data estimada de descarte é obrigatória."))
-                .encadear(exigir(p -> vazio(p.getJustificativa()), "Justificativa da projeção é obrigatória."));
+                .encadear(exigir(p -> isBlankOrNull(p.getJustificativa()), "Justificativa da projeção é obrigatória."));
         return primeiro;
     }
 }

@@ -1,6 +1,9 @@
 // Validação local dos cadastros de capacitação (RF10, UC02, issue #192), igual à da API: campos
-// obrigatórios, datas coerentes e validade de treinamento de ao menos 1 mês.
+// obrigatórios, datas coerentes e validade de treinamento de ao menos 1 mês. Desde a issue #308, as
+// regras são esquemas zod, que também convertem os números digitados.
 
+import { z } from 'zod'
+import { errosPorCampo, regraDoCampo } from '../../shared/formularios/errosDoEsquema'
 import type { DadosCertificacao, DadosExigencia, DadosTreinamento, AlvoExigencia, TipoCapacitacao } from './api'
 
 export type Erros<T extends string> = Partial<Record<T, string>>
@@ -24,61 +27,74 @@ export type CampoExigencia = keyof RascunhoExigencia
 
 type Resultado<D, C extends string> = { dados?: D; erros: Erros<C> }
 
-function inteiroPositivo(valor: string): number | null {
-  const numero = Number(valor)
-  return valor.trim() !== '' && Number.isInteger(numero) && numero > 0 ? numero : null
+/** Texto de um campo numérico convertido para inteiro maior que zero. */
+const inteiroPositivo = (mensagem: string) => z.coerce.number(mensagem).int(mensagem).positive(mensagem)
+
+/** Campo numérico opcional: vazio fica de fora, preenchido precisa ser inteiro maior que zero. */
+const inteiroPositivoOpcional = (mensagem: string) =>
+  z.preprocess(valor => (String(valor).trim() === '' ? undefined : valor), inteiroPositivo(mensagem).optional())
+
+const textoObrigatorio = (mensagem: string) => z.string().trim().min(1, mensagem)
+
+/** Texto opcional: espaços são removidos e o vazio fica de fora do corpo enviado. */
+const textoOpcional = z.string().trim().transform(valor => valor || undefined)
+
+function esquemaCertificacao(hoje: string) {
+  return z.object({
+    colaboradorId: inteiroPositivo('Selecione o colaborador titular.'),
+    nome: textoObrigatorio('Informe o nome da certificação.'),
+    dataEmissao: z.string().min(1, 'Informe a data de emissão.'),
+    dataVencimento: z.string()
+      .min(1, 'Informe a data de vencimento.')
+      .refine(data => data > hoje, 'A data de vencimento deve ser posterior a hoje.'),
+  }).refine(
+    r => !r.dataEmissao || !(r.dataVencimento > hoje) || r.dataEmissao < r.dataVencimento,
+    regraDoCampo('dataEmissao', 'A emissão deve ser anterior ao vencimento.'),
+  )
 }
 
 export function validarCertificacao(r: RascunhoCertificacao, hoje: string): Resultado<DadosCertificacao, CampoCertificacao> {
-  const erros: Erros<CampoCertificacao> = {}
-  const colaboradorId = inteiroPositivo(r.colaboradorId)
-  if (colaboradorId === null) erros.colaboradorId = 'Selecione o colaborador titular.'
-  if (!r.nome.trim()) erros.nome = 'Informe o nome da certificação.'
-  if (!r.dataEmissao) erros.dataEmissao = 'Informe a data de emissão.'
-  if (!r.dataVencimento) erros.dataVencimento = 'Informe a data de vencimento.'
-  else if (r.dataVencimento <= hoje) erros.dataVencimento = 'A data de vencimento deve ser posterior a hoje.'
-  if (r.dataEmissao && r.dataVencimento && !erros.dataVencimento && r.dataEmissao >= r.dataVencimento) {
-    erros.dataEmissao = 'A emissão deve ser anterior ao vencimento.'
-  }
-  if (Object.keys(erros).length > 0) return { erros }
-  return { erros, dados: { nome: r.nome.trim(), dataEmissao: r.dataEmissao, dataVencimento: r.dataVencimento, colaboradorId: colaboradorId! } }
+  const resultado = esquemaCertificacao(hoje).safeParse(r)
+  return resultado.success ? { erros: {}, dados: resultado.data } : { erros: errosPorCampo(resultado) }
+}
+
+function esquemaTreinamento(hoje: string) {
+  return z.object({
+    nome: textoObrigatorio('Informe o nome do treinamento.'),
+    conteudo: textoOpcional,
+    instrutor: textoOpcional,
+    dataRealizacao: z.string()
+      .min(1, 'Informe a data de realização.')
+      .refine(data => data <= hoje, 'A data de realização não pode ser posterior a hoje.'),
+    cargaHoraria: inteiroPositivoOpcional('A carga horária deve ser um número inteiro positivo.'),
+    validadeMeses: inteiroPositivoOpcional('A validade deve ser de ao menos 1 mês.'),
+    colaboradoresIds: z.array(z.number()).min(1, 'Selecione ao menos um colaborador.'),
+  })
+}
+
+/** Campos opcionais sem valor não vão no corpo enviado à API. */
+function semVazios<T extends object>(dados: T): T {
+  return Object.fromEntries(Object.entries(dados).filter(([, valor]) => valor !== undefined)) as T
 }
 
 export function validarTreinamento(r: RascunhoTreinamento, hoje: string): Resultado<DadosTreinamento, CampoTreinamento> {
-  const erros: Erros<CampoTreinamento> = {}
-  if (!r.nome.trim()) erros.nome = 'Informe o nome do treinamento.'
-  if (!r.dataRealizacao) erros.dataRealizacao = 'Informe a data de realização.'
-  else if (r.dataRealizacao > hoje) erros.dataRealizacao = 'A data de realização não pode ser posterior a hoje.'
-  if (r.cargaHoraria.trim() && inteiroPositivo(r.cargaHoraria) === null) erros.cargaHoraria = 'A carga horária deve ser um número inteiro positivo.'
-  if (r.validadeMeses.trim() && inteiroPositivo(r.validadeMeses) === null) erros.validadeMeses = 'A validade deve ser de ao menos 1 mês.'
-  if (r.colaboradoresIds.length === 0) erros.colaboradoresIds = 'Selecione ao menos um colaborador.'
-  if (Object.keys(erros).length > 0) return { erros }
-  const cargaHoraria = inteiroPositivo(r.cargaHoraria)
-  const validadeMeses = inteiroPositivo(r.validadeMeses)
-  return {
-    erros,
-    dados: {
-      nome: r.nome.trim(),
-      ...(r.conteudo.trim() ? { conteudo: r.conteudo.trim() } : {}),
-      ...(r.instrutor.trim() ? { instrutor: r.instrutor.trim() } : {}),
-      dataRealizacao: r.dataRealizacao,
-      ...(cargaHoraria !== null ? { cargaHoraria } : {}),
-      ...(validadeMeses !== null ? { validadeMeses } : {}),
-      colaboradoresIds: r.colaboradoresIds,
-    },
-  }
+  const resultado = esquemaTreinamento(hoje).safeParse(r)
+  return resultado.success ? { erros: {}, dados: semVazios(resultado.data) } : { erros: errosPorCampo(resultado) }
 }
 
+const idSelecionado = inteiroPositivo('Selecione o item.')
+
+const esquemaExigencia = z.object({
+  nomeCapacitacao: textoObrigatorio('Informe a certificação ou o treinamento exigido.'),
+  tipoCapacitacao: z.enum(['CERTIFICACAO', 'TREINAMENTO'], 'Indique se a exigência é de certificação ou de treinamento.'),
+  alvo: z.enum(['TAREFA', 'EPI'], 'Indique se a exigência vale para uma tarefa ou para um EPI.'),
+  alvoId: z.string(),
+})
+  .refine(r => r.alvo !== 'TAREFA' || idSelecionado.safeParse(r.alvoId).success, regraDoCampo('alvoId', 'Selecione a tarefa.'))
+  .refine(r => r.alvo !== 'EPI' || idSelecionado.safeParse(r.alvoId).success, regraDoCampo('alvoId', 'Selecione o EPI.'))
+
 export function validarExigencia(r: RascunhoExigencia): Resultado<DadosExigencia, CampoExigencia> {
-  const erros: Erros<CampoExigencia> = {}
-  if (!r.nomeCapacitacao.trim()) erros.nomeCapacitacao = 'Informe a certificação ou o treinamento exigido.'
-  if (!r.tipoCapacitacao) erros.tipoCapacitacao = 'Indique se a exigência é de certificação ou de treinamento.'
-  if (!r.alvo) erros.alvo = 'Indique se a exigência vale para uma tarefa ou para um EPI.'
-  const alvoId = inteiroPositivo(r.alvoId)
-  if (r.alvo && alvoId === null) erros.alvoId = r.alvo === 'TAREFA' ? 'Selecione a tarefa.' : 'Selecione o EPI.'
-  if (Object.keys(erros).length > 0) return { erros }
-  return {
-    erros,
-    dados: { nomeCapacitacao: r.nomeCapacitacao.trim(), tipoCapacitacao: r.tipoCapacitacao as TipoCapacitacao, alvo: r.alvo as AlvoExigencia, alvoId: alvoId! },
-  }
+  const resultado = esquemaExigencia.safeParse(r)
+  if (!resultado.success) return { erros: errosPorCampo(resultado) }
+  return { erros: {}, dados: { ...resultado.data, alvoId: idSelecionado.parse(resultado.data.alvoId) } }
 }

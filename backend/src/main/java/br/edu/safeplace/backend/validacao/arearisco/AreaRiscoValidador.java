@@ -1,7 +1,7 @@
 package br.edu.safeplace.backend.validacao.arearisco;
 
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
-import static br.edu.safeplace.backend.validacao.RegraElo.vazio;
+import static org.apache.commons.validator.GenericValidator.isBlankOrNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -32,14 +32,14 @@ public class AreaRiscoValidador extends ValidadorEmCadeia<AreaRisco> {
     private static EloValidacao<AreaRisco> montarCadeia(AreaRiscoRepository areas, SetorRepository setores) {
         EloValidacao<AreaRisco> primeiro = new CodigoUnicoElo(areas);
         primeiro.encadear(new SetorExistenteElo(setores))
-                .encadear(exigir(a -> vazio(a.getCodigo()), "Código da área de risco é obrigatório."))
+                .encadear(exigir(a -> isBlankOrNull(a.getCodigo()), "Código da área de risco é obrigatório."))
                 .encadear(exigir(a -> a.getNivelPerigo() == null, "Nível de perigo da área de risco é obrigatório."))
                 .encadear(exigir(a -> a.getAgentesRisco().isEmpty(),
                         "Agentes de risco são obrigatórios para a área de risco."))
-                .encadear(exigir(a -> vazio(a.getLimites()),
+                .encadear(exigir(a -> isBlankOrNull(a.getLimites()),
                         "Limites físicos ou operacionais são obrigatórios para a área de risco."))
                 .encadear(new EpisObrigatoriosElo())
-                .encadear(exigir(a -> vazio(a.getNome()), "Nome da área de risco é obrigatório."));
+                .encadear(exigir(a -> isBlankOrNull(a.getNome()), "Nome da área de risco é obrigatório."));
         return primeiro;
     }
 }

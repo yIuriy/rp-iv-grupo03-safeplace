@@ -1,8 +1,10 @@
 // Leitura e validação local do formulário de entrega (UC12, passos 3 a 5; US11): colaborador, EPI e
 // data prevista de devolução obrigatórios, data não anterior a hoje e justificativa obrigatória na
 // confirmação de duplicidade. As regras definitivas (saldo, CA, capacitação) são do backend; aqui só
-// se evita uma chamada que já se sabe inválida.
+// se evita uma chamada que já se sabe inválida. Desde a issue #308, as regras são esquemas zod.
 
+import { z } from 'zod'
+import { errosPorCampo } from '../../shared/formularios/errosDoEsquema'
 import type { DadosEntrega } from './api'
 
 export type CampoEntrega = 'colaboradorId' | 'epiId' | 'dataDevolucaoPrevista'
@@ -20,18 +22,22 @@ export function lerRascunho(form: FormData): RascunhoEntrega {
   return { colaboradorId: valor('colaboradorId'), epiId: valor('epiId'), dataDevolucaoPrevista: valor('dataDevolucaoPrevista') }
 }
 
+function esquemaEntrega(hoje: string) {
+  return z.object({
+    colaboradorId: z.string().min(1, 'Selecione o colaborador que recebe o EPI.'),
+    epiId: z.string().min(1, 'Selecione o EPI que será entregue.'),
+    dataDevolucaoPrevista: z.string()
+      .min(1, 'Informe a data prevista de devolução.')
+      .refine(data => data >= hoje, 'A devolução prevista não pode ser anterior a hoje, dia da entrega.'),
+  })
+}
+
 /** `hoje` e a data prevista estão em `AAAA-MM-DD`, então a comparação de texto segue a ordem das datas. */
 export function validarEntrega(rascunho: RascunhoEntrega, hoje: string): ErrosEntrega {
-  const erros: ErrosEntrega = {}
-  if (!rascunho.colaboradorId) erros.colaboradorId = 'Selecione o colaborador que recebe o EPI.'
-  if (!rascunho.epiId) erros.epiId = 'Selecione o EPI que será entregue.'
-  if (!rascunho.dataDevolucaoPrevista) {
-    erros.dataDevolucaoPrevista = 'Informe a data prevista de devolução.'
-  } else if (rascunho.dataDevolucaoPrevista < hoje) {
-    erros.dataDevolucaoPrevista = 'A devolução prevista não pode ser anterior a hoje, dia da entrega.'
-  }
-  return erros
+  return errosPorCampo(esquemaEntrega(hoje).safeParse(rascunho))
 }
+
+const justificativaObrigatoria = z.string().trim().min(1, 'Informe a justificativa da substituição.')
 
 export function paraDadosDeEntrega(rascunho: RascunhoEntrega): DadosEntrega {
   return {
@@ -43,5 +49,5 @@ export function paraDadosDeEntrega(rascunho: RascunhoEntrega): DadosEntrega {
 
 /** Dicionário da US11: justificativa condicional, obrigatória quando já existe item ativo do mesmo tipo. */
 export function validarJustificativa(justificativa: string): string | undefined {
-  return justificativa.trim() ? undefined : 'Informe a justificativa da substituição.'
+  return justificativaObrigatoria.safeParse(justificativa).error?.issues[0].message
 }

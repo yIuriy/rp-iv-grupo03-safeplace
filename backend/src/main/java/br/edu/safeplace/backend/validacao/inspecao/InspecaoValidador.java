@@ -2,6 +2,7 @@ package br.edu.safeplace.backend.validacao.inspecao;
 
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.function.Supplier;
 
@@ -23,9 +24,14 @@ import br.edu.safeplace.backend.validacao.ValidadorEmCadeia;
 @Component
 public class InspecaoValidador extends ValidadorEmCadeia<Inspecao> {
 
+    /** Issue #308: usa o mesmo {@link Clock} do projeto (Strategy Clock, #247), com o fuso configurado. */
     @Autowired
+    public InspecaoValidador(Clock clock) {
+        this(() -> LocalDate.now(clock));
+    }
+
     public InspecaoValidador() {
-        this(LocalDate::now);
+        this(Clock.systemDefaultZone());
     }
 
     /** {@code hoje} permite testar a regra da data futura sem depender do relógio. */

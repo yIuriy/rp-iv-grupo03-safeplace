@@ -1,7 +1,7 @@
 package br.edu.safeplace.backend.validacao.emprestimo;
 
 import static br.edu.safeplace.backend.validacao.RegraElo.exigir;
-import static br.edu.safeplace.backend.validacao.RegraElo.vazio;
+import static org.apache.commons.validator.GenericValidator.isBlankOrNull;
 
 import org.springframework.stereotype.Component;
 
@@ -31,7 +31,7 @@ public class EmprestimoValidador extends ValidadorEmCadeia<Emprestimo> {
                 .encadear(exigir(e -> e.getDataRetirada() != null && e.getDataDevolucaoPrevista() != null
                                 && e.getDataDevolucaoPrevista().isBefore(e.getDataRetirada().toLocalDate()),
                         "Data prevista de devolução não pode ser anterior à retirada."))
-                .encadear(exigir(e -> vazio(e.getTermoCautela()), "Termo de cautela é obrigatório."))
+                .encadear(exigir(e -> isBlankOrNull(e.getTermoCautela()), "Termo de cautela é obrigatório."))
                 .encadear(exigir(e -> e.getStatus() == null, "Status do empréstimo é obrigatório."))
                 .encadear(exigir(e -> e.getStatus() != null
                                 && devolvido(e) != (e.getStatus() == ClassificacaoEmprestimo.DISPONIVEL),

@@ -1,5 +1,7 @@
 package br.edu.safeplace.backend.validacao.inspecao;
 
+import static org.apache.commons.validator.GenericValidator.isBlankOrNull;
+
 import br.edu.safeplace.backend.domain.inspecao.Inspecao;
 import br.edu.safeplace.backend.domain.inspecao.ItemVerificado;
 import br.edu.safeplace.backend.domain.inspecao.exception.InspecaoInvalidaException;
@@ -13,7 +15,7 @@ class ItensValidosElo extends EloValidacao<Inspecao> {
     @Override
     protected void verificar(Inspecao inspecao, ResultadoValidacao resultado) {
         for (ItemVerificado item : inspecao.getItens()) {
-            if (item.getDescricao() == null || item.getDescricao().isBlank()) {
+            if (isBlankOrNull(item.getDescricao())) {
                 adicionar(resultado, "Informe a norma ou referência avaliada em cada item verificado.");
             } else if (item.getConformidade() == null) {
                 adicionar(resultado, "Informe se o item \"" + item.getDescricao()
