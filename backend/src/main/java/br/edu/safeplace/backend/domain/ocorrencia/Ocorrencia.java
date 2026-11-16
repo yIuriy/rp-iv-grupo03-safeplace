@@ -83,44 +83,22 @@ public abstract class Ocorrencia {
     protected Ocorrencia() {
     }
 
-    protected Ocorrencia(
-            Integer idOcorrencia,
-            String descricao,
-            LocalDateTime dataOcorrencia,
-            LocalDateTime dataRegistro,
-            StatusOcorrencia statusOcorrencia,
-            Colaborador colaborador,
-            AreaRisco area,
-            Colaborador relator,
-            PlanoDeAcao planoDeAcao) {
-        this(idOcorrencia, descricao, dataOcorrencia, dataRegistro, statusOcorrencia,
-                colaborador, area, relator, null, planoDeAcao);
-    }
-
-    protected Ocorrencia(
-            Integer idOcorrencia,
-            String descricao,
-            LocalDateTime dataOcorrencia,
-            LocalDateTime dataRegistro,
-            StatusOcorrencia statusOcorrencia,
-            Colaborador colaborador,
-            AreaRisco area,
-            Colaborador relator,
-            String local,
-            PlanoDeAcao planoDeAcao) {
-
+    /** Construtor a partir do Builder base da hierarquia (GoF, criacional, #240). */
+    protected Ocorrencia(OcorrenciaBuilder<?> builder) {
         // Data e descrição são validadas por OcorrenciaValidador antes de salvar (issue #266).
-        this.idOcorrencia = idOcorrencia;
-        this.descricao = descricao != null ? descricao.trim() : null;
-        this.dataOcorrencia = dataOcorrencia;
-        this.dataRegistro = dataRegistro != null ? dataRegistro : LocalDateTime.now();
-        this.statusOcorrencia = statusOcorrencia != null ? statusOcorrencia : StatusOcorrencia.ABERTA;
-        this.colaborador = colaborador;
-        this.area = area;
-        this.relator = relator;
-        this.localInformado = local != null && !local.isBlank() ? local.trim() : null;
-        this.planoDeAcao = planoDeAcao;
-        this.planoDeAcaoId = planoDeAcao != null ? planoDeAcao.getId() : null;
+        this.idOcorrencia = builder.getIdOcorrencia();
+        this.descricao = builder.getDescricao() != null ? builder.getDescricao().trim() : null;
+        this.dataOcorrencia = builder.getDataOcorrencia();
+        this.dataRegistro = builder.getDataRegistro() != null ? builder.getDataRegistro() : LocalDateTime.now();
+        this.statusOcorrencia = builder.getStatusOcorrencia() != null ? builder.getStatusOcorrencia() : StatusOcorrencia.ABERTA;
+        this.colaborador = builder.getColaborador();
+        this.area = builder.getArea();
+        this.relator = builder.getRelator();
+        this.localInformado = builder.getLocalInformado() != null && !builder.getLocalInformado().isBlank()
+                ? builder.getLocalInformado().trim()
+                : null;
+        this.planoDeAcao = builder.getPlanoDeAcao();
+        this.planoDeAcaoId = builder.getPlanoDeAcao() != null ? builder.getPlanoDeAcao().getId() : null;
     }
 
     public void transicionarPara(StatusOcorrencia novoStatus) {
