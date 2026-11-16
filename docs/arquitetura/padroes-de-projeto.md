@@ -1840,8 +1840,9 @@ Suíte do backend:
 | --- | --- | --- |
 | Builder | `Emprestimo.Builder` (`src/main`, classe aninhada) | Receber cada dado da entrega por método nomeado e montar o `Emprestimo` em `build()` |
 | Builder | `TarefaBuilder` (`src/main`, com alias `Tarefa.Builder`) | Compor atributos da tarefa (descrição, nível de perigo, data/responsável de classificação, área, setores e EPIs) e instanciar `Tarefa` |
-| Builder | `AcidenteBuilder` (`src/main`, com alias `Acidente.Builder`) | Compor atributos comuns de ocorrência, causa raiz, CAT e gravidade, instanciando `Acidente` com status padrão `ABERTA` |
-| Builder | `IncidenteBuilder` (`src/main`, com alias `Incidente.Builder`) | Compor atributos comuns de ocorrência, situação de risco e potencial de dano, instanciando `Incidente` com status padrão `ABERTA` |
+| Builder | `OcorrenciaBuilder` (`src/main`, classe base abstrata) | Centralizar atributos comuns de ocorrência (id, descrição, data, status, colaborador, área, relator, local, plano) e eliminar construtores telescópicos na superclasse `Ocorrencia` |
+| Builder | `AcidenteBuilder` (`src/main`, herda de `OcorrenciaBuilder`, com alias `Acidente.Builder`) | Compor atributos próprios de acidente (causa raiz, CAT, gravidade, tipo, dano, destino) e delegar atributos comuns via `super(builder)` |
+| Builder | `IncidenteBuilder` (`src/main`, herda de `OcorrenciaBuilder`, com alias `Incidente.Builder`) | Compor atributos próprios de incidente (situação de risco e potencial de dano) e delegar atributos comuns via `super(builder)` |
 | Director | `EmprestimoService.registrarEntrega` | Orquestrar a montagem do empréstimo a partir do DTO e entidades de apoio |
 | Director | `TarefaService` (`cadastrarTarefa`, `atualizarTarefa`) | Montar a tarefa via `TarefaBuilder` a partir de `CadastrarTarefaInputDTO` / `AtualizarTarefaInputDTO` |
 | Director | `FabricaRelatoAcidente.criarOcorrencia` | Montar o `Acidente` via `AcidenteBuilder` a partir do `RegistrarAcidenteInputDTO` |
@@ -1902,6 +1903,21 @@ classDiagram
     +episObrigatorios(List~Epi~) TarefaBuilder
     +build() Tarefa
   }
+  class Ocorrencia {
+    <<Product / Superclass>>
+    #Ocorrencia() JPA
+    #Ocorrencia(OcorrenciaBuilder)
+  }
+  class OcorrenciaBuilder {
+    <<Builder base>>
+    +idOcorrencia(Integer)
+    +descricao(String)
+    +dataOcorrencia(LocalDateTime)
+    +statusOcorrencia(StatusOcorrencia)
+    +colaborador(Colaborador)
+    +area(AreaRisco)
+    +relator(Colaborador)
+  }
   class Acidente {
     <<Product>>
     #Acidente() JPA
@@ -1910,7 +1926,6 @@ classDiagram
   }
   class AcidenteBuilder {
     <<Builder>>
-    +descricao(String) AcidenteBuilder
     +causaRaiz(CausaRaizAcidente) AcidenteBuilder
     +numeroProtocoloCAT(NumeroProtocoloCAT) AcidenteBuilder
     +gravidade(NivelPerigo) AcidenteBuilder
@@ -1924,7 +1939,6 @@ classDiagram
   }
   class IncidenteBuilder {
     <<Builder>>
-    +descricao(String) IncidenteBuilder
     +situacaoRisco(String) IncidenteBuilder
     +potencialDano(String) IncidenteBuilder
     +build() Incidente
@@ -1936,6 +1950,11 @@ classDiagram
     FabricaRelatoIncidente
     OcorrenciaService
   }
+  Acidente --|> Ocorrencia
+  Incidente --|> Ocorrencia
+  AcidenteBuilder --|> OcorrenciaBuilder
+  IncidenteBuilder --|> OcorrenciaBuilder
+  Ocorrencia ..> OcorrenciaBuilder : recebe no construtor
   TarefaBuilder ..> Tarefa : build()
   AcidenteBuilder ..> Acidente : build()
   IncidenteBuilder ..> Incidente : build()
@@ -2051,8 +2070,9 @@ A instanciação de entidades complexas como `Emprestimo`, `Tarefa`, `Acidente` 
 | Maior número de argumentos posicionais para criar `Emprestimo` | 12 | 0 |
 | Construtores públicos de `Tarefa` | 4 | 3 (Builder, 5-args, 4-args) |
 | Métodos/aliases sem uso em `Tarefa` (`associarEPIs`, `verificarEPIsObrigatoriosTarefa`) | 2 | 0 (removidos) |
-| Chamadas a construtores de 12 ou 16 parâmetros em `backend/src` | 38 | 0 (construtores longos eliminados) |
-| Builders em código de produção (`src/main`) | 0 | 4 (`Emprestimo.Builder`, `TarefaBuilder`, `AcidenteBuilder`, `IncidenteBuilder`) |
+| Construtores protegidos de 9 ou 10 parâmetros na superclasse `Ocorrencia` | 2 | 0 (substituídos por `Ocorrencia(OcorrenciaBuilder)`) |
+| Chamadas a construtores de 10, 12 ou 16 parâmetros em `backend/src` | 40 | 0 (construtores longos eliminados) |
+| Builders em código de produção (`src/main`) | 0 | 5 (`Emprestimo.Builder`, `TarefaBuilder`, `OcorrenciaBuilder`, `AcidenteBuilder`, `IncidenteBuilder`) |
 | `null` posicionais necessários na criação de um relato | até 6 | 0 (atributos ausentes mantêm valores padrão) |
 
 ### Evidências
@@ -2060,14 +2080,15 @@ A instanciação de entidades complexas como `Emprestimo`, `Tarefa`, `Acidente` 
 Testes novos de Builders:
 1. `EmprestimoBuilderTest` (5 testes): montagem fluente da entrega com dados nomeados, nascimento no estado ativo (`INDISPONIVEL`), independência entre instâncias e montagem não validadora.
 2. `TarefaBuilderTest` (3 testes): montagem completa com coleções e objetos de domínio, atribuição automática de data de classificação e comportamento não validador.
-3. `AcidenteBuilderTest` (3 testes): montagem completa com protocolo CAT e causa raiz, valores padrão de status e data de registro, e comportamento não validador.
-4. `IncidenteBuilderTest` (3 testes): montagem completa com situação de risco e potencial de dano, valores padrão de status e data de registro, e comportamento não validador.
+3. `OcorrenciaBuilderTest` (2 testes): inicialização completa de todos os atributos comuns na superclasse `Ocorrencia` via builder e garantia de zero construtores telescópicos com 5 ou mais parâmetros.
+4. `AcidenteBuilderTest` (3 testes): montagem completa com protocolo CAT e causa raiz, valores padrão de status e data de registro, e comportamento não validador.
+5. `IncidenteBuilderTest` (3 testes): montagem completa com situação de risco e potencial de dano, valores padrão de status e data de registro, e comportamento não validador.
 
 Papel Director validado nos serviços de domínio e aplicação:
 - `EmprestimoServiceTest`, `TarefaServiceTest`, `FabricaRelatoAcidenteTest`, `FabricaRelatoIncidenteTest`, `OcorrenciaServiceTest`.
 
 Suíte de testes do backend:
-- `1327 testes, 0 falhas, 0 erros` (`./mvnw test`).
+- `1390 testes, 0 falhas, 0 erros` (`./mvnw test`).
 
 ---
 
