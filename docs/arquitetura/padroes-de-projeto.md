@@ -27,7 +27,7 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [Builder](#builder--emprestimobuilder-tarefabuilder-e-builders-de-ocorrencia) | GoF, criacional | Backend: `Emprestimo.Builder`, `TarefaBuilder`, `AcidenteBuilder` e `IncidenteBuilder` em produção | [#226](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/226), [#240](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/240) | Aplicado (2/2: #226, #240) |
 | [Null Object](#null-object--adaptador-nulo-de-notificacao-e-dependencias-opcionais) | Woolf / PLoPD 3 | Backend: `NotificadorOcorrenciaNulo` e dependências opcionais | [#227](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/227), [#241](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/241) | Aplicado (2/2: #227, #241) |
 | [Chain of Responsibility](#chain-of-responsibility--camada-de-validação) | GoF, comportamental | Backend: camada `validacao` (aptidão do colaborador e tarefa) | [#228](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/228); continua em [#263](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/263) a [#267](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/267); complemento em [#297](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/297) | Aplicado (6/6: #228, #267, #263, #264, #265, #266; complemento #297) |
-| [Data Mapper](#data-mapper--mapeadores-de-persistencia) | Fowler / PoEAA | Backend: `EpiEntityMapper`, `AreaRiscoEntityMapper` e `PlanoDeAcaoEntityMapper` | [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229), [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242) | Pendente |
+| [Data Mapper](#data-mapper--mapeadores-de-persistencia) | Fowler / PoEAA | Backend: conversão entre classes espelho `*Entity` e o domínio | [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229), [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242) | Substituído pela [decisão #254](decisao-entidades-jpa-dominio.md) |
 | [Value Object](#value-object--protocolo-cat-em-acidente) | Fowler / DDD | Backend: `NumeroProtocoloCAT` dentro de `Acidente` | [#230](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/230) | Aplicado |
 | [DTO Assembler](#dto-assembler--ocorrenciaoutputdto) | Fowler / PoEAA | Backend: `OcorrenciaOutputAssembler` sem expor `PlanoDeAcao` | [#245](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/245) | Aplicado |
 | [Strategy (Backend)](#strategy--fonte-de-tempo-clock) | GoF, comportamental | Backend: injeção de `java.time.Clock` nas regras de vencimento | [#247](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/247) | Aplicado |
@@ -3067,35 +3067,11 @@ No frontend, os oito arquivos `validacao*.ts` viraram esquemas zod, que já esta
 
 **Catálogo:** PoEAA (Fowler) — Data Mapper.
 
-**Intenção:** centralizar a conversão entre entidades JPA (`*Entity`) e entidades de domínio (`domain`) em mapeadores únicos (`EpiEntityMapper`, `AreaRiscoEntityMapper`, `PlanoDeAcaoEntityMapper`), eliminando mapeamentos duplicados e divergentes entre adaptadores.
+**Situação:** não aplicado. A [decisão #254](decisao-entidades-jpa-dominio.md) substituiu o padrão, e as issues [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229) e [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242) saíram do plano.
 
-**Issues:** [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229) e [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242).
+O plano original era centralizar a conversão entre as classes espelho de persistência (`*Entity`) e o domínio em mapeadores únicos (`EpiEntityMapper`, `AreaRiscoEntityMapper`, `PlanoDeAcaoEntityMapper`). A decisão #254 mapeia o próprio domínio com JPA ([#255](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/255) a [#262](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/262)): cada módulo migrado perde a classe espelho e a conversão, e o adaptador passa a delegar ao `JpaRepository` da entidade de domínio. Sem duas representações, não há conversão a centralizar. As últimas classes espelho (`ManutencaoEpiEntity`, `ProjecaoSubstituicaoEntity`, `PlanoDeAcaoEntity`, `ProrrogacaoPrazoEntity` e `NotificacaoAcaoEntity`) saem em [#259](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/259) e [#262](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/262).
 
-### Problema (antes)
-
-*A preencher nas issues [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229) e [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242) (base: `docs/revisões/analise-padroes-projeto-v1.0.0.md`, §4).*
-
-### Papéis do padrão
-
-| Papel no padrão | Elemento no código | Responsabilidade |
-| --- | --- | --- |
-| Domain Model | `Epi`, `AreaRisco`, `PlanoDeAcao` | Entidades do domínio |
-| Persistence Entity | `EpiEntity`, `AreaRiscoEntity`, `PlanoDeAcaoEntity` | Entidades relacionais mapeadas com JPA |
-| Data Mapper | `EpiEntityMapper`, `AreaRiscoEntityMapper`, `PlanoDeAcaoEntityMapper` | Converter entre `*Entity` e o domínio em um único ponto |
-
-### Diagramas
-
-*Diagramas PlantUML antes e depois a preencher nas issues [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229) e [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242).*
-
-### Métricas locais
-
-| Métrica | Antes (v1.0.0) | Depois |
-| --- | --- | --- |
-| Conversões duplicadas de `AreaRiscoEntity` e `PlanoDeAcaoEntity` | 4 | 2 |
-
-### Evidências
-
-*A preencher nas issues [#229](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/229) e [#242](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/242).*
+O relatório comparativo da [#235](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/235) trata esse ponto como decisão de arquitetura, não como padrão aplicado.
 
 ---
 

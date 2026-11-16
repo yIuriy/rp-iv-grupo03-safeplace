@@ -6,7 +6,7 @@ Este documento registra a correspondência entre as classes `Certificacao`, `Tre
 
 - **Situação**: a consulta, os filtros e os alertas estão implementados. O fluxo de cadastro e os papéis de escrita foram definidos na seção 8 ([#116](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/116), [#126](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/126), [#192](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/192)).
 - **Fontes**: [Diagrama de classes](../diagramas/classes/Diagrama%20de%20Classes%20-%20SafePlace.png), [UC02](../casos-de-uso/casos-de-uso.md#uc02--controlar-certificações-e-treinamentos), [US10](../historias-de-usuario.md#us10--acompanhar-certificações-e-treinamentos), [RF10](../requisitos/requisitos-funcionais.md#rf10-o-sistema-deve-controlar-o-vencimento-das-certificações-e-treinamentos-obrigatórios-dos-funcionários) e [RNF03](../requisitos/requisitos-nao-funcionais.md).
-- **Implementação de referência**: domínio em `backend/src/main/java/br/edu/safeplace/backend/domain/capacitacao/`; casos de uso `ConsultarCapacitacaoService` e `AcompanharCapacitacoesService`; persistência `CapacitacaoJdbcAdapter` sobre a migração `V15__create_capacitacoes.sql`; API `CapacitacaoController` em `/api/capacitacoes`.
+- **Implementação de referência**: domínio em `backend/src/main/java/br/edu/safeplace/backend/domain/capacitacao/`; casos de uso `ConsultarCapacitacaoService` e `AcompanharCapacitacoesService`; persistência `CapacitacaoJpaAdapter` (repositórios Spring Data das entidades `Certificacao`, `Treinamento` e `ExigenciaCapacitacao`, desde a [#257](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/257)) sobre a migração `V15__create_capacitacoes.sql`; API `CapacitacaoController` em `/api/capacitacoes`.
 
 ---
 
