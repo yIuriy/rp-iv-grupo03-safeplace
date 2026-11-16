@@ -192,6 +192,8 @@ A suíte é dividida em dois grupos. Os testes de domínio, casos de uso e contr
 ./mvnw test -Dsafeplace.test.datasource.url=jdbc:postgresql://localhost:5432/safeplace
 ```
 
+A forma 1 funciona com o Docker 29, que exige a API 1.44 ou superior, a partir do Testcontainers 1.21.4. Versões anteriores não alcançam o daemon e ignoram os 131 testes de integração.
+
 Use `-Dsafeplace.test.datasource.username` e `-Dsafeplace.test.datasource.password` se as credenciais forem diferentes de `safeplace`. O banco indicado recebe as migrações; os testes rodam em transações com rollback e não deixam dados. O relatório de cobertura fica em `backend/target/site/jacoco/index.html` e o empacotamento gera `backend/target/backend-0.0.1-SNAPSHOT.jar`.
 
 ## Documentação
