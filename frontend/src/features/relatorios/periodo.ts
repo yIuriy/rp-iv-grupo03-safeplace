@@ -35,15 +35,3 @@ export function periodoDoAno(ano: number): Periodo | null {
   if (!Number.isInteger(ano) || ano < 2000 || ano > 2100) return null
   return { inicio: `${ano}-01-01`, fim: `${ano}-12-31` }
 }
-
-/** `AAAA-MM-DD` para `DD/MM/AAAA`, sem passar por `Date` (evita deslocar o dia pelo fuso). */
-export function formatarData(iso: string): string {
-  const [ano, mes, dia] = iso.slice(0, 10).split('-')
-  return dia && mes && ano ? `${dia}/${mes}/${ano}` : iso
-}
-
-/** `AAAA-MM-DDTHH:mm` para `DD/MM/AAAA às HH:mm`. */
-export function formatarDataHora(iso: string): string {
-  const hora = iso.slice(11, 16)
-  return hora ? `${formatarData(iso)} às ${hora}` : formatarData(iso)
-}

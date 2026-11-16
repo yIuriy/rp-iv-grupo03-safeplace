@@ -5,7 +5,7 @@
 
 import { Alert, Badge, Button, Table, TableRow } from '../../shared/components'
 import { useConsulta } from '../../shared/api/useConsulta'
-import { formatarData } from '../usuarios/formatos'
+import { formatarData } from '../../shared/formatos'
 import { consultarAlertas, type AlertaCertificacao, type AlertaTreinamento, type PendenciaColaborador } from './api'
 import { plural, rotuloDaSituacao, rotuloDaSituacaoTreinamento, tomDaSituacao, tomDaSituacaoTreinamento } from './formatos'
 

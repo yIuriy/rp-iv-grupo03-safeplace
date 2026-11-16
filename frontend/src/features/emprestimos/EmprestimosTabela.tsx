@@ -3,7 +3,7 @@
 // detalhes para todos e registro de devolução só para empréstimos ativos.
 
 import { Badge, Button, Table, TableRow } from '../../shared/components'
-import { formatarData, formatarDataHora } from '../estoque/formatos'
+import { formatarData, formatarDataHora } from '../../shared/formatos'
 import type { Emprestimo } from './api'
 import { rotuloDoEstado, situacaoDoEmprestimo } from './formatos'
 

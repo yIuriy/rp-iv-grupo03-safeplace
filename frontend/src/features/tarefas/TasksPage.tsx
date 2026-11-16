@@ -14,7 +14,7 @@ import {
 } from '../../shared/components'
 import { FeaturePage } from '../../shared/layout/FeaturePage'
 import { useConsulta } from '../../shared/api/useConsulta'
-import { normalizar } from '../../shared/formatos'
+import { formatarDataHora, normalizar } from '../../shared/formatos'
 import { useSessaoAtiva } from '../autenticacao/contexto'
 import { tomDoNivelPerigo } from '../areas-risco/api'
 import { ResultadoConsulta } from '../usuarios/ResultadoConsulta'
@@ -37,14 +37,6 @@ import { HistoricoTarefaDialog } from './HistoricoTarefaDialog'
 import { TarefaFormDialog } from './TarefaFormDialog'
 import { VincularEpisTarefaDialog } from './VincularEpisTarefaDialog'
 import './tarefas.css'
-
-function formatarDataHora(iso: string | null): string {
-  if (!iso) return '—'
-  const [data, hora] = iso.split('T')
-  if (!data || !hora) return iso
-  const [ano, mes, dia] = data.split('-')
-  return `${dia}/${mes}/${ano} ${hora.slice(0, 5)}`
-}
 
 export function TasksPage() {
   const sessao = useSessaoAtiva()
@@ -227,7 +219,7 @@ export function TasksPage() {
                         </td>
                         <td>
                           <time dateTime={tarefa.dataClassificacao ?? undefined}>
-                            {formatarDataHora(tarefa.dataClassificacao)}
+                            {tarefa.dataClassificacao ? formatarDataHora(tarefa.dataClassificacao) : '—'}
                           </time>
                           {tarefa.classificada && (
                             <span className="sp-texto-secundario sp-responsavel-classificacao">

@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Badge, Button, Icon } from '../../shared/components'
-import { formatarDataHora } from '../estoque/formatos'
+import { formatarDataHora } from '../../shared/formatos'
 import type { OcorrenciaResumo } from './api'
 import { rotuloTipoOcorrencia } from './formatos'
 import './notificacoes.css'

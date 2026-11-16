@@ -4,9 +4,10 @@
 import { useCallback } from 'react'
 import { Alert, Button, Dialog, EmptyState } from '../../shared/components'
 import { useConsulta } from '../../shared/api/useConsulta'
+import { formatarData, formatarDataHora } from '../../shared/formatos'
 import type { Epi } from '../epis/epi'
 import { listarHistorico } from './api'
-import { formatarData, formatarDataHora, rotuloDaClassificacao, rotuloDoTipo } from './formatos'
+import { rotuloDaClassificacao, rotuloDoTipo } from './formatos'
 import { SituacaoEstoque } from './SituacaoEstoque'
 
 function Historico({ epiId, versao }: { epiId: number; versao: number }) {

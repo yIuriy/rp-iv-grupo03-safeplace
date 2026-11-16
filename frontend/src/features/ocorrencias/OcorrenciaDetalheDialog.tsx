@@ -7,7 +7,7 @@ import { useCallback, useState } from 'react'
 import { Alert, Badge, Button, Dialog, Tabs } from '../../shared/components'
 import { statusDoErro } from '../../shared/api/erros'
 import { useConsulta } from '../../shared/api/useConsulta'
-import { formatarDataHora } from '../estoque/formatos'
+import { formatarDataHora } from '../../shared/formatos'
 import {
   arquivarOcorrencia,
   avisarOcorrenciasAlteradas,

@@ -5,7 +5,7 @@
 import { useCallback } from 'react'
 import { Badge, Button, Dialog } from '../../shared/components'
 import { useConsulta } from '../../shared/api/useConsulta'
-import { formatarData, formatarDataHora } from '../estoque/formatos'
+import { formatarData, formatarDataHora } from '../../shared/formatos'
 import { nomesDosResponsaveis, type Emprestimo } from './api'
 import { rotuloDoEstado, situacaoDoEmprestimo } from './formatos'
 

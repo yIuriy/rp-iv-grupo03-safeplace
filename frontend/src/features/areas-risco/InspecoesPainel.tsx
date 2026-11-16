@@ -5,9 +5,10 @@
 import { useCallback, useId, useState } from 'react'
 import { Badge, Button, EmptyState, Select, Toast } from '../../shared/components'
 import { useConsulta } from '../../shared/api/useConsulta'
+import { formatarData } from '../../shared/formatos'
 import { ResultadoConsulta } from '../usuarios/ResultadoConsulta'
 import type { AreaRisco } from './api'
-import { formatarDataInspecao, listarInspecoes, type Inspecao } from './apiInspecoes'
+import { listarInspecoes, type Inspecao } from './apiInspecoes'
 import { InspecaoFormDialog } from './InspecaoFormDialog'
 import './inspecoes.css'
 
@@ -23,7 +24,7 @@ function CartaoInspecao({ inspecao }: { inspecao: Inspecao }) {
   return <li>
     <article className="sp-inspecao" aria-labelledby={idTitulo}>
       <h3 id={idTitulo} className="sp-type-heading-sm">
-        Inspeção de <time dateTime={inspecao.dataInspecao}>{formatarDataInspecao(inspecao.dataInspecao)}</time>
+        Inspeção de <time dateTime={inspecao.dataInspecao}>{formatarData(inspecao.dataInspecao)}</time>
       </h3>
       <p className="sp-texto-secundario">Registrada por {inspecao.responsavelNome}; {resumo(inspecao)}.</p>
       <ul className="sp-inspecao-itens">
@@ -100,7 +101,7 @@ export function InspecoesPainel({ areas, offline }: { areas: AreaRisco[] | null;
 
     <InspecaoFormDialog area={registrando ? area : null} aoFechar={() => setRegistrando(false)}
       aoSalvar={inspecao => {
-        setMensagem(`Inspeção de ${formatarDataInspecao(inspecao.dataInspecao)} registrada no histórico da área.`)
+        setMensagem(`Inspeção de ${formatarData(inspecao.dataInspecao)} registrada no histórico da área.`)
         consulta.recarregar()
       }} />
 

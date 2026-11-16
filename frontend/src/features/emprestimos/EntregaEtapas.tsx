@@ -5,7 +5,7 @@
 import { useState, type FormEvent } from 'react'
 import { Alert, Button, TextArea } from '../../shared/components'
 import { focarCampo } from '../../shared/formularios/envioFormulario'
-import { formatarData } from '../estoque/formatos'
+import { formatarData } from '../../shared/formatos'
 import type { Emprestimo } from './api'
 import { validarJustificativa } from './validacaoEntrega'
 

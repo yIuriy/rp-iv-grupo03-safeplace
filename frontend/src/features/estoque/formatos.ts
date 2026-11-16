@@ -19,15 +19,3 @@ export function rotuloDaClassificacao(valor: ClassificacaoEpi | null): string {
   return valor ? rotuloClassificacaoEpi[valor] : 'Não informada'
 }
 
-/** Converte `AAAA-MM-DD` da API para `DD/MM/AAAA`; devolve o original se o formato for outro. */
-export function formatarData(iso: string): string {
-  const [ano, mes, dia] = iso.slice(0, 10).split('-')
-  return ano && mes && dia ? `${dia}/${mes}/${ano}` : iso
-}
-
-/** Converte `AAAA-MM-DDTHH:MM[:SS]` para `DD/MM/AAAA HH:MM`, sem depender do fuso do navegador. */
-export function formatarDataHora(iso: string): string {
-  const [data, hora] = iso.split('T')
-  if (!data || !hora) return iso
-  return `${formatarData(data)} ${hora.slice(0, 5)}`
-}

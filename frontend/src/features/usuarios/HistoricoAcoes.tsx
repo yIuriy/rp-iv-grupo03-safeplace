@@ -3,7 +3,7 @@
 
 import { Badge, Table, TableRow } from '../../shared/components'
 import { useConsulta } from '../../shared/api/useConsulta'
-import { formatarDataHora } from '../estoque/formatos'
+import { formatarDataHora } from '../../shared/formatos'
 import { ResultadoConsulta } from './ResultadoConsulta'
 import {
   descreverRegistro, LIMITE_HISTORICO, listarMinhasAcoes, rotuloOperacao, tomOperacao, type TipoOperacao,
