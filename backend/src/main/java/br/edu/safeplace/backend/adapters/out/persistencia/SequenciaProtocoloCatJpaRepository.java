@@ -32,7 +32,11 @@ public class SequenciaProtocoloCatJpaRepository {
 
         var sequenciaOpt = springDataRepository.findByAnoAndMesComLock(a, m);
         if (sequenciaOpt.isEmpty()) {
-            inicializador.garantirLinhaCriada(a, m);
+            try {
+                inicializador.garantirLinhaCriada(a, m);
+            } catch (Exception ignored) {
+                // Outra transação concorrente já criou o registro inicial no mesmo instante.
+            }
             sequenciaOpt = springDataRepository.findByAnoAndMesComLock(a, m);
         }
 

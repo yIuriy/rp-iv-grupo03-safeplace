@@ -27,11 +27,7 @@ public class Incidente extends Ocorrencia {
 
     /** Construtor a partir do Builder (GoF, criacional, #240). */
     public Incidente(IncidenteBuilder builder) {
-        super(builder.getIdOcorrencia(), builder.getDescricao(), builder.getDataOcorrencia(),
-                builder.getDataRegistro() != null ? builder.getDataRegistro() : LocalDateTime.now(),
-                builder.getStatusOcorrencia() != null ? builder.getStatusOcorrencia() : StatusOcorrencia.ABERTA,
-                builder.getColaborador(), builder.getArea(), builder.getRelator(),
-                builder.getLocalInformado(), builder.getPlanoDeAcao());
+        super(builder);
         this.situacaoRisco = builder.getSituacaoRisco() != null ? builder.getSituacaoRisco().trim() : null;
         this.potencialDano = builder.getPotencialDano() != null ? builder.getPotencialDano().trim() : null;
     }
