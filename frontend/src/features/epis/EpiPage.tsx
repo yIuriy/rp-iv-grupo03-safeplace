@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { criarDescritorDeFalha, usarMensagemDaApi } from '../../shared/api/erros'
 import { useConsulta, type Consulta } from '../../shared/api/useConsulta'
 import { Alert, Badge, Button, Dialog, EmptyState, HistoryItem, Select, Table, TableRow, TextArea, TextField, Toast } from '../../shared/components'
+import { formatarDataHora } from '../../shared/formatos'
 import { FeaturePage } from '../../shared/layout/FeaturePage'
 import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
 import { useSessaoAtiva } from '../autenticacao/contexto'
@@ -35,11 +36,6 @@ function tomDoStatus(status: StatusEpi): 'success' | 'info' | 'warning' | 'dange
   if (status === 'DISPONIVEL') return 'success'
   if (status === 'EM_MANUTENCAO') return 'warning'
   return status === 'DESCARTADO' || status === 'ESGOTADO' ? 'danger' : 'info'
-}
-
-function formatarData(data: string) {
-  const valor = new Date(data)
-  return Number.isNaN(valor.getTime()) ? data : valor.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 }
 
 const descreverErro = criarDescritorDeFalha({
@@ -246,7 +242,7 @@ export function EpiManutencaoPainel({ epis }: { epis: Consulta<Epi[]> }) {
       </Alert> : historico.dados === null ? <p role="status">Carregando histórico...</p>
         : historico.dados.length === 0 ? <EmptyState title="Sem manutenções registradas" description="Este EPI ainda não possui histórico de manutenção." />
           : <ol className="sp-epi-history">{historico.dados.map(manutencao => <HistoryItem key={manutencao.id}
-            dateTime={manutencao.dataManutencao} dateLabel={formatarData(manutencao.dataManutencao)}
+            dateTime={manutencao.dataManutencao} dateLabel={formatarDataHora(manutencao.dataManutencao)}
             title={manutencao.resultado === 'APROVADO' ? 'Manutenção aprovada' : 'Manutenção reprovada'}>
             {manutencao.descricao}{manutencao.responsavelManutencao ? ` · Registrada por ${manutencao.responsavelManutencao}` : ''}
           </HistoryItem>)}</ol>}
