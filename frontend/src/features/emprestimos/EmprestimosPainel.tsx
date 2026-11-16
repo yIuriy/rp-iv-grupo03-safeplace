@@ -6,6 +6,7 @@
 import { useCallback, useState, type FormEvent } from 'react'
 import { Button, SearchInput, Select, Toast } from '../../shared/components'
 import { useConsulta } from '../../shared/api/useConsulta'
+import { normalizar } from '../../shared/formatos'
 import { ResultadoConsulta } from '../usuarios/ResultadoConsulta'
 import { listarEmprestimos, type Emprestimo, type SituacaoConsulta } from './api'
 import { DevolucaoDialog } from './DevolucaoDialog'
@@ -28,10 +29,6 @@ const situacoes: { valor: SituacaoConsulta; rotulo: string; vazio: { title: stri
     vazio: { title: 'Nenhum empréstimo registrado', description: 'As entregas e devoluções registradas aparecerão aqui.' },
   },
 ]
-
-function normalizar(texto: string): string {
-  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLocaleLowerCase('pt-BR')
-}
 
 function filtrar(emprestimos: Emprestimo[], termo: string): Emprestimo[] {
   const busca = normalizar(termo.trim())

@@ -2,7 +2,7 @@
 // triagem, os mais recentes primeiro, com atalho para abrir o detalhe e conduzir a triagem.
 
 import { Badge, Button, Icon } from '../../shared/components'
-import { formatarDataHora } from '../estoque/formatos'
+import { formatarDataHora } from '../../shared/formatos'
 import type { OcorrenciaResumo } from './api'
 import { rotuloTipoOcorrencia } from './formatos'
 

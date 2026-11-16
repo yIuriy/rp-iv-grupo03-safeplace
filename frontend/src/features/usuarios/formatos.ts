@@ -1,4 +1,4 @@
-// Funções puras de formatação: dígitos, máscara e ocultação de CPF, e data ISO para DD/MM/AAAA.
+// Funções puras de formatação: dígitos, máscara e ocultação de CPF.
 
 /** Mantém só os dígitos e limita a 11, o tamanho de um CPF. */
 export function digitosDoCpf(valor: string): string {
@@ -23,12 +23,6 @@ export function mascararCpf(valor: string): string {
 export function ocultarCpf(cpf: string): string {
   const digitos = digitosDoCpf(cpf)
   return digitos.length === 11 ? `•••.${digitos.slice(3, 6)}.${digitos.slice(6, 9)}-••` : cpf
-}
-
-/** Converte `AAAA-MM-DD` da API para `DD/MM/AAAA`; devolve o original se o formato for outro. */
-export function formatarData(iso: string): string {
-  const [ano, mes, dia] = iso.split('-')
-  return ano && mes && dia ? `${dia}/${mes}/${ano}` : iso
 }
 
 /** Data local de hoje em `AAAA-MM-DD`, comparável com o valor de um `<input type="date">`. */

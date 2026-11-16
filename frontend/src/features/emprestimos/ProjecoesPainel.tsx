@@ -6,7 +6,7 @@
 import { useId, useState } from 'react'
 import { Alert, Button, Table, TableRow } from '../../shared/components'
 import { useConsulta } from '../../shared/api/useConsulta'
-import { formatarData } from '../estoque/formatos'
+import { formatarData } from '../../shared/formatos'
 import { ResultadoConsulta } from '../usuarios/ResultadoConsulta'
 import {
   descreverFalhaDeAnalise, listarAlertas, listarProjecoes, maisRecentesPorEpi, solicitarAnalise,

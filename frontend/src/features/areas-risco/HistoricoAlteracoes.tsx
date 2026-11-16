@@ -5,6 +5,7 @@
 import { useCallback, useId, useState } from 'react'
 import { Button, HistoryItem } from '../../shared/components'
 import { useConsulta } from '../../shared/api/useConsulta'
+import { formatarDataHora } from '../../shared/formatos'
 import { ResultadoConsulta } from '../usuarios/ResultadoConsulta'
 import { listarHistoricoAreaRisco, type RegistroHistorico } from './api'
 import './historico.css'
@@ -13,13 +14,6 @@ const rotuloOperacao: Record<string, string> = {
   CADASTRO: 'Cadastro',
   ALTERACAO: 'Alteração',
   REMOCAO: 'Remoção',
-}
-
-function formatarDataHora(iso: string): string {
-  const [data, hora] = iso.split('T')
-  if (!data || !hora) return iso
-  const [ano, mes, dia] = data.split('-')
-  return `${dia}/${mes}/${ano} às ${hora.slice(0, 5)}`
 }
 
 export function HistoricoAlteracoes({ titulo, chave, carregar }: {
@@ -49,7 +43,7 @@ export function HistoricoAlteracoes({ titulo, chave, carregar }: {
               <HistoryItem
                 key={registro.id}
                 dateTime={registro.dataHora}
-                dateLabel={formatarDataHora(registro.dataHora)}
+                dateLabel={formatarDataHora(registro.dataHora, ' às ')}
                 title={`${rotuloOperacao[registro.tipoOperacao] ?? registro.tipoOperacao} por ${registro.responsavel}`}
               >
                 {registro.descricao ?? 'Sem detalhes registrados.'}

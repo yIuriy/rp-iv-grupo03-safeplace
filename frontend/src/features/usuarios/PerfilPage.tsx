@@ -5,10 +5,10 @@
 import { Alert, Button } from '../../shared/components'
 import { useConsulta } from '../../shared/api/useConsulta'
 import { FeaturePage } from '../../shared/layout/FeaturePage'
+import { formatarData } from '../../shared/formatos'
 import { rotuloDoPerfil } from '../autenticacao/sessao'
 import { buscarMeuPerfil, type MeuPerfil, type PerfilUsuario } from './api'
 import { CpfOculto } from './CpfOculto'
-import { formatarData } from './formatos'
 import { HistoricoAcoes } from './HistoricoAcoes'
 import './perfil.css'
 

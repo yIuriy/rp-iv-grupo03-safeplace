@@ -24,7 +24,7 @@ O propósito primordial da Arquitetura Hexagonal é isolar as regras de negócio
 |  |  |  ADAPTADORES DE SAÍDA / OUTBOUND (`adapters/out/persistencia`)       |  |  |
 |  |  +---------------------------------------------------------------------+  |  |
 |  +---------------------------------------------------------------------------+  |
-|  INFRAESTRUTURA EXTERNA (PostgreSQL 16, Spring Data JPA, JdbcTemplate, Flyway) |
+|  INFRAESTRUTURA EXTERNA (PostgreSQL 16, Spring Data JPA, Flyway)               |
 +---------------------------------------------------------------------------------+
 ```
 
@@ -331,40 +331,33 @@ public interface OcorrenciaRepository {
 @Repository
 public class OcorrenciaJpaAdapter implements OcorrenciaRepository {
 
-    private final JdbcTemplate jdbcTemplate;
+    private final OcorrenciaJpaRepository repository;
+    private final SequenciaProtocoloCatJpaRepository sequenciaProtocoloCatRepository;
 
-    public OcorrenciaJpaAdapter(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public OcorrenciaJpaAdapter(OcorrenciaJpaRepository repository,
+                                SequenciaProtocoloCatJpaRepository sequenciaProtocoloCatRepository) {
+        this.repository = repository;
+        this.sequenciaProtocoloCatRepository = sequenciaProtocoloCatRepository;
     }
 
     @Override
     public Ocorrencia salvar(Ocorrencia ocorrencia) {
-        if (ocorrencia instanceof Acidente acidente) {
-            return salvarAcidente(acidente);
+        // Acidente e Incidente são entidades JPA do domínio (herança JOINED, #261):
+        // o Spring Data grava a linha em ocorrencias e na tabela do subtipo.
+        return repository.save(ocorrencia);
+    }
+
+    @Override
+    public Optional<Ocorrencia> buscarPorProtocolo(String protocolo) {
+        if (protocolo == null || protocolo.isBlank()) {
+            return Optional.empty();
         }
-        return salvarIncidente((Incidente) ocorrencia);
+        return repository.findByNumeroProtocolo(protocolo.trim()).map(a -> a);
     }
 
-    private Acidente salvarAcidente(Acidente acidente) {
-        Integer id = jdbcTemplate.queryForObject("""
-                INSERT INTO ocorrencias (data_ocorrencia, descricao, status, colaborador_id, area_risco_id, tipo)
-                VALUES (?, ?, ?, ?, ?, 'ACIDENTE')
-                RETURNING id_ocorrencia
-                """, Integer.class,
-                acidente.getDataOcorrencia(), acidente.getDescricao(),
-                acidente.getStatus().name(), acidente.getColaboradorId(), acidente.getAreaRiscoId());
-
-        jdbcTemplate.update("""
-                INSERT INTO acidentes (id_ocorrencia, numero_protocolo, gravidade)
-                VALUES (?, ?, ?)
-                """, id, acidente.getNumeroProtocoloCAT().valor(), acidente.getGravidade().name());
-
-        return reconstruirAcidente(id);
-    }
-
-    private Acidente reconstruirAcidente(Integer id) {
-        // Leitura relacional e reconstrução da entidade de domínio pura
-        ...
+    @Override
+    public long proximoSequencialCAT(int ano, int mes) {
+        return sequenciaProtocoloCatRepository.reservarProximoSequencial(ano, mes);
     }
 }
 ```

@@ -36,12 +36,15 @@ test('Gestor cadastra EPI e registra manutenção pela tela unificada', async ({
     catalogo = [...catalogo, novo]
     return route.fulfill({ status: 201, json: novo })
   })
+  let historico: object[] = []
   await page.route('**/api/epis/1/manutencoes', route => {
-    if (route.request().method() === 'GET') return route.fulfill({ json: [] })
-    return route.fulfill({ status: 201, json: {
+    if (route.request().method() === 'GET') return route.fulfill({ json: historico })
+    const registrada = {
       id: 10, epiId: 1, dataManutencao: '2026-10-03T10:00:00', descricao: 'Inspeção',
       resultado: 'APROVADO', responsavelManutencao: 'Gestora Ana', statusAtualEpi: 'DISPONIVEL',
-    } })
+    }
+    historico = [registrada]
+    return route.fulfill({ status: 201, json: registrada })
   })
 
   await page.goto('/epis?aba=manutencao')
@@ -63,6 +66,8 @@ test('Gestor cadastra EPI e registra manutenção pela tela unificada', async ({
   await manutencao.getByLabel('Resultado').selectOption('APROVADO')
   await manutencao.getByRole('button', { name: 'Salvar manutenção' }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Manutenção registrada' })).toBeVisible()
+  // A data vem cortada do texto ISO, no mesmo formato das outras telas, sem depender do fuso (#250).
+  await expect(page.getByText('03/10/2026 10:00', { exact: true })).toBeVisible()
 })
 
 test('cadastro exige validade do CA antes de enviar à API (#197)', async ({ page }) => {

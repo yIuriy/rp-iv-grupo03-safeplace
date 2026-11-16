@@ -6,7 +6,7 @@ import { useCallback } from 'react'
 import { isAxiosError } from 'axios'
 import { Alert, Badge, Button, Dialog, Table, TableRow } from '../../shared/components'
 import { useConsulta } from '../../shared/api/useConsulta'
-import { formatarData } from '../usuarios/formatos'
+import { formatarData } from '../../shared/formatos'
 import { consultarColaborador, descreverFalha, type CapacitacoesColaborador, type Certificacao, type Treinamento } from './api'
 import { AptidaoTarefa } from './AptidaoTarefa'
 import {

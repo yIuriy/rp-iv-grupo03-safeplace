@@ -17,6 +17,7 @@ import { FeaturePage } from '../../shared/layout/FeaturePage'
 import { useConsulta } from '../../shared/api/useConsulta'
 import { useConsultaOffline } from '../../shared/offline/useConsultaOffline'
 import { OfflineBanner } from '../../shared/offline/OfflineBanner'
+import { normalizar } from '../../shared/formatos'
 import { useSessaoAtiva } from '../autenticacao/contexto'
 import { listarEpis } from '../epis/api'
 import { ResultadoConsulta } from '../usuarios/ResultadoConsulta'
@@ -34,13 +35,6 @@ import { AreaRiscoFormDialog } from './AreaRiscoFormDialog'
 import { InspecoesPainel } from './InspecoesPainel'
 import { SetoresPainel } from './SetoresPainel'
 import './areas-risco.css'
-
-function normalizar(texto: string): string {
-  return texto
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLocaleLowerCase('pt-BR')
-}
 
 export function RiskAreasPage() {
   const sessao = useSessaoAtiva()

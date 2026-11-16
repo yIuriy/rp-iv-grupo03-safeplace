@@ -72,9 +72,3 @@ export async function registrarInspecao(areaId: number, dados: DadosRegistroInsp
   const { data } = await http.post<unknown>(`/areas-risco/${areaId}/inspecoes`, dados)
   return lerInspecao(data)
 }
-
-/** `AAAA-MM-DD` para `DD/MM/AAAA`, sem passar por `Date`, que mudaria o dia pelo fuso horário. */
-export function formatarDataInspecao(iso: string): string {
-  const [ano, mes, dia] = iso.split('-')
-  return ano && mes && dia ? `${dia}/${mes}/${ano}` : iso
-}

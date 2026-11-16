@@ -3,7 +3,7 @@
 // 2.1), só o acidente recebe o protocolo CAT; o incidente é acompanhado pelo número do registro.
 
 import { Alert, Button, Dialog } from '../../shared/components'
-import { formatarDataHora } from '../estoque/formatos'
+import { formatarDataHora } from '../../shared/formatos'
 import type { OcorrenciaResumo } from './api'
 import { rotuloTipoOcorrencia } from './formatos'
 

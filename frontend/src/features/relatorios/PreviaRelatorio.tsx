@@ -4,8 +4,8 @@
 
 import { useId } from 'react'
 import { Alert, Table, TableRow } from '../../shared/components'
+import { formatarData, formatarDataHora } from '../../shared/formatos'
 import type { Relatorio, Secao, Tabela } from './api'
-import { formatarData, formatarDataHora } from './periodo'
 
 const COLUNAS_COM_BARRA = ['Total', 'Quantidade']
 
@@ -62,7 +62,7 @@ export function PreviaRelatorio({ relatorio }: { relatorio: Relatorio }) {
       <p className="sp-texto-secundario">
         Período de <time dateTime={relatorio.inicio}>{formatarData(relatorio.inicio)}</time> a{' '}
         <time dateTime={relatorio.fim}>{formatarData(relatorio.fim)}</time>; gerado em{' '}
-        <time dateTime={relatorio.geradoEm}>{formatarDataHora(relatorio.geradoEm)}</time>.
+        <time dateTime={relatorio.geradoEm}>{formatarDataHora(relatorio.geradoEm, ' às ')}</time>.
       </p>
     </header>
     {relatorio.semRegistros && <Alert tone="info" live="polite" title="Nenhum registro neste período.">

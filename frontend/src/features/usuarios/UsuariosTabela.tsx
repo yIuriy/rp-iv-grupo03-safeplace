@@ -2,9 +2,9 @@
 // Nunca exibe credenciais.
 
 import { Badge, Button, Table, TableRow } from '../../shared/components'
+import { formatarData } from '../../shared/formatos'
 import type { Usuario } from './api'
 import { CpfOculto } from './CpfOculto'
-import { formatarData } from './formatos'
 
 /**
  * Mostra só dados cadastrais, com o CPF coberto por padrão: a listagem serve para localizar o cadastro,

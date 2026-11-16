@@ -5,13 +5,10 @@
 import { useCallback, useState, type FormEvent } from 'react'
 import { Badge, Button, SearchInput, Select, Table, TableRow } from '../../shared/components'
 import { useConsulta } from '../../shared/api/useConsulta'
+import { normalizar } from '../../shared/formatos'
 import { ResultadoConsulta } from '../usuarios/ResultadoConsulta'
 import { listarColaboradores, situacoesCertificacao, type ResumoColaborador, type SituacaoCertificacao } from './api'
 import { plural, rotuloDaSituacao, rotuloDoFiltro, situacaoDoResumo } from './formatos'
-
-function normalizar(texto: string): string {
-  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLocaleLowerCase('pt-BR')
-}
 
 function vazioDoFiltro(situacao: SituacaoCertificacao | null) {
   if (!situacao) {

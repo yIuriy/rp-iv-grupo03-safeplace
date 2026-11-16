@@ -6,7 +6,7 @@
 import { useId, useState } from 'react'
 import { Alert, Button, Dialog, Radio } from '../../shared/components'
 import { useEnvioFormulario } from '../../shared/formularios/useEnvioFormulario'
-import { formatarData, formatarDataHora } from '../estoque/formatos'
+import { formatarData, formatarDataHora } from '../../shared/formatos'
 import {
   descreverFalhaDeDevolucao, estadosDeDevolucao, registrarDevolucao, type Emprestimo, type EstadoDevolucao,
 } from './api'
