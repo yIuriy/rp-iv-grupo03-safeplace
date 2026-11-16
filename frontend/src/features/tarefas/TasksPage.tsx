@@ -14,6 +14,7 @@ import {
 } from '../../shared/components'
 import { FeaturePage } from '../../shared/layout/FeaturePage'
 import { useConsulta } from '../../shared/api/useConsulta'
+import { normalizar } from '../../shared/formatos'
 import { useSessaoAtiva } from '../autenticacao/contexto'
 import { tomDoNivelPerigo } from '../areas-risco/api'
 import { ResultadoConsulta } from '../usuarios/ResultadoConsulta'
@@ -36,13 +37,6 @@ import { HistoricoTarefaDialog } from './HistoricoTarefaDialog'
 import { TarefaFormDialog } from './TarefaFormDialog'
 import { VincularEpisTarefaDialog } from './VincularEpisTarefaDialog'
 import './tarefas.css'
-
-function normalizar(texto: string): string {
-  return texto
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLocaleLowerCase('pt-BR')
-}
 
 function formatarDataHora(iso: string | null): string {
   if (!iso) return '—'

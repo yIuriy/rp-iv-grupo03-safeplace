@@ -11,6 +11,7 @@ import { useConsulta } from '../../shared/api/useConsulta'
 import { FeaturePage } from '../../shared/layout/FeaturePage'
 import { useConsultaOffline } from '../../shared/offline/useConsultaOffline'
 import { OfflineBanner } from '../../shared/offline/OfflineBanner'
+import { normalizar } from '../../shared/formatos'
 import { listarSetores } from '../areas-risco/api'
 import { useSessaoAtiva } from '../autenticacao/contexto'
 import { formatarDataHora } from '../estoque/formatos'
@@ -34,13 +35,6 @@ import { ProtocoloBusca } from './ProtocoloBusca'
 import { RelatoFormDialog } from './RelatoFormDialog'
 import { useNovosRelatos } from './useNovosRelatos'
 import './ocorrencias.css'
-
-function normalizar(texto: string): string {
-  return texto
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLocaleLowerCase('pt-BR')
-}
 
 function refinar(itens: OcorrenciaResumo[], { texto, status }: CriteriosLocais): OcorrenciaResumo[] {
   const termo = normalizar(texto)
