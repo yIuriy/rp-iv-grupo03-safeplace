@@ -42,21 +42,6 @@ class ArmazenamentoSessaoSeguro implements ArmazenamentoSessao {
   Future<void> apagar() => _armazenamento.delete(key: chave);
 }
 
-class ArmazenamentoSessaoEmMemoria implements ArmazenamentoSessao {
-  ArmazenamentoSessaoEmMemoria([this.sessao]);
-
-  Sessao? sessao;
-
-  @override
-  Future<Sessao?> ler() async => sessao;
-
-  @override
-  Future<void> guardar(Sessao sessao) async => this.sessao = sessao;
-
-  @override
-  Future<void> apagar() async => sessao = null;
-}
-
 final armazenamentoSessaoProvider = Provider<ArmazenamentoSessao>(
   (ref) => ArmazenamentoSessaoSeguro(),
 );

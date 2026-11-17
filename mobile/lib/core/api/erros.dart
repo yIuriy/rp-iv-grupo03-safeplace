@@ -1,8 +1,7 @@
 // Leitura das falhas da API (corpo `{timestamp, status, error, message}` do `ApiExceptionHandler`)
 // e escolha da mensagem para o usuário pelo padrão Strategy, como em `frontend/src/shared/api/erros.ts`.
 
-import 'package:dio/dio.dart';
-
+import 'api_client.dart';
 import 'leitura.dart';
 
 /// Corpo de erro padrão do backend (`CorpoErro`). `message` pode vir nulo.
@@ -26,13 +25,12 @@ class CorpoErro {
   }
 }
 
-/// Status HTTP da falha, ou `null` quando o servidor não respondeu.
-int? statusDoErro(Object erro) =>
-    erro is DioException ? erro.response?.statusCode : null;
+/// Status HTTP da falha, ou `null` quando o servidor não respondeu ou o erro não é da API.
+int? statusDoErro(Object erro) => erro is FalhaApi ? erro.status : null;
 
 /// Corpo de erro devolvido pela API, quando houver.
 CorpoErro? corpoDoErro(Object erro) =>
-    erro is DioException ? CorpoErro.ler(erro.response?.data) : null;
+    erro is FalhaApi ? CorpoErro.ler(erro.corpo) : null;
 
 /// Mensagem devolvida pela API no campo `message`.
 String? mensagemDaApi(Object erro) => corpoDoErro(erro)?.message;
@@ -63,7 +61,7 @@ final Map<int, EstrategiaDeMensagem> estrategiasPadrao = {
 };
 
 /// Context do Strategy: escolhe a estratégia pelo status da falha. Falha sem resposta do servidor
-/// (rede, timeout) usa [semConexao]; status sem estratégia própria usa [padrao].
+/// (rede, timeout) usa [semConexao]; status sem estratégia própria e erros fora da API usam [padrao].
 String Function(Object erro) criarDescritorDeFalha({
   Map<int, EstrategiaDeMensagem> porStatus = const {},
   String padrao = 'Não foi possível concluir a operação. Tente novamente.',
@@ -71,8 +69,9 @@ String Function(Object erro) criarDescritorDeFalha({
 }) {
   final estrategias = {...estrategiasPadrao, ...porStatus};
   return (erro) {
+    if (erro is FalhaApi && erro.semResposta) return semConexao;
     final status = statusDoErro(erro);
-    if (status == null) return erro is DioException ? semConexao : padrao;
-    return (estrategias[status] ?? fixa(padrao))(erro);
+    final estrategia = status == null ? null : estrategias[status];
+    return (estrategia ?? fixa(padrao))(erro);
   };
 }

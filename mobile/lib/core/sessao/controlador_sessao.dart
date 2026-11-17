@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/autenticacao/data/autenticacao_api.dart';
 import 'armazenamento_sessao.dart';
 import 'sessao.dart';
 
@@ -14,7 +13,8 @@ class EstadoSessao {
   final MotivoSaida? motivoSaida;
 }
 
-/// Fonte única da sessão. O router, o cliente HTTP e as telas leem daqui.
+/// Fonte única da sessão. O router, o cliente HTTP e as telas leem daqui. Não sabe como a sessão
+/// é obtida: quem autentica (a feature de login) entrega a sessão pronta em [iniciar].
 class ControladorSessao extends AsyncNotifier<EstadoSessao> {
   ArmazenamentoSessao get _armazenamento =>
       ref.read(armazenamentoSessaoProvider);
@@ -23,11 +23,7 @@ class ControladorSessao extends AsyncNotifier<EstadoSessao> {
   Future<EstadoSessao> build() async =>
       EstadoSessao(sessao: await _armazenamento.ler());
 
-  /// Lança a falha do login para a tela escolher a mensagem.
-  Future<void> entrar(String email, String senha) async {
-    final sessao = await ref
-        .read(autenticacaoApiProvider)
-        .autenticar(email, senha);
+  Future<void> iniciar(Sessao sessao) async {
     await _armazenamento.guardar(sessao);
     state = AsyncData(EstadoSessao(sessao: sessao));
   }

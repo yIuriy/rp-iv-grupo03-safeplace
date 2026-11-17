@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../core/api/erros.dart';
 import '../../../core/sessao/controlador_sessao.dart';
+import '../data/autenticacao_api.dart';
 
 final _descreverFalha = criarDescritorDeFalha(
   porStatus: {
@@ -44,10 +45,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _enviando = true;
     });
     try {
-      await ref
-          .read(controladorSessaoProvider.notifier)
-          .entrar(_email.text.trim(), _senha.text);
+      final sessao = await ref
+          .read(autenticadorProvider)
+          .autenticar(_email.text.trim(), _senha.text);
       // O router troca de tela ao perceber a sessão nova.
+      await ref.read(controladorSessaoProvider.notifier).iniciar(sessao);
     } catch (erro) {
       if (!mounted) return;
       setState(() {

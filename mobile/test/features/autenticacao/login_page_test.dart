@@ -4,11 +4,12 @@ import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:safeplace/core/sessao/armazenamento_sessao.dart';
 import 'package:safeplace/features/autenticacao/data/autenticacao_api.dart';
+import 'package:safeplace/features/autenticacao/domain/autenticador.dart';
 import 'package:safeplace/main.dart';
 
 import '../../apoio.dart';
 
-class _ApiFalsa extends Mock implements AutenticacaoApi {}
+class _ApiFalsa extends Mock implements Autenticador {}
 
 void main() {
   late _ApiFalsa api;
@@ -19,7 +20,7 @@ void main() {
       ProviderScope(
         overrides: [
           armazenamentoSessaoProvider.overrideWithValue(armazenamento),
-          autenticacaoApiProvider.overrideWithValue(api),
+          autenticadorProvider.overrideWithValue(api),
         ],
         child: const SafePlaceApp(),
       ),

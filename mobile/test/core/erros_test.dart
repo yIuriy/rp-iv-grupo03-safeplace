@@ -1,5 +1,5 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:safeplace/core/api/api_client.dart';
 import 'package:safeplace/core/api/erros.dart';
 
 import '../apoio.dart';
@@ -62,11 +62,7 @@ void main() {
   });
 
   test('falha sem resposta do servidor vira aviso de conexão', () {
-    final semRede = DioException.connectionError(
-      requestOptions: RequestOptions(path: '/x'),
-      reason: 'refused',
-    );
-    expect(descrever(semRede), mensagemSemConexao);
+    expect(descrever(const FalhaApi()), mensagemSemConexao);
   });
 
   test('erro que não é HTTP usa o padrão', () {

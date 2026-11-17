@@ -4,7 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../features/autenticacao/presentation/login_page.dart';
 import '../features/inicio/presentation/inicio_page.dart';
-import 'sessao/controlador_sessao.dart';
+import '../core/sessao/controlador_sessao.dart';
 
 abstract final class Rotas {
   static const carregando = '/carregando';

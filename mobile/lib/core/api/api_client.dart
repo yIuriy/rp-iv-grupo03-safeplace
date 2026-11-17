@@ -1,69 +1,34 @@
-// Cliente HTTP compartilhado por todas as features. As features recebem o `Dio` pelo
-// `apiClientProvider` e chamam caminhos relativos a `/api` (ex.: `client.get('/epis')`).
-
-import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../config.dart';
-import '../sessao/controlador_sessao.dart';
-
+/// Rota pública de login. O interceptador não trata o 401 dela como sessão expirada.
 const caminhoDoLogin = '/auth/login';
 
-/// Monta o cliente com o token da sessão em toda chamada e o aviso de 401.
+/// Porta HTTP das features. Caminhos são relativos a `/api` (ex.: `client.get('/epis')`).
 ///
-/// [tokenAtual] é lido a cada requisição, assim o token vale logo após o login.
-/// [aoExpirar] roda quando um 401 fora do login indica token expirado ou revogado: o backend não
-/// tem refresh token (JWT de 7 dias), então a única saída é entrar de novo.
-Dio criarApiClient({
-  required String? Function() tokenAtual,
-  required void Function() aoExpirar,
-  String baseUrl = urlDaApi,
-  HttpClientAdapter? adaptador,
-}) {
-  final dio = Dio(
-    BaseOptions(
-      baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-      sendTimeout: const Duration(seconds: 10),
-      contentType: Headers.jsonContentType,
-    ),
-  );
-  if (adaptador != null) dio.httpClientAdapter = adaptador;
-  dio.interceptors.add(
-    InterceptorDeSessao(tokenAtual: tokenAtual, aoExpirar: aoExpirar),
-  );
-  return dio;
+/// Cada método devolve o corpo JSON ainda sem tipo, para o `X.ler` da feature, e lança
+/// [FalhaApi] em qualquer falha. As features não conhecem a biblioteca HTTP usada por baixo.
+abstract interface class ApiClient {
+  Future<Object?> get(String caminho, {Map<String, Object?>? consulta});
+  Future<Object?> post(String caminho, {Object? corpo});
+  Future<Object?> put(String caminho, {Object? corpo});
+  Future<Object?> patch(String caminho, {Object? corpo});
+  Future<Object?> delete(String caminho);
 }
 
-class InterceptorDeSessao extends Interceptor {
-  InterceptorDeSessao({required this.tokenAtual, required this.aoExpirar});
+/// Falha de uma chamada à API. [status] nulo indica que o servidor não respondeu (rede, timeout).
+class FalhaApi implements Exception {
+  const FalhaApi({this.status, this.corpo, this.causa});
 
-  final String? Function() tokenAtual;
-  final void Function() aoExpirar;
+  final int? status;
+
+  /// Corpo da resposta de erro, normalmente `{timestamp, status, error, message}`. Alguns 409 e
+  /// 422 trazem campos extras (duplicidade de empréstimo, motivos de bloqueio).
+  final Object? corpo;
+
+  /// Erro original, para log.
+  final Object? causa;
+
+  bool get semResposta => status == null;
 
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    final token = tokenAtual();
-    if (token != null && !options.headers.containsKey('Authorization')) {
-      options.headers['Authorization'] = 'Bearer $token';
-    }
-    handler.next(options);
-  }
-
-  @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
-    final ehLogin = err.requestOptions.path.endsWith(caminhoDoLogin);
-    if (err.response?.statusCode == 401 && !ehLogin && tokenAtual() != null) {
-      aoExpirar();
-    }
-    handler.next(err);
-  }
+  String toString() =>
+      'FalhaApi(status: $status, corpo: $corpo, causa: $causa)';
 }
-
-final apiClientProvider = Provider<Dio>((ref) {
-  return criarApiClient(
-    tokenAtual: () => ref.read(controladorSessaoProvider).value?.sessao?.token,
-    aoExpirar: () => ref.read(controladorSessaoProvider.notifier).expirar(),
-  );
-});
