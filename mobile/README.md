@@ -13,7 +13,7 @@ dart format . && flutter analyze && flutter test
 
 ```
 lib/
-  app/        composição: router (a casca por perfil entra aqui na #316)
+  app/        composição: router, menu por perfil, casca e ligações (dependencias.dart)
   core/       config, cliente HTTP, erros, sessão; não importa nenhuma feature
   shared/     widgets e cache offline (#316)
   features/<modulo>/
@@ -88,6 +88,31 @@ Botões, como no web: `FilledButton` (Primary, confirma), `OutlinedButton` (Seco
 | `ConteudoAssincrono<T>(valor: ref.watch(provider), construir:, vazio:, falha:, aoTentarDeNovo:)` | Os quatro estados de uma consulta: carregando, falha, vazia e com dados |
 | `EstadoVazio`, `EstadoCarregando` | Lista sem resultado (com ação opcional) e carregamento com texto |
 | `MascaraCpf`, `validarCpf`, `digitosDoCpf`, `ocultarCpf` | CPF `000.000.000-00` na tela, 11 dígitos no envio, mesmas mensagens do web |
+
+**Navegação por perfil** (`app/navegacao.dart`, `app/casca.dart`): o menu é a lista `itensDoMenu`. Cada item tem a rota, o rótulo (com `rotuloSupervisor` quando muda, como "Colaboradores"), os `perfis` que o veem e a issue que entrega a tela. A casca monta o menu lateral pelo perfil, e o router manda ao início quem abre pelo endereço uma rota de outro perfil. Para entregar o seu módulo, troque a `PaginaEmConstrucao` pela sua tela em `_telaDo` (`app/router.dart`); sub-rotas (`/ocorrencias/:id`) entram como `routes:` do `GoRoute` do item.
+
+**Cache offline somente leitura** (`shared/offline/`, RNF08): declare a consulta com `consultarComCache` e mostre com `ConteudoComCache`:
+
+```dart
+final episProvider = FutureProvider(
+  (ref) => consultarComCache(
+    ref,
+    chave: 'epis',
+    buscar: (api) => api.get('/epis'),
+    ler: (json) => lista(json, Epi.ler, 'Lista de EPIs inválida'),
+  ),
+  retry: (_, _) => null,
+);
+
+ConteudoComCache(
+  valor: ref.watch(episProvider),
+  falha: 'Não foi possível carregar os EPIs.',
+  aoTentarDeNovo: () => ref.invalidate(episProvider),
+  construir: (epis, somenteLeitura) => ..., // somenteLeitura: desabilite cadastrar/editar
+)
+```
+
+A resposta é guardada por conta (e-mail + chave) no armazenamento seguro e apagada ao sair ou expirar a sessão. Só quando o servidor **não responde** a tela recebe a cópia, com `somenteLeitura: true` e o `AvisoOffline` em cima. Um 4xx ou 5xx continua sendo erro. Escritas não são guardadas para enviar depois. A tela Início é o exemplo: em modo avião, mostra os dados da conta em cache e desabilita os atalhos de cadastro.
 
 **Catálogo**: em debug, `flutter run --route=/catalogo` abre todos os componentes e seus estados, sem precisar de login. No Git Bash, use `MSYS_NO_PATHCONV=1 flutter run --route=/catalogo`, senão o `/catalogo` vira caminho do Windows. Para testar uma tela com o tema, use `montarComTema(tester, widget)` de `test/shared/apoio_tema.dart`.
 
