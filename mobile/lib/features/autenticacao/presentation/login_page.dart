@@ -28,7 +28,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _focoSenha = FocusNode();
   String? _falha;
   bool _enviando = false;
-  bool _senhaVisivel = false;
 
   @override
   void dispose() {
@@ -63,7 +62,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final motivo = ref.watch(controladorSessaoProvider).value?.motivoSaida;
-    final tema = Theme.of(context);
 
     return Scaffold(
       body: SafeArea(
@@ -78,97 +76,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(
-                        'SafePlace',
-                        textAlign: TextAlign.center,
-                        style: tema.textTheme.headlineMedium?.copyWith(
-                          color: tema.colorScheme.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Entrar no SafePlace',
-                        textAlign: TextAlign.center,
-                        style: tema.textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Acesso para Gestores de Segurança e Supervisores com o e-mail corporativo e a senha recebida.',
-                        textAlign: TextAlign.center,
-                      ),
+                      const _Cabecalho(),
                       const SizedBox(height: 24),
-                      if (_falha == null && motivo == MotivoSaida.expirada)
-                        const _Aviso(
-                          titulo: 'Sua sessão expirou',
-                          texto:
-                              'Entre novamente para continuar de onde parou.',
-                        ),
-                      if (_falha == null && motivo == MotivoSaida.manual)
-                        const _Aviso(
-                          titulo: 'Você saiu do SafePlace',
-                          texto: 'Entre novamente quando precisar.',
-                        ),
-                      TextFormField(
-                        controller: _email,
-                        decoration: const InputDecoration(labelText: 'E-mail'),
-                        keyboardType: TextInputType.emailAddress,
-                        autofillHints: const [AutofillHints.username],
-                        textInputAction: TextInputAction.next,
-                        enabled: !_enviando,
-                        validator: (v) => (v ?? '').trim().isEmpty
-                            ? 'Informe o e-mail de acesso.'
-                            : null,
-                      ),
+                      if (_falha == null && motivo != null)
+                        _AvisoDeSaida(motivo),
+                      _CampoEmail(_email, habilitado: !_enviando),
                       const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _senha,
-                        focusNode: _focoSenha,
-                        obscureText: !_senhaVisivel,
-                        autofillHints: const [AutofillHints.password],
-                        textInputAction: TextInputAction.done,
-                        enabled: !_enviando,
-                        onFieldSubmitted: (_) => _enviar(),
-                        decoration: InputDecoration(
-                          labelText: 'Senha',
-                          suffixIcon: IconButton(
-                            tooltip: _senhaVisivel
-                                ? 'Ocultar senha'
-                                : 'Mostrar senha',
-                            icon: Icon(
-                              _senhaVisivel
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                            ),
-                            onPressed: () =>
-                                setState(() => _senhaVisivel = !_senhaVisivel),
-                          ),
-                        ),
-                        validator: (v) =>
-                            (v ?? '').isEmpty ? 'Informe a senha.' : null,
+                      _CampoSenha(
+                        _senha,
+                        foco: _focoSenha,
+                        habilitado: !_enviando,
+                        aoConfirmar: _enviar,
                       ),
-                      if (_falha != null) ...[
-                        const SizedBox(height: 16),
-                        Semantics(
-                          liveRegion: true,
-                          child: Text(
-                            _falha!,
-                            style: TextStyle(color: tema.colorScheme.error),
-                          ),
-                        ),
-                      ],
+                      if (_falha != null) _MensagemDeFalha(_falha!),
                       const SizedBox(height: 24),
-                      FilledButton(
-                        onPressed: _enviando ? null : _enviar,
-                        child: _enviando
-                            ? const SizedBox.square(
-                                dimension: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text('Entrar'),
-                      ),
+                      _BotaoEntrar(enviando: _enviando, aoTocar: _enviar),
                     ],
                   ),
                 ),
@@ -181,14 +103,50 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 }
 
-class _Aviso extends StatelessWidget {
-  const _Aviso({required this.titulo, required this.texto});
-
-  final String titulo;
-  final String texto;
+class _Cabecalho extends StatelessWidget {
+  const _Cabecalho();
 
   @override
   Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return Column(
+      children: [
+        Text(
+          'SafePlace',
+          style: tema.textTheme.headlineMedium?.copyWith(
+            color: tema.colorScheme.primary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text('Entrar no SafePlace', style: tema.textTheme.titleLarge),
+        const SizedBox(height: 8),
+        const Text(
+          'Acesso para Gestores de Segurança e Supervisores com o e-mail corporativo e a senha recebida.',
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
+class _AvisoDeSaida extends StatelessWidget {
+  const _AvisoDeSaida(this.motivo);
+
+  final MotivoSaida motivo;
+
+  @override
+  Widget build(BuildContext context) {
+    final (titulo, texto) = switch (motivo) {
+      MotivoSaida.expirada => (
+        'Sua sessão expirou',
+        'Entre novamente para continuar de onde parou.',
+      ),
+      MotivoSaida.manual => (
+        'Você saiu do SafePlace',
+        'Entre novamente quando precisar.',
+      ),
+    };
     final tema = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -208,6 +166,110 @@ class _Aviso extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _CampoEmail extends StatelessWidget {
+  const _CampoEmail(this.controlador, {required this.habilitado});
+
+  final TextEditingController controlador;
+  final bool habilitado;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controlador,
+      decoration: const InputDecoration(labelText: 'E-mail'),
+      keyboardType: TextInputType.emailAddress,
+      autofillHints: const [AutofillHints.username],
+      textInputAction: TextInputAction.next,
+      enabled: habilitado,
+      validator: (v) =>
+          (v ?? '').trim().isEmpty ? 'Informe o e-mail de acesso.' : null,
+    );
+  }
+}
+
+class _CampoSenha extends StatefulWidget {
+  const _CampoSenha(
+    this.controlador, {
+    required this.foco,
+    required this.habilitado,
+    required this.aoConfirmar,
+  });
+
+  final TextEditingController controlador;
+  final FocusNode foco;
+  final bool habilitado;
+  final VoidCallback aoConfirmar;
+
+  @override
+  State<_CampoSenha> createState() => _CampoSenhaState();
+}
+
+class _CampoSenhaState extends State<_CampoSenha> {
+  bool _visivel = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: widget.controlador,
+      focusNode: widget.foco,
+      obscureText: !_visivel,
+      autofillHints: const [AutofillHints.password],
+      textInputAction: TextInputAction.done,
+      enabled: widget.habilitado,
+      onFieldSubmitted: (_) => widget.aoConfirmar(),
+      decoration: InputDecoration(
+        labelText: 'Senha',
+        suffixIcon: IconButton(
+          tooltip: _visivel ? 'Ocultar senha' : 'Mostrar senha',
+          icon: Icon(_visivel ? Icons.visibility_off : Icons.visibility),
+          onPressed: () => setState(() => _visivel = !_visivel),
+        ),
+      ),
+      validator: (v) => (v ?? '').isEmpty ? 'Informe a senha.' : null,
+    );
+  }
+}
+
+class _MensagemDeFalha extends StatelessWidget {
+  const _MensagemDeFalha(this.mensagem);
+
+  final String mensagem;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Semantics(
+        liveRegion: true,
+        child: Text(
+          mensagem,
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
+      ),
+    );
+  }
+}
+
+class _BotaoEntrar extends StatelessWidget {
+  const _BotaoEntrar({required this.enviando, required this.aoTocar});
+
+  final bool enviando;
+  final VoidCallback aoTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton(
+      onPressed: enviando ? null : aoTocar,
+      child: enviando
+          ? const SizedBox.square(
+              dimension: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Text('Entrar'),
     );
   }
 }
