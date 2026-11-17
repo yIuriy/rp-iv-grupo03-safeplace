@@ -1,16 +1,23 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'core/router.dart';
+
 void main() {
-  runApp(const MainApp());
+  runApp(const ProviderScope(child: SafePlaceApp()));
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class SafePlaceApp extends ConsumerWidget {
+  const SafePlaceApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(body: Center(child: Text('Hello World!'))),
+  Widget build(BuildContext context, WidgetRef ref) {
+    return MaterialApp.router(
+      title: 'SafePlace',
+      debugShowCheckedModeBanner: false,
+      // Cor `brand/primary` de `frontend/design-system/tokens.json`. O tema completo é da #316.
+      theme: ThemeData(colorSchemeSeed: const Color(0xFF174B3F)),
+      routerConfig: ref.watch(routerProvider),
     );
   }
 }
