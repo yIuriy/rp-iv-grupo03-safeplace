@@ -46,8 +46,8 @@ final armazenamentoSessaoProvider = Provider<ArmazenamentoSessao>(
   (ref) => ArmazenamentoSessaoSeguro(),
 );
 
-/// Limpa os dados locais da conta ao sair ou expirar (RNF08). O cache offline da #316 sobrescreve
-/// este provider; até lá não há nada a limpar.
+/// Limpa os dados locais da conta ao sair ou expirar (RNF08). O app liga aqui a limpeza do cache
+/// offline (`app/dependencias.dart`); o núcleo não conhece o `shared/`, então o padrão não faz nada.
 final limpezaDaContaProvider = Provider<Future<void> Function(String email)>(
   (ref) => (_) async {},
 );

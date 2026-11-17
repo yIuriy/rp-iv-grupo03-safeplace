@@ -1,13 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'app/dependencias.dart';
 import 'app/router.dart';
 import 'shared/tema/app_theme.dart';
 import 'shared/tema/fontes.dart';
 
 void main() {
   registrarLicencasDasFontes();
-  runApp(const ProviderScope(child: SafePlaceApp()));
+  runApp(
+    ProviderScope(overrides: sobreposicoesDoApp, child: const SafePlaceApp()),
+  );
 }
 
 class SafePlaceApp extends ConsumerWidget {
