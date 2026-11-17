@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -5,16 +6,22 @@ import 'package:material_ui/material_ui.dart';
 import '../features/autenticacao/presentation/login_page.dart';
 import '../features/inicio/presentation/inicio_page.dart';
 import '../core/sessao/controlador_sessao.dart';
+import '../shared/catalogo/catalogo_page.dart';
 
 abstract final class Rotas {
   static const carregando = '/carregando';
   static const login = '/login';
   static const inicio = '/';
+
+  /// Catálogo de componentes (#316), só no modo debug: `flutter run --route=/catalogo`.
+  static const catalogo = '/catalogo';
 }
 
 /// Decide a rota pela sessão: sem sessão só o login abre; com sessão o login volta ao início.
 /// A #316 acrescenta aqui as rotas por perfil.
 String? redirecionar(AsyncValue<EstadoSessao> estado, String local) {
+  // O catálogo não mostra dado nenhum do backend, então abre sem sessão, como o /design-system do web.
+  if (kDebugMode && local == Rotas.catalogo) return null;
   if (estado.isLoading && !estado.hasValue) {
     return local == Rotas.carregando ? null : Rotas.carregando;
   }
@@ -42,6 +49,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: Rotas.login, builder: (_, _) => const LoginPage()),
       GoRoute(path: Rotas.inicio, builder: (_, _) => const InicioPage()),
+      if (kDebugMode)
+        GoRoute(path: Rotas.catalogo, builder: (_, _) => const CatalogoPage()),
     ],
   );
   ref.onDispose(router.dispose);

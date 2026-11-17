@@ -64,4 +64,31 @@ final _descrever = criarDescritorDeFalha(
 
 **Sessão** (`core/sessao/`): `ref.watch(controladorSessaoProvider).value?.sessao` devolve `Sessao` (`token`, `email`, `nome`, `perfil`, `ehGestor`) ou `null`. Use `perfil` para mostrar ou esconder ações; o backend continua sendo quem autoriza. `iniciar(sessao)` abre a sessão (o login chama depois de autenticar) e `sair()` a encerra. O cache offline registra a limpeza da conta sobrescrevendo `limpezaDaContaProvider`.
 
+## Tema e componentes compartilhados (#316)
+
+**Tema** (`shared/tema/`): `AppTheme.claro()` monta o `ThemeData` a partir de `tokens.g.dart`, gerado do `frontend/design-system/tokens.json`. Depois de mudar o `tokens.json`, rode `dart run tool/gerar_tokens.dart`; um teste falha se esquecer. Não use cor nem medida solta nas telas:
+
+- cores do Material: `Theme.of(context).colorScheme` (`primary` é o pinho, `error` o vermelho);
+- cores que o Material não tem: `context.cores` (`alerta`, `perigoFundo`, `destaque`, `textoSecundario`...);
+- medidas: `TokensDimensoes.space16`, `radius8`, `sizeControl`...;
+- texto: `Theme.of(context).textTheme` (`headlineMedium` = Heading MD em Manrope, `bodyLarge` = Body MD em Inter, `labelLarge` = Label MD).
+
+Botões, como no web: `FilledButton` (Primary, confirma), `OutlinedButton` (Secondary), `TextButton` (Quiet, cancela) e `FilledButton(style: AppTheme.botaoPerigo)` (Danger, operação destrutiva).
+
+**Componentes** (`shared/widgets/` e `shared/formularios/`):
+
+| Widget | Para quê |
+| --- | --- |
+| `Aviso(tom:, titulo:, mensagem:, anunciar:, rotuloAcao:, aoAgir:)` | Resultado de operação, falha com "Tentar novamente", alerta fixo (`TomAviso.info`, `sucesso`, `alerta`, `perigo`) |
+| `AvisoOffline(sincronizadoEm:)` | Faixa de modo offline no topo da tela que mostra cache |
+| `confirmar(context, titulo:, descricao:, rotuloConfirmar:, aoConfirmar:, descreverFalha:)` | Confirmação antes de descartar, remover ou arquivar; com `aoConfirmar`, executa a operação mostrando carregando e o erro dentro do diálogo |
+| `CampoTexto(rotulo:, validador:, erroDoServidor:, linhas:, somenteLeitura:, habilitado:)` | Texto e área de texto; `erroDoServidor` mostra o erro de um 409/422 no campo certo e some quando a pessoa edita |
+| `CampoSelecao<T>(rotulo:, opcoes: [(valor:, rotulo:)], aoMudar:)` | Poucas opções fixas (nível de perigo, status) |
+| `SeletorComBusca<T>(rotulo:, opcoes:, descrever:, aoMudar:, validator:, carregando:, falha:)` | Listas longas (colaborador, EPI, área): abre uma lista com busca que ignora acentos |
+| `ConteudoAssincrono<T>(valor: ref.watch(provider), construir:, vazio:, falha:, aoTentarDeNovo:)` | Os quatro estados de uma consulta: carregando, falha, vazia e com dados |
+| `EstadoVazio`, `EstadoCarregando` | Lista sem resultado (com ação opcional) e carregamento com texto |
+| `MascaraCpf`, `validarCpf`, `digitosDoCpf`, `ocultarCpf` | CPF `000.000.000-00` na tela, 11 dígitos no envio, mesmas mensagens do web |
+
+**Catálogo**: em debug, `flutter run --route=/catalogo` abre todos os componentes e seus estados, sem precisar de login. No Git Bash, use `MSYS_NO_PATHCONV=1 flutter run --route=/catalogo`, senão o `/catalogo` vira caminho do Windows. Para testar uma tela com o tema, use `montarComTema(tester, widget)` de `test/shared/apoio_tema.dart`.
+
 **Testes**: `test/apoio.dart` tem `sessaoGestor`, `falhaHttp(status, corpo)` e `ArmazenamentoSessaoEmMemoria`. Teste a classe de `data/` com um mock de `ApiClient` e as telas sobrescrevendo o provider da porta da feature com um mock (`mocktail`), mais `armazenamentoSessaoProvider` com `ArmazenamentoSessaoEmMemoria(sessao)`. `AdaptadorFalso` serve só para testar o `DioApiClient`.
