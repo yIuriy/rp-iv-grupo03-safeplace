@@ -23,3 +23,25 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/fonts/OFL-Inter.txt
+    - assets/fonts/OFL-Manrope.txt
+
+  # Fontes do design system (frontend/design-system/foundations.md): Manrope 600 e 700 nos
+  # títulos, Inter 400, 500 e 600 no corpo. TTF do Google Fonts, licença OFL em assets/fonts.
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Manrope-Bold.ttf
+          weight: 700
