@@ -9,6 +9,9 @@ import 'estados.dart';
 ///
 /// Participa do `Form` como qualquer campo: [validador] roda no envio e o erro aparece embaixo.
 /// [carregando] e [falha] cobrem as opções que ainda vêm da API.
+///
+/// [termosDeBusca] acrescenta à busca textos que não aparecem na lista, como os dígitos de um CPF
+/// mostrado oculto (#317).
 class SeletorComBusca<T> extends FormField<T> {
   SeletorComBusca({
     super.key,
@@ -17,6 +20,7 @@ class SeletorComBusca<T> extends FormField<T> {
     required String Function(T) descrever,
     required ValueChanged<T?> aoMudar,
     String Function(T)? detalhar,
+    String Function(T)? termosDeBusca,
     T? valor,
     String? ajuda,
     String dica = 'Toque para escolher',
@@ -45,6 +49,7 @@ class SeletorComBusca<T> extends FormField<T> {
                  opcoes: opcoes,
                  descrever: descrever,
                  detalhar: detalhar,
+                 termosDeBusca: termosDeBusca,
                  selecionado: selecionado,
                ),
              );
@@ -101,6 +106,7 @@ class _ListaComBusca<T> extends StatefulWidget {
     required this.opcoes,
     required this.descrever,
     required this.detalhar,
+    required this.termosDeBusca,
     required this.selecionado,
   });
 
@@ -109,6 +115,7 @@ class _ListaComBusca<T> extends StatefulWidget {
   final List<T> opcoes;
   final String Function(T) descrever;
   final String Function(T)? detalhar;
+  final String Function(T)? termosDeBusca;
   final T? selecionado;
 
   @override
@@ -124,7 +131,8 @@ class _ListaComBuscaState<T> extends State<_ListaComBusca<T>> {
     final filtradas = widget.opcoes.where((opcao) {
       if (termo.isEmpty) return true;
       final texto =
-          '${widget.descrever(opcao)} ${widget.detalhar?.call(opcao) ?? ''}';
+          '${widget.descrever(opcao)} ${widget.detalhar?.call(opcao) ?? ''} '
+          '${widget.termosDeBusca?.call(opcao) ?? ''}';
       return normalizarBusca(texto).contains(termo);
     }).toList();
 

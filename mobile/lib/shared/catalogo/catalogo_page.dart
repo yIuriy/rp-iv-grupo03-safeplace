@@ -10,10 +10,20 @@ import '../widgets/dialogo_confirmacao.dart';
 import '../widgets/estados.dart';
 import '../widgets/seletor_com_busca.dart';
 
+/// Tela de exemplo de um componente de feature que precisa da API (e, portanto, de login), como o
+/// `ColaboradorPicker` (#317). O app informa como abrir; o catálogo não conhece as features.
+typedef ExemploDoCatalogo = ({
+  String titulo,
+  String descricao,
+  void Function(BuildContext context) abrir,
+});
+
 /// Catálogo dos componentes compartilhados (#316), equivalente ao `/design-system` do web: mostra
 /// cada widget e seus estados com dados de exemplo. Só existe no modo debug (rota `/catalogo`).
 class CatalogoPage extends StatelessWidget {
-  const CatalogoPage({super.key});
+  const CatalogoPage({super.key, this.exemplos = const []});
+
+  final List<ExemploDoCatalogo> exemplos;
 
   @override
   Widget build(BuildContext context) {
@@ -21,15 +31,40 @@ class CatalogoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Catálogo de componentes')),
       body: ListView(
         padding: const EdgeInsets.all(TokensDimensoes.layoutMobilePadding),
-        children: const [
-          _Secao('Tipografia', _Tipografia()),
-          _Secao('Cores', _Cores()),
-          _Secao('Botões', _Botoes()),
-          _Secao('Avisos', _Avisos()),
-          _Secao('Campos', _Campos()),
-          _Secao('Estados', _Estados()),
+        children: [
+          const _Secao('Tipografia', _Tipografia()),
+          const _Secao('Cores', _Cores()),
+          const _Secao('Botões', _Botoes()),
+          const _Secao('Avisos', _Avisos()),
+          const _Secao('Campos', _Campos()),
+          const _Secao('Estados', _Estados()),
+          if (exemplos.isNotEmpty)
+            _Secao('Componentes das features', _Exemplos(exemplos)),
         ],
       ),
+    );
+  }
+}
+
+/// Atalhos para as telas de exemplo das features. Elas usam a API, então pedem login.
+class _Exemplos extends StatelessWidget {
+  const _Exemplos(this.exemplos);
+
+  final List<ExemploDoCatalogo> exemplos;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (final exemplo in exemplos)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(exemplo.titulo),
+            subtitle: Text(exemplo.descricao),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => exemplo.abrir(context),
+          ),
+      ],
     );
   }
 }

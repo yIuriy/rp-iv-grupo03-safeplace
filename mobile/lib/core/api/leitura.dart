@@ -15,6 +15,11 @@ String texto(Object? valor, String reserva) => textoOuNulo(valor) ?? reserva;
 /// Número como veio. Ausência e qualquer outro tipo (inclusive texto numérico) viram `null`.
 num? numeroOuNulo(Object? valor) => valor is num ? valor : null;
 
+/// Data (`aaaa-mm-dd`, o `LocalDate` do backend) ou data e hora ISO (`LocalDateTime`), no horário
+/// local. Ausência, outro tipo ou texto fora do formato viram `null`.
+DateTime? dataOuNula(Object? valor) =>
+    valor is String ? DateTime.tryParse(valor.trim()) : null;
+
 /// Objeto JSON. Fora disso, lança [FormatException]: a resposta não segue o contrato da API.
 Bruto objeto(Object? dado, String mensagem) {
   if (dado is Map<String, Object?>) return dado;
