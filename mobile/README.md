@@ -50,7 +50,7 @@ final episRepositorioProvider =
     Provider<EpisRepositorio>((ref) => EpisApi(ref.read(apiClientProvider)));
 ```
 
-**Leitura das respostas** (`core/api/leitura.dart`): `objeto`, `lista`, `listaOuVazia`, `texto`, `textoOuNulo`, `numeroOuNulo`. Cada modelo tem um `factory X.ler(Object? dado)` que usa essas funções; campo opcional ausente não derruba a tela.
+**Leitura das respostas** (`core/api/leitura.dart`): `objeto`, `lista`, `listaOuVazia`, `texto`, `textoOuNulo`, `numeroOuNulo`, `dataOuNula` (`LocalDate` ou `LocalDateTime` do backend). Cada modelo tem um `factory X.ler(Object? dado)` que usa essas funções; campo opcional ausente não derruba a tela.
 
 **Mensagens de erro** (`core/api/erros.dart`): cada tela cria o seu descritor e sobrescreve só os status que precisa. 400, 404, 409 e 422 já usam o `message` do backend; falha de rede vira aviso de conexão. Para os campos extras de um 409 ou 422, leia `(erro as FalhaApi).corpo`.
 
@@ -84,10 +84,11 @@ Botões, como no web: `FilledButton` (Primary, confirma), `OutlinedButton` (Seco
 | `confirmar(context, titulo:, descricao:, rotuloConfirmar:, aoConfirmar:, descreverFalha:)` | Confirmação antes de descartar, remover ou arquivar; com `aoConfirmar`, executa a operação mostrando carregando e o erro dentro do diálogo |
 | `CampoTexto(rotulo:, validador:, erroDoServidor:, linhas:, somenteLeitura:, habilitado:)` | Texto e área de texto; `erroDoServidor` mostra o erro de um 409/422 no campo certo e some quando a pessoa edita |
 | `CampoSelecao<T>(rotulo:, opcoes: [(valor:, rotulo:)], aoMudar:)` | Poucas opções fixas (nível de perigo, status) |
-| `SeletorComBusca<T>(rotulo:, opcoes:, descrever:, aoMudar:, validator:, carregando:, falha:)` | Listas longas (colaborador, EPI, área): abre uma lista com busca que ignora acentos |
+| `SeletorComBusca<T>(rotulo:, opcoes:, descrever:, aoMudar:, validator:, carregando:, falha:, termosDeBusca:)` | Listas longas (colaborador, EPI, área): abre uma lista com busca que ignora acentos; `termosDeBusca` busca também o que não aparece na lista (dígitos de um CPF oculto) |
 | `ConteudoAssincrono<T>(valor: ref.watch(provider), construir:, vazio:, falha:, aoTentarDeNovo:)` | Os quatro estados de uma consulta: carregando, falha, vazia e com dados |
 | `EstadoVazio`, `EstadoCarregando` | Lista sem resultado (com ação opcional) e carregamento com texto |
 | `MascaraCpf`, `validarCpf`, `digitosDoCpf`, `ocultarCpf` | CPF `000.000.000-00` na tela, 11 dígitos no envio, mesmas mensagens do web |
+| `MascaraData`, `lerData`, `formatarData`, `dataIso`, `hoje` (`shared/formularios/data.dart`) | Data `dd/mm/aaaa` na tela (com máscara e recusa de 31/02), `aaaa-mm-dd` no envio |
 
 **Navegação por perfil** (`app/navegacao.dart`, `app/casca.dart`): o menu é a lista `itensDoMenu`. Cada item tem a rota, o rótulo (com `rotuloSupervisor` quando muda, como "Colaboradores"), os `perfis` que o veem e a issue que entrega a tela. A casca monta o menu lateral pelo perfil, e o router manda ao início quem abre pelo endereço uma rota de outro perfil. Para entregar o seu módulo, troque a `PaginaEmConstrucao` pela sua tela em `_telaDo` (`app/router.dart`); sub-rotas (`/ocorrencias/:id`) entram como `routes:` do `GoRoute` do item.
 
@@ -117,3 +118,26 @@ A resposta é guardada por conta (e-mail + chave) no armazenamento seguro e apag
 **Catálogo**: em debug, `flutter run --route=/catalogo` abre todos os componentes e seus estados, sem precisar de login. No Git Bash, use `MSYS_NO_PATHCONV=1 flutter run --route=/catalogo`, senão o `/catalogo` vira caminho do Windows. Para testar uma tela com o tema, use `montarComTema(tester, widget)` de `test/shared/apoio_tema.dart`.
 
 **Testes**: `test/apoio.dart` tem `sessaoGestor`, `falhaHttp(status, corpo)` e `ArmazenamentoSessaoEmMemoria`. Teste a classe de `data/` com um mock de `ApiClient` e as telas sobrescrevendo o provider da porta da feature com um mock (`mocktail`), mais `armazenamentoSessaoProvider` com `ArmazenamentoSessaoEmMemoria(sessao)`. `AdaptadorFalso` serve só para testar o `DioApiClient`.
+
+## Usuários, perfil e `ColaboradorPicker` (#317)
+
+`features/usuarios/` entrega o item "Usuários" do menu (rótulo "Colaboradores" para o Supervisor) e "Meu perfil":
+
+- `/usuarios`: o Gestor vê as abas Supervisores (`GET /api/usuarios`, filtrado para `SUPERVISOR`) e Colaboradores; o Supervisor vê só Colaboradores (`GET /api/usuarios/colaboradores?nome=&cpf=`) e não tem como listar nem cadastrar supervisores. A busca por CPF pede os 11 dígitos, porque o backend compara o CPF inteiro.
+- Cadastro e edição em tela cheia (`FormularioPessoaPage`), com validação local em `domain/validacao_pessoa.dart` (mesmas mensagens do web). O Colaborador vai sem senha nem perfil; a edição envia só nome, data de nascimento e e-mail, com o CPF somente leitura. O cadastro de Supervisor termina mostrando a `senhaInicial` uma única vez; ela não vai para listas nem para o cache.
+- 409 de CPF ou e-mail duplicado e 400 de validação (`campo: mensagem`) aparecem no campo certo (`erroDeCampo`); o resto vai para o aviso do formulário.
+- `/perfil`: dados da conta (`GET /api/usuarios/me`) e ações recentes (`GET /api/usuarios/me/historico?limite=`, 20 de início e "Ver mais ações" até 100).
+- Todas as leituras usam o cache offline da conta; sem conexão, "Novo" e "Editar" ficam desabilitados com o aviso.
+
+**`ColaboradorPicker`** (`features/usuarios/presentation/colaborador_picker.dart`) é o campo para vincular um colaborador nos formulários de ocorrências (#318), empréstimos (#320), alocações (#324) e capacitações (#325). Carrega os colaboradores uma vez (com cópia offline), mostra o CPF oculto e busca por nome ou CPF, com ou sem máscara e sem acentos. Participa do `Form` como os outros campos:
+
+```dart
+ColaboradorPicker(
+  rotulo: 'Colaborador envolvido',
+  colaboradorId: _colaboradorId,   // escolha inicial por id, como vem nos registros (opcional)
+  obrigatorio: true,               // "Escolha o colaborador." no validate()
+  aoMudar: (colaborador) => setState(() => _colaboradorId = colaborador?.id),
+)
+```
+
+Por padrão só oferece colaboradores ativos, como o web na entrega de EPI (`somenteAtivos: false` mostra todos); o já escolhido em `colaboradorId` aparece mesmo inativo, para a edição de um registro antigo não perder o vínculo. `validador:` troca a regra de obrigatoriedade. A tela de exemplo (`ExemploColaboradorPickerPage`, só em debug) abre pelo catálogo, em "Componentes das features", ou em `/usuarios/exemplo-seletor`; ela pede login, porque usa a API.
