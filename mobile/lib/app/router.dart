@@ -6,6 +6,9 @@ import 'package:material_ui/material_ui.dart';
 import '../core/sessao/controlador_sessao.dart';
 import '../features/autenticacao/presentation/login_page.dart';
 import '../features/inicio/presentation/inicio_page.dart';
+import '../features/usuarios/presentation/exemplo_colaborador_picker_page.dart';
+import '../features/usuarios/presentation/perfil_page.dart';
+import '../features/usuarios/presentation/usuarios_page.dart';
 import '../shared/catalogo/catalogo_page.dart';
 import 'casca.dart';
 import 'navegacao.dart';
@@ -16,6 +19,11 @@ abstract final class Rotas {
   static const inicio = '/';
   static const ocorrencias = '/ocorrencias';
   static const emprestimos = '/emprestimos';
+  static const usuarios = '/usuarios';
+  static const perfil = '/perfil';
+
+  /// Tela de exemplo do `ColaboradorPicker` (#317), só no modo debug.
+  static const exemploSeletorColaborador = '/usuarios/exemplo-seletor';
 
   /// Catálogo de componentes (#316), só no modo debug: `flutter run --route=/catalogo`.
   static const catalogo = '/catalogo';
@@ -58,8 +66,22 @@ Widget _telaDo(ItemMenu item, BuildContext context) {
       ],
     );
   }
-  return PaginaEmConstrucao(item: item);
+  return switch (item.rota) {
+    Rotas.usuarios => const UsuariosPage(),
+    Rotas.perfil => const PerfilPage(),
+    _ => PaginaEmConstrucao(item: item),
+  };
 }
+
+/// Sub-rotas de cada item, que herdam a casca e a guarda de perfil do item.
+List<RouteBase> _subrotasDo(ItemMenu item) => [
+  if (kDebugMode && item.rota == Rotas.usuarios)
+    GoRoute(
+      path: 'exemplo-seletor', // Rotas.exemploSeletorColaborador
+
+      builder: (_, _) => const ExemploColaboradorPickerPage(),
+    ),
+];
 
 final routerProvider = Provider<GoRouter>((ref) {
   final sessao = ValueNotifier(ref.read(controladorSessaoProvider));
@@ -86,11 +108,23 @@ final routerProvider = Provider<GoRouter>((ref) {
             GoRoute(
               path: item.rota,
               builder: (context, _) => _telaDo(item, context),
+              routes: _subrotasDo(item),
             ),
         ],
       ),
       if (kDebugMode)
-        GoRoute(path: Rotas.catalogo, builder: (_, _) => const CatalogoPage()),
+        GoRoute(
+          path: Rotas.catalogo,
+          builder: (_, _) => CatalogoPage(
+            exemplos: [
+              (
+                titulo: 'Seletor de colaborador',
+                descricao: 'ColaboradorPicker (#317), com os colaboradores da API. Pede login.',
+                abrir: (context) => context.go(Rotas.exemploSeletorColaborador),
+              ),
+            ],
+          ),
+        ),
     ],
   );
   ref.onDispose(router.dispose);
