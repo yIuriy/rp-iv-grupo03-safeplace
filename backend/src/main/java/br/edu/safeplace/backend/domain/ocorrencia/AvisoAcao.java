@@ -12,11 +12,19 @@ import br.edu.safeplace.backend.domain.usuario.Colaborador;
  * nunca por login do Colaborador.
  */
 public record AvisoAcao(
-        Integer idAcao,
-        Integer idOcorrencia,
+        PlanoDeAcao acao,
+        Ocorrencia ocorrencia,
         MotivoAvisoAcao motivo,
         Colaborador responsavelColaborador,
         Setor responsavelSetor,
         LocalDate prazo,
         LocalDate dataAviso) {
+
+    public Integer idAcao() {
+        return acao != null ? acao.getId() : null;
+    }
+
+    public Integer idOcorrencia() {
+        return ocorrencia != null ? ocorrencia.getId() : null;
+    }
 }
