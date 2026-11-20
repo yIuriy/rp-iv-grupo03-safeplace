@@ -1,14 +1,17 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
-import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepository;
-import br.edu.safeplace.backend.domain.epi.ManutencaoEpi;
-import br.edu.safeplace.backend.domain.epi.ResultadoManutencao;
-import br.edu.safeplace.backend.domain.epi.TipoManutencao;
-import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.stereotype.Repository;
+
+import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepository;
+import br.edu.safeplace.backend.domain.epi.ManutencaoEpi;
+
+/**
+ * Adaptador JPA da porta ManutencaoEpiRepository: delega ao repositório JPA da própria entidade de
+ * domínio ManutencaoEpi (#259), sem classe espelhada.
+ */
 @Repository
 public class ManutencaoEpiJpaAdapter implements ManutencaoEpiRepository {
     private final ManutencaoEpiJpaRepository repository;
@@ -19,34 +22,16 @@ public class ManutencaoEpiJpaAdapter implements ManutencaoEpiRepository {
 
     @Override
     public ManutencaoEpi salvar(ManutencaoEpi manutencao) {
-        return toDomain(repository.save(toEntity(manutencao)));
+        return repository.save(manutencao);
     }
 
     @Override
     public Optional<ManutencaoEpi> buscarPorId(Integer id) {
-        return repository.findById(id).map(this::toDomain);
+        return repository.findById(id);
     }
 
     @Override
     public List<ManutencaoEpi> listarPorEpi(Integer epiId) {
-        return repository.findByEpiIdOrderByDataManutencaoDesc(epiId).stream()
-                .map(this::toDomain)
-                .toList();
-    }
-
-    private ManutencaoEpiEntity toEntity(ManutencaoEpi manutencao) {
-        return new ManutencaoEpiEntity(manutencao.getId(), manutencao.getEpiId(),
-                manutencao.getDataManutencao(), manutencao.getTipoManutencao() == null
-                        ? null : manutencao.getTipoManutencao().name(),
-                manutencao.getDescricao(), manutencao.getResultado().name(),
-                manutencao.getResponsavelManutencao(), manutencao.getResponsavelId());
-    }
-
-    private ManutencaoEpi toDomain(ManutencaoEpiEntity entity) {
-        return new ManutencaoEpi(entity.getId(), entity.getEpiId(), entity.getDataManutencao(),
-                entity.getTipoManutencao() == null ? null : TipoManutencao.valueOf(entity.getTipoManutencao()),
-                entity.getDescricao(),
-                ResultadoManutencao.valueOf(entity.getResultado()), entity.getResponsavelManutencao(),
-                entity.getResponsavelId());
+        return repository.listarPorEpi(epiId);
     }
 }
