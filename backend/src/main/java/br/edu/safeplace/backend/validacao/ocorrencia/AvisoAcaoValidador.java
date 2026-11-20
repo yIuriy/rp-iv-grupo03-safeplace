@@ -22,8 +22,9 @@ public class AvisoAcaoValidador extends ValidadorEmCadeia<AvisoAcao> {
     }
 
     private static EloValidacao<AvisoAcao> montarCadeia() {
-        EloValidacao<AvisoAcao> primeiro = RegraElo.<AvisoAcao>exigir(a -> a == null || a.idAcao() == null,
-                "O aviso exige uma ação já registrada.").interrompendo();
+        EloValidacao<AvisoAcao> primeiro = RegraElo.<AvisoAcao>exigir(
+                        a -> a == null || a.acao() == null || a.idAcao() == null,
+                        "O aviso exige uma ação já registrada.").interrompendo();
         primeiro.encadear(exigir(a -> a.prazo() == null || a.dataAviso() == null,
                         "O aviso exige o prazo da ação e a data do aviso."))
                 .encadear(exigir(a -> (a.responsavelColaborador() == null) == (a.responsavelSetor() == null),
