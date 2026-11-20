@@ -1,23 +1,39 @@
 package br.edu.safeplace.backend.domain.epi;
 
-import org.junit.jupiter.api.Test;
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.epi;
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.pessoa;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDateTime;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import br.edu.safeplace.backend.domain.usuario.Colaborador;
 
 class ManutencaoEpiTest {
 
     @Test
-    void deveCriarManutencaoEpiComDadosValidos() {
+    void deveCriarManutencaoEpiComBuilderEAssociacoes() {
         LocalDateTime data = LocalDateTime.of(2026, 9, 11, 14, 30);
-        ManutencaoEpi manutencao = new ManutencaoEpi(
-                1, 10, data, TipoManutencao.PREVENTIVA,
-                "Inspeção periódica de rotina", ResultadoManutencao.APROVADO, "Carlos Silva"
-        );
+        Epi epiAssociado = epi(10);
+        Colaborador responsavel = pessoa(7);
 
-        assertEquals(1, manutencao.getId());
+        ManutencaoEpi manutencao = new ManutencaoEpi.Builder()
+                .epi(epiAssociado)
+                .realizadaEm(data)
+                .tipo(TipoManutencao.PREVENTIVA)
+                .descricao("Inspeção periódica de rotina")
+                .resultado(ResultadoManutencao.APROVADO)
+                .responsavelManutencao("Carlos Silva")
+                .responsavel(responsavel)
+                .build();
+
+        assertNull(manutencao.getId());
+        assertSame(epiAssociado, manutencao.getEpi());
         assertEquals(10, manutencao.getEpiId());
+        assertSame(responsavel, manutencao.getResponsavel());
+        assertEquals(7, manutencao.getResponsavelId());
         assertEquals(data, manutencao.getDataManutencao());
         assertEquals(TipoManutencao.PREVENTIVA, manutencao.getTipoManutencao());
         assertEquals("Inspeção periódica de rotina", manutencao.getDescricao());
@@ -26,27 +42,43 @@ class ManutencaoEpiTest {
     }
 
     @Test
-    void deveCriarNovaManutencaoUsandoMetodoFabrica() {
-        LocalDateTime data = LocalDateTime.of(2026, 9, 11, 15, 0);
-        ManutencaoEpi manutencao = ManutencaoEpi.novo(
-                20, data, TipoManutencao.CORRETIVA,
-                "Substituição de correia danificada", ResultadoManutencao.REPROVADO, "Ana Souza"
-        );
+    void devePermitirTipoDeManutencaoAusenteNoMvp() {
+        ManutencaoEpi manutencao = new ManutencaoEpi.Builder()
+                .epi(epi(10))
+                .realizadaEm(LocalDateTime.now())
+                .tipo(null)
+                .descricao("Inspeção concluída")
+                .resultado(ResultadoManutencao.APROVADO)
+                .responsavelManutencao("Gestor")
+                .build();
 
-        assertNull(manutencao.getId());
-        assertEquals(20, manutencao.getEpiId());
-        assertEquals(data, manutencao.getDataManutencao());
-        assertEquals(TipoManutencao.CORRETIVA, manutencao.getTipoManutencao());
-        assertEquals(ResultadoManutencao.REPROVADO, manutencao.getResultado());
+        assertNull(manutencao.getTipoManutencao());
+        assertNull(manutencao.getResponsavel());
+        assertNull(manutencao.getResponsavelId());
     }
 
     @Test
-    void devePermitirTipoDeManutencaoAusenteNoMvp() {
-        ManutencaoEpi manutencao = new ManutencaoEpi(
-                1, 10, LocalDateTime.now(), null, "Inspeção concluída",
-                ResultadoManutencao.APROVADO, "Gestor"
-        );
+    void igualdadeConsideraIdGeradoQuandoPresente() {
+        ManutencaoEpi m1 = new ManutencaoEpi.Builder()
+                .epi(epi(10))
+                .realizadaEm(LocalDateTime.of(2026, 9, 11, 15, 0))
+                .descricao("Revisão")
+                .resultado(ResultadoManutencao.APROVADO)
+                .responsavelManutencao("Ana")
+                .build();
+        ManutencaoEpi m2 = new ManutencaoEpi.Builder()
+                .epi(epi(10))
+                .realizadaEm(LocalDateTime.of(2026, 9, 11, 15, 0))
+                .descricao("Revisão")
+                .resultado(ResultadoManutencao.APROVADO)
+                .responsavelManutencao("Ana")
+                .build();
 
-        assertNull(manutencao.getTipoManutencao());
+        assertNotEquals(m1, m2);
+
+        ReflectionTestUtils.setField(m1, "id", 5);
+        ReflectionTestUtils.setField(m2, "id", 5);
+        assertEquals(m1, m2);
+        assertEquals(m1.hashCode(), m2.hashCode());
     }
 }
