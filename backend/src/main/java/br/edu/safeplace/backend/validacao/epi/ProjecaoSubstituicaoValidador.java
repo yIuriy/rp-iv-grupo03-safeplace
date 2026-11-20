@@ -22,7 +22,7 @@ public class ProjecaoSubstituicaoValidador extends ValidadorEmCadeia<ProjecaoSub
     }
 
     private static EloValidacao<ProjecaoSubstituicao> montarCadeia() {
-        EloValidacao<ProjecaoSubstituicao> primeiro = exigir(p -> p.getEpiId() == null,
+        EloValidacao<ProjecaoSubstituicao> primeiro = exigir(p -> p.getEpi() == null || p.getEpiId() == null,
                 "Identificador do EPI é obrigatório para a projeção.");
         primeiro.encadear(exigir(p -> p.getDataProjecao() == null, "Data da projeção é obrigatória."))
                 .encadear(exigir(p -> p.getDataEstimadaDescarte() == null, "Data estimada de descarte é obrigatória."))
