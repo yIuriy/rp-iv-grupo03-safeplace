@@ -24,6 +24,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
@@ -62,9 +63,9 @@ public class Epi {
     @JoinColumn(name = "lote_id", nullable = false)
     private LoteEPI lote;
 
-    /** O histórico é gravado pela manutenção (ManutencaoEpi ainda não é entidade, #259). */
-    @Transient
-    private final List<ManutencaoEpi> historicoManutencao = new ArrayList<>();
+    /** Histórico de manutenções associado ao EPI (#259); a persistência é feita por ManutencaoEpiRepository. */
+    @OneToMany(mappedBy = "epi", fetch = FetchType.LAZY)
+    private List<ManutencaoEpi> historicoManutencao = new ArrayList<>();
 
     /** Sem persistência: pela decisão #124, o registro tem um único lote. */
     @Transient
