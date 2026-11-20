@@ -18,7 +18,8 @@ public class ManutencaoEpiValidador extends ValidadorEmCadeia<ManutencaoEpi> {
     }
 
     private static EloValidacao<ManutencaoEpi> montarCadeia() {
-        EloValidacao<ManutencaoEpi> primeiro = exigir(m -> m.getEpiId() == null, "Identificador do EPI é obrigatório.");
+        EloValidacao<ManutencaoEpi> primeiro = exigir(m -> m.getEpi() == null || m.getEpiId() == null,
+                "Identificador do EPI é obrigatório.");
         primeiro.encadear(exigir(m -> m.getDataManutencao() == null, "Data da manutenção é obrigatória."))
                 .encadear(exigir(m -> isBlankOrNull(m.getDescricao()), "Descrição da manutenção é obrigatória."))
                 .encadear(exigir(m -> m.getResultado() == null, "Resultado da manutenção é obrigatório."))
