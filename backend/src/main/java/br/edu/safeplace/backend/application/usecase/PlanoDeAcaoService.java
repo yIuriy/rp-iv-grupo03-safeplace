@@ -51,6 +51,7 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
     private final Validador<PlanoDaOcorrencia> planoValidador;
     private final OperadorAtual operadorAtual;
     private final RegistradorAuditoria auditoria;
+    private final MontadorPlanoDeAcao montadorPlano = new MontadorPlanoDeAcao();
 
     @Autowired
     public PlanoDeAcaoService(
@@ -150,18 +151,7 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
         GestorDeSeguranca gestor = operadorAtual.buscarGestor().orElse(null);
         LocalDate hoje = LocalDate.now();
 
-        PlanoDeAcao acao = PlanoDeAcao.definir(
-                ocorrencia,
-                inputDTO.medidasCorretivas(),
-                inputDTO.medidasPreventivas(),
-                inputDTO.prazo(),
-                colaborador,
-                setor,
-                inputDTO.alertaAtivo(),
-                inputDTO.antecedenciaAlertaDias(),
-                gestor,
-                hoje
-        );
+        PlanoDeAcao acao = montadorPlano.montar(inputDTO, ocorrencia, colaborador, setor, gestor);
         // Chain of Responsibility (#266): a ação e, depois, o plano inteiro, antes do repository.
         acaoValidador.validar(new AcaoDoPlano(acao, ocorrencia, hoje));
 
@@ -244,8 +234,8 @@ public class PlanoDeAcaoService implements GerenciarPlanoDeAcaoUseCase {
         auditoria.por(resolverOperador(acao)).operacao(
                 "PRORROGAR_PRAZO",
                 "PlanoDeAcao",
-                prorrogacao.idAcao(),
-                prorrogacao.justificativa()
+                prorrogacao.getIdAcao(),
+                prorrogacao.getJustificativa()
         );
 
         return ProrrogacaoPrazoOutputDTO.deDominio(prorrogacao);
