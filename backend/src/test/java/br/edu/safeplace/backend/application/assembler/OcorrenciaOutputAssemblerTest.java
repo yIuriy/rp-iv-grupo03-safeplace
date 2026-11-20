@@ -23,6 +23,7 @@ import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
 import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcaoBuilder;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.TipoOcorrencia;
 
@@ -40,7 +41,13 @@ class OcorrenciaOutputAssemblerTest {
 
     @Test
     void montaAcidenteComAParteComumEAEspecifica() {
-        PlanoDeAcao plano = new PlanoDeAcao(7, "Isolar a área", LocalDate.of(2026, 12, 1), "PENDENTE", "Treinar");
+        PlanoDeAcao plano = new PlanoDeAcaoBuilder()
+                .id(7)
+                .medidasCorretivas("Isolar a área")
+                .prazo(LocalDate.of(2026, 12, 1))
+                .status("PENDENTE")
+                .medidasPreventivas("Treinar")
+                .build();
         Acidente acidente = Acidente.builder()
                 .idOcorrencia(10)
                 .descricao("Queda")
