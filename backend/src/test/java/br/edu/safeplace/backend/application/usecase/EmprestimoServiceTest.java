@@ -528,18 +528,11 @@ class EmprestimoServiceTest {
 
         @Override
         public ManutencaoEpi salvar(ManutencaoEpi manutencao) {
-            ManutencaoEpi salva = new ManutencaoEpi(
-                    proximoId++,
-                    manutencao.getEpiId(),
-                    manutencao.getDataManutencao(),
-                    manutencao.getTipoManutencao(),
-                    manutencao.getDescricao(),
-                    manutencao.getResultado(),
-                    manutencao.getResponsavelManutencao(),
-                    manutencao.getResponsavelId()
-            );
-            registros.add(salva);
-            return salva;
+            if (manutencao.getId() == null) {
+                ReflectionTestUtils.setField(manutencao, "id", proximoId++);
+            }
+            registros.add(manutencao);
+            return manutencao;
         }
 
         @Override
