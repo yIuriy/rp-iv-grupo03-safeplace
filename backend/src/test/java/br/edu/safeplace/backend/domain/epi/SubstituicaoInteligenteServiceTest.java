@@ -97,7 +97,7 @@ class SubstituicaoInteligenteServiceTest {
         LocalDate caProximo = hoje.plusDays(15);
         Epi epi = criarEpi(7, "Cinto Paraquedista", 120, caProximo, 2, 5);
 
-        ProjecaoSubstituicao projecao = ProjecaoSubstituicao.nova(7, hoje, descarteProximo, "Teste");
+        ProjecaoSubstituicao projecao = new ProjecaoSubstituicao(epi, hoje, descarteProximo, "Teste");
 
         List<AlertaSubstituicaoEpi> alertas = service.emitirAlertas(epi, projecao, hoje);
 
@@ -114,7 +114,7 @@ class SubstituicaoInteligenteServiceTest {
         LocalDate caLonge = hoje.plusYears(2);
         Epi epi = criarEpi(8, "Avental de Raspa", 365, caLonge, 20, 5);
 
-        ProjecaoSubstituicao projecao = ProjecaoSubstituicao.nova(8, hoje, descarteLonge, "Teste seguro");
+        ProjecaoSubstituicao projecao = new ProjecaoSubstituicao(epi, hoje, descarteLonge, "Teste seguro");
 
         List<AlertaSubstituicaoEpi> alertas = service.emitirAlertas(epi, projecao, hoje);
 
