@@ -1,14 +1,16 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
-import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepository;
-import br.edu.safeplace.backend.domain.epi.ManutencaoEpi;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.springframework.test.util.ReflectionTestUtils;
+
+import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepository;
+import br.edu.safeplace.backend.domain.epi.ManutencaoEpi;
 
 /**
  * Dublê de teste da porta de manutenção. Não comprova persistência: a gravação real é coberta por
@@ -20,19 +22,12 @@ public class InMemoryManutencaoEpiRepository implements ManutencaoEpiRepository 
 
     @Override
     public ManutencaoEpi salvar(ManutencaoEpi manutencao) {
-        Integer id = manutencao.getId() != null ? manutencao.getId() : sequence.getAndIncrement();
-        ManutencaoEpi salvo = new ManutencaoEpi(
-                id,
-                manutencao.getEpiId(),
-                manutencao.getDataManutencao(),
-                manutencao.getTipoManutencao(),
-                manutencao.getDescricao(),
-                manutencao.getResultado(),
-                manutencao.getResponsavelManutencao(),
-                manutencao.getResponsavelId()
-        );
-        storage.put(id, salvo);
-        return salvo;
+        // Como o JPA, o banco em memória atribui o id gerado à própria entidade.
+        if (manutencao.getId() == null) {
+            ReflectionTestUtils.setField(manutencao, "id", sequence.getAndIncrement());
+        }
+        storage.put(manutencao.getId(), manutencao);
+        return manutencao;
     }
 
     @Override
