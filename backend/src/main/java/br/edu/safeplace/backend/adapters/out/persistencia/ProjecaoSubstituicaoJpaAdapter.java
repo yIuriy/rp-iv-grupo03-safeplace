@@ -8,6 +8,10 @@ import org.springframework.stereotype.Repository;
 import br.edu.safeplace.backend.application.port.out.ProjecaoSubstituicaoRepository;
 import br.edu.safeplace.backend.domain.epi.ProjecaoSubstituicao;
 
+/**
+ * Adaptador JPA da porta ProjecaoSubstituicaoRepository: delega ao repositório JPA da própria entidade
+ * de domínio ProjecaoSubstituicao (#259), sem classe espelhada.
+ */
 @Repository
 public class ProjecaoSubstituicaoJpaAdapter implements ProjecaoSubstituicaoRepository {
 
@@ -19,52 +23,26 @@ public class ProjecaoSubstituicaoJpaAdapter implements ProjecaoSubstituicaoRepos
 
     @Override
     public ProjecaoSubstituicao salvar(ProjecaoSubstituicao projecao) {
-        ProjecaoSubstituicaoEntity entity = paraEntidade(projecao);
-        return paraDominio(repositorio.save(entity));
+        return repositorio.save(projecao);
     }
 
     @Override
     public List<ProjecaoSubstituicao> salvar(List<ProjecaoSubstituicao> projecoes) {
-        List<ProjecaoSubstituicaoEntity> entidades = projecoes.stream().map(this::paraEntidade).toList();
-        return repositorio.saveAll(entidades).stream().map(this::paraDominio).toList();
+        return repositorio.saveAll(projecoes);
     }
 
     @Override
     public Optional<ProjecaoSubstituicao> buscarUltimaPorEpi(Integer epiId) {
-        return repositorio.findFirstByEpiIdOrderByDataProjecaoDescIdDesc(epiId).map(this::paraDominio);
+        return repositorio.findFirstByEpiCodigoEPIOrderByDataProjecaoDescIdDesc(epiId);
     }
 
     @Override
     public List<ProjecaoSubstituicao> listarPorEpi(Integer epiId) {
-        return repositorio.findByEpiIdOrderByDataProjecaoDescIdDesc(epiId).stream()
-                .map(this::paraDominio)
-                .toList();
+        return repositorio.findByEpiCodigoEPIOrderByDataProjecaoDescIdDesc(epiId);
     }
 
     @Override
     public List<ProjecaoSubstituicao> listar() {
-        return repositorio.findAllByOrderByDataProjecaoDescIdDesc().stream()
-                .map(this::paraDominio)
-                .toList();
-    }
-
-    private ProjecaoSubstituicaoEntity paraEntidade(ProjecaoSubstituicao dominio) {
-        return new ProjecaoSubstituicaoEntity(
-                dominio.getId(),
-                dominio.getEpiId(),
-                dominio.getDataProjecao(),
-                dominio.getDataEstimadaDescarte(),
-                dominio.getJustificativa()
-        );
-    }
-
-    private ProjecaoSubstituicao paraDominio(ProjecaoSubstituicaoEntity entity) {
-        return ProjecaoSubstituicao.reconstituir(
-                entity.getId(),
-                entity.getEpiId(),
-                entity.getDataProjecao(),
-                entity.getDataEstimadaDescarte(),
-                entity.getJustificativa()
-        );
+        return repositorio.findAllByOrderByDataProjecaoDescIdDesc();
     }
 }
