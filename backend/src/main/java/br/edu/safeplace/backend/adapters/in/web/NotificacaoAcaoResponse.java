@@ -20,16 +20,16 @@ public record NotificacaoAcaoResponse(
 
     public static NotificacaoAcaoResponse deDominio(NotificacaoAcao notificacao) {
         return new NotificacaoAcaoResponse(
-                notificacao.id(),
-                notificacao.idAcao(),
-                notificacao.idOcorrencia(),
-                notificacao.motivo().name(),
-                notificacao.responsavelTipo(),
-                notificacao.responsavelId(),
-                notificacao.responsavelNome(),
-                notificacao.prazo(),
-                notificacao.dataAviso(),
-                notificacao.mensagem(),
-                notificacao.criadaEm());
+                notificacao.getId(),
+                notificacao.getIdAcao(),
+                notificacao.getIdOcorrencia(),
+                notificacao.getMotivo().name(),
+                notificacao.getResponsavelTipo(),
+                notificacao.getResponsavelId(),
+                notificacao.getResponsavelNome(),
+                notificacao.getPrazo(),
+                notificacao.getDataAviso(),
+                notificacao.getMensagem(),
+                notificacao.getCriadaEm());
     }
 }
