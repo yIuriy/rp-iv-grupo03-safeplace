@@ -3,9 +3,7 @@ package br.edu.safeplace.backend.application.usecase;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -159,13 +157,9 @@ public class PlanejarSubstituicaoService implements PlanejarSubstituicaoUseCase 
     @Override
     @Transactional(readOnly = true)
     public List<ProjecaoSubstituicaoOutputDTO> listar() {
-        Map<Integer, Epi> mapaEpis = epiRepository.listar().stream()
-                .filter(e -> e.getId() != null)
-                .collect(Collectors.toMap(Epi::getId, e -> e, (e1, e2) -> e1));
-
         return projecaoRepository.listar().stream()
                 .map(proj -> {
-                    Epi epi = mapaEpis.get(proj.getEpiId());
+                    Epi epi = proj.getEpi();
                     String nome = epi != null ? epi.getNome() : "EPI-" + proj.getEpiId();
                     LocalDate ca = epi != null ? epi.getDataValidadeCa() : null;
                     int qtd = epi != null ? epi.getQuantidade() : 0;

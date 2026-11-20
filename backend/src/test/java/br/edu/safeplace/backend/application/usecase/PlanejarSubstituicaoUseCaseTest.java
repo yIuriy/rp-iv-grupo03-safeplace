@@ -23,6 +23,7 @@ import org.mockito.Mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import br.edu.safeplace.backend.application.dto.input.GerarAnaliseProjecaoInputDTO;
 import br.edu.safeplace.backend.application.dto.output.AlertaSubstituicaoOutputDTO;
@@ -198,7 +199,7 @@ class PlanejarSubstituicaoUseCaseTest {
                 .comLocalizacao("Setor A")
                 .build();
 
-        ProjecaoSubstituicao projecao = ProjecaoSubstituicao.nova(1, hoje, hoje.plusDays(20), "Substituição");
+        ProjecaoSubstituicao projecao = new ProjecaoSubstituicao(epi, hoje, hoje.plusDays(20), "Substituição");
 
         when(epiRepository.listar()).thenReturn(List.of(epi));
         when(projecaoRepository.buscarUltimaPorEpi(1)).thenReturn(Optional.of(projecao));
@@ -265,9 +266,9 @@ class PlanejarSubstituicaoUseCaseTest {
                 .comLocalizacao("Setor B")
                 .build();
 
-        ProjecaoSubstituicao projecao = ProjecaoSubstituicao.reconstituir(10, 1, hoje, hoje.plusDays(50), "Desgaste");
+        ProjecaoSubstituicao projecao = new ProjecaoSubstituicao(epi, hoje, hoje.plusDays(50), "Desgaste");
+        ReflectionTestUtils.setField(projecao, "id", 10);
 
-        when(epiRepository.listar()).thenReturn(List.of(epi));
         when(projecaoRepository.listar()).thenReturn(List.of(projecao));
 
         List<ProjecaoSubstituicaoOutputDTO> lista = useCase.listar();

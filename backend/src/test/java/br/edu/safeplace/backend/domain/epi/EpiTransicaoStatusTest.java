@@ -32,8 +32,14 @@ class EpiTransicaoStatusTest {
     }
 
     private static ManutencaoEpi manutencao(ResultadoManutencao resultado) {
-        return ManutencaoEpi.novo(1, LocalDateTime.of(2026, 11, 6, 10, 0), TipoManutencao.CORRETIVA,
-                "Revisão", resultado, "Técnico");
+        return new ManutencaoEpi.Builder()
+                .epi(epi(StatusEpi.EM_MANUTENCAO, 1))
+                .realizadaEm(LocalDateTime.of(2026, 11, 6, 10, 0))
+                .tipo(TipoManutencao.CORRETIVA)
+                .descricao("Revisão")
+                .resultado(resultado)
+                .responsavelManutencao("Técnico")
+                .build();
     }
 
     @Test

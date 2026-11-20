@@ -428,15 +428,27 @@ class EpiTest {
 
                 assertThat(epi.obterHistoricoManutencao()).isEmpty();
 
-                ManutencaoEpi m1 = ManutencaoEpi.novo(1, LocalDateTime.now(), TipoManutencao.PREVENTIVA,
-                                "Revisão geral", ResultadoManutencao.APROVADO, "Técnico Silva");
+                ManutencaoEpi m1 = new ManutencaoEpi.Builder()
+                                .epi(epi)
+                                .realizadaEm(LocalDateTime.now())
+                                .tipo(TipoManutencao.PREVENTIVA)
+                                .descricao("Revisão geral")
+                                .resultado(ResultadoManutencao.APROVADO)
+                                .responsavelManutencao("Técnico Silva")
+                                .build();
                 epi.adicionarManutencao(m1);
 
                 assertThat(epi.obterHistoricoManutencao()).containsExactly(m1);
 
                 epi.enviarParaManutencao(DATA_CADASTRO);
-                ManutencaoEpi m2 = ManutencaoEpi.novo(1, LocalDateTime.now(), TipoManutencao.CORRETIVA,
-                                "Troca de carneira", ResultadoManutencao.APROVADO, "Técnico Silva");
+                ManutencaoEpi m2 = new ManutencaoEpi.Builder()
+                                .epi(epi)
+                                .realizadaEm(LocalDateTime.now())
+                                .tipo(TipoManutencao.CORRETIVA)
+                                .descricao("Troca de carneira")
+                                .resultado(ResultadoManutencao.APROVADO)
+                                .responsavelManutencao("Técnico Silva")
+                                .build();
                 epi.concluirManutencao(m2);
 
                 assertThat(epi.obterHistoricoManutencao()).containsExactly(m1, m2);

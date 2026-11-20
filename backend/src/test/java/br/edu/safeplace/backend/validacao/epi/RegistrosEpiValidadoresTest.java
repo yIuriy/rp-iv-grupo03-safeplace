@@ -89,32 +89,39 @@ class RegistrosEpiValidadoresTest {
     void manutencaoValidaCamposObrigatorios() {
         LocalDateTime agora = LocalDateTime.now();
 
-        assertThatCode(() -> manutencao.validar(new ManutencaoEpi(1, 10, agora, TipoManutencao.PREVENTIVA,
-                "Desc", ResultadoManutencao.APROVADO, "Resp"))).doesNotThrowAnyException();
-        assertThrows(IllegalArgumentException.class, () -> manutencao.validar(
-                new ManutencaoEpi(1, null, agora, TipoManutencao.PREVENTIVA, "Desc", ResultadoManutencao.APROVADO, "Resp")));
-        assertThrows(IllegalArgumentException.class, () -> manutencao.validar(
-                new ManutencaoEpi(1, 10, null, TipoManutencao.PREVENTIVA, "Desc", ResultadoManutencao.APROVADO, "Resp")));
-        assertThrows(IllegalArgumentException.class, () -> manutencao.validar(
-                new ManutencaoEpi(1, 10, agora, TipoManutencao.PREVENTIVA, "   ", ResultadoManutencao.APROVADO, "Resp")));
-        assertThrows(IllegalArgumentException.class, () -> manutencao.validar(
-                new ManutencaoEpi(1, 10, agora, TipoManutencao.PREVENTIVA, "Desc", null, "Resp")));
-        assertThrows(IllegalArgumentException.class, () -> manutencao.validar(
-                new ManutencaoEpi(1, 10, agora, TipoManutencao.PREVENTIVA, "Desc", ResultadoManutencao.APROVADO, "  ")));
+        assertThatCode(() -> manutencao.validar(new ManutencaoEpi.Builder()
+                .epi(EPI).realizadaEm(agora).tipo(TipoManutencao.PREVENTIVA)
+                .descricao("Desc").resultado(ResultadoManutencao.APROVADO).responsavelManutencao("Resp").build()))
+                .doesNotThrowAnyException();
+        assertThrows(IllegalArgumentException.class, () -> manutencao.validar(new ManutencaoEpi.Builder()
+                .epi(null).realizadaEm(agora).tipo(TipoManutencao.PREVENTIVA)
+                .descricao("Desc").resultado(ResultadoManutencao.APROVADO).responsavelManutencao("Resp").build()));
+        assertThrows(IllegalArgumentException.class, () -> manutencao.validar(new ManutencaoEpi.Builder()
+                .epi(EPI).realizadaEm(null).tipo(TipoManutencao.PREVENTIVA)
+                .descricao("Desc").resultado(ResultadoManutencao.APROVADO).responsavelManutencao("Resp").build()));
+        assertThrows(IllegalArgumentException.class, () -> manutencao.validar(new ManutencaoEpi.Builder()
+                .epi(EPI).realizadaEm(agora).tipo(TipoManutencao.PREVENTIVA)
+                .descricao("   ").resultado(ResultadoManutencao.APROVADO).responsavelManutencao("Resp").build()));
+        assertThrows(IllegalArgumentException.class, () -> manutencao.validar(new ManutencaoEpi.Builder()
+                .epi(EPI).realizadaEm(agora).tipo(TipoManutencao.PREVENTIVA)
+                .descricao("Desc").resultado(null).responsavelManutencao("Resp").build()));
+        assertThrows(IllegalArgumentException.class, () -> manutencao.validar(new ManutencaoEpi.Builder()
+                .epi(EPI).realizadaEm(agora).tipo(TipoManutencao.PREVENTIVA)
+                .descricao("Desc").resultado(ResultadoManutencao.APROVADO).responsavelManutencao("  ").build()));
     }
 
     @Test
     void projecaoValidaCamposObrigatorios() {
-        assertThatCode(() -> projecao.validar(new ProjecaoSubstituicao(null, 1, hoje, hoje.plusDays(10), "Ok")))
+        assertThatCode(() -> projecao.validar(new ProjecaoSubstituicao(EPI, hoje, hoje.plusDays(10), "Ok")))
                 .doesNotThrowAnyException();
         assertThrows(IllegalArgumentException.class, () ->
-                projecao.validar(new ProjecaoSubstituicao(null, null, hoje, hoje.plusDays(10), "Ok")));
+                projecao.validar(new ProjecaoSubstituicao(null, hoje, hoje.plusDays(10), "Ok")));
         assertThrows(IllegalArgumentException.class, () ->
-                projecao.validar(new ProjecaoSubstituicao(null, 1, null, hoje.plusDays(10), "Ok")));
+                projecao.validar(new ProjecaoSubstituicao(EPI, null, hoje.plusDays(10), "Ok")));
         assertThrows(IllegalArgumentException.class, () ->
-                projecao.validar(new ProjecaoSubstituicao(null, 1, hoje, null, "Ok")));
+                projecao.validar(new ProjecaoSubstituicao(EPI, hoje, null, "Ok")));
         assertThrows(IllegalArgumentException.class, () ->
-                projecao.validar(new ProjecaoSubstituicao(null, 1, hoje, hoje.plusDays(10), "   ")));
+                projecao.validar(new ProjecaoSubstituicao(EPI, hoje, hoje.plusDays(10), "   ")));
     }
 
     @Test

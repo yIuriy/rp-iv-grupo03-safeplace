@@ -174,15 +174,15 @@ public class EmprestimoService implements ControlarEmprestimoUseCase {
             epis.atualizarSaldo(epi);
             epis.salvar(retorno);
         } else if (estado == EstadoDevolucao.MANUTENCAO) {
-            ManutencaoEpi manutencao = ManutencaoEpi.novo(
-                    epi.getId(),
-                    LocalDateTime.now(),
-                    TipoManutencao.CORRETIVA,
-                    "Devolução do empréstimo " + emprestimoId + " encaminhada para manutenção",
-                    ResultadoManutencao.REPROVADO,
-                    operador.getNome(),
-                    operador.getId()
-            );
+            ManutencaoEpi manutencao = new ManutencaoEpi.Builder()
+                    .epi(epi)
+                    .realizadaEm(LocalDateTime.now())
+                    .tipo(TipoManutencao.CORRETIVA)
+                    .descricao("Devolução do empréstimo " + emprestimoId + " encaminhada para manutenção")
+                    .resultado(ResultadoManutencao.REPROVADO)
+                    .responsavelManutencao(operador.getNome())
+                    .responsavel(operador)
+                    .build();
             manutencaoValidador.validar(manutencao);
             manutencoes.salvar(manutencao);
             epi.registrarDevolucaoManutencao(manutencao);

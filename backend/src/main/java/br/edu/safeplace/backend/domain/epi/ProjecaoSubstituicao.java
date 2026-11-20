@@ -1,38 +1,67 @@
 package br.edu.safeplace.backend.domain.epi;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
-/**
- * Entidade de domínio ProjecaoSubstituicao (RF21, UC10, US21, issue #108).
- * Segue o Diagrama de Classes: dataProjecao, dataEstimadaDescarte e justificativa,
- * associada ao EPI analisado.
- */
-public class ProjecaoSubstituicao {
-    private final Integer id;
-    private final Integer epiId;
-    private final LocalDate dataProjecao;
-    private final LocalDate dataEstimadaDescarte;
-    private final String justificativa;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 
-    public ProjecaoSubstituicao(Integer id, Integer epiId, LocalDate dataProjecao,
-                               LocalDate dataEstimadaDescarte, String justificativa) {
-        this.id = id;
-        this.epiId = epiId;
+/**
+ * Entidade de domínio ProjecaoSubstituicao (RF21, UC10, US21, issue #108) e entidade JPA da tabela
+ * projecoes_substituicao (#259). Segue o Diagrama de Classes: dataProjecao, dataEstimadaDescarte e
+ * justificativa, associada ao EPI analisado; {@link #getEpiId()} serve aos DTOs que continuam expondo ids.
+ */
+@Entity
+@Table(name = "projecoes_substituicao")
+public class ProjecaoSubstituicao {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "epi_id", nullable = false)
+    private Epi epi;
+
+    @Column(name = "data_projecao", nullable = false)
+    private LocalDate dataProjecao;
+
+    @Column(name = "data_estimada_descarte", nullable = false)
+    private LocalDate dataEstimadaDescarte;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String justificativa;
+
+    @Column(name = "criado_em", nullable = false, updatable = false)
+    private LocalDateTime criadoEm;
+
+    /** Exclusivo do JPA (decisão #254). */
+    protected ProjecaoSubstituicao() {
+    }
+
+    public ProjecaoSubstituicao(Epi epi, LocalDate dataProjecao,
+                                LocalDate dataEstimadaDescarte, String justificativa) {
+        this.epi = epi;
         this.dataProjecao = dataProjecao;
         this.dataEstimadaDescarte = dataEstimadaDescarte;
         this.justificativa = justificativa != null ? justificativa.trim() : null;
+        this.criadoEm = LocalDateTime.now();
     }
 
-    public static ProjecaoSubstituicao nova(Integer epiId, LocalDate dataProjecao,
-                                           LocalDate dataEstimadaDescarte, String justificativa) {
-        return new ProjecaoSubstituicao(null, epiId, dataProjecao, dataEstimadaDescarte, justificativa);
-    }
-
-    public static ProjecaoSubstituicao reconstituir(Integer id, Integer epiId, LocalDate dataProjecao,
-                                                   LocalDate dataEstimadaDescarte, String justificativa) {
-        return new ProjecaoSubstituicao(id, epiId, dataProjecao, dataEstimadaDescarte, justificativa);
+    @PrePersist
+    void preencherCriadoEm() {
+        if (this.criadoEm == null) {
+            this.criadoEm = LocalDateTime.now();
+        }
     }
 
     /**
@@ -64,8 +93,12 @@ public class ProjecaoSubstituicao {
         return id;
     }
 
+    public Epi getEpi() {
+        return epi;
+    }
+
     public Integer getEpiId() {
-        return epiId;
+        return epi != null ? epi.getId() : null;
     }
 
     public LocalDate getDataProjecao() {
@@ -80,27 +113,31 @@ public class ProjecaoSubstituicao {
         return justificativa;
     }
 
+    public LocalDateTime getCriadoEm() {
+        return criadoEm;
+    }
+
+    /** Identidade pelo id gerado (decisão #254, seção 2.3); sem id, só o próprio objeto é igual. */
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ProjecaoSubstituicao that = (ProjecaoSubstituicao) o;
-        return Objects.equals(id, that.id) &&
-                Objects.equals(epiId, that.epiId) &&
-                Objects.equals(dataProjecao, that.dataProjecao) &&
-                Objects.equals(dataEstimadaDescarte, that.dataEstimadaDescarte);
+    public boolean equals(Object outro) {
+        if (this == outro) {
+            return true;
+        }
+        if (!(outro instanceof ProjecaoSubstituicao projecao)) {
+            return false;
+        }
+        return getId() != null && getId().equals(projecao.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, epiId, dataProjecao, dataEstimadaDescarte);
+        return Objects.hashCode(getId());
     }
 
     @Override
     public String toString() {
         return "ProjecaoSubstituicao{" +
                 "id=" + id +
-                ", epiId=" + epiId +
                 ", dataProjecao=" + dataProjecao +
                 ", dataEstimadaDescarte=" + dataEstimadaDescarte +
                 ", justificativa='" + justificativa + '\'' +
