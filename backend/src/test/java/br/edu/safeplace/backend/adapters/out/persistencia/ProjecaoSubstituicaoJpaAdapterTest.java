@@ -1,19 +1,22 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
+import static br.edu.safeplace.backend.suporte.ReferenciasDeTeste.epi;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
 import org.mockito.Mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import br.edu.safeplace.backend.domain.epi.ProjecaoSubstituicao;
 
@@ -32,14 +35,20 @@ class ProjecaoSubstituicaoJpaAdapterTest {
         adapter = new ProjecaoSubstituicaoJpaAdapter(jpaRepository);
     }
 
-    @Test
-    @DisplayName("Deve salvar projeção mapeando corretamente entre domínio e entidade")
-    void deveSalvarProjecao() {
-        ProjecaoSubstituicao dominio = ProjecaoSubstituicao.nova(1, hoje, hoje.plusDays(40), "Desgaste mecânico");
-        ProjecaoSubstituicaoEntity entitySalva = new ProjecaoSubstituicaoEntity(
-                10, 1, hoje, hoje.plusDays(40), "Desgaste mecânico");
+    private ProjecaoSubstituicao projecaoComId(Integer id, Integer epiId, LocalDate dataProjecao,
+                                               LocalDate dataDescarte, String justificativa) {
+        ProjecaoSubstituicao projecao = new ProjecaoSubstituicao(epi(epiId), dataProjecao, dataDescarte, justificativa);
+        ReflectionTestUtils.setField(projecao, "id", id);
+        return projecao;
+    }
 
-        when(jpaRepository.save(any(ProjecaoSubstituicaoEntity.class))).thenReturn(entitySalva);
+    @Test
+    @DisplayName("Deve salvar projeção delegando diretamente ao JpaRepository da entidade de domínio")
+    void deveSalvarProjecao() {
+        ProjecaoSubstituicao dominio = new ProjecaoSubstituicao(epi(1), hoje, hoje.plusDays(40), "Desgaste mecânico");
+        ProjecaoSubstituicao salva = projecaoComId(10, 1, hoje, hoje.plusDays(40), "Desgaste mecânico");
+
+        when(jpaRepository.save(dominio)).thenReturn(salva);
 
         ProjecaoSubstituicao resultado = adapter.salvar(dominio);
 
@@ -54,11 +63,10 @@ class ProjecaoSubstituicaoJpaAdapterTest {
     @Test
     @DisplayName("Deve buscar última projeção de um EPI por ordem decrescente")
     void deveBuscarUltimaPorEpi() {
-        ProjecaoSubstituicaoEntity entity = new ProjecaoSubstituicaoEntity(
-                20, 2, hoje, hoje.plusDays(60), "Desgaste");
+        ProjecaoSubstituicao projecao = projecaoComId(20, 2, hoje, hoje.plusDays(60), "Desgaste");
 
-        when(jpaRepository.findFirstByEpiIdOrderByDataProjecaoDescIdDesc(2))
-                .thenReturn(Optional.of(entity));
+        when(jpaRepository.findFirstByEpiCodigoEPIOrderByDataProjecaoDescIdDesc(2))
+                .thenReturn(Optional.of(projecao));
 
         Optional<ProjecaoSubstituicao> resultado = adapter.buscarUltimaPorEpi(2);
 
@@ -70,13 +78,11 @@ class ProjecaoSubstituicaoJpaAdapterTest {
     @Test
     @DisplayName("Deve listar projeções de um EPI")
     void deveListarPorEpi() {
-        ProjecaoSubstituicaoEntity entity1 = new ProjecaoSubstituicaoEntity(
-                1, 3, hoje, hoje.plusDays(30), "Projeção 1");
-        ProjecaoSubstituicaoEntity entity2 = new ProjecaoSubstituicaoEntity(
-                2, 3, hoje.minusDays(10), hoje.plusDays(20), "Projeção 2");
+        ProjecaoSubstituicao p1 = projecaoComId(1, 3, hoje, hoje.plusDays(30), "Projeção 1");
+        ProjecaoSubstituicao p2 = projecaoComId(2, 3, hoje.minusDays(10), hoje.plusDays(20), "Projeção 2");
 
-        when(jpaRepository.findByEpiIdOrderByDataProjecaoDescIdDesc(3))
-                .thenReturn(List.of(entity1, entity2));
+        when(jpaRepository.findByEpiCodigoEPIOrderByDataProjecaoDescIdDesc(3))
+                .thenReturn(List.of(p1, p2));
 
         List<ProjecaoSubstituicao> lista = adapter.listarPorEpi(3);
 
@@ -88,13 +94,13 @@ class ProjecaoSubstituicaoJpaAdapterTest {
     @Test
     @DisplayName("Deve salvar todas as projeções em lote")
     void deveSalvarTodasEmLote() {
-        ProjecaoSubstituicao p1 = ProjecaoSubstituicao.nova(1, hoje, hoje.plusDays(30), "P1");
-        ProjecaoSubstituicao p2 = ProjecaoSubstituicao.nova(2, hoje, hoje.plusDays(45), "P2");
+        ProjecaoSubstituicao p1 = new ProjecaoSubstituicao(epi(1), hoje, hoje.plusDays(30), "P1");
+        ProjecaoSubstituicao p2 = new ProjecaoSubstituicao(epi(2), hoje, hoje.plusDays(45), "P2");
 
-        ProjecaoSubstituicaoEntity e1 = new ProjecaoSubstituicaoEntity(1, 1, hoje, hoje.plusDays(30), "P1");
-        ProjecaoSubstituicaoEntity e2 = new ProjecaoSubstituicaoEntity(2, 2, hoje, hoje.plusDays(45), "P2");
+        ProjecaoSubstituicao s1 = projecaoComId(1, 1, hoje, hoje.plusDays(30), "P1");
+        ProjecaoSubstituicao s2 = projecaoComId(2, 2, hoje, hoje.plusDays(45), "P2");
 
-        when(jpaRepository.saveAll(any())).thenReturn(List.of(e1, e2));
+        when(jpaRepository.saveAll(any())).thenReturn(List.of(s1, s2));
 
         List<ProjecaoSubstituicao> salvas = adapter.salvar(List.of(p1, p2));
 
