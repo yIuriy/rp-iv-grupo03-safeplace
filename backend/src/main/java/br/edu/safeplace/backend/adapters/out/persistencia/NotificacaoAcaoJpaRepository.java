@@ -1,39 +1,23 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.Repository;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-/** Avisos das ações do plano: só inclusão e consulta (issue #196). */
-public interface NotificacaoAcaoJpaRepository extends Repository<NotificacaoAcaoEntity, Integer> {
+import br.edu.safeplace.backend.domain.ocorrencia.MotivoAvisoAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoAcao;
 
-    /**
-     * Grava o aviso. O alerta de prazo repetido para a mesma ação e o mesmo prazo é ignorado pelo índice
-     * único parcial {@code ux_notificacoes_acao_prazo}; devolve 0 nesse caso e 1 quando grava.
-     */
-    @Modifying
-    @Query(value = """
-            INSERT INTO notificacoes_acao (acao_id, ocorrencia_id, motivo, responsavel_tipo, responsavel_id,
-                                           responsavel_nome, prazo, data_aviso, mensagem, criada_em)
-            VALUES (:acaoId, :ocorrenciaId, :motivo, :responsavelTipo, :responsavelId,
-                    :responsavelNome, :prazo, :dataAviso, :mensagem, :criadaEm)
-            ON CONFLICT (acao_id, prazo) WHERE motivo = 'PRAZO' DO NOTHING
-            """, nativeQuery = true)
-    int inserir(@Param("acaoId") Integer acaoId,
-                @Param("ocorrenciaId") Integer ocorrenciaId,
-                @Param("motivo") String motivo,
-                @Param("responsavelTipo") String responsavelTipo,
-                @Param("responsavelId") Integer responsavelId,
-                @Param("responsavelNome") String responsavelNome,
-                @Param("prazo") LocalDate prazo,
-                @Param("dataAviso") LocalDate dataAviso,
-                @Param("mensagem") String mensagem,
-                @Param("criadaEm") LocalDateTime criadaEm);
+/**
+ * Repositório Spring Data da tabela notificacoes_acao, sobre a própria entidade de domínio (#262).
+ * Sem SQL nativo: a unicidade do alerta de prazo é verificada por {@link #existsByAcaoIdAndPrazoAndMotivo}
+ * e reforçada pelo índice único parcial {@code ux_notificacoes_acao_prazo}.
+ */
+public interface NotificacaoAcaoJpaRepository extends JpaRepository<NotificacaoAcao, Integer> {
 
-    List<NotificacaoAcaoEntity> findAllByOrderByCriadaEmDescIdDesc();
+    boolean existsByAcaoIdAndPrazoAndMotivo(Integer acaoId, LocalDate prazo, MotivoAvisoAcao motivo);
+
+    @EntityGraph(attributePaths = {"acao", "ocorrencia"})
+    List<NotificacaoAcao> findAllByOrderByCriadaEmDescIdDesc();
 }
