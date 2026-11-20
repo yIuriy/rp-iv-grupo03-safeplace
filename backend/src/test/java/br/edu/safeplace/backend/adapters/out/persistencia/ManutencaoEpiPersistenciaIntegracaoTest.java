@@ -22,13 +22,18 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
 import br.edu.safeplace.backend.application.dto.input.ConcluirManutencaoInputDTO;
 import br.edu.safeplace.backend.application.dto.output.ManutencaoEpiOutputDTO;
 import br.edu.safeplace.backend.application.port.in.ControlarManutencaoEpiUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarEpiUseCase;
+import br.edu.safeplace.backend.application.port.out.EpiRepository;
+import br.edu.safeplace.backend.application.port.out.ManutencaoEpiRepository;
 import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
+import br.edu.safeplace.backend.domain.epi.Epi;
+import br.edu.safeplace.backend.domain.epi.ManutencaoEpi;
 import br.edu.safeplace.backend.domain.epi.ResultadoManutencao;
 import br.edu.safeplace.backend.domain.epi.StatusEpi;
 import br.edu.safeplace.backend.domain.epi.TipoManutencao;
@@ -57,6 +62,15 @@ class ManutencaoEpiPersistenciaIntegracaoTest {
 
     @Autowired
     private ControlarManutencaoEpiUseCase manutencoes;
+
+    @Autowired
+    private ManutencaoEpiRepository manutencaoRepository;
+
+    @Autowired
+    private EpiRepository epiRepository;
+
+    @Autowired
+    private TransactionTemplate transacoes;
 
     @Autowired
     private JdbcTemplate jdbc;
@@ -99,6 +113,20 @@ class ManutencaoEpiPersistenciaIntegracaoTest {
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM manutencoes_epi WHERE epi_id = ? AND responsavel_id = ?",
                 Integer.class, epiId, idDoGestorDemo())).isEqualTo(1);
         assertThat(statusNoBanco()).isEqualTo(StatusEpi.DISPONIVEL.name());
+
+        List<ManutencaoEpi> entidades = manutencaoRepository.listarPorEpi(epiId);
+        assertThat(entidades).singleElement().satisfies(entidade -> {
+            assertThat(entidade.getEpi().getId()).isEqualTo(epiId);
+            assertThat(entidade.getEpi().getNome()).isEqualTo("Cinto paraquedista");
+            assertThat(entidade.getResponsavel().getId()).isEqualTo(idDoGestorDemo());
+            assertThat(entidade.getResponsavel().getEmail()).isEqualTo(GESTOR_DEMO);
+        });
+
+        Integer totalNoHistoricoDoEpi = transacoes.execute(status -> {
+            Epi epiCarregado = epiRepository.buscarPorId(epiId).orElseThrow();
+            return epiCarregado.obterHistoricoManutencao().size();
+        });
+        assertThat(totalNoHistoricoDoEpi).isEqualTo(1);
     }
 
     @Test
