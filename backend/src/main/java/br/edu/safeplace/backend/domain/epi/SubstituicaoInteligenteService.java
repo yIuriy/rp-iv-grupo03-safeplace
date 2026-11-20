@@ -121,7 +121,7 @@ public class SubstituicaoInteligenteService implements CalculoProjecaoSubstituic
                     periculosidadeSetor.name(), fatorAmbiente, taxaUso * 100.0);
         }
 
-        return ProjecaoSubstituicao.nova(epiId, dataReferencia, dataEstimadaDescarte, justificativa);
+        return new ProjecaoSubstituicao(epi, dataReferencia, dataEstimadaDescarte, justificativa);
     }
 
     /** Dias corridos de um intervalo de uso; retirada e devolução no mesmo dia contam como 1 dia. */
