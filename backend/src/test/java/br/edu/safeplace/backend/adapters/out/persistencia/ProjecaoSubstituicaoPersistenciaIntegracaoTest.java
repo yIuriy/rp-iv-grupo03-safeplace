@@ -17,8 +17,10 @@ import org.springframework.test.context.DynamicPropertySource;
 
 import br.edu.safeplace.backend.application.dto.input.CadastrarEpiInputDTO;
 import br.edu.safeplace.backend.application.port.in.GerenciarEpiUseCase;
+import br.edu.safeplace.backend.application.port.out.EpiRepository;
 import br.edu.safeplace.backend.application.port.out.ProjecaoSubstituicaoRepository;
 import br.edu.safeplace.backend.domain.epi.ClassificacaoEPI;
+import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.ProjecaoSubstituicao;
 import br.edu.safeplace.backend.suporte.PostgresDeTeste;
 
@@ -38,6 +40,9 @@ class ProjecaoSubstituicaoPersistenciaIntegracaoTest {
 
     @Autowired
     private ProjecaoSubstituicaoRepository projecaoRepository;
+
+    @Autowired
+    private EpiRepository epiRepository;
 
     @Autowired
     private GerenciarEpiUseCase gerenciarEpiUseCase;
@@ -82,10 +87,11 @@ class ProjecaoSubstituicaoPersistenciaIntegracaoTest {
         );
         var epiSalvo = gerenciarEpiUseCase.cadastrar(dto);
         epiId = epiSalvo.id();
+        Epi epiEntidade = epiRepository.buscarPorId(epiId).orElseThrow();
 
         // Cria e salva a projeção
-        ProjecaoSubstituicao projecao = ProjecaoSubstituicao.nova(
-                epiSalvo.id(),
+        ProjecaoSubstituicao projecao = new ProjecaoSubstituicao(
+                epiEntidade,
                 hoje,
                 hoje.plusDays(90),
                 "Substituição por desgaste em ambiente BAIXO"
@@ -94,18 +100,22 @@ class ProjecaoSubstituicaoPersistenciaIntegracaoTest {
         ProjecaoSubstituicao salva = projecaoRepository.salvar(projecao);
 
         assertThat(salva.getId()).isNotNull();
+        assertThat(salva.getEpi().getId()).isEqualTo(epiSalvo.id());
         assertThat(salva.getEpiId()).isEqualTo(epiSalvo.id());
         assertThat(salva.getDataProjecao()).isEqualTo(hoje);
         assertThat(salva.getDataEstimadaDescarte()).isEqualTo(hoje.plusDays(90));
+        assertThat(salva.getCriadoEm()).isNotNull();
 
         // Consulta a última
         Optional<ProjecaoSubstituicao> ultima = projecaoRepository.buscarUltimaPorEpi(epiSalvo.id());
         assertThat(ultima).isPresent();
         assertThat(ultima.get().getId()).isEqualTo(salva.getId());
+        assertThat(ultima.get().getEpi().getNome()).isEqualTo("Luva de Segurança para Projeção");
 
         // Lista por EPI
         List<ProjecaoSubstituicao> lista = projecaoRepository.listarPorEpi(epiSalvo.id());
         assertThat(lista).isNotEmpty();
         assertThat(lista.get(0).getEpiId()).isEqualTo(epiSalvo.id());
+        assertThat(lista.get(0).getEpi().getId()).isEqualTo(epiSalvo.id());
     }
 }
