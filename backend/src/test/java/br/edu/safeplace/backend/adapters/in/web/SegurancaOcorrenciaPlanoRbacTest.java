@@ -397,11 +397,20 @@ class SegurancaOcorrenciaPlanoRbacTest {
         @WithMockUser(roles = "GESTOR_SEGURANCA")
         @DisplayName("Gestor de Segurança consulta os avisos de prazo e de reatribuição das ações (UC07, issue #196)")
         void gestorPodeConsultarAvisosDeAcao() throws Exception {
-            when(consultarNotificacoesAcaoUseCase.listar()).thenReturn(List.of(new NotificacaoAcao(
-                    8, 10, 1, MotivoAvisoAcao.REATRIBUICAO, "SETOR", 4, "Manutenção",
-                    LocalDate.of(2026, 10, 25), LocalDate.of(2026, 10, 18),
-                    "Ação #10 da ocorrência #1 reatribuída a setor Manutenção. Prazo: 25/10/2026. Comunique o novo responsável.",
-                    LocalDateTime.of(2026, 10, 18, 9, 30))));
+            var manutencao = br.edu.safeplace.backend.domain.area_risco.Setor.reconstituir(
+                    4, "Manutenção", null, "Bloco A", br.edu.safeplace.backend.domain.comum.NivelPerigo.MEDIO);
+            var ocorrencia1 = br.edu.safeplace.backend.domain.ocorrencia.Incidente.builder()
+                    .idOcorrencia(1).descricao("Ocorrência").dataOcorrencia(LocalDateTime.of(2026, 10, 18, 8, 0)).build();
+            var acao10 = new br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcaoBuilder()
+                    .id(10).ocorrencia(ocorrencia1).medidasCorretivas("Corrigir").prazo(LocalDate.of(2026, 10, 25))
+                    .responsavelSetor(manutencao).build();
+            NotificacaoAcao notificacao = new NotificacaoAcao(new br.edu.safeplace.backend.domain.ocorrencia.AvisoAcao(
+                    acao10, ocorrencia1, MotivoAvisoAcao.REATRIBUICAO, null, manutencao,
+                    LocalDate.of(2026, 10, 25), LocalDate.of(2026, 10, 18)));
+            org.springframework.test.util.ReflectionTestUtils.setField(notificacao, "id", 8);
+            org.springframework.test.util.ReflectionTestUtils.setField(notificacao, "criadaEm", LocalDateTime.of(2026, 10, 18, 9, 30));
+
+            when(consultarNotificacoesAcaoUseCase.listar()).thenReturn(List.of(notificacao));
 
             mockMvc.perform(get("/api/notificacoes/acoes"))
                     .andExpect(status().isOk())
