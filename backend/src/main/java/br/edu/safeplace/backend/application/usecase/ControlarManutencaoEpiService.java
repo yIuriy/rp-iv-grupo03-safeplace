@@ -11,6 +11,7 @@ import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.epi.Epi;
 import br.edu.safeplace.backend.domain.epi.ManutencaoEpi;
 import br.edu.safeplace.backend.domain.epi.exception.EpiNaoEncontradoException;
+import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,7 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
     private final Validador<ManutencaoEpi> manutencaoValidador;
     private final OperadorAtual operadorAtual;
     private final Clock clock;
+    private final MontadorManutencaoEpi montadorManutencao = new MontadorManutencaoEpi();
 
     /** Usa o validador padrão; usado pelos testes sem contexto Spring. */
     public ControlarManutencaoEpiService(EpiRepository epiRepository,
@@ -120,15 +122,8 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
                 : LocalDate.now(clock);
         epi.validarCaValido(dataReferencia);
 
-        ManutencaoEpi manutencao = ManutencaoEpi.novo(
-                epi.getId(),
-                inputDTO.dataManutencao(),
-                inputDTO.tipoManutencao(),
-                inputDTO.descricao(),
-                inputDTO.resultado(),
-                responsavelEmail != null ? responsavelEmail : inputDTO.responsavelManutencao(),
-                buscarResponsavelId(responsavelEmail)
-        );
+        Colaborador responsavel = buscarResponsavel(responsavelEmail);
+        ManutencaoEpi manutencao = montadorManutencao.montar(inputDTO, epi, responsavel, responsavelEmail);
         // Chain of Responsibility (#264): valida antes de concluir a manutenção e de gravar.
         manutencaoValidador.validar(manutencao);
 
@@ -144,7 +139,7 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
         return ManutencaoEpiOutputDTO.deDominio(salva, epi.getStatus());
     }
 
-    private Integer buscarResponsavelId(String responsavelEmail) {
+    private Colaborador buscarResponsavel(String responsavelEmail) {
         if (responsavelEmail == null || responsavelEmail.isBlank()) {
             if (usuarioRepository != null) {
                 throw new IllegalArgumentException("Responsável autenticado é obrigatório.");
@@ -155,7 +150,6 @@ public class ControlarManutencaoEpiService implements ControlarManutencaoEpiUseC
             throw new IllegalStateException("Repositório de usuários indisponível para rastrear manutenção.");
         }
         return usuarioRepository.buscarPorEmail(responsavelEmail.toLowerCase())
-                .map(usuario -> usuario.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Responsável autenticado não encontrado."));
     }
 
