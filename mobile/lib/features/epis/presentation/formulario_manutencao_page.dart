@@ -114,7 +114,7 @@ class _FormularioManutencaoPageState
             ),
           );
       if (!mounted) return;
-      // O resultado pode mudar o status do EPI (reprovado vai a descarte).
+      // Aprovado devolve o EPI a Disponível, então status e lista mudam.
       ref.invalidate(episProvider);
       ref.invalidate(epiProvider(epiId));
       ref.invalidate(manutencoesProvider(epiId));
@@ -186,7 +186,7 @@ class _FormularioManutencaoPageState
                 rotulo: 'Resultado',
                 valor: _resultado,
                 dica: 'Selecione o resultado',
-                ajuda: 'Reprovado leva o EPI a descarte.',
+                ajuda: 'Aprovado devolve o EPI ao estoque. Reprovado mantém o EPI em manutenção.',
                 opcoes: [
                   for (final resultado in ResultadoManutencao.values)
                     (valor: resultado, rotulo: resultado.rotulo),

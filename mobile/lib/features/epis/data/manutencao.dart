@@ -24,7 +24,8 @@ enum TipoManutencao {
   }
 }
 
-/// `ResultadoManutencao` do backend. Reprovado leva o EPI a descarte.
+/// `ResultadoManutencao` do backend. Aprovado devolve o EPI a Disponível, e reprovado o mantém em
+/// manutenção, sem descarte (RF14).
 enum ResultadoManutencao {
   aprovado('APROVADO', 'Aprovado'),
   reprovado('REPROVADO', 'Reprovado');
