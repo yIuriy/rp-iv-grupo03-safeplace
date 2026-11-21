@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../core/sessao/controlador_sessao.dart';
 import '../features/autenticacao/presentation/login_page.dart';
+import '../features/epis/presentation/epis_page.dart';
 import '../features/inicio/presentation/inicio_page.dart';
 import '../features/usuarios/presentation/exemplo_colaborador_picker_page.dart';
 import '../features/usuarios/presentation/perfil_page.dart';
@@ -18,6 +19,7 @@ abstract final class Rotas {
   static const login = '/login';
   static const inicio = '/';
   static const ocorrencias = '/ocorrencias';
+  static const epis = '/epis';
   static const emprestimos = '/emprestimos';
   static const usuarios = '/usuarios';
   static const perfil = '/perfil';
@@ -67,6 +69,7 @@ Widget _telaDo(ItemMenu item, BuildContext context) {
     );
   }
   return switch (item.rota) {
+    Rotas.epis => const EpisPage(),
     Rotas.usuarios => const UsuariosPage(),
     Rotas.perfil => const PerfilPage(),
     _ => PaginaEmConstrucao(item: item),
