@@ -3,6 +3,7 @@
 // mesma lista. Com o servidor fora do ar, mostra a cópia local com o aviso de modo offline (RNF08).
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/sessao/controlador_sessao.dart';
@@ -149,7 +150,12 @@ class _ListaDeEpis extends StatelessWidget {
         ),
         const SizedBox(height: TokensDimensoes.space8),
         for (final epi in visiveis) ...[
-          CartaoEpi(epi: epi),
+          CartaoEpi(
+            epi: epi,
+            aoTocar: epi.id == null
+                ? null
+                : () => context.go('/epis/${epi.id}'),
+          ),
           const SizedBox(height: TokensDimensoes.space12),
         ],
       ],
