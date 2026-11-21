@@ -19,6 +19,7 @@ import '../data/epis_api.dart';
 import '../data/manutencao.dart';
 import '../data/movimentacao.dart';
 import 'componentes_epi.dart';
+import 'formulario_manutencao_page.dart';
 import 'formulario_movimentacao_page.dart';
 
 /// Rótulo e valor dos dados do EPI. Campos opcionais vazios ficam de fora.
@@ -151,6 +152,14 @@ class _AcoesDoGestor extends ConsumerWidget {
     ).showSnackBar(SnackBar(content: Text(mensagemDeMovimentacao(epi, mov))));
   }
 
+  Future<void> _registrarManutencao(BuildContext context) async {
+    final manutencao = await abrirFormularioManutencao(context, epi: epi);
+    if (manutencao == null || !context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text(mensagemManutencaoRegistrada)));
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gestor =
@@ -166,6 +175,12 @@ class _AcoesDoGestor extends ConsumerWidget {
             onPressed: bloqueado ? null : () => _movimentar(context),
             icon: const Icon(Icons.swap_vert),
             label: const Text('Movimentar estoque'),
+          ),
+          const SizedBox(height: TokensDimensoes.space8),
+          OutlinedButton.icon(
+            onPressed: bloqueado ? null : () => _registrarManutencao(context),
+            icon: const Icon(Icons.build_outlined),
+            label: const Text('Registrar manutenção'),
           ),
           if (somenteLeitura) ...[
             const SizedBox(height: TokensDimensoes.space8),
