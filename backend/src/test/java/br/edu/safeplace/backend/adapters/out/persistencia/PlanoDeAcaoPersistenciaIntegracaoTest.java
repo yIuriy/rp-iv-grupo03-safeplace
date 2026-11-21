@@ -30,13 +30,17 @@ import br.edu.safeplace.backend.application.port.in.EmitirAlertasPrazoUseCase;
 import br.edu.safeplace.backend.application.port.in.GerenciarPlanoDeAcaoUseCase;
 import br.edu.safeplace.backend.application.port.out.LogAuditoriaRepository;
 import br.edu.safeplace.backend.application.port.out.NotificadorAcao;
+import br.edu.safeplace.backend.application.port.out.OcorrenciaRepository;
 import br.edu.safeplace.backend.application.port.out.PlanoDeAcaoRepository;
+import br.edu.safeplace.backend.application.port.out.SetorRepository;
+import br.edu.safeplace.backend.application.port.out.UsuarioRepository;
 import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.LogAuditoria;
-import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.MotivoAvisoAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcaoBuilder;
 import br.edu.safeplace.backend.domain.ocorrencia.ProrrogacaoPrazo;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusPlanoDeAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.AcaoPlanoNaoEncontradaException;
@@ -74,6 +78,15 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
 
     @Autowired
     private PlanoDeAcaoRepository planoRepository;
+
+    @Autowired
+    private OcorrenciaRepository ocorrenciaRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private SetorRepository setorRepository;
 
     @Autowired
     private LogAuditoriaRepository auditoriaRepository;
@@ -169,45 +182,45 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
                 """, Integer.class, cpf, nome, Date.valueOf(LocalDate.of(1990, 1, 1)), email, senha, perfil);
     }
 
+    private Ocorrencia ocorrencia() {
+        return ocorrenciaRepository.buscarPorId(ocorrenciaId).orElseThrow();
+    }
+
     private Colaborador colaborador() {
-        return new Colaborador(colaboradorId, CPF_COLABORADOR, "Operador Teste",
-                LocalDate.of(1990, 1, 1), "operador" + DOMINIO_DE_TESTE, true, LocalDateTime.now(), LocalDateTime.now());
+        return usuarioRepository.buscarPorId(colaboradorId).orElseThrow();
     }
 
     private Setor setor() {
-        return Setor.reconstituir(setorId, "Usinagem e Prensas", "Setor de usinagem pesada", "Bloco B", NivelPerigo.ALTO);
+        return setorRepository.buscarPorId(setorId).orElseThrow();
     }
 
     private GestorDeSeguranca gestor() {
-        return new GestorDeSeguranca(gestorId, CPF_GESTOR, "Gestor Segurança Teste",
-                LocalDate.of(1990, 1, 1), "gestor" + DOMINIO_DE_TESTE, "hash", true, LocalDateTime.now(), LocalDateTime.now());
+        return (GestorDeSeguranca) usuarioRepository.buscarPorId(gestorId).orElseThrow();
     }
 
     @Test
     @DisplayName("Critério 1: Plano/ações, responsáveis e vínculo com ocorrência sobrevivem à nova consulta")
     void devePersistirEConsultarPlanoComResponsaveisEAlertas() {
-        PlanoDeAcao acao = new PlanoDeAcao(
-                null,
-                ocorrenciaId,
-                "Reparar válvula da prensa hidráulica",
-                "Revisar cronograma de inspeções preventivas",
-                hoje.plusDays(10),
-                "ABERTA",
-                colaborador(),
-                null,
-                true,
-                3,
-                gestor()
-        );
+        PlanoDeAcao acao = new PlanoDeAcaoBuilder()
+                .ocorrencia(ocorrencia())
+                .medidasCorretivas("Reparar válvula da prensa hidráulica")
+                .medidasPreventivas("Revisar cronograma de inspeções preventivas")
+                .prazo(hoje.plusDays(10))
+                .responsavelColaborador(colaborador())
+                .alertaAtivo(true)
+                .antecedenciaAlertaDias(3)
+                .gestor(gestor())
+                .build();
 
         PlanoDeAcao salva = planoRepository.salvar(acao);
         assertThat(salva.getId()).isNotNull();
 
-        // Nova consulta independente pelo repositório
+        // Nova consulta independente pelo repositório (LEFT JOIN FETCH sem N+1)
         Optional<PlanoDeAcao> consultada = planoRepository.buscarPorId(salva.getId());
         assertThat(consultada).isPresent();
 
         PlanoDeAcao lida = consultada.get();
+        assertThat(lida.getOcorrencia()).isNotNull();
         assertThat(lida.getIdOcorrencia()).isEqualTo(ocorrenciaId);
         assertThat(lida.getMedidasCorretivas()).isEqualTo("Reparar válvula da prensa hidráulica");
         assertThat(lida.getMedidasPreventivas()).isEqualTo("Revisar cronograma de inspeções preventivas");
@@ -218,29 +231,40 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
         assertThat(lida.getAntecedenciaAlertaDias()).isEqualTo(3);
         assertThat(lida.getResponsavelColaborador()).isNotNull();
         assertThat(lida.getResponsavelColaborador().getId()).isEqualTo(colaboradorId);
+        assertThat(lida.getResponsavelColaborador().getNome()).isEqualTo("Operador Teste");
         assertThat(lida.getResponsavelSetor()).isNull();
+        assertThat(lida.getGestor()).isNotNull();
+        assertThat(lida.getGestor().getId()).isEqualTo(gestorId);
 
         // Consulta listando por ocorrência
         List<PlanoDeAcao> acoesOcorrencia = planoRepository.listarPorOcorrencia(ocorrenciaId);
         assertThat(acoesOcorrencia).hasSize(1);
         assertThat(acoesOcorrencia.get(0).getId()).isEqualTo(salva.getId());
+        assertThat(acoesOcorrencia.get(0).getResponsavelColaborador().getNome()).isEqualTo("Operador Teste");
     }
 
     @Test
     @DisplayName("Critério 2: Prazo inválido não grava; reatribuição e prorrogação preservam valores e histórico")
     void deveRejeitarPrazoInvalidoEPreservarHistoricoDeProrrogacao() {
         // Prazo nulo não grava
-        PlanoDeAcao planoInvalido = new PlanoDeAcao(
-                null, ocorrenciaId, "Medida", null, null, "ABERTA", colaborador(), null, false, null, null
-        );
+        PlanoDeAcao planoInvalido = new PlanoDeAcaoBuilder()
+                .ocorrencia(ocorrencia())
+                .medidasCorretivas("Medida")
+                .responsavelColaborador(colaborador())
+                .build();
         assertThatThrownBy(() -> planoRepository.salvar(planoInvalido))
                 .isInstanceOf(PrazoAcaoInvalidoException.class);
 
         // Grava ação válida inicialmente
-        PlanoDeAcao acao = planoRepository.salvar(new PlanoDeAcao(
-                null, ocorrenciaId, "Ajuste na linha", null, hoje.plusDays(5),
-                "ABERTA", colaborador(), null, true, 2, gestor()
-        ));
+        PlanoDeAcao acao = planoRepository.salvar(new PlanoDeAcaoBuilder()
+                .ocorrencia(ocorrencia())
+                .medidasCorretivas("Ajuste na linha")
+                .prazo(hoje.plusDays(5))
+                .responsavelColaborador(colaborador())
+                .alertaAtivo(true)
+                .antecedenciaAlertaDias(2)
+                .gestor(gestor())
+                .build());
 
         // Reatribuição de responsável: de colaborador para setor
         acao.atualizarResponsavel(setor(), hoje);
@@ -264,18 +288,22 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
 
         List<ProrrogacaoPrazo> historico = planoRepository.listarProrrogacoes(acao.getId());
         assertThat(historico).hasSize(1);
-        assertThat(historico.get(0).prazoAnterior()).isEqualTo(hoje.plusDays(5));
-        assertThat(historico.get(0).novoPrazo()).isEqualTo(hoje.plusDays(15));
-        assertThat(historico.get(0).justificativa()).isEqualTo("Atraso no frete das peças");
+        assertThat(historico.get(0).getPlanoDeAcao().getId()).isEqualTo(acao.getId());
+        assertThat(historico.get(0).getPrazoAnterior()).isEqualTo(hoje.plusDays(5));
+        assertThat(historico.get(0).getNovoPrazo()).isEqualTo(hoje.plusDays(15));
+        assertThat(historico.get(0).getJustificativa()).isEqualTo("Atraso no frete das peças");
+        assertThat(historico.get(0).getCriadoEm()).isNotNull();
     }
 
     @Test
     @DisplayName("Critério 3: Arquivamento de ocorrência conserva planos; sem exclusão física em cascata")
     void arquivamentoDeOcorrenciaConservaPlanos() {
-        PlanoDeAcao acao = planoRepository.salvar(new PlanoDeAcao(
-                null, ocorrenciaId, "Ação preventiva", null, hoje.plusDays(5),
-                "ABERTA", colaborador(), null, false, null, null
-        ));
+        PlanoDeAcao acao = planoRepository.salvar(new PlanoDeAcaoBuilder()
+                .ocorrencia(ocorrencia())
+                .medidasCorretivas("Ação preventiva")
+                .prazo(hoje.plusDays(5))
+                .responsavelColaborador(colaborador())
+                .build());
 
         // Arquivamento da ocorrência (atualiza status para ARQUIVADA sem exclusão física)
         jdbcTemplate.update("UPDATE ocorrencias SET status_ocorrencia = 'ARQUIVADA' WHERE id_ocorrencia = ?", ocorrenciaId);
@@ -358,14 +386,22 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Alerta de prazo é emitido uma vez por ação e prazo, e a prorrogação o rearma (issue #196)")
     void alertaDePrazoEmitidoUmaVezPorPrazo() {
-        PlanoDeAcao acao = planoRepository.salvar(new PlanoDeAcao(
-                null, ocorrenciaId, "Trocar mangueira da prensa", null, hoje.plusDays(2),
-                "ABERTA", colaborador(), null, true, 3, gestor()
-        ));
-        PlanoDeAcao semAlerta = planoRepository.salvar(new PlanoDeAcao(
-                null, ocorrenciaId, "Ação sem alerta", null, hoje.plusDays(1),
-                "ABERTA", null, setor(), false, null, gestor()
-        ));
+        PlanoDeAcao acao = planoRepository.salvar(new PlanoDeAcaoBuilder()
+                .ocorrencia(ocorrencia())
+                .medidasCorretivas("Trocar mangueira da prensa")
+                .prazo(hoje.plusDays(2))
+                .responsavelColaborador(colaborador())
+                .alertaAtivo(true)
+                .antecedenciaAlertaDias(3)
+                .gestor(gestor())
+                .build());
+        PlanoDeAcao semAlerta = planoRepository.salvar(new PlanoDeAcaoBuilder()
+                .ocorrencia(ocorrencia())
+                .medidasCorretivas("Ação sem alerta")
+                .prazo(hoje.plusDays(1))
+                .responsavelSetor(setor())
+                .gestor(gestor())
+                .build());
 
         assertThat(planoRepository.listarAbertasComAlerta()).extracting(PlanoDeAcao::getId)
                 .contains(acao.getId())
@@ -385,24 +421,31 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
         assertThat(emitirAlertasPrazo.emitir(hoje.plusDays(7))).isEqualTo(1);
 
         List<NotificacaoAcao> avisos = consultarNotificacoesAcao.listar().stream()
-                .filter(aviso -> acao.getId().equals(aviso.idAcao()))
+                .filter(aviso -> acao.getId().equals(aviso.getIdAcao()))
                 .toList();
-        assertThat(avisos).extracting(NotificacaoAcao::motivo).containsOnly(MotivoAvisoAcao.PRAZO);
-        assertThat(avisos).extracting(NotificacaoAcao::prazo).containsExactly(hoje.plusDays(10), hoje.plusDays(2));
-        assertThat(avisos.get(1).responsavelTipo()).isEqualTo("COLABORADOR");
-        assertThat(avisos.get(1).responsavelId()).isEqualTo(colaboradorId);
-        assertThat(avisos.get(1).responsavelNome()).isEqualTo("Operador Teste");
-        assertThat(avisos.get(1).idOcorrencia()).isEqualTo(ocorrenciaId);
-        assertThat(avisos.get(1).mensagem()).contains("Ação #" + acao.getId(), "Operador Teste");
+        assertThat(avisos).extracting(NotificacaoAcao::getMotivo).containsOnly(MotivoAvisoAcao.PRAZO);
+        assertThat(avisos).extracting(NotificacaoAcao::getPrazo).containsExactly(hoje.plusDays(10), hoje.plusDays(2));
+        assertThat(avisos.get(1).getAcao().getId()).isEqualTo(acao.getId());
+        assertThat(avisos.get(1).getOcorrencia().getId()).isEqualTo(ocorrenciaId);
+        assertThat(avisos.get(1).getResponsavelTipo()).isEqualTo("COLABORADOR");
+        assertThat(avisos.get(1).getResponsavelId()).isEqualTo(colaboradorId);
+        assertThat(avisos.get(1).getResponsavelNome()).isEqualTo("Operador Teste");
+        assertThat(avisos.get(1).getIdOcorrencia()).isEqualTo(ocorrenciaId);
+        assertThat(avisos.get(1).getMensagem()).contains("Ação #" + acao.getId(), "Operador Teste");
     }
 
     @Test
     @DisplayName("Ação concluída sai da verificação e não recebe alerta (issue #196)")
     void acaoConcluidaNaoRecebeAlerta() {
-        PlanoDeAcao acao = planoRepository.salvar(new PlanoDeAcao(
-                null, ocorrenciaId, "Ação concluída", null, hoje,
-                "ABERTA", colaborador(), null, true, 0, gestor()
-        ));
+        PlanoDeAcao acao = planoRepository.salvar(new PlanoDeAcaoBuilder()
+                .ocorrencia(ocorrencia())
+                .medidasCorretivas("Ação concluída")
+                .prazo(hoje)
+                .responsavelColaborador(colaborador())
+                .alertaAtivo(true)
+                .antecedenciaAlertaDias(0)
+                .gestor(gestor())
+                .build());
         acao.atualizarStatus(StatusPlanoDeAcao.CONCLUIDA);
         planoRepository.salvar(acao);
 
@@ -414,26 +457,29 @@ class PlanoDeAcaoPersistenciaIntegracaoTest {
     @Test
     @DisplayName("Reatribuição grava o aviso ao novo encarregado a cada troca (UC07, alternativo II; issue #196)")
     void reatribuicaoGravaAvisoAoNovoResponsavel() {
-        PlanoDeAcao acao = planoRepository.salvar(new PlanoDeAcao(
-                null, ocorrenciaId, "Instalar guarda-corpo", null, LocalDate.now().plusDays(6),
-                "ABERTA", colaborador(), null, false, null, gestor()
-        ));
+        PlanoDeAcao acao = planoRepository.salvar(new PlanoDeAcaoBuilder()
+                .ocorrencia(ocorrencia())
+                .medidasCorretivas("Instalar guarda-corpo")
+                .prazo(LocalDate.now().plusDays(6))
+                .responsavelColaborador(colaborador())
+                .gestor(gestor())
+                .build());
 
         gerenciarPlanoDeAcao.atualizarResponsavel(acao.getId(), new AtualizarResponsavelInputDTO(null, setorId));
         gerenciarPlanoDeAcao.atualizarResponsavel(acao.getId(), new AtualizarResponsavelInputDTO(colaboradorId, null));
 
         List<NotificacaoAcao> avisos = consultarNotificacoesAcao.listar().stream()
-                .filter(aviso -> acao.getId().equals(aviso.idAcao()))
+                .filter(aviso -> acao.getId().equals(aviso.getIdAcao()))
                 .toList();
         assertThat(avisos).hasSize(2);
-        assertThat(avisos).extracting(NotificacaoAcao::motivo).containsOnly(MotivoAvisoAcao.REATRIBUICAO);
+        assertThat(avisos).extracting(NotificacaoAcao::getMotivo).containsOnly(MotivoAvisoAcao.REATRIBUICAO);
         // Mais recente primeiro: voltou ao colaborador depois de passar pelo setor.
-        assertThat(avisos.get(0).responsavelTipo()).isEqualTo("COLABORADOR");
-        assertThat(avisos.get(1).responsavelTipo()).isEqualTo("SETOR");
-        assertThat(avisos.get(1).responsavelId()).isEqualTo(setorId);
-        assertThat(avisos.get(1).responsavelNome()).isEqualTo("Usinagem e Prensas");
-        assertThat(avisos.get(1).dataAviso()).isEqualTo(LocalDate.now());
-        assertThat(avisos.get(1).mensagem()).contains("reatribuída a setor Usinagem e Prensas");
+        assertThat(avisos.get(0).getResponsavelTipo()).isEqualTo("COLABORADOR");
+        assertThat(avisos.get(1).getResponsavelTipo()).isEqualTo("SETOR");
+        assertThat(avisos.get(1).getResponsavelId()).isEqualTo(setorId);
+        assertThat(avisos.get(1).getResponsavelNome()).isEqualTo("Usinagem e Prensas");
+        assertThat(avisos.get(1).getDataAviso()).isEqualTo(LocalDate.now());
+        assertThat(avisos.get(1).getMensagem()).contains("reatribuída a setor Usinagem e Prensas");
     }
 
     @Test

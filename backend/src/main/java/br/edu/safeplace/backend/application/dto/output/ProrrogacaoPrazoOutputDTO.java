@@ -15,10 +15,10 @@ public record ProrrogacaoPrazoOutputDTO(
             return null;
         }
         return new ProrrogacaoPrazoOutputDTO(
-                p.idAcao(),
-                p.prazoAnterior(),
-                p.novoPrazo(),
-                p.justificativa()
+                p.getIdAcao(),
+                p.getPrazoAnterior(),
+                p.getNovoPrazo(),
+                p.getJustificativa()
         );
     }
 }

@@ -12,9 +12,12 @@ import org.mockito.ArgumentCaptor;
 import br.edu.safeplace.backend.application.port.out.NotificadorAcao;
 import br.edu.safeplace.backend.application.port.out.PlanoDeAcaoRepository;
 import br.edu.safeplace.backend.domain.ocorrencia.AvisoAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
 import br.edu.safeplace.backend.domain.ocorrencia.MotivoAvisoAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.NotificacaoAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcaoBuilder;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,6 +36,11 @@ class NotificacaoAcaoServiceTest {
 
     private final Colaborador carlos = new Colaborador(10, "11122233344", "Carlos", LocalDate.of(1990, 1, 1),
             null, true, LocalDateTime.now(), LocalDateTime.now());
+    private final Ocorrencia ocorrencia5 = Incidente.builder()
+            .idOcorrencia(5)
+            .descricao("Ocorrência 5")
+            .dataOcorrencia(HOJE.atStartOfDay())
+            .build();
 
     private PlanoDeAcaoRepository planoDeAcaoRepository;
     private NotificadorAcao notificadorAcao;
@@ -46,7 +54,9 @@ class NotificacaoAcaoServiceTest {
     }
 
     private PlanoDeAcao acao(int id, LocalDate prazo, int antecedenciaDias) {
-        return new PlanoDeAcao(id, 5, "Medida", null, prazo, "ABERTA", carlos, null, true, antecedenciaDias, null);
+        return new PlanoDeAcaoBuilder()
+                .id(id).ocorrencia(ocorrencia5).medidasCorretivas("Medida").prazo(prazo)
+                .responsavelColaborador(carlos).alertaAtivo(true).antecedenciaAlertaDias(antecedenciaDias).build();
     }
 
     @Test
@@ -84,8 +94,9 @@ class NotificacaoAcaoServiceTest {
     @Test
     @DisplayName("Ação concluída não recebe alerta, mesmo se a consulta a devolver")
     void acaoConcluidaNaoRecebeAlerta() {
-        PlanoDeAcao concluida = new PlanoDeAcao(4, 5, "Medida", null, HOJE.minusDays(1), "CONCLUIDA", carlos, null,
-                true, 1, null);
+        PlanoDeAcao concluida = new PlanoDeAcaoBuilder()
+                .id(4).ocorrencia(ocorrencia5).medidasCorretivas("Medida").prazo(HOJE.minusDays(1))
+                .status("CONCLUIDA").responsavelColaborador(carlos).alertaAtivo(true).antecedenciaAlertaDias(1).build();
         when(planoDeAcaoRepository.listarAbertasComAlerta()).thenReturn(List.of(concluida));
 
         assertThat(useCase.emitir(HOJE)).isZero();
@@ -101,9 +112,8 @@ class NotificacaoAcaoServiceTest {
     @Test
     @DisplayName("A consulta devolve os avisos gravados pela porta")
     void listaAvisos() {
-        NotificacaoAcao aviso = new NotificacaoAcao(1, 1, 5, MotivoAvisoAcao.PRAZO, "COLABORADOR", 10, "Carlos",
-                HOJE, HOJE, "Ação #1 da ocorrência #5 com prazo em 18/10/2026. Responsável: Carlos (colaborador).",
-                LocalDateTime.of(2026, 10, 18, 7, 0));
+        NotificacaoAcao aviso = new NotificacaoAcao(new AvisoAcao(
+                acao(1, HOJE, 0), ocorrencia5, MotivoAvisoAcao.PRAZO, carlos, null, HOJE, HOJE));
         when(notificadorAcao.listar()).thenReturn(List.of(aviso));
 
         assertThat(useCase.listar()).containsExactly(aviso);

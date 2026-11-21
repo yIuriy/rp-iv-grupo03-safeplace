@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import br.edu.safeplace.backend.application.dto.input.AtualizarResponsavelInputDTO;
 import br.edu.safeplace.backend.application.dto.input.AtualizarStatusPlanoInputDTO;
@@ -34,6 +35,7 @@ import br.edu.safeplace.backend.domain.comum.NivelPerigo;
 import br.edu.safeplace.backend.domain.ocorrencia.Acidente;
 import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcaoBuilder;
 import br.edu.safeplace.backend.domain.ocorrencia.ProrrogacaoPrazo;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusPlanoDeAcao;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
@@ -121,9 +123,8 @@ class PlanoDeAcaoAuditoriaTest {
         when(planoDeAcaoRepository.listarPorOcorrencia(10)).thenReturn(List.of());
         when(planoDeAcaoRepository.salvar(any(PlanoDeAcao.class))).thenAnswer(inv -> {
             PlanoDeAcao a = inv.getArgument(0);
-            return new PlanoDeAcao(100, a.getIdOcorrencia(), a.getMedidasCorretivas(),
-                    a.getMedidasPreventivas(), a.getPrazo(), a.getStatus(), a.getResponsavelColaborador(),
-                    a.getResponsavelSetor(), a.isAlertaAtivo(), a.getAntecedenciaAlertaDias(), a.getGestor());
+            ReflectionTestUtils.setField(a, "id", 100);
+            return a;
         });
 
         service.cadastrar(10, input);
@@ -140,9 +141,9 @@ class PlanoDeAcaoAuditoriaTest {
     @Test
     @DisplayName("Atualizar status grava auditoria ALTERACAO descrevendo status anterior e novo")
     void deveAuditarAlteracaoDeStatus() {
-        PlanoDeAcao existente = new PlanoDeAcao(
-                100, 10, "Medida", null, hoje.plusDays(5), "ABERTA", colaborador, null, false, null, null
-        );
+        PlanoDeAcao existente = new PlanoDeAcaoBuilder()
+                .id(100).ocorrencia(ocorrencia).medidasCorretivas("Medida").prazo(hoje.plusDays(5))
+                .responsavelColaborador(colaborador).build();
         when(planoDeAcaoRepository.buscarPorId(100)).thenReturn(Optional.of(existente));
         when(planoDeAcaoRepository.salvar(any(PlanoDeAcao.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -159,9 +160,9 @@ class PlanoDeAcaoAuditoriaTest {
     @Test
     @DisplayName("Atualizar responsável grava auditoria ALTERACAO descrevendo responsável anterior e novo")
     void deveAuditarReatribuicaoDeResponsavel() {
-        PlanoDeAcao existente = new PlanoDeAcao(
-                100, 10, "Medida", null, hoje.plusDays(5), "ABERTA", colaborador, null, false, null, null
-        );
+        PlanoDeAcao existente = new PlanoDeAcaoBuilder()
+                .id(100).ocorrencia(ocorrencia).medidasCorretivas("Medida").prazo(hoje.plusDays(5))
+                .responsavelColaborador(colaborador).build();
         when(planoDeAcaoRepository.buscarPorId(100)).thenReturn(Optional.of(existente));
         when(setorRepository.buscarPorId(5)).thenReturn(Optional.of(setor));
         when(planoDeAcaoRepository.salvar(any(PlanoDeAcao.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -179,9 +180,9 @@ class PlanoDeAcaoAuditoriaTest {
     @Test
     @DisplayName("Configurar alerta grava auditoria ALTERACAO quando houver mudança")
     void deveAuditarConfiguracaoDeAlerta() {
-        PlanoDeAcao existente = new PlanoDeAcao(
-                100, 10, "Medida", null, hoje.plusDays(5), "ABERTA", colaborador, null, false, null, null
-        );
+        PlanoDeAcao existente = new PlanoDeAcaoBuilder()
+                .id(100).ocorrencia(ocorrencia).medidasCorretivas("Medida").prazo(hoje.plusDays(5))
+                .responsavelColaborador(colaborador).build();
         when(planoDeAcaoRepository.buscarPorId(100)).thenReturn(Optional.of(existente));
         when(planoDeAcaoRepository.salvar(any(PlanoDeAcao.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -200,9 +201,9 @@ class PlanoDeAcaoAuditoriaTest {
     @Test
     @DisplayName("Prorrogar prazo grava auditoria PRORROGAR_PRAZO com justificativa")
     void deveAuditarProrrogacaoDePrazo() {
-        PlanoDeAcao existente = new PlanoDeAcao(
-                100, 10, "Medida", null, hoje.plusDays(2), "ABERTA", colaborador, null, false, null, null
-        );
+        PlanoDeAcao existente = new PlanoDeAcaoBuilder()
+                .id(100).ocorrencia(ocorrencia).medidasCorretivas("Medida").prazo(hoje.plusDays(2))
+                .responsavelColaborador(colaborador).build();
         when(planoDeAcaoRepository.buscarPorId(100)).thenReturn(Optional.of(existente));
         when(planoDeAcaoRepository.salvar(any(ProrrogacaoPrazo.class))).thenAnswer(inv -> inv.getArgument(0));
         when(planoDeAcaoRepository.salvar(any(PlanoDeAcao.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -222,9 +223,9 @@ class PlanoDeAcaoAuditoriaTest {
     void deveRegistrarOperadorAutenticadoNaAuditoria() {
         operador.autenticar("gestora@safeplace.com", "GESTOR_SEGURANCA");
 
-        PlanoDeAcao existente = new PlanoDeAcao(
-                100, 10, "Medida", null, hoje.plusDays(5), "ABERTA", colaborador, null, false, null, null
-        );
+        PlanoDeAcao existente = new PlanoDeAcaoBuilder()
+                .id(100).ocorrencia(ocorrencia).medidasCorretivas("Medida").prazo(hoje.plusDays(5))
+                .responsavelColaborador(colaborador).build();
         when(planoDeAcaoRepository.buscarPorId(100)).thenReturn(Optional.of(existente));
         when(planoDeAcaoRepository.salvar(any(PlanoDeAcao.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -240,9 +241,9 @@ class PlanoDeAcaoAuditoriaTest {
         GestorDeSeguranca gestor = GestorDeSeguranca.novo(
                 "Gestor Responsavel", "12345678901", LocalDate.of(1980, 1, 1), "gestor.plano@safeplace.com", "hash"
         );
-        PlanoDeAcao existente = new PlanoDeAcao(
-                100, 10, "Medida", null, hoje.plusDays(5), "ABERTA", colaborador, null, false, null, gestor
-        );
+        PlanoDeAcao existente = new PlanoDeAcaoBuilder()
+                .id(100).ocorrencia(ocorrencia).medidasCorretivas("Medida").prazo(hoje.plusDays(5))
+                .responsavelColaborador(colaborador).gestor(gestor).build();
         when(planoDeAcaoRepository.buscarPorId(100)).thenReturn(Optional.of(existente));
         when(planoDeAcaoRepository.salvar(any(PlanoDeAcao.class))).thenAnswer(inv -> inv.getArgument(0));
 

@@ -1,9 +1,13 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,21 +15,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import br.edu.safeplace.backend.domain.area_risco.Setor;
 import br.edu.safeplace.backend.domain.comum.NivelPerigo;
+import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
+import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcaoBuilder;
 import br.edu.safeplace.backend.domain.ocorrencia.ProrrogacaoPrazo;
-import br.edu.safeplace.backend.domain.ocorrencia.StatusPlanoDeAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PrazoAcaoInvalidoException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Testes de Unidade - PlanoDeAcaoJpaAdapter")
@@ -37,23 +37,12 @@ class PlanoDeAcaoJpaAdapterTest {
     @Mock
     private ProrrogacaoPrazoJpaRepository prorrogacaoRepository;
 
-    @Mock
-    private UsuarioJpaRepository usuarioRepository;
-
-    @Mock
-    private SetorJpaRepository setorRepository;
-
     private PlanoDeAcaoJpaAdapter adapter;
     private final LocalDate hoje = LocalDate.of(2026, 9, 20);
 
     @BeforeEach
     void setUp() {
-        adapter = new PlanoDeAcaoJpaAdapter(
-                planoRepository,
-                prorrogacaoRepository,
-                usuarioRepository,
-                setorRepository
-        );
+        adapter = new PlanoDeAcaoJpaAdapter(planoRepository, prorrogacaoRepository);
     }
 
     private Colaborador colaborador(Integer id) {
@@ -65,39 +54,32 @@ class PlanoDeAcaoJpaAdapterTest {
         return Setor.reconstituir(id, "Usinagem", "Setor de usinagem", "Bloco B", NivelPerigo.ALTO);
     }
 
+    private Ocorrencia ocorrencia(Integer id) {
+        return Incidente.builder()
+                .idOcorrencia(id)
+                .descricao("Ocorrência " + id)
+                .dataOcorrencia(hoje.atStartOfDay())
+                .build();
+    }
+
     @Test
-    @DisplayName("Deve salvar ação nova com colaborador e alerta, registrando auditoria de cadastro")
+    @DisplayName("Deve salvar ação nova com colaborador e alerta delegando diretamente ao JpaRepository")
     void deveSalvarAcaoNovaComColaborador() {
-        PlanoDeAcao plano = new PlanoDeAcao(
-                null,
-                10,
-                "Isolar prensa",
-                "Treinar equipe",
-                hoje.plusDays(5),
-                "ABERTA",
-                colaborador(1),
-                null,
-                true,
-                3,
-                null
-        );
+        PlanoDeAcao plano = new PlanoDeAcaoBuilder()
+                .ocorrencia(ocorrencia(10))
+                .medidasCorretivas("Isolar prensa")
+                .medidasPreventivas("Treinar equipe")
+                .prazo(hoje.plusDays(5))
+                .responsavelColaborador(colaborador(1))
+                .alertaAtivo(true)
+                .antecedenciaAlertaDias(3)
+                .build();
 
-        PlanoDeAcaoEntity salva = new PlanoDeAcaoEntity(
-                100,
-                10,
-                "Isolar prensa",
-                hoje.plusDays(5),
-                "ABERTA",
-                "Treinar equipe",
-                1,
-                null,
-                null,
-                true,
-                3
-        );
-
-        when(planoRepository.save(any(PlanoDeAcaoEntity.class))).thenReturn(salva);
-        when(usuarioRepository.findById(1)).thenReturn(Optional.of(colaborador(1)));
+        when(planoRepository.save(plano)).thenAnswer(inv -> {
+            PlanoDeAcao p = inv.getArgument(0);
+            ReflectionTestUtils.setField(p, "id", 100);
+            return p;
+        });
 
         PlanoDeAcao resultado = adapter.salvar(plano);
 
@@ -115,36 +97,18 @@ class PlanoDeAcaoJpaAdapterTest {
     @Test
     @DisplayName("Deve salvar ação vinculada a setor como responsável")
     void deveSalvarAcaoComSetor() {
-        PlanoDeAcao plano = new PlanoDeAcao(
-                null,
-                10,
-                "Manutenção corretiva",
-                null,
-                hoje.plusDays(7),
-                "ABERTA",
-                null,
-                setor(5),
-                false,
-                null,
-                null
-        );
+        PlanoDeAcao plano = new PlanoDeAcaoBuilder()
+                .ocorrencia(ocorrencia(10))
+                .medidasCorretivas("Manutenção corretiva")
+                .prazo(hoje.plusDays(7))
+                .responsavelSetor(setor(5))
+                .build();
 
-        PlanoDeAcaoEntity salva = new PlanoDeAcaoEntity(
-                101,
-                10,
-                "Manutenção corretiva",
-                hoje.plusDays(7),
-                "ABERTA",
-                null,
-                null,
-                5,
-                null,
-                false,
-                null
-        );
-
-        when(planoRepository.save(any(PlanoDeAcaoEntity.class))).thenReturn(salva);
-        when(setorRepository.findById(5)).thenReturn(Optional.of(setor(5)));
+        when(planoRepository.save(plano)).thenAnswer(inv -> {
+            PlanoDeAcao p = inv.getArgument(0);
+            ReflectionTestUtils.setField(p, "id", 101);
+            return p;
+        });
 
         PlanoDeAcao resultado = adapter.salvar(plano);
 
@@ -157,19 +121,11 @@ class PlanoDeAcaoJpaAdapterTest {
     @Test
     @DisplayName("Deve rejeitar gravação quando prazo for nulo")
     void deveRejeitarPrazoNulo() {
-        PlanoDeAcao plano = new PlanoDeAcao(
-                null,
-                10,
-                "Medida",
-                null,
-                null,
-                "ABERTA",
-                colaborador(1),
-                null,
-                false,
-                null,
-                null
-        );
+        PlanoDeAcao plano = new PlanoDeAcaoBuilder()
+                .ocorrencia(ocorrencia(10))
+                .medidasCorretivas("Medida")
+                .responsavelColaborador(colaborador(1))
+                .build();
 
         assertThatThrownBy(() -> adapter.salvar(plano))
                 .isInstanceOf(PrazoAcaoInvalidoException.class)
@@ -177,39 +133,50 @@ class PlanoDeAcaoJpaAdapterTest {
     }
 
     @Test
-    @DisplayName("Deve salvar prorrogação persistindo no repositório de prorrogações")
+    @DisplayName("Deve salvar prorrogação persistindo diretamente no repositório de prorrogações")
     void deveSalvarProrrogacao() {
+        PlanoDeAcao acao = new PlanoDeAcaoBuilder()
+                .id(100)
+                .ocorrencia(ocorrencia(10))
+                .medidasCorretivas("Medida")
+                .prazo(hoje.plusDays(2))
+                .responsavelColaborador(colaborador(1))
+                .build();
         ProrrogacaoPrazo prorrogacao = new ProrrogacaoPrazo(
-                100,
+                acao,
                 hoje.plusDays(2),
                 hoje.plusDays(10),
                 "Atraso na entrega de peças"
         );
+        when(prorrogacaoRepository.save(prorrogacao)).thenReturn(prorrogacao);
 
         ProrrogacaoPrazo resultado = adapter.salvar(prorrogacao);
 
-        assertThat(resultado).isEqualTo(prorrogacao);
-        verify(prorrogacaoRepository).save(any(ProrrogacaoPrazoEntity.class));
+        assertThat(resultado).isSameAs(prorrogacao);
+        verify(prorrogacaoRepository).save(prorrogacao);
     }
 
     @Test
     @DisplayName("Deve listar histórico de prorrogações ordenado")
     void deveListarProrrogacoes() {
-        ProrrogacaoPrazoEntity e1 = new ProrrogacaoPrazoEntity(
-                1, 100, hoje.plusDays(2), hoje.plusDays(5), "Motivo 1", LocalDateTime.now().minusDays(2)
-        );
-        ProrrogacaoPrazoEntity e2 = new ProrrogacaoPrazoEntity(
-                2, 100, hoje.plusDays(5), hoje.plusDays(10), "Motivo 2", LocalDateTime.now().minusDays(1)
-        );
+        PlanoDeAcao acao = new PlanoDeAcaoBuilder()
+                .id(100)
+                .ocorrencia(ocorrencia(10))
+                .medidasCorretivas("Medida")
+                .prazo(hoje.plusDays(10))
+                .responsavelColaborador(colaborador(1))
+                .build();
+        ProrrogacaoPrazo p1 = new ProrrogacaoPrazo(acao, hoje.plusDays(2), hoje.plusDays(5), "Motivo 1");
+        ProrrogacaoPrazo p2 = new ProrrogacaoPrazo(acao, hoje.plusDays(5), hoje.plusDays(10), "Motivo 2");
 
-        when(prorrogacaoRepository.findByPlanoDeAcaoIdOrderByCriadoEmAscIdAsc(100))
-                .thenReturn(List.of(e1, e2));
+        when(prorrogacaoRepository.listarPorPlanoDeAcao(100))
+                .thenReturn(List.of(p1, p2));
 
         List<ProrrogacaoPrazo> lista = adapter.listarProrrogacoes(100);
 
         assertThat(lista).hasSize(2);
-        assertThat(lista.get(0).prazoAnterior()).isEqualTo(hoje.plusDays(2));
-        assertThat(lista.get(0).novoPrazo()).isEqualTo(hoje.plusDays(5));
-        assertThat(lista.get(1).novoPrazo()).isEqualTo(hoje.plusDays(10));
+        assertThat(lista.get(0).getPrazoAnterior()).isEqualTo(hoje.plusDays(2));
+        assertThat(lista.get(0).getNovoPrazo()).isEqualTo(hoje.plusDays(5));
+        assertThat(lista.get(1).getNovoPrazo()).isEqualTo(hoje.plusDays(10));
     }
 }

@@ -19,6 +19,7 @@ import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Ocorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcaoBuilder;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.AcaoPreventivaObrigatoriaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PlanoDeAcaoInvalidoException;
@@ -79,15 +80,27 @@ class PlanoDeAcaoValidadoresTest {
     }
 
     private static PlanoDeAcao acaoCorretiva(Ocorrencia ocorrencia, LocalDate prazo) {
-        return PlanoDeAcao.definir(ocorrencia, "Isolar máquina", null, prazo,
-                colaborador(1), null, false, null, null, HOJE);
+        return new PlanoDeAcaoBuilder()
+                .ocorrencia(ocorrencia)
+                .medidasCorretivas("Isolar máquina")
+                .prazo(prazo)
+                .responsavelColaborador(colaborador(1))
+                .build();
     }
 
     /** O fluxo do caso de uso: definir a ação e validá-la antes de gravar. */
     private void definirEValidar(Ocorrencia ocorrencia, String corretiva, String preventiva, LocalDate prazo,
             Colaborador colaborador, Setor setor, boolean alertaAtivo, Integer antecedencia, LocalDate hoje) {
-        PlanoDeAcao acao = PlanoDeAcao.definir(ocorrencia, corretiva, preventiva, prazo,
-                colaborador, setor, alertaAtivo, antecedencia, null, hoje);
+        PlanoDeAcao acao = new PlanoDeAcaoBuilder()
+                .ocorrencia(ocorrencia)
+                .medidasCorretivas(corretiva)
+                .medidasPreventivas(preventiva)
+                .prazo(prazo)
+                .responsavelColaborador(colaborador)
+                .responsavelSetor(setor)
+                .alertaAtivo(alertaAtivo)
+                .antecedenciaAlertaDias(antecedencia)
+                .build();
         acaoValidador.validar(new AcaoDoPlano(acao, ocorrencia, hoje));
     }
 
@@ -169,10 +182,14 @@ class PlanoDeAcaoValidadoresTest {
         }
 
         @Test
-        @DisplayName("Lista os problemas na ordem de PlanoDeAcao.definir")
+        @DisplayName("Lista os problemas na ordem de definição da ação")
         void listaProblemasNaOrdemAntiga() {
-            PlanoDeAcao acao = PlanoDeAcao.definir(acidente(NivelPerigo.BAIXO), " ", null, null,
-                    null, null, true, -1, null, HOJE);
+            PlanoDeAcao acao = new PlanoDeAcaoBuilder()
+                    .ocorrencia(acidente(NivelPerigo.BAIXO))
+                    .medidasCorretivas(" ")
+                    .alertaAtivo(true)
+                    .antecedenciaAlertaDias(-1)
+                    .build();
 
             assertThat(acaoValidador.verificar(new AcaoDoPlano(acao, acidente(NivelPerigo.BAIXO), HOJE)).mensagens())
                     .containsExactly(
@@ -200,8 +217,12 @@ class PlanoDeAcaoValidadoresTest {
         @DisplayName("Ocorrência grave com ação preventiva deve ser aceita")
         void ocorrenciaGraveComPreventiva() {
             Acidente critico = acidente(NivelPerigo.CRITICO);
-            PlanoDeAcao preventiva = PlanoDeAcao.definir(critico, null, "Treinar equipe", HOJE,
-                    colaborador(1), null, false, null, null, HOJE);
+            PlanoDeAcao preventiva = new PlanoDeAcaoBuilder()
+                    .ocorrencia(critico)
+                    .medidasPreventivas("Treinar equipe")
+                    .prazo(HOJE)
+                    .responsavelColaborador(colaborador(1))
+                    .build();
 
             planoValidador.validar(new PlanoDaOcorrencia(critico, List.of(acaoCorretiva(critico, HOJE), preventiva)));
         }

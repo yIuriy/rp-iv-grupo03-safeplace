@@ -9,107 +9,83 @@ import br.edu.safeplace.backend.domain.ocorrencia.exception.PlanoDeAcaoInvalidoE
 import br.edu.safeplace.backend.domain.ocorrencia.exception.PrazoAcaoInvalidoException;
 import br.edu.safeplace.backend.domain.usuario.Colaborador;
 import br.edu.safeplace.backend.domain.usuario.GestorDeSeguranca;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 /**
- * Classe {@code PlanoDeAcao} do diagrama de classes (RF07, UC07, US07).
+ * Classe {@code PlanoDeAcao} do diagrama de classes (RF07, UC07, US07) e entidade JPA da tabela
+ * {@code planos_de_acao} (#262, decisão #254).
  *
- * <p>Cada instância é uma ação do plano: o {@code idAcao} recebido pelas operações do diagrama
- * ({@code buscarAcao}, {@code validarProrrogacao}, {@code atualizarPrazo},
- * {@code atualizarResponsavel}) é o identificador desta classe, e o plano de uma ocorrência é o
- * conjunto de instâncias vinculadas a ela ({@code Ocorrencia} 1 para 0..* {@code PlanoDeAcao}). Os atributos
- * {@code medidasCorretivas}, {@code medidasPreventivas}, {@code prazo} e {@code status} são os do
- * modelo; responsável, alerta e vínculo com a ocorrência completam o que UC07 exige. O contrato
- * está em {@code docs/arquitetura/correspondencia-classes-plano-de-acao.md} (issue #97).</p>
+ * <p>Cada instância é uma ação do plano vinculada à ocorrência ({@code Ocorrencia} 1 para 0..*
+ * {@code PlanoDeAcao}), ao responsável único ({@code Colaborador} ou {@code Setor}) e opcionalmente ao
+ * {@code GestorDeSeguranca}. {@link #getIdOcorrencia()} serve aos DTOs e validadores que expõem ids.</p>
  */
+@Entity
+@Table(name = "planos_de_acao")
 public class PlanoDeAcao {
-    private final Integer id;
-    private final Integer idOcorrencia;
-    private final String medidasCorretivas;
-    private final String medidasPreventivas;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ocorrencia_id")
+    private Ocorrencia ocorrencia;
+
+    @Column(name = "medidas_corretivas", columnDefinition = "TEXT")
+    private String medidasCorretivas;
+
+    @Column(name = "medidas_preventivas", columnDefinition = "TEXT")
+    private String medidasPreventivas;
+
     private LocalDate prazo;
+
+    @Column(length = 80)
     private String status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "colaborador_id")
     private Colaborador responsavelColaborador;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "setor_id")
     private Setor responsavelSetor;
+
+    @Column(name = "alerta_ativo", nullable = false)
     private boolean alertaAtivo;
+
+    @Column(name = "antecedencia_alerta_dias")
     private Integer antecedenciaAlertaDias;
-    private final GestorDeSeguranca gestor;
 
-    /**
-     * Reconstitui uma ação já gravada. Não repete as validações temporais do cadastro: uma ação
-     * aberta com prazo vencido continua válida e passa a constar como em atraso.
-     */
-    public PlanoDeAcao(
-            Integer id,
-            Integer idOcorrencia,
-            String medidasCorretivas,
-            String medidasPreventivas,
-            LocalDate prazo,
-            String status,
-            Colaborador responsavelColaborador,
-            Setor responsavelSetor,
-            boolean alertaAtivo,
-            Integer antecedenciaAlertaDias,
-            GestorDeSeguranca gestor) {
-        // Responsável único e alerta são validados por AcaoPlanoValidador antes de salvar (#266).
-        this.id = id;
-        this.idOcorrencia = idOcorrencia;
-        this.medidasCorretivas = normalizar(medidasCorretivas);
-        this.medidasPreventivas = normalizar(medidasPreventivas);
-        this.prazo = prazo;
-        this.status = status != null && !status.isBlank() ? status.trim() : null;
-        this.responsavelColaborador = responsavelColaborador;
-        this.responsavelSetor = responsavelSetor;
-        this.alertaAtivo = alertaAtivo;
-        this.antecedenciaAlertaDias = alertaAtivo ? antecedenciaAlertaDias : null;
-        this.gestor = gestor;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "gestor_id")
+    private GestorDeSeguranca gestor;
+
+    /** Exclusivo do JPA (decisão #254). */
+    protected PlanoDeAcao() {
     }
 
-    /**
-     * Forma anterior ao contrato, ainda usada pelo plano embutido no cadastro de ocorrência
-     * ({@code ocorrencias.plano_de_acao_id}). Preserva o texto de {@code status} como foi gravado;
-     * a transição desse vínculo para {@code Ocorrencia} 1 para 0..* {@code PlanoDeAcao} fica em #98/#99.
-     */
-    public PlanoDeAcao(Integer id, String medidasCorretivas, LocalDate prazo, String status,
-            String medidasPreventivas) {
-        this(id, null, medidasCorretivas, medidasPreventivas, prazo, status, null, null, false, null, null);
-    }
-
-    /**
-     * Fábrica da forma anterior ao contrato; ver o construtor de cinco argumentos.
-     */
-    public static PlanoDeAcao novo(String medidasCorretivas, LocalDate prazo, String status,
-            String medidasPreventivas) {
-        return new PlanoDeAcao(null, medidasCorretivas, prazo, status, medidasPreventivas);
-    }
-
-    /**
-     * Define uma nova ação vinculada a uma ocorrência registrada (UC07, cenário principal, passo 5).
-     * Informe exatamente um responsável: {@code responsavelColaborador} ou {@code responsavelSetor}.
-     */
-    public static PlanoDeAcao definir(
-            Ocorrencia ocorrencia,
-            String medidasCorretivas,
-            String medidasPreventivas,
-            LocalDate prazo,
-            Colaborador responsavelColaborador,
-            Setor responsavelSetor,
-            boolean alertaAtivo,
-            Integer antecedenciaAlertaDias,
-            GestorDeSeguranca gestor,
-            LocalDate dataAtual) {
-        // Ocorrência, medidas, responsável, prazo e alerta: AcaoPlanoValidador, antes de salvar (#266).
-        return new PlanoDeAcao(
-                null,
-                ocorrencia != null ? ocorrencia.getId() : null,
-                medidasCorretivas,
-                medidasPreventivas,
-                prazo,
-                StatusPlanoDeAcao.ABERTA.name(),
-                responsavelColaborador,
-                responsavelSetor,
-                alertaAtivo,
-                antecedenciaAlertaDias,
-                gestor);
+    /** Construção exclusiva via {@link PlanoDeAcaoBuilder} (#262). */
+    PlanoDeAcao(PlanoDeAcaoBuilder builder) {
+        // Ocorrência, medidas, responsável único, prazo e alerta são validados por AcaoPlanoValidador (#266).
+        this.id = builder.getId();
+        this.ocorrencia = builder.getOcorrencia();
+        this.medidasCorretivas = normalizar(builder.getMedidasCorretivas());
+        this.medidasPreventivas = normalizar(builder.getMedidasPreventivas());
+        this.prazo = builder.getPrazo();
+        String statusInformado = builder.getStatus();
+        this.status = statusInformado != null && !statusInformado.isBlank() ? statusInformado.trim() : null;
+        this.responsavelColaborador = builder.getResponsavelColaborador();
+        this.responsavelSetor = builder.getResponsavelSetor();
+        this.alertaAtivo = builder.isAlertaAtivo();
+        this.antecedenciaAlertaDias = builder.isAlertaAtivo() ? builder.getAntecedenciaAlertaDias() : null;
+        this.gestor = builder.getGestor();
     }
 
     /**
@@ -157,7 +133,7 @@ public class PlanoDeAcao {
      */
     public ProrrogacaoPrazo prorrogarPrazo(LocalDate novoPrazo, String justificativa, LocalDate dataAtual) {
         validarProrrogacao(novoPrazo, justificativa, dataAtual);
-        ProrrogacaoPrazo prorrogacao = new ProrrogacaoPrazo(id, prazo, novoPrazo, justificativa.trim());
+        ProrrogacaoPrazo prorrogacao = new ProrrogacaoPrazo(this, prazo, novoPrazo, justificativa.trim());
         this.prazo = novoPrazo;
         return prorrogacao;
     }
@@ -257,8 +233,12 @@ public class PlanoDeAcao {
         return id;
     }
 
+    public Ocorrencia getOcorrencia() {
+        return ocorrencia;
+    }
+
     public Integer getIdOcorrencia() {
-        return idOcorrencia;
+        return ocorrencia != null ? ocorrencia.getId() : null;
     }
 
     public String getMedidasCorretivas() {
@@ -298,7 +278,7 @@ public class PlanoDeAcao {
     }
 
     private AvisoAcao aviso(MotivoAvisoAcao motivo, LocalDate dataAviso) {
-        return new AvisoAcao(id, idOcorrencia, motivo, responsavelColaborador, responsavelSetor, prazo, dataAviso);
+        return new AvisoAcao(this, ocorrencia, motivo, responsavelColaborador, responsavelSetor, prazo, dataAviso);
     }
 
     private void exigirAberta(String operacao) {
@@ -346,5 +326,22 @@ public class PlanoDeAcao {
 
     private static String normalizar(String texto) {
         return isVazio(texto) ? null : texto.trim();
+    }
+
+    /** Identidade pelo id gerado (decisão #254, seção 2.3); sem id, só o próprio objeto é igual. */
+    @Override
+    public boolean equals(Object outro) {
+        if (this == outro) {
+            return true;
+        }
+        if (!(outro instanceof PlanoDeAcao plano)) {
+            return false;
+        }
+        return getId() != null && getId().equals(plano.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
     }
 }

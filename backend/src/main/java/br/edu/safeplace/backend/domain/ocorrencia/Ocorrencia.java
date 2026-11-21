@@ -19,7 +19,6 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 
 /**
  * Relato de acidente ou incidente (UC05, UC09). É a raiz da hierarquia de ocorrências,
@@ -72,11 +71,9 @@ public abstract class Ocorrencia {
     @Column(name = "local")
     private String localInformado;
 
-    /** Preserva a coluna legada no banco sem cascata de gravação (issue #196). */
-    @Column(name = "plano_de_acao_id", insertable = false, updatable = false)
-    private Integer planoDeAcaoId;
-
-    @Transient
+    /** Preserva a coluna legada no banco sem cascata de gravação (issue #196, #262). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "plano_de_acao_id", insertable = false, updatable = false)
     private PlanoDeAcao planoDeAcao;
 
     /** Exclusivo do JPA (decisão #254). */
@@ -98,7 +95,6 @@ public abstract class Ocorrencia {
                 ? builder.getLocalInformado().trim()
                 : null;
         this.planoDeAcao = builder.getPlanoDeAcao();
-        this.planoDeAcaoId = builder.getPlanoDeAcao() != null ? builder.getPlanoDeAcao().getId() : null;
     }
 
     public void transicionarPara(StatusOcorrencia novoStatus) {

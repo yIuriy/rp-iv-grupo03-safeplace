@@ -61,13 +61,24 @@ class PlanoDeAcaoTest {
     }
 
     private static PlanoDeAcao acaoCorretiva(Ocorrencia ocorrencia, LocalDate prazo) {
-        return PlanoDeAcao.definir(ocorrencia, "Isolar máquina", null, prazo,
-                colaborador(1), null, false, null, null, HOJE);
+        return new PlanoDeAcaoBuilder()
+                .ocorrencia(ocorrencia)
+                .medidasCorretivas("Isolar máquina")
+                .prazo(prazo)
+                .responsavelColaborador(colaborador(1))
+                .build();
     }
 
     private static PlanoDeAcao acaoComAlerta(LocalDate prazo, int antecedencia) {
-        return PlanoDeAcao.definir(acidente(NivelPerigo.BAIXO), "Isolar máquina", "Treinar equipe", prazo,
-                colaborador(1), null, true, antecedencia, null, HOJE);
+        return new PlanoDeAcaoBuilder()
+                .ocorrencia(acidente(NivelPerigo.BAIXO))
+                .medidasCorretivas("Isolar máquina")
+                .medidasPreventivas("Treinar equipe")
+                .prazo(prazo)
+                .responsavelColaborador(colaborador(1))
+                .alertaAtivo(true)
+                .antecedenciaAlertaDias(antecedencia)
+                .build();
     }
 
     @Nested
@@ -91,8 +102,12 @@ class PlanoDeAcaoTest {
         @Test
         @DisplayName("Deve aceitar setor como responsável, sem conta de acesso")
         void deveAceitarSetorComoResponsavel() {
-            PlanoDeAcao acao = PlanoDeAcao.definir(acidente(NivelPerigo.BAIXO), null, "Sinalizar área",
-                    HOJE, null, setor(3), false, null, null, HOJE);
+            PlanoDeAcao acao = new PlanoDeAcaoBuilder()
+                    .ocorrencia(acidente(NivelPerigo.BAIXO))
+                    .medidasPreventivas("Sinalizar área")
+                    .prazo(HOJE)
+                    .responsavelSetor(setor(3))
+                    .build();
 
             assertThat(acao.getResponsavelSetor().getId()).isEqualTo(3);
             assertThat(acao.getResponsavelColaborador()).isNull();
@@ -139,7 +154,13 @@ class PlanoDeAcaoTest {
         @Test
         @DisplayName("Situação legada fora do contrato é preservada, mas não é convertida por suposição")
         void situacaoLegadaPreservada() {
-            PlanoDeAcao legado = new PlanoDeAcao(5, "Isolar máquina", HOJE, "PENDENTE", "Treinar");
+            PlanoDeAcao legado = new PlanoDeAcaoBuilder()
+                    .id(5)
+                    .medidasCorretivas("Isolar máquina")
+                    .medidasPreventivas("Treinar")
+                    .prazo(HOJE)
+                    .status("PENDENTE")
+                    .build();
 
             assertThat(legado.getStatus()).isEqualTo("PENDENTE");
             assertThat(legado.getSituacao()).isEmpty();
@@ -161,9 +182,10 @@ class PlanoDeAcaoTest {
 
             ProrrogacaoPrazo registro = acao.prorrogarPrazo(HOJE.plusDays(10), "  Aguardando peça  ", HOJE);
 
-            assertThat(registro.prazoAnterior()).isEqualTo(HOJE.plusDays(2));
-            assertThat(registro.novoPrazo()).isEqualTo(HOJE.plusDays(10));
-            assertThat(registro.justificativa()).isEqualTo("Aguardando peça");
+            assertThat(registro.getPlanoDeAcao()).isSameAs(acao);
+            assertThat(registro.getPrazoAnterior()).isEqualTo(HOJE.plusDays(2));
+            assertThat(registro.getNovoPrazo()).isEqualTo(HOJE.plusDays(10));
+            assertThat(registro.getJustificativa()).isEqualTo("Aguardando peça");
             assertThat(acao.getPrazo()).isEqualTo(HOJE.plusDays(10));
         }
 

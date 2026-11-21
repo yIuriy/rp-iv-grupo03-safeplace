@@ -21,6 +21,7 @@ import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
 import br.edu.safeplace.backend.domain.ocorrencia.MotivoAvisoAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
 import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcaoBuilder;
 import br.edu.safeplace.backend.domain.ocorrencia.ProrrogacaoPrazo;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusPlanoDeAcao;
@@ -38,6 +39,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -134,9 +136,8 @@ class PlanoDeAcaoServiceTest {
         when(planoDeAcaoRepository.listarPorOcorrencia(2)).thenReturn(List.of());
         when(planoDeAcaoRepository.salvar(any(PlanoDeAcao.class))).thenAnswer(inv -> {
             PlanoDeAcao p = inv.getArgument(0);
-            return new PlanoDeAcao(100, p.getIdOcorrencia(), p.getMedidasCorretivas(), p.getMedidasPreventivas(),
-                    p.getPrazo(), p.getStatus(), p.getResponsavelColaborador(), p.getResponsavelSetor(),
-                    p.isAlertaAtivo(), p.getAntecedenciaAlertaDias(), p.getGestor());
+            ReflectionTestUtils.setField(p, "id", 100);
+            return p;
         });
 
         CriarAcaoPlanoInputDTO input = new CriarAcaoPlanoInputDTO(
@@ -163,9 +164,8 @@ class PlanoDeAcaoServiceTest {
         when(planoDeAcaoRepository.listarPorOcorrencia(2)).thenReturn(List.of());
         when(planoDeAcaoRepository.salvar(any(PlanoDeAcao.class))).thenAnswer(inv -> {
             PlanoDeAcao p = inv.getArgument(0);
-            return new PlanoDeAcao(100, p.getIdOcorrencia(), p.getMedidasCorretivas(), p.getMedidasPreventivas(),
-                    p.getPrazo(), p.getStatus(), p.getResponsavelColaborador(), p.getResponsavelSetor(),
-                    p.isAlertaAtivo(), p.getAntecedenciaAlertaDias(), p.getGestor());
+            ReflectionTestUtils.setField(p, "id", 100);
+            return p;
         });
 
         useCase.cadastrar(2, new CriarAcaoPlanoInputDTO(
@@ -260,9 +260,9 @@ class PlanoDeAcaoServiceTest {
     @DisplayName("Deve prorrogar prazo com justificativa")
     void deveProrrogarPrazoComJustificativa() {
         LocalDate prazoAtual = LocalDate.now().plusDays(5);
-        PlanoDeAcao acao = new PlanoDeAcao(
-                50, 2, "Conserto", null, prazoAtual, "ABERTA", colaborador, null, true, 3, null
-        );
+        PlanoDeAcao acao = new PlanoDeAcaoBuilder()
+                .id(50).ocorrencia(ocorrenciaLeve).medidasCorretivas("Conserto").prazo(prazoAtual)
+                .responsavelColaborador(colaborador).alertaAtivo(true).antecedenciaAlertaDias(3).build();
         when(planoDeAcaoRepository.buscarPorId(50)).thenReturn(Optional.of(acao));
         when(planoDeAcaoRepository.salvar(any(ProrrogacaoPrazo.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -280,9 +280,9 @@ class PlanoDeAcaoServiceTest {
     @Test
     @DisplayName("Deve reatribuir responsável da ação para setor")
     void deveReatribuirResponsavelParaSetor() {
-        PlanoDeAcao acao = new PlanoDeAcao(
-                60, 2, "Manutenção geral", null, LocalDate.now().plusDays(5), "ABERTA", colaborador, null, false, null, null
-        );
+        PlanoDeAcao acao = new PlanoDeAcaoBuilder()
+                .id(60).ocorrencia(ocorrenciaLeve).medidasCorretivas("Manutenção geral")
+                .prazo(LocalDate.now().plusDays(5)).responsavelColaborador(colaborador).build();
         when(planoDeAcaoRepository.buscarPorId(60)).thenReturn(Optional.of(acao));
         when(setorRepository.buscarPorId(20)).thenReturn(Optional.of(setor));
         when(planoDeAcaoRepository.salvar(any(PlanoDeAcao.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -310,9 +310,9 @@ class PlanoDeAcaoServiceTest {
     void deveAvisarNovoColaboradorNaReatribuicao() {
         Colaborador novo = new Colaborador(11, "55566677788", "Beatriz", LocalDate.of(1992, 2, 2), null, true,
                 LocalDateTime.now(), LocalDateTime.now());
-        PlanoDeAcao acao = new PlanoDeAcao(
-                61, 2, "Troca de guarda-corpo", null, LocalDate.now().plusDays(8), "ABERTA", null, setor, false, null, null
-        );
+        PlanoDeAcao acao = new PlanoDeAcaoBuilder()
+                .id(61).ocorrencia(ocorrenciaLeve).medidasCorretivas("Troca de guarda-corpo")
+                .prazo(LocalDate.now().plusDays(8)).responsavelSetor(setor).build();
         when(planoDeAcaoRepository.buscarPorId(61)).thenReturn(Optional.of(acao));
         when(usuarioRepository.buscarPorId(11)).thenReturn(Optional.of(novo));
         when(planoDeAcaoRepository.salvar(any(PlanoDeAcao.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -330,9 +330,9 @@ class PlanoDeAcaoServiceTest {
     @Test
     @DisplayName("Reatribuição recusada não grava nem avisa")
     void reatribuicaoRecusadaNaoAvisa() {
-        PlanoDeAcao acao = new PlanoDeAcao(
-                62, 2, "Manutenção geral", null, LocalDate.now().plusDays(5), "ABERTA", null, setor, false, null, null
-        );
+        PlanoDeAcao acao = new PlanoDeAcaoBuilder()
+                .id(62).ocorrencia(ocorrenciaLeve).medidasCorretivas("Manutenção geral")
+                .prazo(LocalDate.now().plusDays(5)).responsavelSetor(setor).build();
         when(planoDeAcaoRepository.buscarPorId(62)).thenReturn(Optional.of(acao));
         when(setorRepository.buscarPorId(20)).thenReturn(Optional.of(setor));
 
@@ -367,12 +367,14 @@ class PlanoDeAcaoServiceTest {
     @Test
     @DisplayName("Alerta devido e atraso são calculados no servidor (issue #196)")
     void alertaEAtrasoCalculadosNoServidor() {
-        PlanoDeAcao vencida = new PlanoDeAcao(
-                80, 2, "Sinalizar rampa", null, LocalDate.now().minusDays(1), "ABERTA", colaborador, null, true, 2, null
-        );
-        PlanoDeAcao futura = new PlanoDeAcao(
-                81, 2, "Revisar extintores", null, LocalDate.now().plusDays(10), "ABERTA", colaborador, null, true, 2, null
-        );
+        PlanoDeAcao vencida = new PlanoDeAcaoBuilder()
+                .id(80).ocorrencia(ocorrenciaLeve).medidasCorretivas("Sinalizar rampa")
+                .prazo(LocalDate.now().minusDays(1)).responsavelColaborador(colaborador)
+                .alertaAtivo(true).antecedenciaAlertaDias(2).build();
+        PlanoDeAcao futura = new PlanoDeAcaoBuilder()
+                .id(81).ocorrencia(ocorrenciaLeve).medidasCorretivas("Revisar extintores")
+                .prazo(LocalDate.now().plusDays(10)).responsavelColaborador(colaborador)
+                .alertaAtivo(true).antecedenciaAlertaDias(2).build();
         when(planoDeAcaoRepository.buscarPorId(80)).thenReturn(Optional.of(vencida));
         when(planoDeAcaoRepository.buscarPorId(81)).thenReturn(Optional.of(futura));
 
@@ -389,9 +391,9 @@ class PlanoDeAcaoServiceTest {
     @Test
     @DisplayName("Deve atualizar status da ação para CONCLUIDA")
     void deveAtualizarStatusDaAcao() {
-        PlanoDeAcao acao = new PlanoDeAcao(
-                70, 2, "Treinamento", null, LocalDate.now().plusDays(10), "ABERTA", colaborador, null, false, null, null
-        );
+        PlanoDeAcao acao = new PlanoDeAcaoBuilder()
+                .id(70).ocorrencia(ocorrenciaLeve).medidasCorretivas("Treinamento")
+                .prazo(LocalDate.now().plusDays(10)).responsavelColaborador(colaborador).build();
         when(planoDeAcaoRepository.buscarPorId(70)).thenReturn(Optional.of(acao));
         when(planoDeAcaoRepository.salvar(any(PlanoDeAcao.class))).thenAnswer(inv -> inv.getArgument(0));
 

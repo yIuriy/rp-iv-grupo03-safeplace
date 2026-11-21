@@ -21,6 +21,8 @@ import br.edu.safeplace.backend.domain.ocorrencia.CausaRaizAcidente;
 import br.edu.safeplace.backend.domain.ocorrencia.Incidente;
 import br.edu.safeplace.backend.domain.ocorrencia.MotivoAvisoAcao;
 import br.edu.safeplace.backend.domain.ocorrencia.NumeroProtocoloCAT;
+import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcao;
+import br.edu.safeplace.backend.domain.ocorrencia.PlanoDeAcaoBuilder;
 import br.edu.safeplace.backend.domain.ocorrencia.StatusOcorrencia;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.DataOcorrenciaInvalidaException;
 import br.edu.safeplace.backend.domain.ocorrencia.exception.ProtocoloCATInvalidoException;
@@ -170,14 +172,19 @@ class OcorrenciaValidadorTest {
         Colaborador maria = new Colaborador(7, "52998224725", "Maria Souza", LocalDate.of(1990, 1, 1),
                 null, true, LocalDateTime.now(), LocalDateTime.now());
         Setor manutencao = Setor.reconstituir(3, "Manutenção", null, "Bloco B", NivelPerigo.MEDIO);
+        Incidente ocorrencia5 = Incidente.builder().idOcorrencia(5).descricao("Ocorrência").dataOcorrencia(hoje.atStartOfDay()).build();
+        PlanoDeAcao acao12 = new PlanoDeAcaoBuilder().id(12).ocorrencia(ocorrencia5).medidasCorretivas("Medida").prazo(hoje).responsavelColaborador(maria).build();
+        PlanoDeAcao acaoSemId = new PlanoDeAcaoBuilder().ocorrencia(ocorrencia5).medidasCorretivas("Medida").prazo(hoje).responsavelColaborador(maria).build();
 
-        assertThatThrownBy(() -> aviso.validar(new AvisoAcao(null, 5, MotivoAvisoAcao.PRAZO, maria, null, hoje, hoje)))
+        assertThatThrownBy(() -> aviso.validar(new AvisoAcao(null, ocorrencia5, MotivoAvisoAcao.PRAZO, maria, null, hoje, hoje)))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> aviso.validar(new AvisoAcao(12, 5, MotivoAvisoAcao.PRAZO, maria, null, null, hoje)))
+        assertThatThrownBy(() -> aviso.validar(new AvisoAcao(acaoSemId, ocorrencia5, MotivoAvisoAcao.PRAZO, maria, null, hoje, hoje)))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> aviso.validar(new AvisoAcao(12, 5, MotivoAvisoAcao.PRAZO, null, null, hoje, hoje)))
+        assertThatThrownBy(() -> aviso.validar(new AvisoAcao(acao12, ocorrencia5, MotivoAvisoAcao.PRAZO, maria, null, null, hoje)))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> aviso.validar(new AvisoAcao(12, 5, MotivoAvisoAcao.PRAZO, maria, manutencao, hoje, hoje)))
+        assertThatThrownBy(() -> aviso.validar(new AvisoAcao(acao12, ocorrencia5, MotivoAvisoAcao.PRAZO, null, null, hoje, hoje)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> aviso.validar(new AvisoAcao(acao12, ocorrencia5, MotivoAvisoAcao.PRAZO, maria, manutencao, hoje, hoje)))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> aviso.validar(null)).hasMessage("O aviso exige uma ação já registrada.");
     }
