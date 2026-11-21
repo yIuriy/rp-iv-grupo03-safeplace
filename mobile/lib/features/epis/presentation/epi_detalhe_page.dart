@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/sessao/controlador_sessao.dart';
 import '../../../shared/formularios/data.dart';
 import '../../../shared/offline/cache_offline.dart';
 import '../../../shared/offline/conteudo_com_cache.dart';
@@ -18,6 +19,7 @@ import '../data/epis_api.dart';
 import '../data/manutencao.dart';
 import '../data/movimentacao.dart';
 import 'componentes_epi.dart';
+import 'formulario_movimentacao_page.dart';
 
 /// Rótulo e valor dos dados do EPI. Campos opcionais vazios ficam de fora.
 List<(String, String)> dadosDoEpi(Epi epi) {
@@ -98,10 +100,11 @@ class _ConteudoDoEpi extends ConsumerWidget {
       falha: 'Não foi possível carregar o EPI.',
       descreverFalha: descreverFalhaDeConsultaEpi,
       aoTentarDeNovo: () => ref.invalidate(epiProvider(id)),
-      construir: (epi, _) => Column(
+      construir: (epi, somenteLeitura) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _DadosDoEpi(epi: epi),
+          _AcoesDoGestor(epi: epi, somenteLeitura: somenteLeitura),
           const SizedBox(height: TokensDimensoes.space24),
           _Historico<Movimentacao>(
             titulo: 'Histórico de movimentações',
@@ -126,6 +129,52 @@ class _ConteudoDoEpi extends ConsumerWidget {
             ),
             item: (manutencao) => _ItemManutencao(manutencao: manutencao),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Ações de escrita, só do Gestor (RNF03). O Supervisor não vê os botões. Sem conexão, os botões
+/// ficam desabilitados com o motivo (RNF08).
+class _AcoesDoGestor extends ConsumerWidget {
+  const _AcoesDoGestor({required this.epi, required this.somenteLeitura});
+
+  final Epi epi;
+  final bool somenteLeitura;
+
+  Future<void> _movimentar(BuildContext context) async {
+    final mov = await abrirFormularioMovimentacao(context, epi: epi);
+    if (mov == null || !context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensagemDeMovimentacao(epi, mov))));
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final gestor =
+        ref.watch(controladorSessaoProvider).value?.sessao?.ehGestor ?? false;
+    if (!gestor) return const SizedBox.shrink();
+    final bloqueado = somenteLeitura || epi.id == null;
+    return Padding(
+      padding: const EdgeInsets.only(top: TokensDimensoes.space16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FilledButton.icon(
+            onPressed: bloqueado ? null : () => _movimentar(context),
+            icon: const Icon(Icons.swap_vert),
+            label: const Text('Movimentar estoque'),
+          ),
+          if (somenteLeitura) ...[
+            const SizedBox(height: TokensDimensoes.space8),
+            Text(
+              'Cadastros e alterações voltam quando a conexão voltar.',
+              style: Theme.of(context).textTheme.bodyMedium
+                  ?.copyWith(color: context.cores.textoSecundario),
+            ),
+          ],
         ],
       ),
     );
