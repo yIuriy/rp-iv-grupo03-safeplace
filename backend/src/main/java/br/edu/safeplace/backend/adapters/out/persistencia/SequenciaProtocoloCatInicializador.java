@@ -1,35 +1,32 @@
 package br.edu.safeplace.backend.adapters.out.persistencia;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.edu.safeplace.backend.domain.ocorrencia.SequenciaProtocoloCat;
-import br.edu.safeplace.backend.domain.ocorrencia.SequenciaProtocoloCatId;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 @Component
 public class SequenciaProtocoloCatInicializador {
 
-    private final SequenciaProtocoloCatSpringDataRepository repository;
-
-    public SequenciaProtocoloCatInicializador(SequenciaProtocoloCatSpringDataRepository repository) {
-        this.repository = repository;
-    }
+    @PersistenceContext
+    private EntityManager entityManager;
 
     /**
-     * Garante que a linha (ano, mes) existe na tabela sequencias_protocolo_cat.
+     * Cria a linha (ano, mes) da tabela sequencias_protocolo_cat com contador zero.
      * Roda em transação isolada (REQUIRES_NEW) para que eventual concorrência no primeiro insert
      * não marque a transação principal como rollback-only.
+     *
+     * <p>Usa {@code persist}, que sempre gera INSERT. O {@code save} do Spring Data faria {@code merge},
+     * porque a chave é atribuída, e sobrescreveria com zero uma linha criada por outra transação no
+     * mesmo instante. Com INSERT, essa corrida viola a chave primária, a transação isolada é desfeita e
+     * o chamador ignora a exceção.</p>
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void garantirLinhaCriada(Short ano, Short mes) {
-        if (!repository.existsById(new SequenciaProtocoloCatId(ano, mes))) {
-            try {
-                repository.saveAndFlush(new SequenciaProtocoloCat(ano, mes, 0L));
-            } catch (DataIntegrityViolationException ignored) {
-                // Outra transação concorrente já criou o registro inicial no mesmo instante.
-            }
-        }
+        entityManager.persist(new SequenciaProtocoloCat(ano, mes, 0L));
+        entityManager.flush();
     }
 }
