@@ -107,16 +107,22 @@ void main() {
       await abrirMenu(tester);
 
       await tester.tap(
-        find.descendant(of: find.byType(Drawer), matching: find.text('EPIs')),
+        find.descendant(
+          of: find.byType(Drawer),
+          matching: find.text('Empréstimos de EPIs'),
+        ),
       );
       await tester.pumpAndSettle();
 
       expect(
-        find.descendant(of: find.byType(AppBar), matching: find.text('EPIs')),
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.text('Empréstimos de EPIs'),
+        ),
         findsOneWidget,
       );
       expect(find.text('Funcionalidade em desenvolvimento'), findsOneWidget);
-      expect(find.textContaining('issue #319'), findsOneWidget);
+      expect(find.textContaining('issue #320'), findsOneWidget);
     },
   );
 

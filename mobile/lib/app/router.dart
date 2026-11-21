@@ -5,6 +5,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../core/sessao/controlador_sessao.dart';
 import '../features/autenticacao/presentation/login_page.dart';
+import '../features/epis/presentation/epi_detalhe_page.dart';
+import '../features/epis/presentation/epis_page.dart';
 import '../features/inicio/presentation/inicio_page.dart';
 import '../features/usuarios/presentation/exemplo_colaborador_picker_page.dart';
 import '../features/usuarios/presentation/perfil_page.dart';
@@ -18,6 +20,7 @@ abstract final class Rotas {
   static const login = '/login';
   static const inicio = '/';
   static const ocorrencias = '/ocorrencias';
+  static const epis = '/epis';
   static const emprestimos = '/emprestimos';
   static const usuarios = '/usuarios';
   static const perfil = '/perfil';
@@ -67,6 +70,7 @@ Widget _telaDo(ItemMenu item, BuildContext context) {
     );
   }
   return switch (item.rota) {
+    Rotas.epis => const EpisPage(),
     Rotas.usuarios => const UsuariosPage(),
     Rotas.perfil => const PerfilPage(),
     _ => PaginaEmConstrucao(item: item),
@@ -75,6 +79,12 @@ Widget _telaDo(ItemMenu item, BuildContext context) {
 
 /// Sub-rotas de cada item, que herdam a casca e a guarda de perfil do item.
 List<RouteBase> _subrotasDo(ItemMenu item) => [
+  if (item.rota == Rotas.epis)
+    GoRoute(
+      path: ':id', // /epis/{id}
+      builder: (_, state) =>
+          EpiDetalhePage(id: int.tryParse(state.pathParameters['id'] ?? '')),
+    ),
   if (kDebugMode && item.rota == Rotas.usuarios)
     GoRoute(
       path: 'exemplo-seletor', // Rotas.exemploSeletorColaborador
