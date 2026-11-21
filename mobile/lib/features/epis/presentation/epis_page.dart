@@ -1,6 +1,7 @@
 // Tela `/epis` (RF03, UC06, US03): catálogo com saldo, mínimo, status e estoque crítico destacado,
 // busca local por nome ou localização e "puxar para atualizar". Gestor e Supervisor consultam a
-// mesma lista. Com o servidor fora do ar, mostra a cópia local com o aviso de modo offline (RNF08).
+// mesma lista, e só o Gestor vê o botão de cadastro. Com o servidor fora do ar, mostra a cópia local
+// com o aviso de modo offline (RNF08) e o cadastro fica desabilitado.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,6 +16,7 @@ import '../../../shared/widgets/estados.dart';
 import '../data/epi.dart';
 import '../data/epis_api.dart';
 import 'componentes_epi.dart';
+import 'formulario_cadastro_epi_page.dart';
 
 /// EPIs cujo nome ou localização contém o [termo], sem diferenciar maiúsculas (como o web).
 List<Epi> filtrarEpis(List<Epi> epis, String termo) {
@@ -51,8 +53,17 @@ class _EpisPageState extends ConsumerState<EpisPage> {
     setState(() => _termo = '');
   }
 
+  Future<void> _cadastrar() async {
+    final epi = await abrirFormularioCadastroEpi(context);
+    if (epi == null || !mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text(mensagemEpiCadastrado)));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final consulta = ref.watch(episProvider);
+    final somenteLeitura = consulta.value?.somenteLeitura ?? false;
     final gestor =
         ref.watch(controladorSessaoProvider).value?.sessao?.ehGestor ?? false;
     final secundario = Theme.of(context).textTheme.bodyMedium
@@ -65,10 +76,26 @@ class _EpisPageState extends ConsumerState<EpisPage> {
         children: [
           Text(
             gestor
-                ? 'Consulte o catálogo, o saldo e o histórico de cada EPI e registre entradas e saídas de estoque.'
+                ? 'Cadastre EPIs, consulte o saldo e o histórico de cada um e registre entradas e saídas de estoque.'
                 : 'Consulte o catálogo, o saldo e o histórico de cada EPI. Entradas e saídas são registradas pelo Gestor de Segurança.',
             style: secundario,
           ),
+          if (gestor) ...[
+            const SizedBox(height: TokensDimensoes.space12),
+            FilledButton.icon(
+              // Cadastro precisa do servidor: sem conexão, fica desabilitado (RNF08).
+              onPressed: somenteLeitura ? null : _cadastrar,
+              icon: const Icon(Icons.add),
+              label: const Text('Cadastrar EPI'),
+            ),
+            if (somenteLeitura) ...[
+              const SizedBox(height: TokensDimensoes.space8),
+              Text(
+                'Cadastros e alterações voltam quando a conexão voltar.',
+                style: secundario,
+              ),
+            ],
+          ],
           const SizedBox(height: TokensDimensoes.space16),
           CampoTexto(
             rotulo: 'Nome ou localização',
@@ -79,7 +106,7 @@ class _EpisPageState extends ConsumerState<EpisPage> {
           ),
           const SizedBox(height: TokensDimensoes.space16),
           ConteudoComCache<List<Epi>>(
-            valor: ref.watch(episProvider),
+            valor: consulta,
             carregando: 'Carregando EPIs...',
             falha: 'Não foi possível carregar o estoque de EPIs.',
             descreverFalha: descreverFalhaDeConsultaEpi,
