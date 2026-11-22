@@ -142,8 +142,8 @@ class EntregaConcluidaWidget extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(TokensDimensoes.space16),
           decoration: BoxDecoration(
-            color: context.cores.superficieVariante,
-            borderRadius: BorderRadius.circular(TokensDimensoes.radiusSm),
+            color: context.cores.pagina,
+            borderRadius: BorderRadius.circular(TokensDimensoes.radius8),
             border: Border.all(color: context.cores.borda),
           ),
           child: Text(

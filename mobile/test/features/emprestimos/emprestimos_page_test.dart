@@ -5,6 +5,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:safeplace/core/api/api_client.dart';
+import 'package:safeplace/features/emprestimos/data/emprestimo.dart';
+import 'package:safeplace/features/emprestimos/data/emprestimos_api.dart';
+import 'package:safeplace/features/emprestimos/presentation/componentes_emprestimo.dart';
 import 'package:safeplace/shared/offline/cache_offline.dart';
 
 import '../../apoio.dart';
@@ -79,7 +82,13 @@ void main() {
     // Destaque visual no cartão atrasado
     expect(find.text('Devolução atrasada'), findsOneWidget);
     expect(find.text('Atrasado'), findsOneWidget);
-    expect(find.text('Em posse'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(SeloSituacaoEmprestimo),
+        matching: find.text('Em posse'),
+      ),
+      findsOneWidget,
+    );
 
     // Semântica acessível para leitores de tela
     expect(
@@ -132,7 +141,7 @@ void main() {
 
     expect(find.text('Detalhes do empréstimo'), findsOneWidget);
     expect(find.text('Termo de cautela assinado digitalmente.'), findsOneWidget);
-    expect(find.text('Código do EPI'), findsOneWidget);
+    expect(find.textContaining('Código do EPI'), findsOneWidget);
 
     await tocar(tester, find.text('Fechar'));
     expect(find.text('Detalhes do empréstimo'), findsNothing);
@@ -141,24 +150,23 @@ void main() {
   testWidgets('modo offline: exibe aviso e desabilita ações de escrita', (tester) async {
     final cache = ArmazenamentoCacheEmMemoria();
     const filtro = FiltroEmprestimos(situacao: SituacaoConsulta.pendentes);
-    await cache.guardar(
-      'sessao-gestor',
+    await CacheOffline(cache).guardar(
+      sessaoGestor.email,
       filtro.chaveCache,
       [emprestimoNoPrazoJson],
     );
 
-    final apiSemRede = ApiEmprestimosFalsa(
-      (_) => throw FalhaApi(status: null, semResposta: true),
-    );
+    api.responder = (_) => throw const FalhaApi();
 
     await abrirApp(
       tester,
       sessao: sessaoGestor,
-      api: apiSemRede,
+      api: api,
       rota: '/emprestimos',
       cache: cache,
     );
 
+    expect(find.text('Modo offline: exibindo dados locais'), findsOneWidget);
     expect(find.text('Óculos de Proteção Ampla Visão'), findsOneWidget);
     expect(
       find.text('Ações de escrita voltam quando a conexão voltar.'),

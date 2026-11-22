@@ -8,7 +8,7 @@ import 'package:safeplace/core/api/api_client.dart';
 import 'package:safeplace/features/emprestimos/presentation/dialogo_devolucao.dart';
 
 import '../../apoio.dart';
-import '../usuarios/apoio_usuarios.dart' show abrirApp, sessaoGestor, tocar;
+import '../usuarios/apoio_usuarios.dart' show abrirApp, tocar;
 import 'apoio_emprestimos.dart';
 
 void main() {
@@ -56,8 +56,20 @@ void main() {
 
     expect(find.byType(DialogoDevolucao), findsOneWidget);
     expect(find.text('Registrar devolução'), findsOneWidget);
-    expect(find.textContaining('Roberto Dias'), findsOneWidget);
-    expect(find.textContaining('Protetor Auditivo Plug'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(DialogoDevolucao),
+        matching: find.textContaining('Roberto Dias'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(DialogoDevolucao),
+        matching: find.textContaining('Protetor Auditivo Plug'),
+      ),
+      findsOneWidget,
+    );
     expect(find.textContaining('(prazo vencido)'), findsOneWidget);
 
     // 2. Tentar confirmar sem selecionar condição gera erro de validação

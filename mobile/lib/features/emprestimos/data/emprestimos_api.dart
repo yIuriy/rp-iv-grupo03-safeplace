@@ -25,8 +25,7 @@ class EmprestimosApi implements EmprestimoRepository {
       'colaboradorId': dados.colaboradorId,
       'dataDevolucaoPrevista': dataIso(dados.dataDevolucaoPrevista),
       if (dados.confirmarSubstituicao) 'confirmarSubstituicao': true,
-      if (dados.justificativaSubstituicao case final justificativa?)
-        'justificativaSubstituicao': justificativa,
+      'justificativaSubstituicao': ?dados.justificativaSubstituicao,
     };
     final resposta = await _client.post('/emprestimos', corpo: corpo);
     return Emprestimo.ler(resposta);

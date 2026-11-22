@@ -113,7 +113,7 @@ void main() {
         'Seu perfil não tem permissão para registrar entregas de EPI.',
       );
 
-      final semRede = FalhaApi(status: null, corpo: null, semResposta: true);
+      final semRede = const FalhaApi();
       expect(descreverFalhaDeEntrega(semRede), contains('conexão'));
     });
 

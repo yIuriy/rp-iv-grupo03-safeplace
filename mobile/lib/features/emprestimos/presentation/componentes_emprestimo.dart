@@ -102,9 +102,9 @@ class CartaoEmprestimo extends StatelessWidget {
       label: rotuloSemantico,
       container: true,
       child: Card(
-        margin: const EdgeInsets.symmetric(vertical: TokensDimensoes.space6),
+        margin: const EdgeInsets.symmetric(vertical: TokensDimensoes.space8),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(TokensDimensoes.radiusMd),
+          borderRadius: BorderRadius.circular(TokensDimensoes.radius8),
           side: BorderSide(
             color: atrasado ? cores.perigo : cores.borda,
             width: atrasado ? 2 : 1,
@@ -112,7 +112,7 @@ class CartaoEmprestimo extends StatelessWidget {
         ),
         child: InkWell(
           onTap: aoDetalhar,
-          borderRadius: BorderRadius.circular(TokensDimensoes.radiusMd),
+          borderRadius: BorderRadius.circular(TokensDimensoes.radius8),
           child: Padding(
             padding: const EdgeInsets.all(TokensDimensoes.space16),
             child: Column(
@@ -177,7 +177,7 @@ class CartaoEmprestimo extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: cores.perigoFundo,
                       borderRadius:
-                          BorderRadius.circular(TokensDimensoes.radiusXs),
+                          BorderRadius.circular(TokensDimensoes.radius4),
                     ),
                     child: Row(
                       children: [
@@ -295,8 +295,8 @@ class DialogoDetalhesEmprestimo extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(TokensDimensoes.space12),
               decoration: BoxDecoration(
-                color: cores.superficieVariante,
-                borderRadius: BorderRadius.circular(TokensDimensoes.radiusSm),
+                color: cores.pagina,
+                borderRadius: BorderRadius.circular(TokensDimensoes.radius8),
                 border: Border.all(color: cores.borda),
               ),
               child: Text(
@@ -329,21 +329,15 @@ class _LinhaDetalhe extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
-      child: RichText(
-        text: TextSpan(
+      child: Text.rich(
+        TextSpan(
           style: Theme.of(context).textTheme.bodyMedium,
           children: [
             TextSpan(
               text: '$rotulo: ',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: context.cores.textoPrincipal,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            TextSpan(
-              text: valor,
-              style: TextStyle(color: context.cores.textoPrincipal),
-            ),
+            TextSpan(text: valor),
           ],
         ),
       ),

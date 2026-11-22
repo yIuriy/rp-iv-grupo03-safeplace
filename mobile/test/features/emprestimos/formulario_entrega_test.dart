@@ -10,7 +10,7 @@ import 'package:safeplace/features/emprestimos/presentation/formulario_entrega_p
 import '../../apoio.dart';
 import '../epis/epi_test.dart' show capaceteJson;
 import '../usuarios/apoio_usuarios.dart'
-    show abrirApp, campo, joaoJson, sessaoGestor, tocar;
+    show abrirApp, campo, joaoJson, tocar;
 import 'apoio_emprestimos.dart';
 
 void main() {
@@ -134,7 +134,7 @@ void main() {
     // 11. Requisição reenviada com confirmarSubstituicao e justificativa
     expect(tentativasEnvio, 3);
     expect(ultimaRequisicao?.corpo, {
-      'colaboradorId': 3,
+      'colaboradorId': 10,
       'epiId': 1,
       'dataDevolucaoPrevista': '2026-11-25',
       'confirmarSubstituicao': true,

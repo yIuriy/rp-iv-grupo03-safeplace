@@ -106,35 +106,9 @@ class _DialogoDevolucaoState extends ConsumerState<DialogoDevolucao> {
                   : emp.epiNome,
             ),
             _ItemDetalhe(rotulo: 'Entregue em', valor: retirada),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: RichText(
-                text: TextSpan(
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  children: [
-                    TextSpan(
-                      text: 'Devolução prevista: ',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: cores.textoPrincipal,
-                      ),
-                    ),
-                    TextSpan(
-                      text: devolucaoPrevista,
-                      style: TextStyle(color: cores.textoPrincipal),
-                    ),
-                    if (emp.estaAtrasado) ...[
-                      TextSpan(
-                        text: ' (prazo vencido)',
-                        style: TextStyle(
-                          color: cores.perigo,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+            _ItemDetalhe(
+              rotulo: 'Devolução prevista',
+              valor: '$devolucaoPrevista${emp.estaAtrasado ? " (prazo vencido)" : ""}',
             ),
             const SizedBox(height: TokensDimensoes.space16),
             Text(
@@ -144,22 +118,28 @@ class _DialogoDevolucaoState extends ConsumerState<DialogoDevolucao> {
                   ),
             ),
             const SizedBox(height: TokensDimensoes.space4),
-            for (final opcao in EstadoDevolucao.values)
-              RadioListTile<EstadoDevolucao>(
-                value: opcao,
-                groupValue: _estado,
-                contentPadding: EdgeInsets.zero,
-                dense: true,
-                title: Text(opcao.rotulo),
-                onChanged: _enviando
-                    ? null
-                    : (val) {
-                        setState(() {
-                          _estado = val;
-                          _erroValidacao = null;
-                        });
-                      },
+            RadioGroup<EstadoDevolucao>(
+              groupValue: _estado,
+              onChanged: (val) {
+                if (_enviando) return;
+                setState(() {
+                  _estado = val;
+                  _erroValidacao = null;
+                });
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final opcao in EstadoDevolucao.values)
+                    RadioListTile<EstadoDevolucao>(
+                      value: opcao,
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: Text(opcao.rotulo),
+                    ),
+                ],
               ),
+            ),
             if (_erroValidacao != null) ...[
               const SizedBox(height: TokensDimensoes.space4),
               Text(
@@ -175,8 +155,8 @@ class _DialogoDevolucaoState extends ConsumerState<DialogoDevolucao> {
               Container(
                 padding: const EdgeInsets.all(TokensDimensoes.space12),
                 decoration: BoxDecoration(
-                  color: cores.superficieVariante,
-                  borderRadius: BorderRadius.circular(TokensDimensoes.radiusSm),
+                  color: cores.pagina,
+                  borderRadius: BorderRadius.circular(TokensDimensoes.radius8),
                   border: Border.all(color: cores.borda),
                 ),
                 child: Text(
@@ -236,21 +216,15 @@ class _ItemDetalhe extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: RichText(
-        text: TextSpan(
+      child: Text.rich(
+        TextSpan(
           style: Theme.of(context).textTheme.bodyMedium,
           children: [
             TextSpan(
               text: '$rotulo: ',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: context.cores.textoPrincipal,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            TextSpan(
-              text: valor,
-              style: TextStyle(color: context.cores.textoPrincipal),
-            ),
+            TextSpan(text: valor),
           ],
         ),
       ),
