@@ -109,7 +109,7 @@ void main() {
       await tester.tap(
         find.descendant(
           of: find.byType(Drawer),
-          matching: find.text('Empréstimos de EPIs'),
+          matching: find.text('Áreas de risco'),
         ),
       );
       await tester.pumpAndSettle();
@@ -117,12 +117,12 @@ void main() {
       expect(
         find.descendant(
           of: find.byType(AppBar),
-          matching: find.text('Empréstimos de EPIs'),
+          matching: find.text('Áreas de risco'),
         ),
         findsOneWidget,
       );
       expect(find.text('Funcionalidade em desenvolvimento'), findsOneWidget);
-      expect(find.textContaining('issue #320'), findsOneWidget);
+      expect(find.textContaining('issue #323'), findsOneWidget);
     },
   );
 
