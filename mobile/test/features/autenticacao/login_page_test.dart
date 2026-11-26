@@ -86,6 +86,8 @@ void main() {
 
     await tester.tap(find.text('Sair'));
     await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Sair'));
+    await tester.pumpAndSettle();
 
     expect(find.text('Você saiu do SafePlace'), findsOneWidget);
     expect(armazenamento.sessao, isNull);

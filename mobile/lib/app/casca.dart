@@ -5,16 +5,41 @@ import 'package:material_ui/material_ui.dart';
 import '../core/sessao/controlador_sessao.dart';
 import '../shared/tema/cores_safeplace.dart';
 import '../shared/tema/tokens.g.dart';
+import '../shared/widgets/dialogo_confirmacao.dart';
 import '../shared/widgets/estados.dart';
 import 'navegacao.dart';
 
+/// Endereço um nível acima de [local]: `/epis/12` volta a `/epis`, e `/epis` volta ao início.
+String rotaAcima(String local) {
+  final barra = local.lastIndexOf('/');
+  return barra <= 0 ? '/' : local.substring(0, barra);
+}
+
 /// Casca das telas autenticadas (#316), como o `AppLayout` do web: barra com o título da tela,
 /// botão de menu, "Sair" sempre visível e o menu lateral montado pelo perfil de quem entrou.
+///
+/// Voltar (#335): numa sub-rota, como `/epis/12`, a barra mostra a seta de voltar no lugar do
+/// menu. O voltar do Android leva cada módulo ao início, e só no início fecha o app.
 class CascaApp extends ConsumerWidget {
   const CascaApp({super.key, required this.local, required this.filho});
 
   final String local;
   final Widget filho;
+
+  /// "Sair" apaga a sessão e o cache offline da conta, então pede confirmação antes (#335).
+  Future<void> _sair(BuildContext context, WidgetRef ref) async {
+    final sair = await confirmar(
+      context,
+      titulo: 'Sair do SafePlace?',
+      descricao:
+          'Para voltar, você vai precisar entrar de novo com e-mail e senha. '
+          'Os dados guardados neste aparelho para uso offline serão apagados.',
+      rotuloConfirmar: 'Sair',
+      rotuloCancelar: 'Cancelar',
+      perigosa: false,
+    );
+    if (sair) await ref.read(controladorSessaoProvider.notifier).sair();
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -23,42 +48,54 @@ class CascaApp extends ConsumerWidget {
 
     final itens = itensPara(sessao.perfil);
     final atual = itemDaRota(local);
+    final subrota = atual != null && local != atual.rota;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(atual?.rotuloPara(sessao.perfil) ?? 'SafePlace'),
-        actions: [
-          TextButton(
-            onPressed: () =>
-                ref.read(controladorSessaoProvider.notifier).sair(),
-            child: const Text('Sair'),
-          ),
-        ],
-      ),
-      // ListTile, e não NavigationDrawerDestination: o rótulo quebra linha com zoom de texto
-      // (RNF11) em vez de estourar, e o item atual continua anunciado como selecionado.
-      drawer: Drawer(
-        child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.only(bottom: TokensDimensoes.space16),
-            children: [
-              _CabecalhoDoMenu(nome: sessao.nome, perfil: sessao.perfil.rotulo),
-              const Divider(height: 1),
-              for (final item in itens)
-                _ItemDoMenu(
-                  item: item,
-                  rotulo: item.rotuloPara(sessao.perfil),
-                  atual: item == atual,
-                  aoTocar: () {
-                    Navigator.of(context).pop();
-                    context.go(item.rota);
-                  },
+    return PopScope(
+      canPop: local == '/',
+      onPopInvokedWithResult: (saiu, _) {
+        if (!saiu) context.go(rotaAcima(local));
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: subrota
+              ? BackButton(onPressed: () => context.go(rotaAcima(local)))
+              : null,
+          title: Text(atual?.rotuloPara(sessao.perfil) ?? 'SafePlace'),
+          actions: [
+            TextButton(
+              onPressed: () => _sair(context, ref),
+              child: const Text('Sair'),
+            ),
+          ],
+        ),
+        // ListTile, e não NavigationDrawerDestination: o rótulo quebra linha com zoom de texto
+        // (RNF11) em vez de estourar, e o item atual continua anunciado como selecionado.
+        drawer: Drawer(
+          child: SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: TokensDimensoes.space16),
+              children: [
+                _CabecalhoDoMenu(
+                  nome: sessao.nome,
+                  perfil: sessao.perfil.rotulo,
                 ),
-            ],
+                const Divider(height: 1),
+                for (final item in itens)
+                  _ItemDoMenu(
+                    item: item,
+                    rotulo: item.rotuloPara(sessao.perfil),
+                    atual: item == atual,
+                    aoTocar: () {
+                      Navigator.of(context).pop();
+                      context.go(item.rota);
+                    },
+                  ),
+              ],
+            ),
           ),
         ),
+        body: SafeArea(child: filho),
       ),
-      body: SafeArea(child: filho),
     );
   }
 }

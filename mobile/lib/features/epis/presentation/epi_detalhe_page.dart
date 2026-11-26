@@ -1,9 +1,8 @@
 // Tela `/epis/{id}` (UC06, passo 4): dados do EPI, histórico de movimentações (RNF05) e histórico
 // de manutenções. Gestor e Supervisor consultam. Com o servidor fora do ar, mostra a cópia local com
-// um único aviso de modo offline, no topo (RNF08).
+// um único aviso de modo offline, no topo (RNF08). A seta de voltar fica na barra da casca (#335).
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/sessao/controlador_sessao.dart';
@@ -58,15 +57,6 @@ class EpiDetalhePage extends ConsumerWidget {
     final lista = ListView(
       padding: const EdgeInsets.all(TokensDimensoes.layoutMobilePadding),
       children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton.icon(
-            onPressed: () => context.go('/epis'),
-            icon: const Icon(Icons.arrow_back),
-            label: const Text('Voltar para a lista'),
-          ),
-        ),
-        const SizedBox(height: TokensDimensoes.space8),
         if (id == null)
           const EstadoVazio(
             titulo: 'EPI não encontrado',
