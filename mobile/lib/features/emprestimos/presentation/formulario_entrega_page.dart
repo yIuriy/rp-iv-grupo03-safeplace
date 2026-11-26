@@ -9,6 +9,7 @@ import '../../../shared/formularios/data.dart';
 import '../../../shared/tema/tokens.g.dart';
 import '../../../shared/widgets/aviso.dart';
 import '../../../shared/widgets/campos.dart';
+import '../../../shared/widgets/guarda_de_descarte.dart';
 import '../../epis/data/epi.dart';
 import '../../epis/presentation/epi_picker.dart';
 import '../../usuarios/presentation/colaborador_picker.dart';
@@ -54,6 +55,7 @@ class _FormularioEntregaPageState extends ConsumerState<FormularioEntregaPage> {
 
   String? _falha;
   bool _enviando = false;
+  bool _alterado = false;
 
   @override
   void dispose() {
@@ -145,12 +147,15 @@ class _FormularioEntregaPageState extends ConsumerState<FormularioEntregaPage> {
       EtapaEntrega.concluida => 'Entrega concluída',
     };
 
-    return Scaffold(
+    return GuardaDeDescarte(
+      alterado: _alterado && _etapa != EtapaEntrega.concluida,
+      enviando: _enviando,
+      child: Scaffold(
       appBar: AppBar(
         title: Text(titulo),
         leading: _etapa == EtapaEntrega.concluida
             ? const SizedBox.shrink()
-            : CloseButton(onPressed: _enviando ? null : () => Navigator.of(context).pop()),
+            : CloseButton(onPressed: _enviando ? null : () => Navigator.of(context).maybePop()),
       ),
       body: switch (_etapa) {
         EtapaEntrega.duplicidade => DuplicidadeConfirmacaoWidget(
@@ -168,6 +173,9 @@ class _FormularioEntregaPageState extends ConsumerState<FormularioEntregaPage> {
           ),
         EtapaEntrega.formulario => Form(
             key: _formKey,
+            onChanged: () {
+              if (!_alterado) setState(() => _alterado = true);
+            },
             child: ListView(
               padding: const EdgeInsets.all(TokensDimensoes.layoutMobilePadding),
               children: [
@@ -213,7 +221,7 @@ class _FormularioEntregaPageState extends ConsumerState<FormularioEntregaPage> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: _enviando ? null : () => Navigator.of(context).pop(),
+                        onPressed: _enviando ? null : () => Navigator.of(context).maybePop(),
                         child: const Text('Cancelar'),
                       ),
                     ),
@@ -237,6 +245,7 @@ class _FormularioEntregaPageState extends ConsumerState<FormularioEntregaPage> {
             ),
           ),
       },
+      ),
     );
   }
 }
