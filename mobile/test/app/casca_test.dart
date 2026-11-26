@@ -55,7 +55,7 @@ void main() {
   }
 
   Future<void> abrirMenu(WidgetTester tester) async {
-    await tester.tap(find.byTooltip('Open navigation menu'));
+    await tester.tap(find.byTooltip('Abrir menu de navegação'));
     await tester.pumpAndSettle();
   }
 
