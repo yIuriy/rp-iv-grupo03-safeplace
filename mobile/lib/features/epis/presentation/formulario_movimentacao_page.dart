@@ -1,6 +1,7 @@
 // Formulário de entrada ou saída de estoque (UC06, passos 5 a 8), só do Gestor: tipo, quantidade e
 // motivo, validação local e envio à API. Quando o servidor recusa (por exemplo, saída acima do
 // saldo), a mensagem dele aparece e os dados continuam preenchidos, como o `MovimentacaoDialog` do web.
+// Fechar com dados digitados pede confirmação (#335).
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +12,7 @@ import '../../../shared/tema/cores_safeplace.dart';
 import '../../../shared/tema/tokens.g.dart';
 import '../../../shared/widgets/aviso.dart';
 import '../../../shared/widgets/campos.dart';
+import '../../../shared/widgets/guarda_de_descarte.dart';
 import '../data/epi.dart';
 import '../data/epis_api.dart';
 import '../data/movimentacao.dart';
@@ -75,6 +77,7 @@ class _FormularioMovimentacaoPageState
   TipoMovimentacao _tipo = TipoMovimentacao.entrada;
   bool _tentouEnviar = false;
   bool _enviando = false;
+  bool _alterado = false;
   String? _falha;
 
   @override
@@ -127,90 +130,99 @@ class _FormularioMovimentacaoPageState
   @override
   Widget build(BuildContext context) {
     final epi = widget.epi;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Registrar movimentação')),
-      body: SafeArea(
-        child: Form(
-          key: _form,
-          child: ListView(
-            padding: const EdgeInsets.all(TokensDimensoes.layoutMobilePadding),
-            children: [
-              Text(
-                '${epi.nome}: saldo atual ${numeroOuNaoInformado(epi.quantidade)}, '
-                'mínimo ${numeroOuNaoInformado(epi.estoqueMinimo)}. Data, hora e operador são registrados automaticamente.',
-                style: Theme.of(context).textTheme.bodyMedium
-                    ?.copyWith(color: context.cores.textoSecundario),
+    return GuardaDeDescarte(
+      alterado: _alterado,
+      enviando: _enviando,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Registrar movimentação')),
+        body: SafeArea(
+          child: Form(
+            key: _form,
+            onChanged: () {
+              if (!_alterado) setState(() => _alterado = true);
+            },
+            child: ListView(
+              padding: const EdgeInsets.all(
+                TokensDimensoes.layoutMobilePadding,
               ),
-              const SizedBox(height: TokensDimensoes.space24),
-              Semantics(
-                container: true,
-                label: 'Tipo de movimentação',
-                child: SegmentedButton<TipoMovimentacao>(
-                  segments: const [
-                    ButtonSegment(
-                      value: TipoMovimentacao.entrada,
-                      label: Text('Entrada (reposição)'),
-                    ),
-                    ButtonSegment(
-                      value: TipoMovimentacao.saida,
-                      label: Text('Saída (baixa)'),
-                    ),
-                  ],
-                  selected: {_tipo},
-                  onSelectionChanged: _enviando
-                      ? null
-                      : (escolha) => _trocarTipo(escolha.single),
+              children: [
+                Text(
+                  '${epi.nome}: saldo atual ${numeroOuNaoInformado(epi.quantidade)}, '
+                  'mínimo ${numeroOuNaoInformado(epi.estoqueMinimo)}. Data, hora e operador são registrados automaticamente.',
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(color: context.cores.textoSecundario),
                 ),
-              ),
-              const SizedBox(height: TokensDimensoes.space16),
-              CampoTexto(
-                rotulo: 'Quantidade',
-                controlador: _quantidade,
-                ajuda: 'Unidades a movimentar. Uma saída não pode deixar o saldo negativo.',
-                teclado: TextInputType.number,
-                formatadores: [FilteringTextInputFormatter.digitsOnly],
-                validador: (valor) => validarQuantidadeMovimentacao(
-                  valor,
-                  tipo: _tipo,
-                  saldo: epi.quantidade,
+                const SizedBox(height: TokensDimensoes.space24),
+                Semantics(
+                  container: true,
+                  label: 'Tipo de movimentação',
+                  child: SegmentedButton<TipoMovimentacao>(
+                    segments: const [
+                      ButtonSegment(
+                        value: TipoMovimentacao.entrada,
+                        label: Text('Entrada (reposição)'),
+                      ),
+                      ButtonSegment(
+                        value: TipoMovimentacao.saida,
+                        label: Text('Saída (baixa)'),
+                      ),
+                    ],
+                    selected: {_tipo},
+                    onSelectionChanged: _enviando
+                        ? null
+                        : (escolha) => _trocarTipo(escolha.single),
+                  ),
                 ),
-              ),
-              const SizedBox(height: TokensDimensoes.space16),
-              CampoTexto(
-                rotulo: 'Motivo',
-                controlador: _motivo,
-                linhas: 3,
-                ajuda: 'Ex.: recebimento de lote, entrega à equipe, ajuste de inventário.',
-                validador: validarMotivo,
-              ),
-              if (_falha != null) ...[
                 const SizedBox(height: TokensDimensoes.space16),
-                Aviso(
-                  tom: TomAviso.perigo,
-                  anunciar: true,
-                  titulo: 'Movimentação não registrada',
-                  mensagem: _falha,
+                CampoTexto(
+                  rotulo: 'Quantidade',
+                  controlador: _quantidade,
+                  ajuda: 'Unidades a movimentar. Uma saída não pode deixar o saldo negativo.',
+                  teclado: TextInputType.number,
+                  formatadores: [FilteringTextInputFormatter.digitsOnly],
+                  validador: (valor) => validarQuantidadeMovimentacao(
+                    valor,
+                    tipo: _tipo,
+                    saldo: epi.quantidade,
+                  ),
+                ),
+                const SizedBox(height: TokensDimensoes.space16),
+                CampoTexto(
+                  rotulo: 'Motivo',
+                  controlador: _motivo,
+                  linhas: 3,
+                  ajuda: 'Ex.: recebimento de lote, entrega à equipe, ajuste de inventário.',
+                  validador: validarMotivo,
+                ),
+                if (_falha != null) ...[
+                  const SizedBox(height: TokensDimensoes.space16),
+                  Aviso(
+                    tom: TomAviso.perigo,
+                    anunciar: true,
+                    titulo: 'Movimentação não registrada',
+                    mensagem: _falha,
+                  ),
+                ],
+                const SizedBox(height: TokensDimensoes.space24),
+                FilledButton.icon(
+                  onPressed: _enviando ? null : _enviar,
+                  icon: _enviando
+                      ? const SizedBox.square(
+                          dimension: TokensDimensoes.sizeIcon,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.check),
+                  label: const Text('Registrar'),
+                ),
+                const SizedBox(height: TokensDimensoes.space8),
+                TextButton(
+                  onPressed: _enviando
+                      ? null
+                      : () => Navigator.of(context).maybePop(),
+                  child: const Text('Cancelar'),
                 ),
               ],
-              const SizedBox(height: TokensDimensoes.space24),
-              FilledButton.icon(
-                onPressed: _enviando ? null : _enviar,
-                icon: _enviando
-                    ? const SizedBox.square(
-                        dimension: TokensDimensoes.sizeIcon,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.check),
-                label: const Text('Registrar'),
-              ),
-              const SizedBox(height: TokensDimensoes.space8),
-              TextButton(
-                onPressed: _enviando
-                    ? null
-                    : () => Navigator.of(context).maybePop(),
-                child: const Text('Cancelar'),
-              ),
-            ],
+            ),
           ),
         ),
       ),

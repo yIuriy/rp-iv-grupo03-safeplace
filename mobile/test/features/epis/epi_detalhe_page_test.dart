@@ -65,7 +65,7 @@ void main() {
     expect(find.text('Preventiva, aprovado'), findsOneWidget);
     expect(find.text('Status do EPI após: Disponível.'), findsOneWidget);
 
-    await tocar(tester, find.text('Voltar para a lista'));
+    await tocar(tester, find.byTooltip('Voltar'));
     expect(find.text('Luva de Vaqueta'), findsOneWidget);
   });
 

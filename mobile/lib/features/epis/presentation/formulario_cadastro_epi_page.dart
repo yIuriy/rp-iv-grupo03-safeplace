@@ -1,6 +1,7 @@
 // Formulário de cadastro de EPI (RF03), só do Gestor: dados obrigatórios do `CriarEpiRequest`,
 // classificação, localização e descrição, e os dados opcionais de lote e modelo. Os textos seguem o
 // `DialogoCadastroEpi` do web. Quando o servidor recusa, a mensagem dele aparece e os dados ficam.
+// Fechar com dados digitados pede confirmação (#335).
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,7 @@ import '../../../shared/tema/cores_safeplace.dart';
 import '../../../shared/tema/tokens.g.dart';
 import '../../../shared/widgets/aviso.dart';
 import '../../../shared/widgets/campos.dart';
+import '../../../shared/widgets/guarda_de_descarte.dart';
 import '../data/epi.dart';
 import '../data/epis_api.dart';
 import '../domain/epi_repository.dart';
@@ -69,6 +71,7 @@ class _FormularioCadastroEpiPageState
   final _marca = TextEditingController();
   ClassificacaoEpi? _classificacao;
   bool _enviando = false;
+  bool _alterado = false;
   String? _falha;
 
   List<TextEditingController> get _controladores => [
@@ -176,127 +179,139 @@ class _FormularioCadastroEpiPageState
   Widget build(BuildContext context) {
     const espaco = SizedBox(height: TokensDimensoes.space16);
     final textos = Theme.of(context).textTheme;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Cadastrar EPI')),
-      body: SafeArea(
-        child: Form(
-          key: _form,
-          // Coluna em vez de ListView: a lista constrói só o que está na tela, e um campo fora dela
-          // escaparia da validação do formulário.
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(TokensDimensoes.layoutMobilePadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Nome, CA, validade do CA, quantidade inicial, estoque mínimo e classificação são obrigatórios. Os demais campos são opcionais.',
-                  style: textos.bodyMedium?.copyWith(
-                    color: context.cores.textoSecundario,
+    return GuardaDeDescarte(
+      alterado: _alterado,
+      enviando: _enviando,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Cadastrar EPI')),
+        body: SafeArea(
+          child: Form(
+            key: _form,
+            onChanged: () {
+              if (!_alterado) setState(() => _alterado = true);
+            },
+            // Coluna em vez de ListView: a lista constrói só o que está na tela, e um campo fora dela
+            // escaparia da validação do formulário.
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(
+                TokensDimensoes.layoutMobilePadding,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Nome, CA, validade do CA, quantidade inicial, estoque mínimo e classificação são obrigatórios. Os demais campos são opcionais.',
+                    style: textos.bodyMedium?.copyWith(
+                      color: context.cores.textoSecundario,
+                    ),
                   ),
-                ),
-                const SizedBox(height: TokensDimensoes.space24),
-                CampoTexto(
-                  rotulo: 'Nome do EPI',
-                  controlador: _nome,
-                  validador: validarNomeEpi,
-                ),
-                espaco,
-                CampoTexto(
-                  rotulo: 'Número do CA',
-                  controlador: _numeroCa,
-                  ajuda: 'Certificado de Aprovação emitido pelo Ministério do Trabalho.',
-                  validador: validarNumeroCa,
-                ),
-                espaco,
-                _data('Validade do CA', _validadeCa, validarValidadeCa),
-                espaco,
-                _numero(
-                  'Quantidade inicial',
-                  _quantidade,
-                  validarQuantidadeInicial,
-                ),
-                espaco,
-                _numero(
-                  'Estoque mínimo',
-                  _estoqueMinimo,
-                  validarEstoqueMinimo,
-                  ajuda: 'Com saldo igual ou abaixo deste valor, o EPI aparece como crítico.',
-                ),
-                espaco,
-                CampoSelecao<ClassificacaoEpi>(
-                  rotulo: 'Classificação',
-                  valor: _classificacao,
-                  dica: 'Selecione a classificação',
-                  opcoes: [
-                    for (final classificacao in ClassificacaoEpi.values)
-                      (valor: classificacao, rotulo: classificacao.rotulo),
-                  ],
-                  aoMudar: (valor) => setState(() => _classificacao = valor),
-                  validador: validarClassificacao,
-                  habilitado: !_enviando,
-                ),
-                espaco,
-                _numero(
-                  'Vida útil estimada (dias)',
-                  _vidaUtil,
-                  validarVidaUtil,
-                ),
-                espaco,
-                CampoTexto(rotulo: 'Localização', controlador: _localizacao),
-                espaco,
-                CampoTexto(
-                  rotulo: 'Descrição',
-                  controlador: _descricao,
-                  linhas: 3,
-                  ajuda: 'Especificação opcional do equipamento.',
-                ),
-                const SizedBox(height: TokensDimensoes.space24),
-                Text(
-                  'Dados opcionais de lote e modelo',
-                  style: textos.titleMedium,
-                ),
-                espaco,
-                CampoTexto(rotulo: 'Número do lote', controlador: _numeroLote),
-                espaco,
-                CampoTexto(rotulo: 'Nota fiscal', controlador: _notaFiscal),
-                espaco,
-                _data(
-                  'Data de fabricação',
-                  _dataFabricacao,
-                  validarDataOpcional,
-                ),
-                espaco,
-                _data('Validade do lote', _validadeLote, validarDataOpcional),
-                espaco,
-                CampoTexto(rotulo: 'Marca', controlador: _marca),
-                if (_falha != null) ...[
+                  const SizedBox(height: TokensDimensoes.space24),
+                  CampoTexto(
+                    rotulo: 'Nome do EPI',
+                    controlador: _nome,
+                    validador: validarNomeEpi,
+                  ),
                   espaco,
-                  Aviso(
-                    tom: TomAviso.perigo,
-                    anunciar: true,
-                    titulo: 'Cadastro não concluído',
-                    mensagem: _falha,
+                  CampoTexto(
+                    rotulo: 'Número do CA',
+                    controlador: _numeroCa,
+                    ajuda: 'Certificado de Aprovação emitido pelo Ministério do Trabalho.',
+                    validador: validarNumeroCa,
+                  ),
+                  espaco,
+                  _data('Validade do CA', _validadeCa, validarValidadeCa),
+                  espaco,
+                  _numero(
+                    'Quantidade inicial',
+                    _quantidade,
+                    validarQuantidadeInicial,
+                  ),
+                  espaco,
+                  _numero(
+                    'Estoque mínimo',
+                    _estoqueMinimo,
+                    validarEstoqueMinimo,
+                    ajuda: 'Com saldo igual ou abaixo deste valor, o EPI aparece como crítico.',
+                  ),
+                  espaco,
+                  CampoSelecao<ClassificacaoEpi>(
+                    rotulo: 'Classificação',
+                    valor: _classificacao,
+                    dica: 'Selecione a classificação',
+                    opcoes: [
+                      for (final classificacao in ClassificacaoEpi.values)
+                        (valor: classificacao, rotulo: classificacao.rotulo),
+                    ],
+                    aoMudar: (valor) => setState(() => _classificacao = valor),
+                    validador: validarClassificacao,
+                    habilitado: !_enviando,
+                  ),
+                  espaco,
+                  _numero(
+                    'Vida útil estimada (dias)',
+                    _vidaUtil,
+                    validarVidaUtil,
+                  ),
+                  espaco,
+                  CampoTexto(rotulo: 'Localização', controlador: _localizacao),
+                  espaco,
+                  CampoTexto(
+                    rotulo: 'Descrição',
+                    controlador: _descricao,
+                    linhas: 3,
+                    ajuda: 'Especificação opcional do equipamento.',
+                  ),
+                  const SizedBox(height: TokensDimensoes.space24),
+                  Text(
+                    'Dados opcionais de lote e modelo',
+                    style: textos.titleMedium,
+                  ),
+                  espaco,
+                  CampoTexto(
+                    rotulo: 'Número do lote',
+                    controlador: _numeroLote,
+                  ),
+                  espaco,
+                  CampoTexto(rotulo: 'Nota fiscal', controlador: _notaFiscal),
+                  espaco,
+                  _data(
+                    'Data de fabricação',
+                    _dataFabricacao,
+                    validarDataOpcional,
+                  ),
+                  espaco,
+                  _data('Validade do lote', _validadeLote, validarDataOpcional),
+                  espaco,
+                  CampoTexto(rotulo: 'Marca', controlador: _marca),
+                  if (_falha != null) ...[
+                    espaco,
+                    Aviso(
+                      tom: TomAviso.perigo,
+                      anunciar: true,
+                      titulo: 'Cadastro não concluído',
+                      mensagem: _falha,
+                    ),
+                  ],
+                  const SizedBox(height: TokensDimensoes.space24),
+                  FilledButton.icon(
+                    onPressed: _enviando ? null : _enviar,
+                    icon: _enviando
+                        ? const SizedBox.square(
+                            dimension: TokensDimensoes.sizeIcon,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.check),
+                    label: const Text('Cadastrar EPI'),
+                  ),
+                  const SizedBox(height: TokensDimensoes.space8),
+                  TextButton(
+                    onPressed: _enviando
+                        ? null
+                        : () => Navigator.of(context).maybePop(),
+                    child: const Text('Cancelar'),
                   ),
                 ],
-                const SizedBox(height: TokensDimensoes.space24),
-                FilledButton.icon(
-                  onPressed: _enviando ? null : _enviar,
-                  icon: _enviando
-                      ? const SizedBox.square(
-                          dimension: TokensDimensoes.sizeIcon,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.check),
-                  label: const Text('Cadastrar EPI'),
-                ),
-                const SizedBox(height: TokensDimensoes.space8),
-                TextButton(
-                  onPressed: _enviando
-                      ? null
-                      : () => Navigator.of(context).maybePop(),
-                  child: const Text('Cancelar'),
-                ),
-              ],
+              ),
             ),
           ),
         ),

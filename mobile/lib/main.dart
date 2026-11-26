@@ -22,6 +22,11 @@ class SafePlaceApp extends ConsumerWidget {
       title: 'SafePlace',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.claro(),
+      // pt-BR nos textos do Material (#335): o TalkBack lê "Voltar" e "Abrir menu de navegação"
+      // em vez dos rótulos em inglês.
+      locale: const Locale('pt', 'BR'),
+      supportedLocales: const [Locale('pt', 'BR')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       routerConfig: ref.watch(routerProvider),
     );
   }
