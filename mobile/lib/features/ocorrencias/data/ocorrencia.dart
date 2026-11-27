@@ -53,6 +53,14 @@ enum CausaRaiz {
 
   final String codigo;
   final String rotulo;
+
+  /// Causa pelo código da API, ou `null` se desconhecida (#321, edição do relato).
+  static CausaRaiz? ler(Object? valor) {
+    for (final causa in values) {
+      if (causa.codigo == valor) return causa;
+    }
+    return null;
+  }
 }
 
 /// Rótulo da causa. Valor desconhecido aparece como veio.

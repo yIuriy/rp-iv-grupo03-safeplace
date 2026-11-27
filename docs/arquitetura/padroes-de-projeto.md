@@ -36,6 +36,8 @@ As classes e funções técnicas criadas pelos padrões (`OperadorAtual`, `Regis
 | [State (Frontend)](#state--dialogos-de-taskspage) | GoF, comportamental | Frontend: estado único `DialogoTarefa` em `TasksPage` | [#246](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/246) | Aplicado |
 | [Bridge](#bridge--relatórios-estatísticos-e-formatos-de-arquivo) | GoF, estrutural | Backend: relatórios (`Relatorio`) × formatos (`FormatoCsv`, `FormatoPdf`) | [#299](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/299) | Aplicado |
 | [Template Method (Backend)](#template-method-backend--esqueleto-dos-relatórios-estatísticos) | GoF, comportamental | Backend: `Relatorio.gerar` e os três relatórios do RF18 | [#299](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/299) | Aplicado |
+| [State (Mobile)](#state-mobile--situação-da-ocorrência) | GoF, comportamental | App Flutter: `EstadoOcorrencia` (aberta, em triagem, arquivada) decide edição e operações | [#321](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/321) | Aplicado |
+| [Command (Mobile)](#command-mobile--operações-sobre-a-ocorrência) | GoF, comportamental | App Flutter: `OperacaoOcorrencia` (triagem, arquivar, CAT) executada pelo mesmo diálogo | [#321](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/321) | Aplicado |
 
 ---
 
@@ -5109,3 +5111,105 @@ O hook surgiu no primeiro teste com dados reais: a tela abria no mês corrente, 
 - `RelatorioTreinamentosTest` (3 testes): hook `semRegistros`; só treinamentos do período, em ordem de data; certificações avaliadas no último dia do período, vencidas primeiro.
 - `RelatorioAreasRiscoTest` (1 teste): ranking por ocorrências e nível de perigo, com inspeções e não conformidades só do período.
 - `PeriodoRelatorioValidadorTest` (4 testes): períodos válidos, datas obrigatórias interrompendo a cadeia, período invertido e maior que um ano.
+
+---
+
+## State (Mobile) — situação da ocorrência
+
+**Catálogo:** GoF, comportamental.
+
+**Intenção:** permitir que um objeto mude de comportamento quando o seu estado interno muda, como se mudasse de classe.
+
+**Issue:** [#321](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/321) (app Flutter, UC05 e UC07).
+
+### Problema
+
+O detalhe da ocorrência no app precisa mostrar ao Gestor operações diferentes conforme a situação do relato, seguindo o fluxo do backend (`StatusOcorrencia.podeTransicaoPara`, decisão DS09, seção 2.6):
+
+```
+ABERTA ──triagem──► EM_TRIAGEM ──arquivar──► ARQUIVADA
+```
+
+Sem o padrão, a tela teria testes de status espalhados: "se ABERTA, mostra triagem", "se EM_TRIAGEM, mostra arquivar", "se não ARQUIVADA, mostra editar", "se acidente sem protocolo, mostra CAT". Cada regra nova iria para dentro da tela, e o plano de ação repetiria a mesma pergunta para saber se aceita ações novas.
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| Context | `GestaoDaOcorrencia` e `PlanoDeAcaoSecao` (`presentation/`) | Pedem ao estado o que mostrar; não testam o status |
+| State | `EstadoOcorrencia` (classe `sealed`, `domain/estado_ocorrencia.dart`) | Declara `permiteEdicao`, `permiteNovasAcoes`, `proximo`, `operacoes(ocorrencia)` e `aviso` |
+| ConcreteState | `EstadoAberta`, `EstadoEmTriagem`, `EstadoArquivada` | Cada um responde pela sua situação |
+
+| Situação | Edita | Próxima etapa | Operações do Gestor |
+| --- | --- | --- | --- |
+| `EstadoAberta` | sim | Em triagem | Enviar para triagem (+ Emitir CAT, se acidente sem protocolo) |
+| `EstadoEmTriagem` | sim | Arquivada | Arquivar (+ Emitir CAT, se acidente sem protocolo) |
+| `EstadoArquivada` | não | nenhuma | nenhuma; aviso de que os registros ficam preservados |
+
+```dart
+sealed class EstadoOcorrencia {
+  factory EstadoOcorrencia.de(StatusOcorrencia status) => switch (status) {
+    StatusOcorrencia.aberta => const EstadoAberta(),
+    StatusOcorrencia.emTriagem => const EstadoEmTriagem(),
+    StatusOcorrencia.arquivada => const EstadoArquivada(),
+  };
+  bool get permiteEdicao;
+  StatusOcorrencia? get proximo;
+  List<OperacaoOcorrencia> operacoes(Ocorrencia ocorrencia);
+}
+```
+
+A classe é `sealed`: o `switch` da fábrica é exaustivo, e um status novo no enum obriga a criar o estado correspondente para o app compilar.
+
+### Benefício
+
+- As regras de cada situação ficam em um lugar só e são testadas sem tela (`estado_ocorrencia_test.dart`).
+- A tela de detalhe e a seção do plano usam a mesma resposta (`permiteEdicao`, `permiteNovasAcoes`), então não divergem.
+- O app espelha o fluxo do backend; o servidor continua sendo quem autoriza (RNF03).
+
+---
+
+## Command (Mobile) — operações sobre a ocorrência
+
+**Catálogo:** GoF, comportamental.
+
+**Intenção:** encapsular uma requisição como um objeto, para tratar operações diferentes de forma uniforme.
+
+**Issue:** [#321](https://github.com/yIuriy/rp-iv-grupo03-safeplace/issues/321).
+
+### Problema
+
+Enviar para triagem, arquivar e emitir o protocolo CAT seguem o mesmo roteiro na tela: pedir confirmação, chamar a API, mostrar "carregando", tratar a recusa do servidor dentro do diálogo, recarregar e avisar o resultado. Sem o padrão, esse roteiro seria copiado uma vez por operação.
+
+### Papéis do padrão
+
+| Papel no padrão | Elemento no código | Responsabilidade |
+| --- | --- | --- |
+| Command | `OperacaoOcorrencia` (`sealed`, `domain/operacao_ocorrencia.dart`) | `rotulo`, `destrutiva`, `confirmacao`, `executar(repositorio, id)`, `mensagemDeSucesso` |
+| ConcreteCommand | `EnviarParaTriagem`, `Arquivar`, `ConsolidarCat` | Cada uma chama a sua rota (`PATCH /triagem`, `/arquivar`, `/consolidar-cat`) |
+| Receiver | `OcorrenciaRepository` (`OcorrenciasApi`) | Faz a chamada HTTP |
+| Invoker | `GestaoDaOcorrencia._executar` | Executa qualquer comando pelo diálogo `confirmar` da #316 |
+| Client | `EstadoOcorrencia.operacoes` | Decide quais comandos existem na situação atual |
+
+```dart
+// O Invoker não conhece nenhum comando em particular.
+await confirmar(
+  context,
+  titulo: operacao.confirmacao.titulo,
+  descricao: operacao.confirmacao.descricao,
+  rotuloConfirmar: operacao.confirmacao.rotuloConfirmar,
+  perigosa: operacao.destrutiva,
+  aoConfirmar: () async => atualizada = await operacao.executar(repositorio, id),
+  descreverFalha: descreverFalhaDeOcorrencia,
+);
+```
+
+### Como os dois padrões se combinam
+
+O **State** responde *o que* pode ser feito agora; o **Command** responde *como* cada operação é feita. A tela só desenha um botão por comando que o estado devolveu e executa qualquer um do mesmo jeito. Uma operação nova é uma classe `OperacaoOcorrencia` mais uma linha no estado onde ela vale.
+
+### Evidências
+
+- `estado_ocorrencia_test.dart` (6 testes): operações de cada situação, CAT só para acidente sem protocolo, cada comando chama a rota certa, só arquivar é destrutiva.
+- `ocorrencias_ii_test.dart` (10 testes de widget): triagem e arquivamento pela tela, recusa do servidor dentro do diálogo, CAT, edição com `PUT`, plano de ação (concluir, nova ação, prorrogação), Supervisor sem operações e modo offline com tudo desabilitado.
+- `plano_modelos_test.dart` (9 testes): leitura da ação do plano, corpos enviados e validação local com as mensagens do web.

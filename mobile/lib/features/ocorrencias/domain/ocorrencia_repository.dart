@@ -94,4 +94,19 @@ abstract interface class OcorrenciaRepository {
 
   /// `GET /api/ocorrencias/protocolo/{protocolo}`. Só acidentes têm protocolo (o número da CAT).
   Future<Ocorrencia> buscarPorProtocolo(String protocolo);
+
+  // Operações do Gestor (#321). O tipo da ocorrência não muda depois do registro: em [atualizar],
+  // `dados.tipo` só decide quais campos próprios vão no corpo.
+
+  /// `PUT /api/ocorrencias/{id}`. Recusado para ocorrência arquivada.
+  Future<Ocorrencia> atualizar(int id, DadosOcorrencia dados);
+
+  /// `PATCH /api/ocorrencias/{id}/triagem`: ABERTA → EM_TRIAGEM.
+  Future<Ocorrencia> enviarParaTriagem(int id);
+
+  /// `PATCH /api/ocorrencias/{id}/arquivar`: EM_TRIAGEM → ARQUIVADA.
+  Future<Ocorrencia> arquivar(int id);
+
+  /// `PATCH /api/ocorrencias/{id}/consolidar-cat`: emite o protocolo CAT do acidente.
+  Future<Ocorrencia> consolidarCat(int id);
 }
