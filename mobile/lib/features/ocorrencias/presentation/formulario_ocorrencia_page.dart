@@ -32,6 +32,20 @@ Future<Ocorrencia?> abrirFormularioOcorrencia(BuildContext context) {
   );
 }
 
+/// Abre o mesmo formulário para o Gestor editar [ocorrencia] (#321, `PUT /api/ocorrencias/{id}`).
+/// Devolve a ocorrência atualizada, ou `null` se a pessoa desistiu.
+Future<Ocorrencia?> abrirEdicaoOcorrencia(
+  BuildContext context,
+  Ocorrencia ocorrencia,
+) {
+  return Navigator.of(context, rootNavigator: true).push<Ocorrencia>(
+    MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (_) => FormularioOcorrenciaPage(inicial: ocorrencia),
+    ),
+  );
+}
+
 /// Aviso depois do registro. O acidente mostra o protocolo CAT gerado pelo servidor.
 String mensagemDeRegistro(Ocorrencia ocorrencia) {
   final protocolo = ocorrencia.protocoloCat;
@@ -47,7 +61,10 @@ String? _opcional(TextEditingController campo) {
 }
 
 class FormularioOcorrenciaPage extends ConsumerStatefulWidget {
-  const FormularioOcorrenciaPage({super.key});
+  const FormularioOcorrenciaPage({super.key, this.inicial});
+
+  /// Ocorrência a editar (#321). Nula no registro de um relato novo.
+  final Ocorrencia? inicial;
 
   @override
   ConsumerState<FormularioOcorrenciaPage> createState() =>
@@ -73,6 +90,33 @@ class _FormularioOcorrenciaPageState
   bool _enviando = false;
   bool _alterado = false;
   String? _falha;
+
+  bool get _editando => widget.inicial != null;
+
+  /// Na edição, os campos começam com os dados atuais. O tipo não muda depois do registro.
+  @override
+  void initState() {
+    super.initState();
+    final atual = widget.inicial;
+    if (atual == null) return;
+    _tipo = atual.tipo;
+    final fato = atual.dataOcorrencia;
+    if (fato != null) {
+      _data.text = formatarData(fato);
+      _hora.text =
+          '${fato.hour.toString().padLeft(2, '0')}:${fato.minute.toString().padLeft(2, '0')}';
+    }
+    _descricao.text = atual.descricao;
+    _colaboradorId = atual.colaboradorId;
+    _areaId = atual.areaId;
+    _causa = CausaRaiz.ler(atual.causaRaiz);
+    _gravidade = NivelPerigo.ler(atual.gravidade);
+    _tipoLesao.text = atual.tipoLesao ?? '';
+    _dano.text = atual.dano ?? '';
+    _destino.text = atual.destino ?? '';
+    _situacaoRisco.text = atual.situacaoRisco ?? '';
+    _potencialDano.text = atual.potencialDano ?? '';
+  }
 
   @override
   void dispose() {
@@ -114,11 +158,14 @@ class _FormularioOcorrenciaPageState
     if (!_form.currentState!.validate()) return;
     setState(() => _enviando = true);
     try {
-      final ocorrencia = await ref
-          .read(ocorrenciaRepositoryProvider)
-          .registrar(_dados());
+      final repositorio = ref.read(ocorrenciaRepositoryProvider);
+      final atual = widget.inicial;
+      final ocorrencia = atual?.id == null
+          ? await repositorio.registrar(_dados())
+          : await repositorio.atualizar(atual!.id!, _dados());
       if (!mounted) return;
       ref.invalidate(ocorrenciasProvider);
+      if (atual?.id case final id?) ref.invalidate(ocorrenciaProvider(id));
       Navigator.of(context).pop<Ocorrencia>(ocorrencia);
     } catch (erro) {
       if (!mounted) return;
@@ -136,7 +183,9 @@ class _FormularioOcorrenciaPageState
       alterado: _alterado,
       enviando: _enviando,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Registrar ocorrência')),
+        appBar: AppBar(
+          title: Text(_editando ? 'Editar ocorrência' : 'Registrar ocorrência'),
+        ),
         body: SafeArea(
           child: Form(
             key: _form,
@@ -149,7 +198,9 @@ class _FormularioOcorrenciaPageState
               ),
               children: [
                 Text(
-                  'Descreva o que aconteceu, onde e com quem. Não é preciso investigar a causa raiz agora.',
+                  _editando
+                      ? 'Corrija os dados do relato. O tipo e o protocolo CAT não mudam.'
+                      : 'Descreva o que aconteceu, onde e com quem. Não é preciso investigar a causa raiz agora.',
                   style: Theme.of(context).textTheme.bodyMedium
                       ?.copyWith(color: context.cores.textoSecundario),
                 ),
@@ -158,14 +209,14 @@ class _FormularioOcorrenciaPageState
                   rotulo: 'Tipo de ocorrência',
                   valor: _tipo,
                   dica: 'Selecione o tipo',
-                  ajuda: 'Acidente teve lesão ou dano. Incidente foi um quase acidente ou uma situação de risco.',
+                  ajuda: _editando ? 'O tipo não muda depois do registro.' : 'Acidente teve lesão ou dano. Incidente foi um quase acidente ou uma situação de risco.',
                   opcoes: [
                     for (final tipo in TipoOcorrencia.values)
                       (valor: tipo, rotulo: tipo.rotulo),
                   ],
                   aoMudar: (tipo) => setState(() => _tipo = tipo),
                   validador: validarTipoOcorrencia,
-                  habilitado: !_enviando,
+                  habilitado: !_enviando && !_editando,
                 ),
                 espaco,
                 CampoTexto(
@@ -218,7 +269,9 @@ class _FormularioOcorrenciaPageState
                   Aviso(
                     tom: TomAviso.perigo,
                     anunciar: true,
-                    titulo: 'Relato não registrado',
+                    titulo: _editando
+                        ? 'Alterações não salvas'
+                        : 'Relato não registrado',
                     mensagem: _falha,
                   ),
                 ],
@@ -231,7 +284,9 @@ class _FormularioOcorrenciaPageState
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.check),
-                  label: const Text('Registrar ocorrência'),
+                  label: Text(
+                    _editando ? 'Salvar alterações' : 'Registrar ocorrência',
+                  ),
                 ),
                 const SizedBox(height: TokensDimensoes.space8),
                 TextButton(

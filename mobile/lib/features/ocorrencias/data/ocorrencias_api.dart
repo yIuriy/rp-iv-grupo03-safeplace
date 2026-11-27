@@ -22,6 +22,24 @@ class OcorrenciasApi implements OcorrenciaRepository {
   );
 
   @override
+  Future<Ocorrencia> atualizar(int id, DadosOcorrencia dados) async =>
+      Ocorrencia.ler(
+        await _client.put('/ocorrencias/$id', corpo: corpoDaAtualizacao(dados)),
+      );
+
+  @override
+  Future<Ocorrencia> enviarParaTriagem(int id) async =>
+      Ocorrencia.ler(await _client.patch('/ocorrencias/$id/triagem'));
+
+  @override
+  Future<Ocorrencia> arquivar(int id) async =>
+      Ocorrencia.ler(await _client.patch('/ocorrencias/$id/arquivar'));
+
+  @override
+  Future<Ocorrencia> consolidarCat(int id) async =>
+      Ocorrencia.ler(await _client.patch('/ocorrencias/$id/consolidar-cat'));
+
+  @override
   Future<Ocorrencia> buscarPorProtocolo(String protocolo) async =>
       Ocorrencia.ler(
         await _client.get(
@@ -45,6 +63,10 @@ Map<String, Object?> corpoDoRelato(DadosOcorrencia dados) => {
   'situacaoRisco': ?dados.situacaoRisco,
   'potencialDano': ?dados.potencialDano,
 };
+
+/// Corpo de `AtualizarOcorrenciaRequest` (#321): o mesmo do relato, sem o tipo, que não muda.
+Map<String, Object?> corpoDaAtualizacao(DadosOcorrencia dados) =>
+    corpoDoRelato(dados)..remove('tipoOcorrencia');
 
 final ocorrenciaRepositoryProvider = Provider<OcorrenciaRepository>(
   (ref) => OcorrenciasApi(ref.read(apiClientProvider)),
