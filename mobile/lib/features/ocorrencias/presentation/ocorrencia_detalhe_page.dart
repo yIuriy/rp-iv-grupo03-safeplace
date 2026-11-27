@@ -1,17 +1,23 @@
 // Tela `/ocorrencias/{id}` (UC05, UC09, #318): dados do relato, com os campos próprios de acidente
 // ou de incidente. Gestor e Supervisor consultam. Com o servidor fora do ar, mostra a cópia local
 // com o aviso de modo offline (RNF08). A seta de voltar fica na barra da casca (#335).
+// #321: o Gestor acompanha a ocorrência (editar, triagem, arquivamento e CAT) e todos veem o plano
+// de ação; só o Gestor o altera.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/sessao/controlador_sessao.dart';
 import '../../../shared/offline/conteudo_com_cache.dart';
 import '../../../shared/tema/cores_safeplace.dart';
 import '../../../shared/tema/tokens.g.dart';
 import '../../../shared/widgets/estados.dart';
 import '../data/ocorrencia.dart';
 import '../data/ocorrencias_api.dart';
+import '../data/planos_api.dart';
 import 'componentes_ocorrencia.dart';
+import 'gestao_ocorrencia.dart';
+import 'plano_acao_secao.dart';
 
 String _ouNaoInformado(String? valor) => valor ?? 'Não informado';
 
@@ -45,6 +51,8 @@ class OcorrenciaDetalhePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final id = this.id;
+    final gestor =
+        ref.watch(controladorSessaoProvider).value?.sessao?.ehGestor ?? false;
     final lista = ListView(
       padding: const EdgeInsets.all(TokensDimensoes.layoutMobilePadding),
       children: [
@@ -60,16 +68,36 @@ class OcorrenciaDetalhePage extends ConsumerWidget {
             falha: 'Não foi possível carregar a ocorrência.',
             descreverFalha: descreverFalhaDeOcorrencia,
             aoTentarDeNovo: () => ref.invalidate(ocorrenciaProvider(id)),
-            construir: (ocorrencia, _) =>
+            construir: (ocorrencia, somenteLeitura) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                 _DadosDaOcorrencia(ocorrencia: ocorrencia),
+                if (gestor) ...[
+                  const SizedBox(height: TokensDimensoes.space24),
+                  GestaoDaOcorrencia(
+                    ocorrencia: ocorrencia,
+                    somenteLeitura: somenteLeitura,
+                  ),
+                ],
+                const SizedBox(height: TokensDimensoes.space32),
+                PlanoDeAcaoSecao(
+                  ocorrencia: ocorrencia,
+                  gestor: gestor,
+                  somenteLeitura: somenteLeitura,
+                ),
+              ],
+            ),
           ),
       ],
     );
     if (id == null) return lista;
     return RefreshIndicator(
-      onRefresh: () => ref
-          .refresh(ocorrenciaProvider(id).future)
-          .then((_) {}, onError: (_) {}),
+      onRefresh: () {
+        ref.invalidate(acoesDoPlanoProvider(id));
+        return ref
+            .refresh(ocorrenciaProvider(id).future)
+            .then((_) {}, onError: (_) {});
+      },
       child: lista,
     );
   }
