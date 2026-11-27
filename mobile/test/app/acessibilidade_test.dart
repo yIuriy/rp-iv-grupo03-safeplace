@@ -1,5 +1,5 @@
-// Testes de acessibilidade (#335, RNF11) nas telas principais: login, início, EPIs, detalhe do EPI
-// e empréstimos.
+// Testes de acessibilidade (#335, RNF11) nas telas principais: login, início, EPIs, detalhe do EPI,
+// empréstimos, ocorrências e detalhe da ocorrência.
 // Conferem as diretrizes do flutter_test (alvo de toque de 48 dp, rótulo em todo alvo tocável,
 // contraste de texto) e que nenhuma tela estoura com o texto do sistema em 200%.
 
@@ -15,6 +15,8 @@ import '../features/emprestimos/emprestimos_page_test.dart'
 import '../features/epis/apoio_epis.dart';
 import '../features/epis/epi_test.dart' show capaceteJson;
 import '../features/epis/epis_page_test.dart' show luvaCriticaJson;
+import '../features/ocorrencias/apoio_ocorrencias.dart'
+    show acidenteJson, incidenteJson;
 import '../features/usuarios/apoio_usuarios.dart' show abrirApp, gestorJson;
 
 void main() {
@@ -24,6 +26,8 @@ void main() {
       '/epis' => [capaceteJson, luvaCriticaJson],
       '/epis/1' => capaceteJson,
       '/emprestimos' => [emprestimoNoPrazoJson, emprestimoAtrasadoJson],
+      '/ocorrencias' => [acidenteJson, incidenteJson],
+      '/ocorrencias/7' => acidenteJson,
       _ => <Object?>[],
     },
   );
@@ -70,7 +74,14 @@ void main() {
         semantica.dispose();
       });
 
-      for (final rota in ['/', '/epis', '/epis/1', '/emprestimos']) {
+      for (final rota in [
+        '/',
+        '/epis',
+        '/epis/1',
+        '/emprestimos',
+        '/ocorrencias',
+        '/ocorrencias/7',
+      ]) {
         testWidgets('tela $rota', (tester) async {
           final semantica = tester.ensureSemantics();
           usarEscala(tester, escala);

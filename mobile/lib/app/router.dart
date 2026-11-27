@@ -9,6 +9,8 @@ import '../features/emprestimos/presentation/emprestimos_page.dart';
 import '../features/epis/presentation/epi_detalhe_page.dart';
 import '../features/epis/presentation/epis_page.dart';
 import '../features/inicio/presentation/inicio_page.dart';
+import '../features/ocorrencias/presentation/ocorrencia_detalhe_page.dart';
+import '../features/ocorrencias/presentation/ocorrencias_page.dart';
 import '../features/usuarios/presentation/exemplo_colaborador_picker_page.dart';
 import '../features/usuarios/presentation/perfil_page.dart';
 import '../features/usuarios/presentation/usuarios_page.dart';
@@ -73,6 +75,7 @@ Widget _telaDo(ItemMenu item, BuildContext context) {
   return switch (item.rota) {
     Rotas.epis => const EpisPage(),
     Rotas.emprestimos => const EmprestimosPage(),
+    Rotas.ocorrencias => const OcorrenciasPage(),
     Rotas.usuarios => const UsuariosPage(),
     Rotas.perfil => const PerfilPage(),
     _ => PaginaEmConstrucao(item: item),
@@ -86,6 +89,13 @@ List<RouteBase> _subrotasDo(ItemMenu item) => [
       path: ':id', // /epis/{id}
       builder: (_, state) =>
           EpiDetalhePage(id: int.tryParse(state.pathParameters['id'] ?? '')),
+    ),
+  if (item.rota == Rotas.ocorrencias)
+    GoRoute(
+      path: ':id', // /ocorrencias/{id}
+      builder: (_, state) => OcorrenciaDetalhePage(
+        id: int.tryParse(state.pathParameters['id'] ?? ''),
+      ),
     ),
   if (kDebugMode && item.rota == Rotas.usuarios)
     GoRoute(

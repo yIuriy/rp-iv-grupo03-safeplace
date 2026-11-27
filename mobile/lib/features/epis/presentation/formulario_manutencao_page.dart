@@ -3,12 +3,12 @@
 // (mesmo cuidado da #250). Quando o servidor recusa, a mensagem dele aparece e os dados ficam.
 // Fechar com dados digitados pede confirmação (#335).
 
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/api/erros.dart';
 import '../../../shared/formularios/data.dart';
+import '../../../shared/formularios/hora.dart';
 import '../../../shared/tema/cores_safeplace.dart';
 import '../../../shared/tema/tokens.g.dart';
 import '../../../shared/widgets/aviso.dart';
@@ -47,27 +47,6 @@ final descreverFalhaDeManutencao = criarDescritorDeFalha(
 
 const mensagemManutencaoRegistrada =
     'Manutenção registrada. Situação e histórico foram atualizados.';
-
-/// `hh:mm` enquanto se digita: só números, com os dois-pontos depois da hora.
-class _MascaraHora extends TextInputFormatter {
-  const _MascaraHora();
-
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue antigo,
-    TextEditingValue novo,
-  ) {
-    var digitos = novo.text.replaceAll(RegExp(r'\D'), '');
-    if (digitos.length > 4) digitos = digitos.substring(0, 4);
-    final texto = digitos.length > 2
-        ? '${digitos.substring(0, 2)}:${digitos.substring(2)}'
-        : digitos;
-    return TextEditingValue(
-      text: texto,
-      selection: TextSelection.collapsed(offset: texto.length),
-    );
-  }
-}
 
 class FormularioManutencaoPage extends ConsumerStatefulWidget {
   const FormularioManutencaoPage({super.key, required this.epi});
@@ -170,7 +149,7 @@ class _FormularioManutencaoPageState
                   controlador: _hora,
                   dica: 'hh:mm',
                   teclado: TextInputType.number,
-                  formatadores: const [_MascaraHora()],
+                  formatadores: const [MascaraHora()],
                   validador: validarHoraManutencao,
                 ),
                 espaco,
