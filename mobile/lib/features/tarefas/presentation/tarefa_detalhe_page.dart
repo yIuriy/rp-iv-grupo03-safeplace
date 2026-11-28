@@ -5,6 +5,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/sessao/controlador_sessao.dart';
 import '../../../shared/offline/conteudo_com_cache.dart';
 import '../../../shared/tema/cores_safeplace.dart';
 import '../../../shared/tema/tokens.g.dart';
@@ -14,6 +15,7 @@ import '../../areas_risco/data/areas_risco_api.dart';
 import '../data/tarefa.dart';
 import '../data/tarefas_api.dart';
 import 'componentes_tarefa.dart';
+import 'formulario_tarefa_page.dart';
 
 /// Rótulo e valor dos dados da tarefa. Área e setores aparecem pelo nome quando o catálogo já
 /// chegou, e pelo número enquanto isso.
@@ -98,7 +100,59 @@ class _ConteudoDaTarefa extends ConsumerWidget {
       aoTentarDeNovo: () => ref.invalidate(tarefaProvider(id)),
       construir: (tarefa, somenteLeitura) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [_DadosDaTarefa(tarefa: tarefa)],
+        children: [
+          _DadosDaTarefa(tarefa: tarefa),
+          _Acoes(tarefa: tarefa, somenteLeitura: somenteLeitura),
+        ],
+      ),
+    );
+  }
+}
+
+/// Ações por perfil, conforme a matriz do backend (RNF03): o Gestor edita. Sem conexão, os botões
+/// ficam desabilitados com o motivo (RNF08).
+class _Acoes extends ConsumerWidget {
+  const _Acoes({required this.tarefa, required this.somenteLeitura});
+
+  final Tarefa tarefa;
+  final bool somenteLeitura;
+
+  Future<void> _avisar(BuildContext context, String mensagem) async {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensagem)));
+  }
+
+  Future<void> _editar(BuildContext context) async {
+    final salva = await abrirFormularioTarefa(context, tarefa: tarefa);
+    if (salva == null || !context.mounted) return;
+    await _avisar(context, mensagemAoSalvarTarefa(salva, editando: true));
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final gestor =
+        ref.watch(controladorSessaoProvider).value?.sessao?.ehGestor ?? false;
+    if (!gestor) return const SizedBox.shrink();
+    final bloqueado = somenteLeitura || tarefa.id == null;
+    return Padding(
+      padding: const EdgeInsets.only(top: TokensDimensoes.space16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          OutlinedButton.icon(
+            onPressed: bloqueado ? null : () => _editar(context),
+            icon: const Icon(Icons.edit_outlined),
+            label: const Text('Editar tarefa'),
+          ),
+          if (somenteLeitura) ...[
+            const SizedBox(height: TokensDimensoes.space8),
+            Text(
+              'Cadastros e alterações voltam quando a conexão voltar.',
+              style: Theme.of(context).textTheme.bodyMedium
+                  ?.copyWith(color: context.cores.textoSecundario),
+            ),
+          ],
+        ],
       ),
     );
   }

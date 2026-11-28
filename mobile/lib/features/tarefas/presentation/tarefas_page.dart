@@ -15,6 +15,7 @@ import '../../../shared/widgets/estados.dart';
 import '../data/tarefa.dart';
 import '../data/tarefas_api.dart';
 import 'componentes_tarefa.dart';
+import 'formulario_tarefa_page.dart';
 
 /// Tarefas cuja descrição contém o [termo], sem diferenciar maiúsculas (como o web).
 List<Tarefa> filtrarTarefas(List<Tarefa> tarefas, String termo) {
@@ -51,12 +52,23 @@ class _TarefasPageState extends ConsumerState<TarefasPage> {
     });
   }
 
+  Future<void> _cadastrar() async {
+    final salva = await abrirFormularioTarefa(context);
+    if (salva == null || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(mensagemAoSalvarTarefa(salva, editando: false))),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = tarefasProvider(_nivel);
     final consulta = ref.watch(provider);
+    final somenteLeitura = consulta.value?.somenteLeitura ?? false;
     final gestor =
         ref.watch(controladorSessaoProvider).value?.sessao?.ehGestor ?? false;
+    final secundario = Theme.of(context).textTheme.bodyMedium
+        ?.copyWith(color: context.cores.textoSecundario);
     return RefreshIndicator(
       onRefresh: () =>
           ref.refresh(provider.future).then((_) {}, onError: (_) {}),
@@ -67,9 +79,24 @@ class _TarefasPageState extends ConsumerState<TarefasPage> {
             gestor
                 ? 'Consulte a matriz de periculosidade, cadastre atividades operacionais e defina o grau de risco.'
                 : 'Consulte a matriz de periculosidade e as diretrizes de risco das atividades operacionais.',
-            style: Theme.of(context).textTheme.bodyMedium
-                ?.copyWith(color: context.cores.textoSecundario),
+            style: secundario,
           ),
+          if (gestor) ...[
+            const SizedBox(height: TokensDimensoes.space12),
+            FilledButton.icon(
+              // Cadastro precisa do servidor: sem conexão, fica desabilitado (RNF08).
+              onPressed: somenteLeitura ? null : _cadastrar,
+              icon: const Icon(Icons.add),
+              label: const Text('Cadastrar tarefa'),
+            ),
+            if (somenteLeitura) ...[
+              const SizedBox(height: TokensDimensoes.space8),
+              Text(
+                'Cadastros e alterações voltam quando a conexão voltar.',
+                style: secundario,
+              ),
+            ],
+          ],
           const SizedBox(height: TokensDimensoes.space16),
           CampoTexto(
             rotulo: 'Buscar tarefa',
