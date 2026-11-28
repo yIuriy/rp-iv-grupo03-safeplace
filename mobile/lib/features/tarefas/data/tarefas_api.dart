@@ -15,6 +15,7 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/api_client_provider.dart';
 import '../../../shared/offline/cache_offline.dart';
 import '../domain/tarefa_repository.dart';
+import 'alocacao.dart';
 import 'tarefa.dart';
 
 /// Escritas de `/api/tarefas`. Os corpos seguem os `Request` do backend.
@@ -41,6 +42,26 @@ class TarefasApi implements TarefaRepository {
       '/tarefas/$id/classificacao',
       corpo: {'nivelPerigo': nivel.codigo},
     ),
+  );
+
+  @override
+  Future<AlocacaoTarefa> alocar(
+    int tarefaId, {
+    required int colaboradorId,
+    String? observacao,
+  }) async => AlocacaoTarefa.ler(
+    await _client.post(
+      '/tarefas/$tarefaId/alocacoes',
+      corpo: {'colaboradorId': colaboradorId, 'observacao': ?observacao},
+    ),
+  );
+
+  @override
+  Future<ConsultaAptidao> consultarAptidao(
+    int tarefaId,
+    int colaboradorId,
+  ) async => ConsultaAptidao.ler(
+    await _client.get('/tarefas/$tarefaId/aptidao/$colaboradorId'),
   );
 
   static Map<String, Object?> _corpo(DadosTarefa dados) => {
@@ -90,6 +111,18 @@ final historicoTarefaProvider = FutureProvider.autoDispose
         chave: 'tarefas/$id/historico',
         buscar: (api) => api.get('/tarefas/$id/historico'),
         ler: lerHistorico,
+      ),
+      retry: (_, _) => null,
+    );
+
+/// Alocações registradas na tarefa (`GET /api/tarefas/{id}/alocacoes`).
+final alocacoesProvider = FutureProvider.autoDispose
+    .family<Consultado<List<AlocacaoTarefa>>, int>(
+      (ref, id) => consultarComCache(
+        ref,
+        chave: 'tarefas/$id/alocacoes',
+        buscar: (api) => api.get('/tarefas/$id/alocacoes'),
+        ler: lerAlocacoes,
       ),
       retry: (_, _) => null,
     );

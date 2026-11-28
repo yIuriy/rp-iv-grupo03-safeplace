@@ -81,7 +81,7 @@ void main() {
   testWidgets('Gestor classifica tarefa pendente', (tester) async {
     await abrirApp(tester, sessao: sessaoGestor, api: api, rota: '/tarefas/2');
 
-    await tocar(tester, find.widgetWithText(FilledButton, 'Classificar'));
+    await tocar(tester, find.widgetWithText(OutlinedButton, 'Classificar'));
     await tocar(tester, find.text('Salvar classificação'));
     expect(find.text('Escolha o grau de periculosidade.'), findsOneWidget);
 

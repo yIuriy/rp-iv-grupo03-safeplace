@@ -12,9 +12,11 @@ import '../../../shared/tema/tokens.g.dart';
 import '../../../shared/widgets/estados.dart';
 import '../../areas_risco/data/area_risco.dart';
 import '../../areas_risco/data/areas_risco_api.dart';
+import '../data/alocacao.dart';
 import '../data/tarefa.dart';
 import '../data/tarefas_api.dart';
 import 'componentes_tarefa.dart';
+import 'formulario_alocacao_page.dart';
 import 'formulario_classificacao_page.dart';
 import 'formulario_tarefa_page.dart';
 
@@ -82,6 +84,7 @@ class TarefaDetalhePage extends ConsumerWidget {
       onRefresh: () {
         // As seções buscam de novo sozinhas; a espera é só pela tarefa.
         ref.invalidate(historicoTarefaProvider(id));
+        ref.invalidate(alocacoesProvider(id));
         return ref
             .refresh(tarefaProvider(id).future)
             .then((_) {}, onError: (_) {});
@@ -111,6 +114,27 @@ class _ConteudoDaTarefa extends ConsumerWidget {
         children: [
           _DadosDaTarefa(tarefa: tarefa),
           _Acoes(tarefa: tarefa, somenteLeitura: somenteLeitura),
+          const SizedBox(height: TokensDimensoes.space24),
+          SecaoDeLista<AlocacaoTarefa>(
+            titulo: 'Alocações',
+            falha: 'Não foi possível carregar as alocações.',
+            valor: ref.watch(alocacoesProvider(id)),
+            aoTentarDeNovo: () => ref.invalidate(alocacoesProvider(id)),
+            vazio: const EstadoVazio(
+              icone: Icons.group_outlined,
+              titulo: 'Nenhuma alocação registrada',
+              descricao:
+                  'Os colaboradores alocados nesta tarefa aparecerão aqui.',
+            ),
+            item: (alocacao) => ItemDeSecao(
+              quando: alocacao.dataAlocacao,
+              titulo: alocacao.colaboradorNome,
+              linhas: [
+                'Alocado por ${alocacao.responsavelNome ?? 'responsável não registrado'}',
+                ?alocacao.observacao,
+              ],
+            ),
+          ),
           // O backend recusa o histórico ao Supervisor (403), então a seção nem aparece.
           if (gestor) ...[
             const SizedBox(height: TokensDimensoes.space24),
@@ -140,7 +164,8 @@ class _ConteudoDaTarefa extends ConsumerWidget {
   }
 }
 
-/// Ações por perfil, conforme a matriz do backend (RNF03): o Gestor classifica e edita. Sem conexão, os botões
+/// Ações por perfil, conforme a matriz do backend (RNF03): Gestor e Supervisor alocam; só o
+/// Gestor classifica e edita. Sem conexão, os botões
 /// ficam desabilitados com o motivo (RNF08).
 class _Acoes extends ConsumerWidget {
   const _Acoes({required this.tarefa, required this.somenteLeitura});
@@ -151,6 +176,12 @@ class _Acoes extends ConsumerWidget {
   Future<void> _avisar(BuildContext context, String mensagem) async {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(mensagem)));
+  }
+
+  Future<void> _alocar(BuildContext context) async {
+    final alocacao = await abrirFormularioAlocacao(context, tarefa: tarefa);
+    if (alocacao == null || !context.mounted) return;
+    await _avisar(context, mensagemDeAlocacao(alocacao));
   }
 
   Future<void> _classificar(BuildContext context) async {
@@ -169,7 +200,6 @@ class _Acoes extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final gestor =
         ref.watch(controladorSessaoProvider).value?.sessao?.ehGestor ?? false;
-    if (!gestor) return const SizedBox.shrink();
     final bloqueado = somenteLeitura || tarefa.id == null;
     return Padding(
       padding: const EdgeInsets.only(top: TokensDimensoes.space16),
@@ -177,18 +207,26 @@ class _Acoes extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           FilledButton.icon(
-            onPressed: bloqueado ? null : () => _classificar(context),
-            icon: const Icon(Icons.rule),
-            label: Text(
-              tarefa.classificada ? 'Reavaliar risco' : 'Classificar',
+            onPressed: bloqueado ? null : () => _alocar(context),
+            icon: const Icon(Icons.person_add_alt),
+            label: const Text('Alocar colaborador'),
+          ),
+          if (gestor) ...[
+            const SizedBox(height: TokensDimensoes.space8),
+            OutlinedButton.icon(
+              onPressed: bloqueado ? null : () => _classificar(context),
+              icon: const Icon(Icons.rule),
+              label: Text(
+                tarefa.classificada ? 'Reavaliar risco' : 'Classificar',
+              ),
             ),
-          ),
-          const SizedBox(height: TokensDimensoes.space8),
-          OutlinedButton.icon(
-            onPressed: bloqueado ? null : () => _editar(context),
-            icon: const Icon(Icons.edit_outlined),
-            label: const Text('Editar tarefa'),
-          ),
+            const SizedBox(height: TokensDimensoes.space8),
+            OutlinedButton.icon(
+              onPressed: bloqueado ? null : () => _editar(context),
+              icon: const Icon(Icons.edit_outlined),
+              label: const Text('Editar tarefa'),
+            ),
+          ],
           if (somenteLeitura) ...[
             const SizedBox(height: TokensDimensoes.space8),
             Text(

@@ -1,6 +1,7 @@
 // Contrato de escrita do módulo de tarefas (RF06, UC11). As leituras ficam nos providers com cache
 // offline de `data/tarefas_api.dart`.
 
+import '../data/alocacao.dart';
 import '../data/tarefa.dart';
 
 /// Formulário de cadastro ou edição, já validado (`CriarTarefaRequest` e `AtualizarTarefaRequest`).
@@ -29,4 +30,15 @@ abstract interface class TarefaRepository {
 
   /// Define ou reavalia o grau; o Gestor logado fica como responsável técnico.
   Future<Tarefa> classificar(int id, NivelPerigo nivel);
+
+  /// Gestor e Supervisor. 409 quando a tarefa não tem grau; 422 com os `impedimentos` quando o
+  /// colaborador não tem as capacitações exigidas.
+  Future<AlocacaoTarefa> alocar(
+    int tarefaId, {
+    required int colaboradorId,
+    String? observacao,
+  });
+
+  /// Consulta sem cache, porque o diagnóstico só vale com dados atuais.
+  Future<ConsultaAptidao> consultarAptidao(int tarefaId, int colaboradorId);
 }
