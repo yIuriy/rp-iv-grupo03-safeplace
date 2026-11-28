@@ -30,12 +30,7 @@ class SeloSituacaoEmprestimo extends StatelessWidget {
         cores.perigoFundo,
         Icons.error_outline,
       ),
-      _ => (
-        'Em posse',
-        cores.info,
-        cores.infoFundo,
-        Icons.info_outline,
-      ),
+      _ => ('Em posse', cores.info, cores.infoFundo, Icons.info_outline),
     };
 
     return DecoratedBox(
@@ -55,10 +50,8 @@ class SeloSituacaoEmprestimo extends StatelessWidget {
             const SizedBox(width: TokensDimensoes.space4),
             Text(
               rotulo,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: frente,
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(context).textTheme.labelSmall
+                  ?.copyWith(color: frente, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -127,17 +120,13 @@ class CartaoEmprestimo extends StatelessWidget {
                         children: [
                           Text(
                             emprestimo.epiNome,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
+                            style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: TokensDimensoes.space4),
                           Text(
                             emprestimo.colaboradorNome,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
+                            style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(color: cores.textoSecundario),
                           ),
                         ],
@@ -159,10 +148,11 @@ class CartaoEmprestimo extends StatelessWidget {
                       child: Text(
                         'Previsão: $previsao',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: atrasado ? cores.perigo : null,
-                              fontWeight:
-                                  atrasado ? FontWeight.bold : FontWeight.normal,
-                            ),
+                          color: atrasado ? cores.perigo : null,
+                          fontWeight: atrasado
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
                       ),
                     ),
                   ],
@@ -176,8 +166,9 @@ class CartaoEmprestimo extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: cores.perigoFundo,
-                      borderRadius:
-                          BorderRadius.circular(TokensDimensoes.radius4),
+                      borderRadius: BorderRadius.circular(
+                        TokensDimensoes.radius4,
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -252,9 +243,7 @@ class DialogoDetalhesEmprestimo extends StatelessWidget {
                 Expanded(
                   child: Text(
                     emprestimo.epiNome,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
+                    style: Theme.of(context).textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -262,16 +251,25 @@ class DialogoDetalhesEmprestimo extends StatelessWidget {
               ],
             ),
             const SizedBox(height: TokensDimensoes.space12),
-            _LinhaDetalhe(rotulo: 'Colaborador', valor: emprestimo.colaboradorNome),
+            _LinhaDetalhe(
+              rotulo: 'Colaborador',
+              valor: emprestimo.colaboradorNome,
+            ),
             if (emprestimo.epiId != null)
-              _LinhaDetalhe(rotulo: 'Código do EPI', valor: '${emprestimo.epiId}'),
+              _LinhaDetalhe(
+                rotulo: 'Código do EPI',
+                valor: '${emprestimo.epiId}',
+              ),
             _LinhaDetalhe(rotulo: 'Data de entrega', valor: retirada),
             _LinhaDetalhe(
               rotulo: 'Devolução prevista',
               valor: previsao + (emprestimo.estaAtrasado ? ' (atrasada)' : ''),
             ),
             if (devolucaoReal != null)
-              _LinhaDetalhe(rotulo: 'Devolução realizada', valor: devolucaoReal),
+              _LinhaDetalhe(
+                rotulo: 'Devolução realizada',
+                valor: devolucaoReal,
+              ),
             if (emprestimo.estadoDevolucao != null)
               _LinhaDetalhe(
                 rotulo: 'Condição na devolução',
@@ -287,9 +285,8 @@ class DialogoDetalhesEmprestimo extends StatelessWidget {
             const SizedBox(height: TokensDimensoes.space16),
             Text(
               'Termo de cautela',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(context).textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: TokensDimensoes.space4),
             Container(

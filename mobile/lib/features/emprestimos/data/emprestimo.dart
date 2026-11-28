@@ -125,13 +125,12 @@ class Emprestimo {
         b['colaboradorNome'],
         colabId != null ? 'Colaborador $colabId' : 'Colaborador',
       ),
-      responsavelEntregaId:
-          numeroOuNulo(b['responsavelEntregaId'])?.toInt(),
+      responsavelEntregaId: numeroOuNulo(b['responsavelEntregaId'])?.toInt(),
       dataRetirada: dataOuNula(b['dataRetirada']),
       dataDevolucaoPrevista: dataOuNula(b['dataDevolucaoPrevista']),
       dataDevolucaoReal: dataOuNula(b['dataDevolucaoReal']),
-      responsavelDevolucaoId:
-          numeroOuNulo(b['responsavelDevolucaoId'])?.toInt(),
+      responsavelDevolucaoId: numeroOuNulo(b['responsavelDevolucaoId'])
+          ?.toInt(),
       estadoDevolucao: EstadoDevolucao.ler(b['estadoDevolucao']),
       status: ClassificacaoEmprestimo.ler(b['status']),
       atrasado: b['atrasado'] == true,
@@ -144,8 +143,8 @@ class Emprestimo {
   /// convertendo-a para `Emprestimo` concluído com status DISPONIVEL.
   factory Emprestimo.lerDevolucao(Object? dado) {
     final b = objeto(dado, 'Registro de devolução inválido');
-    final id =
-        (numeroOuNulo(b['emprestimoId']) ?? numeroOuNulo(b['id']))?.toInt();
+    final id = (numeroOuNulo(b['emprestimoId']) ?? numeroOuNulo(b['id']))
+        ?.toInt();
     final epiId = numeroOuNulo(b['epiId'])?.toInt();
     final colabId = numeroOuNulo(b['colaboradorId'])?.toInt();
     return Emprestimo(
@@ -157,13 +156,12 @@ class Emprestimo {
         b['colaboradorNome'],
         colabId != null ? 'Colaborador $colabId' : 'Colaborador',
       ),
-      responsavelEntregaId:
-          numeroOuNulo(b['responsavelEntregaId'])?.toInt(),
+      responsavelEntregaId: numeroOuNulo(b['responsavelEntregaId'])?.toInt(),
       dataRetirada: dataOuNula(b['dataRetirada']),
       dataDevolucaoPrevista: dataOuNula(b['dataDevolucaoPrevista']),
       dataDevolucaoReal: dataOuNula(b['dataDevolucaoReal']),
-      responsavelDevolucaoId:
-          numeroOuNulo(b['responsavelDevolucaoId'])?.toInt(),
+      responsavelDevolucaoId: numeroOuNulo(b['responsavelDevolucaoId'])
+          ?.toInt(),
       estadoDevolucao: EstadoDevolucao.ler(b['estadoDevolucao']),
       status: ClassificacaoEmprestimo.disponivel,
       atrasado: false,

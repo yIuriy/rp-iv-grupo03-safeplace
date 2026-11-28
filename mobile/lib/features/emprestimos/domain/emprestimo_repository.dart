@@ -26,7 +26,10 @@ abstract interface class EmprestimoRepository {
   Future<Emprestimo> registrarEntrega(DadosEntrega dados);
 
   /// Registra a devolução do EPI com seu estado de conservação (POST /api/emprestimos/{id}/devolucao).
-  Future<Emprestimo> registrarDevolucao(int emprestimoId, EstadoDevolucao estado);
+  Future<Emprestimo> registrarDevolucao(
+    int emprestimoId,
+    EstadoDevolucao estado,
+  );
 
   /// Consulta detalhes do empréstimo (GET /api/emprestimos/{id}).
   Future<Emprestimo> buscarPorId(int id);

@@ -11,6 +11,8 @@ import '../features/epis/presentation/epis_page.dart';
 import '../features/inicio/presentation/inicio_page.dart';
 import '../features/ocorrencias/presentation/ocorrencia_detalhe_page.dart';
 import '../features/ocorrencias/presentation/ocorrencias_page.dart';
+import '../features/tarefas/presentation/tarefa_detalhe_page.dart';
+import '../features/tarefas/presentation/tarefas_page.dart';
 import '../features/usuarios/presentation/exemplo_colaborador_picker_page.dart';
 import '../features/usuarios/presentation/perfil_page.dart';
 import '../features/usuarios/presentation/usuarios_page.dart';
@@ -25,6 +27,7 @@ abstract final class Rotas {
   static const ocorrencias = '/ocorrencias';
   static const epis = '/epis';
   static const emprestimos = '/emprestimos';
+  static const tarefas = '/tarefas';
   static const usuarios = '/usuarios';
   static const perfil = '/perfil';
 
@@ -76,6 +79,7 @@ Widget _telaDo(ItemMenu item, BuildContext context) {
     Rotas.epis => const EpisPage(),
     Rotas.emprestimos => const EmprestimosPage(),
     Rotas.ocorrencias => const OcorrenciasPage(),
+    Rotas.tarefas => const TarefasPage(),
     Rotas.usuarios => const UsuariosPage(),
     Rotas.perfil => const PerfilPage(),
     _ => PaginaEmConstrucao(item: item),
@@ -96,6 +100,12 @@ List<RouteBase> _subrotasDo(ItemMenu item) => [
       builder: (_, state) => OcorrenciaDetalhePage(
         id: int.tryParse(state.pathParameters['id'] ?? ''),
       ),
+    ),
+  if (item.rota == Rotas.tarefas)
+    GoRoute(
+      path: ':id', // /tarefas/{id}
+      builder: (_, state) =>
+          TarefaDetalhePage(id: int.tryParse(state.pathParameters['id'] ?? '')),
     ),
   if (kDebugMode && item.rota == Rotas.usuarios)
     GoRoute(

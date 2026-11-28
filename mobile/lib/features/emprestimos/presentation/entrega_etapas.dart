@@ -117,8 +117,9 @@ class EntregaConcluidaWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dataDevolucao = emprestimo.dataDevolucaoPrevista;
-    final dataFormatada =
-        dataDevolucao != null ? formatarData(dataDevolucao) : 'não informada';
+    final dataFormatada = dataDevolucao != null
+        ? formatarData(dataDevolucao)
+        : 'não informada';
 
     return ListView(
       padding: const EdgeInsets.all(TokensDimensoes.layoutMobilePadding),
@@ -134,9 +135,8 @@ class EntregaConcluidaWidget extends StatelessWidget {
         const SizedBox(height: TokensDimensoes.space24),
         Text(
           'Termo de cautela',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(context).textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: TokensDimensoes.space8),
         Container(
@@ -150,9 +150,8 @@ class EntregaConcluidaWidget extends StatelessWidget {
             emprestimo.termoCautela.isNotEmpty
                 ? emprestimo.termoCautela
                 : 'Termo de cautela não informado.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontFamily: 'monospace',
-                ),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(fontFamily: 'monospace'),
           ),
         ),
         const SizedBox(height: TokensDimensoes.space24),
