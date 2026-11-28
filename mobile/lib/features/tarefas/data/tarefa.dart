@@ -64,3 +64,37 @@ List<int> _ids(Object? dado) => [
 
 List<Tarefa> lerTarefas(Object? dado) =>
     lista(dado, Tarefa.ler, 'Esperava uma lista de tarefas');
+
+/// Entrada do histórico da tarefa (`RegistroHistoricoResponse`): cadastro e cada classificação, da
+/// mais recente para a mais antiga.
+class RegistroHistorico {
+  const RegistroHistorico({
+    this.id,
+    this.tipoOperacao,
+    this.dataHora,
+    this.responsavel,
+    this.descricao,
+  });
+
+  final int? id;
+  final String? tipoOperacao;
+  final DateTime? dataHora;
+
+  /// E-mail de quem fez a operação.
+  final String? responsavel;
+  final String? descricao;
+
+  factory RegistroHistorico.ler(Object? dado) {
+    final b = objeto(dado, 'Registro de histórico inválido');
+    return RegistroHistorico(
+      id: numeroOuNulo(b['id'])?.toInt(),
+      tipoOperacao: textoOuNulo(b['tipoOperacao']),
+      dataHora: dataOuNula(b['dataHora']),
+      responsavel: textoOuNulo(b['responsavel']),
+      descricao: textoOuNulo(b['descricao']),
+    );
+  }
+}
+
+List<RegistroHistorico> lerHistorico(Object? dado) =>
+    lista(dado, RegistroHistorico.ler, 'Esperava uma lista de registros');

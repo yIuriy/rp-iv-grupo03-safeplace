@@ -2,12 +2,15 @@
 // cartão de uma tarefa. O grau aparece em texto e cor juntos, porque a cor sozinha não carrega a
 // informação (RNF11).
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/api/erros.dart';
 import '../../../shared/tema/cores_safeplace.dart';
 import '../../../shared/tema/tokens.g.dart';
+import '../../../shared/offline/cache_offline.dart';
 import '../../../shared/widgets/aviso.dart';
+import '../../../shared/widgets/estados.dart';
 import '../data/tarefa.dart';
 
 /// Mensagem das consultas do módulo quando o servidor responde com erro.
@@ -115,6 +118,110 @@ class CartaoTarefa extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Seção do detalhe com uma lista consultada à parte: título, carregando, falha com "Tentar
+/// novamente", vazio ou os itens em cartões. O aviso de modo offline fica só no topo da tela, então
+/// aqui a cópia local aparece sem repetir o aviso.
+class SecaoDeLista<T> extends StatelessWidget {
+  const SecaoDeLista({
+    super.key,
+    required this.titulo,
+    required this.valor,
+    required this.aoTentarDeNovo,
+    required this.vazio,
+    required this.item,
+    this.falha = 'Não foi possível carregar a lista.',
+  });
+
+  final String titulo;
+  final AsyncValue<Consultado<List<T>>> valor;
+  final VoidCallback aoTentarDeNovo;
+  final Widget vazio;
+  final Widget Function(T item) item;
+  final String falha;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(
+          header: true,
+          child: Text(titulo, style: Theme.of(context).textTheme.titleLarge),
+        ),
+        const SizedBox(height: TokensDimensoes.space8),
+        valor.when(
+          skipLoadingOnReload: true,
+          skipLoadingOnRefresh: true,
+          loading: () => const EstadoCarregando(),
+          error: (erro, _) => Aviso(
+            tom: TomAviso.perigo,
+            anunciar: true,
+            titulo: falha,
+            mensagem: descreverFalhaDeConsultaTarefa(erro),
+            rotuloAcao: 'Tentar novamente',
+            aoAgir: aoTentarDeNovo,
+          ),
+          data: (consultado) => consultado.dados.isEmpty
+              ? vazio
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final registro in consultado.dados) ...[
+                      Card(
+                        margin: EdgeInsets.zero,
+                        child: Padding(
+                          padding: const EdgeInsets.all(
+                            TokensDimensoes.space12,
+                          ),
+                          child: item(registro),
+                        ),
+                      ),
+                      const SizedBox(height: TokensDimensoes.space8),
+                    ],
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Data em destaque, um título e as linhas de apoio, o formato dos itens das seções do detalhe.
+class ItemDeSecao extends StatelessWidget {
+  const ItemDeSecao({
+    super.key,
+    this.quando,
+    required this.titulo,
+    this.linhas = const [],
+  });
+
+  final DateTime? quando;
+  final String titulo;
+  final List<String> linhas;
+
+  @override
+  Widget build(BuildContext context) {
+    final textos = Theme.of(context).textTheme;
+    final quando = this.quando;
+    return MergeSemantics(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (quando != null)
+            Text(
+              formatarDataHora(quando),
+              style: textos.labelMedium?.copyWith(
+                color: context.cores.textoSecundario,
+              ),
+            ),
+          Text(titulo, style: textos.titleSmall),
+          for (final linha in linhas) Text(linha),
+        ],
       ),
     );
   }

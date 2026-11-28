@@ -35,6 +35,14 @@ class TarefasApi implements TarefaRepository {
   Future<Tarefa> atualizar(int id, DadosTarefa dados) async =>
       Tarefa.ler(await _client.put('/tarefas/$id', corpo: _corpo(dados)));
 
+  @override
+  Future<Tarefa> classificar(int id, NivelPerigo nivel) async => Tarefa.ler(
+    await _client.patch(
+      '/tarefas/$id/classificacao',
+      corpo: {'nivelPerigo': nivel.codigo},
+    ),
+  );
+
   static Map<String, Object?> _corpo(DadosTarefa dados) => {
     'descricao': dados.descricao,
     'areaRiscoId': ?dados.areaRiscoId,
@@ -70,6 +78,18 @@ final tarefaProvider = FutureProvider.autoDispose
         chave: 'tarefas/$id',
         buscar: (api) => api.get('/tarefas/$id'),
         ler: Tarefa.ler,
+      ),
+      retry: (_, _) => null,
+    );
+
+/// Cadastro e classificações da tarefa (`GET /api/tarefas/{id}/historico`). Só o Gestor consulta.
+final historicoTarefaProvider = FutureProvider.autoDispose
+    .family<Consultado<List<RegistroHistorico>>, int>(
+      (ref, id) => consultarComCache(
+        ref,
+        chave: 'tarefas/$id/historico',
+        buscar: (api) => api.get('/tarefas/$id/historico'),
+        ler: lerHistorico,
       ),
       retry: (_, _) => null,
     );

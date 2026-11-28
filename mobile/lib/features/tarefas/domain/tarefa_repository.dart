@@ -26,4 +26,7 @@ abstract interface class TarefaRepository {
 
   /// Só o Gestor de Segurança.
   Future<Tarefa> atualizar(int id, DadosTarefa dados);
+
+  /// Define ou reavalia o grau; o Gestor logado fica como responsável técnico.
+  Future<Tarefa> classificar(int id, NivelPerigo nivel);
 }

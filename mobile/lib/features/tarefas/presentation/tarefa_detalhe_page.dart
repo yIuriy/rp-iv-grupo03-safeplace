@@ -15,6 +15,7 @@ import '../../areas_risco/data/areas_risco_api.dart';
 import '../data/tarefa.dart';
 import '../data/tarefas_api.dart';
 import 'componentes_tarefa.dart';
+import 'formulario_classificacao_page.dart';
 import 'formulario_tarefa_page.dart';
 
 /// Rótulo e valor dos dados da tarefa. Área e setores aparecem pelo nome quando o catálogo já
@@ -78,8 +79,13 @@ class TarefaDetalhePage extends ConsumerWidget {
     );
     if (id == null) return lista;
     return RefreshIndicator(
-      onRefresh: () =>
-          ref.refresh(tarefaProvider(id).future).then((_) {}, onError: (_) {}),
+      onRefresh: () {
+        // As seções buscam de novo sozinhas; a espera é só pela tarefa.
+        ref.invalidate(historicoTarefaProvider(id));
+        return ref
+            .refresh(tarefaProvider(id).future)
+            .then((_) {}, onError: (_) {});
+      },
       child: lista,
     );
   }
@@ -92,6 +98,8 @@ class _ConteudoDaTarefa extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final gestor =
+        ref.watch(controladorSessaoProvider).value?.sessao?.ehGestor ?? false;
     return ConteudoComCache<Tarefa>(
       valor: ref.watch(tarefaProvider(id)),
       carregando: 'Carregando tarefa...',
@@ -103,13 +111,36 @@ class _ConteudoDaTarefa extends ConsumerWidget {
         children: [
           _DadosDaTarefa(tarefa: tarefa),
           _Acoes(tarefa: tarefa, somenteLeitura: somenteLeitura),
+          // O backend recusa o histórico ao Supervisor (403), então a seção nem aparece.
+          if (gestor) ...[
+            const SizedBox(height: TokensDimensoes.space24),
+            SecaoDeLista<RegistroHistorico>(
+              titulo: 'Histórico da tarefa',
+              falha: 'Não foi possível carregar o histórico.',
+              valor: ref.watch(historicoTarefaProvider(id)),
+              aoTentarDeNovo: () => ref.invalidate(historicoTarefaProvider(id)),
+              vazio: const EstadoVazio(
+                icone: Icons.history,
+                titulo: 'Sem registros',
+                descricao: 'O cadastro e cada classificação aparecerão aqui, do mais recente ao mais antigo.',
+              ),
+              item: (registro) => ItemDeSecao(
+                quando: registro.dataHora,
+                titulo: rotuloDaOperacao(registro.tipoOperacao),
+                linhas: [
+                  ?registro.descricao,
+                  'Por ${registro.responsavel ?? 'responsável não registrado'}',
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-/// Ações por perfil, conforme a matriz do backend (RNF03): o Gestor edita. Sem conexão, os botões
+/// Ações por perfil, conforme a matriz do backend (RNF03): o Gestor classifica e edita. Sem conexão, os botões
 /// ficam desabilitados com o motivo (RNF08).
 class _Acoes extends ConsumerWidget {
   const _Acoes({required this.tarefa, required this.somenteLeitura});
@@ -120,6 +151,12 @@ class _Acoes extends ConsumerWidget {
   Future<void> _avisar(BuildContext context, String mensagem) async {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(mensagem)));
+  }
+
+  Future<void> _classificar(BuildContext context) async {
+    final salva = await abrirFormularioClassificacao(context, tarefa: tarefa);
+    if (salva == null || !context.mounted) return;
+    await _avisar(context, mensagemDeClassificacao(salva));
   }
 
   Future<void> _editar(BuildContext context) async {
@@ -139,6 +176,14 @@ class _Acoes extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          FilledButton.icon(
+            onPressed: bloqueado ? null : () => _classificar(context),
+            icon: const Icon(Icons.rule),
+            label: Text(
+              tarefa.classificada ? 'Reavaliar risco' : 'Classificar',
+            ),
+          ),
+          const SizedBox(height: TokensDimensoes.space8),
           OutlinedButton.icon(
             onPressed: bloqueado ? null : () => _editar(context),
             icon: const Icon(Icons.edit_outlined),
@@ -157,6 +202,13 @@ class _Acoes extends ConsumerWidget {
     );
   }
 }
+
+String rotuloDaOperacao(String? tipo) => switch (tipo) {
+  'CADASTRO' => 'Cadastro',
+  'ALTERACAO' => 'Alteração',
+  'REMOCAO' => 'Remoção',
+  _ => 'Operação registrada',
+};
 
 class _DadosDaTarefa extends ConsumerWidget {
   const _DadosDaTarefa({required this.tarefa});
