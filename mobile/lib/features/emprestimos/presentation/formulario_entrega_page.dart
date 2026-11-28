@@ -103,8 +103,9 @@ class _FormularioEntregaPageState extends ConsumerState<FormularioEntregaPage> {
       });
     } catch (erro) {
       if (!mounted) return;
-      final duplicidade =
-          confirmarSubstituicao ? null : duplicidadeDaFalha(erro);
+      final duplicidade = confirmarSubstituicao
+          ? null
+          : duplicidadeDaFalha(erro);
 
       setState(() {
         _enviando = false;
@@ -151,14 +152,18 @@ class _FormularioEntregaPageState extends ConsumerState<FormularioEntregaPage> {
       alterado: _alterado && _etapa != EtapaEntrega.concluida,
       enviando: _enviando,
       child: Scaffold(
-      appBar: AppBar(
-        title: Text(titulo),
-        leading: _etapa == EtapaEntrega.concluida
-            ? const SizedBox.shrink()
-            : CloseButton(onPressed: _enviando ? null : () => Navigator.of(context).maybePop()),
-      ),
-      body: switch (_etapa) {
-        EtapaEntrega.duplicidade => DuplicidadeConfirmacaoWidget(
+        appBar: AppBar(
+          title: Text(titulo),
+          leading: _etapa == EtapaEntrega.concluida
+              ? const SizedBox.shrink()
+              : CloseButton(
+                  onPressed: _enviando
+                      ? null
+                      : () => Navigator.of(context).maybePop(),
+                ),
+        ),
+        body: switch (_etapa) {
+          EtapaEntrega.duplicidade => DuplicidadeConfirmacaoWidget(
             mensagem: _duplicidadeMensagem,
             falha: _falha,
             enviando: _enviando,
@@ -167,17 +172,19 @@ class _FormularioEntregaPageState extends ConsumerState<FormularioEntregaPage> {
             aoVoltar: _voltarDaDuplicidade,
             aoConfirmar: _confirmarDuplicidade,
           ),
-        EtapaEntrega.concluida => EntregaConcluidaWidget(
+          EtapaEntrega.concluida => EntregaConcluidaWidget(
             emprestimo: _emprestimoConcluido!,
             aoFechar: () => Navigator.of(context).pop(_emprestimoConcluido),
           ),
-        EtapaEntrega.formulario => Form(
+          EtapaEntrega.formulario => Form(
             key: _formKey,
             onChanged: () {
               if (!_alterado) setState(() => _alterado = true);
             },
             child: ListView(
-              padding: const EdgeInsets.all(TokensDimensoes.layoutMobilePadding),
+              padding: const EdgeInsets.all(
+                TokensDimensoes.layoutMobilePadding,
+              ),
               children: [
                 ColaboradorPicker(
                   colaboradorId: _colaboradorId,
@@ -221,19 +228,25 @@ class _FormularioEntregaPageState extends ConsumerState<FormularioEntregaPage> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: _enviando ? null : () => Navigator.of(context).maybePop(),
+                        onPressed: _enviando
+                            ? null
+                            : () => Navigator.of(context).maybePop(),
                         child: const Text('Cancelar'),
                       ),
                     ),
                     const SizedBox(width: TokensDimensoes.space12),
                     Expanded(
                       child: FilledButton.icon(
-                        onPressed: _enviando ? null : _submeterFormularioInicial,
+                        onPressed: _enviando
+                            ? null
+                            : _submeterFormularioInicial,
                         icon: _enviando
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(Icons.check),
                         label: const Text('Registrar entrega'),
@@ -244,7 +257,7 @@ class _FormularioEntregaPageState extends ConsumerState<FormularioEntregaPage> {
               ],
             ),
           ),
-      },
+        },
       ),
     );
   }

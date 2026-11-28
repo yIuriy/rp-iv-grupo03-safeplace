@@ -93,9 +93,8 @@ class _DialogoDevolucaoState extends ConsumerState<DialogoDevolucao> {
           children: [
             Text(
               'Confira o item recebido e informe sua condição antes de concluir.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: cores.textoSecundario,
-                  ),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: cores.textoSecundario),
             ),
             const SizedBox(height: TokensDimensoes.space16),
             _ItemDetalhe(rotulo: 'Colaborador', valor: emp.colaboradorNome),
@@ -108,14 +107,14 @@ class _DialogoDevolucaoState extends ConsumerState<DialogoDevolucao> {
             _ItemDetalhe(rotulo: 'Entregue em', valor: retirada),
             _ItemDetalhe(
               rotulo: 'Devolução prevista',
-              valor: '$devolucaoPrevista${emp.estaAtrasado ? " (prazo vencido)" : ""}',
+              valor:
+                  '$devolucaoPrevista${emp.estaAtrasado ? " (prazo vencido)" : ""}',
             ),
             const SizedBox(height: TokensDimensoes.space16),
             Text(
               'Condição do item',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(context).textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: TokensDimensoes.space4),
             RadioGroup<EstadoDevolucao>(
@@ -144,10 +143,7 @@ class _DialogoDevolucaoState extends ConsumerState<DialogoDevolucao> {
               const SizedBox(height: TokensDimensoes.space4),
               Text(
                 _erroValidacao!,
-                style: TextStyle(
-                  color: cores.perigo,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: cores.perigo, fontSize: 12),
               ),
             ],
             if (_estado != null) ...[
@@ -178,9 +174,9 @@ class _DialogoDevolucaoState extends ConsumerState<DialogoDevolucao> {
             Text(
               'A data, a hora e o responsável pela devolução são registrados na confirmação.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: cores.textoSecundario,
-                    fontStyle: FontStyle.italic,
-                  ),
+                color: cores.textoSecundario,
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ],
         ),

@@ -36,10 +36,9 @@ String? validarDataDevolucaoTexto(String? texto, [DateTime? dataHoje]) {
 }
 
 /// Justificativa condicional obrigatória ao confirmar duplicidade de posse (US11, critério 6).
-String? validarJustificativa(String? valor) =>
-    (valor ?? '').trim().isEmpty
-        ? 'Informe a justificativa da substituição.'
-        : null;
+String? validarJustificativa(String? valor) => (valor ?? '').trim().isEmpty
+    ? 'Informe a justificativa da substituição.'
+    : null;
 
 /// Condição obrigatória ao registrar devolução (UC12, alternativo I).
 String? validarEstadoDevolucao(EstadoDevolucao? estado) =>
@@ -47,11 +46,7 @@ String? validarEstadoDevolucao(EstadoDevolucao? estado) =>
 
 /// Agrupamento de erros de validação local do formulário de entrega.
 class ErrosEntrega {
-  const ErrosEntrega({
-    this.colaborador,
-    this.epi,
-    this.dataDevolucaoPrevista,
-  });
+  const ErrosEntrega({this.colaborador, this.epi, this.dataDevolucaoPrevista});
 
   final String? colaborador;
   final String? epi;

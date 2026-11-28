@@ -19,7 +19,10 @@ import 'dialogo_devolucao.dart';
 import 'formulario_entrega_page.dart';
 
 /// Filtra empréstimos por nome do colaborador ou nome do EPI ignorando maiúsculas e espaços.
-List<Emprestimo> filtrarEmprestimos(List<Emprestimo> emprestimos, String termo) {
+List<Emprestimo> filtrarEmprestimos(
+  List<Emprestimo> emprestimos,
+  String termo,
+) {
   final busca = termo.trim().toLowerCase();
   if (busca.isEmpty) return emprestimos;
   return emprestimos.where((emp) {
@@ -65,7 +68,10 @@ class _EmprestimosPageState extends ConsumerState<EmprestimosPage> {
   }
 
   Future<void> _devolver(Emprestimo emprestimo) async {
-    final devolvido = await abrirDialogoDevolucao(context, emprestimo: emprestimo);
+    final devolvido = await abrirDialogoDevolucao(
+      context,
+      emprestimo: emprestimo,
+    );
     if (devolvido == null || !mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -107,7 +113,8 @@ class _EmprestimosPageState extends ConsumerState<EmprestimosPage> {
       ),
     };
 
-    final totalAtrasados = consulta.value?.dados
+    final totalAtrasados =
+        consulta.value?.dados
             .where((e) => e.estaAtrasado && e.emPosse)
             .length ??
         0;
@@ -121,9 +128,8 @@ class _EmprestimosPageState extends ConsumerState<EmprestimosPage> {
         children: [
           Text(
             'A entrega retém uma unidade do EPI. Só o item devolvido apto volta ao saldo disponível.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: cores.textoSecundario,
-                ),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: cores.textoSecundario),
           ),
           const SizedBox(height: TokensDimensoes.space12),
           FilledButton.icon(
@@ -135,9 +141,8 @@ class _EmprestimosPageState extends ConsumerState<EmprestimosPage> {
             const SizedBox(height: TokensDimensoes.space8),
             Text(
               'Ações de escrita voltam quando a conexão voltar.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: cores.textoSecundario,
-                  ),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: cores.textoSecundario),
             ),
           ],
           const SizedBox(height: TokensDimensoes.space16),
@@ -172,7 +177,8 @@ class _EmprestimosPageState extends ConsumerState<EmprestimosPage> {
             acaoTeclado: TextInputAction.search,
             aoMudar: (v) => setState(() => _termo = v),
           ),
-          if (totalAtrasados > 0 && _situacao != SituacaoConsulta.atrasados) ...[
+          if (totalAtrasados > 0 &&
+              _situacao != SituacaoConsulta.atrasados) ...[
             const SizedBox(height: TokensDimensoes.space16),
             Aviso(
               titulo: totalAtrasados == 1
@@ -203,8 +209,7 @@ class _EmprestimosPageState extends ConsumerState<EmprestimosPage> {
               if (visiveis.isEmpty) {
                 return EstadoVazio(
                   titulo: 'Nenhum resultado',
-                  descricao:
-                      'Nenhum empréstimo corresponde à busca. Ajuste o termo ou limpe o filtro.',
+                  descricao: 'Nenhum empréstimo corresponde à busca. Ajuste o termo ou limpe o filtro.',
                   icone: Icons.search_off,
                   rotuloAcao: 'Limpar busca',
                   aoAgir: _limparFiltro,

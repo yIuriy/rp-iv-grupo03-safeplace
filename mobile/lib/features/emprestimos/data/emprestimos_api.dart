@@ -73,8 +73,7 @@ final descreverFalhaDeEntrega = criarDescritorDeFalha(
     404: _falhaEntrega,
     422: _falhaEntrega,
   },
-  padrao:
-      'Não foi possível registrar a entrega agora. Os dados preenchidos foram mantidos; tente novamente.',
+  padrao: 'Não foi possível registrar a entrega agora. Os dados preenchidos foram mantidos; tente novamente.',
 );
 
 final _emprestimoInativo = usarMensagemDaApi(
@@ -93,8 +92,7 @@ final descreverFalhaDeDevolucao = criarDescritorDeFalha(
     404: _emprestimoInativo,
     409: _emprestimoInativo,
   },
-  padrao:
-      'Não foi possível registrar a devolução agora. A condição escolhida foi mantida; tente novamente.',
+  padrao: 'Não foi possível registrar a devolução agora. A condição escolhida foi mantida; tente novamente.',
 );
 
 /// Mensagem de falha para consulta da listagem de empréstimos.
@@ -160,8 +158,8 @@ final episDisponiveisProvider =
     );
 
 /// Detalhes de um empréstimo específico (`GET /api/emprestimos/{id}`).
-final emprestimoProvider =
-    FutureProvider.autoDispose.family<Consultado<Emprestimo>, int>(
+final emprestimoProvider = FutureProvider.autoDispose
+    .family<Consultado<Emprestimo>, int>(
       (ref, id) => consultarComCache(
         ref,
         chave: 'emprestimos/$id',
