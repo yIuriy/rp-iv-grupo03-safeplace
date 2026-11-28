@@ -41,4 +41,7 @@ abstract interface class TarefaRepository {
 
   /// Consulta sem cache, porque o diagnóstico só vale com dados atuais.
   Future<ConsultaAptidao> consultarAptidao(int tarefaId, int colaboradorId);
+
+  /// Substitui a lista de EPIs obrigatórios. Só o Gestor de Segurança.
+  Future<Tarefa> vincularEpis(int id, List<int> epiIds);
 }

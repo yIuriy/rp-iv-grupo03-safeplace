@@ -5,7 +5,7 @@
 import '../../../core/api/leitura.dart';
 import '../../areas_risco/data/area_risco.dart';
 
-export '../../areas_risco/data/area_risco.dart' show NivelPerigo;
+export '../../areas_risco/data/area_risco.dart' show EpiResumo, NivelPerigo;
 
 /// Atividade operacional e a última classificação de periculosidade. Leitura defensiva: sem [id], a
 /// tarefa aparece na lista mas não abre o detalhe.
@@ -98,3 +98,66 @@ class RegistroHistorico {
 
 List<RegistroHistorico> lerHistorico(Object? dado) =>
     lista(dado, RegistroHistorico.ler, 'Esperava uma lista de registros');
+
+enum TipoCapacitacao {
+  treinamento('TREINAMENTO', 'Treinamento'),
+  certificacao('CERTIFICACAO', 'Certificação');
+
+  const TipoCapacitacao(this.codigo, this.rotulo);
+
+  final String codigo;
+  final String rotulo;
+
+  /// Como o web: o que não for certificação conta como treinamento.
+  static TipoCapacitacao ler(Object? valor) =>
+      valor == certificacao.codigo ? certificacao : treinamento;
+}
+
+/// Capacitação normativa exigida pela tarefa.
+class ExigenciaCapacitacao {
+  const ExigenciaCapacitacao({this.id, required this.nome, required this.tipo});
+
+  final int? id;
+  final String nome;
+  final TipoCapacitacao tipo;
+
+  factory ExigenciaCapacitacao.ler(Object? dado) {
+    final b = objeto(dado, 'Exigência de capacitação inválida');
+    return ExigenciaCapacitacao(
+      id: numeroOuNulo(b['id'])?.toInt(),
+      nome: texto(b['nomeCapacitacao'], 'Capacitação sem nome'),
+      tipo: TipoCapacitacao.ler(b['tipoCapacitacao']),
+    );
+  }
+}
+
+/// O que a tarefa exige (`ExigenciasTarefaResponse`, US06): grau, EPIs e capacitações.
+class ExigenciasTarefa {
+  const ExigenciasTarefa({
+    this.nivelPerigo,
+    this.classificada = false,
+    this.capacitacoes = const [],
+    this.episObrigatorios = const [],
+  });
+
+  final NivelPerigo? nivelPerigo;
+  final bool classificada;
+  final List<ExigenciaCapacitacao> capacitacoes;
+  final List<EpiResumo> episObrigatorios;
+
+  factory ExigenciasTarefa.ler(Object? dado) {
+    final b = objeto(dado, 'Exigências da tarefa inválidas');
+    final nivel = NivelPerigo.ler(b['nivelPerigo']);
+    return ExigenciasTarefa(
+      nivelPerigo: nivel,
+      classificada: b['classificada'] is bool
+          ? b['classificada']! as bool
+          : nivel != null,
+      capacitacoes: listaOuVazia(b['capacitacoes'], ExigenciaCapacitacao.ler),
+      episObrigatorios: listaOuVazia(b['episObrigatorios'], EpiResumo.ler),
+    );
+  }
+}
+
+List<EpiResumo> lerEpisDaTarefa(Object? dado) =>
+    lista(dado, EpiResumo.ler, 'Esperava uma lista de EPIs');

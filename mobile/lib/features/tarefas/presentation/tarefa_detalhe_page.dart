@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../core/sessao/controlador_sessao.dart';
 import '../../../shared/offline/conteudo_com_cache.dart';
+import '../../../shared/widgets/aviso.dart';
 import '../../../shared/tema/cores_safeplace.dart';
 import '../../../shared/tema/tokens.g.dart';
 import '../../../shared/widgets/estados.dart';
@@ -18,6 +19,7 @@ import '../data/tarefas_api.dart';
 import 'componentes_tarefa.dart';
 import 'formulario_alocacao_page.dart';
 import 'formulario_classificacao_page.dart';
+import 'formulario_epis_tarefa_page.dart';
 import 'formulario_tarefa_page.dart';
 
 /// Rótulo e valor dos dados da tarefa. Área e setores aparecem pelo nome quando o catálogo já
@@ -85,6 +87,7 @@ class TarefaDetalhePage extends ConsumerWidget {
         // As seções buscam de novo sozinhas; a espera é só pela tarefa.
         ref.invalidate(historicoTarefaProvider(id));
         ref.invalidate(alocacoesProvider(id));
+        ref.invalidate(exigenciasProvider(id));
         return ref
             .refresh(tarefaProvider(id).future)
             .then((_) {}, onError: (_) {});
@@ -114,6 +117,8 @@ class _ConteudoDaTarefa extends ConsumerWidget {
         children: [
           _DadosDaTarefa(tarefa: tarefa),
           _Acoes(tarefa: tarefa, somenteLeitura: somenteLeitura),
+          const SizedBox(height: TokensDimensoes.space24),
+          _Exigencias(id: id),
           const SizedBox(height: TokensDimensoes.space24),
           SecaoDeLista<AlocacaoTarefa>(
             titulo: 'Alocações',
@@ -165,7 +170,7 @@ class _ConteudoDaTarefa extends ConsumerWidget {
 }
 
 /// Ações por perfil, conforme a matriz do backend (RNF03): Gestor e Supervisor alocam; só o
-/// Gestor classifica e edita. Sem conexão, os botões
+/// Gestor classifica, vincula EPIs e edita. Sem conexão, os botões
 /// ficam desabilitados com o motivo (RNF08).
 class _Acoes extends ConsumerWidget {
   const _Acoes({required this.tarefa, required this.somenteLeitura});
@@ -188,6 +193,12 @@ class _Acoes extends ConsumerWidget {
     final salva = await abrirFormularioClassificacao(context, tarefa: tarefa);
     if (salva == null || !context.mounted) return;
     await _avisar(context, mensagemDeClassificacao(salva));
+  }
+
+  Future<void> _vincularEpis(BuildContext context) async {
+    final salva = await abrirFormularioEpisTarefa(context, tarefa: tarefa);
+    if (salva == null || !context.mounted) return;
+    await _avisar(context, mensagemDeVinculoEpis(salva));
   }
 
   Future<void> _editar(BuildContext context) async {
@@ -222,6 +233,12 @@ class _Acoes extends ConsumerWidget {
             ),
             const SizedBox(height: TokensDimensoes.space8),
             OutlinedButton.icon(
+              onPressed: bloqueado ? null : () => _vincularEpis(context),
+              icon: const Icon(Icons.inventory_2_outlined),
+              label: const Text('Vincular EPIs'),
+            ),
+            const SizedBox(height: TokensDimensoes.space8),
+            OutlinedButton.icon(
               onPressed: bloqueado ? null : () => _editar(context),
               icon: const Icon(Icons.edit_outlined),
               label: const Text('Editar tarefa'),
@@ -237,6 +254,76 @@ class _Acoes extends ConsumerWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// Exigências da atividade (US06, critério 4): EPIs obrigatórios e capacitações normativas, para o
+/// Supervisor conferir antes de alocar.
+class _Exigencias extends ConsumerWidget {
+  const _Exigencias({required this.id});
+
+  final int id;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textos = Theme.of(context).textTheme;
+    final secundario = textos.bodyMedium?.copyWith(
+      color: context.cores.textoSecundario,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(
+          header: true,
+          child: Text('Exigências da atividade', style: textos.titleLarge),
+        ),
+        const SizedBox(height: TokensDimensoes.space8),
+        ref
+            .watch(exigenciasProvider(id))
+            .when(
+              skipLoadingOnReload: true,
+              skipLoadingOnRefresh: true,
+              loading: () => const EstadoCarregando(
+                texto: 'Consultando exigências registradas...',
+              ),
+              error: (erro, _) => Aviso(
+                tom: TomAviso.perigo,
+                anunciar: true,
+                titulo: 'Não foi possível carregar as exigências.',
+                mensagem: descreverFalhaDeConsultaTarefa(erro),
+                rotuloAcao: 'Tentar novamente',
+                aoAgir: () => ref.invalidate(exigenciasProvider(id)),
+              ),
+              data: (consultado) {
+                final exigencias = consultado.dados;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('EPIs obrigatórios', style: textos.titleSmall),
+                    if (exigencias.episObrigatorios.isEmpty)
+                      Text('Nenhum EPI vinculado.', style: secundario)
+                    else
+                      for (final epi in exigencias.episObrigatorios)
+                        Text(
+                          epi.numeroCa == null
+                              ? '• ${epi.nome}'
+                              : '• ${epi.nome} (CA ${epi.numeroCa})',
+                        ),
+                    const SizedBox(height: TokensDimensoes.space12),
+                    Text('Capacitações exigidas', style: textos.titleSmall),
+                    if (exigencias.capacitacoes.isEmpty)
+                      Text('Nenhuma capacitação exigida.', style: secundario)
+                    else
+                      for (final capacitacao in exigencias.capacitacoes)
+                        Text(
+                          '• ${capacitacao.nome} (${capacitacao.tipo.rotulo})',
+                        ),
+                  ],
+                );
+              },
+            ),
+      ],
     );
   }
 }

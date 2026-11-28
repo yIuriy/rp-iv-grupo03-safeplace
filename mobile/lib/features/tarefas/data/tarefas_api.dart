@@ -64,6 +64,11 @@ class TarefasApi implements TarefaRepository {
     await _client.get('/tarefas/$tarefaId/aptidao/$colaboradorId'),
   );
 
+  @override
+  Future<Tarefa> vincularEpis(int id, List<int> epiIds) async => Tarefa.ler(
+    await _client.put('/tarefas/$id/epis', corpo: {'epiIds': epiIds}),
+  );
+
   static Map<String, Object?> _corpo(DadosTarefa dados) => {
     'descricao': dados.descricao,
     'areaRiscoId': ?dados.areaRiscoId,
@@ -123,6 +128,30 @@ final alocacoesProvider = FutureProvider.autoDispose
         chave: 'tarefas/$id/alocacoes',
         buscar: (api) => api.get('/tarefas/$id/alocacoes'),
         ler: lerAlocacoes,
+      ),
+      retry: (_, _) => null,
+    );
+
+/// EPIs obrigatórios vinculados (`GET /api/tarefas/{id}/epis`), a seleção inicial do vínculo.
+final episDaTarefaProvider = FutureProvider.autoDispose
+    .family<Consultado<List<EpiResumo>>, int>(
+      (ref, id) => consultarComCache(
+        ref,
+        chave: 'tarefas/$id/epis',
+        buscar: (api) => api.get('/tarefas/$id/epis'),
+        ler: lerEpisDaTarefa,
+      ),
+      retry: (_, _) => null,
+    );
+
+/// Grau, EPIs e capacitações exigidos (`GET /api/tarefas/{id}/exigencias`).
+final exigenciasProvider = FutureProvider.autoDispose
+    .family<Consultado<ExigenciasTarefa>, int>(
+      (ref, id) => consultarComCache(
+        ref,
+        chave: 'tarefas/$id/exigencias',
+        buscar: (api) => api.get('/tarefas/$id/exigencias'),
+        ler: ExigenciasTarefa.ler,
       ),
       retry: (_, _) => null,
     );

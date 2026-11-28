@@ -81,6 +81,26 @@ const luvaJson = <String, Object?>{
   'classificacao': 'PROTECAO_DE_MEMBROS_SUPERIORES',
 };
 
+const exigenciasSoldaJson = <String, Object?>{
+  'tarefaId': 1,
+  'descricao': 'Solda em altura na estrutura metálica',
+  'nivelPerigo': 'ALTO',
+  'classificada': true,
+  'capacitacoes': [
+    {
+      'id': 1,
+      'nomeCapacitacao': 'NR-35 Trabalho em altura',
+      'tipoCapacitacao': 'CERTIFICACAO',
+    },
+    {
+      'id': 2,
+      'nomeCapacitacao': 'Solda segura',
+      'tipoCapacitacao': 'TREINAMENTO',
+    },
+  ],
+  'episObrigatorios': [cintoJson],
+};
+
 /// Respostas de leitura do módulo; escritas caem no [UnimplementedError] até o teste trocar.
 Object? responderTarefas(Requisicao r) => switch ((r.metodo, r.caminho)) {
   ('GET', '/tarefas') => switch (r.consulta?['nivelPerigo']) {
@@ -90,6 +110,12 @@ Object? responderTarefas(Requisicao r) => switch ((r.metodo, r.caminho)) {
   },
   ('GET', '/tarefas/1') => soldaJson,
   ('GET', '/tarefas/2') => limpezaJson,
+  ('GET', '/tarefas/1/exigencias') => exigenciasSoldaJson,
+  ('GET', '/tarefas/2/exigencias') => {...limpezaJson, 'tarefaId': 2},
+  ('GET', '/tarefas/1/epis') => [cintoJson],
+  ('GET', '/tarefas/2/epis') => <Object?>[],
+  ('GET', '/tarefas/1/alocacoes' || '/tarefas/2/alocacoes') => <Object?>[],
+  ('GET', '/tarefas/1/historico' || '/tarefas/2/historico') => <Object?>[],
   ('GET', '/areas-risco') => [areaCaldeirariaJson],
   ('GET', '/setores') => [setorProducaoJson, setorEstoqueJson],
   ('GET', '/epis') => [cintoJson, luvaJson],
